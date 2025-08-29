@@ -9,3 +9,4 @@
 /.github/workflows/docs.yml                         @pyvista/ci-reviewers
 /.github/workflows/docker-package.yml               @pyvista/ci-reviewers
 /.github/workflows/vtk-pre-test.yml                 @pyvista/ci-reviewers
+/tox.ini                                            @pyvista/ci-reviewers
