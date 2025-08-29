@@ -9,7 +9,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    runs-on: ubuntu-22.04-self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Automatically update PR
         uses: adRise/update-pr-branch@1982757e254dab9d5bbb8478b35a2b20411270d9
