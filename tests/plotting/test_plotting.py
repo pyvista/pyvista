@@ -40,7 +40,6 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
-from tests.conftest import flaky_test
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:
@@ -49,13 +48,6 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-# flaky tests need to capture RegressionError as well
-try:
-    from pytest_pyvista.pytest_pyvista import RegressionError
-
-    flaky_error_types = (AssertionError, RegressionError)
-except ImportError:
-    flaky_error_types = (AssertionError,)
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -1302,16 +1294,16 @@ def test_axes():
     plotter.show()
 
 
-@flaky_test(exceptions=flaky_error_types)
 def test_box_axes(verify_image_cache):
-    verify_image_cache.high_variance_test = True
+    """Test deprecated function and make sure we remove it by v0.48."""
+    verify_image_cache.skip = True
 
     plotter = pv.Plotter()
 
     def _test_add_axes_box():
         plotter.add_axes(box=True)
         if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
+            msg = 'Calling this should raise an error'
             raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
@@ -1322,8 +1314,7 @@ def test_box_axes(verify_image_cache):
         match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
     ):
         _test_add_axes_box()
-    plotter.add_mesh(pv.Sphere())
-    plotter.show()
+    plotter.close()
 
 
 def test_box_axes_color_box():
