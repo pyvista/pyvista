@@ -333,7 +333,7 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Note that it is pointing in the positive z-direction.
 
-    >>> np.round(normal, decimals=5)
+    >>> np.round(normal, decimals=5) + 0.0
     array([0., 0., 1.], dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
@@ -781,10 +781,10 @@ def principal_axes(
     Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
-    >>> np.round(axes, decimals=5)
-    array([[-1., -0.,  0.],
-           [-0.,  1., -0.],
-           [-0., -0., -1.]], dtype=float32)
+    >>> np.round(axes, decimals=5) + 0.0
+    array([[-1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0., -1.]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
