@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 1 * *"
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
 
 permissions:
   id-token: none
@@ -12,8 +17,8 @@ jobs:
   intersphinx_update:
     # This job can create issues/PRs/comments, so
     #   only run on the head `pyvista/pyvista` repo
-    if: github.repository_owner == 'pyvista'
-    runs-on: ubuntu-22.04
+    # if: github.repository_owner == 'pyvista'
+    runs-on: ubuntu-22.04-self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
