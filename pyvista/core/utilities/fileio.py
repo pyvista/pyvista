@@ -178,9 +178,10 @@ def set_vtkwriter_mode(
                 supported = {'zlib', 'lz4', 'lzma'}
                 compression_ = cast('Literal["zlib", "lz4", "lzma"]', compression.lower())
                 if compression_ not in supported:
+                    supported_str = "', '".join(supported)
                     msg = (
-                        f'Unsupported compression format `{compression_}`. '
-                        f'Valid options are `{"`, `".join(supported)}` and ``None``.'
+                        f"Unsupported compression format '{compression_}'. "
+                        f"Valid options are '{supported_str}', and `None`."
                     )
                     raise ValueError(msg)
                 if compression_ == 'zlib':
