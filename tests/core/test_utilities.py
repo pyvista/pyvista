@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+import itertools
 import json
 import operator
 import os
@@ -1561,6 +1562,7 @@ def test_transform_rotate(transform):
 @pytest.mark.parametrize(
     ('method', 'args'),
     [
+        ('compose', (pv.Transform(ROTATION).translate(VECTOR),)),
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
         ('flip_x', ()),
@@ -1883,6 +1885,16 @@ def test_transform_matrix_list(transform, attr):
     assert np.array_equal(identity, np.eye(4))
 
 
+@pytest.mark.parametrize('point', [None, VECTOR])
+def test_transform_set_matrix(point):
+    # Create transform using point
+    trans = pv.Transform(point=point).scale(SCALE)
+    new_matrix = pv.Transform(ROTATION).matrix
+    assert not np.allclose(trans.matrix, new_matrix)
+    trans.matrix = new_matrix
+    assert np.allclose(trans.matrix, new_matrix)
+
+
 @pytest.fixture
 def transformed_actor():
     actor = pv.Actor()
@@ -1956,6 +1968,25 @@ def test_transform_init():
 
     transform = Transform(matrix.tolist())
     assert np.array_equal(transform.matrix, matrix)
+
+
+def test_transform_equivalent_methods():
+    def assert_transform_equivalence(tr_a: pv.Transform, tr_b: pv.Transform):
+        A = (tr_a * tr_b.inverse_matrix).matrix
+        B = np.eye(4)
+        assert np.allclose(A, B)
+        assert tr_a.n_transformations == tr_b.n_transformations
+
+    # All these transformations should be the same
+    tr1 = pv.Transform(ROTATION, point=VECTOR)
+    tr2 = pv.Transform(point=VECTOR).rotate(ROTATION)
+    tr3 = pv.Transform().rotate(ROTATION, point=VECTOR)
+    tr4 = pv.Transform().translate(-np.array(VECTOR)).rotate(ROTATION).translate(VECTOR)
+
+    trans = [tr1, tr2, tr3, tr4]
+
+    for _tr1, _tr2 in itertools.combinations(trans, 2):
+        assert_transform_equivalence(_tr1, _tr2)
 
 
 def test_transform_chain_methods():
