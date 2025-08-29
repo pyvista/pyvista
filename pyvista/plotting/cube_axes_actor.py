@@ -95,17 +95,17 @@ class CubeAxesActor(
     x_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the x-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     y_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the y-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     z_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the z-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     x_label_visibility : bool, default: True
         The visibility of the x-axis labels.
@@ -197,18 +197,20 @@ class CubeAxesActor(
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
+        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+        default_fmt = '%.1f' if pyvista.vtk_version_info < (9, 5, 99) else '{0:.1f}'
         if x_label_format is None:
             x_label_format = pyvista.global_theme.font.fmt
             if x_label_format is None:
-                x_label_format = '%.1f'
+                x_label_format = default_fmt
         if y_label_format is None:
             y_label_format = pyvista.global_theme.font.fmt
             if y_label_format is None:
-                y_label_format = '%.1f'
+                y_label_format = default_fmt
         if z_label_format is None:
             z_label_format = pyvista.global_theme.font.fmt
             if z_label_format is None:
-                z_label_format = '%.1f'
+                z_label_format = default_fmt
 
         self.x_label_format = x_label_format
         self.y_label_format = y_label_format
