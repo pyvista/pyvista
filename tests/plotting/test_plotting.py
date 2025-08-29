@@ -48,7 +48,6 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
 
