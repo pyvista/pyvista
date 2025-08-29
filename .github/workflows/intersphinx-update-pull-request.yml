@@ -1,0 +1,36 @@
+name: Update Local Intersphinx Mappings
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 * *"
+
+permissions:
+  id-token: none
+
+jobs:
+  intersphinx_update:
+    # This job can create issues/PRs/comments, so
+    #   only run on the head `pyvista/pyvista` repo
+    if: github.repository_owner == 'pyvista'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Update intersphinx objects
+        run: make -C doc update-intersphinx
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e
+        with:
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          author: pyvista-bot <53544751+pyvista-bot@users.noreply.github.com>
+          commit-message: "[create-pull-request] update local intersphinx"
+          labels: |
+            maintenance
+          body: |
+            Automated changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+            These changes update all the intersphinx mappings.
+          title: "Automated PR: Update Local Intersphinx"

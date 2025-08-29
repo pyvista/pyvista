@@ -17,7 +17,6 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  TOX_COLORED: "yes"
 
 jobs:
   VTK-master:
@@ -43,11 +42,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        with:
-          packages: xvfb
-          version: 3.0
-
       - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
@@ -55,15 +49,25 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Install tox-uv
-        run: pip install tox-uv
+      - name: Install PyVista Testing Requirements
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
+
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        with:
+          packages: xvfb
+          version: 3.0
+
+      - name: Install nightly VTK
+        run: |
+          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
+        run: python -m pytest --cov=pyvista -v tests/core tests/examples --test_downloads
 
       - name: Plotting Testing (uses GL)
-        if: always()
-        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
+        run: xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -71,3 +75,11 @@ jobs:
         with:
           name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: debug_images
+
+      - name: Software Report
+        if: always()
+        run: |
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
+          pip show vtk

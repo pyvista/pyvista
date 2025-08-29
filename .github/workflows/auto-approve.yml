@@ -1,0 +1,25 @@
+name: Approve PRs
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+jobs:
+  autoapprove:
+    # This job only runs for pull request comments by approved users on creation
+    name: PR comment
+    if: github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@pyvista-bot LGTM') && (
+      github.event.comment.user.login == 'banesullivan' ||
+      github.event.comment.user.login == 'tkoyama010' ||
+      github.event.comment.user.login == 'akaszynski'
+      )
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hmarr/auto-approve-action@f0939ea97e9205ef24d872e76833fa908a770363
+        with:
+          review-message: ":white_check_mark: Approving this PR because [${{ github.event.comment.user.login }}](https://github.com/${{ github.event.comment.user.login }}) said so in [here](${{ github.event.comment.html_url }}) :shipit:"
+          pull-request-number: ${{ github.event.issue.number }}
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
