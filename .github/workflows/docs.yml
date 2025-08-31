@@ -113,26 +113,26 @@ jobs:
           html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
 
       - name: Dump Sphinx Warnings and Errors
-        if: always()
+        if: ${{ !cancelled() }}
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
       - name: Dump VTK Warnings and Errors
-        if: always()
+        if: ${{ !cancelled() }}
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation
-        if: always()
+        if: ${{ !cancelled() }}
         run: pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images-failed
           path: _doc_debug_images_failed
 
       - name: Upload Test Debug Images
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images
@@ -157,7 +157,7 @@ jobs:
           rm -rf doc/_build/mini18n-html
 
       - name: Upload HTML documentation
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: docs-build
@@ -171,7 +171,7 @@ jobs:
             !doc/_build/html/user-guide/**/*.vtksz
 
       - name: Upload non-interactive HTML documentation
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: docs-build-light

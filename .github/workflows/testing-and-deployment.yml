@@ -89,10 +89,10 @@ jobs:
           # Self-hosted runner configurations
           - name: MacOS Unit Testing (3.10)
             python-version: "3.10"
-            runner-labels: "macos-15-self-hosted"
+            runner-labels: "macos-15"
           - name: MacOS Unit Testing (3.11)
             python-version: "3.11"
-            runner-labels: "macos-15-self-hosted"
+            runner-labels: "macos-15"
           - name: MacOS Unit Testing (3.12)
             python-version: "3.12"
             runner-labels: "macos-15-self-hosted"
@@ -120,6 +120,10 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
+      - name: Set PARALLEL when on GitHub
+        if: runner.environment != 'self-hosted'
+        run: echo "PARALLEL=-n4" >> $GITHUB_ENV
+
       - name: Restore example data cache
         uses: actions/cache/restore@v4
         with:
@@ -131,11 +135,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        run: tox run -e py${{ matrix.python-version }}-core -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: tox run -e py${{ matrix.python-version }}-plotting
+        run: tox run -e py${{ matrix.python-version }}-plotting -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
 
       - name: Upload Images for Failed Tests
         if: always()
