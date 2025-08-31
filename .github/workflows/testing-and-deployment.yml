@@ -185,6 +185,7 @@ jobs:
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
+      PARALLEL: "-n4" # flag for pytest-xdist
     steps:
       - uses: actions/checkout@v4
         with:
@@ -212,11 +213,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
+        run: tox run -e ${{env.TOX_FACTOR}}-cov-core -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
 
       - name: Upload Images for Failed Tests
         if: always()
