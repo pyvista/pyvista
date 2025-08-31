@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import shutil
 from subprocess import PIPE
 from subprocess import Popen
 import sys
@@ -27,7 +28,12 @@ ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
 @pytest.mark.skip_check_gc
-def test_tinypages(tmp_path, ename, evalue):
+def test_tinypages(tmp_path: Path, ename: str, evalue: str):
+    # copy source directory to ensure isolation
+    src_dir = Path(__file__).parent / 'tinypages'
+    tmp_src_dir = tmp_path / 'tinypages'
+    shutil.copytree(src_dir, tmp_src_dir)
+
     # sanitise the environment namespace
     for hook in ENVIRONMENT_HOOKS:
         os.environ.pop(hook, None)
@@ -51,7 +57,7 @@ def test_tinypages(tmp_path, ename, evalue):
         'html',
         '-d',
         str(doctree_dir),
-        str(Path(__file__).parent / 'tinypages'),
+        str(tmp_src_dir),
         str(html_dir),
     ]
     proc = Popen(
@@ -137,6 +143,12 @@ def test_tinypages(tmp_path, ename, evalue):
 @pytest.mark.skip_check_gc
 def test_parallel(tmp_path: Path) -> None:
     """Ensure that labeling image serial fails."""
+
+    # copy source directory to ensure isolation
+    src_dir = Path(__file__).parent / 'tinypages'
+    tmp_src_dir = tmp_path / 'tinypages'
+    shutil.copytree(src_dir, tmp_src_dir)
+
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
     cmd = [
@@ -148,7 +160,7 @@ def test_parallel(tmp_path: Path) -> None:
         '-j2',
         '-d',
         str(doctree_dir),
-        str(Path(__file__).parent / 'tinypages'),
+        str(tmp_src_dir),
         str(html_dir),
     ]
     proc = Popen(
