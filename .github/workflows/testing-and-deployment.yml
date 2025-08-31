@@ -320,6 +320,7 @@ jobs:
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
+      PARALLEL: "-n2" # flag for pytest-xdist
     strategy:
       fail-fast: false
       matrix:
@@ -349,11 +350,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        run: tox run -e py${{ matrix.python-version }}-core -- ${{env.PARALLEL}}
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: tox run -e py${{ matrix.python-version }}-plotting
+        run: tox run -e py${{ matrix.python-version }}-plotting -- ${{env.PARALLEL}}
 
       - name: Upload Images for Failed Tests
         if: always()

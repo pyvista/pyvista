@@ -886,14 +886,14 @@ def test_plotter_shape():
     assert isinstance(pl.shape[0], int)
 
 
-@pytest.mark.parametrize(
-    'filename_mtl',
-    [
-        None,
-        Path(pv.examples.download_doorman(load=False)).with_suffix('.mtl'),
-    ],
-)
-def test_import_obj_with_filename_mtl(filename_mtl):
+def test_import_obj_with_filename_mtl():
     filename = Path(pv.examples.download_doorman(load=False))
+
+    # test with and without setting filename_mtl
     plotter = pv.Plotter()
-    plotter.import_obj(filename, filename_mtl=filename_mtl)
+    plotter.import_obj(filename, filename_mtl=None)
+    assert plotter.actors
+
+    plotter = pv.Plotter()
+    plotter.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
+    assert plotter.actors
