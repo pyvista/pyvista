@@ -61,6 +61,7 @@ from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
+from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -2845,12 +2846,13 @@ def test_max_positional_args_matches_pyproject():
 def test_save_compression():
     writer = vtk.vtkXMLUnstructuredGridWriter()
 
-    for compressor in ['zlib', 'lz4', 'lzma']:
-        set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
-        assert compressor in str(type(writer.GetCompressor())).lower()
-
-    set_vtkwriter_mode(writer, use_binary=True, compression=None)
-    assert writer.GetCompressor() is None
+    for compressor in get_args(_CompressionOptions):
+        if compressor is None:
+            set_vtkwriter_mode(writer, use_binary=True, compression=None)
+            assert writer.GetCompressor() is None
+        else:
+            set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
+            assert compressor in str(type(writer.GetCompressor())).lower()
 
     with pytest.raises(ValueError, match='Unsupported compression format'):
         set_vtkwriter_mode(writer, use_binary=True, compression='foo')
