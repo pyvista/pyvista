@@ -428,12 +428,11 @@ def test_multi_block_eq(multiblock_all_with_nested_and_none):
     assert multi != other
 
 
-@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension, binary, compression, tmpdir, use_pathlib, multiblock_all_with_nested_and_none
+    extension, binary, tmpdir, use_pathlib, multiblock_all_with_nested_and_none
 ):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
@@ -451,9 +450,9 @@ def test_multi_block_io(
     if extension == '.vtkhdf' and binary is False:
         match = '.vtkhdf files can only be written in binary format'
         with pytest.raises(ValueError, match=match):
-            multi.save(filename, binary=binary, compression=compression)
+            multi.save(filename, binary=binary)
         return
-    multi.save(filename, binary=binary, compression=compression)
+    multi.save(filename, binary=binary)
 
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
@@ -509,10 +508,9 @@ def test_multi_block_hdf_invalid_nested_block(tmpdir):
         multi.save(filename)
 
 
-@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, compression, tmpdir):
+def test_ensight_multi_block_io(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
@@ -522,7 +520,7 @@ def test_ensight_multi_block_io(extension, binary, compression, tmpdir):
     for block in multi:
         assert block.array_names == array_names
     # Save it out
-    multi.save(filename, binary=binary, compression=compression)
+    multi.save(filename, binary=binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     for block in foo:

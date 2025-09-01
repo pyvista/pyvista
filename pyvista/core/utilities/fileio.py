@@ -188,7 +188,7 @@ def set_vtkwriter_mode(
                     vtk_writer.SetCompressorTypeToZLib()
                 elif compression_ == 'lz4':
                     vtk_writer.SetCompressorTypeToLZ4()
-                elif compression_ == 'lzma':
+                else:
                     vtk_writer.SetCompressorTypeToLZMA()
         else:
             vtk_writer.SetDataModeToAscii()
