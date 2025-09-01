@@ -120,7 +120,7 @@ docs = [
   'joblib==1.5.1',
   'jupyter_sphinx==0.5.3',
   'jupyterlab==4.4.5',
-  'lxml==6.0.0',
+  'lxml==6.0.1',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==1.17.1',
