@@ -175,15 +175,8 @@ def set_vtkwriter_mode(
         if use_binary:
             vtk_writer.SetDataModeToBinary()
             supported = get_args(_CompressionOptions)
-            if compression not in supported:
-                supported_str = ', '.join(
-                    f"'{x}'" if x is not None else '`None`' for x in supported
-                )
-                msg = (
-                    f"Unsupported compression format '{compression}'. "
-                    f'Valid options are {supported_str}.'
-                )
-                raise ValueError(msg)
+            from pyvista.core import _validation
+            _validation.check_contains(supported, must_contain=compression, name='compression')
             if compression is None:
                 vtk_writer.SetCompressorTypeToNone()
             elif compression == 'zlib':
