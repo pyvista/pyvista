@@ -134,7 +134,7 @@ jobs:
         run: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
-        if: always()
+        if: ${{ !cancelled() }}
         run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
@@ -215,7 +215,7 @@ jobs:
         run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
-        if: always()
+        if: ${{ !cancelled() }}
         run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
 
       - name: Upload Images for Failed Tests
@@ -297,7 +297,7 @@ jobs:
         run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
-        if: always()
+        if: ${{ !cancelled() }}
         run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
 
       - name: Upload Generated Images
@@ -351,7 +351,7 @@ jobs:
         run: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
-        if: always()
+        if: ${{ !cancelled() }}
         run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
