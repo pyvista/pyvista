@@ -121,7 +121,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation
-        if: always()
+        if: ${{ !cancelled() }}
         run: pytest tests/doc/tst_doc_build.py
 
       - name: Test Documentation2
@@ -129,14 +129,14 @@ jobs:
         run: pytest --doc_mode
 
       - name: Upload Images for Failed Tests
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: doc-failed-test-images
           path: _doc_failed_test_images
 
-      - name: Upload Generated Test Images
-        if: always()
+      - name: Upload Test Debug Images
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: doc-generated-test-images
@@ -161,7 +161,7 @@ jobs:
           rm -rf doc/_build/mini18n-html
 
       - name: Upload HTML documentation
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: docs-build
@@ -175,7 +175,7 @@ jobs:
             !doc/_build/html/user-guide/**/*.vtksz
 
       - name: Upload non-interactive HTML documentation
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: docs-build-light
