@@ -819,7 +819,9 @@ def test_plot_label_fmt(sphere, verify_image_cache):
 
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    plotter.show_bounds(xtitle='My X', fmt=fmt)
     plotter.show()
 
 
@@ -1292,14 +1294,15 @@ def test_axes():
 
 
 def test_box_axes(verify_image_cache):
-    verify_image_cache.high_variance_test = True
+    """Test deprecated function and make sure we remove it by v0.48."""
+    verify_image_cache.skip = True
 
     plotter = pv.Plotter()
 
     def _test_add_axes_box():
         plotter.add_axes(box=True)
         if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
+            msg = 'Calling this should raise an error'
             raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
@@ -1310,8 +1313,7 @@ def test_box_axes(verify_image_cache):
         match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
     ):
         _test_add_axes_box()
-    plotter.add_mesh(pv.Sphere())
-    plotter.show()
+    plotter.close()
 
 
 def test_box_axes_color_box():
@@ -3958,7 +3960,9 @@ def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
-    p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt='%.3f')
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
     p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
     p.show()
 

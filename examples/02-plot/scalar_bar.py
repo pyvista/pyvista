@@ -76,7 +76,7 @@ sargs = dict(
     shadow=True,
     n_labels=3,
     italic=True,
-    fmt='%.1f',
+    fmt='{0:.1f}',
     font_family='arial',
 )
 

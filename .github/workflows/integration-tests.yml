@@ -37,7 +37,7 @@ jobs:
   # For now this is just MNE-Python, but others could be added
   mne:
     name: MNE-Python
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     env:
       DISPLAY: ":99.0"
       MNE_LOGGING_LEVEL: "info"
@@ -78,7 +78,7 @@ jobs:
 
   pyvistaqt:
     name: PyVistaQt
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
@@ -98,7 +98,7 @@ jobs:
 
   geovista:
     name: GeoVista
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     defaults:
       run:
         shell: bash -l {0}
@@ -128,7 +128,7 @@ jobs:
 
   trame:
     name: Trame
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     defaults:
       run:
         shell: bash -l {0}

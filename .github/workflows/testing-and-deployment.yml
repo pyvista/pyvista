@@ -20,7 +20,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  PYTEST_ADDOPTS: "--color=yes"
+  TOX_COLORED: "yes"
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -33,8 +33,6 @@ env:
     }}
   CACHE_FOLDER_NAME: vtk-data
   PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
-  LINUX_PLOTTING_ARGS: >
-    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch --disallow_unused_cache
 
 permissions:
   id-token: none
@@ -42,7 +40,15 @@ permissions:
 jobs:
   cache-vtk-data:
     name: Cache vtk-data Repo
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # need both self-hosted and github hosted to ensure cache is local to runners
+          - runner-labels: "ubuntu-22.04-self-hosted"
+          - runner-labels: "ubuntu-22.04"
+
+    runs-on: ${{ matrix.runner-labels }}
     outputs:
       key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
     steps:
@@ -121,20 +127,15 @@ jobs:
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
-      - name: Install PyVista test dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
+      - name: Install tox-uv
+        run: pip install tox-uv
 
-      - name: Report
-        run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core
 
-      - name: Test Core API
-        run: pytest -v --ignore=tests/plotting --test_downloads
-
-      - name: Test Plotting
-        if: always()
-        run: pytest -v tests/plotting --disallow_unused_cache
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -151,8 +152,8 @@ jobs:
           path: _generated_test_images
 
   Linux:
-    name: Linux Unit Testing
-    runs-on: ubuntu-22.04
+    name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
+    runs-on: ${{ matrix.runner-labels }}
     needs: cache-vtk-data
     strategy:
       fail-fast: false
@@ -164,18 +165,26 @@ jobs:
           - python-version: "3.10"
             vtk-version: "9.2.2"
             numpy-version: "1.26"
+            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.11"
             vtk-version: "9.2.6"
             numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.12"
             vtk-version: "9.3.1"
             numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
             vtk-version: "9.4.2"
             numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
+            runner-labels: "ubuntu-22.04-self-hosted"
+
+    env:
+      TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -186,7 +195,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        with:
+          packages: xvfb
+          version: 3.0
 
       - name: Cache example data
         uses: actions/cache/restore@v4
@@ -195,53 +208,15 @@ jobs:
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
-      - name: Build wheel and install pyvista
-        run: |
-          pip install build
-          python -m build --wheel
-          pip install dist/pyvista*.whl
-
-      - name: Set up vtk
-        if: ${{ matrix.vtk-version != 'latest' }}
-        run: pip install vtk==${{ matrix.vtk-version }}
-
-      # Make sure PyVista does not break from non-core dependencies
-      - name: Software Report (Core Dependencies)
-        run: python -c "import pyvista; print(pyvista.Report());"
-
-      - name: Install Testing Requirements
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
-
-      - name: Set up numpy
-        if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
-        run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
-
-      - name: Install latest numpy 2.0 beta/rc
-        if: ${{ matrix.numpy-version == 'nightly' }}
-        run: |
-          pip uninstall numpy matplotlib -y
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
-
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        if: always()
-        with:
-          packages: xvfb
-          version: 3.0
-
-      - name: Software Report (Plotting Dependencies)
-        if: always()
-        run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
+        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
-        if: always()
-        run: |
-          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
+        if: ${{ !cancelled() }}
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -256,13 +231,6 @@ jobs:
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
-
-      - name: Software Report
-        if: always()
-        run: |
-          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
-          which python
-          pip list
 
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         name: "Upload coverage to CodeCov"
@@ -292,7 +260,7 @@ jobs:
     name: Linux VTK Dev Testing
     permissions:
       contents: read
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     needs: cache-vtk-data
     strategy:
       fail-fast: false
@@ -310,6 +278,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        with:
+          packages: xvfb
+          version: 3.0
+
       - name: Cache example data
         uses: actions/cache/restore@v4
         with:
@@ -317,39 +290,15 @@ jobs:
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
-      - name: Install Testing Requirements
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
-
-      - name: Install VTK dev wheel
-        run: |
-          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
-
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        if: always()
-        with:
-          packages: xvfb
-          version: 3.0
-
-      - name: Software Report (Plotting Dependencies)
-        if: always()
-        run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
-        if: always()
-        run: |
-          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
+        if: ${{ !cancelled() }}
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
 
       - name: Upload Generated Images
         if: always()
@@ -358,13 +307,10 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Software Report
-        if: always()
-        run: |
-          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
-          which python
-          pip list
-          pip show vtk
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+        name: "Upload coverage to CodeCov"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   windows:
     name: Windows Unit Testing
@@ -398,20 +344,15 @@ jobs:
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
-      - name: Install PyVista test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install . --group test
+      - name: Install tox-uv
+        run: pip install tox-uv
 
-      - name: Report
-        run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core
 
-      - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting --test_downloads
-
-      - name: Test Plotting
-        if: always()
-        run: python -m pytest -v tests/plotting --disallow_unused_cache
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
