@@ -9,9 +9,15 @@ CODE_FILES ?= *.py *.rst *.md
 doctest-modules: export PYVISTA_OFF_SCREEN = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
-doctest-modules:
-	@echo "Running module doctesting"
-	pytest -v --doctest-modules pyvista
+doctest-modules-core:
+	@echo "Running core doctests"
+	pytest -v --doctest-modules pyvista/ --ignore=pyvista/plotting
+
+doctest-modules-plotting:
+	@echo "Running plotting doctests"
+	pytest -v --doctest-modules pyvista/plotting
+
+doctest-modules: doctest-modules-core doctest-modules-plotting
 
 doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"

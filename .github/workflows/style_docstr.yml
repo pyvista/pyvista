@@ -16,6 +16,13 @@ permissions:
 jobs:
   docstringcheck:
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - make-target: "doctest-modules-core"
+          - make-target: "doctest-modules-plotting"
+          - make-target: "doctest-modules-local-namespace"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,15 +51,12 @@ jobs:
 
       - name: Software Report
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
 
-      - name: Test Package Docstrings
-        run: make doctest-modules
-
-      - name: Test Package Docstrings with Local Namespace
-        run: make doctest-modules-local-namespace
+      - name: Test Docstrings
+        run: xvfb-run -a make ${{ matrix.make-target }}
 
   vale:
     name: Vale
