@@ -65,7 +65,7 @@ jobs:
 
       - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
         if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: pyvista/vtk-data
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -102,7 +102,7 @@ jobs:
 
     runs-on: ${{ matrix.runner-labels }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -186,7 +186,7 @@ jobs:
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -196,7 +196,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         with:
           packages: xvfb
           version: 3.0
@@ -232,7 +232,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -267,7 +267,7 @@ jobs:
       matrix:
         python-version: ["3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -278,7 +278,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         with:
           packages: xvfb
           version: 3.0
@@ -307,7 +307,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -324,7 +324,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
