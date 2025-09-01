@@ -119,7 +119,7 @@ docs = [
   'imageio==2.37.0',
   'joblib==1.5.1',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.4.5',
+  'jupyterlab==4.4.6',
   'lxml==6.0.0',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
