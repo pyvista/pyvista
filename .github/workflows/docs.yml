@@ -132,7 +132,7 @@ jobs:
           path: _doc_debug_images_failed
 
       - name: Upload Test Debug Images
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images
