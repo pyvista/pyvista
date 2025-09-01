@@ -157,6 +157,8 @@ def set_vtkwriter_mode(
         Acceptable values are ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``.
         ``None`` indicates no compression.
 
+        .. versionadded:: 0.47
+
     Returns
     -------
     :vtk:`vtkDataWriter` | :vtk:`vtkPLYWriter` | :vtk:`vtkSTLWriter` | :vtk:`vtkXMLWriter`

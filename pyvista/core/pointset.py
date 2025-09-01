@@ -1468,6 +1468,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
             indicates no compression.
 
+            .. versionadded:: 0.47
+
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
@@ -3276,6 +3278,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             argument has no effect otherwise. Acceptable values are
             ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
             indicates no compression.
+
+            .. versionadded:: 0.47
 
         Notes
         -----

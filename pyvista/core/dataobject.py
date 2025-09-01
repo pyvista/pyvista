@@ -166,6 +166,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
             indicates no compression.
 
+            .. versionadded:: 0.47
+
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
