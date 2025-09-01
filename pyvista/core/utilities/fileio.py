@@ -176,6 +176,7 @@ def set_vtkwriter_mode(
             vtk_writer.SetDataModeToBinary()
             supported = get_args(_CompressionOptions)
             from pyvista.core import _validation
+
             _validation.check_contains(supported, must_contain=compression, name='compression')
             if compression is None:
                 vtk_writer.SetCompressorTypeToNone()
