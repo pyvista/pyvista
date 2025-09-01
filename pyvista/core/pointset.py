@@ -3277,7 +3277,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
             indicates no compression.
 
-
         Notes
         -----
         VTK adds the ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'``

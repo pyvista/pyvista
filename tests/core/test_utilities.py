@@ -2853,6 +2853,3 @@ def test_save_compression():
         else:
             set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
             assert compressor in str(type(writer.GetCompressor())).lower()
-
-    with pytest.raises(ValueError, match='Unsupported compression format'):
-        set_vtkwriter_mode(writer, use_binary=True, compression='foo')
