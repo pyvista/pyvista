@@ -20,6 +20,7 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -175,7 +176,6 @@ def set_vtkwriter_mode(
         if use_binary:
             vtk_writer.SetDataModeToBinary()
             supported = get_args(_CompressionOptions)
-            from pyvista.core import _validation
 
             _validation.check_contains(supported, must_contain=compression, name='compression')
             if compression is None:
