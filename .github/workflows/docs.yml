@@ -113,11 +113,11 @@ jobs:
           html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
 
       - name: Dump Sphinx Warnings and Errors
-        if: ${{ !cancelled() }}
+        if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
       - name: Dump VTK Warnings and Errors
-        if: ${{ !cancelled() }}
+        if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation
@@ -132,7 +132,7 @@ jobs:
           path: _doc_debug_images_failed
 
       - name: Upload Test Debug Images
-        if: ${{ !cancelled() }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images
