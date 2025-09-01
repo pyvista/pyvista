@@ -19,6 +19,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  TOX_COLORED: "yes"
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -68,11 +69,11 @@ jobs:
 
       - name: Run tests (no xvfb)
         if: ${{matrix.project != 'geovista'}}
-        run: tox run -e integration-${{matrix.project}} --colored=yes
+        run: tox run -e integration-${{matrix.project}}
 
       - name: Run tests (geovista)
         if: ${{matrix.project == 'geovista'}}
-        run: xvfb-run -a tox run -e integration-${{matrix.project}} --colored=yes
+        run: xvfb-run -a tox run -e integration-${{matrix.project}}
 
       - uses: actions/cache@v4
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
