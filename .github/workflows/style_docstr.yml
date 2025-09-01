@@ -9,6 +9,7 @@ concurrency:
 
 env:
   TOX_COLORED: "yes"
+  PARALLEL: "-n2"
 permissions:
   id-token: none
 
