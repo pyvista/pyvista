@@ -53,7 +53,7 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.10.2',
+  'matplotlib<3.10.7',
   'numpy<2.4.0',
   'pillow<11.4.0',
   'pooch<1.9.0',
