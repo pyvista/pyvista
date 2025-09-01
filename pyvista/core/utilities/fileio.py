@@ -12,6 +12,7 @@ from typing import Literal
 from typing import TextIO
 from typing import TypeVar
 from typing import cast
+from typing import get_args
 from typing import overload
 import warnings
 
@@ -39,6 +40,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
+_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 
 if TYPE_CHECKING:
@@ -136,7 +138,7 @@ def get_ext(filename: str | Path) -> str:
 def set_vtkwriter_mode(
     vtk_writer: _VTKWriterType,
     use_binary: bool = True,  # noqa: FBT001, FBT002
-    compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
+    compression: _CompressionOptions = 'zlib',
 ) -> _VTKWriterType:
     """Set any vtk writer to write as binary or ascii.
 
@@ -172,24 +174,24 @@ def set_vtkwriter_mode(
     elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
+            supported = get_args(_CompressionOptions)
+            if compression not in supported:
+                supported_str = ', '.join(
+                    f"'{x}'" if x is not None else '`None`' for x in supported
+                )
+                msg = (
+                    f"Unsupported compression format '{compression}'. "
+                    f'Valid options are {supported_str}.'
+                )
+                raise ValueError(msg)
             if compression is None:
                 vtk_writer.SetCompressorTypeToNone()
+            elif compression == 'zlib':
+                vtk_writer.SetCompressorTypeToZLib()
+            elif compression == 'lz4':
+                vtk_writer.SetCompressorTypeToLZ4()
             else:
-                supported = {'zlib', 'lz4', 'lzma'}
-                compression_ = cast('Literal["zlib", "lz4", "lzma"]', compression.lower())
-                if compression_ not in supported:
-                    supported_str = "', '".join(supported)
-                    msg = (
-                        f"Unsupported compression format '{compression_}'. "
-                        f"Valid options are '{supported_str}', and `None`."
-                    )
-                    raise ValueError(msg)
-                if compression_ == 'zlib':
-                    vtk_writer.SetCompressorTypeToZLib()
-                elif compression_ == 'lz4':
-                    vtk_writer.SetCompressorTypeToLZ4()
-                else:
-                    vtk_writer.SetCompressorTypeToLZMA()
+                vtk_writer.SetCompressorTypeToLZMA()
         else:
             vtk_writer.SetDataModeToAscii()
     return vtk_writer

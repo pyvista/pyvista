@@ -7,7 +7,6 @@ from collections import UserDict
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Literal
 from typing import cast
 import warnings
 
@@ -24,6 +23,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
+from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
@@ -124,7 +124,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
-        compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Save this vtk object to file.
 

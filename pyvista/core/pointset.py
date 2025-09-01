@@ -11,7 +11,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -39,6 +38,7 @@ from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
+from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
@@ -1420,7 +1420,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
         recompute_normals: bool = True,  # noqa: FBT001, FBT002
-        compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Write a surface mesh to disk.
 
@@ -3255,7 +3255,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
-        compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Save this VTK object to file.
 
