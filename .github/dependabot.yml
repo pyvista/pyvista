@@ -6,6 +6,9 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 100
+    ignore:
+      - dependency-name: "pydata-sphinx-theme" # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+        versions: [ "> 15.4" ]
     groups:
       trame:
         patterns:
@@ -15,8 +18,6 @@ updates:
         patterns:
           - "*sphinx*"
           - "pypandoc"
-        ignore:
-          - "pydata-sphinx-theme" # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
       pytest:
         patterns:
           - "pytest"
