@@ -7209,7 +7209,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if pyvista.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
-            self.last_image_depth = self.get_image_depth()
             with suppress(ImportError):
                 self.last_vtksz = self.export_vtksz(filename=None)
 
