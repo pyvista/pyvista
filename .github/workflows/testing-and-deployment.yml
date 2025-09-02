@@ -347,20 +347,19 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      # Multiple attempts with a 12 minute timeout
       - name: Core Testing (no GL)
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
         with:
-          timeout_seconds: 720
+          timeout_minutes: 12
           max_attempts: 3
           retry_on: timeout
           command: tox run -e py${{ matrix.python-version }}-core
 
-      # Multiple attempts with a 12 minute timeout
       - name: Core Testing (no GL)
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        if: ${{ !cancelled() }}
         with:
-          timeout_seconds: 1800
+          timeout_minutes: 30
           max_attempts: 3
           retry_on: timeout
           command: tox run -e py${{ matrix.python-version }}-plotting
