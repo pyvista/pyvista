@@ -19,6 +19,9 @@ updates:
         patterns:
           - "pytest"
           - "pytest-*"
+      all-else:
+        patterns:
+          - "*"
     labels:
       - "maintenance"
       - "dependencies"
