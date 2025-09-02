@@ -87,7 +87,7 @@ test = [
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cov<6.3.0',
   'pytest-mypy-plugins<3.3.0',
-  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista.git@feat/doc',
+  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista.git@feat/multiple-cache-images',
   'pytest-xdist<3.9.0',
   'pytest<8.5.0',
   'pytest_cases<3.10.0',
