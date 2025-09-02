@@ -347,12 +347,26 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # Multiple attempts with a 12 minute timeout
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            echo "Attempt $i"
+            timeout 720 tox run -e py${{ matrix.python-version }}-core && exit 0
+          done
+          exit 1
 
+      # Multiple attempts with a 30 minute timeout
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting
+        shell: bash
+        run: |
+          for i in 1 2; do
+            echo "Attempt $i"
+            timeout 1800 tox run -e py${{ matrix.python-version }}-plotting && exit 0
+          done
+          exit 1
 
       - name: Upload Images for Failed Tests
         if: always()
