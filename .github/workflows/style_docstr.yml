@@ -17,7 +17,7 @@ jobs:
   docstringcheck:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -47,7 +47,7 @@ jobs:
     name: Vale
     runs-on: ubuntu-22.04 # does not support self-hosted (yet)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 

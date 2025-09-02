@@ -42,7 +42,7 @@ jobs:
       DISPLAY: ":99.0"
       MNE_LOGGING_LEVEL: "info"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -80,7 +80,7 @@ jobs:
     name: PyVistaQt
     runs-on: ubuntu-22.04-self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -107,7 +107,7 @@ jobs:
       GEOVISTA_POOCH_MUTE: true
     steps:
       - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -133,7 +133,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
