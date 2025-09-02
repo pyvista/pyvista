@@ -7,8 +7,10 @@ from __future__ import annotations
 import gc
 import inspect
 import platform
+from typing import Any
 
 import pytest
+from vtk import vtkObjectBase
 
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
@@ -33,10 +35,11 @@ def pytest_runtest_setup(item):
         pytest.skip('Test requires system to support plotting')
 
 
-def _is_vtk(obj):
+def _is_vtk(obj: Any) -> bool:
     try:
-        return obj.__class__.__name__.startswith('vtk')
-    except (ReferenceError, AttributeError):
+        if isinstance(obj, vtkObjectBase):
+            return obj.__class__.__name__.startswith('vtk')
+    except ReferenceError:
         return False
 
 
@@ -101,6 +104,11 @@ def check_gc(request):
             del ri, referrer
         msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
         del cn, referrers
+
+    if request.node.get_closest_marker('expect_check_gc_fail'):
+        assert after
+        return
+
     assert len(after) == 0, msg
 
 
