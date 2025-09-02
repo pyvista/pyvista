@@ -7,11 +7,10 @@ from __future__ import annotations
 import gc
 import inspect
 import platform
-from typing import Any
 
 import pytest
+from vtk import vtkObjectBase
 
-# from vtk import vtkObjectBase
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
 
@@ -33,14 +32,6 @@ def pytest_runtest_setup(item):
     skip = any(mark.name == 'skip_plotting' for mark in item.iter_markers())
     if skip and SKIP_PLOTTING:
         pytest.skip('Test requires system to support plotting')
-
-
-def _is_vtk(obj: Any) -> bool:
-    try:
-        # if isinstance(obj, vtkObjectBase):
-        return obj.__class__.__name__.startswith('vtk')
-    except ReferenceError:
-        return False
 
 
 if APPLE_SILICON:
@@ -66,8 +57,16 @@ def check_gc(request):
         yield
         return
 
+    # Get all VTK objects before calling the test
     gc.collect()
-    before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
+    before = set()
+    for obj in gc.get_objects():
+        # Micro-optimized for performance as this is called millions of times
+        try:
+            if isinstance(obj, vtkObjectBase) and obj.__class__.__name__.startswith('vtk'):
+                before.add(id(obj))
+        except ReferenceError:
+            pass
 
     yield
 
@@ -77,8 +76,21 @@ def check_gc(request):
     if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
         return
 
+    # get all vtk objects after the test
     gc.collect()
-    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    after = []
+    for obj in gc.get_objects():
+        # Micro-optimized for performance as this is called millions of times
+        try:
+            if (
+                isinstance(obj, vtkObjectBase)
+                and obj.__class__.__name__.startswith('vtk')
+                and id(obj) not in before
+            ):
+                after.append(obj)
+        except ReferenceError:
+            pass
+
     msg = 'Not all objects GCed:\n'
     for obj in after:
         cn = obj.__class__.__name__
