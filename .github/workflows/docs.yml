@@ -33,10 +33,6 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  PYDEVD_DISABLE_FILE_VALIDATION: "1"
-  PYTEST_ADDOPTS: "--color=yes"
-  FORCE_COLOR: "True"
-  VTK_DEFAULT_OPENGL_WINDOW: "vtkEGLRenderWindow"
 
 permissions:
   id-token: none
@@ -46,21 +42,12 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
     env:
-      PYVISTA_OFF_SCREEN: "True"
-      ALLOW_PLOTTING: true
-      SHELLOPTS: "errexit:pipefail"
-      SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
+      PARALLEL: ${{ runner.environment == 'self-hosted' && '-j8' || '-j2' }}
+      TOX_COLORED: "yes"
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-
-      - name: Set environment for self-hosted
-        if: runner.environment == 'self-hosted'
-        run: |
-          echo "SPHINX_JOBS=-j8" >> $GITHUB_ENV
-          echo "VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow" >> $GITHUB_ENV
-          # echo "VTK_DEFAULT_EGL_DEVICE_INDEX=1" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v5
         with:
@@ -73,16 +60,8 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Install PyVista and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
-
-      - name: PyVista Report
-        run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
-          pip list
+      - name: Set PyVista example data path
+        run: echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
@@ -106,11 +85,7 @@ jobs:
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: |
-          make -C doc \
-          gen-external-examples \
-          gen-dataset-gallery \
-          html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
+        run: tox run -e docs-build
 
       - name: Dump Sphinx Warnings and Errors
         if: always()
@@ -122,7 +97,7 @@ jobs:
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
-        run: pytest tests/doc/tst_doc_build.py
+        run: tox r -e docs-test
 
       - name: Upload Images for Failed Tests
         if: ${{ !cancelled() }}
@@ -148,11 +123,7 @@ jobs:
 
       - name: Build I18N Documentation
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
-        run: |
-          make -C doc \
-          gen-external-examples \
-          gen-dataset-gallery \
-          mini18n-html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
+        run: tox run -e docs-build -- mini18n-html
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
           rm -rf doc/_build/mini18n-html
 
