@@ -16,7 +16,7 @@ updates:
           - "*sphinx*"
           - "pypandoc"
         ignore:
-          - "pydata-sphinx-theme"
+          - "pydata-sphinx-theme" # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
       pytest:
         patterns:
           - "pytest"
