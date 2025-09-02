@@ -10,8 +10,8 @@ import platform
 from typing import Any
 
 import pytest
-from vtk import vtkObjectBase
 
+# from vtk import vtkObjectBase
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
 
@@ -37,8 +37,8 @@ def pytest_runtest_setup(item):
 
 def _is_vtk(obj: Any) -> bool:
     try:
-        if isinstance(obj, vtkObjectBase):
-            return obj.__class__.__name__.startswith('vtk')
+        # if isinstance(obj, vtkObjectBase):
+        return obj.__class__.__name__.startswith('vtk')
     except ReferenceError:
         return False
 
