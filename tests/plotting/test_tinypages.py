@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-import shutil
 from subprocess import PIPE
 from subprocess import Popen
 import sys
@@ -55,6 +54,7 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
+
     proc = Popen(
         cmd,
         stdout=PIPE,
