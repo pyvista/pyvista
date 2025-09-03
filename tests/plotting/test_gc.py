@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+import shutil
+import subprocess
 from typing import Any
 
 import pytest
@@ -20,6 +23,28 @@ def test_leak_pv(sphere) -> None:
     """A VTK leak within a pyvista object with a simple self-reference."""
     points = sphere.points
     points.VTKObject._ref = points.VTKObject
+
+
+def test_run_leak_tests(tmp_path: Path) -> None:
+    shutil.copy(Path(__file__).parent / 'conftest.py', tmp_path / 'conftest.py')
+
+    test_file = tmp_path / 'test_leak_pv.py'
+    test_file.write_text("""
+import pyvista as pv
+
+
+def test_leak_pv() -> None:
+    sphere = pv.Sphere()
+    points = sphere.points
+    points.VTKObject._ref = points.VTKObject
+""")
+
+    result = subprocess.run(
+        ['pytest', '-v', str(test_file)], cwd=tmp_path, capture_output=True, text=True, check=False
+    )
+
+    assert result.returncode != 0
+    assert 'Not all objects GCed' in result.stdout
 
 
 @pytest.mark.expect_check_gc_fail
