@@ -361,11 +361,21 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core -- ${{env.PARALLEL}}
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        with:
+          timeout_minutes: 12
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-core -- ${{env.PARALLEL}}
 
-      - name: Plotting Testing (uses GL)
+      - name: Core Testing (no GL)
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting -- ${{env.PARALLEL}}
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-plotting -- ${{env.PARALLEL}}
 
       - name: Upload Images for Failed Tests
         if: always()
