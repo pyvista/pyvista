@@ -44,6 +44,7 @@ jobs:
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
+      PYVISTA_USERDATA_PATH: ${{ github.workspace }}/.pyvista_examples
     steps:
       - uses: actions/checkout@v5
         with:
@@ -66,8 +67,8 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Set PyVista example data path
-        run: echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
@@ -80,7 +81,7 @@ jobs:
         uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
         with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache Sphinx build directory
