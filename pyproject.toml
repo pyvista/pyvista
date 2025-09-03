@@ -246,6 +246,7 @@ image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
+  'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
