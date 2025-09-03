@@ -42,7 +42,7 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
     env:
-      PARALLEL: ${{ runner.environment == 'self-hosted' && '-j8' || '-j2' }}
+      PARALLEL: ${{ github.runner.environment == 'self-hosted' && '-j8' || '-j2' }}
       TOX_COLORED: "yes"
     steps:
       - uses: actions/checkout@v5
