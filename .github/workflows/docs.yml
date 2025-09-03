@@ -91,6 +91,9 @@ jobs:
           path: doc/_build/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
+      - name: Install tox-uv
+        run: pip install tox-uv
+
       - name: Build Documentation
         run: tox run -e docs-build
 
