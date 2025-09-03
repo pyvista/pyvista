@@ -21,17 +21,20 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Define camera and axes
-# ++++++++++++++++++++++
+# Define camera position and axes
+# +++++++++++++++++++++++++++++++
 #
-# Define camera and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
+# Define camera position and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
 
 mesh = examples.download_cow()
 mesh.points /= 1.5  # scale the mesh
 
-camera = pv.Camera()
-camera.position = (30.0, 30.0, 30.0)
-camera.focal_point = (5.0, 5.0, 5.0)
+cpos = [
+    (30.0, 30.0, 30.0),  # position
+    (5.0, 5.0, 5.0),  # focal point
+    (0.0, 1.0, 0.0),  # view up
+]
+
 
 axes = pv.Axes(show_actor=True, actor_scale=2.0, line_width=5)
 axes.origin = (3.0, 3.0, 3.0)
@@ -46,10 +49,9 @@ p = pv.Plotter()
 
 p.add_text('Mesh', font_size=24)
 p.add_actor(axes.actor)
-p.camera = camera
 p.add_mesh(mesh)
 
-p.show()
+p.show(cpos=cpos)
 
 # %%
 # Rotation about the x axis
@@ -62,13 +64,12 @@ p = pv.Plotter()
 
 p.add_text('X-Axis Rotation', font_size=24)
 p.add_actor(axes.actor)
-p.camera = camera
 
 for i in range(6):
     rot = mesh.rotate_x(60 * i, point=axes.origin, inplace=False)
     p.add_mesh(rot)
 
-p.show()
+p.show(cpos=cpos)
 
 # %%
 # Rotation about the y axis
@@ -80,14 +81,13 @@ p.show()
 p = pv.Plotter()
 
 p.add_text('Y-Axis Rotation', font_size=24)
-p.camera = camera
 p.add_actor(axes.actor)
 
 for i in range(6):
     rot = mesh.rotate_y(60 * i, point=axes.origin, inplace=False)
     p.add_mesh(rot)
 
-p.show()
+p.show(cpos=cpos)
 
 # %%
 # Rotation about the z axis
@@ -99,14 +99,13 @@ p.show()
 p = pv.Plotter()
 
 p.add_text('Z-Axis Rotation', font_size=24)
-p.camera = camera
 p.add_actor(axes.actor)
 
 for i in range(6):
     rot = mesh.rotate_z(60 * i, point=axes.origin, inplace=False)
     p.add_mesh(rot)
 
-p.show()
+p.show(cpos=cpos)
 
 # %%
 # Rotation about a custom vector
@@ -118,13 +117,12 @@ p.show()
 p = pv.Plotter()
 
 p.add_text('Custom Vector Rotation', font_size=24)
-p.camera = camera
 p.add_actor(axes.actor)
 for i in range(6):
     rot = mesh.copy()
     rot.rotate_vector(vector=(1, 1, 1), angle=60 * i, point=axes.origin)
     p.add_mesh(rot)
 
-p.show()
+p.show(cpos=cpos)
 # %%
 # .. tags:: filter
