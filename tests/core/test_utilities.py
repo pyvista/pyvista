@@ -42,6 +42,7 @@ from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
+from pyvista.core.utilities import set_vtkwriter_mode
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -60,6 +61,7 @@ from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
+from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -2839,3 +2841,15 @@ def test_max_positional_args_matches_pyproject():
     expected_value = pyproject_data['tool']['ruff']['lint']['pylint']['max-positional-args']
 
     assert expected_value == _MAX_POSITIONAL_ARGS
+
+
+def test_save_compression():
+    writer = vtk.vtkXMLUnstructuredGridWriter()
+
+    for compressor in get_args(_CompressionOptions):
+        if compressor is None:
+            set_vtkwriter_mode(writer, use_binary=True, compression=None)
+            assert writer.GetCompressor() is None
+        else:
+            set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
+            assert compressor in str(type(writer.GetCompressor())).lower()

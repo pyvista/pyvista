@@ -51,7 +51,7 @@ jobs:
       SHELLOPTS: "errexit:pipefail"
       SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -67,7 +67,7 @@ jobs:
           python-version: "3.13"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         if: runner.environment != 'self-hosted'
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
@@ -138,7 +138,7 @@ jobs:
           name: doc-debug-images
           path: _doc_debug_images
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         with:
           repository: pyvista/pyvista-doc-translations
@@ -200,7 +200,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: docs-build
           path: .
@@ -226,7 +226,7 @@ jobs:
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: docs-build
           path: .
@@ -252,7 +252,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -261,7 +261,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install cookiecutter
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: pyvista-notebooks
           path: .

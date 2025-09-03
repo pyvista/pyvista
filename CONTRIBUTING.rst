@@ -700,9 +700,22 @@ Docstring Testing
 ~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --doctest-modules pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest -v --doctest-modules pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e doctest-modules
 
 .. note::
 
@@ -1509,7 +1522,7 @@ created the following will occur:
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest-modules
+       tox run -e doctest-modules
        make html -b linkcheck
 
 #.  After building the documentation, open the local build and examine

@@ -3113,7 +3113,6 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_notebook(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -3122,6 +3121,7 @@ def test_screenshot_notebook(tmpdir):
     pl.theme.jupyter_backend = 'static'
     pl.add_mesh(pv.Cone())
     pl.show(screenshot=filename)
+    pl.close()
 
     assert Path(filename).is_file()
 
