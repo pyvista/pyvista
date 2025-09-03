@@ -8,8 +8,6 @@ import vtk
 import pyvista as pv
 
 
-
-
 @pytest.mark.expect_check_gc_fail
 def test_leak_vtk() -> None:
     """Create a vtk leak with a simple self-reference."""
@@ -18,10 +16,10 @@ def test_leak_vtk() -> None:
 
 
 @pytest.mark.parametrize(
-    "decorator, expected_exit",
+    'decorator, expected_exit',
     [
-        ("@pytest.mark.expect_check_gc_fail", pytest.ExitCode.OK),
-        ("", pytest.ExitCode.TESTS_FAILED),
+        ('@pytest.mark.expect_check_gc_fail', pytest.ExitCode.OK),
+        ('', pytest.ExitCode.TESTS_FAILED),
     ],
 )
 def test_expect_check_gc_fail(
@@ -49,7 +47,6 @@ def test_expect_check_gc_fail(
     else:
         # Without the marker, the leak should trigger failure
         results.assert_outcomes(failed=1)
-
 
 
 @pytest.mark.expect_check_gc_fail
