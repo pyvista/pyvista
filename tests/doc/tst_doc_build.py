@@ -34,7 +34,9 @@ SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds
 XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
 assert XML_FILE.is_file()
 
-pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
+pytestmark = [
+    pytest.mark.filterwarnings(r'always:.*\n.*This test has multiple cached images.*:UserWarning')
+]
 
 
 class _TestCaseTuple(NamedTuple):
