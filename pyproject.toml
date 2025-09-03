@@ -236,6 +236,7 @@ filterwarnings = [
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
+  'always:(?s).*This test has multiple cached images.*:UserWarning',
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
 
