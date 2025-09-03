@@ -84,6 +84,13 @@ jobs:
           echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
           pip list
 
+      - name: Cache Sphinx-Gallery Examples
+        uses: actions/cache@v4
+        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
+        with:
+          path: doc/source/examples/
+          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+
       - name: Cache example data
         uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
