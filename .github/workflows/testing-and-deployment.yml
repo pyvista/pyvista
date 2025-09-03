@@ -213,11 +213,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core
+        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
 
       - name: Upload Images for Failed Tests
         if: always()
