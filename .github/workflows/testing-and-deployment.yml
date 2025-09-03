@@ -89,10 +89,10 @@ jobs:
           # Self-hosted runner configurations
           - name: MacOS Unit Testing (3.10)
             python-version: "3.10"
-            runner-labels: "macos-15"
+            runner-labels: "macos-15-self-hosted"
           - name: MacOS Unit Testing (3.11)
             python-version: "3.11"
-            runner-labels: "macos-15"
+            runner-labels: "macos-15-self-hosted"
           - name: MacOS Unit Testing (3.12)
             python-version: "3.12"
             runner-labels: "macos-15-self-hosted"
@@ -120,10 +120,6 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-      - name: Set PARALLEL when on GitHub
-        if: runner.environment != 'self-hosted'
-        run: echo "PARALLEL=-n4" >> $GITHUB_ENV
-
       - name: Restore example data cache
         uses: actions/cache/restore@v4
         with:
@@ -135,11 +131,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
+        run: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting -- ${{env.PARALLEL}}
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -217,11 +213,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
+        run: tox run -e ${{env.TOX_FACTOR}}-cov-core
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting -- ${{env.PARALLEL}} # zizmor: ignore[template-injection]
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -327,7 +323,7 @@ jobs:
   windows:
     name: Windows Unit Testing
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
@@ -366,7 +362,7 @@ jobs:
           timeout_minutes: 12
           max_attempts: 3
           retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-core -- ${{env.PARALLEL}}
+          command: tox run -e py${{ matrix.python-version }}-core
 
       - name: Core Testing (no GL)
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
@@ -375,7 +371,7 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-plotting -- ${{env.PARALLEL}}
+          command: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
