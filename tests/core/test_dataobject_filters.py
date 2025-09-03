@@ -62,7 +62,9 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
             clips = [clips]
 
         for clip in clips:
-            if isinstance(dataset, pv.PolyData):
+            if isinstance(dataset, pv.PointSet):
+                assert isinstance(clip, pv.PointSet)
+            elif isinstance(dataset, pv.PolyData):
                 assert isinstance(clip, pv.PolyData)
             elif isinstance(dataset, pv.MultiBlock):
                 assert isinstance(clip, pv.MultiBlock)
@@ -98,7 +100,7 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
-        dataset.clip(normal=normals[i], invert=True)
+        dataset.clip(normal=normals[i % len(normals)], invert=True)
 
 
 @pytest.mark.parametrize('dataset', [pv.PolyData(), pv.MultiBlock()])
@@ -162,7 +164,7 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
     for dataset in multiblock_all_with_nested_and_none:
         clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock))
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock, pv.PointSet))
         if isinstance(clp, pv.MultiBlock):
             assert all(
                 isinstance(block, pv.UnstructuredGrid)
@@ -238,9 +240,9 @@ def test_clip_box_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_filter(datasets):
+def test_slice_filter(datasets_no_pointset):
     """This tests the slice filter on all datatypes available filters"""
-    for i, dataset in enumerate(datasets):
+    for i, dataset in enumerate(datasets_no_pointset):
         slc = dataset.slice(normal=normals[i], progress_bar=True)
         assert slc is not None
         assert isinstance(slc, pv.PolyData)
@@ -258,9 +260,9 @@ def test_slice_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_orthogonal_filter(datasets):
+def test_slice_orthogonal_filter(datasets_no_pointset):
     """This tests the slice filter on all datatypes available filters"""
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         slices = dataset.slice_orthogonal(progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pv.MultiBlock)
@@ -269,17 +271,17 @@ def test_slice_orthogonal_filter(datasets):
             assert isinstance(slc, pv.PolyData)
 
 
-def test_slice_orthogonal_filter_composite(multiblock_all):
+def test_slice_orthogonal_filter_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.slice_orthogonal(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.slice_orthogonal(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
-def test_slice_along_axis(datasets):
+def test_slice_along_axis(datasets_no_pointset):
     """Test the many slices along axis filter"""
     axii = ['x', 'y', 'z', 'y', 0]
     ns = [2, 3, 4, 10, 20, 13]
-    for i, dataset in enumerate(datasets):
+    for i, dataset in enumerate(datasets_no_pointset):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i], progress_bar=True)
         assert slices is not None
         assert isinstance(slices, pv.MultiBlock)
@@ -291,19 +293,19 @@ def test_slice_along_axis(datasets):
         dataset.slice_along_axis(axis='u')
 
 
-def test_slice_along_axis_composite(multiblock_all):
+def test_slice_along_axis_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.slice_along_axis(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.slice_along_axis(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
-def test_extract_all_edges(datasets):
-    for dataset in datasets:
+def test_extract_all_edges(datasets_no_pointset):
+    for dataset in datasets_no_pointset:
         edges = dataset.extract_all_edges()
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
-    edges = datasets[0].extract_all_edges(use_all_points=True)
+    edges = datasets_no_pointset[0].extract_all_edges(use_all_points=True)
     assert edges.n_lines
 
 
@@ -366,8 +368,8 @@ def test_elevation_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_compute_cell_sizes(datasets):
-    for dataset in datasets:
+def test_compute_cell_sizes(datasets_no_pointset):
+    for dataset in datasets_no_pointset:
         result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True)
         assert result is not None
         assert isinstance(result, type(dataset))
@@ -639,15 +641,21 @@ def test_cell_quality_all_valid(ant):
     assert VOLUME not in qual.array_names
 
 
-def test_cell_quality_composite(multiblock_all_with_nested_and_none):
-    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+def test_cell_quality_composite(
+    multiblock_all_with_nested_and_none, multiblock_all_no_pointset_with_nested_and_none
+):
+    match = "could not be applied to the block at index 5 with name 'Block-05' and type PointSet"
+    with pytest.raises(RuntimeError, match=match):
+        qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+
+    qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
     for block in qual.recursive_iterator(skip_none=True):
         assert SHAPE in block.array_names
 
 
-def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
-    iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
-    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+def test_cell_quality_return_type(multiblock_all_no_pointset_with_nested_and_none):
+    iter_in = multiblock_all_no_pointset_with_nested_and_none.recursive_iterator()
+    qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
     iter_out = qual.recursive_iterator()
     for block_in, block_out in zip(iter_in, iter_out):
         assert type(block_in) is type(block_out)
@@ -662,7 +670,8 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     tf = pv.Transform().translate((dx, dy, dz))
     for dataset in datasets:
         for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
+            if not isinstance(dataset, pv.PointSet):
+                dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
             dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
@@ -702,8 +711,9 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     sx, sy, sz = -1.1, 2.2, 3.3
     tf = pv.Transform().scale((sx, sy, sz))
     for dataset in datasets:
-        for i in range(num_cell_arrays):
-            dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
+        if not isinstance(dataset, pv.PointSet):
+            for i in range(num_cell_arrays):
+                dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
         for i in range(num_point_data):
             dataset.point_data[f'P{i}'] = np.random.default_rng().random((dataset.n_points, 3))
@@ -723,19 +733,20 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         assert np.allclose(dataset.points[:, 1] * sy, transformed.points[:, 1])
         assert np.allclose(dataset.points[:, 2] * sz, transformed.points[:, 2])
 
-        for i in range(num_cell_arrays):
-            assert np.allclose(
-                dataset.cell_data[f'C{i}'][:, 0] * sx,
-                transformed.cell_data[f'C{i}'][:, 0],
-            )
-            assert np.allclose(
-                dataset.cell_data[f'C{i}'][:, 1] * sy,
-                transformed.cell_data[f'C{i}'][:, 1],
-            )
-            assert np.allclose(
-                dataset.cell_data[f'C{i}'][:, 2] * sz,
-                transformed.cell_data[f'C{i}'][:, 2],
-            )
+        if not isinstance(dataset, pv.PointSet):
+            for i in range(num_cell_arrays):
+                assert np.allclose(
+                    dataset.cell_data[f'C{i}'][:, 0] * sx,
+                    transformed.cell_data[f'C{i}'][:, 0],
+                )
+                assert np.allclose(
+                    dataset.cell_data[f'C{i}'][:, 1] * sy,
+                    transformed.cell_data[f'C{i}'][:, 1],
+                )
+                assert np.allclose(
+                    dataset.cell_data[f'C{i}'][:, 2] * sz,
+                    transformed.cell_data[f'C{i}'][:, 2],
+                )
 
         for i in range(num_point_data):
             assert np.allclose(
@@ -765,9 +776,9 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     ('num_cell_arrays', 'num_point_data'),
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
-def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+def test_transform_int_vectors_warning(datasets_no_pointset, num_cell_arrays, num_point_data):
     tf = pv.Transform().scale((1, 2, 3))
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().integers(
@@ -793,18 +804,21 @@ def test_transform_inplace(datasets):
         pdata_name = 'pdata'
         cdata_name = 'cdata'
         dataset[pdata_name] = pdata_array
-        dataset[cdata_name] = cdata_array
+        if not isinstance(dataset, pv.PointSet):
+            dataset[cdata_name] = cdata_array
 
         copied = dataset.copy()
         inplace = copied.transform(tf, inplace=True)
         assert inplace is copied
         assert np.shares_memory(inplace[pdata_name], copied[pdata_name])
-        assert np.shares_memory(inplace[cdata_name], copied[cdata_name])
+        if not isinstance(dataset, pv.PointSet):
+            assert np.shares_memory(inplace[cdata_name], copied[cdata_name])
 
         not_inplace = dataset.transform(tf, inplace=False)
         assert inplace == not_inplace
         assert not np.shares_memory(not_inplace[pdata_name], copied[pdata_name])
-        assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
+        if not isinstance(dataset, pv.PointSet):
+            assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
 
 
 def test_transform_rectilinear_warns(rectilinear):
@@ -915,10 +929,11 @@ def test_reflect_mesh_with_vectors(datasets):
             dataset.compute_normals(inplace=True, progress_bar=True)
 
         # add vector data to cell and point arrays
-        dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * np.array(
-            [1, 2, 3],
-            dtype=float,
-        ).reshape((1, 3))
+        if not isinstance(dataset, pv.PointSet):
+            dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * np.array(
+                [1, 2, 3],
+                dtype=float,
+            ).reshape((1, 3))
         dataset.point_data['P'] = np.arange(dataset.n_points)[:, np.newaxis] * np.array(
             [1, 2, 3],
             dtype=float,
@@ -957,8 +972,9 @@ def test_reflect_mesh_with_vectors(datasets):
             )
 
         # assert other vector fields are reflected
-        assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
-        assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
+        if not isinstance(dataset, pv.PointSet):
+            assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
+            assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
         assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
         assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
 

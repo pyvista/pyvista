@@ -190,7 +190,7 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def datasets_no_pointset():
     return [
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
@@ -198,6 +198,11 @@ def datasets():
         examples.load_airplane(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
+
+
+@pytest.fixture
+def datasets(datasets_no_pointset, pointset):
+    return [*datasets_no_pointset, pointset]
 
 
 @pytest.fixture
@@ -241,9 +246,24 @@ def pointset():
 
 
 @pytest.fixture
+def multiblock_all_no_pointset(datasets_no_pointset):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    return pyvista.MultiBlock(datasets_no_pointset)
+
+
+@pytest.fixture
 def multiblock_all(datasets):
     """Return datasets fixture combined in a pyvista multiblock."""
     return pyvista.MultiBlock(datasets)
+
+
+@pytest.fixture
+def multiblock_all_no_pointset_with_nested_and_none(
+    datasets_no_pointset, multiblock_all_no_pointset
+):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    multiblock_all_no_pointset.append(None)
+    return pyvista.MultiBlock([*datasets_no_pointset, None, multiblock_all_no_pointset])
 
 
 @pytest.fixture

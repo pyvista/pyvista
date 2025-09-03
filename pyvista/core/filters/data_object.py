@@ -2926,6 +2926,8 @@ class DataObjectFilters:
         progress_bar,
     ) -> _DataSetType:
         """Compute cell quality of a DataSet (internal method)."""
+        if isinstance(self, pyvista.PointSet):
+            raise pyvista.core.errors.PointSetCellOperationError
         CELL_QUALITY = 'CellQuality'
 
         alg = _vtk.vtkCellQuality()
@@ -3128,7 +3130,8 @@ class _Crinkler:
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
-            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
-                block.n_cells, dtype=_Crinkler.INT_DTYPE
-            )
+            if not isinstance(block, pyvista.PointSet):
+                block.cell_data[_Crinkler.CELL_IDS] = np.arange(
+                    block.n_cells, dtype=_Crinkler.INT_DTYPE
+                )
         return active_scalars_info
