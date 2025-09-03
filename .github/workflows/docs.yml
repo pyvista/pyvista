@@ -42,10 +42,8 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
     env:
-      PARALLEL: ${{ github.runner.environment == 'self-hosted' && '-j8' || '-j2' }}
+      PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
-      ENV: ${{ github.runner.environment }}
-      RUNNER: ${{ github.runner }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -55,6 +53,12 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
+
+      - name: Set environment for self-hosted
+        if: runner.environment == 'self-hosted'
+        run: |
+          echo "PARALLEL=-j8" >> $GITHUB_ENV
+          # echo "VTK_DEFAULT_EGL_DEVICE_INDEX=1" >> $GITHUB_ENV
 
       - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         if: runner.environment != 'self-hosted'
