@@ -300,6 +300,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
