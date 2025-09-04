@@ -459,7 +459,7 @@ it using the ``[]`` operator.
 
 .. jupyter-execute::
 
-   >>> simple_range = range(ugrid.n_cells)
+   >>> simple_range = np.arange(ugrid.n_cells, dtype=float)
    >>> ugrid.cell_data['my-data'] = simple_range
    >>> ugrid.cell_data['my-data']
 
@@ -471,7 +471,7 @@ inputs to C arrays. We can then plot this with:
    :context:
    :include-source: False
 
-   >>> ugrid.cell_data['my-data'] = range(ugrid.n_cells)
+   >>> ugrid.cell_data['my-data'] = np.arange(ugrid.n_cells, dtype=float)
 
 .. pyvista-plot::
    :context:
