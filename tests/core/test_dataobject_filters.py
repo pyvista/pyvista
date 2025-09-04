@@ -303,7 +303,14 @@ def test_extract_all_edges(datasets):
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
-    edges = datasets[0].extract_all_edges(use_all_points=True)
+    # Test that use_all_points parameter raises a deprecation warning
+    with pytest.warns(PyVistaDeprecationWarning, match="use_all_points.*deprecated"):
+        edges = datasets[0].extract_all_edges(use_all_points=True)
+    assert edges.n_lines
+
+    # Test that use_all_points=False also raises a deprecation warning
+    with pytest.warns(PyVistaDeprecationWarning, match="use_all_points.*deprecated"):
+        edges = datasets[0].extract_all_edges(use_all_points=False)
     assert edges.n_lines
 
 

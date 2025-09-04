@@ -2049,7 +2049,7 @@ class DataObjectFilters:
     @_deprecate_positional_args
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        use_all_points: bool = False,  # noqa: FBT001, FBT002
+        use_all_points: bool | None = None,
         clear_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -2059,16 +2059,10 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        use_all_points : bool, default: False
-            Indicates whether all of the points of the input mesh should exist
-            in the output. When ``True``, point numbering does not change and
-            a threaded approach is used, which avoids the use of a point locator
-            and is quicker.
-
-            By default this is set to ``False``, and unused points are omitted
-            from the output.
-
-            This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+        use_all_points : bool, optional
+            .. deprecated:: 0.44.0
+               Parameter ``use_all_points`` is deprecated since VTK < 9.2 is no
+               longer supported. This parameter has no effect and is always ``True``.
 
         clear_data : bool, default: False
             Clear any point, cell, or field data. This is useful
@@ -2096,17 +2090,22 @@ class DataObjectFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        import warnings
+
+        from pyvista.core.errors import PyVistaDeprecationWarning
+
+        if use_all_points is not None:
+            warnings.warn(
+                "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
+                "supported. This parameter has no effect and is always `True`.",
+                PyVistaDeprecationWarning,
+                stacklevel=2,
+            )
+
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
-        if use_all_points:
-            try:
-                alg.SetUseAllPoints(use_all_points)
-            except AttributeError:  # pragma: no cover
-                msg = (
-                    'This version of VTK does not support `use_all_points=True`. '
-                    'VTK v9.1 or newer is required.'
-                )
-                raise VTKVersionError(msg)
+        # Always use all points since VTK >= 9.2 is required
+        alg.SetUseAllPoints(True)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         with pyvista.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
