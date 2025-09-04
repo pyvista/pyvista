@@ -2097,7 +2097,7 @@ class DataObjectFilters:
         if use_all_points is not None:
             warnings.warn(
                 "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
-                "supported. This parameter has no effect and is always `True`.",
+                'supported. This parameter has no effect and is always `True`.',
                 PyVistaDeprecationWarning,
                 stacklevel=2,
             )
