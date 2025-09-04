@@ -565,6 +565,15 @@ def test_report():
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
     assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
+    assert 'User Data Path' not in report.__repr__()
+
+
+def test_report_downloads():
+    report = pv.Report(downloads=True)
+    repr_ = repr(report)
+    assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
+    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
 
 
 def test_line_segments_from_points():

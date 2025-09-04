@@ -677,7 +677,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     >>> mesh = pv.PolyData(examples.antfile)
 
-    Construct a set of random line segments using a ``pv.CellArray`.
+    Construct a set of random line segments using a ``pv.CellArray``.
     Because every line in this example has the same size, in this case
     two points, we can use ``pv.CellArray.from_regular_cells`` to
     construct the ``lines`` cell array. This is the most efficient
