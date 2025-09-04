@@ -2049,7 +2049,7 @@ class DataObjectFilters:
     @_deprecate_positional_args
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        use_all_points: bool | None = None,
+        use_all_points: bool | None = None,  # noqa: FBT001
         clear_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -2090,10 +2090,6 @@ class DataObjectFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
-        import warnings
-
-        from pyvista.core.errors import PyVistaDeprecationWarning
-
         if use_all_points is not None:
             warnings.warn(
                 "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
