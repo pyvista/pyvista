@@ -88,7 +88,7 @@ spline = pv.Spline(points, 1000)
 # Plot spline as a tube
 
 # add scalars to spline and plot it
-spline['scalars'] = np.arange(spline.n_points)
+spline['scalars'] = np.arange(spline.n_points, dtype=float)
 tube = spline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
