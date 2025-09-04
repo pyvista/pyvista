@@ -185,6 +185,14 @@ class Report(scooby.Report):
         experiencing rendering issues, pass ``False`` to safely generate a
         report.
 
+    downloads : bool, default: False
+        Gather information about downloads. If ``True``, includes:
+        - The local user data path (where downloads are saved)
+        - The VTK Data source (where files are downloaded from)
+        - Whether local file caching is enabled for the VTK Data source
+
+        .. versionadded:: 0.47
+
     Examples
     --------
     >>> import pyvista as pv
@@ -225,10 +233,11 @@ class Report(scooby.Report):
     def __init__(  # noqa: PLR0917
         self,
         additional=None,
-        ncol=3,
-        text_width=80,
-        sort=False,  # noqa: FBT002
-        gpu=True,  # noqa: FBT002
+        ncol: int = 3,
+        text_width: int = 80,
+        sort: bool = False,  # noqa: FBT001, FBT002
+        gpu: bool = True,  # noqa: FBT001, FBT002
+        downloads: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate a :class:`scooby.Report` instance."""
         from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
@@ -275,6 +284,15 @@ class Report(scooby.Report):
 
         extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
         extra_meta.append(('MathText Support', check_math_text_support()))
+        if downloads:
+            user_data_path, vtk_data_source, file_cache = _get_downloads_info()
+            extra_meta.extend(
+                [
+                    ('User Data Path', user_data_path),
+                    ('VTK Data Source', vtk_data_source),
+                    ('File Cache', file_cache),
+                ]
+            )
 
         scooby.Report.__init__(
             self,
@@ -286,3 +304,11 @@ class Report(scooby.Report):
             sort=sort,
             extra_meta=extra_meta,
         )
+
+
+def _get_downloads_info() -> tuple[str, str, bool]:
+    from pyvista.examples.downloads import _FILE_CACHE  # noqa: PLC0415
+    from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
+    from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+
+    return USER_DATA_PATH, SOURCE, _FILE_CACHE
