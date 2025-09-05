@@ -95,6 +95,9 @@ skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
+skip_lesser_9_4_X_depth_peeling = pytest.mark.needs_vtk_version(  # noqa: N816
+    9, 4, reason='Depth peeling unstable on CI before 9.4.X'
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -2075,6 +2078,7 @@ def test_plot_compare_four():
     )
 
 
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
     p = pv.Plotter()
@@ -3616,6 +3620,7 @@ def test_lookup_table_above_below_opacity():
 
 
 @skip_windows_mesa
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
@@ -3636,6 +3641,7 @@ def test_plot_nan_color(uniform):
     pl.show()
 
 
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_above_below_color(uniform):
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
