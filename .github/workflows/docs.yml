@@ -1,15 +1,8 @@
 name: Build Documentation
 
-# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
-  pull_request: # Uses cache
-  workflow_dispatch: # Able to not use cache by user demand
-    inputs:
-      cache:
-        description: "Use build cache"
-        required: false
-        default: "true"
-  # No cache enabled for `schedule` and `push`
+  pull_request:
+  workflow_dispatch:
   schedule:
     - cron: "0 0 1 * *" # once a month on main
   push:
@@ -22,18 +15,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  USE_CACHE: ${{
-    (
-    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
-    (github.event_name == 'pull_request') ||
-    (github.event_name == 'push')
-    ) &&
-    !startsWith(github.ref, 'refs/tags/v') &&
-    !startsWith(github.ref, 'refs/heads/release/') &&
-    !startsWith(github.ref, 'refs/heads/main')
-    }}
-
 permissions:
   id-token: none
 
@@ -44,7 +25,6 @@ jobs:
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
-      PYVISTA_USERDATA_PATH: ${{ github.workspace }}/.pyvista_examples
     steps:
       - uses: actions/checkout@v5
         with:
@@ -66,30 +46,6 @@ jobs:
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
-
-      - name: Create example data path
-        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
-
-      - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
-        with:
-          path: doc/source/examples/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
-        with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache Sphinx build directory
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
-        with:
-          path: doc/_build/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Install tox-uv
         run: pip install tox-uv
