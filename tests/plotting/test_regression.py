@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
-# pytestmark = pytest.mark.skip_plotting
+pytestmark = pytest.mark.skip_plotting
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])

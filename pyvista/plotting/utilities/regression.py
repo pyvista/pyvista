@@ -242,7 +242,7 @@ def compare_images(  # noqa: PLR0917
             if not isinstance(dataset, ImageData):
                 msg = (
                     f'The file {img} may not be an image. PyVista read it in as a '
-                    f'`type({dataset})`.'
+                    f'{type(dataset)!r}.'
                 )
                 raise TypeError(msg)
 
