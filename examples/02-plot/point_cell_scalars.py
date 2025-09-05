@@ -10,6 +10,14 @@ a dataset.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np
