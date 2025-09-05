@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting import Plotter
 
-    IMAGE_COMPARE_TYPE: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
+    ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
 
 def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
@@ -173,8 +173,8 @@ def image_from_window(  # noqa: PLR0917
 
 @_deprecate_positional_args(allowed=['im1', 'im2'])
 def compare_images(  # noqa: PLR0917
-    im1: IMAGE_COMPARE_TYPE,
-    im2: IMAGE_COMPARE_TYPE,
+    im1: ImageCompareType,
+    im2: ImageCompareType,
     threshold: int = 1,
     use_vtk: bool = True,  # noqa: FBT001, FBT002
 ) -> float:
@@ -232,7 +232,7 @@ def compare_images(  # noqa: PLR0917
     from pyvista import read  # noqa: PLC0415
     from pyvista import wrap  # noqa: PLC0415
 
-    def to_img(img: IMAGE_COMPARE_TYPE) -> pyvista.ImageData:
+    def to_img(img: ImageCompareType) -> pyvista.ImageData:
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):
