@@ -58,9 +58,8 @@ def _validate_jupyter_backend(
             import vtk  # noqa: F401, PLC0415
         except ImportError:  # pragma: no cover
             msg = (
-                'VTK-WASM backend requires VTK>=9.3 and trame-vtklocal. '
-                'Install: pip install --extra-index-url https://wheels.vtk.org '
-                '"vtk>=9.3" trame-vtklocal'
+                'VTK-WASM backend requires VTK>=9.4 and trame-vtklocal. Install with:'
+                '    pip install --extra-index-url vtk>=9.4 trame-vtklocal'
             )
             raise ImportError(msg)
 
@@ -102,7 +101,7 @@ def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
 
         * ``'vtk-wasm'`` : Use VTK WebAssembly for client-side rendering.
           This provides native VTK performance in the browser without
-          requiring a server connection. Requires ``vtk>=9.3`` and
+          requiring a server connection. Requires ``vtk>=9.4`` and
           ``trame-vtklocal`` to be installed.
 
         * ``'none'`` : Do not display any plots within jupyterlab,

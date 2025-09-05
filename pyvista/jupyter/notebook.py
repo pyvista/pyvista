@@ -72,9 +72,8 @@ def show_vtk_wasm(plotter: Plotter, **kwargs) -> IFrame:  # noqa: ARG001  # nump
         import vtk  # noqa: F401, PLC0415
     except ImportError as e:
         msg = (
-            'VTK-WASM backend requires VTK>=9.3 and trame-vtklocal. '
-            'Install: pip install --extra-index-url https://wheels.vtk.org '
-            '"vtk>=9.3" trame-vtklocal'
+                'VTK-WASM backend requires VTK>=9.4 and trame-vtklocal. Install with:'
+                '    pip install --extra-index-url vtk>=9.4 trame-vtklocal'
         )
         raise ImportError(msg) from e
 
