@@ -66,7 +66,7 @@ def numpy_to_idarr(
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
 @_deprecate_positional_args(allowed=['ind'])
 def numpy_to_idarr(
-    ind: int | ArrayLike[int],
+    ind: int | ArrayLike[int] | ArrayLike[bool],
     deep: bool = False,  # noqa: FBT001, FBT002
     return_ind: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
@@ -75,8 +75,8 @@ def numpy_to_idarr(
     Parameters
     ----------
     ind : sequence[int]
-        Input sequence to be converted to a :vtk:`vtkIdTypeArray`. Can be either a mask
-        or an integer array-like.
+        Input sequence to be converted to a :vtk:`vtkIdTypeArray`. Can be
+        either a mask or an integer array-like.
     deep : bool, default: False
         If ``True``, deep copy the input data. If ``False``, do not deep copy
         the input data.
@@ -101,7 +101,7 @@ def numpy_to_idarr(
     ind = np.asarray(ind)
 
     # np.asarray will eat anything, so we have to weed out bogus inputs
-    if not issubclass(ind.dtype.type, (np.bool_, np.integer)):
+    if not (np.issubdtype(ind.dtype, np.integer) or ind.dtype == np.bool_):
         msg = 'Indices must be either a mask or an integer array-like'
         raise TypeError(msg)
 

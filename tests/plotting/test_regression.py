@@ -11,6 +11,7 @@ from hypothesis import strategies as st
 import pytest
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.plotting.utilities import regression
 
 if TYPE_CHECKING:
@@ -77,6 +78,9 @@ def test_commpare_images_raises(mocker: MockerFixture):
 
     with pytest.raises(RuntimeError, match='Input images are not the same size.'):
         pv.compare_images(pv.ImageData(), pv.ImageData())
+
+    with pytest.raises(TypeError, match='may not be an image'):
+        pv.compare_images(pv.ImageData(), examples.antfile)
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):
