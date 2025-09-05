@@ -11,6 +11,7 @@ from hypothesis import strategies as st
 import pytest
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.plotting.utilities import regression
 
 if TYPE_CHECKING:
@@ -57,7 +58,7 @@ def test_wrap_image_array_raises_dtype(mocker: MockerFixture):
         pv.wrap_image_array(m)
 
 
-def test_compare_images_raises(mocker: MockerFixture, ant):
+def test_compare_images_raises(mocker: MockerFixture):
     @dataclass
     class Foo:
         n_calls: int = 0
@@ -83,7 +84,7 @@ def test_compare_images_raises(mocker: MockerFixture, ant):
         pv.compare_images(pv.ImageData(), pv.ImageData())
 
     with pytest.raises(TypeError, match='may not be an image'):
-        pv.compare_images(pv.ImageData(), ant)
+        pv.compare_images(pv.ImageData(), examples.antfile)
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):
