@@ -66,7 +66,7 @@ def numpy_to_idarr(
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
 @_deprecate_positional_args(allowed=['ind'])
 def numpy_to_idarr(
-    ind: int | ArrayLike[int] | ArrayLike[bool],
+    ind: int | ArrayLike[int],
     deep: bool = False,  # noqa: FBT001, FBT002
     return_ind: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
