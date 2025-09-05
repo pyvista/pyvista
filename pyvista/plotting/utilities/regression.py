@@ -183,8 +183,8 @@ def compare_images(  # noqa: PLR0917
     Parameters
     ----------
     im1 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
-        Render window, numpy array representing the output of a render
-        window, or :vtk:`vtkImageData`.
+        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        a render window, or :vtk:`vtkImageData`.
 
     im2 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
         Path, :class:`pyvista.Plotter`, numpy array representing the output of

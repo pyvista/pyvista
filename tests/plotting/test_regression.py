@@ -58,7 +58,7 @@ def test_wrap_image_array_raises_dtype(mocker: MockerFixture):
         pv.wrap_image_array(m)
 
 
-def test_commpare_images_raises(mocker: MockerFixture):
+def test_compare_images_raises(mocker: MockerFixture):
     @dataclass
     class Foo:
         n_calls: int = 0
@@ -71,7 +71,11 @@ def test_commpare_images_raises(mocker: MockerFixture):
     class Bar:
         n_calls: int
 
-        def GetDimensions(self):  # noqa: N802
+        def GetDimensions(self) -> int:  # noqa: N802
+            return self.n_calls
+
+        @property
+        def dimensions(self) -> int:
             return self.n_calls
 
     mocker.patch.object(regression, 'remove_alpha', new=Foo())
