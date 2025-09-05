@@ -32,6 +32,8 @@ from tests.conftest import flaky_test
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from pyvista.core.pointset import PolyData
+
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 
@@ -513,15 +515,14 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-@pytest.mark.parametrize('dataset', [examples.download_bunny()])
-def test_gaussian_splatting(dataset):
-    output = dataset.gaussian_splatting(progress_bar=True)
+def test_gaussian_splatting(sphere: PolyData):
+    output = sphere.gaussian_splatting(progress_bar=True)
     assert output is not None
     assert isinstance(output, pv.ImageData)
     assert output.dimensions == (50, 50, 50)
 
     dimensions = (10, 11, 12)
-    output = dataset.gaussian_splatting(dimensions=dimensions)
+    output = sphere.gaussian_splatting(dimensions=dimensions)
     assert output.dimensions == dimensions
 
 
