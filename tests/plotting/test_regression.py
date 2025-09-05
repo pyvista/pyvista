@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
-pytestmark = pytest.mark.skip_plotting
+# pytestmark = pytest.mark.skip_plotting
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
@@ -101,7 +101,7 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
     assert not pv.compare_images(arr1, pl2)
     assert not pv.compare_images(im1, pl2)
     assert not pv.compare_images(filename, pl2)
-    assert not pv.compare_images(arr1, pl2, use_vtk=True)
+    assert not pv.compare_images(arr1, pl2, use_vtk=False)
 
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.render_window)
@@ -141,3 +141,5 @@ def test_compare_images_two_plotter_different(sphere, airplane, tmpdir):
 
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.render_window)
+
+    assert pv.compare_images(im1, im2, use_vtk=False) > 50

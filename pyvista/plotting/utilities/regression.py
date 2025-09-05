@@ -233,9 +233,9 @@ def compare_images(  # noqa: PLR0917
     from pyvista import wrap  # noqa: PLC0415
 
     def to_img(img: ImageCompareType) -> pyvista.ImageData:
-        if isinstance(img, ImageData):  # pragma: no cover
+        if isinstance(img, ImageData):
             return img
-        elif isinstance(img, _vtk.vtkImageData):
+        elif isinstance(img, _vtk.vtkImageData):  # pragma: no cover
             return wrap(img)
         elif isinstance(img, (str, Path)):
             dataset = read(img)
@@ -281,10 +281,11 @@ def compare_images(  # noqa: PLR0917
         img_diff.Update()
         return img_diff.GetThresholdedError()
 
-    if im1_proc.active_scalars is None:
+    # unlikely but possible
+    if im1_proc.active_scalars is None:  # pragma: no cover
         msg = 'Missing active scalars in first image'
         raise RuntimeError(msg)
-    if im2_proc.active_scalars is None:
+    if im2_proc.active_scalars is None:  # pragma: no cover
         msg = 'Missing active scalars in second image'
         raise RuntimeError(msg)
 
