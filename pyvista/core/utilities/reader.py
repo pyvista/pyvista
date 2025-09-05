@@ -24,29 +24,19 @@ from pyvista.core import _vtk_core as _vtk
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
+from .misc import _NoNewAttrMixin
 from .misc import abstract_class
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-HDF_HELP = 'https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format'
+HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 
 
 def _lazy_vtk_instantiation(module_name, class_name):
     """Lazy import and instantiation of a class from vtkmodules."""
     module = importlib.import_module(f'vtkmodules.{module_name}')
     return getattr(module, class_name)()
-
-
-def lazy_vtkPOpenFOAMReader():
-    """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
-    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader  # noqa: PLC0415
-    from vtkmodules.vtkParallelCore import vtkDummyController  # noqa: PLC0415
-
-    # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
-    reader = vtkPOpenFOAMReader()
-    reader.SetController(vtkDummyController())
-    return reader
 
 
 def get_reader(filename, force_ext=None):
@@ -280,7 +270,7 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader:
+class BaseReader(_NoNewAttrMixin):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -444,7 +434,7 @@ class BaseReader:
         """Set defaults on reader post setting file, if needed."""
 
 
-class PointCellDataSelection:
+class PointCellDataSelection(_NoNewAttrMixin):
     """Mixin for readers that support data array selections.
 
     Examples
@@ -887,7 +877,10 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @property
     def number_time_points(self):  # noqa: D102
-        return self.reader.GetTimeSets().GetItem(self.active_time_set).GetSize()
+        item = self.reader.GetTimeSets().GetItem(self.active_time_set)
+        if item is None:
+            return 0
+        return item.GetSize()
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
@@ -1228,9 +1221,8 @@ class POpenFOAMReader(OpenFOAMReader):
     parallel reconstructed data, and decomposed data.
     """
 
-    _class_reader = staticmethod(lazy_vtkPOpenFOAMReader)
-    _vtk_module_name = ''
-    _vtk_class_name = ''
+    _vtk_module_name = 'vtkIOParallel'
+    _vtk_class_name = 'vtkPOpenFOAMReader'
 
     @property
     def case_type(self):
@@ -1542,10 +1534,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         # AddFileName supports reading multiple q files
         for q_filename in files:
-            if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-                self.reader.AddFileName(str(q_filename))
-            else:
-                self.reader.AddFileName(q_filename)
+            self.reader.AddFileName(q_filename)
 
     @property
     def auto_detect_format(self):
@@ -1963,7 +1952,7 @@ class BinaryMarchingCubesReader(BaseReader):
 
 
 @dataclass(order=True)
-class PVDDataSet:
+class PVDDataSet(_NoNewAttrMixin):
     """Class for storing dataset info from PVD file."""
 
     time: float
@@ -2604,13 +2593,6 @@ class HDFReader(BaseReader):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
-
-    def __init__(self, path):
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = f'{self.__class__.__name__} is only available for vtk>=9.1'
-            raise pyvista.VTKVersionError(msg)
-
-        super().__init__(path)
 
     @wraps(BaseReader.read)
     def read(self):  # type: ignore[override]
@@ -3511,7 +3493,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetTimeStep(time_point)
 
 
-class ExodusIIBlockSet:
+class ExodusIIBlockSet(_NoNewAttrMixin):
     """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):

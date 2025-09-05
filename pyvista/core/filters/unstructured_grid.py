@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from functools import wraps
+from typing import TYPE_CHECKING
+
+import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
@@ -12,6 +15,9 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
 
 
 @abstract_class
@@ -113,6 +119,11 @@ class UnstructuredGridFilters(DataSetFilters):
         UnstructuredGrid
             Cleaned unstructured grid.
 
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
+
         Examples
         --------
         Demonstrate cleaning an UnstructuredGrid and show how it can be used to
@@ -157,3 +168,79 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetAveragePointData(average_point_data)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg)
+
+    def remove_unused_points(  # type: ignore[misc]
+        self: _UnstructuredGridType,
+        *,
+        inplace: bool = False,
+    ) -> _UnstructuredGridType:
+        """Remove points which are not used by any cells.
+
+        Unlike :meth:`clean`, this filter does `not` merge points.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.remove_unused_points
+
+        Returns
+        -------
+        UnstructuredGrid
+            Mesh with unused points removed.
+
+        Examples
+        --------
+        Create :class:`~pyvista.UnstructuredGrid` with three points. The first two points are
+        coincident and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point
+        is "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> cells = [1, 0, 1, 1]
+        >>> celltypes = [pv.CellType.VERTEX, pv.CellType.VERTEX]
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
+        >>> grid
+        UnstructuredGrid (...)
+          N Cells:    2
+          N Points:   3
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> grid = grid.remove_unused_points()
+        >>> grid
+        UnstructuredGrid (...)
+          N Cells:    2
+          N Points:   2
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
+        """
+        if self.is_empty:
+            return self if inplace else self.copy()
+
+        out = self.copy()
+
+        # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
+        cell_array = out.GetCells()
+        cell_array.InsertNextCell(1)
+
+        # Extract all the cells, except for the dummy cell
+        out = out.extract_cells(np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False)
+
+        if inplace:
+            self.copy_from(out)
+            return self
+        return out

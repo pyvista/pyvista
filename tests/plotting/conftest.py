@@ -6,8 +6,10 @@ from __future__ import annotations
 
 import gc
 import inspect
+import platform
 
 import pytest
+from vtk import vtkObjectBase
 
 import pyvista as pv
 from pyvista.plotting import system_supports_plotting
@@ -15,6 +17,7 @@ from pyvista.plotting import system_supports_plotting
 # these are set here because we only need them for plotting tests
 pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
+APPLE_SILICON = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 # Configure skip_plotting marker
@@ -31,11 +34,20 @@ def pytest_runtest_setup(item):
         pytest.skip('Test requires system to support plotting')
 
 
-def _is_vtk(obj):
-    try:
-        return obj.__class__.__name__.startswith('vtk')
-    except Exception:  # old Python sometimes no __class__.__name__
-        return False
+if APPLE_SILICON:
+
+    @pytest.fixture(autouse=True)
+    def macos_memory_leak(request):  # noqa: ARG001
+        # Without this, only 500 render windows can be created in a single Python
+        # process on MacOS using Apple silicon
+        # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+        from Foundation import NSAutoreleasePool  # for macOS
+
+        pool = NSAutoreleasePool.alloc().init()
+        yield
+
+        # pool goes out of scope and resources get collected
+        del pool
 
 
 @pytest.fixture(autouse=True)
@@ -45,15 +57,40 @@ def check_gc(request):
         yield
         return
 
+    # Get all VTK objects before calling the test
     gc.collect()
-    before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
+    before = set()
+    for obj in gc.get_objects():
+        # Micro-optimized for performance as this is called millions of times
+        try:
+            if isinstance(obj, vtkObjectBase) and obj.__class__.__name__.startswith('vtk'):
+                before.add(id(obj))
+        except ReferenceError:
+            pass
 
     yield
 
     pv.close_all()
 
+    # Skip GC check if test failed
+    if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
+        return
+
+    # get all vtk objects after the test
     gc.collect()
-    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    after = []
+    for obj in gc.get_objects():
+        # Micro-optimized for performance as this is called millions of times
+        try:
+            if (
+                isinstance(obj, vtkObjectBase)
+                and obj.__class__.__name__.startswith('vtk')
+                and id(obj) not in before
+            ):
+                after.append(obj)
+        except ReferenceError:
+            pass
+
     msg = 'Not all objects GCed:\n'
     for obj in after:
         cn = obj.__class__.__name__
@@ -79,6 +116,11 @@ def check_gc(request):
             del ri, referrer
         msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
         del cn, referrers
+
+    if request.node.get_closest_marker('expect_check_gc_fail'):
+        assert after
+        return
+
     assert len(after) == 0, msg
 
 

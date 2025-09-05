@@ -18,7 +18,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from pyvista import MultiBlock
     from pyvista.core.composite import _TypeMultiBlockLeaf
@@ -126,11 +126,8 @@ class CompositeFilters(DataObjectFilters):
         ...     # Center the dataset
         ...     dataset = dataset.translate(-np.array(dataset.center))
         ...     # Scale the dataset
-        ...     bounds = dataset.bounds
-        ...     x_scale = 1 / (bounds.x_max - bounds.x_min)
-        ...     y_scale = 1 / (bounds.y_max - bounds.y_min)
-        ...     z_scale = 1 / (bounds.z_max - bounds.z_min)
-        ...     return dataset.scale((x_scale, y_scale, z_scale))
+        ...     factor = 1 / np.array(dataset.bounds_size)
+        ...     return dataset.scale(factor)
 
         >>> filtered = multi.generic_filter(normalize_bounds)
         >>> filtered

@@ -17,7 +17,6 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -36,6 +35,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import _PolyDataType
 
 
 @abstract_class
@@ -2246,6 +2246,11 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Cleaned mesh.
 
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
+
         Examples
         --------
         Create a mesh with a degenerate face and then clean it,
@@ -2511,7 +2516,7 @@ class PolyDataFilters(DataSetFilters):
         """
         points = _vtk.vtkPoints()
         cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
+        self.obbTree.IntersectWithLine(list(origin), list(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
@@ -2920,7 +2925,7 @@ class PolyDataFilters(DataSetFilters):
             for key in self.cell_data:  # type: ignore[attr-defined]
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
-                except:
+                except (ValueError, TypeError, KeyError):  # pragma: no cover
                     warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
@@ -3642,7 +3647,6 @@ class PolyDataFilters(DataSetFilters):
 
         rotation_axis : numpy.ndarray or sequence, optional
             The direction vector of the axis around which the rotation is done.
-            It requires vtk>=9.1.0.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3720,14 +3724,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        if pyvista.vtk_version_info >= (9, 1, 0):
-            alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
-        elif rotation_axis != (0, 0, 1):
-            msg = (
-                'The installed version of VTK does not support '
-                'setting the direction vector of the axis around which the rotation is done.'
-            )
-            raise VTKVersionError(msg)
+        alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
         output = wrap(alg.GetOutput())
@@ -4517,3 +4514,69 @@ class PolyDataFilters(DataSetFilters):
             alg.SetResolution(resolution)  # type: ignore[arg-type]
         _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
         return _get_output(alg)
+
+    def remove_unused_points(  # type: ignore[misc]
+        self: _PolyDataType,
+        *,
+        inplace: bool = False,
+    ) -> _PolyDataType:
+        """Remove points which are not used by any cells.
+
+        This filter is similar to :meth:`clean` but does `not` merge points or convert cells.
+        The point order is also unchanged by this filter.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.UnstructuredGridFilters.remove_unused_points
+
+        Returns
+        -------
+        PolyData
+            Mesh with unused points removed.
+
+        Examples
+        --------
+        Create :class:`~pyvista.PolyData` with three points. The first two points are coincident
+        and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point is
+        "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> faces = [1, 0, 1, 1]
+        >>> poly = pv.PolyData(points, faces)
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   3
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> poly = poly.remove_unused_points()
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   2
+          N Strips:   0
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
+        """
+        removed = self.cast_to_unstructured_grid().remove_unused_points().extract_geometry()
+        out = self if inplace else type(self)()
+        out.copy_from(removed, deep=not inplace)
+        return out

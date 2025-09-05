@@ -18,6 +18,7 @@ from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
@@ -29,7 +30,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-class Timer:
+class Timer(_NoNewAttrMixin):
     """Timer class.
 
     Parameters
@@ -63,7 +64,7 @@ class Timer:
             iren.DestroyTimer(self.id)
 
 
-class RenderWindowInteractor:
+class RenderWindowInteractor(_NoNewAttrMixin):
     """Wrap :vtk:`vtkRenderWindowInteractor`.
 
     This class has been added for the purpose of making some methods
@@ -106,11 +107,13 @@ class RenderWindowInteractor:
 
         # Map of observers to events
         self._observers = {}
+        self._last_key: str | None = None
         self._key_press_event_callbacks = defaultdict(list)
         self._click_event_callbacks = {  # type: ignore[var-annotated]
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ('LeftButtonPressEvent', 'RightButtonPressEvent')
         }
+        self._timer = None
         self._timer_event = None
         self._click_time = 0
         self._MAX_CLICK_DELAY = 0.8  # seconds
@@ -118,7 +121,9 @@ class RenderWindowInteractor:
 
         # Set default style
         self._style_class: _vtk.vtkInteractorStyle | None = None
-        self._style: Literal['Interactor', 'Context'] = 'Interactor'
+        self._style: Literal['Interactor', 'Context'] | None = 'Interactor'
+        self._prev_style_class: _vtk.vtkInteractorStyle | None = self._style_class
+        self._prev_style: Literal['Interactor', 'Context'] | None = self._style
         self.style = InteractorStyleRubberBandPick(self)
         self.__plotter = weakref.ref(plotter)
 
@@ -576,8 +581,8 @@ class RenderWindowInteractor:
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
-            self._style = self._prev_style  # type: ignore[has-type]
-            self.style = self._prev_style_class  # type: ignore[has-type]
+            self._style = self._prev_style
+            self.style = self._prev_style_class
             self._prev_style = None
             self._prev_style_class = None
         elif scene is not None and self._style != 'Context':
@@ -1563,13 +1568,7 @@ class RenderWindowInteractor:
     def terminate_app(self):
         """Terminate the app."""
         if self.initialized:
-            # #################################################################
-            # 9.0.2+ compatibility:
-            # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
-            if hasattr(self.interactor, 'GetDone'):
-                self.interactor.SetDone(True)
-            # #################################################################
-
+            self.interactor.SetDone(True)  # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
             self.interactor.TerminateApp()
 
     def close(self):
@@ -1592,7 +1591,7 @@ class RenderWindowInteractor:
 
 
 @abstract_class
-class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
+class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
     """A mixin for subclasses of vtkInteractorStyle with capturing ability.
 
     Use a custom capturing events because the default ones

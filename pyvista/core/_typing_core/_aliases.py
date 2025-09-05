@@ -84,7 +84,9 @@ class BoundsTuple(NamedTuple):
     def __repr__(self) -> str:
         # Split bounds at decimal and compute padding needed to the left of it
         dot = '.'
-        split_strings = [str(float(val)).split(dot) for val in self]
+        strings = [str(float(val)) for val in self]
+        has_dot = [dot in s for s in strings]
+        split_strings = [s.split(dot) for s in strings]
         pad_left = max(len(parts[0]) for parts in split_strings)
 
         # Iterate through fields and align values at the decimal
@@ -95,8 +97,12 @@ class BoundsTuple(NamedTuple):
         whitespace = (len(name) + 1) * ' '
         for i, items in enumerate(zip(fields, split_strings)):
             field, parts = items
-            left, right = parts
-            aligned = f'{left:>{pad_left}}{dot}{right}'
+            if has_dot[i]:
+                left, right = parts
+                aligned = f'{left:>{pad_left}}{dot}{right}'
+            else:
+                left = parts[0]
+                aligned = f'{left:>{pad_left}}'
             spacing = '' if i == 0 else whitespace
             comma = '' if i == len(fields) - 1 else ','
             lines.append(f'{spacing}{field:<{field_size}} = {aligned}{comma}')

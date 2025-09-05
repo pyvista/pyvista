@@ -25,7 +25,6 @@ from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
-from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
@@ -39,6 +38,7 @@ from .utilities.arrays import get_array_association
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -96,7 +96,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     name: str
 
 
-class ActiveArrayInfo:
+class ActiveArrayInfo(_NoNewAttrMixin):
     """Active array info class with support for pickling.
 
     .. deprecated:: 0.45
@@ -197,6 +197,9 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+
+        # Used by glyph filter and plotter legend
+        self._glyph_geom: Sequence[_vtk.vtkDataSet] | None = None
 
     def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -1458,7 +1461,7 @@ class DataSet(DataSetFilters, DataObject):
     def __getitem__(
         self: Self,
         index: tuple[str, Literal['cell', 'point', 'field']] | str,
-    ) -> NumpyArray[float]:
+    ) -> pyvista_ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, tuple):
             name, preference = index
@@ -2188,10 +2191,6 @@ class DataSet(DataSetFilters, DataObject):
         array([  86, 1653])
 
         """
-        if pyvista.vtk_version_info < (9, 2, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.2.0'
-            raise VTKVersionError(msg)
-
         if np.array(pointa).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)

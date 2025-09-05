@@ -27,9 +27,13 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _reciprocal
+from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Sequence
+    from typing import ClassVar
 
     from pyvista import DataSet
     from pyvista import MultiBlock
@@ -44,6 +48,7 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
 
 
+@abstract_class
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 
@@ -810,6 +815,9 @@ class DataObjectFilters:
         pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
 
+        pyvista.DataObjectFilters.resize
+            Resize a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -838,6 +846,162 @@ class DataObjectFilters:
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
+        )
+
+    def resize(  # type: ignore[misc]
+        self: _MeshType_co,
+        *,
+        bounds: VectorLike[float] | None = None,
+        bounds_size: float | VectorLike[float] | None = None,
+        center: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ) -> _MeshType_co:
+        """Resize the dataset's bounds.
+
+        This filter rescales and translates the mesh to fit specified bounds. This is useful for
+        normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
+
+        Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
+        ``bounds_size`` and ``center`` to implicitly set the new bounds.
+
+        .. versionadded:: 0.46
+
+        See Also
+        --------
+        :meth:`scale`, :meth:`translate`
+            Scale and/or translate a mesh. Used internally by :meth:`resize`.
+
+        Parameters
+        ----------
+        bounds : VectorLike[float], optional
+            Target :attr:`~pyvista.DataSet.bounds` for the resized dataset in the format
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``. If provided, the dataset is scaled and
+            translated to fit exactly within these bounds. Cannot be used together with
+            ``bounds_size`` or ``center``.
+
+        bounds_size : float | VectorLike[float], optional
+            Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
+            single float to specify the size of all three axes, or a 3-element vector to set the
+            size of each axis independently. Cannot be used together with ``bounds``.
+
+        center : VectorLike[float], optional
+            Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            If True, the dataset is modified in place. If False, a new dataset is returned.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Resized dataset. Return type matches input.
+
+        Examples
+        --------
+        Load a mesh with asymmetric bounds and show them.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube(
+        ...     x_length=1.0, y_length=2.0, z_length=3.0, center=(1.0, 2.0, 3.0)
+        ... )
+        >>> mesh.bounds
+        BoundsTuple(x_min = 0.5,
+                    x_max = 1.5,
+                    y_min = 1.0,
+                    y_max = 3.0,
+                    z_min = 1.5,
+                    z_max = 4.5)
+
+        Resize it to fit specific bounds.
+
+        >>> resized = mesh.resize(bounds=[-1, 2, -3, 4, -5, 6])
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  2.0,
+                    y_min = -3.0,
+                    y_max =  4.0,
+                    z_min = -5.0,
+                    z_max =  6.0)
+
+        Resize the mesh so its size is ``4.0``.
+
+        >>> resized = mesh.resize(bounds_size=4.0)
+        >>> resized.bounds_size
+        (4.0, 4.0, 4.0)
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  3.0,
+                    y_min =  0.0,
+                    y_max =  4.0,
+                    z_min =  1.0,
+                    z_max =  5.0)
+
+        Specify a different size for each axis and set the desired center.
+
+        >>> resized = mesh.resize(bounds_size=(2.0, 1.0, 0.5), center=(1.0, 0.5, 0.25))
+        >>> resized.bounds_size
+        (2.0, 1.0, 0.5)
+        >>> resized.center
+        (1.0, 0.5, 0.25)
+
+        Center the mesh at the origin and normalize its bounds to ``1.0``.
+
+        >>> resized = mesh.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
+
+        """
+        if bounds is not None:
+            if bounds_size is not None:
+                msg = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
+                raise ValueError(msg)
+            if center is not None:
+                msg = (
+                    "Cannot specify both 'bounds' and 'center'. 'center' can only be used with "
+                    "the 'bounds_size' parameter."
+                )
+                raise ValueError(msg)
+
+            target_bounds3x2 = _validation.validate_array(
+                bounds, must_have_shape=6, reshape_to=(3, 2), name='bounds'
+            )
+            target_size = np.diff(target_bounds3x2.T, axis=0)[0]
+            current_center = np.array(self.center)
+            target_center = np.mean(target_bounds3x2, axis=1)
+
+        else:
+            if bounds_size is None:
+                msg = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
+                raise ValueError(msg)
+
+            target_size = bounds_size
+            current_center = np.array(self.center)
+            target_center = (
+                current_center
+                if center is None
+                else _validation.validate_array3(center, name='center')
+            )
+
+        current_size = self.bounds_size
+        scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        # Apply transformation
+        transform = pyvista.Transform()
+        transform.translate(-current_center)
+        transform.scale(scale_factors)
+        transform.translate(target_center)
+        return self.transform(
+            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
     @_deprecate_positional_args
@@ -1104,91 +1268,7 @@ class DataObjectFilters:
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
-            CELL_IDS_KEY = 'cell_ids'
-            VTK_POINT_IDS_KEYS = 'vtkOriginalPointIds'
-            VTK_CELL_IDS_KEYS = 'vtkOriginalCellIds'
-            INT_DTYPE = np.int64
-            ITER_KWARGS = dict(skip_none=True)
-
-            def extract_cells(dataset, ids, active_scalars_info_):
-                # Extract cells and remove arrays, and restore active scalars
-                output = dataset.extract_cells(ids)
-                if VTK_POINT_IDS_KEYS in (point_data := output.point_data):
-                    del point_data[VTK_POINT_IDS_KEYS]
-                if VTK_CELL_IDS_KEYS in (cell_data := output.cell_data):
-                    del cell_data[VTK_CELL_IDS_KEYS]
-                association, name = active_scalars_info_
-                dataset.set_active_scalars(name, preference=association)
-                output.set_active_scalars(name, preference=association)
-                return output
-
-            def extract_crinkle_cells(dataset, a_, b_, _):
-                if b_ is None:
-                    # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
-                        return extract_cells(
-                            block_,
-                            np.unique(clipped_a.cell_data[CELL_IDS_KEY]),
-                            active_scalars_info_,
-                        )
-                else:
-                    # Extract cells when `return_clipped=True`
-                    def extract_cells_from_block(  # noqa: PLR0917
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
-                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
-                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
-
-                        # Need to cast as int dtype explicitly to ensure empty arrays have
-                        # the right type required by extract_cells
-                        array_a = np.array(list(set_a), dtype=INT_DTYPE)
-                        array_b = np.array(list(set_b), dtype=INT_DTYPE)
-
-                        clipped_a = extract_cells(block_, array_a, active_scalars_info_)
-                        clipped_b = extract_cells(block_, array_b, active_scalars_info_)
-                        return clipped_a, clipped_b
-
-                def extract_cells_from_multiblock(  # noqa: PLR0917
-                    multi_in, multi_a, multi_b, active_scalars_info_
-                ):
-                    # Iterate though input and output multiblocks
-                    # `multi_b` may be None depending on `return_clipped`
-                    self_iter = multi_in.recursive_iterator('all', **ITER_KWARGS)
-                    a_iter = multi_a.recursive_iterator(**ITER_KWARGS)
-                    b_iter = (
-                        multi_b.recursive_iterator(**ITER_KWARGS)
-                        if multi_b is not None
-                        else itertools.repeat(None)
-                    )
-
-                    for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                        self_iter, a_iter, b_iter, active_scalars_info_
-                    ):
-                        crinkled = extract_cells_from_block(
-                            block_self, block_a, block_b, scalars_info
-                        )
-                        # Replace blocks with crinkled ones
-                        if block_b is None:
-                            # Only need to replace one block
-                            multi_a.replace(ids, crinkled)
-                        else:
-                            multi_a.replace(ids, crinkled[0])
-                            multi_b.replace(ids, crinkled[1])
-                    return multi_a if multi_b is None else (multi_a, multi_b)
-
-                if isinstance(dataset, pyvista.MultiBlock):
-                    return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
-                return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
-
-            # Add Cell IDs to all blocks and keep track of scalars to restore later
-            active_scalars_info = []
-            if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
-            else:
-                blocks = [self]
-            for block in blocks:
-                active_scalars_info.append(block.active_scalars_info)
-                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
+            active_scalars_info = _Crinkler.add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -1220,11 +1300,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler.extract_crinkle_cells(self, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
@@ -1278,9 +1358,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData | tuple[pyvista.PolyData]
-            Clipped mesh when ``return_clipped=False``,
-            otherwise a tuple containing the unclipped and clipped datasets.
+        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing the
+            unclipped and clipped meshes. Output mesh type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1318,6 +1401,21 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+
+        # Post-process clip to fix output type and remove unused points
+        input_bounds = self.bounds
+        if isinstance(result, tuple):
+            result = (
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
+            result = (
+                _remove_unused_points_post_clip(result[0], input_bounds),
+                _remove_unused_points_post_clip(result[1], input_bounds),
+            )
+        else:
+            result = _cast_output_to_match_input_type(result, self)
+            result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1433,7 +1531,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            active_scalars_info = _Crinkler.add_cell_ids(self)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -1448,8 +1546,8 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        return clipped
+            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
+        return _remove_unused_points_post_clip(clipped, self.bounds)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
@@ -1483,6 +1581,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
@@ -1553,6 +1659,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the surface of a sphere.
@@ -1620,6 +1734,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
@@ -1741,6 +1863,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the random hills dataset in the X direction.
@@ -1853,6 +1983,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the random hills dataset along a circular arc.
@@ -1911,7 +2049,7 @@ class DataObjectFilters:
     @_deprecate_positional_args
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        use_all_points: bool = False,  # noqa: FBT001, FBT002
+        use_all_points: bool | None = None,  # noqa: FBT001
         clear_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -1921,16 +2059,10 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        use_all_points : bool, default: False
-            Indicates whether all of the points of the input mesh should exist
-            in the output. When ``True``, point numbering does not change and
-            a threaded approach is used, which avoids the use of a point locator
-            and is quicker.
-
-            By default this is set to ``False``, and unused points are omitted
-            from the output.
-
-            This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+        use_all_points : bool, optional
+            .. deprecated:: 0.44.0
+               Parameter ``use_all_points`` is deprecated since VTK < 9.2 is no
+               longer supported. This parameter has no effect and is always ``True``.
 
         clear_data : bool, default: False
             Clear any point, cell, or field data. This is useful
@@ -1958,17 +2090,18 @@ class DataObjectFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        if use_all_points is not None:
+            warnings.warn(
+                "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
+                'supported. This parameter has no effect and is always `True`.',
+                PyVistaDeprecationWarning,
+                stacklevel=2,
+            )
+
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
-        if use_all_points:
-            try:
-                alg.SetUseAllPoints(use_all_points)
-            except AttributeError:  # pragma: no cover
-                msg = (
-                    'This version of VTK does not support `use_all_points=True`. '
-                    'VTK v9.1 or newer is required.'
-                )
-                raise VTKVersionError(msg)
+        # Always use all points since VTK >= 9.2 is required
+        alg.SetUseAllPoints(True)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         with pyvista.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
@@ -2670,7 +2803,7 @@ class DataObjectFilters:
 
         .. note::
 
-            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            Refer to the `Verdict Library Reference Manual <https://github.com/sandialabs/verdict/raw/master/SAND2007-2853p.pdf>`_
             for low-level technical information about how each metric is computed.
 
         .. versionadded:: 0.45
@@ -2845,3 +2978,152 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _remove_unused_points_post_clip(clip_output, input_bounds):
+    # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
+    # https://github.com/pyvista/pyvista/issues/6511
+    # https://github.com/pyvista/pyvista/issues/7738
+
+    def maybe_remove_unused_points(mesh: DataSet):
+        # Unused points are correctly removed sometimes, so for performance we only
+        # remove points when the clipped bounds match input bounds
+        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+            return mesh.remove_unused_points()
+        return mesh
+
+    return (
+        clip_output.generic_filter(maybe_remove_unused_points)
+        if isinstance(clip_output, pyvista.MultiBlock)
+        else maybe_remove_unused_points(clip_output)
+    )
+
+
+def _cast_output_to_match_input_type(
+    output_mesh: DataSet | MultiBlock, input_mesh: DataSet | MultiBlock
+):
+    # Ensure output type matches input type
+
+    def cast_output(mesh_out: DataSet, mesh_in: DataSet):
+        if isinstance(mesh_in, pyvista.PolyData) and not isinstance(mesh_out, pyvista.PolyData):
+            return mesh_out.extract_geometry()
+        elif isinstance(mesh_in, pyvista.PointSet) and not isinstance(mesh_out, pyvista.PointSet):
+            return mesh_out.cast_to_pointset()
+        return mesh_out
+
+    def cast_output_blocks(mesh_out: MultiBlock, mesh_in: MultiBlock):
+        # Replace all blocks in the output mesh with cast versions that match the input
+        for (ids, _, block_out), block_in in zip(
+            mesh_out.recursive_iterator('all', skip_none=True),
+            mesh_in.recursive_iterator(skip_none=True),
+        ):
+            mesh_out.replace(ids, cast_output(block_out, block_in))
+        return mesh_out
+
+    return (
+        cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
+        if isinstance(output_mesh, pyvista.MultiBlock)
+        else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
+    )
+
+
+class _Crinkler:
+    CELL_IDS = 'cell_ids'
+    INT_DTYPE = np.int64
+    ITER_KWARGS: ClassVar = dict(skip_none=True)
+
+    @staticmethod
+    def extract_cells(dataset, ids, active_scalars_info_):
+        # Extract cells and remove arrays, and restore active scalars
+        output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
+        association, name = active_scalars_info_
+        if not dataset.is_empty:
+            dataset.set_active_scalars(name, preference=association)
+        if not output.is_empty:
+            output.set_active_scalars(name, preference=association)
+        return output
+
+    @staticmethod
+    def extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+        if b_ is None:
+            # Extract cells when `return_clipped=False`
+            def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
+                if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
+                    return _Crinkler.extract_cells(
+                        block_,
+                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
+                        active_scalars_info_,
+                    )
+                return clipped_a
+        else:
+            # Extract cells when `return_clipped=True`
+            def extract_cells_from_block(  # noqa: PLR0917
+                block_, clipped_a, clipped_b, active_scalars_info_
+            ):
+                set_a = (
+                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
+                    else set()
+                )
+                set_b = (
+                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
+                    else set()
+                )
+                set_b = set_b - set_a
+
+                # Need to cast as int dtype explicitly to ensure empty arrays have
+                # the right type required by extract_cells
+                array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
+                array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
+
+                clipped_a = _Crinkler.extract_cells(block_, array_a, active_scalars_info_)
+                clipped_b = _Crinkler.extract_cells(block_, array_b, active_scalars_info_)
+                return clipped_a, clipped_b
+
+        def extract_cells_from_multiblock(  # noqa: PLR0917
+            multi_in, multi_a, multi_b, active_scalars_info_
+        ):
+            # Iterate though input and output multiblocks
+            # `multi_b` may be None depending on `return_clipped`
+            self_iter = multi_in.recursive_iterator('all', **_Crinkler.ITER_KWARGS)
+            a_iter = multi_a.recursive_iterator(**_Crinkler.ITER_KWARGS)
+            b_iter = (
+                multi_b.recursive_iterator(**_Crinkler.ITER_KWARGS)
+                if multi_b is not None
+                else itertools.repeat(None)
+            )
+
+            for (ids, _, block_self), block_a, block_b, scalars_info in zip(
+                self_iter, a_iter, b_iter, active_scalars_info_
+            ):
+                crinkled = extract_cells_from_block(block_self, block_a, block_b, scalars_info)
+                # Replace blocks with crinkled ones
+                if block_b is None:
+                    # Only need to replace one block
+                    multi_a.replace(ids, crinkled)
+                else:
+                    multi_a.replace(ids, crinkled[0])
+                    multi_b.replace(ids, crinkled[1])
+            return multi_a if multi_b is None else (multi_a, multi_b)
+
+        if isinstance(dataset, pyvista.MultiBlock):
+            return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
+        return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
+
+    @staticmethod
+    def add_cell_ids(dataset: DataSet | MultiBlock):
+        # Add Cell IDs to all blocks and keep track of scalars to restore later
+        active_scalars_info = []
+        if isinstance(dataset, pyvista.MultiBlock):
+            blocks: Iterable[DataSet] = dataset.recursive_iterator(
+                'blocks', **_Crinkler.ITER_KWARGS
+            )
+        else:
+            blocks = [dataset]
+        for block in blocks:
+            active_scalars_info.append(block.active_scalars_info)
+            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
+                block.n_cells, dtype=_Crinkler.INT_DTYPE
+            )
+        return active_scalars_info

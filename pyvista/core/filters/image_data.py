@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -220,6 +220,174 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
+    def slice_index(  # type: ignore[misc]
+        self: ImageData,
+        i: int | VectorLike[int] | slice | None = None,
+        j: int | VectorLike[int] | slice | None = None,
+        k: int | VectorLike[int] | slice | None = None,
+        *,
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        strict_index: bool = False,
+        rebase_coordinates: bool = False,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Extract a subset using IJK indices.
+
+        This filter enables slicing :class:`~pyvista.ImageData` with Python-style indexing using
+        IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
+        a volume of interest. Unlike other slicing filters, this filter returns
+        :class:`~pyvista.ImageData`.
+
+        .. note::
+            Slicing by index is also possible using the "get index" operator ``[]``. See examples.
+
+        .. versionadded::0.46
+
+        Parameters
+        ----------
+        i, j, k : int | VectorLike[int] | slice, optional
+            Indices to slice along the I, J, and K coordinate axes, respectively. Specify an
+            integer for a single index, or two integers ``[start, stop)`` for a range of indices.
+
+            .. note::
+
+                Like regular Python slicing:
+
+                - Half-open intervals are used, i.e. the ``start`` index is included in the range
+                  but the ``stop`` index is not.
+                - Negative indexing is supported.
+                - An ``IndexError`` is raised when a single integer is specified as the index and
+                  the index is out-of-bounds.
+                - An ``IndexError`` is `not` raised when a range is specified as the index and
+                  the index is out-of-bounds. This default can be overridden by setting
+                  ``strict_index=True``.
+                - A copy of the data is returned (modifying the sliced output does `not` affect
+                  the input data).
+
+        index_mode : 'extent' | 'dimensions', default: 'dimensions'
+            Mode to use when determining the range of values to index from.
+
+            - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
+            - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
+              i.e. ``[offset, offset + dimensions - 1]``.
+
+            The main difference between these modes is the inclusion or exclusion of the
+            :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
+            object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
+            definition of ``extent`` and considers the object's geometry.
+
+        strict_index : bool, default: False
+            Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
+            ``IndexError`` is only raised if a single integer index is out of range, but not when
+            a range of indices are specified; set this to ``True`` to raise in error in both cases.
+
+        rebase_coordinates : bool, default: False
+            Rebase the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the indexing.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Sliced mesh.
+
+        See Also
+        --------
+        crop
+        extract_subset
+        :meth:`~pyvista.DataObjectFilters.slice`
+        :meth:`~pyvista.DataObjectFilters.slice_implicit`
+        :meth:`~pyvista.DataObjectFilters.slice_orthogonal`
+        :meth:`~pyvista.DataObjectFilters.slice_along_axis`
+        :meth:`~pyvista.DataObjectFilters.slice_along_line`
+
+        Examples
+        --------
+        Create a :class:`~pyvista.ImageData` mesh and give it some point data.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ImageData(dimensions=(10, 10, 10))
+        >>> mesh['data'] = range(mesh.n_points)
+
+        Extract a single slice along the k-axis.
+
+        >>> sliced = mesh.slice_index(k=5)
+        >>> sliced.dimensions
+        (10, 10, 1)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[:, :, 5]
+        >>> sliced == sliced2
+        True
+
+        Extract a volume of interest.
+
+        >>> sliced = mesh.slice_index(i=[1, 3], j=[2, 5], k=[5, 10])
+        >>> sliced.dimensions
+        (2, 3, 5)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[1:3, 2:5, 5:10]
+        >>> sliced == sliced2
+        True
+
+        Use ``None`` to implicitly define the start and/or stop indices.
+
+        >>> sliced = mesh.slice_index(i=[None, 3], j=[2, None], k=None)
+        >>> sliced.dimensions
+        (3, 8, 10)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[:3, 2:, :]
+        >>> sliced == sliced2
+        True
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+
+        def _set_default_start_and_stop(rng, default_start, default_stop):
+            if isinstance(rng, slice):
+                return rng
+            out = (default_start, default_stop) if rng is None else np.asanyarray(rng).tolist()
+            if isinstance(out, list) and len(out) >= 2:
+                if out[0] is None:
+                    out[0] = default_start
+                if out[1] is None:
+                    out[1] = default_stop
+            return out
+
+        if i is None and j is None and k is None:
+            msg = 'No indices were provided for slicing.'
+            raise TypeError(msg)
+
+        lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
+        indices = tuple(
+            _set_default_start_and_stop(slc, low, dim)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
+        )
+        voi = self._compute_voi_from_index(
+            indices, index_mode=index_mode, strict_index=strict_index
+        )
+        return self.extract_subset(
+            voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
+        )
+
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
         self,
@@ -282,6 +450,11 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             ImageData subset.
+
+        See Also
+        --------
+        slice_index
+        crop
 
         """
         alg = _vtk.vtkExtractVOI()
@@ -431,12 +604,12 @@ class ImageDataFilters(DataSetFilters):
             If ``True``, the cropped output is :meth:`padded <pad_image>` with ``fill_value`` to
             ensure the output dimensions match the input.
 
-        fill_value: float | VectorLike[float], optional
+        fill_value : float | VectorLike[float], optional
             Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
             a single float or a multi-component vector (e.g. RGB vector).
 
         rebase_coordinates : bool, default: False
-            Rebase the coordinate reference of the extracted subset:
+            Rebase the coordinate reference of the cropped output:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
@@ -446,8 +619,8 @@ class ImageDataFilters(DataSetFilters):
             the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
             reference frame is modified.
 
-            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
-            the ``voi`` parameter.
+            Set this to ``False`` to leave the origin unmodified and keep the offset used by the
+            crop.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -467,6 +640,9 @@ class ImageDataFilters(DataSetFilters):
 
         select_values
             Threshold-like filter which may be used to generate a mask for cropping.
+
+        extract_subset
+            Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
 
         :ref:`crop_labeled_example`
             Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
@@ -503,7 +679,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> image_plotter(gray_image).show()
 
-        Crop the white border around the image by the active scalars as a mask. Here we specify a
+        Crop the white border around the image using active scalars as a mask. Here we specify a
         background value of ``255`` to correspond to white pixels. If this was an RGB image, we
         could also specify ``(255, 255, 255)`` as the background value.
 
@@ -3335,17 +3511,8 @@ class ImageDataFilters(DataSetFilters):
             if point_seeds is None:
                 msg = '`point_seeds` must be specified when `extraction_mode="seeded"`.'
                 raise ValueError(msg)
-
-            # PointSet requires vtk >= 9.1.0
-            # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
             elif not isinstance(point_seeds, _vtk.vtkDataSet):
-                if pyvista.vtk_version_info >= (9, 1, 0):
-                    point_seeds = pyvista.PointSet(point_seeds)
-                else:
-                    # Assign points outside the constructor to not create useless cells
-                    tmp = point_seeds
-                    point_seeds = pyvista.PolyData()
-                    point_seeds.SetPoints(pyvista.vtk_points(tmp, force_float=True))
+                point_seeds = pyvista.PointSet(point_seeds)
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
@@ -4112,14 +4279,7 @@ class ImageDataFilters(DataSetFilters):
                 output_image.origin = new_origin
             else:
                 # Compute spacing to match bounds of input and dimensions of output
-                bnds = input_image.bounds
-                size = np.array(
-                    (
-                        bnds.x_max - bnds.x_min,
-                        bnds.y_max - bnds.y_min,
-                        bnds.z_max - bnds.z_min,
-                    )
-                )
+                size = np.array(input_image.bounds_size)
                 if processing_cell_scalars:
                     new_spacing = (size + input_image.spacing) / output_dimensions
                 else:

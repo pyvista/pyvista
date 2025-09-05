@@ -76,7 +76,6 @@ def test_picker_raises(picker, mocker: MockerFixture):
     m.assert_called_once_with(picker)
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_observers():
     pl = pv.Plotter()
 
@@ -212,11 +211,6 @@ def test_track_click_position():
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
-@pytest.mark.needs_vtk_version(
-    (9, 2),
-    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents '
-    'until VTK9.2.',
-)
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)
@@ -326,7 +320,6 @@ def test_add_pick_observer():
     pl.iren.add_pick_observer(empty_callback)
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:

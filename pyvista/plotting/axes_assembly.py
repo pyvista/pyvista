@@ -23,6 +23,7 @@ from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.misc import _NameMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
@@ -79,7 +80,13 @@ class _XYZTuple(NamedTuple):
 
 
 @abstract_class
-class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(
+    _NoNewAttrMixin,
+    _vtk.DisableVtkSnakeCase,
+    _Prop3DMixin,
+    _NameMixin,
+    _vtk.vtkPropAssembly,
+):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -164,7 +171,7 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
         self.origin = origin
         self.user_matrix = user_matrix
 
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
     @property
     def parts(self):
@@ -1542,6 +1549,8 @@ class PlanesAssembly(_XYZAssembly):
         name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
+        self._camera = None
+
         # Init plane actors
         self._plane_actors = (Actor(), Actor(), Actor())
         # Init planes from source
@@ -1741,10 +1750,16 @@ class PlanesAssembly(_XYZAssembly):
         # Values on the order of 0.01-0.05 seem to work best. Use a normalization
         # factor so that input values are on the order of 10-50 and roughly match 2D sizes
         NORM_FACTOR = 1000
-        scale = self.planes.length * float(valid_size) / NORM_FACTOR
+        scale_3d = self.planes.length * float(valid_size) / NORM_FACTOR
+
+        # In VTK 9.6+, the 3D label size depends on the 2D label size, so in the 3D case
+        # we need to reset the 2D font size to match the VTK default value of 12
+        font_size_2d = (
+            valid_size if hasattr(self, 'label_mode') and self.label_mode == '2D' else 12
+        )
         for axis in self._axis_actors:
-            axis.GetTitleActor().SetScale(scale)  # 3D labels
-            axis.GetTitleTextProperty().SetFontSize(size)  # 2D labels
+            axis.GetTitleActor().SetScale(scale_3d)  # 3D labels
+            axis.GetTitleTextProperty().SetFontSize(font_size_2d)  # 2D labels
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1896,6 +1911,9 @@ class PlanesAssembly(_XYZAssembly):
         for axis in self._axis_actors:
             axis.SetUse2DMode(use_2D)
 
+        # The 3D label size depends on the 2D label size so we need to reset this property
+        self.label_size = self.label_size
+
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the yz-plane."""
@@ -1940,9 +1958,6 @@ class PlanesAssembly(_XYZAssembly):
     @property
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
-        if not hasattr(self, '_camera'):
-            msg = 'Camera has not been set.'
-            raise ValueError(msg)
         return self._camera
 
     @camera.setter

@@ -5,10 +5,19 @@ import os
 from pathlib import Path
 import re
 import sys
+import warnings
 
 import pyvista
 
 sys.path.append(str(Path(__file__).parent))
+
+# Suppress invalid user data path when there is an issue with restoring the cache for CI
+# https://github.com/pyvista/pyvista/pull/7747
+warnings.filterwarnings(
+    'ignore',
+    message=r'(?s).*PYVISTA_VTK_DATA is not a valid directory.*',
+    category=UserWarning,
+)
 
 # -- General configuration ------------------------------------------------
 
@@ -90,3 +99,6 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+# required for testing
+pyvista_plot_use_counter = os.environ.get('PYVISTA_PLOT_USE_COUNTER', 'true').lower() == 'true'

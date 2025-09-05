@@ -8,6 +8,7 @@ permissions:
 
 jobs:
   triage:
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-22.04
     steps:
       - name: Label based on changed files

@@ -10,8 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  MYPY_FORCE_COLOR: 1
-  TERM: xterm-color
+  TOX_COLORED: "yes"
 
 jobs:
   mypy:
@@ -19,7 +18,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -29,16 +28,8 @@ jobs:
           python-version: 3.13
           cache: "pip"
 
-      - name: Install PyVista test requirements
-        run: |
-          pip install --upgrade pip
-          pip install . --group typing
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Run Mypy
-        run: mypy
-
-      - name: Software Report
-        run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
-          which python
-          pip list
+        run: tox run -e mypy

@@ -123,11 +123,27 @@ The plot directive has the following configuration options:
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
+
+**Directive Configuration Settings**
+
+Globally, you can set if the file names should be either:
+
+* Deterministic, based on directive source hash:
+  ``<BASENAME>-<HASH>_<INDEX>_<SUBINDEX>.<EXT>`` (Default)
+* Indexed, based on location in document:
+  ``<BASENAME>-<DOC-INDEX>_<INDEX>_<SUBINDEX>.<EXT>``
+
+Enable indexed naming this by setting ``pyvista_plot_use_counter=True``. Note
+that indexed is incompatible with parallel builds due to race conditions.
+
+.. versionchanged:: 0.47
+    Hash-based image naming is now used by default.
 """
 
 from __future__ import annotations
 
 import doctest
+import hashlib
 import os
 from os.path import relpath
 from pathlib import Path
@@ -149,6 +165,10 @@ import pyvista
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from sphinx.application import Sphinx
+    from sphinx.config import Config
+
 
 pyvista.BUILDING_GALLERY = True
 pyvista.OFF_SCREEN = True
@@ -216,11 +236,11 @@ class PlotDirective(Directive):
                 self.state,
                 self.lineno,
             )
-        except Exception as e:  # pragma: no cover
+        except Exception as e:  # noqa: BLE001  # pragma: no cover
             raise self.error(str(e))
 
 
-def setup(app):
+def setup(app: Sphinx):
     """Set up the plot directive."""
     setup.app = app
     setup.config = app.config
@@ -238,7 +258,7 @@ def setup(app):
         'plot_skip_optional',
     ]
 
-    def raise_on_legacy_config(app, config):
+    def raise_on_legacy_config(app: Sphinx, config: Config) -> None:
         """Raise a RuntimeError when using legacy configuration parameters.
 
         These parameters conflict with matplotlib's ``plot_directive``.
@@ -257,6 +277,19 @@ def setup(app):
 
     app.connect('config-inited', raise_on_legacy_config)
 
+    def check_counter_for_parallel_build(app: Sphinx, config: Config) -> None:
+        if config.pyvista_plot_use_counter and app.parallel > 1:
+            msg = (
+                "The 'pyvista_plot_use_counter' option cannot be enabled for parallel builds."
+                " Set 'pyvista_plot_use_counter = False' in your conf.py"
+                ' or disable parallel builds.'
+            )
+            raise RuntimeError(msg)
+
+    # Connect the new function to the 'config-inited' event
+    app.connect('config-inited', check_counter_for_parallel_build)
+
+    app.add_config_value('pyvista_plot_use_counter', False, 'env')
     app.add_config_value('pyvista_plot_include_source', True, False)
     app.add_config_value('pyvista_plot_basedir', None, True)
     app.add_config_value('pyvista_plot_html_show_formats', True, True)
@@ -509,7 +542,7 @@ def render_figures(
                 figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
                 for j, (_, plotter) in enumerate(figures.items()):
-                    if hasattr(plotter, '_gif_filename'):
+                    if plotter._gif_filename is not None:
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                         shutil.move(plotter._gif_filename, image_file.filename)
                     else:
@@ -540,6 +573,34 @@ def render_figures(
     return results
 
 
+def _contains_doctest(text: str) -> bool:
+    """Check if the text contains doctest markers."""
+    r = re.compile(r'^\s*>>>', re.MULTILINE)
+    m = r.search(text)
+    return bool(m)
+
+
+def hash_plot_code(code: str, options: dict) -> str:
+    """Generate a hash of the plot code."""
+    # convert to plain script if doctest code
+    script = doctest.script_from_examples(code) if _contains_doctest(code) else code
+
+    lines = []
+    for line in script.splitlines():
+        line_without_comments = re.sub(r'(?<!["\'])#.*', '', line).strip()
+        if line_without_comments:
+            lines.append(line_without_comments)
+    clean_script = textwrap.dedent('\n'.join(lines))
+
+    parts = [
+        'ctx=' + str('context' in options),
+        clean_script,
+    ]
+
+    # first 16 char should be sufficient
+    return hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()[:16]
+
+
 def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
@@ -547,6 +608,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     nofigs = 'nofigs' in options
     optional = 'optional' in options
     force_static = 'force_static' in options
+    use_counter = config.pyvista_plot_use_counter
 
     default_fmt = 'png'
 
@@ -589,14 +651,18 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         source_file_name = rst_file
         code = textwrap.dedent('\n'.join(map(str, content)))
 
-        # note: this reuses the existing matplotlib plot counter if available
-        counter = document.attributes.get('_plot_counter', 0) + 1
-        document.attributes['_plot_counter'] = counter
         base = Path(source_file_name).stem
         ext = Path(source_file_name).suffix
-        output_base = f'{base}-{counter}{ext}'
         function_name = None
         caption = options.get('caption', '')
+
+        if use_counter:
+            counter = document.attributes.get('_plot_counter', 0) + 1
+            document.attributes['_plot_counter'] = counter
+            output_base = f'{base}-{counter}{ext}'
+        else:
+            code_hash = hash_plot_code(code, options)
+            output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
     source_ext = Path(output_base).suffix

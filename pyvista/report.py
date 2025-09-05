@@ -28,6 +28,67 @@ def get_gpu_info():  # numpydoc ignore=RT01
     return '' if proc.returncode else proc.stdout.decode()
 
 
+def check_matplotlib_vtk_compatibility() -> bool:
+    """Check if VTK and Matplotlib versions are compatible for MathText rendering.
+
+    This function is primarily geared towards checking if MathText rendering is
+    supported with the given versions of VTK and Matplotlib. It follows the
+    version constraints:
+
+    * VTK <= 9.2.2 requires Matplotlib < 3.6
+    * VTK > 9.2.2 requires Matplotlib >= 3.6
+
+    Other version combinations of VTK and Matplotlib will work without
+    errors, but some features (like MathText/LaTeX rendering) may
+    silently fail.
+
+    Returns
+    -------
+    bool
+        True if the versions of VTK and Matplotlib are compatible for MathText
+        rendering, False otherwise.
+
+    Raises
+    ------
+    RuntimeError
+        If the versions of VTK and Matplotlib cannot be checked.
+
+    """
+    import matplotlib as mpl  # noqa: PLC0415
+
+    from pyvista import vtk_version_info  # noqa: PLC0415
+
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
+    if vtk_version_info <= (9, 2, 2):
+        return not mpl_vers >= (3, 6)
+    elif vtk_version_info > (9, 2, 2):
+        return mpl_vers >= (3, 6)
+    msg = 'Uncheckable versions.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover
+
+
+def check_math_text_support() -> bool:
+    """Check if MathText and LaTeX symbols are supported.
+
+    Returns
+    -------
+    bool
+        ``True`` if both MathText and LaTeX symbols are supported, ``False``
+        otherwise.
+
+    """
+    # Something seriously sketchy is happening with this VTK code
+    # It seems to hijack stdout and stderr?
+    # See https://github.com/pyvista/pyvista/issues/4732
+    # This is a hack to get around that by executing the code in a subprocess
+    # and capturing the output:
+    # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    _cmd = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
+    return math_text_support and check_matplotlib_vtk_compatibility()
+
+
 class GPUInfo:
     """A class to hold GPU details."""
 
@@ -124,6 +185,14 @@ class Report(scooby.Report):
         experiencing rendering issues, pass ``False`` to safely generate a
         report.
 
+    downloads : bool, default: False
+        Gather information about downloads. If ``True``, includes:
+        - The local user data path (where downloads are saved)
+        - The VTK Data source (where files are downloaded from)
+        - Whether local file caching is enabled for the VTK Data source
+
+        .. versionadded:: 0.47
+
     Examples
     --------
     >>> import pyvista as pv
@@ -164,15 +233,14 @@ class Report(scooby.Report):
     def __init__(  # noqa: PLR0917
         self,
         additional=None,
-        ncol=3,
-        text_width=80,
-        sort=False,  # noqa: FBT002
-        gpu=True,  # noqa: FBT002
+        ncol: int = 3,
+        text_width: int = 80,
+        sort: bool = False,  # noqa: FBT001, FBT002
+        gpu: bool = True,  # noqa: FBT001, FBT002
+        downloads: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate a :class:`scooby.Report` instance."""
         from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
-
-        from pyvista.plotting.tools import check_math_text_support  # noqa: PLC0415
 
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
@@ -200,12 +268,12 @@ class Report(scooby.Report):
             'nest_asyncio',
         ]
 
-        # Information about the GPU - bare except in case there is a rendering
+        # Information about the GPU - catch all Exception in case there is a rendering
         # bug that the user is trying to report.
         if gpu:
             try:
                 extra_meta = GPUInfo().get_info()
-            except:
+            except Exception:  # noqa: BLE001
                 extra_meta = [
                     ('GPU Details', 'error'),
                 ]
@@ -216,6 +284,15 @@ class Report(scooby.Report):
 
         extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
         extra_meta.append(('MathText Support', check_math_text_support()))
+        if downloads:
+            user_data_path, vtk_data_source, file_cache = _get_downloads_info()
+            extra_meta.extend(
+                [
+                    ('User Data Path', user_data_path),
+                    ('VTK Data Source', vtk_data_source),
+                    ('File Cache', file_cache),
+                ]
+            )
 
         scooby.Report.__init__(
             self,
@@ -227,3 +304,11 @@ class Report(scooby.Report):
             sort=sort,
             extra_meta=extra_meta,
         )
+
+
+def _get_downloads_info() -> tuple[str, str, bool]:
+    from pyvista.examples.downloads import _FILE_CACHE  # noqa: PLC0415
+    from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
+    from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+
+    return USER_DATA_PATH, SOURCE, _FILE_CACHE

@@ -26,7 +26,6 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
@@ -220,6 +219,21 @@ def test_clip_surface():
     # Test crinkle
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
+
+
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_surface_output_type(datasets, crinkle):
+    for dataset in datasets:
+        clp = dataset.clip_surface(dataset.extract_geometry(), crinkle=crinkle)
+        assert clp is not None
+        if isinstance(dataset, pv.PointSet):
+            assert isinstance(clp, pv.PointSet)
+        elif isinstance(dataset, pv.PolyData):
+            assert isinstance(clp, pv.PolyData)
+        elif isinstance(dataset, pv.MultiBlock):
+            assert isinstance(clp, pv.MultiBlock)
+        else:
+            assert isinstance(clp, pv.UnstructuredGrid)
 
 
 def test_clip_closed_surface():
@@ -949,7 +963,6 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
 )
 @pytest.mark.parametrize('label_regions', [True, False])
 @pytest.mark.parametrize('scalar_range', [True, False])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_inplace_and_output_type(
     datasets,
     dataset_index,
@@ -1000,7 +1013,6 @@ def test_connectivity_inplace_and_output_type(
     'extraction_mode',
     ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     # the connectivity filter is known to output incorrectly sized scalars
     # test all modes and datasets for correct scalar size
@@ -1038,7 +1050,6 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
@@ -1081,7 +1092,6 @@ def test_connectivity_raises(
     ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
 @pytest.mark.parametrize('association', ['cell', 'point'])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_scalar_range(
     connected_datasets_single_disconnected_cell,
     dataset_index,
@@ -1117,7 +1127,6 @@ def test_connectivity_scalar_range(
     assert len(conn_with_full_range.array_names) == 3
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_all(foot_bones):
     conn = foot_bones.connectivity('all')
     assert conn.n_cells == foot_bones.n_cells
@@ -1159,7 +1168,6 @@ def test_connectivity_all(foot_bones):
     )
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_largest(foot_bones):
     conn = foot_bones.connectivity('largest')
     assert conn.n_cells == 598
@@ -1171,7 +1179,6 @@ def test_connectivity_largest(foot_bones):
     assert counts == [598]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_specified(foot_bones):
     # test all regions
     all_regions = list(range(26))
@@ -1197,7 +1204,6 @@ def test_connectivity_specified(foot_bones):
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_specified_returns_empty(connected_datasets, dataset_index):
     dataset = connected_datasets[dataset_index]
     unused_region_id = 1
@@ -1206,7 +1212,6 @@ def test_connectivity_specified_returns_empty(connected_datasets, dataset_index)
     assert conn.n_points == 0
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_point_seed(foot_bones):
     conn = foot_bones.connectivity('point_seed', point_ids=1598)
     assert conn.n_cells == 598
@@ -1221,7 +1226,6 @@ def test_connectivity_point_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_cell_seed(foot_bones):
     conn = foot_bones.connectivity('cell_seed', cell_ids=3122)
     assert conn.n_cells == 598
@@ -1237,7 +1241,6 @@ def test_connectivity_cell_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_closest_point(foot_bones):
     conn = foot_bones.connectivity('closest', closest_point=(-3.5, -0.5, -0.5))
     assert conn.n_cells == 598
@@ -2366,7 +2369,6 @@ component_mode_test_cases = [
     ('values', 'component_mode', 'expected', 'expected_invert'),
     component_mode_test_cases,
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_extract_values_component_mode(
     point_cloud_colors,
     values,
@@ -2404,7 +2406,6 @@ def test_extract_values_component_mode(
         (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
     ],
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_extract_values_component_values_split_unique(
     point_cloud_colors_duplicates,
     dataset_filter,
@@ -2811,6 +2812,16 @@ def test_extract_subset(uniform, rebase_coordinates):
     else:
         assert voi.origin == origin
         assert voi.offset == new_offset
+
+    # Test same output as using slice_index
+    cropped = uniform.slice_index(
+        [extent[0], extent[1] + 1],
+        [extent[2], extent[3] + 1],
+        [extent[4], extent[5] + 1],
+        index_mode='extent',
+        rebase_coordinates=rebase_coordinates,
+    )
+    assert cropped == voi
 
     # Test same output as using crop
     cropped = uniform.crop(extent=extent, rebase_coordinates=rebase_coordinates)
@@ -3226,18 +3237,14 @@ def test_extrude_rotate():
     assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
-    if not pv.vtk_version_info >= (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
-    else:
-        poly = line.extrude_rotate(
-            rotation_axis=rotation_axis,
-            resolution=resolution,
-            progress_bar=True,
-            capping=True,
-        )
-        assert poly.n_cells == line.n_points - 1
-        assert poly.n_points == (resolution + 1) * line.n_points
+    poly = line.extrude_rotate(
+        rotation_axis=rotation_axis,
+        resolution=resolution,
+        progress_bar=True,
+        capping=True,
+    )
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1) * line.n_points
 
     with pytest.raises(ValueError):  # noqa: PT011
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
@@ -4041,21 +4048,13 @@ def test_voxelize_binary_mask_dimensions(sphere):
 def test_voxelize_binary_mask_spacing(ant):
     # Test default
     mask_no_input = ant.voxelize_binary_mask()
-    if pv.vtk_version_info < (9, 2):
-        expected_mask = ant.voxelize_binary_mask(spacing=ant.length / 100)
-    else:
-        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+    expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
     assert mask_no_input.spacing == expected_mask.spacing
 
     # Test cell length
-    if pv.vtk_version_info < (9, 2):
-        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-        with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
-    else:
-        mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
-        mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
-        assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
+    mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+    assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
 
     # Test mesh length
     mask_fraction_200 = ant.voxelize_binary_mask(spacing=ant.length / 200)
@@ -4064,24 +4063,25 @@ def test_voxelize_binary_mask_spacing(ant):
     # Check spacing matches mesh length. Use atol since spacing is approximate.
     assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
 
+    match = 'Spacing and cell length options cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_percentile=0.1)
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=ant.n_cells)
+
 
 # This test is flaky because of random sampling that cannot be controlled.
 # Sometimes the sampling produces the same output.
 # https://github.com/pyvista/pyvista/pull/6728
 @flaky_test(times=5)
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
-    if pv.vtk_version_info < (9, 2):
-        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-        with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
-    else:
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
-        assert mask_samples_1.spacing != mask_samples_2.spacing
+    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
+    assert mask_samples_1.spacing != mask_samples_2.spacing
 
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        assert mask_samples_1.spacing == mask_samples_2.spacing
+    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    assert mask_samples_1.spacing == mask_samples_2.spacing
 
 
 @pytest.mark.parametrize(
@@ -4198,3 +4198,83 @@ def test_voxelize_binary_mask_raises(sphere):
         )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_rectilinear(ant):
+    vox = ant.voxelize_rectilinear()
+    assert isinstance(vox, pv.RectilinearGrid)
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = ant.voxelize_rectilinear(dimensions=dims)
+    assert np.array_equal(vox.dimensions, dims)
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    single_cell_dims = np.array((2, 2, 2))
+    vox = ant.voxelize_rectilinear(spacing=size)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test reference volume - specify both dimensions and spacing
+    reference_volume = pv.ImageData(dimensions=single_cell_dims - 1, spacing=size)
+    vox = ant.voxelize_rectilinear(reference_volume=reference_volume)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test scalar values
+    foreground = 2
+    background = 3
+    vox = ant.voxelize_rectilinear(foreground_value=foreground, background_value=background)
+    assert 'mask' in vox.cell_data
+    assert vox.array_names == ['mask']
+    values = np.unique(vox['mask'])
+    assert np.array_equal(values, [foreground, background])
+
+    # Test other keywords
+    vox = ant.voxelize(cell_length_percentile=0.5)
+    assert vox.n_cells
+    vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+    assert vox.n_cells
+    assert vox.n_cells
+    vox = ant.voxelize_rectilinear(progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize_rectilinear(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize_rectilinear(spacing={0.5, 0.3})
+
+
+def test_voxelize(ant):
+    vox = ant.voxelize()
+    assert isinstance(vox, pv.UnstructuredGrid)
+    assert vox.array_names == []
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = pv.Cube().voxelize(dimensions=dims)
+    assert np.array_equal(vox.n_points, np.prod(dims))
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    vox = ant.voxelize(spacing=size)
+    assert np.allclose(vox.n_cells, 1)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test other keywords
+    vox = ant.voxelize(cell_length_percentile=0.5)
+    assert vox.n_cells
+    vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+    assert vox.n_cells
+    vox = ant.voxelize(progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize(spacing={0.5, 0.3})

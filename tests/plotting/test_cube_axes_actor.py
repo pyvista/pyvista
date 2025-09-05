@@ -29,9 +29,11 @@ def test_cube_axes_actor():
     assert isinstance(actor.camera, pv.Camera)
 
     # ensure label format is set to default
-    assert actor.x_label_format == '%.1f'
-    assert actor.y_label_format == '%.1f'
-    assert actor.z_label_format == '%.1f'
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    expected_fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'
+    assert actor.x_label_format == expected_fmt
+    assert actor.y_label_format == expected_fmt
+    assert actor.z_label_format == expected_fmt
 
 
 def test_labels(cube_axes_actor):
@@ -48,7 +50,8 @@ def test_labels(cube_axes_actor):
     assert np.allclose(values, expected)
 
     # standard format
-    cube_axes_actor.z_label_format = '%.1f'
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    cube_axes_actor.z_label_format = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'
     assert len(cube_axes_actor.z_labels) == 5
     assert all(len(label) < 5 for label in cube_axes_actor.z_labels)
 

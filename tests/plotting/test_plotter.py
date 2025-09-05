@@ -87,17 +87,17 @@ def test_plotter_anti_aliasing_raises():
         pl.enable_anti_aliasing(aa_type='foo')
 
 
-def test_plotter_store_mouse_position_raises(monkeypatch: pytest.MonkeyPatch):
+def test_plotter_store_mouse_position_raises():
     pl = pv.Plotter()
-    monkeypatch.delattr(pl, 'iren')
+    pl.iren = None
     with pytest.raises(
-        AttributeError,
+        RuntimeError,
         match='This plotting window is not interactive.',
     ):
         pl.store_mouse_position()
 
     with pytest.raises(
-        AttributeError,
+        RuntimeError,
         match='This plotting window is not interactive.',
     ):
         pl.store_click_position()
@@ -245,7 +245,6 @@ def test_add_point_labels_raises(points):
         pl.add_point_labels(points=points, labels='foo')
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 

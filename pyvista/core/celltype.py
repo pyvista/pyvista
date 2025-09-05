@@ -7,7 +7,13 @@ import textwrap
 from typing import Literal
 from typing import NamedTuple
 
+import numpy as np
+
 from . import _vtk_core as _vtk
+
+_CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
+
+PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _DROPDOWN_TEMPLATE = """
 .. dropdown:: More info
@@ -42,7 +48,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
@@ -617,6 +623,42 @@ _CELL_TYPE_INFO = dict(
         The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     ),
+    TRIQUADRATIC_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
+        cell_class=_vtk.vtkTriQuadraticPyramid,
+        example='TriQuadraticPyramid',
+        short_doc="""
+        Represents a second order 3D iso-parametric 19-node pyramid.
+
+        The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
+        and 1 volumetric centroid node.
+        """,
+        long_doc="""
+        The ordering of the nineteen points defining the cell is point
+        ids ``(0-4, 5-12, 13-17, 18)``, where:
+
+        - ids ``(0-4)`` are the five corner vertices of the pyramid.
+        - ids ``(5-12)`` are the 8 mid-edge nodes.
+        - ids ``(13-17)`` are the 5 mid-face nodes.
+        - id ``(19)`` is the volumetric centroid node.
+
+        The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
+        ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
+        respectively.
+
+        The mid-face nodes lie on the faces defined by (first corner nodes ids,
+        then mid-edge node ids):
+
+        - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
+        - triangle face 1: ``(0,1,4; 5,10,9)``
+        - triangle face 2: ``(1,2,4; 6,11,10)``
+        - triangle face 3: ``(2,3,4; 7,12,11)``
+        - triangle face 5: ``(3,0,4; 8,9,12)``
+
+        The last point lies in the center of the cell ``(0,1,2,3,4)``.
+        The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
+        """,
+    ),
     QUADRATIC_LINEAR_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
@@ -804,60 +846,37 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE),
-    LAGRANGE_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TRIANGLE),
-    LAGRANGE_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_QUADRILATERAL),
+    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE, cell_class=_vtk.vtkLagrangeCurve),
+    LAGRANGE_TRIANGLE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_TRIANGLE, cell_class=_vtk.vtkLagrangeTriangle
+    ),
+    LAGRANGE_QUADRILATERAL=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_QUADRILATERAL, cell_class=_vtk.vtkLagrangeQuadrilateral
+    ),
     LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
-    LAGRANGE_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_HEXAHEDRON),
-    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE),
+    LAGRANGE_HEXAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_HEXAHEDRON, cell_class=_vtk.vtkLagrangeHexahedron
+    ),
+    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE, cell_class=_vtk.vtkLagrangeWedge),
     LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE),
-    BEZIER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_BEZIER_TRIANGLE),
-    BEZIER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_BEZIER_QUADRILATERAL),
-    BEZIER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_TETRAHEDRON),
-    BEZIER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_HEXAHEDRON),
-    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE),
+    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE, cell_class=_vtk.vtkBezierCurve),
+    BEZIER_TRIANGLE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_TRIANGLE, cell_class=_vtk.vtkBezierTriangle
+    ),
+    BEZIER_QUADRILATERAL=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_QUADRILATERAL, cell_class=_vtk.vtkBezierQuadrilateral
+    ),
+    BEZIER_TETRAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_TETRAHEDRON, cell_class=_vtk.vtkBezierTetra
+    ),
+    BEZIER_HEXAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_HEXAHEDRON, cell_class=_vtk.vtkBezierHexahedron
+    ),
+    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
     BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
 )
-if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
-    _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID'] = _CellTypeTuple(
-        value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
-        cell_class=_vtk.vtkTriQuadraticPyramid,
-        example='TriQuadraticPyramid',
-        short_doc="""
-        Represents a second order 3D iso-parametric 19-node pyramid.
-
-        The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
-        and 1 volumetric centroid node.
-        """,
-        long_doc="""
-        The ordering of the nineteen points defining the cell is point
-        ids ``(0-4, 5-12, 13-17, 18)``, where:
-
-        - ids ``(0-4)`` are the five corner vertices of the pyramid.
-        - ids ``(5-12)`` are the 8 mid-edge nodes.
-        - ids ``(13-17)`` are the 5 mid-face nodes.
-        - id ``(19)`` is the volumetric centroid node.
-
-        The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
-        ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
-        respectively.
-
-        The mid-face nodes lie on the faces defined by (first corner nodes ids,
-        then mid-edge node ids):
-
-        - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
-        - triangle face 1: ``(0,1,4; 5,10,9)``
-        - triangle face 2: ``(1,2,4; 6,11,10)``
-        - triangle face 3: ``(2,3,4; 7,12,11)``
-        - triangle face 5: ``(3,0,4; 8,9,12)``
-
-        The last point lies in the center of the cell ``(0,1,2,3,4)``.
-        The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
-        """,
-    )
 
 
 class CellType(IntEnum):
@@ -1012,6 +1031,7 @@ class CellType(IntEnum):
             badges = ''
             if _cell_class:
                 cell = _cell_class()
+                _CELL_TYPE_TO_NUM_POINTS[np.uint8(value)] = cell.GetNumberOfPoints()
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
@@ -1045,7 +1065,7 @@ class CellType(IntEnum):
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
-                    _example, _example, badges, _short_doc, _long_doc
+                    _example, _example, PLACEHOLDER, badges, _short_doc, _long_doc
                 )
             )
 
@@ -1078,8 +1098,7 @@ class CellType(IntEnum):
     QUADRATIC_PYRAMID = _CELL_TYPE_INFO['QUADRATIC_PYRAMID']
     BIQUADRATIC_QUAD = _CELL_TYPE_INFO['BIQUADRATIC_QUAD']
     TRIQUADRATIC_HEXAHEDRON = _CELL_TYPE_INFO['TRIQUADRATIC_HEXAHEDRON']
-    if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
-        TRIQUADRATIC_PYRAMID = _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID']
+    TRIQUADRATIC_PYRAMID = _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID']
     QUADRATIC_LINEAR_QUAD = _CELL_TYPE_INFO['QUADRATIC_LINEAR_QUAD']
     QUADRATIC_LINEAR_WEDGE = _CELL_TYPE_INFO['QUADRATIC_LINEAR_WEDGE']
     BIQUADRATIC_QUADRATIC_WEDGE = _CELL_TYPE_INFO['BIQUADRATIC_QUADRATIC_WEDGE']

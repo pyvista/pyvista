@@ -19,6 +19,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  TOX_COLORED: "yes"
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -34,119 +35,48 @@ permissions:
   id-token: none
 
 jobs:
-  # For now this is just MNE-Python, but others could be added
-  mne:
-    name: MNE-Python
-    runs-on: ubuntu-22.04
+  Integration:
+    name: ${{matrix.project}}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ["mne", "trame", "pyvistaqt", "geovista"]
+    runs-on: ubuntu-22.04-self-hosted
+    defaults:
+      run:
+        shell: bash -l {0}
     env:
       DISPLAY: ":99.0"
       MNE_LOGGING_LEVEL: "info"
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
+
+      - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+        if: ${{matrix.project == 'pyvistaqt' || matrix.project == 'geovista'}}
+        with:
+          qt: ${{matrix.project == 'pyvistaqt'}}
+          pyvista: ${{matrix.project != 'pyvistaqt'}}
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
-      - run: ./mne-python/tools/setup_xvfb.sh
-      - name: Install MNE dependencies
-        run: pip install numpy scipy matplotlib nibabel "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0" qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
-      - name: Install PyVista
-        run: pip install -ve . # pyvista
-      - run: python -c "import pyvista; assert not pyvista.OFF_SCREEN, f'{pyvista.OFF_SCREEN=} should be False'"
-        name: Ensure OFF_SCREEN is False
-      - name: Install PyVistaQt main
-        run: pip install -v git+https://github.com/pyvista/pyvistaqt.git
-      - name: Install MNE
-        run: pip install -ve . # mne
-        working-directory: mne-python
-      - name: MNE Info
-        run: mne sys_info -p
-        working-directory: mne-python
-      - run: ./tools/get_testing_version.sh
-        working-directory: mne-python
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Run tests (no xvfb)
+        if: ${{matrix.project != 'geovista'}}
+        run: tox run -e integration-${{matrix.project}}
+
+      - name: Run tests (geovista)
+        if: ${{matrix.project == 'geovista'}}
+        run: xvfb-run -a tox run -e integration-${{matrix.project}}
+
       - uses: actions/cache@v4
-        if: env.USE_CACHE == 'true'
+        if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
         with:
           key: ${{ env.TESTING_VERSION }}
           path: ~/mne_data
-      - run: ./tools/github_actions_download.sh
-        working-directory: mne-python
-      - run: pytest mne/viz/_brain mne/viz/tests/test_3d.py mne/viz/backends
-        working-directory: mne-python
-
-  pyvistaqt:
-    name: PyVistaQt
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
-      - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
-        with:
-          qt: true
-          pyvista: false
-      - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
-      - run: pip install -ve .
-      - run: pytest ./tests
-        working-directory: pyvistaqt
-
-  geovista:
-    name: GeoVista
-    runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash -l {0}
-    env:
-      CARTOPY_SHARE_DIR: ~/.local/share/cartopy
-      GEOVISTA_POOCH_MUTE: true
-    steps:
-      - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - run: git clone https://github.com/bjlittle/geovista.git --single-branch
-      - name: Install PyVista
-        run: pip install -ve . # pyvista
-      - name: Install GeoVista
-        run: pip install -ve .[test,exam,cmap] # geovista
-        working-directory: geovista
-      - name: Download cartopy assets
-        run: |
-          mkdir -p ${CARTOPY_SHARE_DIR}
-          cartopy_feature_download physical --output ${CARTOPY_SHARE_DIR} --no-warn
-      - run: xvfb-run -a pytest
-        working-directory: geovista
-
-  trame:
-    name: Trame
-    runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Install PyVista
-        run: |
-          pip install --upgrade pip
-          pip install -ve . --group test
-
-      - name: Install requirements
-        run: |
-          pip install -r examples_trame/requirements.txt
-      - name: Run examples
-        working-directory: examples_trame
-        run: pytest -v ./tests

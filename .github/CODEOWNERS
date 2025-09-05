@@ -5,7 +5,8 @@
 /CODE_OF_CONDUCT.md                                 @pyvista/admin
 /CODEOWNERS                                         @pyvista/admin
 /.github/workflows/auto-approve.yml                 @pyvista/admin
-/.github/workflows/testing-and-deployment.yml       @banesullivan
-/.github/workflows/docs.yml                         @banesullivan
-/.github/workflows/docker-package.yml               @banesullivan
-/.github/workflows/vtk-pre-test.yml                 @banesullivan
+/.github/workflows/testing-and-deployment.yml       @pyvista/ci-reviewers
+/.github/workflows/docs.yml                         @pyvista/ci-reviewers
+/.github/workflows/docker-package.yml               @pyvista/ci-reviewers
+/.github/workflows/vtk-pre-test.yml                 @pyvista/ci-reviewers
+/tox.ini                                            @pyvista/ci-reviewers

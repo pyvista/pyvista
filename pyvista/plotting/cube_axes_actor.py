@@ -13,6 +13,9 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
+from pyvista.core.utilities.misc import _BoundsSizeMixin
+from pyvista.core.utilities.misc import _NameMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
@@ -50,7 +53,9 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     return labels
 
 
-class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
+class CubeAxesActor(
+    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor
+):
     """Wrap :vtk:`vtkCubeAxesActor`.
 
     This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
@@ -90,17 +95,17 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     x_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the x-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     y_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the y-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     z_label_format : str, optional
         A format string defining how tick labels are generated from tick
         positions for the z-axis. Defaults to the theme format if set,
-        otherwise ``'%.1f'``.
+        otherwise ``'{0:.1f}'``.
 
     x_label_visibility : bool, default: True
         The visibility of the x-axis labels.
@@ -192,18 +197,20 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
+        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+        default_fmt = '%.1f' if pyvista.vtk_version_info < (9, 5, 99) else '{0:.1f}'
         if x_label_format is None:
             x_label_format = pyvista.global_theme.font.fmt
             if x_label_format is None:
-                x_label_format = '%.1f'
+                x_label_format = default_fmt
         if y_label_format is None:
             y_label_format = pyvista.global_theme.font.fmt
             if y_label_format is None:
-                y_label_format = '%.1f'
+                y_label_format = default_fmt
         if z_label_format is None:
             z_label_format = pyvista.global_theme.font.fmt
             if z_label_format is None:
-                z_label_format = '%.1f'
+                z_label_format = default_fmt
 
         self.x_label_format = x_label_format
         self.y_label_format = y_label_format
@@ -568,7 +575,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(0, self._empty_str)
         else:
-            self.SetXTitle('')
+            self.SetXTitle(' ')
             self.SetAxisLabels(0, self._empty_str)
 
     def _update_y_labels(self):
@@ -586,7 +593,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(1, self._empty_str)
         else:
-            self.SetYTitle('')
+            self.SetYTitle(' ')
             self.SetAxisLabels(1, self._empty_str)
 
     def _update_z_labels(self):
@@ -604,7 +611,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(2, self._empty_str)
         else:
-            self.SetZTitle('')
+            self.SetZTitle(' ')
             self.SetAxisLabels(2, self._empty_str)
 
     @property

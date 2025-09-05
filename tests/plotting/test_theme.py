@@ -7,6 +7,7 @@ from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import matplotlib as mpl
 import pytest
 import vtk
 
@@ -179,7 +180,7 @@ def test_font_label_size(default_theme):
 
 
 def test_font_fmt(default_theme):
-    fmt = '%.6e'
+    fmt = '{:.6e}'
     default_theme.font.fmt = fmt
     assert default_theme.font.fmt == fmt
 
@@ -359,18 +360,20 @@ def test_camera_parallel_scale(default_theme):
     assert pl2.parallel_scale == 2.0
 
 
-def test_cmap(default_theme):
-    cmap = 'jet'
+@pytest.mark.parametrize('cmap', ['jet', mpl.colormaps['jet'], ['red', 'green', 'blue']])
+def test_cmap(default_theme, cmap):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
+
+def test_cmap_raises(default_theme):
     match = "Invalid colormap 'not a color map'"
     with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
     match = (
-        "cmap must be an instance of any type (<class 'str'>, <class 'list'>). "
-        "Got <class 'NoneType'> instead."
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>, "
+        "<class 'matplotlib.colors.Colormap'>). Got <class 'NoneType'> instead."
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None

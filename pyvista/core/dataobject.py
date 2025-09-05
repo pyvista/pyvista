@@ -23,10 +23,12 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
+from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -46,7 +48,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
+class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -117,11 +119,12 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(
+    def save(  # noqa: PLR0917
         self: Self,
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Save this vtk object to file.
 
@@ -155,6 +158,15 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
             .. note::
                This feature is only available when saving PLY files.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
+
+            .. versionadded:: 0.47
 
         Notes
         -----
@@ -194,7 +206,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                     )
                     raise TypeError(msg)
 
-            supported_block_types = [
+            supported_block_types: list[type] = [
                 pyvista.PolyData,
                 pyvista.UnstructuredGrid,
                 type(None),
@@ -225,7 +237,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
-            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
@@ -356,7 +368,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             for attr in self._get_attrs():
                 try:
                     fmt += row.format(attr[0], attr[2].format(*attr[1]))
-                except:
+                except TypeError:
                     fmt += row.format(attr[0], attr[2].format(attr[1]))
             if hasattr(self, 'n_arrays'):
                 fmt += row.format('N Arrays', self.n_arrays)
@@ -381,7 +393,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
             fmt += row.format('N Arrays:', self.n_arrays)
@@ -721,7 +733,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         if not hasattr(self, '_user_dict'):
             # Init
-            self._user_dict = _SerializedDictArray()
+            object.__setattr__(self, '_user_dict', _SerializedDictArray())
 
         if USER_DICT_KEY in field_data.keys():
             if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
@@ -1007,6 +1019,6 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         self.copy_attributes(mesh)  # type: ignore[arg-type]
 
     @property
+    @abstractmethod
     def is_empty(self) -> bool:
         """Return ``True`` if the object is empty."""
-        raise NotImplementedError

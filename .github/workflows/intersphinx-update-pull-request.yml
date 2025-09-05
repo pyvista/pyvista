@@ -13,9 +13,9 @@ jobs:
     # This job can create issues/PRs/comments, so
     #   only run on the head `pyvista/pyvista` repo
     if: github.repository_owner == 'pyvista'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 

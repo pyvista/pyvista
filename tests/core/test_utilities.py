@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+import itertools
 import json
+import operator
 import os
 from pathlib import Path
 import pickle
@@ -40,6 +42,7 @@ from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
+from pyvista.core.utilities import set_vtkwriter_mode
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -58,14 +61,15 @@ from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
+from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
-from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
@@ -79,6 +83,8 @@ with contextlib.suppress(ImportError):
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 @pytest.fixture
@@ -159,7 +165,7 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
-def test_version():
+def test_vtk_version_info():
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -171,7 +177,48 @@ def test_version():
     )
     assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
-    assert pv.vtk_version_info >= (0, 0, 0)
+    assert pv.vtk_version_info >= pv._MIN_SUPPORTED_VTK_VERSION
+
+
+@pytest.mark.parametrize('operation', [operator.le, operator.lt, operator.gt, operator.ge])
+def test_vtk_version_info_raises(operation):
+    version_str = '.'.join(map(str, pv._MIN_SUPPORTED_VTK_VERSION))
+    match = f'Comparing against unsupported VTK version 1.2.3. Minimum supported is {version_str}'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        operation(pv.vtk_version_info, (1, 2, 3))
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
+)
+def test_min_supported_vtk_version_matches_pyproject():
+    def get_min_vtk_version_from_pyproject():
+        # locate pyproject.toml relative to package
+        root = Path(
+            os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
+        )  # to make the test work when pyvista is installed via tox
+        pyproject_path = root / 'pyproject.toml'
+
+        with pyproject_path.open('rb') as f:
+            pyproject_data = tomllib.load(f)
+
+        # dependencies live under [project]
+        dependencies = pyproject_data.get('project', {}).get('dependencies', [])
+
+        # find the first vtk>= spec
+        min_vtk = next(dep.split('>=')[1] for dep in dependencies if 'vtk>=' in dep)
+        assert isinstance(min_vtk, str)
+        assert len(min_vtk) > 0
+        return tuple(map(int, min_vtk.split('.')))
+
+    from_pyproject = get_min_vtk_version_from_pyproject()
+    from_code = pv._MIN_SUPPORTED_VTK_VERSION
+    msg = (
+        f"Min VTK version specified in 'pyproject.toml' should match the "
+        f'min version specified in {_vtk.__name__!r}'
+    )
+    assert from_pyproject == from_code, msg
 
 
 def test_createvectorpolydata_error():
@@ -419,51 +466,73 @@ def test_is_inside_bounds_raises():
 
 
 def test_voxelize(uniform):
-    vox = pv.voxelize(uniform, density=0.5)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize(uniform, density=0.5)
     assert vox.n_cells
+
+    if pv._version.version_info[:2] > (0, 49):
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
 
 def test_voxelize_non_uniform_density(uniform):
-    vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
     assert vox.n_cells
-    vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
 def test_voxelize_invalid_density(rectilinear):
     # test error when density is not length-3
-    with pytest.raises(ValueError, match='not enough values to unpack'):
-        pv.voxelize(rectilinear, density=[0.5, 0.3])
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='not enough values to unpack'):
+            pv.voxelize(rectilinear, density=[0.5, 0.3])
     # test error when density is not an array-like
-    with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize(rectilinear, density={0.5, 0.3})
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
     mesh = pv.PolyData(hexbeam.points)
-    with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize(mesh)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='must have faces'):
+            pv.voxelize(mesh)
 
 
 def test_voxelize_volume_default_density(uniform):
-    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
-    actual = pv.voxelize_volume(uniform).n_cells
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        actual = pv.voxelize_volume(uniform).n_cells
     assert actual == expected
+
+    if pv._version.version_info[:2] > (0, 49):
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
 
 def test_voxelize_volume_invalid_density(rectilinear):
-    with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize_volume(rectilinear, density={0.5, 0.3})
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
-def test_voxelize_volume_no_face_mesh():
-    with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize_volume(pv.PolyData())
+def test_voxelize_volume_no_face_mesh(rectilinear):
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='must have faces'):
+            pv.voxelize_volume(pv.PolyData())
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_enclosed_bounds(function, ant):
-    vox = function(ant, density=0.9, enclosed=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = function(ant, density=0.9, enclosed=True)
 
     assert vox.bounds.x_min <= ant.bounds.x_min
     assert vox.bounds.y_min <= ant.bounds.y_min
@@ -476,7 +545,8 @@ def test_voxelize_enclosed_bounds(function, ant):
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_fit_bounds(function, uniform):
-    vox = function(uniform, density=0.9, fit_bounds=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = function(uniform, density=0.9, fit_bounds=True)
 
     assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
     assert np.isclose(vox.bounds.y_min, uniform.bounds.y_min)
@@ -495,6 +565,15 @@ def test_report():
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
     assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
+    assert 'User Data Path' not in report.__repr__()
+
+
+def test_report_downloads():
+    report = pv.Report(downloads=True)
+    repr_ = repr(report)
+    assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
+    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
 
 
 def test_line_segments_from_points():
@@ -686,6 +765,10 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
+@pytest.mark.skipif(
+    NUMPY_VERSION_INFO < (2, 3) and IS_ARM_MAC,
+    reason='Specific to Mac M4. See https://github.com/numpy/numpy/issues/28687',
+)
 def test_apply_transformation_to_points():
     mesh = ex.load_airplane()
     points = mesh.points
@@ -1206,11 +1289,9 @@ CASE_3 = (  # non-coplanar points
     ],
 )
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    NUMPY_VERSION_INFO < (1, 26) or IS_ARM_MAC,
     reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(
@@ -1285,25 +1366,53 @@ def test_fit_plane_to_points_success_with_many_points(one_million_points):
 
 
 @pytest.fixture
-def no_new_attr_subclass():
-    @no_new_attr
-    class A: ...
+def no_new_attributes_mixin_subclass():
+    class A(_NoNewAttrMixin):
+        def __init__(self):
+            super().__init__()
+            self.bar = 42
 
     class B(A):
-        _new_attr_exceptions = 'eggs'
-
         def __init__(self):
-            self.eggs = 'ham'
+            super().__init__()
+            self.baz = 42
 
-    return B
+    return A(), B()
 
 
-def test_no_new_attr_subclass(no_new_attr_subclass):
-    obj = no_new_attr_subclass()
-    assert obj
-    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
-    with pytest.raises(AttributeError, match=msg):
-        obj._eggs = 'ham'
+def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
+    a, b = no_new_attributes_mixin_subclass
+    ham = 'ham'
+    eggs = 'eggs'
+
+    match = (
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
+        'Use `pv.set_new_attribute` to set new attributes.'
+    )
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        setattr(a, ham, eggs)
+
+    match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        setattr(b, ham, eggs)
+
+
+def test_set_new_attribute(no_new_attributes_mixin_subclass):
+    a, _ = no_new_attributes_mixin_subclass
+    ham = 'ham'
+    eggs = 'eggs'
+
+    assert not hasattr(a, ham)
+    pv.set_new_attribute(a, ham, eggs)
+    assert hasattr(a, ham)
+    assert getattr(a, ham) == eggs
+
+    match = (
+        "Attribute 'ham' already exists. "
+        '`set_new_attribute` can only be used for setting NEW attributes.'
+    )
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
+        pv.set_new_attribute(a, ham, eggs)
 
 
 @pytest.fixture
@@ -1464,6 +1573,7 @@ def test_transform_rotate(transform):
 @pytest.mark.parametrize(
     ('method', 'args'),
     [
+        ('compose', (pv.Transform(ROTATION).translate(VECTOR),)),
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
         ('flip_x', ()),
@@ -1786,6 +1896,16 @@ def test_transform_matrix_list(transform, attr):
     assert np.array_equal(identity, np.eye(4))
 
 
+@pytest.mark.parametrize('point', [None, VECTOR])
+def test_transform_set_matrix(point):
+    # Create transform using point
+    trans = pv.Transform(point=point).scale(SCALE)
+    new_matrix = pv.Transform(ROTATION).matrix
+    assert not np.allclose(trans.matrix, new_matrix)
+    trans.matrix = new_matrix
+    assert np.allclose(trans.matrix, new_matrix)
+
+
 @pytest.fixture
 def transformed_actor():
     actor = pv.Actor()
@@ -1859,6 +1979,25 @@ def test_transform_init():
 
     transform = Transform(matrix.tolist())
     assert np.array_equal(transform.matrix, matrix)
+
+
+def test_transform_equivalent_methods():
+    def assert_transform_equivalence(tr_a: pv.Transform, tr_b: pv.Transform):
+        A = (tr_a * tr_b.inverse_matrix).matrix
+        B = np.eye(4)
+        assert np.allclose(A, B)
+        assert tr_a.n_transformations == tr_b.n_transformations
+
+    # All these transformations should be the same
+    tr1 = pv.Transform(ROTATION, point=VECTOR)
+    tr2 = pv.Transform(point=VECTOR).rotate(ROTATION)
+    tr3 = pv.Transform().rotate(ROTATION, point=VECTOR)
+    tr4 = pv.Transform().translate(-np.array(VECTOR)).rotate(ROTATION).translate(VECTOR)
+
+    trans = [tr1, tr2, tr3, tr4]
+
+    for _tr1, _tr2 in itertools.combinations(trans, 2):
+        assert_transform_equivalence(_tr1, _tr2)
 
 
 def test_transform_chain_methods():
@@ -2189,7 +2328,6 @@ def test_parse_interaction_event_raises_wrong_type():
 def test_classproperty():
     magic_number = 42
 
-    @no_new_attr
     class Foo:
         @_classproperty
         def prop(cls):  # noqa: N805
@@ -2381,7 +2519,6 @@ def _compute_unit_cell_quality(
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
@@ -2410,7 +2547,6 @@ def xfail_distortion_returns_one(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
     """Test that the actual computed measure for a unit cell matches the reported value."""
     xfail_wedge_negative_volume(info)
@@ -2421,7 +2557,6 @@ def test_cell_quality_info_unit_cell_value(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
     """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
@@ -2445,7 +2580,6 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_normal_range(info):
     """Test that the normal range is broader than the acceptable range."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
@@ -2456,7 +2590,6 @@ def test_cell_quality_info_normal_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_full_range(info):
     """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
@@ -2467,7 +2600,6 @@ def test_cell_quality_info_full_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_degenerate_cell(info):
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_distortion_returns_one(info)
@@ -2483,7 +2615,6 @@ def test_cell_quality_info_degenerate_cell(info):
     )
 
 
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_raises():
     match = re.escape(
         "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
@@ -2710,9 +2841,24 @@ def test_deprecate_positional_args_decorator_not_needed():
     reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_max_positional_args_matches_pyproject():
-    pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+    root = Path(
+        os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
+    )  # to make the test work when pyvista is installed via tox
+    pyproject_path = root / 'pyproject.toml'
     with pyproject_path.open('rb') as f:
         pyproject_data = tomllib.load(f)
     expected_value = pyproject_data['tool']['ruff']['lint']['pylint']['max-positional-args']
 
     assert expected_value == _MAX_POSITIONAL_ARGS
+
+
+def test_save_compression():
+    writer = vtk.vtkXMLUnstructuredGridWriter()
+
+    for compressor in get_args(_CompressionOptions):
+        if compressor is None:
+            set_vtkwriter_mode(writer, use_binary=True, compression=None)
+            assert writer.GetCompressor() is None
+        else:
+            set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
+            assert compressor in str(type(writer.GetCompressor())).lower()

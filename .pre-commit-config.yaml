@@ -22,7 +22,7 @@ repos:
         additional_dependencies: ["tomli"]
 
   - repo: https://github.com/DanielNoord/pydocstringformatter
-    rev: v0.7.3
+    rev: v0.7.5
     hooks:
       - id: pydocstringformatter
         args:
@@ -39,7 +39,7 @@ repos:
         files: ^pyvista/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-merge-conflict
       - id: debug-statements
@@ -64,12 +64,12 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.2
+    rev: 0.33.3
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.2
+    rev: v0.12.11
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
@@ -91,7 +91,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.11.0-1
+    rev: v3.12.0-2
     hooks:
       - id: shfmt
 
@@ -100,7 +100,15 @@ repos:
     hooks:
       - id: taplo-format
         # See options: https://taplo.tamasfe.dev/configuration/formatter-options.html
-        args: [--option, "reorder_arrays=true", --option, "reorder_keys=true"]
+        args:
+          [
+            --option,
+            "reorder_arrays=true",
+            --option,
+            "reorder_keys=true",
+            --option,
+            "align_comments=false",
+          ]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.11.0
