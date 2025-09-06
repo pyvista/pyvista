@@ -113,9 +113,9 @@ jobs:
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
-      PIP_TRUSTED_HOST: devpi.devpi.svc.cluster.local
-      PIP_INDEX_URL: http://devpi.devpi.svc.cluster.local:3141/root/pypi
-      UV_INDEX: http://devpi.devpi.svc.cluster.local:3141/root/pypi
+      PIP_TRUSTED_HOST: 10.30.0.9
+      PIP_INDEX_URL: http://10.30.0.9:3141/root/pypi
+      UV_INDEX: http://10.30.0.9:3141/root/pypi
     steps:
       - uses: actions/checkout@v5
         with:
