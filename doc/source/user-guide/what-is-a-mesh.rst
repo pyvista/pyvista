@@ -158,7 +158,7 @@ interpolated across the cells.
 .. pyvista-plot::
     :context:
 
-    mesh.point_data['my point values'] = np.arange(mesh.n_points)
+    mesh.point_data['my point values'] = np.arange(mesh.n_points, dtype=float)
     mesh.plot(scalars='my point values', cpos=cpos, show_edges=True)
 
 Cell Data
@@ -170,7 +170,7 @@ face or 3D volume) is assigned the value of that attribute.
 .. pyvista-plot::
     :context:
 
-    mesh.cell_data['my cell values'] = np.arange(mesh.n_cells)
+    mesh.cell_data['my cell values'] = np.arange(mesh.n_cells, dtype=float)
     mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
 
 Here's a comparison of point data versus cell data and how point data
@@ -216,10 +216,10 @@ Note how this varies from assigning scalars to each point
    :context:
 
    cube = pv.Cube()
-   cube.cell_data['myscalars'] = range(6)
+   cube.cell_data['myscalars'] = np.arange(6,dtype=float)
 
    other_cube = cube.copy()
-   other_cube.point_data['myscalars'] = range(8)
+   other_cube.point_data['myscalars'] = np.arange(8,dtype=float)
 
    pl = pv.Plotter(shape=(1, 2), border_width=1)
    pl.add_mesh(cube, cmap='coolwarm')
