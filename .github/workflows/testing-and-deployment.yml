@@ -79,6 +79,78 @@ jobs:
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true
 
+  macOS:
+    name: ${{ matrix.name }}
+    needs: cache-vtk-data
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Self-hosted runner configurations
+          - name: MacOS Unit Testing (3.10)
+            python-version: "3.10"
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.11)
+            python-version: "3.11"
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.12)
+            python-version: "3.12"
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.13)
+            python-version: "3.13"
+            runner-labels: "macos-15-self-hosted"
+
+    runs-on: ${{ matrix.runner-labels }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: runner.environment != 'self-hosted'
+        uses: actions/setup-python@v5
+        continue-on-error: true
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+
+      - name: Set Python PATH and create a virtual env
+        if: runner.environment == 'self-hosted'
+        run: |
+          /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
+          echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
+
+      - name: Restore example data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: tox run -e py${{ matrix.python-version }}-plotting
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
@@ -145,41 +217,173 @@ jobs:
       - name: Core Testing (no GL)
         run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
 
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
 
-      # - name: Plotting Testing (uses GL)
-      #   if: ${{ !cancelled() }}
-      #   run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
-      # - name: Upload Images for Failed Tests
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-      #     path: _failed_test_images
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
 
-      # - name: Upload Generated Images
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-      #     path: _generated_test_images
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
+        name: "Upload coverage to CodeCov"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      # - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
-      #   name: "Upload coverage to CodeCov"
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Check package
+        run: |
+          pip install build twine
+          python -m build
+          twine check --strict dist/*
 
-      # - name: Check package
-      #   run: |
-      #     pip install build twine
-      #     python -m build
-      #     twine check --strict dist/*
+      - name: Upload to PyPi
+        if: matrix.python-version == '3.10' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          twine upload --skip-existing dist/pyvista*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
-      # - name: Upload to PyPi
-      #   if: matrix.python-version == '3.10' && startsWith(github.ref, 'refs/tags/v')
-      #   run: |
-      #     twine upload --skip-existing dist/pyvista*
-      #   env:
-      #     TWINE_USERNAME: __token__
-      #     TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      #     TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+  VTK-dev:
+    # For PRs, only run this job if the 'vtk-dev-testing' label is applied
+    if: |
+      (github.event_name != 'pull_request' && github.event_name != 'push') ||
+      contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
+    name: Linux VTK Dev Testing
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04-self-hosted
+    needs: cache-vtk-data
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
+        with:
+          packages: xvfb
+          version: 3.0
+
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
+        name: "Upload coverage to CodeCov"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  windows:
+    name: Windows Unit Testing
+    runs-on: windows-latest
+    timeout-minutes: 60
+    needs: cache-vtk-data
+    env:
+      CI_WINDOWS: true
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Core Testing (no GL)
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        with:
+          timeout_minutes: 12
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-core
+
+      - name: Plotting Testing (uses GL)
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        if: ${{ !cancelled() }}
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-plotting
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
