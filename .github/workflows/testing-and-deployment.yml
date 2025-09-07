@@ -185,7 +185,6 @@ jobs:
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
-      PARALLEL: "-n4" # flag for pytest-xdist
     steps:
       - uses: actions/checkout@v5
         with:
@@ -208,6 +207,16 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
+
+      - name: Set PARALLEL flag for vtk>=9.4.0
+        run: |
+          python - <<'EOF'
+          import os
+          from packaging.version import Version
+          v = "${{ matrix.vtk-version }}"
+          p = "-n4" if v=="latest" or Version(v) >= Version("9.4.0") else ""
+          open(os.environ["GITHUB_ENV"], "a").write(f"PARALLEL={p}\n")
+          EOF
 
       - name: Install tox-uv
         run: pip install tox-uv
