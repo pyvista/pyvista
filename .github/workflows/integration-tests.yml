@@ -17,9 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PIP_TRUSTED_HOST: devpi.devpi.svc.cluster.local
-  PIP_INDEX_URL: http://devpi.devpi.svc.cluster.local/root/pypi
-  UV_INDEX: http://devpi.devpi.svc.cluster.local/root/pypi
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
   TOX_COLORED: "yes"

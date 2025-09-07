@@ -33,9 +33,6 @@ jobs:
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
       SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
-      PIP_TRUSTED_HOST: devpi.devpi.svc.cluster.local
-      PIP_INDEX_URL: http://devpi.devpi.svc.cluster.local/root/pypi
-      UV_INDEX: http://devpi.devpi.svc.cluster.local/root/pypi
     steps:
       - uses: actions/checkout@v5
         with:
