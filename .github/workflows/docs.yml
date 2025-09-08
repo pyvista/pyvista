@@ -88,7 +88,7 @@ jobs:
           persist-credentials: false
 
       - name: Build I18N Documentation
-        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
+        # if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
           tox run -e docs-build -- mini18n-html
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
