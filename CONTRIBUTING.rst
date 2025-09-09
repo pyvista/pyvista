@@ -967,25 +967,49 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Install documentation dependencies with:
+Documentation can be build either directly (ie. using python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
 
-.. code-block:: shell
+.. tab-set::
+    :sync-group: category
 
-   python -m pip install -e . --group docs
+    .. tab-item:: python
+        :sync: pytest
 
-Build the documentation on Linux or Mac OS with:
+        .. code-block:: bash
 
-.. code-block:: bash
+            python -m pip install -e . --group docs
 
-   make -C doc html
+        .. tab-set::
 
-Build the documentation on Windows with:
+            .. tab-item:: Mac OS / Linux
 
-.. code-block:: winbatch
+                .. code-block:: bash
 
-   cd doc
-   python -msphinx -M html source _build
-   python -msphinx -M html . _build
+                    make -C doc html
+
+            .. tab-item:: Windows
+
+                .. code-block:: bash
+
+                    cd doc
+                    python -msphinx -M html source _build
+                    python -msphinx -M html . _build
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e docs-build
+
+        .. note::
+            By default, the ``html`` builder of sphinx is specified when running the ``docs-build``
+            environment.
+            You can customize it as a separate positional argument such that:
+
+            .. code-block:: bash
+
+                tox run -e docs-build -- mini18n-html # for translated languages
 
 The generated documentation can be found in the ``doc/_build/html``
 directory.
@@ -1043,7 +1067,7 @@ The regression testing compares these generated images to those stored in
 
     Doc Image Cache: ``./tests/doc/doc_image_cache``
 
-To test all the images, run ``pytest`` with:
+To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
 .. tab-set::
     :sync-group: category
@@ -1061,6 +1085,7 @@ To test all the images, run ``pytest`` with:
         .. code-block:: bash
 
             tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
+            tox run -e docs-test -- -k test_static_images
 
 
 The tests must be executed explicitly with this command. The name of the test
@@ -1167,6 +1192,7 @@ To test that interactive plots do not exceed this limit, run:
         .. code-block:: bash
 
             tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+            tox run -e docs-test -- -k test_interactive_plot_file_size
 
 
 If any of these tests fail, the example(s) which generated the plot should be
