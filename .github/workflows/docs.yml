@@ -15,9 +15,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  VTK_DEFAULT_OPENGL_WINDOW: "vtkEGLRenderWindow"
-
 permissions:
   id-token: none
 
