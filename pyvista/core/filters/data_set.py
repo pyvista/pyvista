@@ -2115,9 +2115,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                         inplace=True,
                         progress_bar=progress_bar,
                     )  # remove unused points
-            if has_cells:
-                extracted.point_data.remove('vtkOriginalPointIds')
-                extracted.cell_data.remove('vtkOriginalCellIds')
+
             return extracted
 
         # Store active scalars info to restore later if needed
