@@ -4198,15 +4198,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.UnstructuredGrid
             Subselected grid.
 
-        Notes
-        -----
-        Calling this has the side effect of adding both a
-        ``"vtkOriginalPointIds"`` array to point data and
-        ``'vtkOriginalCellIds'`` array to the cell data in-place. If they
-        already exist they will be overwritten.
-
-        This method is not thread-safe.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -4239,9 +4230,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         selection = _vtk.vtkSelection()
         selection.AddNode(selectionNode)
 
-        # extract
+        # Extract using a shallow copy to avoid the side effect of creating the
+        # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
+        # dataset.
+        #
+        # See: https://github.com/pyvista/pyvista/pull/7946
+        ds_copy = self.copy(deep=False)
+
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(0, ds_copy)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract_sel)
@@ -4344,7 +4341,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # extract
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(0, self.copy(deep=False))
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel)
