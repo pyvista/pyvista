@@ -4198,6 +4198,23 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.UnstructuredGrid
             Subselected grid.
 
+        Notes
+        -----
+        Calling this has the side effect of adding both a
+        ``"vtkOriginalPointIds"`` array to point data and
+        ``'vtkOriginalCellIds'`` array to the cell data in-place. If they
+        already exist they will be overwritten.
+
+        If you intend on calling this function in multiple threads, either copy
+        the original dataset or add these two arrays beforehand. For example:
+
+        .. code:: pycon
+
+           >>> import numpy as np
+           >>> ds = pv.Sphere()
+           >>> ds['vtkOriginalPointIds'] = np.arange(ds.n_points)  # doctest:+SKIP
+           >>> ds['vtkOriginalCellIds'] = np.arange(ds.n_cells)  # doctest:+SKIP
+
         Examples
         --------
         >>> import pyvista as pv
