@@ -2304,6 +2304,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             # restore previously active scalars
             output.set_active_scalars(active_name, preference=active_field)
 
+        output.cell_data.pop('vtkOriginalCellIds', None)
+        output.point_data.pop('vtkOriginalPointIds', None)
+
         if inplace:
             try:
                 self.copy_from(output, deep=False)
