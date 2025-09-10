@@ -967,7 +967,7 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Documentation can be build either directly (ie. using python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
+Documentation can be build either directly (i.e. using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
 
 .. tab-set::
     :sync-group: category
