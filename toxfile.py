@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001, D103
-    if env_conf.env_name != 'docs-build':
+    if env_conf.env_name not in ['docs-build', 'doctest-modules']:
         return
 
     if os.environ.get('CI', 'false').lower() == 'true':
