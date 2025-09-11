@@ -12,6 +12,7 @@ from typing import Literal
 from typing import TextIO
 from typing import TypeVar
 from typing import cast
+from typing import get_args
 from typing import overload
 import warnings
 
@@ -19,6 +20,7 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -39,6 +41,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
+_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 
 if TYPE_CHECKING:
@@ -133,7 +136,11 @@ def get_ext(filename: str | Path) -> str:
 
 
 @_deprecate_positional_args(allowed=['vtk_writer'])
-def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001, FBT002
+def set_vtkwriter_mode(
+    vtk_writer: _VTKWriterType,
+    use_binary: bool = True,  # noqa: FBT001, FBT002
+    compression: _CompressionOptions = 'zlib',
+) -> _VTKWriterType:
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -144,6 +151,13 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
         ``False``, the writer is set to write files in ASCII format.
+    compression : str or None, default: 'zlib'
+        The compression type to use when ``use_binary`` is ``True`` and ``vtk_writer``
+        is of type :vtk:`vtkXMLWriter`. This argument has no effect otherwise.
+        Acceptable values are ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``.
+        ``None`` indicates no compression.
+
+        .. versionadded:: 0.47
 
     Returns
     -------
@@ -163,6 +177,17 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
+            supported = get_args(_CompressionOptions)
+
+            _validation.check_contains(supported, must_contain=compression, name='compression')
+            if compression is None:
+                vtk_writer.SetCompressorTypeToNone()
+            elif compression == 'zlib':
+                vtk_writer.SetCompressorTypeToZLib()
+            elif compression == 'lz4':
+                vtk_writer.SetCompressorTypeToLZ4()
+            else:
+                vtk_writer.SetCompressorTypeToLZMA()
         else:
             vtk_writer.SetDataModeToAscii()
     return vtk_writer

@@ -160,6 +160,7 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
     (r'py:.*', '.*MatrixLike'),
@@ -186,6 +187,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
+    (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
     #
     # Dataset-related types

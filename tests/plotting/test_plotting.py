@@ -95,6 +95,9 @@ skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
+skip_lesser_9_4_X_depth_peeling = pytest.mark.needs_vtk_version(  # noqa: N816
+    9, 4, reason='Depth peeling unstable on CI before 9.4.X'
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -1294,14 +1297,15 @@ def test_axes():
 
 
 def test_box_axes(verify_image_cache):
-    verify_image_cache.high_variance_test = True
+    """Test deprecated function and make sure we remove it by v0.48."""
+    verify_image_cache.skip = True
 
     plotter = pv.Plotter()
 
     def _test_add_axes_box():
         plotter.add_axes(box=True)
         if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
+            msg = 'Calling this should raise an error'
             raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
@@ -1312,8 +1316,7 @@ def test_box_axes(verify_image_cache):
         match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
     ):
         _test_add_axes_box()
-    plotter.add_mesh(pv.Sphere())
-    plotter.show()
+    plotter.close()
 
 
 def test_box_axes_color_box():
@@ -2107,6 +2110,7 @@ def test_plot_compare_four():
     )
 
 
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
     p = pv.Plotter()
@@ -3113,7 +3117,6 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_notebook(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -3122,6 +3125,7 @@ def test_screenshot_notebook(tmpdir):
     pl.theme.jupyter_backend = 'static'
     pl.add_mesh(pv.Cone())
     pl.show(screenshot=filename)
+    pl.close()
 
     assert Path(filename).is_file()
 
@@ -3648,6 +3652,7 @@ def test_lookup_table_above_below_opacity():
 
 
 @skip_windows_mesa
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
@@ -3668,6 +3673,7 @@ def test_plot_nan_color(uniform):
     pl.show()
 
 
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_above_below_color(uniform):
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
