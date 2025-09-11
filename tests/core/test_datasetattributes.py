@@ -554,6 +554,7 @@ def test_preserve_field_data_after_extract_cells(hexbeam, arr):
     # https://github.com/pyvista/pyvista/pull/934
     hexbeam.field_data['foo'] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
+
     assert 'foo' in extracted.field_data
 
 
