@@ -11,15 +11,15 @@ import scooby
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 _cmd_render_window_info = """
-import pyvista; \
-plotter = pyvista.Plotter(notebook=False, off_screen=True); \
-plotter.add_mesh(pyvista.Sphere()); \
-plotter.show(auto_close=False); \
-gpu_info = plotter.render_window.ReportCapabilities(); \
-print(gpu_info); \
-class_name = plotter.render_window.GetClassName(); \
-print(f'vtkRenderWindow class name: {class_name}'); \
-plotter.close() \
+from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+import vtkmodules.vtkRenderingOpenGL2
+ren = vtkRenderer()
+win = vtkRenderWindow()
+win.OffScreenRenderingOn()
+win.AddRenderer(ren)
+win.Render()
+print(win.ReportCapabilities())
+print(win.GetClassName())
 """
 
 _cmd_math_text = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
