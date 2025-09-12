@@ -26,6 +26,13 @@ Three spotlights with three different attenuation profiles each:
 """
 
 # sphinx_gallery_thumbnail_number = 3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv
