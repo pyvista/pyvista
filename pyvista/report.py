@@ -22,10 +22,7 @@ print(f'vtkRenderWindow class name: {class_name}'); \
 plotter.close() \
 """
 
-_cmd_math_text = """
-from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer; \
-print(vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()); \
-"""
+_cmd_math_text = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
 
 
 def _run(cmd: str):
