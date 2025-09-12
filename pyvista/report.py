@@ -296,8 +296,13 @@ class Report(scooby.Report):
             extra_meta = [
                 ('GPU Details', 'None'),
             ]
+        try:
+            render_window = _get_render_window_class()
+        except Exception:  # noqa: BLE001
+            render_window = 'error'
+        finally:
+            extra_meta.append(('Render Window', render_window))
 
-        extra_meta.append(('Render Window', _get_render_window_class()))
         extra_meta.append(('MathText Support', check_math_text_support()))
         if downloads:
             user_data_path, vtk_data_source, file_cache = _get_downloads_info()
