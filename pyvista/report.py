@@ -22,7 +22,11 @@ print(win.ReportCapabilities())
 print(win.GetClassName())
 """
 
-_cmd_math_text = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
+_cmd_math_text = """
+import vtkmodules.vtkRenderingFreeType
+import vtkmodules.vtkRenderingMatplotlib
+vtkmodules.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+"""
 
 
 def _run(cmd: str):
