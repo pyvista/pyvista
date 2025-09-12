@@ -25,7 +25,7 @@ print(win.GetClassName())
 _cmd_math_text = """
 import vtkmodules.vtkRenderingFreeType
 import vtkmodules.vtkRenderingMatplotlib
-vtkmodules.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+print(vtkmodules.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported())
 """
 
 
