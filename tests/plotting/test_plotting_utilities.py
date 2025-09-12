@@ -12,6 +12,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
+from pyvista.report import _get_render_window_class
 
 HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
@@ -35,6 +36,10 @@ def test_gpuinfo(monkeypatch):
     for func_name in ['renderer', 'version', 'vendor']:
         with pytest.raises(RuntimeError, match=func_name):
             getattr(gpuinfo, func_name)()
+
+    match = 'Unable to parse rendering information for the vtkRenderWindow class name.'
+    with pytest.raises(RuntimeError, match=match):
+        _get_render_window_class()
 
 
 @pytest.mark.skip_plotting
