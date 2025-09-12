@@ -296,12 +296,15 @@ class Report(scooby.Report):
             extra_meta = [
                 ('GPU Details', 'None'),
             ]
-        try:
-            render_window = _get_render_window_class()
-        except Exception:  # noqa: BLE001
-            render_window = 'error'
-        finally:
-            extra_meta.append(('Render Window', render_window))
+
+        if gpu:
+            try:
+                render_window = _get_render_window_class()
+            except Exception:  # noqa: BLE001
+                render_window = 'error'
+        else:
+            render_window = 'None'
+        extra_meta.append(('Render Window', render_window))
 
         extra_meta.append(('MathText Support', check_math_text_support()))
         if downloads:
