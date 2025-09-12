@@ -10,22 +10,53 @@ import scooby
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
-_cmd = """\
+_cmd_render_window_info = """
 import pyvista; \
 plotter = pyvista.Plotter(notebook=False, off_screen=True); \
 plotter.add_mesh(pyvista.Sphere()); \
 plotter.show(auto_close=False); \
 gpu_info = plotter.render_window.ReportCapabilities(); \
 print(gpu_info); \
-plotter.close()\
+class_name = plotter.render_window.GetClassName(); \
+print(f'vtkRenderWindow class name: {class_name}'); \
+plotter.close() \
 """
+
+_cmd_math_text = """
+from vtkmodules.vtkRenderingFreeType import vtkMathTextFreeTypeTextRenderer; \
+print(vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()); \
+"""
+
+
+def _run(cmd: str):
+    return subprocess.run([sys.executable, '-c', cmd], check=False, capture_output=True)
+
+
+def _get_cached_render_window_info(attr_name: str = ''):
+    if not (info := getattr(_get_cached_render_window_info, 'info', '')):
+        # an OpenGL context MUST be opened before trying to do this.
+        proc = _run(_cmd_render_window_info)
+        info = '' if proc.returncode else proc.stdout.decode()
+        _get_cached_render_window_info.info = info
+    if attr_name:
+        regex = re.compile(f'{attr_name}:(.+)\n')
+        try:
+            value = regex.findall(info)[0]
+        except IndexError:
+            msg = f'Unable to parse rendering information for the {attr_name}.'
+            raise RuntimeError(msg) from None
+        return value.strip()
+    return info
 
 
 def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
-    # an OpenGL context MUST be opened before trying to do this.
-    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
-    return '' if proc.returncode else proc.stdout.decode()
+    return _get_cached_render_window_info()
+
+
+def _get_render_window_class() -> str:  # numpydoc ignore=RT01
+    """Get the render window class."""
+    return _get_cached_render_window_info('vtkRenderWindow class name')
 
 
 def check_matplotlib_vtk_compatibility() -> bool:
@@ -83,8 +114,7 @@ def check_math_text_support() -> bool:
     # This is a hack to get around that by executing the code in a subprocess
     # and capturing the output:
     # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-    _cmd = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
-    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    proc = _run(_cmd_math_text)
     math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
     return math_text_support and check_matplotlib_vtk_compatibility()
 
@@ -99,35 +129,17 @@ class GPUInfo:
     @property
     def renderer(self):  # numpydoc ignore=RT01
         """GPU renderer name."""
-        regex = re.compile('OpenGL renderer string:(.+)\n')
-        try:
-            renderer = regex.findall(self._gpu_info)[0]
-        except IndexError:
-            msg = 'Unable to parse GPU information for the renderer.'
-            raise RuntimeError(msg) from None
-        return renderer.strip()
+        return _get_cached_render_window_info('OpenGL renderer string')
 
     @property
     def version(self):  # numpydoc ignore=RT01
         """GPU renderer version."""
-        regex = re.compile('OpenGL version string:(.+)\n')
-        try:
-            version = regex.findall(self._gpu_info)[0]
-        except IndexError:
-            msg = 'Unable to parse GPU information for the version.'
-            raise RuntimeError(msg) from None
-        return version.strip()
+        return _get_cached_render_window_info('OpenGL version string')
 
     @property
     def vendor(self):  # numpydoc ignore=RT01
         """GPU renderer vendor."""
-        regex = re.compile('OpenGL vendor string:(.+)\n')
-        try:
-            vendor = regex.findall(self._gpu_info)[0]
-        except IndexError:
-            msg = 'Unable to parse GPU information for the vendor.'
-            raise RuntimeError(msg) from None
-        return vendor.strip()
+        return _get_cached_render_window_info('OpenGL vendor string')
 
     def get_info(self):
         """All GPU information as tuple pairs.
@@ -240,8 +252,6 @@ class Report(scooby.Report):
         downloads: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate a :class:`scooby.Report` instance."""
-        from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
-
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
@@ -282,7 +292,7 @@ class Report(scooby.Report):
                 ('GPU Details', 'None'),
             ]
 
-        extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
+        extra_meta.append(('Render Window', _get_render_window_class()))
         extra_meta.append(('MathText Support', check_math_text_support()))
         if downloads:
             user_data_path, vtk_data_source, file_cache = _get_downloads_info()
