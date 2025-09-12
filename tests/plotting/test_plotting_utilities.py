@@ -17,7 +17,7 @@ HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
 @pytest.mark.skip_plotting
-def test_gpuinfo():
+def test_gpuinfo(monkeypatch):
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
     _repr_html = gpuinfo._repr_html_()
@@ -27,7 +27,11 @@ def test_gpuinfo():
     assert len(_repr_html) > 1
 
     # test corrupted internal infos
-    gpuinfo._gpu_info = 'foo'
+    monkeypatch.setattr(
+        'pyvista.report._get_cached_render_window_info.info',
+        'foo',
+        raising=False,
+    )
     for func_name in ['renderer', 'version', 'vendor']:
         with pytest.raises(RuntimeError, match=func_name):
             getattr(gpuinfo, func_name)()
