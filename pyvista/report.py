@@ -19,7 +19,7 @@ win.OffScreenRenderingOn()
 win.AddRenderer(ren)
 win.Render()
 print(win.ReportCapabilities())
-print(win.GetClassName())
+print('vtkRenderWindow class name: ', win.GetClassName())
 """
 
 _cmd_math_text = """
