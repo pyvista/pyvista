@@ -115,7 +115,7 @@ def check_math_text_support() -> bool:
     # This is a hack to get around that by executing the code in a subprocess
     # and capturing the output:
     # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-    if not (is_supported := getattr(check_math_text_support, 'is_supported', False)):
+    if (is_supported := getattr(check_math_text_support, 'is_supported', None)) is None:
         proc = _run(_cmd_math_text)
         math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
         is_supported = math_text_support and check_matplotlib_vtk_compatibility()
