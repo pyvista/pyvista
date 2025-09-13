@@ -108,6 +108,14 @@ def test_unstructured_grid_eq(hexbeam):
     hexbeam.cell_connectivity[0] += 1
     assert hexbeam != copy
 
+    poly = examples.cells.Polyhedron()
+    poly_copy = poly.copy()
+    assert poly == poly_copy
+
+    conn = poly_copy.GetPolyhedronFaces().GetConnectivityArray()
+    pv._vtk.vtk_to_numpy(conn)[0] += 1
+    assert poly != poly_copy
+
 
 def test_eq_nan_points():
     poly = pv.PolyData([np.nan, np.nan, np.nan])
