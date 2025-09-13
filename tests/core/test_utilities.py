@@ -561,10 +561,12 @@ def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
     assert 'GPU Details : None' not in report.__repr__()
+    assert re.search(r'Render Window : (vtk\w+RenderWindow|error)', report.__repr__())
+    assert 'vtkRenderWindow' not in report.__repr__()  # must not be abstract
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
-    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
+    assert 'Render Window : None' in report.__repr__()
     assert 'User Data Path' not in report.__repr__()
 
 
