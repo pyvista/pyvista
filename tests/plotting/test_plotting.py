@@ -3962,7 +3962,10 @@ def test_remove_vertices_actor(sphere):
 
 
 @pytest.mark.skip_windows
-def test_add_point_scalar_labels_fmt():
+def test_add_point_scalar_labels_fmt(verify_image_cache):
+    # parallel on GitHub hosted sometimes has high image error
+    verify_image_cache.macos_skip_image_cache = True
+
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
