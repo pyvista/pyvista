@@ -53,12 +53,12 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.10.2',
+  'matplotlib<3.10.7',
   'numpy<2.4.0',
   'pillow<11.4.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
-  'typing-extensions<4.15.0',
+  'typing-extensions<4.16.0',
 ]
 
 typing = [
@@ -74,7 +74,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.136.8',
+  'hypothesis<6.138.14',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
@@ -104,7 +104,7 @@ test = [
   'trame-vuetify>=2.3.1,<3.0.2',
   'trame>=2.5.2,<3.10.3',
   'trimesh<4.7.0',
-  'typing-extensions<4.15.0',
+  'typing-extensions<4.16.0',
   { include-group = 'pinned' },
 ]
 
@@ -117,10 +117,10 @@ docs = [
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
-  'joblib==1.5.1',
+  'joblib==1.5.2',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.4.5',
-  'lxml==6.0.0',
+  'jupyterlab==4.4.6',
+  'lxml==6.0.1',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==1.17.1',
@@ -136,19 +136,19 @@ docs = [
   'sphinx-design==0.6.1',
   'sphinx-gallery==0.19.0',
   'sphinx-notfound-page==1.1.0',
-  'sphinx-sitemap==2.7.2',
+  'sphinx-sitemap==2.8.0',
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.3.2',
   'sphinx-toolbox==4.0.0',
   'sphinx==8.2.3',
   'sphinxcontrib-asciinema==0.4.2',
   'sphinxcontrib-websupport==2.0.0',
-  'sphinxext-opengraph==0.10.0',
+  'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
   'trame-vtk==2.9.1',
-  'trame-vuetify==3.0.1',
-  'trame==3.11.0',
-  'trimesh==4.7.1',
+  'trame-vuetify==3.0.2',
+  'trame==3.12.0',
+  'trimesh==4.8.0',
   'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]
@@ -250,6 +250,7 @@ image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
+  'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
@@ -568,6 +569,5 @@ ignore = [
   'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
   'PY004', # we have a 'doc' folder, not 'docs'
-  'PY007', # tox support
   'RTD', # RTD: the documentation is not hosted by ReadTheDocs
 ]

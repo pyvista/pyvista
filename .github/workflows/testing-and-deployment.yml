@@ -65,7 +65,7 @@ jobs:
 
       - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
         if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: pyvista/vtk-data
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -102,7 +102,7 @@ jobs:
 
     runs-on: ${{ matrix.runner-labels }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -186,7 +186,7 @@ jobs:
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -196,7 +196,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         with:
           packages: xvfb
           version: 3.0
@@ -232,7 +232,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -267,7 +267,7 @@ jobs:
       matrix:
         python-version: ["3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -278,7 +278,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         with:
           packages: xvfb
           version: 3.0
@@ -300,6 +300,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
@@ -307,7 +314,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -324,7 +331,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -348,11 +355,21 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        with:
+          timeout_minutes: 12
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: timeout
+          command: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()

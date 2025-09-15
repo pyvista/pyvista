@@ -38,6 +38,7 @@ from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
+from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
@@ -676,7 +677,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     >>> mesh = pv.PolyData(examples.antfile)
 
-    Construct a set of random line segments using a ``pv.CellArray`.
+    Construct a set of random line segments using a ``pv.CellArray``.
     Because every line in this example has the same size, in this case
     two points, we can use ``pv.CellArray.from_regular_cells`` to
     construct the ``lines`` cell array. This is the most efficient
@@ -687,7 +688,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(points, lines=pv.CellArray.from_regular_cells(lines))
-    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines, dtype=float)
     >>> mesh.plot(scalars='line_idx')
 
     Construct a set of random triangle strips using a ``pv.CellArray``.
@@ -705,7 +706,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
     ... )
-    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips, dtype=float)
     >>> mesh.plot(show_edges=True, scalars='strip_idx')
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
@@ -1413,13 +1414,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.GetNumberOfPolys()
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(  # noqa: PLR0917
+    def save(  # type: ignore[override]  # noqa: PLR0917
         self,
-        filename,
+        filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
-        texture=None,
+        texture: NumpyArray[np.uint8] | str | None = None,
         recompute_normals: bool = True,  # noqa: FBT001, FBT002
-    ):
+        compression: _CompressionOptions = 'zlib',
+    ) -> None:
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -1458,6 +1460,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             are computed in place to ensure the mesh is properly saved.
             Set this to ``False`` to save instead the already existing normal
             array in the PolyData.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
+
+            .. versionadded:: 0.47
 
         Notes
         -----
@@ -1520,14 +1531,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     msg = f'Invalid datatype {texture.dtype} of texture array'
                     raise ValueError(msg)
             else:
-                msg = (
+                msg = (  # type: ignore[unreachable]
                     f'Invalid type {type(texture)} for texture.  '
                     'Should be either a string representing a point or '
                     'cell array, or a numpy array.'
                 )
                 raise TypeError(msg)
 
-        super().save(filename, binary=binary, texture=texture)
+        super().save(filename, binary=binary, texture=texture, compression=compression)
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01
@@ -3241,11 +3252,12 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return grid
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(
+    def save(  # noqa: PLR0917
         self,
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Save this VTK object to file.
 
@@ -3259,6 +3271,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         texture : np.ndarray, str, None
             Ignored argument. Kept to maintain compatibility with supertype.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
+
+            .. versionadded:: 0.47
 
         Notes
         -----
@@ -3285,7 +3306,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             msg = 'Cannot save texture of a pointset.'
             raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
-        grid.save(filename, binary=binary)
+        grid.save(filename, binary=binary, compression=compression)
 
     @_deprecate_positional_args(allowed=['ind'])
     def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002

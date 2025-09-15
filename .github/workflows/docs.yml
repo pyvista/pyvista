@@ -1,15 +1,8 @@
 name: Build Documentation
 
-# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
-  pull_request: # Uses cache
-  workflow_dispatch: # Able to not use cache by user demand
-    inputs:
-      cache:
-        description: "Use build cache"
-        required: false
-        default: "true"
-  # No cache enabled for `schedule` and `push`
+  pull_request:
+  workflow_dispatch:
   schedule:
     - cron: "0 0 1 * *" # once a month on main
   push:
@@ -22,22 +15,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  USE_CACHE: ${{
-    (
-    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
-    (github.event_name == 'pull_request') ||
-    (github.event_name == 'push')
-    ) &&
-    !startsWith(github.ref, 'refs/tags/v') &&
-    !startsWith(github.ref, 'refs/heads/release/') &&
-    !startsWith(github.ref, 'refs/heads/main')
-    }}
-  PYDEVD_DISABLE_FILE_VALIDATION: "1"
-  PYTEST_ADDOPTS: "--color=yes"
-  FORCE_COLOR: "True"
-  VTK_DEFAULT_OPENGL_WINDOW: "vtkEGLRenderWindow"
-
 permissions:
   id-token: none
 
@@ -46,71 +23,34 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
     env:
-      PYVISTA_OFF_SCREEN: "True"
-      ALLOW_PLOTTING: true
-      SHELLOPTS: "errexit:pipefail"
-      SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
+      PARALLEL: "-j2" # Public GitHub runners have 2 real cores
+      TOX_COLORED: "yes"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-
-      - name: Set environment for self-hosted
-        if: runner.environment == 'self-hosted'
-        run: |
-          echo "SPHINX_JOBS=-j8" >> $GITHUB_ENV
-          echo "VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow" >> $GITHUB_ENV
-          # echo "VTK_DEFAULT_EGL_DEVICE_INDEX=1" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - name: Set environment for self-hosted
+        if: runner.environment == 'self-hosted'
+        run: |
+          echo "PARALLEL=-j8" >> $GITHUB_ENV
+
+      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         if: runner.environment != 'self-hosted'
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Install PyVista and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
-
-      - name: PyVista Report
-        run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
-          pip list
-
-      - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
-        with:
-          path: doc/source/examples/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache Sphinx build directory
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
-        with:
-          path: doc/_build/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Build Documentation
-        run: |
-          make -C doc \
-          gen-external-examples \
-          gen-dataset-gallery \
-          html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
+        run: tox run -e docs-build
 
       - name: Dump Sphinx Warnings and Errors
         if: always()
@@ -122,7 +62,7 @@ jobs:
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
-        run: pytest tests/doc/tst_doc_build.py
+        run: tox r -e docs-test
 
       - name: Test Documentation2
         if: always()
@@ -142,7 +82,7 @@ jobs:
           name: doc-generated-test-images
           path: _doc_generated_test_images
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         with:
           repository: pyvista/pyvista-doc-translations
@@ -153,10 +93,7 @@ jobs:
       - name: Build I18N Documentation
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
-          make -C doc \
-          gen-external-examples \
-          gen-dataset-gallery \
-          mini18n-html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
+          tox run -e docs-build -- mini18n-html
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
           rm -rf doc/_build/mini18n-html
 
@@ -204,7 +141,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: docs-build
           path: .
@@ -230,7 +167,7 @@ jobs:
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: docs-build
           path: .
@@ -256,7 +193,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -265,7 +202,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install cookiecutter
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: pyvista-notebooks
           path: .
