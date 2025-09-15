@@ -786,7 +786,7 @@ def principal_axes(
     ...     axes
     pyvista_ndarray([[-1., -0.,  0.],
                      [-0.,  1., -0.],
-                     [-0., -0., -1.]], dtype=float32)
+                     [ 0., -0., -1.]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
