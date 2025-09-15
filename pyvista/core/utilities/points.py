@@ -333,9 +333,9 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Note that it is pointing in the positive z-direction.
 
-    >>> normal
-    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
-                    dtype=float32)
+    >>> with np.printoptions(precision=6, suppress=True):  # for readability
+    ...     normal
+    pyvista_ndarray([0., 0., 1.], dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
 
@@ -458,7 +458,7 @@ def fit_line_to_points(
     Show the length of the line.
 
     >>> length
-    167.6145387467733
+    167.614
 
     Plot the line as an arrow to show its direction.
 
@@ -782,11 +782,11 @@ def principal_axes(
     Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
-    >>> axes
-    pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
-                     [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
-                     [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
-                    dtype=float32)
+    >>> with np.printoptions(precision=6, suppress=True):  # for readability
+    ...     axes
+    pyvista_ndarray([[-1., -0.,  0.],
+                     [-0.,  1., -0.],
+                     [-0., -0., -1.]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
