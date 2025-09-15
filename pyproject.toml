@@ -87,7 +87,7 @@ test = [
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cov<6.3.0',
   'pytest-mypy-plugins<3.3.0',
-  'pytest-pyvista[vtksz] @ git+https://github.com/pyvista/pytest-pyvista.git@feat/interactive',
+  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista.git@feat/interactive',
   'pytest-xdist<3.9.0',
   'pytest<8.5.0',
   'pytest_cases<3.10.0',
@@ -127,7 +127,7 @@ docs = [
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
-  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista.git@feat/interactive',
+  'pytest-pyvista[vtksz] @ git+https://github.com/pyvista/pytest-pyvista.git@feat/interactive',
   'pytest-sphinx==0.6.3',
   'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
