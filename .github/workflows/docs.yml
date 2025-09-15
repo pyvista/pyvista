@@ -64,10 +64,6 @@ jobs:
         if: ${{ !cancelled() }}
         run: tox r -e docs-test
 
-      - name: Test Documentation2
-        if: always()
-        run: pytest --doc_mode
-
       - name: Upload Images for Failed Tests
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
