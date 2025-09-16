@@ -46,6 +46,23 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
+      - name: Repair dpkg if needed
+        run: |
+          sudo apt-get update
+          sudo apt-get install --reinstall dpkg -y
+
+      - name: Validate dpkg-split
+        run: |
+          file /usr/bin/dpkg-split
+          ls -l /usr/bin/dpkg-split
+          head -n 10 /usr/bin/dpkg-split || true
+
+      - name: Clean apt cache
+        run: |
+          sudo rm -rf /var/cache/apt/archives/*
+          sudo apt-get clean
+          sudo apt-get update
+
       - name: Update apt and install packages
         run: |
           sudo apt-get update
