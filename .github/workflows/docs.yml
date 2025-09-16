@@ -60,8 +60,8 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Install playwright
-        run: playwright install chromium
+      - name: Install playwright dependencies
+        run: playwright install-deps
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
