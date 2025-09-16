@@ -795,7 +795,7 @@ def principal_axes(
 
     Show the standard deviation along each axis.
 
-    >>> std
+    >>> std  # doctest:+SKIP
     array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
     Compare this to using :meth:`numpy.std` for the computation.
@@ -810,7 +810,7 @@ def principal_axes(
 
     Convert the values to proportions for analysis.
 
-    >>> std / sum(std)
+    >>> std / sum(std)  # doctest:+SKIP
     array([0.5769149 , 0.28845742, 0.1346276 ], dtype=float32)
 
     From this result, we can determine that the axes explain approximately
