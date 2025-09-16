@@ -61,7 +61,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Install playwright dependencies
-        run: playwright install-deps
+        run: python -m playwright install-deps
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
