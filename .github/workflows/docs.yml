@@ -43,7 +43,11 @@ jobs:
       - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
         if: runner.environment != 'self-hosted'
         with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          packages: >
+            libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+            libnss3 libatk1.0-0 libatk-bridge2.0-0
+            libatspi2.0-0 libxcomposite1 libxdamage1
+            libxkbcommon0 libasound2 libnspr4
           version: 3.0
 
       - name: Install tox-uv
@@ -59,9 +63,6 @@ jobs:
       - name: Dump VTK Warnings and Errors
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
-
-      - name: Install playwright dependencies
-        run: python -m playwright install-deps
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
