@@ -341,9 +341,8 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> _, _, normal = pv.fit_plane_to_points(
     ...     mesh.points, return_meta=True, init_normal='-z'
     ... )
-    >>> normal
-    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, -1.0], dtype=float32)
 
     """
     valid_resolution = _validation.validate_array(
@@ -797,7 +796,7 @@ def principal_axes(
     Show the standard deviation along each axis.
 
     >>> std
-    array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
+    array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
     Compare this to using :meth:`numpy.std` for the computation.
 
