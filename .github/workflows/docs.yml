@@ -51,12 +51,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install --reinstall dpkg -y
 
-      - name: Validate dpkg-split
-        run: |
-          file /usr/bin/dpkg-split
-          ls -l /usr/bin/dpkg-split
-          head -n 10 /usr/bin/dpkg-split || true
-
       - name: Clean apt cache
         run: |
           sudo rm -rf /var/cache/apt/archives/*
