@@ -60,7 +60,7 @@ jobs:
       - name: Update apt and install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y libnspr4 libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 libxcomposite1 libxdamage1 libxkbcommon0 libasound2t64
+          sudo apt-get install -y libnspr4 libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 libxcomposite1 libxdamage1 libxkbcommon0 libasound2t64 libcups2t64 libcairo2 libpango-1.0-0
 
       - name: Install tox-uv
         run: pip install tox-uv
