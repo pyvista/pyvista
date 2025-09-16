@@ -241,14 +241,6 @@ filterwarnings = [
   'always:(?s).*This test has multiple cached images.*:UserWarning',
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
-
-doc_failed_image_dir = '_doc_failed_test_images'
-doc_generated_image_dir = '_doc_generated_test_images'
-doc_image_cache_dir = 'tests/doc/doc_image_cache'
-doc_images_dir = 'doc/_build/html/_images'
-failed_image_dir = '_failed_test_images'
-generated_image_dir = '_generated_test_images'
-image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
@@ -263,6 +255,17 @@ markers = [
 minversion = "7"
 testpaths = 'tests'
 xfail_strict = true
+
+# pytest-pyvista options
+doc_failed_image_dir = '_doc_failed_test_images'
+doc_generated_image_dir = '_doc_generated_test_images'
+doc_image_cache_dir = 'tests/doc/doc_image_cache'
+doc_image_format = 'jpg'
+doc_images_dir = 'doc/_build/html/_images'
+failed_image_dir = '_failed_test_images'
+generated_image_dir = '_generated_test_images'
+image_cache_dir = 'tests/plotting/image_cache'
+image_format = 'png'
 
 [tool.mypy]
 check_untyped_defs = true
