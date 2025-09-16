@@ -46,13 +46,10 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
-        if: runner.environment == 'self-hosted'
-        with:
-          packages: >
-            libnspr4 libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64
-            libxcomposite1 libxdamage1 libxkbcommon0 libasound2t64
-          version: 3.0
+      - name: Update apt and install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnspr4 libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 libxcomposite1 libxdamage1 libxkbcommon0 libasound2t64
 
       - name: Install tox-uv
         run: pip install tox-uv
