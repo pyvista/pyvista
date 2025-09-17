@@ -9,6 +9,13 @@ Show the edges of all geometries within a mesh using the
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # Sometimes it can be useful to show all of the edges of a mesh when rendering
 # to communicate aspects of the dataset like resolution.

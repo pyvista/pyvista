@@ -11,6 +11,14 @@ This is an extension of the :ref:`create_spline_example`.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np
