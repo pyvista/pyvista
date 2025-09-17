@@ -266,6 +266,7 @@ failed_image_dir = '_failed_test_images'
 generated_image_dir = '_generated_test_images'
 image_cache_dir = 'tests/plotting/image_cache'
 image_format = 'png'
+max_vtksz_file_size = 50
 
 [tool.mypy]
 check_untyped_defs = true
