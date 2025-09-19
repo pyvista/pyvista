@@ -1354,16 +1354,16 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
 @pytest.mark.parametrize(
     ('border_mode', 'expected_array'),
     [  # Exact values aren't important, we're just checking the values differ between modes
-        ('wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
-        ('mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
-        ('clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
+        ('wrap', [0.5, 0.50799719, 0.80400287, 1.19599713, 1.49200281, 1.5]),
+        ('mirror', [0.33333333, 0.47199609, 0.8026696, 1.1973304, 1.52800391, 1.66666667]),
+        ('clamp', [0.16666667, 0.435995, 0.80133632, 1.19866368, 1.564005, 1.83333333]),
     ],
 )
 def test_resample_border_mode(border_mode, expected_array):
     im = pv.ImageData(dimensions=(3, 1, 1))
     im.point_data['data'] = np.arange(3, dtype=float).ravel()
 
-    out = im.resample(2, interpolation='cubic', border_mode=border_mode)
+    out = im.resample(2, interpolation='bspline', border_mode=border_mode)
     array = out['data']
     assert np.allclose(array, expected_array)
 
