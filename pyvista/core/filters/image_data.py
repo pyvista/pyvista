@@ -3892,6 +3892,7 @@ class ImageDataFilters(DataSetFilters):
         ...         lighting=False,
         ...         show_edges=True,
         ...         cmap='grey',
+        ...         clim=[0, 255],
         ...         show_scalar_bar=False,
         ...     )
         ...     pl.view_xy()
