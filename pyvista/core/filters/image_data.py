@@ -4261,7 +4261,7 @@ class ImageDataFilters(DataSetFilters):
         elif border_mode == 'wrap':
             interpolator.SetBorderModeToRepeat()
         else:  # pragma: no cover
-            msg = f"Unexpected border mode '{border_mode}'."
+            msg = f"Unexpected border mode '{border_mode}'."  # type: ignore[unreachable]
             raise RuntimeError(msg)
 
         if anti_aliasing and np.any(magnification_factors < 1.0):
