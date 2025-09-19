@@ -3727,7 +3727,7 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
         interpolation: Literal[
-            'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
+            'nearest', 'linear', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman'
         ] = 'nearest',
         *,
         reference_image: ImageData | None = None,
@@ -3772,13 +3772,18 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman'
-            Interpolation mode to use. By default, ``'nearest'`` is used which
-            duplicates (if upsampling) or removes (if downsampling) values but
-            does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
-            and cubic interpolation, respectively, and may modify the values. The
-            ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
-            and may be used to preserve sharp details and/or reduce image artifacts.
+        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
+            Interpolation mode to use.
+
+            - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
+              values but does not modify them.
+            - ``'linear'`` and ``'cubic'`` use linear and cubic interpolation, respectively
+            - ``'bspline'`` uses a cubic spline to smoothly interpolate across points
+            - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+              and may be used to preserve sharp details and/or reduce image artifacts.
+
+            .. versionadded:: 0.47
+                Added ``'bspline'`` interpolation.
 
             .. note::
 
@@ -3906,6 +3911,12 @@ class ImageDataFilters(DataSetFilters):
         ``dimensions`` explicitly instead of using ``sample_rate``.
 
         >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Use ``'bspline'`` interpolation instead.
+
+        >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='bspline')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
@@ -4130,7 +4141,7 @@ class ImageDataFilters(DataSetFilters):
         input_dtype = active_scalars.dtype
         has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman'],
+            ['linear', 'nearest', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman'],
             must_contain=interpolation,
             name='interpolation',
         )
@@ -4226,6 +4237,15 @@ class ImageDataFilters(DataSetFilters):
         elif interpolation == 'cubic':
             interpolator = _vtk.vtkImageInterpolator()
             interpolator.SetInterpolationModeToCubic()
+        elif interpolation == 'bspline':
+            interpolator = _vtk.vtkImageBSplineInterpolator()
+            # Need to pre-compute coefficients
+            coefficients = _vtk.vtkImageBSplineCoefficients()
+            coefficients.SetInputData(input_image)
+            _update_alg(
+                coefficients, progress_bar=progress_bar, message='Computing sline coefficients.'
+            )
+            input_image = _get_output(coefficients)
         elif interpolation == 'lanczos':
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToLanczos()
@@ -4248,7 +4268,7 @@ class ImageDataFilters(DataSetFilters):
         resize_filter.SetInterpolator(interpolator)
 
         # Get output
-        _update_alg(resize_filter, progress_bar=progress_bar)
+        _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
         output_image = _get_output(resize_filter).copy(deep=False)
 
         # Set geometry from the reference

@@ -1326,7 +1326,7 @@ def test_resample_extend_border(uniform, extend_border, name, value):
 
 @pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
 @pytest.mark.parametrize(
-    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
+    'interpolation', ['linear', 'nearest', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman']
 )
 @pytest.mark.parametrize('sample_rate', [0.5, 2.0])
 def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
