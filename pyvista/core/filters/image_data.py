@@ -3730,6 +3730,7 @@ class ImageDataFilters(DataSetFilters):
             'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
         ] = 'nearest',
         *,
+        border_mode: Literal['clamp', 'wrap', 'mirror', 'constant'] = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         anti_aliasing: bool = False,
@@ -3772,7 +3773,7 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman'
+        interpolation : 'nearest' | 'linear' | 'cubic' | 'lanczos' | 'hamming' | 'blackman'
             Interpolation mode to use. By default, ``'nearest'`` is used which
             duplicates (if upsampling) or removes (if downsampling) values but
             does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
@@ -3789,6 +3790,15 @@ class ImageDataFilters(DataSetFilters):
                 - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
                 - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
+        border_mode : 'clamp' | 'wrap' | 'mirror', default: 'clamp'
+            Controls the interpolation at the image's borders.
+
+            - ``'clamp'`` - values outside the image are clamped to the nearest edge.
+            - ``'wrap'`` - values outside the image are wrapped periodically along the axis.
+            - ``'mirror'`` - values outside the image are mirrored at the boundary.
+
+            .. versionadded:: 0.47
+
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
             to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
@@ -3796,7 +3806,7 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
             of the resampled image will all match the reference image.
 
-        dimensions : VectorLike[int]
+        dimensions : VectorLike[int], optional
             Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
 
             .. note::
@@ -4134,6 +4144,11 @@ class ImageDataFilters(DataSetFilters):
             must_contain=interpolation,
             name='interpolation',
         )
+        _validation.check_contains(
+            ['clamp', 'wrap', 'mirror'],
+            must_contain=border_mode,
+            name='border_mode',
+        )
         if has_int_scalars:
             # int (long long) is not supported by the filter so we cast to float
             input_image = self.copy(deep=False)
@@ -4235,6 +4250,16 @@ class ImageDataFilters(DataSetFilters):
         elif interpolation == 'blackman':
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
+        else:  # pragma: no cover
+            msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
+            raise RuntimeError(msg)
+
+        if border_mode == 'clamp':
+            interpolator.SetBorderModeToClamp()
+        elif border_mode == 'mirror':
+            interpolator.SetBorderModeToMirror()
+        elif border_mode == 'wrap':
+            interpolator.SetBorderModeToRepeat()
         else:  # pragma: no cover
             msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
             raise RuntimeError(msg)
