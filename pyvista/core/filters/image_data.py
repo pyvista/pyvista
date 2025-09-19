@@ -4243,7 +4243,7 @@ class ImageDataFilters(DataSetFilters):
             coefficients = _vtk.vtkImageBSplineCoefficients()
             coefficients.SetInputData(input_image)
             _update_alg(
-                coefficients, progress_bar=progress_bar, message='Computing sline coefficients.'
+                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
             )
             input_image = _get_output(coefficients)
         elif interpolation == 'lanczos':
