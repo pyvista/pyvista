@@ -3772,7 +3772,7 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
+        interpolation : 'nearest', 'linear', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman'
             Interpolation mode to use.
 
             - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
