@@ -3730,7 +3730,7 @@ class ImageDataFilters(DataSetFilters):
             'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
         ] = 'nearest',
         *,
-        border_mode: Literal['clamp', 'wrap', 'mirror', 'constant'] = 'clamp',
+        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         anti_aliasing: bool = False,
