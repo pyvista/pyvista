@@ -248,6 +248,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'HorizontalOptions'),
     (r'py:.*', 'VerticalOptions'),
     (r'py:.*', 'JupyterBackendOptions'),
+    (r'py:.*', 'InterpolationOptions'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
