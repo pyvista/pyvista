@@ -55,6 +55,7 @@ def handle_plotter(
     except ImportError as e:
         warnings.warn(
             f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.',
+            stacklevel=2,
         )
 
     return show_static_image(plotter, screenshot)

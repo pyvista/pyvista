@@ -176,7 +176,7 @@ def test_static_images(test_case: _TestCaseTuple):
         )
         _save_failed_test_image(test_case.docs_image_path, parent_dir)
         _save_failed_test_image(test_case.cached_image_path, parent_dir)
-        warnings.warn(warn_msg)
+        warnings.warn(warn_msg, stacklevel=2)
 
 
 def _test_both_images_exist(filename, docs_image_path, cached_image_path):

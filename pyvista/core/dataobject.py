@@ -188,7 +188,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                         f'has field data which will not be saved.\n'
                         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
                         'Use `move_nested_field_data_to_root` to store the field data '
-                        'with the root MultiBlock before saving.'
+                        'with the root MultiBlock before saving.',
+                        stacklevel=2,
                     )
 
         def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
@@ -232,7 +233,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                     'The direction matrix for ImageData will not be saved using the '
                     'legacy `.vtk` format.\n'
                     'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                    'Use the `.vti` extension instead (XML format).'
+                    'Use the `.vti` extension instead (XML format).',
+                    stacklevel=2,
                 )
 
         def _write_vtk(mesh_: DataObject) -> None:

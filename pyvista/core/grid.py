@@ -1029,7 +1029,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
                 'instead.'
             )
-            warnings.warn(msg, RuntimeWarning)
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
@@ -1204,7 +1204,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         if not np.allclose(K, np.eye(3)):
             warnings.warn(
                 'The transformation matrix has a shear component which has been removed. \n'
-                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.'
+                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+                stacklevel=2,
             )
 
         self.origin = T

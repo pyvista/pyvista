@@ -77,7 +77,7 @@ class TrameJupyterServerDownError(RuntimeError):
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
-        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE)
+        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE, stacklevel=2)
         # and Error
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 

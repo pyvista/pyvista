@@ -122,6 +122,7 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         warnings.warn(
             'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:

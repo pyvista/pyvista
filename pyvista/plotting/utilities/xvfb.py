@@ -49,6 +49,7 @@ def start_xvfb(wait=3, window_size=None):
         'This function is deprecated and will be removed in future version of '
         'PyVista. Use vtk-osmesa instead.',
         PyVistaDeprecationWarning,
+        stacklevel=2,
     )
 
     from pyvista import global_theme  # noqa: PLC0415

@@ -25,7 +25,9 @@ if TYPE_CHECKING:
     import pytest_mock
 
 if 'TEST_DOWNLOADS' in os.environ:
-    warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
+    warnings.warn(
+        '"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`', stacklevel=2
+    )
 
 pytestmark = pytest.mark.needs_download
 

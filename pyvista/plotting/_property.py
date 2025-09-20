@@ -256,6 +256,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
                 '`edge_opacity` cannot be used under VTK v9.3.0. '
                 'Try installing VTK v9.3.0 or newer.',
                 UserWarning,
+                stacklevel=2,
             )
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity

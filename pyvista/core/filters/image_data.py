@@ -1701,6 +1701,7 @@ class ImageDataFilters(DataSetFilters):
             'transition to the new filter.'
             '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
@@ -3126,6 +3127,7 @@ class ImageDataFilters(DataSetFilters):
                     'Use of `pad_singleton_dims=True` is deprecated. '
                     'Use `dimensionality="3D"` instead',
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
                 dimensionality = '3D'
             else:
@@ -3133,6 +3135,7 @@ class ImageDataFilters(DataSetFilters):
                     'Use of `pad_singleton_dims=False` is deprecated. '
                     'Use `dimensionality="preserve"` instead',
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
                 dimensionality = 'preserve'
 

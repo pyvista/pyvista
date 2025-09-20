@@ -159,9 +159,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn('Opacity scalars contain values over 1')
+                warnings.warn('Opacity scalars contain values over 1', stacklevel=2)
             if np.any(opacity < 0):
-                warnings.warn('Opacity scalars contain values less than 0')
+                warnings.warn('Opacity scalars contain values less than 0', stacklevel=2)
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
