@@ -4173,7 +4173,8 @@ class ImageDataFilters(DataSetFilters):
         >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
         >>> plt.show()
 
-        Use the ``'wrap'`` border mode. Note how points at border are brighter than previously.
+        Use the ``'wrap'`` border mode. Note how points at the border are brighter than previously,
+        since the bright pixels from the opposite edge are now included in the interpolation.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
         >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
