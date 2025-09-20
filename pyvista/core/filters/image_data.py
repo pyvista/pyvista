@@ -4337,7 +4337,7 @@ class ImageDataFilters(DataSetFilters):
             )
             input_image = _get_output(coefficients)
         else:  # pragma: no cover
-            msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
+            msg = f"Unexpected interpolation mode '{interpolation}'."
             raise RuntimeError(msg)
 
         set_border_mode(interpolator)
