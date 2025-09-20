@@ -3925,9 +3925,22 @@ class ImageDataFilters(DataSetFilters):
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Use ``'bspline'`` interpolation instead.
+        Use ``'bspline'`` interpolation instead. Explicitly use the ``'clamp'``
+        ``border_mode``, which is the default.
 
-        >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='bspline')
+        >>> upsampled = image.resample(2.0, 'bspline', border_mode='clamp')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Show the result when the ``'wrap'`` border mode is used.
+
+        >>> upsampled = image.resample(2.0, 'bspline', border_mode='wrap')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Show the result when the ``'mirror'`` border mode is used.
+
+        >>> upsampled = image.resample(2.0, 'bspline', border_mode='mirror')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
