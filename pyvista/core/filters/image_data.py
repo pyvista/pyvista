@@ -3792,15 +3792,17 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest', 'linear', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman'
+        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
             Interpolation mode to use.
 
             - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
               values but does not modify them.
             - ``'linear'`` and ``'cubic'`` use linear and cubic interpolation, respectively.
-            - ``'bspline'`` uses a cubic spline to smoothly interpolate across points.
             - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
               and may be used to preserve sharp details and/or reduce image artifacts.
+            - ``'bspline'`` uses an n-degree basis spline to smoothly interpolate across points.
+              The default degree is ``3``, but can range from ``0`` to ``9``. Append the desired
+              degree to the string to set it, e.g. ``'bspline5'`` for a 5th-degree B-spline.
 
             .. versionadded:: 0.47
                 Added ``'bspline'`` interpolation.
@@ -3903,7 +3905,7 @@ class ImageDataFilters(DataSetFilters):
         :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
         instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
-        >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
+        >>> def image_plotter(image: pv.ImageData, clim=(0, 255)) -> pv.Plotter:
         ...     pl = pv.Plotter()
         ...     image = image.points_to_cells()
         ...     pl.add_mesh(
@@ -3911,7 +3913,7 @@ class ImageDataFilters(DataSetFilters):
         ...         lighting=False,
         ...         show_edges=True,
         ...         cmap='grey',
-        ...         clim=[0, 255],
+        ...         clim=clim,
         ...         show_scalar_bar=False,
         ...     )
         ...     pl.view_xy()
@@ -3941,31 +3943,6 @@ class ImageDataFilters(DataSetFilters):
         ``dimensions`` explicitly instead of using ``sample_rate``.
 
         >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
-        >>> plot = image_plotter(upsampled)
-        >>> plot.show()
-
-        Use ``'bspline'`` interpolation instead. Explicitly use the ``'clamp'``
-        ``border_mode``, which is the default.
-
-        >>> upsampled = image.resample(
-        ...     dimensions=[5, 3, 1], interpolation='bspline', border_mode='clamp'
-        ... )
-        >>> plot = image_plotter(upsampled)
-        >>> plot.show()
-
-        Show the result when the ``'wrap'`` border mode is used.
-
-        >>> upsampled = image.resample(
-        ...     dimensions=[5, 3, 1], interpolation='bspline', border_mode='wrap'
-        ... )
-        >>> plot = image_plotter(upsampled)
-        >>> plot.show()
-
-        Show the result when the ``'mirror'`` border mode is used.
-
-        >>> upsampled = image.resample(
-        ...     dimensions=[5, 3, 1], interpolation='bspline', border_mode='mirror'
-        ... )
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
@@ -4174,6 +4151,38 @@ class ImageDataFilters(DataSetFilters):
         Compare down-sampling with aliasing (left) to without aliasing (right).
 
         >>> plt = compare_images_plotter(downsampled, downsampled2)
+        >>> plt.show()
+
+        Load an MRI of a knee and downsample it.
+
+        >>> knee = pv.examples.download_knee().resample(
+        ...     0.1, 'linear', anti_aliasing=True
+        ... )
+
+        Crop and plot it.
+
+        >>> knee = knee.crop(normalized_bounds=[0.2, 0.8, 0.2, 0.8, 0.0, 1.0])
+        >>> vmin = knee.active_scalars.min()
+        >>> vmax = knee.active_scalars.max()
+        >>> plt = image_plotter(knee, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Upsample it with B-spline interpolation. The interpolation is very smooth.
+
+        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Use the ``'wrap'`` border mode. Note how points at border are brighter than previously.
+
+        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Compare B-spline interpolation to ``'hamming'``.
+
+        >>> upsampled = knee.resample(2.0, 'hamming')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
         >>> plt.show()
 
         """
