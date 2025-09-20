@@ -8,6 +8,7 @@ import operator
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import get_args
 import warnings
 
 import numpy as np
@@ -39,6 +40,26 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
+_InterpolationOptions = Literal[
+    'nearest',
+    'linear',
+    'cubic',
+    'lanczos',
+    'hamming',
+    'blackman',
+    'bspline',
+    'bspline0',
+    'bspline1',
+    'bspline2',
+    'bspline3',
+    'bspline4',
+    'bspline5',
+    'bspline6',
+    'bspline7',
+    'bspline8',
+    'bspline9',
+]
 
 
 @abstract_class
@@ -3726,9 +3747,7 @@ class ImageDataFilters(DataSetFilters):
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
-        interpolation: Literal[
-            'nearest', 'linear', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman'
-        ] = 'nearest',
+        interpolation: _InterpolationOptions = 'nearest',
         *,
         border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
         reference_image: ImageData | None = None,
@@ -3928,19 +3947,25 @@ class ImageDataFilters(DataSetFilters):
         Use ``'bspline'`` interpolation instead. Explicitly use the ``'clamp'``
         ``border_mode``, which is the default.
 
-        >>> upsampled = image.resample(2.0, 'bspline', border_mode='clamp')
+        >>> upsampled = image.resample(
+        ...     dimensions=[5, 3, 1], interpolation='bspline', border_mode='clamp'
+        ... )
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
         Show the result when the ``'wrap'`` border mode is used.
 
-        >>> upsampled = image.resample(2.0, 'bspline', border_mode='wrap')
+        >>> upsampled = image.resample(
+        ...     dimensions=[5, 3, 1], interpolation='bspline', border_mode='wrap'
+        ... )
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
         Show the result when the ``'mirror'`` border mode is used.
 
-        >>> upsampled = image.resample(2.0, 'bspline', border_mode='mirror')
+        >>> upsampled = image.resample(
+        ...     dimensions=[5, 3, 1], interpolation='bspline', border_mode='mirror'
+        ... )
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
@@ -4179,7 +4204,7 @@ class ImageDataFilters(DataSetFilters):
         input_dtype = active_scalars.dtype
         has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            ['linear', 'nearest', 'cubic', 'bspline', 'lanczos', 'hamming', 'blackman'],
+            get_args(_InterpolationOptions),
             must_contain=interpolation,
             name='interpolation',
         )
@@ -4280,16 +4305,6 @@ class ImageDataFilters(DataSetFilters):
         elif interpolation == 'cubic':
             interpolator = _vtk.vtkImageInterpolator()
             interpolator.SetInterpolationModeToCubic()
-        elif interpolation == 'bspline':
-            interpolator = _vtk.vtkImageBSplineInterpolator()
-            # Need to pre-compute coefficients
-            coefficients = _vtk.vtkImageBSplineCoefficients()
-            coefficients.SetInputData(input_image)
-            set_border_mode(coefficients)
-            _update_alg(
-                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
-            )
-            input_image = _get_output(coefficients)
         elif interpolation == 'lanczos':
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToLanczos()
@@ -4299,6 +4314,19 @@ class ImageDataFilters(DataSetFilters):
         elif interpolation == 'blackman':
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
+        elif interpolation.startswith('bspline'):
+            interpolator = _vtk.vtkImageBSplineInterpolator()
+            # Set degree
+            degree = 3 if interpolation.endswith('bspline') else int(interpolation[-1])
+            interpolator.SetSplineDegree(degree)
+            # Need to pre-compute coefficients
+            coefficients = _vtk.vtkImageBSplineCoefficients()
+            coefficients.SetInputData(input_image)
+            set_border_mode(coefficients)
+            _update_alg(
+                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
+            )
+            input_image = _get_output(coefficients)
         else:  # pragma: no cover
             msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
             raise RuntimeError(msg)
