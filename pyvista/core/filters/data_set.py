@@ -1775,7 +1775,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             except MissingDataError:
                 warnings.warn(
                     'No data to use for scale. scale will be set to False.', stacklevel=2
-                )
+                )  # pragma: no cover
                 do_scale = False
             except AmbiguousDataError as err:
                 warnings.warn(
