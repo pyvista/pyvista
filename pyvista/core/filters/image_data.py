@@ -8,6 +8,7 @@ import operator
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import get_args
 import warnings
 
 import numpy as np
@@ -39,6 +40,26 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
+_InterpolationOptions = Literal[
+    'nearest',
+    'linear',
+    'cubic',
+    'lanczos',
+    'hamming',
+    'blackman',
+    'bspline',
+    'bspline0',
+    'bspline1',
+    'bspline2',
+    'bspline3',
+    'bspline4',
+    'bspline5',
+    'bspline6',
+    'bspline7',
+    'bspline8',
+    'bspline9',
+]
 
 
 @abstract_class
@@ -3729,10 +3750,9 @@ class ImageDataFilters(DataSetFilters):
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
-        interpolation: Literal[
-            'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
-        ] = 'nearest',
+        interpolation: _InterpolationOptions = 'nearest',
         *,
+        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         anti_aliasing: bool = False,
@@ -3775,13 +3795,20 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman'
-            Interpolation mode to use. By default, ``'nearest'`` is used which
-            duplicates (if upsampling) or removes (if downsampling) values but
-            does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
-            and cubic interpolation, respectively, and may modify the values. The
-            ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
-            and may be used to preserve sharp details and/or reduce image artifacts.
+        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
+            Interpolation mode to use.
+
+            - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
+              values but does not modify them.
+            - ``'linear'`` and ``'cubic'`` use linear and cubic interpolation, respectively.
+            - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+              and may be used to preserve sharp details and/or reduce image artifacts.
+            - ``'bspline'`` uses an n-degree basis spline to smoothly interpolate across points.
+              The default degree is ``3``, but can range from ``0`` to ``9``. Append the desired
+              degree to the string to set it, e.g. ``'bspline5'`` for a 5th-degree B-spline.
+
+            .. versionadded:: 0.47
+                Added ``'bspline'`` interpolation.
 
             .. note::
 
@@ -3792,6 +3819,15 @@ class ImageDataFilters(DataSetFilters):
                 - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
                 - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
+        border_mode : 'clamp' | 'wrap' | 'mirror', default: 'clamp'
+            Controls the interpolation at the image's borders.
+
+            - ``'clamp'`` - values outside the image are clamped to the nearest edge.
+            - ``'wrap'`` - values outside the image are wrapped periodically along the axis.
+            - ``'mirror'`` - values outside the image are mirrored at the boundary.
+
+            .. versionadded:: 0.47
+
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
             to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
@@ -3799,7 +3835,7 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
             of the resampled image will all match the reference image.
 
-        dimensions : VectorLike[int]
+        dimensions : VectorLike[int], optional
             Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
 
             .. note::
@@ -3872,7 +3908,7 @@ class ImageDataFilters(DataSetFilters):
         :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
         instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
-        >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
+        >>> def image_plotter(image: pv.ImageData, clim=(0, 255)) -> pv.Plotter:
         ...     pl = pv.Plotter()
         ...     image = image.points_to_cells()
         ...     pl.add_mesh(
@@ -3880,6 +3916,7 @@ class ImageDataFilters(DataSetFilters):
         ...         lighting=False,
         ...         show_edges=True,
         ...         cmap='grey',
+        ...         clim=clim,
         ...         show_scalar_bar=False,
         ...     )
         ...     pl.view_xy()
@@ -4119,7 +4156,54 @@ class ImageDataFilters(DataSetFilters):
         >>> plt = compare_images_plotter(downsampled, downsampled2)
         >>> plt.show()
 
+        Load an MRI of a knee and downsample it.
+
+        >>> knee = pv.examples.download_knee().resample(
+        ...     0.1, 'linear', anti_aliasing=True
+        ... )
+
+        Crop and plot it.
+
+        >>> knee = knee.crop(normalized_bounds=[0.2, 0.8, 0.2, 0.8, 0.0, 1.0])
+        >>> vmin = knee.active_scalars.min()
+        >>> vmax = knee.active_scalars.max()
+        >>> plt = image_plotter(knee, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Upsample it with B-spline interpolation. The interpolation is very smooth.
+
+        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Use the ``'wrap'`` border mode. Note how points at the border are brighter than previously,
+        since the bright pixels from the opposite edge are now included in the interpolation.
+
+        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Compare B-spline interpolation to ``'hamming'``.
+
+        >>> upsampled = knee.resample(2.0, 'hamming')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
         """
+
+        def set_border_mode(
+            obj: _vtk.vtkImageBSplineCoefficients | _vtk.vtkAbstractImageInterpolator,
+        ):
+            if border_mode == 'clamp':
+                obj.SetBorderModeToClamp()
+            elif border_mode == 'mirror':
+                obj.SetBorderModeToMirror()
+            elif border_mode == 'wrap':
+                obj.SetBorderModeToRepeat()
+            else:  # pragma: no cover
+                msg = f"Unexpected border mode '{border_mode}'."  # type: ignore[unreachable]
+                raise RuntimeError(msg)
+
         # Process scalars
         if scalars is None:
             field, name = set_default_active_scalars(self)
@@ -4133,9 +4217,14 @@ class ImageDataFilters(DataSetFilters):
         input_dtype = active_scalars.dtype
         has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman'],
+            get_args(_InterpolationOptions),
             must_contain=interpolation,
             name='interpolation',
+        )
+        _validation.check_contains(
+            ['clamp', 'wrap', 'mirror'],
+            must_contain=border_mode,
+            name='border_mode',
         )
         if has_int_scalars:
             # int (long long) is not supported by the filter so we cast to float
@@ -4238,10 +4327,24 @@ class ImageDataFilters(DataSetFilters):
         elif interpolation == 'blackman':
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
+        elif interpolation.startswith('bspline'):
+            interpolator = _vtk.vtkImageBSplineInterpolator()
+            # Set degree
+            degree = 3 if interpolation.endswith('bspline') else int(interpolation[-1])
+            interpolator.SetSplineDegree(degree)
+            # Need to pre-compute coefficients
+            coefficients = _vtk.vtkImageBSplineCoefficients()
+            coefficients.SetInputData(input_image)
+            set_border_mode(coefficients)
+            _update_alg(
+                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
+            )
+            input_image = _get_output(coefficients)
         else:  # pragma: no cover
-            msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
+            msg = f"Unexpected interpolation mode '{interpolation}'."
             raise RuntimeError(msg)
 
+        set_border_mode(interpolator)
         if anti_aliasing and np.any(magnification_factors < 1.0):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
@@ -4251,7 +4354,7 @@ class ImageDataFilters(DataSetFilters):
         resize_filter.SetInterpolator(interpolator)
 
         # Get output
-        _update_alg(resize_filter, progress_bar=progress_bar)
+        _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
         output_image = _get_output(resize_filter).copy(deep=False)
 
         # Set geometry from the reference

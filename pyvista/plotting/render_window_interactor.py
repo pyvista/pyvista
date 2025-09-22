@@ -56,11 +56,11 @@ class Timer(_NoNewAttrMixin):
         # https://github.com/pyvista/pyvista/pull/5618
         iren = obj
 
-        while self.step < self.max_steps:
+        if self.step < self.max_steps:
             self.callback(self.step)
             iren.GetRenderWindow().Render()
             self.step += 1
-        if self.id:
+        elif self.id:
             iren.DestroyTimer(self.id)
 
 

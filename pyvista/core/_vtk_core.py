@@ -453,6 +453,8 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
 from vtkmodules.vtkImagingCore import vtkAbstractImageInterpolator as vtkAbstractImageInterpolator
 from vtkmodules.vtkImagingCore import vtkExtractVOI as vtkExtractVOI
+from vtkmodules.vtkImagingCore import vtkImageBSplineCoefficients as vtkImageBSplineCoefficients
+from vtkmodules.vtkImagingCore import vtkImageBSplineInterpolator as vtkImageBSplineInterpolator
 from vtkmodules.vtkImagingCore import vtkImageConstantPad as vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
