@@ -342,7 +342,7 @@ class CubeAxesActor(
                     f'Accepts now a sequence of (x,y) offsets. '
                     f'Setting the x offset to {(x := 0.0)}'
                 )
-                warnings.warn(msg, UserWarning)
+                warnings.warn(msg, UserWarning, stacklevel=2)
                 self.SetTitleOffset([x, offset])
             else:
                 self.SetTitleOffset(offset)
@@ -353,7 +353,7 @@ class CubeAxesActor(
                 f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
                 f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
             )
-            warnings.warn(msg, UserWarning)
+            warnings.warn(msg, UserWarning, stacklevel=2)
             self.SetTitleOffset(y)  # type: ignore[arg-type]
             return
 

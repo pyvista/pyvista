@@ -72,6 +72,7 @@ def _set_plot_theme_from_env() -> None:
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
+                stacklevel=2,
             )
 
 
@@ -1548,7 +1549,7 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):
         if enabled and self.jupyter_extension_enabled:
-            warnings.warn('Enabling server_proxy will disable jupyter_extension')
+            warnings.warn('Enabling server_proxy will disable jupyter_extension', stacklevel=2)
             self._jupyter_extension_enabled = False
 
         self._server_proxy_enabled = bool(enabled)
@@ -1571,6 +1572,7 @@ class _TrameConfig(_ThemeConfig):
     def jupyter_extension_available(self, _available: bool):
         warnings.warn(
             'The jupyter_extension_available flag is read only and is automatically detected.',
+            stacklevel=2,
         )
 
     @property
@@ -1585,7 +1587,7 @@ class _TrameConfig(_ThemeConfig):
             raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
-            warnings.warn('Enabling jupyter_extension will disable server_proxy')
+            warnings.warn('Enabling jupyter_extension will disable server_proxy', stacklevel=2)
             self._server_proxy_enabled = False
 
         self._jupyter_extension_enabled = bool(enabled)

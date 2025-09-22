@@ -617,7 +617,7 @@ def _get_vtk_version():
             f'Unable to detect VTK version. '
             f'Defaulting to {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)}'
         )
-        warnings.warn(msg)
+        warnings.warn(msg, stacklevel=2)
         major, minor, micro = _MIN_SUPPORTED_VTK_VERSION
     return VersionInfo(major, minor, micro)
 
@@ -703,7 +703,7 @@ class DisableVtkSnakeCase:
                     if state == 'error':
                         raise pv.PyVistaAttributeError(msg)
                     else:
-                        warnings.warn(msg, RuntimeWarning)
+                        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)
