@@ -216,6 +216,7 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
+run.parallel = true
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']

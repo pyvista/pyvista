@@ -232,14 +232,19 @@ but the source will always be included with a conditional caption:
 
 **Plot 23** Create a gif.
 
+.. note::
+   We use ``uuid`` here to avoid multiple threads writing to the same GIF
+   similtaniously when using ``pytest-xdist`` and building ``tinypages``.
+
 .. pyvista-plot::
 
+    import uuid
     import pyvista as pv
     from pyvista import examples
     filename = examples.download_single_sphere_animation(load=False)
     reader = pv.PVDReader(filename)
     plotter = pv.Plotter()
-    plotter.open_gif('single_sphere.gif')
+    plotter.open_gif(f'single_sphere_{str(uuid.uuid4())[:8]}.gif')
     for time_value in reader.time_values:
         reader.set_active_time_value(time_value)
         mesh = reader.read()
