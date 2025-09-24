@@ -113,6 +113,14 @@ def reset_global_state():
     pyvista.PICKLE_FORMAT = 'vtk'
 
 
+@pytest.fixture(autouse=True)
+def set_default_theme():
+    """Reset the testing theme for every test."""
+    pyvista.global_theme.load_theme(pyvista.plotting.themes._TestingTheme())
+    yield
+    pyvista.global_theme.load_theme(pyvista.plotting.themes._TestingTheme())
+
+
 @pytest.fixture
 def cube():
     return pyvista.Cube()

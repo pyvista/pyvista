@@ -131,14 +131,6 @@ def colorful_tetrahedron():
     return mesh
 
 
-@pytest.fixture(autouse=True)
-def set_default_theme():
-    """Reset the testing theme for every test."""
-    pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
-    yield
-    pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
-
-
 def make_two_char_img(text):
     """Turn text into an image.
 
