@@ -117,6 +117,7 @@ jobs:
     name: Test Documentation
     runs-on: ubuntu-22.04
     needs: doc
+    if: ${{ !cancelled() }}
     env:
       TOX_COLORED: "yes"
     steps:
