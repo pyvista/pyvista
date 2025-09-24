@@ -123,7 +123,7 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: docs-build
-          path: .
+          path: doc/
 
       - uses: actions/checkout@v5
         with:
