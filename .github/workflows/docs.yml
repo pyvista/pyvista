@@ -120,11 +120,6 @@ jobs:
     env:
       TOX_COLORED: "yes"
     steps:
-      - uses: actions/download-artifact@v5
-        with:
-          name: docs-build
-          path: doc/_build/html
-
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -136,6 +131,11 @@ jobs:
 
       - name: Install tox-uv
         run: pip install tox-uv
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: docs-build
+          path: doc/_build/html
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
