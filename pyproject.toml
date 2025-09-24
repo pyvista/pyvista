@@ -399,7 +399,6 @@ ignore = [
   'ANN002', # Missing annotations for `*args`
   'ANN003', # Missing annotations for `*kwargs`
   'ANN401', # Disallow `Any`
-  'B028', # https://github.com/pyvista/pyvista/pull/6030
   'B904', # https://github.com/pyvista/pyvista/pull/6022
   'B905', # zip() without explicit strict parameter - will be addressed in separate PR
   'COM812', # May cause conflicts when used with the formatter

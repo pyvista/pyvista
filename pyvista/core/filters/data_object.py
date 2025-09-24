@@ -179,7 +179,7 @@ class DataObjectFilters:
                 'Previously it defaulted to `True`, but will change to `False`. '
                 'Explicitly set `inplace` to `True` or `False` to silence this warning.'
             )
-            warnings.warn(msg, PyVistaDeprecationWarning)
+            warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
             inplace = True  # The old default behavior
 
         if isinstance(self, pyvista.MultiBlock):
@@ -238,6 +238,7 @@ class DataObjectFilters:
                 'Integer points, vector and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
+                stacklevel=2,
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -284,7 +285,7 @@ class DataObjectFilters:
                     'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
                     'shear transformations.'
                 )
-                warnings.warn(msg)
+                warnings.warn(msg, stacklevel=2)
 
             # Lump scale and reflection together
             scale = S * N
@@ -294,7 +295,7 @@ class DataObjectFilters:
                     'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
                     'StructuredGrid first to fully support rotations.'
                 )
-                warnings.warn(msg)
+                warnings.warn(msg, stacklevel=2)
             else:
                 # Lump any reflections from the rotation into the scale
                 scale *= np.diagonal(R)
