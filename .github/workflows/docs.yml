@@ -60,24 +60,6 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Test Documentation
-        if: ${{ !cancelled() }}
-        run: tox r -e docs-test
-
-      - name: Upload Images for Failed Tests
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images-failed
-          path: _doc_debug_images_failed
-
-      - name: Upload Test Debug Images
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images
-          path: _doc_debug_images
-
       - uses: actions/checkout@v5
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         with:
@@ -130,6 +112,44 @@ jobs:
         with:
           name: pyvista-notebooks
           path: _notebooks
+
+  test:
+    name: Test Documentation
+    runs-on: ubuntu-22.04
+    needs: doc
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: docs-build
+          path: .
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Test Documentation
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test
+
+      - name: Upload Images for Failed Tests
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-debug-images-failed
+          path: _doc_debug_images_failed
+
+      - name: Upload Test Debug Images
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-debug-images
+          path: _doc_debug_images
 
   preview:
     name: Preview Development Documentation
