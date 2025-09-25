@@ -30,6 +30,7 @@ def test_report(tmp_path, include_args):
 
     result = subprocess.run(
         cli_args,
+        check=False,
         capture_output=True,
         encoding='utf-8',
         cwd=tmp_path,
