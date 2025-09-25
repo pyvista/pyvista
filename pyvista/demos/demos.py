@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import examples
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
@@ -216,7 +217,8 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
+@_deprecate_positional_args
+def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -337,8 +339,8 @@ def plot_ants_plane(notebook=None):
        Create plotting object.
 
        >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+       >>> _ = plotter.add_mesh(ant, color='r')
+       >>> _ = plotter.add_mesh(ant_copy, color='b')
 
        Add airplane mesh and make the color equal to the Y position.
 
@@ -378,8 +380,8 @@ def plot_ants_plane(notebook=None):
 
     # Create plotting object
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
@@ -428,7 +430,7 @@ def plot_beam(notebook=None):
         scalars=d,
         scalar_bar_args={'title': 'Y Displacement'},
         rng=[-d.max(), d.max()],
-        cmap=cmap,
+        cmap=cmap,  # type: ignore[arg-type]
     )
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
@@ -472,7 +474,8 @@ def plot_datasets(dataset_type=None):
     ]
     if dataset_type is not None and dataset_type not in allowable_types:
         msg = (
-            f'Invalid dataset_type {dataset_type}.  Must be one of the following: {allowable_types}'
+            f'Invalid dataset_type {dataset_type}.  '
+            f'Must be one of the following: {allowable_types}'
         )
         raise ValueError(msg)
 
@@ -505,20 +508,20 @@ def plot_datasets(dataset_type=None):
     points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pyvista.Line()
-    line.points += np.array((2, 0, 0))  # type: ignore[misc]
+    line.points += np.array((2, 0, 0))
     line.clear_data()
 
     tri = pyvista.Triangle()
-    tri.points += np.array([0, 1, 0])  # type: ignore[misc]
+    tri.points += np.array([0, 1, 0])
     circ = pyvista.Circle()
-    circ.points += np.array([1.5, 1.5, 0])  # type: ignore[misc]
+    circ.points += np.array([1.5, 1.5, 0])
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
     pyr = pyvista.Pyramid()
-    pyr.points *= 0.7  # type: ignore[misc]
+    pyr.points *= 0.7
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 

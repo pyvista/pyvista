@@ -38,8 +38,8 @@ lin_pts = np.array(
 )
 
 # these are the "midside" points of a quad cell.  See the definition of a
-# vtkQuadraticHexahedron at:
-# https://vtk.org/doc/nightly/html/classvtkQuadraticHexahedron.html
+# :vtk:`vtkQuadraticHexahedron`.
+
 quad_pts = np.array(
     [
         (lin_pts[1] + lin_pts[0]) / 2,  # between point 0 and 1

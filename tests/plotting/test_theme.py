@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+import re
 
 from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import matplotlib as mpl
 import pytest
 import vtk
 
@@ -84,7 +86,7 @@ def test_depth_silhouette_eq(default_theme):
     assert my_theme.silhouette != 1
 
 
-def test_depth_silhouette_opacity_outside_clamp(default_theme):
+def test_depth_silhouette_opacity_outside_clamp():
     my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
@@ -178,7 +180,7 @@ def test_font_label_size(default_theme):
 
 
 def test_font_fmt(default_theme):
-    fmt = '%.6e'
+    fmt = '{:.6e}'
     default_theme.font.fmt = fmt
     assert default_theme.font.fmt == fmt
 
@@ -358,15 +360,22 @@ def test_camera_parallel_scale(default_theme):
     assert pl2.parallel_scale == 2.0
 
 
-def test_cmap(default_theme):
-    cmap = 'jet'
+@pytest.mark.parametrize('cmap', ['jet', mpl.colormaps['jet'], ['red', 'green', 'blue']])
+def test_cmap(default_theme, cmap):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a color map'):
+
+def test_cmap_raises(default_theme):
+    match = "Invalid colormap 'not a color map'"
+    with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
-    with pytest.raises(ValueError, match='Invalid color map'):
+    match = (
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>, "
+        "<class 'matplotlib.colors.Colormap'>). Got <class 'NoneType'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
 
 
@@ -498,7 +507,8 @@ def test_plotter_set_theme():
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -511,7 +521,8 @@ def test_load_theme(tmpdir, default_theme):
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -582,7 +593,8 @@ def test_below_range_color(default_theme):
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
-def test_user_logo(default_theme, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_user_logo(default_theme):
     default_theme.logo_file = download_file('vtk.png')
     pl = pv.Plotter()
     pl.add_logo_widget()

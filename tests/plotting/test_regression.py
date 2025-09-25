@@ -11,6 +11,7 @@ from hypothesis import strategies as st
 import pytest
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.plotting.utilities import regression
 
 if TYPE_CHECKING:
@@ -57,26 +58,33 @@ def test_wrap_image_array_raises_dtype(mocker: MockerFixture):
         pv.wrap_image_array(m)
 
 
-def test_commpare_images_raises(mocker: MockerFixture):
+def test_compare_images_raises(mocker: MockerFixture):
     @dataclass
-    class foo:
+    class Foo:
         n_calls: int = 0
 
-        def __call__(self, v):
+        def __call__(self, v):  # noqa: ARG002
             self.n_calls += 1
-            return bar(self.n_calls)
+            return Bar(self.n_calls)
 
     @dataclass
-    class bar:
+    class Bar:
         n_calls: int
 
-        def GetDimensions(self):
+        def GetDimensions(self) -> int:  # noqa: N802
             return self.n_calls
 
-    mocker.patch.object(regression, 'remove_alpha', new=foo())
+        @property
+        def dimensions(self) -> int:
+            return self.n_calls
+
+    mocker.patch.object(regression, 'remove_alpha', new=Foo())
 
     with pytest.raises(RuntimeError, match='Input images are not the same size.'):
         pv.compare_images(pv.ImageData(), pv.ImageData())
+
+    with pytest.raises(TypeError, match='may not be an image'):
+        pv.compare_images(pv.ImageData(), examples.antfile)
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):
@@ -93,7 +101,7 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
     assert not pv.compare_images(arr1, pl2)
     assert not pv.compare_images(im1, pl2)
     assert not pv.compare_images(filename, pl2)
-    assert not pv.compare_images(arr1, pl2, use_vtk=True)
+    assert not pv.compare_images(arr1, pl2, use_vtk=False)
 
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.render_window)
@@ -133,3 +141,5 @@ def test_compare_images_two_plotter_different(sphere, airplane, tmpdir):
 
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.render_window)
+
+    assert pv.compare_images(im1, im2, use_vtk=False) > 50

@@ -8,7 +8,7 @@ import os.path as op
 import sys
 
 
-def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:
+def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001, FBT002
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -37,7 +37,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
 
     """
-    import pyvista
+    import pyvista  # noqa: PLC0415
 
     if domain != 'py':
         return None
@@ -57,22 +57,25 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
 
     # deal with our decorators properly
     while hasattr(obj, 'fget'):
         obj = obj.fget
 
+    # deal with wrapped object
+    while hasattr(obj, '__wrapped__'):
+        obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001  # pragma: no cover
         fn = None
 
     if not fn:  # pragma: no cover
         try:
             fn = inspect.getsourcefile(sys.modules[obj.__module__])
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
         return None
 
@@ -81,7 +84,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001 # pragma: no cover
         lineno = None
 
     linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
@@ -89,21 +92,21 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))  # noqa: UP031
+        kind = f'release/{".".join(pyvista.__version__.split(".")[:2])}'
 
     blob_or_edit = 'edit' if edit else 'blob'
 
     return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
-def pv_html_page_context(
-    app,
+def pv_html_page_context(  # noqa: PLR0917
+    app,  # noqa: ARG001
     pagename: str,
-    templatename: str,
+    templatename: str,  # noqa: ARG001
     context,
-    doctree,
+    doctree,  # noqa: ARG001
 ) -> None:  # pragma: no cover
-    """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
+    """Add a function for returning an "edit this page" link pointing to `main`.
 
     This is specific to PyVista to ensure that the "edit this page" link always
     goes to the right page, specifically for:

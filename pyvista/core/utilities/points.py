@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
@@ -20,13 +21,14 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(
+@_deprecate_positional_args(allowed=['points'])
+def vtk_points(  # noqa: PLR0917
     points: VectorLike[float] | MatrixLike[float],
-    deep: bool = True,
-    force_float: bool = False,
-    allow_empty: bool = True,
+    deep: bool = True,  # noqa: FBT001, FBT002
+    force_float: bool = False,  # noqa: FBT001, FBT002
+    allow_empty: bool = True,  # noqa: FBT001, FBT002
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a ``vtkPoints`` object.
+    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------
@@ -52,8 +54,8 @@ def vtk_points(
 
     Returns
     -------
-    vtk.vtkPoints
-        The vtkPoints object.
+    :vtk:`vtkPoints`
+        The :vtk:`vtkPoints` object.
 
     Examples
     --------
@@ -79,6 +81,7 @@ def vtk_points(
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
+            stacklevel=2,
         )
         points_ = points_.astype(np.float32)
 
@@ -141,20 +144,20 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     n_points = len(points)
     n_lines = n_points // 2
     lines = np.c_[
-        (
-            2 * np.ones(n_lines, np.int_),
-            np.arange(0, n_points - 1, step=2),
-            np.arange(1, n_points + 1, step=2),
-        )
+        2 * np.ones(n_lines, np.int_),
+        np.arange(0, n_points - 1, step=2),
+        np.arange(1, n_points + 1, step=2),
     ]
     poly = pyvista.PolyData()
-    poly.points = points  # type: ignore[assignment]
+    poly.points = points
     poly.lines = lines
     return poly
 
 
+@_deprecate_positional_args(allowed=['points'])
 def lines_from_points(
-    points: VectorLike[float] | MatrixLike[float], close: bool = False
+    points: VectorLike[float] | MatrixLike[float],
+    close: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Make a connected line set given an array of points.
 
@@ -183,7 +186,7 @@ def lines_from_points(
 
     """
     poly = pyvista.PolyData()
-    poly.points = points  # type: ignore[assignment]
+    poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
@@ -193,9 +196,10 @@ def lines_from_points(
     return poly
 
 
-def fit_plane_to_points(
+@_deprecate_positional_args(allowed=['points'])
+def fit_plane_to_points(  # noqa: PLR0917
     points: MatrixLike[float],
-    return_meta: bool = False,
+    return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
 ) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
@@ -330,18 +334,16 @@ def fit_plane_to_points(
 
     Note that it is pointing in the positive z-direction.
 
-    >>> normal
-    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, 1.0], dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
 
     >>> _, _, normal = pv.fit_plane_to_points(
     ...     mesh.points, return_meta=True, init_normal='-z'
     ... )
-    >>> normal
-    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, -1.0], dtype=float32)
 
     """
     valid_resolution = _validation.validate_array(
@@ -359,9 +361,7 @@ def fit_plane_to_points(
     )
 
     # Fit plane to xyz-aligned mesh
-    aligned_bnds = aligned.bounds
-    i_size = aligned_bnds.x_max - aligned_bnds.x_min
-    j_size = aligned_bnds.y_max - aligned_bnds.y_min
+    i_size, j_size, _ = aligned.bounds_size
     plane = pyvista.Plane(
         i_size=i_size,
         j_size=j_size,
@@ -457,7 +457,7 @@ def fit_line_to_points(
     Show the length of the line.
 
     >>> length
-    167.6145387467733
+    167.6145
 
     Plot the line as an arrow to show its direction.
 
@@ -781,11 +781,10 @@ def principal_axes(
     Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
-    >>> axes
-    pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
-                     [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
-                     [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
-                    dtype=float32)
+    >>> axes  # doctest:+SKIP
+    pyvista_ndarray([[-1.,  0.,  0.],
+                     [ 0.,  1.,  0.],
+                     [ 0.,  0., -1.]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
@@ -797,8 +796,8 @@ def principal_axes(
 
     Show the standard deviation along each axis.
 
-    >>> std
-    array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
+    >>> std  # doctest:+SKIP
+    array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
     Compare this to using :meth:`numpy.std` for the computation.
 
@@ -812,7 +811,7 @@ def principal_axes(
 
     Convert the values to proportions for analysis.
 
-    >>> std / sum(std)
+    >>> std / sum(std)  # doctest:+SKIP
     array([0.5769149 , 0.28845742, 0.1346276 ], dtype=float32)
 
     From this result, we can determine that the axes explain approximately

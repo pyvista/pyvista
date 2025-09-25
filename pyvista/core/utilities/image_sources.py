@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import wrap
 
@@ -14,8 +14,9 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-@no_new_attr
-class ImageEllipsoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource):
+class ImageEllipsoidSource(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource
+):
     """Create a binary image of an ellipsoid class.
 
     .. versionadded:: 0.44.0
@@ -140,8 +141,9 @@ class ImageEllipsoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSourc
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageMandelbrotSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource):
+class ImageMandelbrotSource(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource
+):
     """Create an image of the Mandelbrot set.
 
     .. versionadded:: 0.44.0
@@ -236,8 +238,7 @@ class ImageMandelbrotSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSou
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageNoiseSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
+class ImageNoiseSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -271,9 +272,8 @@ class ImageNoiseSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         whole_extent=(0, 255, 0, 255, 0, 0),
         minimum=0.0,
@@ -388,8 +388,7 @@ class ImageNoiseSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageSinusoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
+class ImageSinusoidSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
 
     .. versionadded:: 0.44.0
@@ -427,9 +426,8 @@ class ImageSinusoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource)
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         whole_extent=None,
         direction=None,
@@ -591,8 +589,7 @@ class ImageSinusoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource)
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageGaussianSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
+class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
     """Create a binary image with Gaussian pixel values.
 
     .. versionadded:: 0.44.0
@@ -626,9 +623,10 @@ class ImageGaussianSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource)
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
+        self, center=None, whole_extent=None, maximum=None, std=None
+    ) -> None:
         super().__init__()
         if center is not None:
             self.center = center
@@ -757,8 +755,7 @@ class ImageGaussianSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource)
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageGridSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
+class ImageGridSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
     """Create an image of a grid.
 
     .. versionadded:: 0.44.0

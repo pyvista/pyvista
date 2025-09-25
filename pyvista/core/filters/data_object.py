@@ -7,13 +7,14 @@ import itertools
 import re
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeVar
 from typing import cast
-from typing import overload
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -26,15 +27,17 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _reciprocal
+from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Sequence
+    from typing import ClassVar
 
     from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista import RectilinearGrid
     from pyvista import RotationLike
-    from pyvista import StructuredGrid
     from pyvista import TransformLike
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
@@ -42,35 +45,23 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
+    _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
 
+
+@abstract_class
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 
     points: pyvista_ndarray
 
-    @overload
-    def transform(  # type: ignore[misc]
-        self: RectilinearGrid,
+    @_deprecate_positional_args(allowed=['trans'])
+    def transform(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         trans: TransformLike,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool | None = ...,
-        progress_bar: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def transform(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool | None = ...,
-        progress_bar: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def transform(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = False,
-        inplace: bool | None = None,
-        progress_bar: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool | None = None,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Transform this mesh with a 4x4 transform.
 
         .. warning::
@@ -93,16 +84,29 @@ class DataObjectFilters:
             this conversion always applies to the input mesh.
 
         .. warning::
-            Shear transformations are not supported for :class:`~pyvista.ImageData`.
-            If present, any shear component is removed by the filter.
+            Shear transformations are not supported for :class:`~pyvista.ImageData` or
+            :class:`~pyvista.RectilinearGrid`, and rotations are not supported for
+            :class:`~pyvista.RectilinearGrid`. If present, these component(s) are removed by the
+            filter. To fully support these transformations, the input should be cast to
+            :class:`~pyvista.StructuredGrid` `before` applying this filter.
 
         .. note::
-            Transforming :class:`~pyvista.ImageData` modifies its :class:`~pyvista.ImageData.origin`,
-            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
-            properties.
+            Transforming :class:`~pyvista.ImageData` modifies its
+            :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and
+            :class:`~pyvista.ImageData.direction_matrix` properties.
 
         .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+            `inplace` was previously defaulted to `True`. In the future this will change
+            to `False`.
+
+        .. versionchanged:: 0.45.0
+            Transforming :class:`~pyvista.ImageData` now returns ``ImageData``.
+            Previously, :class:`~pyvista.StructuredGrid` was returned.
+
+        .. versionchanged:: 0.46.0
+            Transforming :class:`~pyvista.RectilinearGrid` now returns ``RectilinearGrid``.
+            Previously, :class:`~pyvista.StructuredGrid` was returned.
 
         Parameters
         ----------
@@ -124,9 +128,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Transformed dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Transformed dataset. Return type matches input.
 
         See Also
         --------
@@ -172,11 +174,12 @@ class DataObjectFilters:
                 raise RuntimeError(msg)
 
             msg = (
-                f'The default value of `inplace` for the filter `{self.__class__.__name__}.transform` will change in the future. '
+                f'The default value of `inplace` for the filter '
+                f'`{self.__class__.__name__}.transform` will change in the future. '
                 'Previously it defaulted to `True`, but will change to `False`. '
                 'Explicitly set `inplace` to `True` or `False` to silence this warning.'
             )
-            warnings.warn(msg, PyVistaDeprecationWarning)
+            warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
             inplace = True  # The old default behavior
 
         if isinstance(self, pyvista.MultiBlock):
@@ -187,10 +190,6 @@ class DataObjectFilters:
                 inplace=inplace,
                 progress_bar=progress_bar,
             )
-
-        if inplace and isinstance(self, pyvista.RectilinearGrid):
-            msg = f'Cannot transform a {self.__class__} inplace'
-            raise TypeError(msg)
 
         t = trans if isinstance(trans, Transform) else Transform(trans)
 
@@ -203,7 +202,7 @@ class DataObjectFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)  # type: ignore[assignment]
+            self.points = self.points.astype(np.float32)
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
@@ -239,6 +238,7 @@ class DataObjectFilters:
                 'Integer points, vector and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
+                stacklevel=2,
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -254,25 +254,10 @@ class DataObjectFilters:
         f.SetTransform(t)
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
-        _update_alg(f, progress_bar, 'Transforming')
-        res = pyvista.core.filters._get_output(f)
+        _update_alg(f, progress_bar=progress_bar, message='Transforming')
+        vtk_filter_output = pyvista.core.filters._get_output(f)
 
-        def _restore_active_scalars(input_: _DataSetType, output_: _DataSetType):
-            # make the previously active scalars active again
-            input_.point_data.active_scalars_name = active_point_scalars_name
-            input_.cell_data.active_scalars_name = active_cell_scalars_name
-
-            # Only update output if necessary
-            if input_ is not output_:
-                output_.point_data.active_scalars_name = active_point_scalars_name
-                output_.cell_data.active_scalars_name = active_cell_scalars_name
-
-        if isinstance(self, pyvista.RectilinearGrid):
-            output: DataSet | MultiBlock = pyvista.StructuredGrid()
-        elif inplace:
-            output = self
-        else:
-            output = self.__class__()
+        output = self if inplace else self.__class__()
 
         if isinstance(output, pyvista.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
@@ -284,49 +269,76 @@ class DataObjectFilters:
             new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
 
-            output.point_data.update(res.point_data, copy=False)
-            output.cell_data.update(res.cell_data, copy=False)
-            output.field_data.update(res.field_data, copy=False)
-            _restore_active_scalars(self, output)
-            return output
+            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
+            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
+            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
-        _restore_active_scalars(self, res)
+        elif isinstance(output, pyvista.RectilinearGrid):
+            # vtkTransformFilter returns a StructuredGrid, but we can return
+            # RectilinearGrid if we ignore shear and rotations
+            # Follow similar decomposition performed by ImageData.index_to_physical_matrix
+            T, R, N, S, K = t.decompose()
 
-        # The output from the transform filter contains a shallow copy
-        # of the original dataset except for the point arrays.  Here
-        # we perform a copy so the two are completely unlinked.
-        if inplace:
-            output.copy_from(res, deep=False)
+            if not np.allclose(K, np.eye(3)):
+                msg = (
+                    'The transformation has a shear component which has been removed. Shear is '
+                    'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
+                    'shear transformations.'
+                )
+                warnings.warn(msg, stacklevel=2)
+
+            # Lump scale and reflection together
+            scale = S * N
+            if not np.allclose(np.abs(R), np.eye(3)):
+                msg = (
+                    'The transformation has a non-diagonal rotation component which has been '
+                    'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
+                    'StructuredGrid first to fully support rotations.'
+                )
+                warnings.warn(msg, stacklevel=2)
+            else:
+                # Lump any reflections from the rotation into the scale
+                scale *= np.diagonal(R)
+
+            # Apply transformation to structure
+            tx, ty, tz = T
+            sx, sy, sz = scale
+            output.x = self.x * sx + tx
+            output.y = self.y * sy + ty
+            output.z = self.z * sz + tz
+
+            # Copy data arrays from the vtkTransformFilter's output
+            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
+            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
+            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
+
+        elif inplace:
+            output.copy_from(vtk_filter_output, deep=False)
         else:
-            output.copy_from(res, deep=True)
+            # The output from the transform filter contains a shallow copy
+            # of the original dataset except for the point arrays.  Here
+            # we perform a copy so the two are completely unlinked.
+            output.copy_from(vtk_filter_output, deep=True)
+
+        # Make the previously active scalars active again
+        self.point_data.active_scalars_name = active_point_scalars_name
+        if output is not self:
+            output.point_data.active_scalars_name = active_point_scalars_name
+        self.cell_data.active_scalars_name = active_cell_scalars_name
+        if output is not self:
+            output.cell_data.active_scalars_name = active_cell_scalars_name
+
         return output
 
-    @overload
-    def reflect(  # type: ignore[misc]
-        self: RectilinearGrid,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        inplace: bool = ...,
-        transform_all_input_vectors: bool = ...,
-        progress_bar: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def reflect(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        inplace: bool = ...,
-        transform_all_input_vectors: bool = ...,
-        progress_bar: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def reflect(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['normal'])
+    def reflect(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
-        inplace: bool = False,
-        transform_all_input_vectors: bool = False,
-        progress_bar: bool = False,
-    ) -> DataSet | MultiBlock:
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Reflect a dataset across a plane.
 
         Parameters
@@ -351,9 +363,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Reflected dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Reflected dataset. Return type matches input.
 
         See Also
         --------
@@ -378,29 +388,14 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    @overload
-    def rotate_x(  # type: ignore[misc]
-        self: RectilinearGrid,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def rotate_x(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def rotate_x(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['angle'])
+    def rotate_x(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Rotate mesh about the x-axis.
 
         .. note::
@@ -426,9 +421,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -459,29 +452,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate_y(  # type: ignore[misc]
-        self: RectilinearGrid,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def rotate_y(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def rotate_y(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['angle'])
+    def rotate_y(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Rotate mesh about the y-axis.
 
         .. note::
@@ -506,9 +484,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -539,29 +515,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate_z(  # type: ignore[misc]
-        self: RectilinearGrid,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def rotate_z(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def rotate_z(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['angle'])
+    def rotate_z(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Rotate mesh about the z-axis.
 
         .. note::
@@ -587,9 +548,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -620,32 +579,15 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate_vector(  # type: ignore[misc]
-        self: RectilinearGrid,
-        vector: VectorLike[float],
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def rotate_vector(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        vector: VectorLike[float],
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def rotate_vector(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['vector', 'angle'])
+    def rotate_vector(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Rotate mesh about a vector.
 
         .. note::
@@ -674,9 +616,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -707,29 +647,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate(  # type: ignore[misc]
-        self: RectilinearGrid,
-        rotation: RotationLike,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def rotate(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        rotation: RotationLike,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def rotate(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['rotation'])
+    def rotate(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
 
         .. note::
@@ -755,9 +680,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -798,26 +721,12 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
     def translate(  # type: ignore[misc]
-        self: RectilinearGrid,
+        self: _MeshType_co,
         xyz: VectorLike[float],
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def translate(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def translate(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Translate the mesh.
 
         .. note::
@@ -840,9 +749,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Translated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Translated dataset. Return type matches input.
 
         See Also
         --------
@@ -869,29 +776,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def scale(  # type: ignore[misc]
-        self: RectilinearGrid,
+    @_deprecate_positional_args(allowed=['xyz'])
+    def scale(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         xyz: float | VectorLike[float],
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-        point: VectorLike[float] | None = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def scale(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        xyz: float | VectorLike[float],
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-        point: VectorLike[float] | None = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def scale(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
-        xyz: float | VectorLike[float],
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
         point: VectorLike[float] | None = None,
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Scale the mesh.
 
         .. note::
@@ -917,14 +809,15 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Scaled dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Scaled dataset. Return type matches input.
 
         See Also
         --------
         pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
+
+        pyvista.DataObjectFilters.resize
+            Resize a mesh.
 
         Examples
         --------
@@ -956,26 +849,169 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def flip_x(  # type: ignore[misc]
-        self: RectilinearGrid,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def flip_x(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def flip_x(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
-        point: VectorLike[float] | None = None,
+    def resize(  # type: ignore[misc]
+        self: _MeshType_co,
+        *,
+        bounds: VectorLike[float] | None = None,
+        bounds_size: float | VectorLike[float] | None = None,
+        center: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
+        """Resize the dataset's bounds.
+
+        This filter rescales and translates the mesh to fit specified bounds. This is useful for
+        normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
+
+        Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
+        ``bounds_size`` and ``center`` to implicitly set the new bounds.
+
+        .. versionadded:: 0.46
+
+        See Also
+        --------
+        :meth:`scale`, :meth:`translate`
+            Scale and/or translate a mesh. Used internally by :meth:`resize`.
+
+        Parameters
+        ----------
+        bounds : VectorLike[float], optional
+            Target :attr:`~pyvista.DataSet.bounds` for the resized dataset in the format
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``. If provided, the dataset is scaled and
+            translated to fit exactly within these bounds. Cannot be used together with
+            ``bounds_size`` or ``center``.
+
+        bounds_size : float | VectorLike[float], optional
+            Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
+            single float to specify the size of all three axes, or a 3-element vector to set the
+            size of each axis independently. Cannot be used together with ``bounds``.
+
+        center : VectorLike[float], optional
+            Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            If True, the dataset is modified in place. If False, a new dataset is returned.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Resized dataset. Return type matches input.
+
+        Examples
+        --------
+        Load a mesh with asymmetric bounds and show them.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube(
+        ...     x_length=1.0, y_length=2.0, z_length=3.0, center=(1.0, 2.0, 3.0)
+        ... )
+        >>> mesh.bounds
+        BoundsTuple(x_min = 0.5,
+                    x_max = 1.5,
+                    y_min = 1.0,
+                    y_max = 3.0,
+                    z_min = 1.5,
+                    z_max = 4.5)
+
+        Resize it to fit specific bounds.
+
+        >>> resized = mesh.resize(bounds=[-1, 2, -3, 4, -5, 6])
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  2.0,
+                    y_min = -3.0,
+                    y_max =  4.0,
+                    z_min = -5.0,
+                    z_max =  6.0)
+
+        Resize the mesh so its size is ``4.0``.
+
+        >>> resized = mesh.resize(bounds_size=4.0)
+        >>> resized.bounds_size
+        (4.0, 4.0, 4.0)
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  3.0,
+                    y_min =  0.0,
+                    y_max =  4.0,
+                    z_min =  1.0,
+                    z_max =  5.0)
+
+        Specify a different size for each axis and set the desired center.
+
+        >>> resized = mesh.resize(bounds_size=(2.0, 1.0, 0.5), center=(1.0, 0.5, 0.25))
+        >>> resized.bounds_size
+        (2.0, 1.0, 0.5)
+        >>> resized.center
+        (1.0, 0.5, 0.25)
+
+        Center the mesh at the origin and normalize its bounds to ``1.0``.
+
+        >>> resized = mesh.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
+
+        """
+        if bounds is not None:
+            if bounds_size is not None:
+                msg = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
+                raise ValueError(msg)
+            if center is not None:
+                msg = (
+                    "Cannot specify both 'bounds' and 'center'. 'center' can only be used with "
+                    "the 'bounds_size' parameter."
+                )
+                raise ValueError(msg)
+
+            target_bounds3x2 = _validation.validate_array(
+                bounds, must_have_shape=6, reshape_to=(3, 2), name='bounds'
+            )
+            target_size = np.diff(target_bounds3x2.T, axis=0)[0]
+            current_center = np.array(self.center)
+            target_center = np.mean(target_bounds3x2, axis=1)
+
+        else:
+            if bounds_size is None:
+                msg = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
+                raise ValueError(msg)
+
+            target_size = bounds_size
+            current_center = np.array(self.center)
+            target_center = (
+                current_center
+                if center is None
+                else _validation.validate_array3(center, name='center')
+            )
+
+        current_size = self.bounds_size
+        scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        # Apply transformation
+        transform = pyvista.Transform()
+        transform.translate(-current_center)
+        transform.scale(scale_factors)
+        transform.translate(target_center)
+        return self.transform(
+            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
+
+    @_deprecate_positional_args
+    def flip_x(  # type: ignore[misc]
+        self: _MeshType_co,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Flip mesh about the x-axis.
 
         .. note::
@@ -999,9 +1035,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Flipped dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Flipped dataset. Return type matches input.
 
         See Also
         --------
@@ -1033,26 +1067,13 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
+    @_deprecate_positional_args
     def flip_y(  # type: ignore[misc]
-        self: RectilinearGrid,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def flip_y(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def flip_y(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Flip mesh about the y-axis.
 
         .. note::
@@ -1076,9 +1097,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Flipped dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Flipped dataset. Return type matches input.
 
         See Also
         --------
@@ -1110,26 +1129,13 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
+    @_deprecate_positional_args
     def flip_z(  # type: ignore[misc]
-        self: RectilinearGrid,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def flip_z(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def flip_z(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Flip mesh about the z-axis.
 
         .. note::
@@ -1153,9 +1159,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Flipped dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Flipped dataset. Return type matches input.
 
         See Also
         --------
@@ -1187,29 +1191,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def flip_normal(  # type: ignore[misc]
-        self: RectilinearGrid,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> StructuredGrid: ...
-    @overload
-    def flip_normal(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,
-        inplace: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
-    def flip_normal(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+    @_deprecate_positional_args(allowed=['normal'])
+    def flip_normal(  # type: ignore[misc]  # noqa: PLR0917
+        self: _MeshType_co,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ) -> DataSet | MultiBlock:
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _MeshType_co:
         """Flip mesh about the normal.
 
         .. note::
@@ -1236,9 +1225,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Dataset flipped about its normal. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Dataset flipped about its normal. Return type matches input.
 
         See Also
         --------
@@ -1273,6 +1260,7 @@ class DataObjectFilters:
     def _clip_with_function(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         function: _vtk.vtkImplicitFunction,
+        *,
         invert: bool = True,
         value: float = 0.0,
         return_clipped: bool = False,
@@ -1281,91 +1269,7 @@ class DataObjectFilters:
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
-            CELL_IDS_KEY = 'cell_ids'
-            VTK_POINT_IDS_KEYS = 'vtkOriginalPointIds'
-            VTK_CELL_IDS_KEYS = 'vtkOriginalCellIds'
-            INT_DTYPE = np.int64
-            ITER_KWARGS = dict(skip_none=True)
-
-            def extract_cells(dataset, ids, active_scalars_info_):
-                # Extract cells and remove arrays, and restore active scalars
-                output = dataset.extract_cells(ids)
-                if VTK_POINT_IDS_KEYS in (point_data := output.point_data):
-                    del point_data[VTK_POINT_IDS_KEYS]
-                if VTK_CELL_IDS_KEYS in (cell_data := output.cell_data):
-                    del cell_data[VTK_CELL_IDS_KEYS]
-                association, name = active_scalars_info_
-                dataset.set_active_scalars(name, preference=association)
-                output.set_active_scalars(name, preference=association)
-                return output
-
-            def extract_crinkle_cells(dataset, a_, b_, active_scalars_info_):
-                if b_ is None:
-                    # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
-                        return extract_cells(
-                            block_,
-                            np.unique(clipped_a.cell_data[CELL_IDS_KEY]),
-                            active_scalars_info_,
-                        )
-                else:
-                    # Extract cells when `return_clipped=True`
-                    def extract_cells_from_block(
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
-                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
-                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
-
-                        # Need to cast as int dtype explicitly to ensure empty arrays have
-                        # the right type required by extract_cells
-                        array_a = np.array(list(set_a), dtype=INT_DTYPE)
-                        array_b = np.array(list(set_b), dtype=INT_DTYPE)
-
-                        clipped_a = extract_cells(block_, array_a, active_scalars_info_)
-                        clipped_b = extract_cells(block_, array_b, active_scalars_info_)
-                        return clipped_a, clipped_b
-
-                def extract_cells_from_multiblock(multi_in, multi_a, multi_b, active_scalars_info_):
-                    # Iterate though input and output multiblocks
-                    # `multi_b` may be None depending on `return_clipped`
-                    self_iter = multi_in.recursive_iterator('all', **ITER_KWARGS)
-                    a_iter = multi_a.recursive_iterator(**ITER_KWARGS)
-                    b_iter = (
-                        multi_b.recursive_iterator(**ITER_KWARGS)
-                        if multi_b is not None
-                        else itertools.repeat(None)
-                    )
-
-                    for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                        self_iter, a_iter, b_iter, active_scalars_info_
-                    ):
-                        crinkled = extract_cells_from_block(
-                            block_self, block_a, block_b, scalars_info
-                        )
-                        # Replace blocks with crinkled ones
-                        if block_b is None:
-                            # Only need to replace one block
-                            multi_a.replace(ids, crinkled)
-                        else:
-                            multi_a.replace(ids, crinkled[0])
-                            multi_b.replace(ids, crinkled[1])
-                    return multi_a if multi_b is None else (multi_a, multi_b)
-
-                if isinstance(dataset, pyvista.MultiBlock):
-                    return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
-                return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
-
-            # Add Cell IDs to all blocks and keep track of scalars to restore later
-            active_scalars_info = []
-            if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
-            else:
-                blocks = [self]
-            for block in blocks:
-                active_scalars_info.append(block.active_scalars_info)
-                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
+            active_scalars_info = _Crinkler.add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -1388,7 +1292,7 @@ class DataObjectFilters:
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
-        _update_alg(alg, progress_bar, 'Clipping with Function')
+        _update_alg(alg, progress_bar=progress_bar, message='Clipping with Function')
 
         def _maybe_cast_to_point_set(in_):
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
@@ -1397,23 +1301,24 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler.extract_crinkle_cells(self, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
-    def clip(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['normal'])
+    def clip(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
-        invert: bool = True,
+        invert: bool = True,  # noqa: FBT001, FBT002
         value: float = 0.0,
-        inplace: bool = False,
-        return_clipped: bool = False,
-        progress_bar: bool = False,
-        crinkle: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        return_clipped: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        crinkle: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -1454,9 +1359,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData | tuple[pyvista.PolyData]
-            Clipped mesh when ``return_clipped=False``,
-            otherwise a tuple containing the unclipped and clipped datasets.
+        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing the
+            unclipped and clipped meshes. Output mesh type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1494,6 +1402,21 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+
+        # Post-process clip to fix output type and remove unused points
+        input_bounds = self.bounds
+        if isinstance(result, tuple):
+            result = (
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
+            result = (
+                _remove_unused_points_post_clip(result[0], input_bounds),
+                _remove_unused_points_post_clip(result[1], input_bounds),
+            )
+        else:
+            result = _cast_output_to_match_input_type(result, self)
+            result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1503,14 +1426,15 @@ class DataObjectFilters:
                 return self
         return result
 
-    def clip_box(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['bounds'])
+    def clip_box(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
-        invert: bool = True,
+        invert: bool = True,  # noqa: FBT001, FBT002
         factor: float = 0.35,
-        progress_bar: bool = False,
-        merge_points: bool = True,
-        crinkle: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        merge_points: bool = True,  # noqa: FBT001, FBT002
+        crinkle: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -1608,7 +1532,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            active_scalars_info = _Crinkler.add_cell_ids(self)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -1620,24 +1544,25 @@ class DataObjectFilters:
             # invert the clip if needed
             port = 1
             alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar, 'Clipping a Dataset by a Bounding Box')
+        _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        return clipped
+            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
+        return _remove_unused_points_post_clip(clipped, self.bounds)
 
-    def slice_implicit(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['implicit_function'])
+    def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         implicit_function: _vtk.vtkImplicitFunction,
-        generate_triangles: bool = False,
-        contour: bool = False,
-        progress_bar: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        contour: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Slice a dataset by a VTK implicit function.
 
         Parameters
         ----------
-        implicit_function : vtk.vtkImplicitFunction
+        implicit_function : :vtk:`vtkImplicitFunction`
             Specify the implicit function to perform the cutting.
 
         generate_triangles : bool, default: False
@@ -1657,6 +1582,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
@@ -1681,19 +1614,20 @@ class DataObjectFilters:
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
         alg.SetGenerateTriangles(generate_triangles)
-        _update_alg(alg, progress_bar, 'Slicing')
+        _update_alg(alg, progress_bar=progress_bar, message='Slicing')
         output = _get_output(alg)
         if contour:
             return output.contour()
         return output
 
-    def slice(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['normal'])
+    def slice(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
-        generate_triangles: bool = False,
-        contour: bool = False,
-        progress_bar: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        contour: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
@@ -1726,6 +1660,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the surface of a sphere.
@@ -1754,14 +1696,15 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    def slice_orthogonal(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def slice_orthogonal(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         x: float | None = None,
         y: float | None = None,
         z: float | None = None,
-        generate_triangles: bool = False,
-        contour: bool = False,
-        progress_bar: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        contour: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create three orthogonal slices through the dataset on the three cartesian planes.
 
@@ -1792,6 +1735,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
@@ -1857,16 +1808,17 @@ class DataObjectFilters:
         )
         return output
 
-    def slice_along_axis(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['n', 'axis'])
+    def slice_along_axis(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
         tolerance: float | None = None,
-        generate_triangles: bool = False,
-        contour: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        contour: bool = False,  # noqa: FBT001, FBT002
         bounds=None,
         center=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create many slices of the input dataset along a specified axis.
 
@@ -1912,6 +1864,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the random hills dataset in the X direction.
@@ -1934,7 +1894,11 @@ class DataObjectFilters:
         # parse axis input
         XYZLiteral = Literal['x', 'y', 'z']
         labels: list[XYZLiteral] = ['x', 'y', 'z']
-        label_to_index: dict[Literal['x', 'y', 'z'], Literal[0, 1, 2]] = {'x': 0, 'y': 1, 'z': 2}
+        label_to_index: dict[Literal['x', 'y', 'z'], Literal[0, 1, 2]] = {
+            'x': 0,
+            'y': 1,
+            'z': 2,
+        }
         if isinstance(axis, int):
             ax_index = axis
             ax_label = labels[ax_index]
@@ -1953,7 +1917,9 @@ class DataObjectFilters:
             center = self.center
         if tolerance is None:
             tolerance = (bounds[ax_index * 2 + 1] - bounds[ax_index * 2]) * 0.01
-        rng = np.linspace(bounds[ax_index * 2] + tolerance, bounds[ax_index * 2 + 1] - tolerance, n)
+        rng = np.linspace(
+            bounds[ax_index * 2] + tolerance, bounds[ax_index * 2 + 1] - tolerance, n
+        )
         center = list(center)
         # Make each of the slices
         output = pyvista.MultiBlock()
@@ -1986,12 +1952,13 @@ class DataObjectFilters:
             output.append(slc, f'slice{i}')
         return output
 
-    def slice_along_line(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['line'])
+    def slice_along_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         line: pyvista.PolyData,
-        generate_triangles: bool = False,
-        contour: bool = False,
-        progress_bar: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        contour: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Slice a dataset using a polyline/spline as the path.
 
@@ -2017,6 +1984,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the random hills dataset along a circular arc.
@@ -2028,7 +2003,9 @@ class DataObjectFilters:
         >>> center = np.array(hills.center)
         >>> point_a = center + np.array([5, 0, 0])
         >>> point_b = center + np.array([-5, 0, 0])
-        >>> arc = pv.CircularArc(point_a, point_b, center, resolution=100)
+        >>> arc = pv.CircularArc(
+        ...     pointa=point_a, pointb=point_b, center=center, resolution=100
+        ... )
         >>> line_slice = hills.slice_along_line(arc)
 
         Plot the circular arc and the hills mesh.
@@ -2064,17 +2041,18 @@ class DataObjectFilters:
         alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        _update_alg(alg, progress_bar, 'Slicing along Line')
+        _update_alg(alg, progress_bar=progress_bar, message='Slicing along Line')
         output = _get_output(alg)
         if contour:
             return output.contour()
         return output
 
+    @_deprecate_positional_args
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        use_all_points: bool = False,
-        clear_data: bool = False,
-        progress_bar: bool = False,
+        use_all_points: bool | None = None,  # noqa: FBT001
+        clear_data: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract all the internal/external edges of the dataset as PolyData.
 
@@ -2082,16 +2060,10 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        use_all_points : bool, default: False
-            Indicates whether all of the points of the input mesh should exist
-            in the output. When ``True``, point numbering does not change and
-            a threaded approach is used, which avoids the use of a point locator
-            and is quicker.
-
-            By default this is set to ``False``, and unused points are omitted
-            from the output.
-
-            This parameter can only be set to ``True`` with ``vtk==9.1.0`` or newer.
+        use_all_points : bool, optional
+            .. deprecated:: 0.44.0
+               Parameter ``use_all_points`` is deprecated since VTK < 9.2 is no
+               longer supported. This parameter has no effect and is always ``True``.
 
         clear_data : bool, default: False
             Clear any point, cell, or field data. This is useful
@@ -2119,33 +2091,35 @@ class DataObjectFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        if use_all_points is not None:
+            warnings.warn(
+                "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
+                'supported. This parameter has no effect and is always `True`.',
+                PyVistaDeprecationWarning,
+                stacklevel=2,
+            )
+
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
-        if use_all_points:
-            try:
-                alg.SetUseAllPoints(use_all_points)
-            except AttributeError:  # pragma: no cover
-                msg = (
-                    'This version of VTK does not support `use_all_points=True`. '
-                    'VTK v9.1 or newer is required.'
-                )
-                raise VTKVersionError(msg)
+        # Always use all points since VTK >= 9.2 is required
+        alg.SetUseAllPoints(True)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         with pyvista.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar, 'Extracting All Edges')
+            _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
         output = _get_output(alg)
         if clear_data:
             output.clear_data()
         return output
 
-    def elevation(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
         scalar_range: str | VectorLike[float] | None = None,
         preference: Literal['point', 'cell'] = 'point',
-        set_active: bool = True,
-        progress_bar: bool = False,
+        set_active: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate scalar values on a dataset.
 
@@ -2242,7 +2216,7 @@ class DataObjectFilters:
         alg.SetScalarRange(scalar_range_)
         alg.SetLowPoint(low_point_)
         alg.SetHighPoint(high_point_)
-        _update_alg(alg, progress_bar, 'Computing Elevation')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Elevation')
         # Decide on updating active scalars array
         output = _get_output(alg)
         if not set_active:
@@ -2250,13 +2224,14 @@ class DataObjectFilters:
             output.point_data.active_scalars_name = self.point_data.active_scalars_name
         return output
 
-    def compute_cell_sizes(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def compute_cell_sizes(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        length: bool = True,
-        area: bool = True,
-        volume: bool = True,
-        progress_bar: bool = False,
-        vertex_count: bool = False,
+        length: bool = True,  # noqa: FBT001, FBT002
+        area: bool = True,  # noqa: FBT001, FBT002
+        volume: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        vertex_count: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -2306,11 +2281,15 @@ class DataObjectFilters:
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(vertex_count)
-        _update_alg(alg, progress_bar, 'Computing Cell Sizes')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
         return _get_output(alg)
 
+    @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType, vertex: bool = True, progress_bar: bool = False
+        self: _DataSetOrMultiBlockType,
+        vertex: bool = True,  # noqa: FBT001, FBT002
+        pass_cell_data: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate points at the center of the cells in this dataset.
 
@@ -2320,6 +2299,9 @@ class DataObjectFilters:
         ----------
         vertex : bool, default: True
             Enable or disable the generation of vertex cells.
+
+        pass_cell_data : bool, default: True
+            If enabled, pass the input cell data through to the output.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2353,13 +2335,17 @@ class DataObjectFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
-        _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
+        alg.SetCopyArrays(pass_cell_data)
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Generating Points at the Center of the Cells'
+        )
         return _get_output(alg)
 
+    @_deprecate_positional_args
     def cell_data_to_point_data(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        pass_cell_data: bool = False,
-        progress_bar: bool = False,
+        pass_cell_data: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Transform cell data into point data.
 
@@ -2415,16 +2401,19 @@ class DataObjectFilters:
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
-        _update_alg(alg, progress_bar, 'Transforming cell data into point data.')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Transforming cell data into point data.'
+        )
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
+    @_deprecate_positional_args
     def ctp(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        pass_cell_data: bool = False,
-        progress_bar: bool = False,
+        pass_cell_data: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Transform cell data into point data.
@@ -2459,11 +2448,12 @@ class DataObjectFilters:
             **kwargs,
         )
 
+    @_deprecate_positional_args
     def point_data_to_cell_data(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        pass_point_data: bool = False,
-        categorical: bool = False,
-        progress_bar: bool = False,
+        pass_point_data: bool = False,  # noqa: FBT001, FBT002
+        categorical: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Transform point data into cell data.
 
@@ -2532,16 +2522,19 @@ class DataObjectFilters:
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
         alg.SetCategoricalData(categorical)
-        _update_alg(alg, progress_bar, 'Transforming point data into cell data')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Transforming point data into cell data'
+        )
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
+    @_deprecate_positional_args
     def ptc(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        pass_point_data: bool = False,
-        progress_bar: bool = False,
+        pass_point_data: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Transform point data into cell data.
@@ -2576,8 +2569,11 @@ class DataObjectFilters:
             **kwargs,
         )
 
+    @_deprecate_positional_args
     def triangulate(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType, inplace: bool = False, progress_bar: bool = False
+        self: _DataSetOrMultiBlockType,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return an all triangle mesh.
 
@@ -2613,7 +2609,7 @@ class DataObjectFilters:
         """
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Converting to triangle mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -2621,20 +2617,21 @@ class DataObjectFilters:
             return self
         return mesh
 
-    def sample(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['target'])
+    def sample(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         target: DataSet | _vtk.vtkDataSet,
         tolerance: float | None = None,
-        pass_cell_data: bool = True,
-        pass_point_data: bool = True,
-        categorical: bool = False,
-        progress_bar: bool = False,
+        pass_cell_data: bool = True,  # noqa: FBT001, FBT002
+        pass_point_data: bool = True,  # noqa: FBT001, FBT002
+        categorical: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
         | _vtk.vtkAbstractCellLocator
         | None = 'static_cell',
-        pass_field_data: bool = True,
-        mark_blank: bool = True,
-        snap_to_closest_point: bool = False,
+        pass_field_data: bool = True,  # noqa: FBT001, FBT002
+        mark_blank: bool = True,  # noqa: FBT001, FBT002
+        snap_to_closest_point: bool = False,  # noqa: FBT001, FBT002
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -2649,7 +2646,7 @@ class DataObjectFilters:
         with a value of 1 meaning successful sampling. And a value of 0 means
         unsuccessful.
 
-        This uses :class:`vtk.vtkResampleWithDataSet`.
+        This uses :vtk:`vtkResampleWithDataSet`.
 
         Parameters
         ----------
@@ -2676,15 +2673,15 @@ class DataObjectFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        locator : vtkAbstractCellLocator or str or None, default: 'static_cell'
+        locator : :vtk:`vtkAbstractCellLocator` or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
             operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
-                * 'cell' - vtkCellLocator
-                * 'cell_tree' - vtkCellTreeLocator
-                * 'obb_tree' - vtkOBBTree
-                * 'static_cell' - vtkStaticCellLocator
+                * 'cell' - :vtk:`vtkCellLocator`
+                * 'cell_tree' - :vtk:`vtkCellTreeLocator`
+                * 'obb_tree' - :vtk:`vtkOBBTree`
+                * 'static_cell' - :vtk:`vtkStaticCellLocator`
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
@@ -2738,7 +2735,9 @@ class DataObjectFilters:
 
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
-        alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
+        alg.SetInputData(
+            self
+        )  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetSourceData(wrap(target))
         alg.SetPassCellArrays(pass_cell_data)
@@ -2772,7 +2771,11 @@ class DataObjectFilters:
             except AttributeError:  # pragma: no cover
                 msg = '`snap_to_closest_point=True` requires vtk 9.3.0 or newer'
                 raise VTKVersionError(msg)
-        _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
+        _update_alg(
+            alg,
+            progress_bar=progress_bar,
+            message='Resampling array Data from a Passed Mesh onto Mesh',
+        )
         return _get_output(alg)
 
     def cell_quality(  # type: ignore[misc]
@@ -2801,7 +2804,7 @@ class DataObjectFilters:
 
         .. note::
 
-            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            Refer to the `Verdict Library Reference Manual <https://github.com/sandialabs/verdict/raw/master/SAND2007-2853p.pdf>`_
             for low-level technical information about how each metric is computed.
 
         .. versionadded:: 0.45
@@ -2889,9 +2892,9 @@ class DataObjectFilters:
             measures_requested = measures_available_names
         else:
             measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
-            for quality_measure in measures:
+            for measure in measures:
                 _validation.check_contains(
-                    measures_available_names, must_contain=quality_measure, name='quality_measure'
+                    measures_available_names, must_contain=measure, name='quality_measure'
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
@@ -2948,7 +2951,9 @@ class DataObjectFilters:
         for measure in measures_requested:
             # Set measure and update
             getattr(alg, measures_available[measure])()
-            _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
+            _update_alg(
+                alg, progress_bar=progress_bar, message=f"Computing Cell Quality '{measure}'"
+            )
 
             # Store the cell quality array with the output
             cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
@@ -2961,7 +2966,7 @@ class DataObjectFilters:
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
-    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    """Return snake case quality measure keys and vtkCellQuality attribute setter names."""
     # Get possible quality measures dynamically
     str_start = 'SetQualityMeasureTo'
     measures = {}
@@ -2974,3 +2979,152 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _remove_unused_points_post_clip(clip_output, input_bounds):
+    # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
+    # https://github.com/pyvista/pyvista/issues/6511
+    # https://github.com/pyvista/pyvista/issues/7738
+
+    def maybe_remove_unused_points(mesh: DataSet):
+        # Unused points are correctly removed sometimes, so for performance we only
+        # remove points when the clipped bounds match input bounds
+        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+            return mesh.remove_unused_points()
+        return mesh
+
+    return (
+        clip_output.generic_filter(maybe_remove_unused_points)
+        if isinstance(clip_output, pyvista.MultiBlock)
+        else maybe_remove_unused_points(clip_output)
+    )
+
+
+def _cast_output_to_match_input_type(
+    output_mesh: DataSet | MultiBlock, input_mesh: DataSet | MultiBlock
+):
+    # Ensure output type matches input type
+
+    def cast_output(mesh_out: DataSet, mesh_in: DataSet):
+        if isinstance(mesh_in, pyvista.PolyData) and not isinstance(mesh_out, pyvista.PolyData):
+            return mesh_out.extract_geometry()
+        elif isinstance(mesh_in, pyvista.PointSet) and not isinstance(mesh_out, pyvista.PointSet):
+            return mesh_out.cast_to_pointset()
+        return mesh_out
+
+    def cast_output_blocks(mesh_out: MultiBlock, mesh_in: MultiBlock):
+        # Replace all blocks in the output mesh with cast versions that match the input
+        for (ids, _, block_out), block_in in zip(
+            mesh_out.recursive_iterator('all', skip_none=True),
+            mesh_in.recursive_iterator(skip_none=True),
+        ):
+            mesh_out.replace(ids, cast_output(block_out, block_in))
+        return mesh_out
+
+    return (
+        cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
+        if isinstance(output_mesh, pyvista.MultiBlock)
+        else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
+    )
+
+
+class _Crinkler:
+    CELL_IDS = 'cell_ids'
+    INT_DTYPE = np.int64
+    ITER_KWARGS: ClassVar = dict(skip_none=True)
+
+    @staticmethod
+    def extract_cells(dataset, ids, active_scalars_info_):
+        # Extract cells and remove arrays, and restore active scalars
+        output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
+        association, name = active_scalars_info_
+        if not dataset.is_empty:
+            dataset.set_active_scalars(name, preference=association)
+        if not output.is_empty:
+            output.set_active_scalars(name, preference=association)
+        return output
+
+    @staticmethod
+    def extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+        if b_ is None:
+            # Extract cells when `return_clipped=False`
+            def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
+                if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
+                    return _Crinkler.extract_cells(
+                        block_,
+                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
+                        active_scalars_info_,
+                    )
+                return clipped_a
+        else:
+            # Extract cells when `return_clipped=True`
+            def extract_cells_from_block(  # noqa: PLR0917
+                block_, clipped_a, clipped_b, active_scalars_info_
+            ):
+                set_a = (
+                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
+                    else set()
+                )
+                set_b = (
+                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
+                    else set()
+                )
+                set_b = set_b - set_a
+
+                # Need to cast as int dtype explicitly to ensure empty arrays have
+                # the right type required by extract_cells
+                array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
+                array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
+
+                clipped_a = _Crinkler.extract_cells(block_, array_a, active_scalars_info_)
+                clipped_b = _Crinkler.extract_cells(block_, array_b, active_scalars_info_)
+                return clipped_a, clipped_b
+
+        def extract_cells_from_multiblock(  # noqa: PLR0917
+            multi_in, multi_a, multi_b, active_scalars_info_
+        ):
+            # Iterate though input and output multiblocks
+            # `multi_b` may be None depending on `return_clipped`
+            self_iter = multi_in.recursive_iterator('all', **_Crinkler.ITER_KWARGS)
+            a_iter = multi_a.recursive_iterator(**_Crinkler.ITER_KWARGS)
+            b_iter = (
+                multi_b.recursive_iterator(**_Crinkler.ITER_KWARGS)
+                if multi_b is not None
+                else itertools.repeat(None)
+            )
+
+            for (ids, _, block_self), block_a, block_b, scalars_info in zip(
+                self_iter, a_iter, b_iter, active_scalars_info_
+            ):
+                crinkled = extract_cells_from_block(block_self, block_a, block_b, scalars_info)
+                # Replace blocks with crinkled ones
+                if block_b is None:
+                    # Only need to replace one block
+                    multi_a.replace(ids, crinkled)
+                else:
+                    multi_a.replace(ids, crinkled[0])
+                    multi_b.replace(ids, crinkled[1])
+            return multi_a if multi_b is None else (multi_a, multi_b)
+
+        if isinstance(dataset, pyvista.MultiBlock):
+            return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
+        return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
+
+    @staticmethod
+    def add_cell_ids(dataset: DataSet | MultiBlock):
+        # Add Cell IDs to all blocks and keep track of scalars to restore later
+        active_scalars_info = []
+        if isinstance(dataset, pyvista.MultiBlock):
+            blocks: Iterable[DataSet] = dataset.recursive_iterator(
+                'blocks', **_Crinkler.ITER_KWARGS
+            )
+        else:
+            blocks = [dataset]
+        for block in blocks:
+            active_scalars_info.append(block.active_scalars_info)
+            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
+                block.n_cells, dtype=_Crinkler.INT_DTYPE
+            )
+        return active_scalars_info

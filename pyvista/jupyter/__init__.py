@@ -3,21 +3,26 @@
 from __future__ import annotations
 
 import importlib.util
+from typing import Literal
+from typing import get_args
+
+from typing_extensions import TypeIs
 
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 
-ALLOWED_BACKENDS = [
-    'static',
-    'client',
-    'server',
-    'trame',
-    'html',
-    'none',
-]
+JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
+ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
 
-def _validate_jupyter_backend(backend):
+def _is_jupyter_backend(backend: str) -> TypeIs[JupyterBackendOptions]:
+    """Return True if backend is allowed jupyter backend."""
+    return backend in ALLOWED_BACKENDS
+
+
+def _validate_jupyter_backend(
+    backend: str | None,
+) -> JupyterBackendOptions:
     """Validate that a jupyter backend is valid.
 
     Returns the normalized name of the backend. Raises if the backend is invalid.
@@ -32,7 +37,7 @@ def _validate_jupyter_backend(backend):
         msg = 'Install IPython to display with pyvista in a notebook.'
         raise ImportError(msg)
 
-    if backend not in ALLOWED_BACKENDS:
+    if not _is_jupyter_backend(backend):
         backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
         msg = (
             f'Invalid Jupyter notebook plotting backend "{backend}".\n'
@@ -42,17 +47,15 @@ def _validate_jupyter_backend(backend):
 
     if backend in ['server', 'client', 'trame', 'html']:
         try:
-            from pyvista.trame.jupyter import show_trame as show_trame
+            from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
 
-    if backend == 'none':
-        backend = None
     return backend
 
 
-def set_jupyter_backend(backend, name=None, **kwargs):
+def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
     """Set the plotting backend for a jupyter notebook.
 
     Parameters

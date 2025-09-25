@@ -94,7 +94,7 @@ def path(y):
 x, y = path(np.arange(model.bounds.y_min, model.bounds.y_max, 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
-spline = pv.Spline(points, 15)
+spline = pv.Spline(points, n_points=15)
 spline
 
 
@@ -130,7 +130,7 @@ b = mesh.center - normal * mesh.length / 3.0
 
 # Define the line/points for the slices
 n_slices = 5
-line = pv.Line(a, b, n_slices)
+line = pv.Line(a, b, resolution=n_slices)
 
 # Generate all of the slices
 slices = pv.MultiBlock()
@@ -177,5 +177,33 @@ p = pv.Plotter()
 p.add_mesh(slices, cmap=cmap)
 p.add_mesh(model.outline())
 p.show()
+
+# %%
+# Slice ImageData With Indexing
+# +++++++++++++++++++++++++++++
+# Most slicing filters return :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+# For :class:`~pyvista.ImageData` inputs, however, it's often desirable to return
+# :class:`~pyvista.ImageData`. The :meth:`~pyvista.ImageDataFilters.slice_index` filter supports
+# this use case.
+#
+# Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
+# :func:`~pyvista.examples.examples.load_frog_tissues`.
+
+mask = examples.load_frog_tissues()
+sliced = mask.slice_index(k=50)
+colored = sliced.color_labels()
+colored.plot(cpos='xy', zoom='tight', lighting=False)
+
+# %%
+# Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we define
+# indices to extract the frog's head.
+
+sliced = mask.slice_index(i=[300, 500], j=[110, 350], k=[0, 100])
+surface = sliced.contour_labels()
+colored = surface.color_labels()
+
+cpos = [(520.0, 461.0, -402.0), (372.0, 243.0, 52.0), (-0.73, -0.50, -0.47)]
+colored.plot(cpos=cpos)
+
 # %%
 # .. tags:: filter

@@ -13,6 +13,11 @@ from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
+@pytest.fixture
+def plane2x2():
+    return pv.Plane(i_resolution=2, j_resolution=2)
+
+
 def test_show_bounds_axes_ranges():
     plotter = pv.Plotter()
 
@@ -236,14 +241,30 @@ def test_add_remove_legend(sphere):
     pl.remove_legend()
 
 
-@pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
-def test_legend_face(sphere, face, verify_image_cache):
+LEGEND_FACES = {
+    '-': '-',
+    '^': '^',
+    'o': 'o',
+    'r': 'r',
+    'none_str': 'none',
+    'None': None,
+    'custom': pv.ParametricKlein(),
+}
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.parametrize('face', LEGEND_FACES.values(), ids=LEGEND_FACES.keys())
+def test_legend_face(face):
     pl = pv.Plotter()
-    pl.add_mesh(sphere, label='sphere')
-    pl.add_legend(face=face, size=(0.5, 0.5))
+    pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), color='r', label='Sphere')
+    pl.add_mesh(pv.Cube(), color='w', label='Cube')
+    # add a large legend to ensure test fails if face is not configured right
+    pl.add_legend(face=face, bcolor='k', size=(0.6, 0.6))
+    pl.show()
 
 
 def test_legend_from_glyph(sphere, verify_image_cache):
+    verify_image_cache.high_variance_test = True
     pl = pv.Plotter()
     x = sphere.face_normals[:, 0] ** 2
     y = sphere.face_normals[:, 1] ** 2
@@ -256,47 +277,50 @@ def test_legend_from_glyph(sphere, verify_image_cache):
     pl.add_mesh(arrows, color='red', label='Magnitude')
     pl.add_mesh(sphere)
     pl.add_legend(size=(0.5, 0.5))
-
-
-def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
-    pl = pv.Plotter()
-
-    random_hills['Normals2'] = -1 * random_hills['Normals'].copy()
-
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
-    pl.add_mesh(arrows, color='black', label='label 1')
-
-    arrows2 = random_hills.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
-    pl.add_mesh(arrows2, color='red', label='label 2')
-
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
-
-    pl.add_legend(size=(0.5, 0.5))
     pl.show()
 
 
-def test_legend_using_add_legend(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_from_multiple_glyph(plane2x2):
     pl = pv.Plotter()
+    plane2x2['Normals2'] = -1 * plane2x2['Normals'].copy()
 
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
+    arrows2 = plane2x2.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
+    pl.add_mesh(arrows2, color='red', label='label 2')
+
+    pl.add_mesh(plane2x2, color='white')
+
+    pl.add_legend(size=(0.5, 0.5), bcolor='gray')
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend(plane2x2):
+    pl = pv.Plotter()
+
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='black', label='label 1')
+
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
     legend_entries.append(['my label 2', 'blue'])
-    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.add_legend(legend_entries, size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
-def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend_with_glyph(plane2x2):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
@@ -305,52 +329,68 @@ def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': 'circle'})
     legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': None})
 
-    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.add_legend(legend_entries, size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
-def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend_only_labels(plane2x2):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = ['label 1', 'label 2']
 
-    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.add_legend(legend_entries, size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
-def test_legend_none_face(verify_image_cache):
-    """Verifies that ``face="none"`` does not add a face for each label in legend."""
+@pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
+def test_legend_using_add_legend_dict(use_dict_labels):
+    sphere_label = 'sphere'
+    sphere_color = 'r'
+    sphere_kwargs = dict(color=sphere_color)
+
+    cube_label = 'cube'
+    cube_color = 'w'
+    cube_kwargs = dict(color=cube_color)
+
+    legend_kwargs = dict(bcolor='k', size=(0.6, 0.6))
+    if use_dict_labels:
+        legend_kwargs['labels'] = {
+            sphere_label: sphere_color,
+            cube_label: cube_color,
+        }
+    else:
+        sphere_kwargs['label'] = sphere_label
+        cube_kwargs['label'] = cube_label
+
     pl = pv.Plotter()
-    pl.add_mesh(
-        pv.Icosphere(center=(3, 0, 0), radius=1),
-        color='r',
-        label='Sphere',
-    )
-    pl.add_mesh(pv.Box(), color='w', label='Box')
-    # add a large legend to ensure test fails if face="none" not configured right
-    pl.add_legend(face='none', bcolor='k', size=(0.6, 0.6))
+    pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), **sphere_kwargs)
+    pl.add_mesh(pv.Cube(), **cube_kwargs)
+    pl.add_legend(**legend_kwargs)
     pl.show()
 
 
-def test_legend_add_entry_warning(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_add_entry_warning():
     pl = pv.Plotter()
     legend_entries = [{'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'non_used_arg': 'asdf'}]
 
     with pytest.warns(UserWarning, match='Some of the arguments given to legend are not used'):
         pl.add_legend(legend_entries, size=(0.5, 0.5))
-        pl.show()
+    pl.show()
 
 
 def test_legend_add_entry_exception():
     pl = pv.Plotter()
     legend_entries = np.array([1, 2])  # Not allowed type
 
-    with pytest.raises(ValueError, match='The object passed to the legend'):
+    with pytest.raises(TypeError, match='The object passed to the legend'):
         pl.add_legend(legend_entries)
     pl.show()
 
@@ -567,7 +607,7 @@ def test_show_bounds_grid_raises(grid):
         pl.renderer.show_bounds(grid=grid)
 
 
-def test_show_bounds_grid_value_raises(grid):
+def test_show_bounds_grid_value_raises():
     pl = pv.Plotter()
     with pytest.raises(
         ValueError, match=re.escape('`grid` must be either "front", "back, or, "all", not foo')

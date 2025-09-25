@@ -1,4 +1,3 @@
-# ruff: noqa: D102,D103,D107
 """PyVista Trame User Interface.
 
 This module builds a base UI for manipulating a PyVista Plotter.
@@ -54,6 +53,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
             warnings.warn(
                 'Suppress rendering on the plotter is changed to ' + str(suppress_rendering),
                 UserWarning,
+                stacklevel=2,
             )
         return viewer
 

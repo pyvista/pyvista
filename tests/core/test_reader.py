@@ -52,7 +52,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
     ):
         pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
@@ -315,7 +315,16 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
-def test_dcmreader(tmpdir):
+def test_ensightreader_non_time_series_data():
+    filename = examples.download_file('simple_tetra/example.case')
+    examples.download_file('simple_tetra/example.geo')
+
+    reader = pv.get_reader(filename)
+    assert reader.number_time_points == 0
+    assert reader.time_values == []
+
+
+def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pv.get_reader(directory)
@@ -598,7 +607,6 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -720,14 +728,8 @@ def test_openfoam_cell_to_point_default():
 
 
 def test_openfoam_patch_arrays():
-    # vtk version 9.1.0 changed the way patch names are handled.
-    vtk_version = pv.vtk_version_info
-    if vtk_version >= (9, 1, 0):
-        patch_array_key = 'boundary'
-        reader_patch_prefix = 'patch/'
-    else:
-        patch_array_key = 'Patches'
-        reader_patch_prefix = ''
+    patch_array_key = 'boundary'
+    reader_patch_prefix = 'patch/'
 
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
@@ -786,7 +788,6 @@ def test_openfoam_case_type():
         reader.case_type = 'wrong_value'
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
@@ -960,7 +961,6 @@ def test_avsucd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_hdf_reader():
     filename = examples.download_can_crushed_hdf(load=False)
     reader = pv.get_reader(filename)
@@ -1025,9 +1025,6 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
-)
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
     partitions = pv.PartitionedDataSet(
@@ -1039,7 +1036,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
 @pytest.mark.needs_vtk_version(
@@ -1067,9 +1064,6 @@ def test_gambitreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
     reader = pv.get_reader(filename)
@@ -1102,9 +1096,6 @@ def test_gesignareader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
     reader = pv.get_reader(filename)
@@ -1226,7 +1217,7 @@ def test_nek5000_reader():
     nek_reader = pv.get_reader(filename)
 
     # test time routines
-    ## Check correct number of time points
+    # Check correct number of time points
     ntimes = 11
     dt = 0.01
     assert nek_reader.number_time_points == ntimes, 'Checks number of time points'
@@ -1234,7 +1225,7 @@ def test_nek5000_reader():
 
     assert nek_reader.time_values == [dt * i for i in range(ntimes)]
 
-    ## check setting and getting of time points and times
+    # check setting and getting of time points and times
     for i in range(ntimes):
         nek_reader.set_active_time_point(i)
         assert nek_reader.active_time_point == i, 'check time point set'
@@ -1285,7 +1276,7 @@ def test_nek5000_reader():
     with pytest.raises(AttributeError):
         nek_reader.disable_all_cell_arrays()
 
-    ## check enabling and disabling of point arrays
+    # check enabling and disabling of point arrays
     for name in nek_reader.point_array_names:
         # Should be enabled by default
         assert nek_reader.point_array_status(name)
@@ -1355,7 +1346,7 @@ def test_nek5000_reader():
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
 )
 @pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+def test_read_write_pickle(tmp_path, data_object, ext):
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
     new_data_object = pv.read(filepath)
@@ -1376,7 +1367,10 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.read_pickle({})
 
-    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    match = (
+        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
+        "Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 
@@ -1400,7 +1394,7 @@ def test_exodus_reader_core():
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
 
-    ## check enabling of displacements (To match functionality
+    # check enabling of displacements (To match functionality
     # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
@@ -1409,7 +1403,7 @@ def test_exodus_reader_core():
     e_reader.disable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 0
 
-    ## check number of cell and point arrays and their names
+    # check number of cell and point arrays and their names
     assert e_reader.number_point_arrays == 2
     assert e_reader.number_cell_arrays == 1
 
@@ -1417,7 +1411,7 @@ def test_exodus_reader_core():
 
     assert 'aux_elem' in e_reader.cell_array_names
 
-    ## check enabling and disabling of point arrays
+    # check enabling and disabling of point arrays
     for name in e_reader.point_array_names:
         # Should be enabled by default
         assert e_reader.point_array_status(name)
@@ -1428,7 +1422,7 @@ def test_exodus_reader_core():
         e_reader.enable_point_array(name)
         assert e_reader.point_array_status(name)
 
-    ## check enabling and disabling of cell arrays
+    # check enabling and disabling of cell arrays
     for name in e_reader.cell_array_names:
         # Should be enabled by default
         assert e_reader.cell_array_status(name)
@@ -1464,13 +1458,13 @@ def test_exodus_reader_core():
     ntimes = 21
     dt = 0.1
 
-    ## check correct number of time points
+    # check correct number of time points
     assert e_reader.number_time_points == ntimes, 'Checks number of time points'
     assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
 
     assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
 
-    ## check setting and getting of time points and times
+    # check setting and getting of time points and times
     for i in range(ntimes):
         e_reader.set_active_time_point(i)
         assert e_reader.reader.GetTimeStep() == i, 'check time point set'
@@ -1498,7 +1492,7 @@ def test_exodus_reader_core():
     with pytest.raises(ValueError, match=err_msg):
         e_reader.set_active_time_value(1.25)
 
-    ## check read with point and cell arrays present
+    # check read with point and cell arrays present
     multiblock = e_reader.read()
 
     unstruct = multiblock[0][0]

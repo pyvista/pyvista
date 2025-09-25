@@ -83,9 +83,9 @@ def discover_modules(entry=pyvista, recurse=True):
     next_entries = {entry}
     while next_entries:
         next_modules = {}
-        for entry in next_entries:
-            for attr_short_name in dir(entry):
-                attr = getattr(entry, attr_short_name)
+        for ent in next_entries:
+            for attr_short_name in dir(ent):
+                attr = getattr(ent, attr_short_name)
                 if not isinstance(attr, ModuleType):
                     continue
 
@@ -154,7 +154,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             continue
 
         # mock print to suppress output from a few talkative tests
-        globs = {'print': (lambda *args, **kwargs: ...)}
+        globs = {'print': (lambda *args, **kwargs: ...)}  # noqa: ARG005
         for iline, example in enumerate(dt.examples, start=1):
             if not example.source.strip() or (
                 respect_skips and skip_pattern.search(example.source)
@@ -162,7 +162,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
                 continue
             try:
                 exec(example.source, globs)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')
                 erroring_code = ''.join([example.source for example in dt.examples[:iline]])

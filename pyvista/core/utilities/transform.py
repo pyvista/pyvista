@@ -14,6 +14,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
@@ -34,7 +35,12 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
-class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTransform):
+class Transform(
+    _NoNewAttrMixin,
+    _vtk.DisableVtkSnakeCase,
+    _vtk.vtkPyVistaOverride,
+    _vtk.vtkTransform,
+):
     """Describes linear transformations via a 4x4 matrix.
 
     A :class:`Transform` can be used to describe the full range of linear (also known
@@ -63,7 +69,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         By default, the transform is initialized as the identity matrix.
 
     point : VectorLike[float], optional
-        Point to use when composing some transformations such as scale, rotation, etc.
+        Point to use when composing transformations.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
@@ -255,7 +261,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
     ) -> None:
         super().__init__()
         self.multiply_mode = multiply_mode
-        self.point = point  # type: ignore[assignment]
+        self.point = point
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
@@ -266,7 +272,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                     # Init from sequence of transformations
                     [self.compose(t) for t in trans]
             else:
-                self.matrix = trans  # type: ignore[assignment]
+                self.compose(trans)
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
@@ -274,13 +280,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
             raise ValueError(msg)
@@ -291,13 +299,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand type(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand value(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
             raise ValueError(msg)
@@ -316,14 +326,17 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                 transform = copied.compose(other, multiply_mode='post')
             except TypeError:
                 msg = (
-                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
                 raise TypeError(msg)
             except ValueError:
                 msg = (
-                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector '
+                    f'or have 3x3 or 4x4 shape.'
                 )
                 raise ValueError(msg)
         return transform
@@ -334,13 +347,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand type(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand value(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise ValueError(msg)
@@ -527,6 +542,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         --------
         pyvista.DataObjectFilters.scale
             Scale a mesh.
+
+        pyvista.DataObjectFilters.resize
+            Resize a mesh.
 
         Examples
         --------
@@ -1275,6 +1293,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         self: Transform,
         transform: TransformLike,
         *,
+        point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a transformation matrix.
@@ -1289,6 +1308,17 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         ----------
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
+
+        point : VectorLike[float], optional
+            Point to transform about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are composed and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the transformation
+                - :meth:`translate` away from ``point`` after the transformation
+
+            .. versionadded:: 0.47
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when composing the matrix. By default, the
@@ -1317,7 +1347,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                [ 0.   ,  0.   ,  1.   ,  1.5  ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
-        Define a second transformation and use ``+`` to compose it.
+        Define a second transformation and use ``*`` to compose it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
         >>> transform = transform * array
@@ -1327,7 +1357,34 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                [-0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
+        Compose the transform about a point. Check the :attr:`matrix_list` to see that a
+        translation is added before and after the transform.
+
+        >>> transform = pv.Transform().compose(transform, point=(1, 2, 3))
+        >>> transform.matrix_list  # doctest: +NORMALIZE_WHITESPACE
+        [array([[ 1.,  0.,  0., -1.],
+                [ 0.,  1.,  0., -2.],
+                [ 0.,  0.,  1., -3.],
+                [ 0.,  0.,  0.,  1.]]),
+         array([[ 0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   , -1.   , -1.5  ],
+                [-0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   ,  0.   ,  2.   ]]),
+         array([[1., 0., 0., 1.],
+                [0., 1., 0., 2.],
+                [0., 0., 1., 3.],
+                [0., 0., 0., 1.]])]
+
+
         """
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
+
+    def _compose(
+        self: Transform,
+        transform: TransformLike,
+        *,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
         # Make sure we have a vtkTransform
         if isinstance(transform, _vtk.vtkTransform):
             vtk_transform = transform
@@ -1378,8 +1435,10 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
     @matrix.setter
     def matrix(self: Transform, trans: TransformLike) -> None:
-        self.identity()
-        self.compose(trans)
+        array = _validation.validate_transform4x4(
+            trans, must_be_finite=self.check_finite, name='matrix'
+        )
+        self.SetMatrix(vtkmatrix_from_array(array))
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
@@ -1517,7 +1576,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
             Points with integer values are cast to a float type before the
             transformation is applied. A similar casting is also performed when
-            transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
+            transforming datasets. See also the notes at
+            :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
         Parameters
@@ -1545,7 +1605,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                 - ``'active_vectors'`` transforms active normals and active vectors
                   arrays only.
                 - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
-                  with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+                  with three components. This mode is equivalent to setting
+                  ``transform_all_input_vectors=True``
                   with :meth:`pyvista.DataObjectFilters.transform`.
 
                 By default, only ``'active_vectors'`` are transformed.
@@ -1652,7 +1713,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
                 msg = (
-                    f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
+                    f"Transformation mode '{mode_}' is not supported for {kind}. "
+                    'Mode must be one of'
                     f'\n{allowed_modes}'
                 )
                 raise ValueError(msg)
@@ -1734,10 +1796,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
-        if out is not None:
-            return out
-        else:
-            return array
+        return out if out is not None else array
 
     def apply_to_points(
         self,
@@ -1858,7 +1917,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             - ``'active_vectors'`` transforms active normals and active vectors arrays
               only.
             - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
-              three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+              three components. This mode is equivalent to setting
+              ``transform_all_input_vectors=True``
               with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
@@ -2257,12 +2317,12 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             point=point, multiply_mode=multiply_mode
         )
         if translate_before:
-            self.compose(translate_before, multiply_mode=multiply_mode)
+            self._compose(translate_before, multiply_mode=multiply_mode)
 
-        self.compose(transform, multiply_mode=multiply_mode)
+        self._compose(transform, multiply_mode=multiply_mode)
 
         if translate_after:
-            self.compose(translate_after, multiply_mode=multiply_mode)
+            self._compose(translate_after, multiply_mode=multiply_mode)
 
         return self
 
@@ -2306,7 +2366,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         *args,
         **kwargs,
     ) -> Rotation | NumpyArray[float]:
-        """Return the rotation component as a SciPy :class:`~scipy.spatial.transform.Rotation` or any of its representations.
+        """Return the rotation component as a SciPy ``Rotation`` or any of its representations.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component
         and then returned with the specified representation.
@@ -2320,15 +2380,21 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         representation : str, optional
             Representation of the rotation.
 
-            - ``'quat'``: Represent as a quaternion using :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
-            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
-            - ``'rotvec'``: Represent as a rotation vector using :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
-            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
-            - ``'euler'``: Represent as Euler angles using :meth:`~scipy.spatial.transform.Rotation.as_euler`.
-            - ``'davenport'``: Represent as Davenport angles using :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
+            - ``'quat'``: Represent as a quaternion using
+              :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using
+              :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
 
-            If no representation is given, then an instance of :class:`scipy.spatial.transform.Rotation`
-            is returned by default.
+            If no representation is given, then an instance of
+            :class:`scipy.spatial.transform.Rotation` is returned by default.
 
         *args
             Arguments passed to the ``Rotation`` method for the specified
@@ -2363,7 +2429,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         >>> rot = transform.as_rotation()
         >>> rot
-        <scipy.spatial.transform._rotation.Rotation ...>
+        Rotation.from_matrix(array([[ 0., -1.,  0.],
+                                    [ 1.,  0.,  0.],
+                                    [ 0.,  0.,  1.]]))
 
         Represent the rotation as a quaternion.
 
@@ -2400,7 +2468,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         """
         try:
-            from scipy.spatial.transform import Rotation
+            from scipy.spatial.transform import Rotation  # noqa: PLC0415
         except ImportError:
             msg = "The 'scipy' package must be installed to use `as_rotation`"
             raise ImportError(msg)
@@ -2419,21 +2487,22 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         _, R, _, _, _ = self.decompose()
 
         if representation == 'matrix':
-            return R
-
-        rotation = Rotation.from_matrix(R)
-        if representation is None:
-            return rotation
-        elif representation == 'quat':
-            return rotation.as_quat(*args, **kwargs)
-        elif representation == 'rotvec':
-            return rotation.as_rotvec(*args, **kwargs)
-        elif representation == 'mrp':
-            return rotation.as_mrp(*args, **kwargs)
-        elif representation == 'euler':
-            return rotation.as_euler(*args, **kwargs)
-        elif representation == 'davenport':
-            return rotation.as_davenport(*args, **kwargs)
-        else:  # pragma: no cover
-            msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
-            raise RuntimeError(msg)
+            out = R
+        else:
+            rotation = Rotation.from_matrix(R)
+            if representation is None:
+                out = rotation
+            elif representation == 'quat':
+                out = rotation.as_quat(*args, **kwargs)
+            elif representation == 'rotvec':
+                out = rotation.as_rotvec(*args, **kwargs)
+            elif representation == 'mrp':
+                out = rotation.as_mrp(*args, **kwargs)
+            elif representation == 'euler':
+                out = rotation.as_euler(*args, **kwargs)
+            elif representation == 'davenport':
+                out = rotation.as_davenport(*args, **kwargs)
+            else:  # pragma: no cover
+                msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
+                raise RuntimeError(msg)
+        return out

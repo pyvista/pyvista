@@ -65,7 +65,7 @@ def test_clear(scalar_bars):
     assert len(scalar_bars) == 0
 
 
-def test_too_many_scalar_bars(sphere):
+def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
         for i in range(100):

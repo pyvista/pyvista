@@ -51,8 +51,7 @@ data:
    demos.plot_datasets('StructuredGrid')
 
 
-The :class:`pyvista.PointSet` (as of ``vtk==9.1.0``) is a concrete class for
-storing a set of points.
+The :class:`pyvista.PointSet` is a concrete class for storing a set of points.
 
 .. jupyter-execute::
    :hide-code:
@@ -68,9 +67,9 @@ storing a set of points.
 **Class Descriptions**
 
 The following table describes PyVista's point set classes. These
-classes inherit all methods from their corresponding VTK `vtkPointSet`_,
-`vtkPolyData`_, `vtkUnstructuredGrid`_, `vtkStructuredGrid`_, and
-`vtkExplicitStructuredGrid`_ superclasses.
+classes inherit all methods from their corresponding VTK :vtk:`vtkPointSet`,
+:vtk:`vtkPolyData`, :vtk:`vtkUnstructuredGrid`, :vtk:`vtkStructuredGrid`, and
+:vtk:`vtkExplicitStructuredGrid` superclasses.
 
 .. autosummary::
    :toctree: _autosummary
@@ -80,12 +79,6 @@ classes inherit all methods from their corresponding VTK `vtkPointSet`_,
    pyvista.UnstructuredGrid
    pyvista.StructuredGrid
    pyvista.ExplicitStructuredGrid
-
-.. _vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
-.. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
-.. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html
-.. _vtkExplicitStructuredGrid: https://vtk.org/doc/nightly/html/classvtkExplicitStructuredGrid.html
 
 
 PolyData Creation
@@ -178,8 +171,8 @@ and plots the meshes with various colors.
 
     # Create plotter object
     plotter = pyvista.Plotter()
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position. Add a
     # scalar bar associated with this mesh

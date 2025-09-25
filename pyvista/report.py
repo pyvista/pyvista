@@ -13,22 +13,121 @@ if TYPE_CHECKING:
 
 import scooby
 
-_cmd = """\
-import pyvista; \
-plotter = pyvista.Plotter(notebook=False, off_screen=True); \
-plotter.add_mesh(pyvista.Sphere()); \
-plotter.show(auto_close=False); \
-gpu_info = plotter.render_window.ReportCapabilities(); \
-print(gpu_info); \
-plotter.close()\
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
+_cmd_render_window_info = """
+from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+import vtkmodules.vtkRenderingOpenGL2
+ren = vtkRenderer()
+win = vtkRenderWindow()
+win.OffScreenRenderingOn()
+win.AddRenderer(ren)
+win.Render()
+print(win.ReportCapabilities())
+print('vtkRenderWindow class name: ', win.GetClassName())
 """
+
+_cmd_math_text = """
+import vtkmodules.vtkRenderingFreeType
+import vtkmodules.vtkRenderingMatplotlib
+print(vtkmodules.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported())
+"""
+
+
+def _run(cmd: str):
+    return subprocess.run([sys.executable, '-c', cmd], check=False, capture_output=True)
+
+
+def _get_cached_render_window_info(attr_name: str = ''):
+    if not (info := getattr(_get_cached_render_window_info, 'info', '')):
+        # an OpenGL context MUST be opened before trying to do this.
+        proc = _run(_cmd_render_window_info)
+        info = '' if proc.returncode else proc.stdout.decode()
+        # Cache the value for the next call
+        _get_cached_render_window_info.info = info  # type: ignore[attr-defined]
+    if attr_name:
+        regex = re.compile(f'{attr_name}:(.+)\n')
+        try:
+            value = regex.findall(info)[0]
+        except IndexError:
+            msg = f'Unable to parse rendering information for the {attr_name}.'
+            raise RuntimeError(msg) from None
+        return value.strip()
+    return info
 
 
 def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
-    # an OpenGL context MUST be opened before trying to do this.
-    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
-    return '' if proc.returncode else proc.stdout.decode()
+    return _get_cached_render_window_info()
+
+
+def _get_render_window_class() -> str:  # numpydoc ignore=RT01
+    """Get the render window class."""
+    return _get_cached_render_window_info('vtkRenderWindow class name')
+
+
+def check_matplotlib_vtk_compatibility() -> bool:
+    """Check if VTK and Matplotlib versions are compatible for MathText rendering.
+
+    This function is primarily geared towards checking if MathText rendering is
+    supported with the given versions of VTK and Matplotlib. It follows the
+    version constraints:
+
+    * VTK <= 9.2.2 requires Matplotlib < 3.6
+    * VTK > 9.2.2 requires Matplotlib >= 3.6
+
+    Other version combinations of VTK and Matplotlib will work without
+    errors, but some features (like MathText/LaTeX rendering) may
+    silently fail.
+
+    Returns
+    -------
+    bool
+        True if the versions of VTK and Matplotlib are compatible for MathText
+        rendering, False otherwise.
+
+    Raises
+    ------
+    RuntimeError
+        If the versions of VTK and Matplotlib cannot be checked.
+
+    """
+    import matplotlib as mpl  # noqa: PLC0415
+
+    from pyvista import vtk_version_info  # noqa: PLC0415
+
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
+    if vtk_version_info <= (9, 2, 2):
+        return not mpl_vers >= (3, 6)
+    elif vtk_version_info > (9, 2, 2):
+        return mpl_vers >= (3, 6)
+    msg = 'Uncheckable versions.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover
+
+
+def check_math_text_support() -> bool:
+    """Check if MathText and LaTeX symbols are supported.
+
+    Returns
+    -------
+    bool
+        ``True`` if both MathText and LaTeX symbols are supported, ``False``
+        otherwise.
+
+    """
+    # Something seriously sketchy is happening with this VTK code
+    # It seems to hijack stdout and stderr?
+    # See https://github.com/pyvista/pyvista/issues/4732
+    # This is a hack to get around that by executing the code in a subprocess
+    # and capturing the output:
+    # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    if (is_supported := getattr(check_math_text_support, 'is_supported', None)) is None:
+        proc = _run(_cmd_math_text)
+        math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
+        is_supported = math_text_support and check_matplotlib_vtk_compatibility()
+        # Cache the value for the next call
+        check_math_text_support.is_supported = is_supported  # type: ignore[attr-defined]
+    return is_supported
 
 
 class GPUInfo:
@@ -41,35 +140,17 @@ class GPUInfo:
     @property
     def renderer(self):  # numpydoc ignore=RT01
         """GPU renderer name."""
-        regex = re.compile('OpenGL renderer string:(.+)\n')
-        try:
-            renderer = regex.findall(self._gpu_info)[0]
-        except IndexError:
-            msg = 'Unable to parse GPU information for the renderer.'
-            raise RuntimeError(msg) from None
-        return renderer.strip()
+        return _get_cached_render_window_info('OpenGL renderer string')
 
     @property
     def version(self):  # numpydoc ignore=RT01
         """GPU renderer version."""
-        regex = re.compile('OpenGL version string:(.+)\n')
-        try:
-            version = regex.findall(self._gpu_info)[0]
-        except IndexError:
-            msg = 'Unable to parse GPU information for the version.'
-            raise RuntimeError(msg) from None
-        return version.strip()
+        return _get_cached_render_window_info('OpenGL version string')
 
     @property
     def vendor(self):  # numpydoc ignore=RT01
         """GPU renderer vendor."""
-        regex = re.compile('OpenGL vendor string:(.+)\n')
-        try:
-            vendor = regex.findall(self._gpu_info)[0]
-        except IndexError:
-            msg = 'Unable to parse GPU information for the vendor.'
-            raise RuntimeError(msg) from None
-        return vendor.strip()
+        return _get_cached_render_window_info('OpenGL vendor string')
 
     def get_info(self):
         """All GPU information as tuple pairs.
@@ -127,6 +208,14 @@ class Report(scooby.Report):
         experiencing rendering issues, pass ``False`` to safely generate a
         report.
 
+    downloads : bool, default: False
+        Gather information about downloads. If ``True``, includes:
+        - The local user data path (where downloads are saved)
+        - The VTK Data source (where files are downloaded from)
+        - Whether local file caching is enabled for the VTK Data source
+
+        .. versionadded:: 0.47
+
     Examples
     --------
     >>> import pyvista as pv
@@ -163,19 +252,17 @@ class Report(scooby.Report):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         additional: Sequence[ModuleType] | Sequence[str] | None = None,
         ncol: int = 3,
         text_width: int = 80,
-        sort: bool = False,
-        gpu: bool = True,
+        sort: bool = False,  # noqa: FBT001, FBT002
+        gpu: bool = True,  # noqa: FBT001, FBT002
+        downloads: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate a :class:`scooby.Report` instance."""
-        from vtkmodules.vtkRenderingCore import vtkRenderWindow
-
-        from pyvista.plotting.tools import check_math_text_support
-
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
@@ -202,12 +289,12 @@ class Report(scooby.Report):
             'nest_asyncio',
         ]
 
-        # Information about the GPU - bare except in case there is a rendering
+        # Information about the GPU - catch all Exception in case there is a rendering
         # bug that the user is trying to report.
         if gpu:
             try:
                 extra_meta = GPUInfo().get_info()
-            except:
+            except Exception:  # noqa: BLE001
                 extra_meta = [
                     ('GPU Details', 'error'),
                 ]
@@ -216,8 +303,25 @@ class Report(scooby.Report):
                 ('GPU Details', 'None'),
             ]
 
-        extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
+        if gpu:
+            try:
+                render_window = _get_render_window_class()
+            except Exception:  # noqa: BLE001
+                render_window = 'error'
+        else:
+            render_window = 'None'
+        extra_meta.append(('Render Window', render_window))
+
         extra_meta.append(('MathText Support', check_math_text_support()))
+        if downloads:
+            user_data_path, vtk_data_source, file_cache = _get_downloads_info()
+            extra_meta.extend(
+                [
+                    ('User Data Path', user_data_path),
+                    ('VTK Data Source', vtk_data_source),
+                    ('File Cache', file_cache),
+                ]
+            )
 
         scooby.Report.__init__(
             self,
@@ -229,3 +333,11 @@ class Report(scooby.Report):
             sort=sort,
             extra_meta=extra_meta,
         )
+
+
+def _get_downloads_info() -> tuple[str, str, bool]:
+    from pyvista.examples.downloads import _FILE_CACHE  # noqa: PLC0415
+    from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
+    from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+
+    return USER_DATA_PATH, SOURCE, _FILE_CACHE

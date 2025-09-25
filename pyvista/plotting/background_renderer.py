@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .renderer import Renderer
 
@@ -25,10 +26,13 @@ class BackgroundRenderer(Renderer):
 
     """
 
-    def __init__(self, parent, image_path, scale=1, view_port=None):
+    @_deprecate_positional_args(allowed=['parent', 'image_path'])
+    def __init__(  # noqa: PLR0917
+        self, parent, image_path, scale=1, view_port=None
+    ):
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
-        from . import _vtk
+        from . import _vtk  # noqa: PLC0415
 
         # read the image first as we don't need to create a render if
         # the image path is invalid
@@ -52,7 +56,7 @@ class BackgroundRenderer(Renderer):
         self.reset_camera()  # necessary to get first render
         self.resize()
 
-    def resize(self, *args):
+    def resize(self, *args):  # noqa: ARG002
         """Resize a background renderer.
 
         Parameters
@@ -81,7 +85,7 @@ class BackgroundRenderer(Renderer):
 
         # make the longest dimensions match the plotting window
         img_dim = np.array(image_data.dimensions[:2])
-        self.camera.focus = np.array([xc, yc, 0.0])
+        self.camera._focus = np.array([xc, yc, 0.0])
         self.camera.position = np.array([xc, yc, dist])
 
         ratio = img_dim / np.array(self.parent.window_size)

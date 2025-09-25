@@ -112,12 +112,22 @@ Colors
    Color
    ColorLike
 
-Named colors supported by the :class:`~pyvista.Color` class:
+Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
+and other plotting-related methods:
 
 .. toctree::
    :maxdepth: 3
 
    /api/utilities/named_colors
+
+
+Named colormaps supported by :class:`~pyvista.LookupTable`, :class:`~pyvista.Plotter`,
+and other plotting-related methods:
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/utilities/named_colormaps
 
 Miscellaneous
 ~~~~~~~~~~~~~
@@ -125,6 +135,7 @@ Miscellaneous
 .. autosummary::
    :toctree: _autosummary
 
+   set_new_attribute
    start_xvfb
    Report
    vtk_verbosity

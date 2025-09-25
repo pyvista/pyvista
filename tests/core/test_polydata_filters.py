@@ -81,8 +81,13 @@ def test_clean_raises(mocker: MockerFixture):
 def test_flip_normals_raises():
     plane = pv.Plane()
     with (
-        pytest.raises(NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'),
-        pytest.warns(PyVistaDeprecationWarning),
+        pytest.raises(
+            NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'
+        ),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='`flip_normals` is deprecated. Use `flip_faces` instead',
+        ),
     ):
         plane.flip_normals()
 
@@ -155,9 +160,6 @@ def test_triangulate_contours():
         assert cell.type == pv.CellType.TRIANGLE
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader'
-)
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()

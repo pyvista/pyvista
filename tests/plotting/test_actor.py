@@ -240,7 +240,9 @@ def test_actor_user_matrix(klass, actor, dummy_actor):
     actor = actor if klass == 'Prop3D' else dummy_actor
     assert np.allclose(actor.user_matrix, np.eye(4))
 
-    arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
+    arr = np.array(
+        [[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]]
+    )
 
     actor.user_matrix = arr
     assert isinstance(actor.user_matrix, np.ndarray)
@@ -288,7 +290,9 @@ def test_vol_actor_prop(vol_actor):
 
 
 @pytest.mark.parametrize(
-    'func', [np.array, scipy.spatial.transform.Rotation.from_matrix], ids=['numpy', 'scipy']
+    'func',
+    [np.array, scipy.spatial.transform.Rotation.from_matrix],
+    ids=['numpy', 'scipy'],
 )
 def test_rotation_from(actor, func):
     array = [
@@ -358,3 +362,14 @@ def test_transform_actor(actor, multiply_mode):
     assert actor2 is not actor1
 
     assert np.allclose(actor2.user_matrix, expected.matrix)
+
+
+def test_follower():
+    mesh = pv.Sphere()
+    mapper = pv.DataSetMapper(mesh)
+    follower = pv.Follower(mapper=mapper)
+    camera = pv.Camera()
+    follower.camera = camera
+    assert follower.mapper is mapper
+    assert follower.prop is not None
+    assert follower.camera is camera

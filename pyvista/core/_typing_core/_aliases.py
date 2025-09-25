@@ -81,6 +81,35 @@ class BoundsTuple(NamedTuple):
     z_min: float
     z_max: float
 
+    def __repr__(self) -> str:
+        # Split bounds at decimal and compute padding needed to the left of it
+        dot = '.'
+        strings = [str(float(val)) for val in self]
+        has_dot = [dot in s for s in strings]
+        split_strings = [s.split(dot) for s in strings]
+        pad_left = max(len(parts[0]) for parts in split_strings)
+
+        # Iterate through fields and align values at the decimal
+        lines = []
+        fields = self._fields
+        field_size = max(len(f) for f in fields)
+        name = self.__class__.__name__
+        whitespace = (len(name) + 1) * ' '
+        for i, items in enumerate(zip(fields, split_strings)):
+            field, parts = items
+            if has_dot[i]:
+                left, right = parts
+                aligned = f'{left:>{pad_left}}{dot}{right}'
+            else:
+                left = parts[0]
+                aligned = f'{left:>{pad_left}}'
+            spacing = '' if i == 0 else whitespace
+            comma = '' if i == len(fields) - 1 else ','
+            lines.append(f'{spacing}{field:<{field_size}} = {aligned}{comma}')
+
+        joined_lines = '\n'.join(lines)
+        return f'{name}({joined_lines})'
+
 
 CellsLike = Union[MatrixLike[int], VectorLike[int]]
 

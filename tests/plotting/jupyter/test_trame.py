@@ -32,15 +32,16 @@ try:
     from pyvista.trame.views import PyVistaRemoteLocalView
     from pyvista.trame.views import PyVistaRemoteView
     from pyvista.trame.views import _BasePyVistaView
-except:
+except ImportError:
     has_trame = False
 
 pytestmark = [
-    pytest.mark.needs_vtk_version(9, 1),
     pytest.mark.skipif(not has_trame, reason='Requires trame'),
     pytest.mark.skip_plotting,
+    pytest.mark.skip_check_gc,
     pytest.mark.filterwarnings(
-        r'ignore:It is recommended to use web\.AppKey instances for keys:aiohttp.web_exceptions.NotAppKeyWarning'
+        r'ignore:It is recommended to use web\.AppKey instances for '
+        r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
     ),
 ]
 
@@ -73,7 +74,9 @@ def test_base_viewer_ui():
 
 
 @pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
-@pytest.mark.filterwarnings('ignore:Suppress rendering on the plotter is changed to .*:UserWarning')
+@pytest.mark.filterwarnings(
+    'ignore:Suppress rendering on the plotter is changed to .*:UserWarning'
+)
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
@@ -147,9 +150,9 @@ def test_trame(client_type):
     assert len(pl.actors) == 1
 
     server.state[viewer.AXIS] = True
-    assert not hasattr(pl.renderer, 'axes_actor')
+    assert pl.renderer.axes_actor is None
     viewer.on_axis_visibility_change(**server.state.to_dict())
-    assert hasattr(pl.renderer, 'axes_actor')
+    assert pl.renderer.axes_actor is not None
     server.state[viewer.AXIS] = False
     viewer.on_axis_visibility_change(**server.state.to_dict())
 
@@ -225,12 +228,12 @@ def test_trame_custom_menu_items(client_type):
     ctrl.view_update = widget.viewer.update
 
     @state.change('resolution')
-    def update_resolution(resolution, **kwargs):
+    def update_resolution(resolution, **kwargs):  # noqa: ARG001
         algo.resolution = resolution
         ctrl.view_update()
 
     @state.change('visibility')
-    def set_visibility(visibility, **kwargs):
+    def set_visibility(visibility, **kwargs):  # noqa: ARG001
         toggle = {'Hide': 0, 'Show': 1}
         mesh_actor.visibility = toggle[visibility]
         ctrl.view_update()
@@ -271,7 +274,9 @@ def test_trame_closed_plotter():
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     pl.close()
-    with pytest.raises(RuntimeError, match='The render window for this plotter has been destroyed'):
+    with pytest.raises(
+        RuntimeError, match='The render window for this plotter has been destroyed'
+    ):
         PyVistaRemoteLocalView(pl)
 
 
@@ -319,7 +324,7 @@ def test_trame_jupyter_custom_size():
 
 
 def test_trame_jupyter_custom_handler():
-    def handler(viewer, src, **kwargs):
+    def handler(viewer, src, **kwargs):  # noqa: ARG001
         return IFrame(src, '75%', '500px')
 
     plotter = pv.Plotter(notebook=True)
@@ -355,7 +360,7 @@ def test_trame_export_html(tmpdir):
     assert Path(filename).is_file()
 
 
-def test_export_single(tmpdir, skip_check_gc):
+def test_export_single(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-single'))
     data = examples.load_airplane()
     # Create the scene
@@ -366,7 +371,7 @@ def test_export_single(tmpdir, skip_check_gc):
     assert Path(f'{filename}').is_file()
 
 
-def test_export_multi(tmpdir, skip_check_gc):
+def test_export_multi(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-multi'))
     multi = pv.MultiBlock()
     # Add examples
@@ -383,7 +388,7 @@ def test_export_multi(tmpdir, skip_check_gc):
     assert Path(f'{filename}').is_file()
 
 
-def test_export_texture(tmpdir, skip_check_gc):
+def test_export_texture(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-texture'))
     data = examples.load_globe()
     texture = examples.load_globe_texture()
@@ -395,7 +400,7 @@ def test_export_texture(tmpdir, skip_check_gc):
     assert Path(f'{filename}').is_file()
 
 
-def test_export_verts(tmpdir, skip_check_gc):
+def test_export_verts(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-verts'))
     data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
@@ -406,7 +411,7 @@ def test_export_verts(tmpdir, skip_check_gc):
     assert Path(f'{filename}').is_file()
 
 
-def test_export_color(tmpdir, skip_check_gc):
+def test_export_color(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-color'))
     data = examples.load_airplane()
     # Create the scene
@@ -417,7 +422,7 @@ def test_export_color(tmpdir, skip_check_gc):
     assert Path(f'{filename}').is_file()
 
 
-def test_embeddable_widget(skip_check_gc):
+def test_embeddable_widget():
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(pv.Sphere())
     widget = plotter.show(jupyter_backend='html', return_viewer=True)

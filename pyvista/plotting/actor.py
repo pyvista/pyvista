@@ -1,15 +1,13 @@
-"""Wrap vtkActor module."""
+"""Wrap :vtk:`vtkActor` module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 from ._property import Property
@@ -21,9 +19,8 @@ if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
-@no_new_attr
-class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
-    """Wrap vtkActor.
+class Actor(Prop3D, _vtk.vtkActor):
+    """Wrap :vtk:`vtkActor`.
 
     This class represents the geometry & properties in a rendered
     scene. Normally, a :class:`pyvista.Actor` is constructed from
@@ -85,8 +82,6 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     False
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None) -> None:
         """Initialize actor."""
@@ -241,11 +236,21 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> pl.bounds
-        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+        BoundsTuple(x_min =  139.06100463867188,
+                    x_max = 1654.9300537109375,
+                    y_min =   32.09429931640625,
+                    y_max = 1319.949951171875,
+                    z_min =  -17.741199493408203,
+                    z_max =  282.1300048828125)
 
         >>> actor.visibility = False
         >>> pl.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         """
         return bool(self.GetVisibility())
@@ -276,11 +281,21 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> pl.bounds
-        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+        BoundsTuple(x_min =  139.06100463867188,
+                    x_max = 1654.9300537109375,
+                    y_min =   32.09429931640625,
+                    y_max = 1319.949951171875,
+                    z_min =  -17.741199493408203,
+                    z_max =  282.1300048828125)
 
         >>> actor.use_bounds = False
         >>> pl.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         Although the actor's bounds are no longer used, the actor remains visible.
 
@@ -319,10 +334,11 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
 
         """
         pl = pyvista.Plotter()
-        pl.add_actor(self)  # type: ignore[arg-type]
+        pl.add_actor(self)
         pl.show(**kwargs)
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Create a copy of this actor.
 
         Parameters

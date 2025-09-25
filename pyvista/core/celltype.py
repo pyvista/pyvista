@@ -7,7 +7,13 @@ import textwrap
 from typing import Literal
 from typing import NamedTuple
 
+import numpy as np
+
 from . import _vtk_core as _vtk
+
+_CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
+
+PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _DROPDOWN_TEMPLATE = """
 .. dropdown:: More info
@@ -22,7 +28,11 @@ _GRID_TEMPLATE_NO_IMAGE = """
 
     .. grid-item::
 
-{}{}{}
+{}
+
+{}
+
+{}
 """
 
 _GRID_TEMPLATE_WITH_IMAGE = """
@@ -38,13 +48,17 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
 
-{}{}{}
-"""
+{}
+
+{}
+
+{}
+"""  # noqa: E501
 
 
 def _indent_paragraph(string: str, level: int) -> str:
@@ -56,12 +70,12 @@ def _indent_paragraph(string: str, level: int) -> str:
 _BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
 
 
-def _generate_linear_badge(is_linear: bool) -> str:
+def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
     text = 'Linear' if is_linear else 'Non-linear'
     return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
 
 
-def _generate_primary_badge(is_primary: bool) -> str:
+def _generate_primary_badge(is_primary: bool) -> str:  # noqa: FBT001
     text = 'Primary' if is_primary else 'Composite'
     return f':bdg-{_BADGE_COLORS["primary"]}:`{text}`'
 
@@ -85,8 +99,8 @@ def _generate_faces_badge(num_faces: int) -> str:
 class _CellTypeTuple(NamedTuple):
     value: int
     cell_class: type[_vtk.vtkCell] | None = None
-    short_doc: str | None = None
-    long_doc: str | None = None
+    short_doc: str = ''
+    long_doc: str = ''
     example: str | None = None
     points_override: Literal['variable', 'n/a'] | None = None
     edges_override: Literal['variable', 'n/a'] | None = None
@@ -609,6 +623,42 @@ _CELL_TYPE_INFO = dict(
         The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     ),
+    TRIQUADRATIC_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
+        cell_class=_vtk.vtkTriQuadraticPyramid,
+        example='TriQuadraticPyramid',
+        short_doc="""
+        Represents a second order 3D iso-parametric 19-node pyramid.
+
+        The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
+        and 1 volumetric centroid node.
+        """,
+        long_doc="""
+        The ordering of the nineteen points defining the cell is point
+        ids ``(0-4, 5-12, 13-17, 18)``, where:
+
+        - ids ``(0-4)`` are the five corner vertices of the pyramid.
+        - ids ``(5-12)`` are the 8 mid-edge nodes.
+        - ids ``(13-17)`` are the 5 mid-face nodes.
+        - id ``(19)`` is the volumetric centroid node.
+
+        The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
+        ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
+        respectively.
+
+        The mid-face nodes lie on the faces defined by (first corner nodes ids,
+        then mid-edge node ids):
+
+        - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
+        - triangle face 1: ``(0,1,4; 5,10,9)``
+        - triangle face 2: ``(1,2,4; 6,11,10)``
+        - triangle face 3: ``(2,3,4; 7,12,11)``
+        - triangle face 5: ``(3,0,4; 8,9,12)``
+
+        The last point lies in the center of the cell ``(0,1,2,3,4)``.
+        The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
+        """,
+    ),
     QUADRATIC_LINEAR_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
@@ -765,7 +815,7 @@ _CELL_TYPE_INFO = dict(
         - not contain zero-thickness portions: adjacent faces should not
           overlap each other even partially
         - not contain disconnected elements: detached vertice(s), edge(s) or face(s)
-        - be simply connected: vtkPolyhedron must describe a single polyhedron
+        - be simply connected: :vtk:`vtkPolyhedron` must describe a single polyhedron
         - not contain duplicate elements: each point index and each face
           description should be unique
         - not contain “internal” or “external” faces: for each face,
@@ -796,60 +846,37 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE),
-    LAGRANGE_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TRIANGLE),
-    LAGRANGE_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_QUADRILATERAL),
+    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE, cell_class=_vtk.vtkLagrangeCurve),
+    LAGRANGE_TRIANGLE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_TRIANGLE, cell_class=_vtk.vtkLagrangeTriangle
+    ),
+    LAGRANGE_QUADRILATERAL=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_QUADRILATERAL, cell_class=_vtk.vtkLagrangeQuadrilateral
+    ),
     LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
-    LAGRANGE_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_HEXAHEDRON),
-    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE),
+    LAGRANGE_HEXAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_HEXAHEDRON, cell_class=_vtk.vtkLagrangeHexahedron
+    ),
+    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE, cell_class=_vtk.vtkLagrangeWedge),
     LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE),
-    BEZIER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_BEZIER_TRIANGLE),
-    BEZIER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_BEZIER_QUADRILATERAL),
-    BEZIER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_TETRAHEDRON),
-    BEZIER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_HEXAHEDRON),
-    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE),
+    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE, cell_class=_vtk.vtkBezierCurve),
+    BEZIER_TRIANGLE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_TRIANGLE, cell_class=_vtk.vtkBezierTriangle
+    ),
+    BEZIER_QUADRILATERAL=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_QUADRILATERAL, cell_class=_vtk.vtkBezierQuadrilateral
+    ),
+    BEZIER_TETRAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_TETRAHEDRON, cell_class=_vtk.vtkBezierTetra
+    ),
+    BEZIER_HEXAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_HEXAHEDRON, cell_class=_vtk.vtkBezierHexahedron
+    ),
+    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
     BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
 )
-if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
-    _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID'] = _CellTypeTuple(
-        value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
-        cell_class=_vtk.vtkTriQuadraticPyramid,
-        example='TriQuadraticPyramid',
-        short_doc="""
-        Represents a second order 3D iso-parametric 19-node pyramid.
-
-        The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
-        and 1 volumetric centroid node.
-        """,
-        long_doc="""
-        The ordering of the nineteen points defining the cell is point
-        ids ``(0-4, 5-12, 13-17, 18)``, where:
-
-        - ids ``(0-4)`` are the five corner vertices of the pyramid.
-        - ids ``(5-12)`` are the 8 mid-edge nodes.
-        - ids ``(13-17)`` are the 5 mid-face nodes.
-        - id ``(19)`` is the volumetric centroid node.
-
-        The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
-        ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
-        respectively.
-
-        The mid-face nodes lie on the faces defined by (first corner nodes ids,
-        then mid-edge node ids):
-
-        - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
-        - triangle face 1: ``(0,1,4; 5,10,9)``
-        - triangle face 2: ``(1,2,4; 6,11,10)``
-        - triangle face 3: ``(2,3,4; 7,12,11)``
-        - triangle face 5: ``(3,0,4; 8,9,12)``
-
-        The last point lies in the center of the cell ``(0,1,2,3,4)``.
-        The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
-        """,
-    )
 
 
 class CellType(IntEnum):
@@ -876,6 +903,9 @@ class CellType(IntEnum):
     graphics rendering or numerical simulation.
 
     .. seealso::
+
+        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
+            VTK reference about cell types.
 
         `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
             List of all cell types defined in VTK.
@@ -931,8 +961,8 @@ class CellType(IntEnum):
         cls: type[CellType],
         value: int,
         _cell_class: type[_vtk.vtkCell] | None = None,
-        _short_doc: str | None = None,
-        _long_doc: str | None = None,
+        _short_doc: str = '',
+        _long_doc: str = '',
         _example: str | None = None,
         _points_override: Literal['variable', 'n/a'] | None = None,
         _edges_override: Literal['variable', 'n/a'] | None = None,
@@ -953,7 +983,7 @@ class CellType(IntEnum):
         value : int
             Integer value of the cell type.
 
-        _cell_class : type[_vtk.vtkCell], optional
+        _cell_class : type[:vtk:`vtkCell`], optional
             VTK class for this cell type.
 
         _short_doc : str, optional
@@ -993,51 +1023,49 @@ class CellType(IntEnum):
         self._value_ = value
         self.__doc__ = ''
 
+        _short_doc = textwrap.dedent(_short_doc).strip()
+        _long_doc = textwrap.dedent(_long_doc).strip()
+
         # Generate cell type documentation if specified
         if _cell_class or _short_doc or _long_doc or _example:
+            badges = ''
             if _cell_class:
                 cell = _cell_class()
+                _CELL_TYPE_TO_NUM_POINTS[np.uint8(value)] = cell.GetNumberOfPoints()
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
 
-                points = _points_override if _points_override else cell.GetNumberOfPoints()
+                points = _points_override or cell.GetNumberOfPoints()
                 points_badge = _generate_points_badge(points)  # type: ignore[arg-type]
 
-                edges = _edges_override if _edges_override else cell.GetNumberOfEdges()
+                edges = _edges_override or cell.GetNumberOfEdges()
                 edges_badge = _generate_edges_badge(edges)  # type: ignore[arg-type]
 
-                faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
+                faces = _faces_override or cell.GetNumberOfFaces()
                 faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
 
-                badges = (
-                    _indent_paragraph(
-                        f'{linear_badge} {primary_badge} {dimension_badge}\n'
-                        f'{points_badge} {edges_badge} {faces_badge}',
-                        level=2,
-                    )
-                    + '\n\n'
+                badges = _indent_paragraph(
+                    f'{linear_badge} {primary_badge} {dimension_badge}\n'
+                    f'{points_badge} {edges_badge} {faces_badge}',
+                    level=2,
                 )
-            else:
-                badges = ''
 
-            _short_doc = '' if _short_doc is None else _indent_paragraph(_short_doc, level=2)
+                # Add additional references to VTK docs
+                cell_class_ref = f':vtk:`{_cell_class.__name__}`'
+                see_also = f'See also {cell_class_ref}.'
+                _long_doc += f'\n\n{see_also}'
 
-            _long_doc = (
-                ''
-                if _long_doc is None
-                else _indent_paragraph(
-                    _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
-                )
+            _short_doc = _indent_paragraph(_short_doc, level=2)
+            _long_doc = _indent_paragraph(
+                _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
             )
-            if _short_doc and _long_doc:
-                _short_doc += '\n\n'
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
-                    _example, _example, badges, _short_doc, _long_doc
+                    _example, _example, PLACEHOLDER, badges, _short_doc, _long_doc
                 )
             )
 
@@ -1070,8 +1098,7 @@ class CellType(IntEnum):
     QUADRATIC_PYRAMID = _CELL_TYPE_INFO['QUADRATIC_PYRAMID']
     BIQUADRATIC_QUAD = _CELL_TYPE_INFO['BIQUADRATIC_QUAD']
     TRIQUADRATIC_HEXAHEDRON = _CELL_TYPE_INFO['TRIQUADRATIC_HEXAHEDRON']
-    if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
-        TRIQUADRATIC_PYRAMID = _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID']
+    TRIQUADRATIC_PYRAMID = _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID']
     QUADRATIC_LINEAR_QUAD = _CELL_TYPE_INFO['QUADRATIC_LINEAR_QUAD']
     QUADRATIC_LINEAR_WEDGE = _CELL_TYPE_INFO['QUADRATIC_LINEAR_WEDGE']
     BIQUADRATIC_QUADRATIC_WEDGE = _CELL_TYPE_INFO['BIQUADRATIC_QUADRATIC_WEDGE']

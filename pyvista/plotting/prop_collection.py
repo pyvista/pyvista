@@ -1,4 +1,4 @@
-"""Wrapper for vtkPropCollection."""
+"""Wrapper for :vtk:`vtkPropCollection`."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class _PropCollection(MutableSequence[_vtk.vtkProp]):
-    """Sequence wrapper for a vtkPropCollection with a dict-like interface.
+    """Sequence wrapper for a :vtk:`vtkPropCollection` with a dict-like interface.
 
     .. versionadded:: 0.45
 

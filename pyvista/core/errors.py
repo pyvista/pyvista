@@ -51,7 +51,7 @@ class VTKVersionError(RuntimeError):
         RuntimeError.__init__(self, message)
 
 
-class PointSetNotSupported(TypeError):
+class PointSetNotSupported(TypeError):  # noqa: N818
     """Requested filter or property is not supported by the PointSet class.
 
     Parameters
@@ -105,7 +105,7 @@ class PointSetDimensionReductionError(PointSetNotSupported):
         PointSetNotSupported.__init__(self, message)
 
 
-class PartitionedDataSetsNotSupported(TypeError):
+class PartitionedDataSetsNotSupported(TypeError):  # noqa: N818
     """Requested filter or property is not supported by the PartitionedDataSets class.
 
     Parameters

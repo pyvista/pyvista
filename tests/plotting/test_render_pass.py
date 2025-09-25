@@ -79,7 +79,7 @@ def test_depth_of_field_pass():
 
 def test_depth_of_field_raise_no_ssao():
     ren, passes = make_passes()
-    passes.enable_ssao_pass(0.5, 0.005, 16, False)
+    passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
     with pytest.raises(RuntimeError, match='Depth of field pass is incompatible'):
         passes.enable_depth_of_field_pass()
 
@@ -88,7 +88,7 @@ def test_ssao_raise_no_depth_of_field():
     ren, passes = make_passes()
     passes.enable_depth_of_field_pass()
     with pytest.raises(RuntimeError, match='SSAO pass is incompatible'):
-        passes.enable_ssao_pass(0.5, 0.005, 16, False)
+        passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
 
 
 def test_shadow_pass():
@@ -125,12 +125,12 @@ def test_ssao_pass():
     ren, passes = make_passes()
     assert not passes._passes
 
-    ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
+    ren_pass = passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
     assert isinstance(ren_pass, _vtk.vtkSSAOPass)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     # enabling again should just not add the pass again
-    ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
+    ren_pass = passes.enable_ssao_pass(radius=0.5, bias=0.005, kernel_size=16, blur=False)
     assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     passes.disable_ssao_pass()

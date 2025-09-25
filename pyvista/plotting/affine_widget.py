@@ -7,7 +7,8 @@ from typing import cast
 import numpy as np
 
 import pyvista
-from pyvista.core.errors import VTKVersionError
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -81,7 +82,8 @@ def get_angle(v1, v2):
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
-def ray_plane_intersection(start_point, direction, plane_point, normal):
+@_deprecate_positional_args
+def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa: PLR0917
     """Compute the intersection between a ray and a plane.
 
     Parameters
@@ -105,7 +107,7 @@ def ray_plane_intersection(start_point, direction, plane_point, normal):
     return start_point + t_value * direction
 
 
-class AffineWidget3D:
+class AffineWidget3D(_NoNewAttrMixin):
     """3D affine transform widget.
 
     This widget allows interactive transformations including translation and
@@ -172,35 +174,31 @@ class AffineWidget3D:
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter', 'actor'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         actor,
         origin=None,
-        start: bool = True,
+        start: bool = True,  # noqa: FBT001, FBT002
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,
+        always_visible: bool = True,  # noqa: FBT001, FBT002
         axes_colors=None,
         axes=None,
         release_callback=None,
         interact_callback=None,
     ):
         """Initialize the widget."""
-        # needs VTK v9.2.0 due to the hardware picker
-        if pyvista.vtk_version_info < (9, 2):
-            msg = 'AfflineWidget3D requires VTK v9.2.0 or newer.'
-            raise VTKVersionError(msg)
-
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
         self._pl = plotter
         self._main_actor = actor
         self._selected_actor: pyvista.Actor | None = None
         self._init_position = None
-        self._mouse_move_observer = None
-        self._left_press_observer = None
-        self._left_release_observer = None
+        self._mouse_move_observer: int | None = None
+        self._left_press_observer: int | None = None
+        self._left_release_observer: int | None = None
 
         if self._main_actor.user_matrix is None:
             self._main_actor.user_matrix = np.eye(4)
@@ -209,7 +207,7 @@ class AffineWidget3D:
         self._arrows = []  # type: ignore[var-annotated]
         self._circles = []  # type: ignore[var-annotated]
         self._pressing_down = False
-        origin = origin if origin else actor.center
+        origin = origin or actor.center
         self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (
@@ -231,8 +229,8 @@ class AffineWidget3D:
             try:
                 _validate_axes(axes)
             except ValueError:
-                for actor in self._arrows + self._circles:
-                    self._pl.remove_actor(actor)
+                for actor_ in self._arrows + self._circles:
+                    self._pl.remove_actor(actor_)
                 raise
             self.axes = axes
 
@@ -243,13 +241,15 @@ class AffineWidget3D:
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
             arrow = pyvista.Arrow(
-                (0, 0, 0),
+                start=(0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
                 tip_radius=0.05,
                 shaft_radius=self._line_radius,
             )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
+            self._arrows.append(
+                self._pl.add_mesh(arrow, color=color, lighting=False, render=False)
+            )
             axis_circ = self._circ.copy()
             if ii == 0:
                 axis_circ = axis_circ.rotate_y(-90)
@@ -301,7 +301,12 @@ class AffineWidget3D:
         if self._selected_actor:
             index = self._circles.index(self._selected_actor)
             to_widget = np.array(ren.camera.position - self._origin)
-            point = ray_plane_intersection(point, to_widget, self._origin, self.axes[index])
+            point = ray_plane_intersection(
+                start_point=point,
+                direction=to_widget,
+                plane_point=self._origin,
+                normal=self.axes[index],
+            )
         return point
 
     def _get_world_coord_trans(self, interactor):
@@ -348,7 +353,7 @@ class AffineWidget3D:
             if self._selected_actor in self._arrows:
                 current_pos = self._get_world_coord_trans(interactor)
                 index = self._arrows.index(self._selected_actor)
-                diff = current_pos - self.init_position
+                diff = current_pos - self._init_position
                 trans_matrix = np.eye(4)
                 trans_matrix[:3, -1] = self.axes[index] * np.dot(diff, self.axes[index])
                 matrix = trans_matrix @ self._cached_matrix
@@ -356,7 +361,7 @@ class AffineWidget3D:
                 current_pos = self._get_world_coord_rot(interactor)
                 index = self._circles.index(self._selected_actor)
                 vec_current = current_pos - self._origin
-                vec_init = self.init_position - self._origin
+                vec_init = self._init_position - self._origin
                 normal = self.axes[index]
                 vec_current = vec_current - np.dot(vec_current, normal) * normal
                 vec_init = vec_init - np.dot(vec_init, normal) * normal
@@ -415,9 +420,9 @@ class AffineWidget3D:
             self._pl.enable_trackball_actor_style()
             self._pressing_down = True
             if self._selected_actor in self._circles:
-                self.init_position = self._get_world_coord_rot(interactor)
+                self._init_position = self._get_world_coord_rot(interactor)
             else:
-                self.init_position = self._get_world_coord_trans(interactor)
+                self._init_position = self._get_world_coord_trans(interactor)
 
     def _release_callback(self, _interactor, _event):
         """Process actions for the mouse button release event."""
@@ -453,7 +458,7 @@ class AffineWidget3D:
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
-        self._axes_inv = np.linalg.inv(self._axes)
+        self._axes_inv = np.linalg.inv(self._axes)  # type: ignore[assignment]
         for actor in self._arrows + self._circles:
             matrix = actor.user_matrix
             # Be sure to use the inverse here
