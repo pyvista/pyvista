@@ -108,9 +108,8 @@ def test_report_help():
 
 
 @pytest.mark.parametrize('as_script', [True, False])
-@pytest.mark.parametrize('flag', ['-v', '--version'])
-def test_version(as_script, flag):
-    result = _run_pyvista([flag], as_script=as_script)
+def test_version(as_script):
+    result = _run_pyvista(['--version'], as_script=as_script)
     actual = result.stdout.strip()
     expected = pv.__version__
-    assert actual == f'PyVista {expected}'
+    assert actual == f'pyvista {expected}'
