@@ -80,21 +80,15 @@ def main(argv: list[str] | None = None) -> None:
             'kwargs', nargs='*', help='optional keyword arguments in key=value form'
         )
 
-    # Parse and validate primary args
+    # Parse primary args
     if not argv:
         parser.print_help()
         sys.exit(1)
-
     args = parser.parse_args(argv)
-
-    subcommand = args.subcommand
-    if subcommand not in COMMANDS:
-        parser.print_help()
-        sys.exit(1)
 
     # Parse remaining args as a Python kwargs dict and execute command as a function
     kwargs = _parse_kwargs(getattr(args, 'kwargs', []))
-    func = COMMANDS[subcommand]
+    func = COMMANDS[args.subcommand]
     result = func(**kwargs)
 
     if result is not None:
