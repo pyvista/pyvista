@@ -52,9 +52,11 @@ def _parse_kwargs(args: list[str]) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> None:
     """PyVista Command-Line Interface entry point."""
+    # Use sys.argv if no arguments were explicitly passed
     if argv is None:
         argv = sys.argv[1:]
 
+    # Create top-level parser with --version option
     parser = argparse.ArgumentParser(prog='pyvista')
     parser.add_argument(
         '--version',
@@ -63,7 +65,7 @@ def main(argv: list[str] | None = None) -> None:
         help='show PyVista version and exit',
     )
 
-    # Create a generic subparser for each command
+    # Create a generic keyword subparser for each command
     subparsers = parser.add_subparsers(dest='subcommand', required=True)
     for name in COMMANDS:
         subparser = subparsers.add_parser(
@@ -74,6 +76,8 @@ def main(argv: list[str] | None = None) -> None:
         subparser.add_argument(
             'kwargs', nargs='*', help='optional keyword arguments in key=value form'
         )
+
+    # Parse and validate primary args
     if not argv:
         parser.print_help()
         sys.exit(1)
@@ -85,6 +89,7 @@ def main(argv: list[str] | None = None) -> None:
         parser.print_help()
         sys.exit(1)
 
+    # Parse remaining args as a Python kwargs dict and execute command as a function
     kwargs = _parse_kwargs(getattr(args, 'kwargs', []))
     func = COMMANDS[subcommand]
     result = func(**kwargs)
