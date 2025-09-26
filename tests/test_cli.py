@@ -19,8 +19,11 @@ def pop_second_line(text: str) -> str:
     return '\n'.join(lines)
 
 
-def _run_cli(argv: list[str] | None = None):
-    args = [sys.executable, '-m', 'pyvista']
+def _run_cli(argv: list[str] | None = None, *, as_script: bool = False):
+    args = []
+    if not as_script:
+        args.extend([sys.executable, '-m'])
+    args.append('pyvista')
     if argv:
         args.extend(argv)
     return subprocess.run(
@@ -74,8 +77,9 @@ def test_report(cli_kwargs, py_kwargs):
     assert actual_clean == expected_clean
 
 
-def test_version():
-    result = _run_cli(['--version'])
+@pytest.mark.parametrize('as_script', [True, False])
+def test_version(as_script):
+    result = _run_cli(['--version'], as_script=as_script)
     actual = result.stdout.strip()
     expected = pv.__version__
     assert actual == expected
