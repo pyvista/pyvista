@@ -14,9 +14,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 COMMANDS: dict[str, Callable[..., Any]] = {
-    '--version': lambda: pyvista.__version__,  # help='Show PyVista version and exit.'
     'report': pyvista.Report,
 }
+COMMANDS_DISPLAY = {pyvista.Report: 'pyvista.Report()'}
 
 
 def _parse_kwargs(args: list[str]) -> dict[str, Any]:
@@ -26,6 +26,9 @@ def _parse_kwargs(args: list[str]) -> dict[str, Any]:
     """
     kwargs = {}
     for arg in args:
+        if arg in ('-h', '--help'):
+            # let argparse handle this
+            continue
         if '=' not in arg:
             msg = f'Invalid kwarg format: {arg!r}, expected key=value'
             raise ValueError(msg)
@@ -44,23 +47,37 @@ def main(argv: list[str] | None = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(prog='PyVista')
+    parser = argparse.ArgumentParser(prog='pyvista')
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f'PyVista {pyvista.__version__}',
+        help='show PyVista version and exit',
+    )
 
     # Create a generic subparser for each command
     subparsers = parser.add_subparsers(dest='subcommand', required=True)
     for name in COMMANDS:
-        subparsers.add_parser(name, help=f'Run PyVista {name} with kwargs')
-
+        subparser = subparsers.add_parser(
+            name,
+            help=f'run {COMMANDS_DISPLAY[COMMANDS[name]]!r} with optional key=value kwargs',
+            usage='%(prog)s [key=value] ...',
+        )
+        subparser.add_argument(
+            'kwargs', nargs='*', help='optional keyword arguments in key=value form'
+        )
     if not argv:
         parser.print_help()
         sys.exit(1)
 
-    subcommand = argv[0]
+    args = parser.parse_args(argv)
+
+    subcommand = args.subcommand
     if subcommand not in COMMANDS:
         parser.print_help()
         sys.exit(1)
 
-    kwargs = _parse_kwargs(argv[1:])
+    kwargs = _parse_kwargs(getattr(args, 'kwargs', []))
     func = COMMANDS[subcommand]
     result = func(**kwargs)
 

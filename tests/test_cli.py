@@ -34,14 +34,24 @@ def _run_cli(argv: list[str] | None = None, *, as_script: bool = False):
     )
 
 
-@pytest.mark.parametrize('args', [None, ['foo'], []])
-def test_bad_input(args):
+@pytest.mark.parametrize('args', [None, []])
+def test_no_input(args):
     result = _run_cli(args)
     assert result.returncode == 1
     stdout = result.stdout
-    assert stdout.startswith('usage: PyVista [-h] {--version,report} ...')
+    assert stdout.startswith('usage: pyvista [-h] [--version] {report} ...')
     assert 'positional arguments:' in stdout
     assert 'options:' in stdout
+
+
+def test_invalid_command():
+    result = _run_cli(['foo'])
+    assert result.returncode == 2
+    stderr = result.stderr.strip()
+    assert stderr.endswith(
+        'usage: pyvista [-h] [--version] {report} ...\n'
+        "pyvista: error: argument subcommand: invalid choice: 'foo' (choose from report)"
+    )
 
 
 def test_bad_kwarg():
@@ -82,4 +92,4 @@ def test_version(as_script):
     result = _run_cli(['--version'], as_script=as_script)
     actual = result.stdout.strip()
     expected = pv.__version__
-    assert actual == expected
+    assert actual == f'PyVista {expected}'
