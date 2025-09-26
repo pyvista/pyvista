@@ -34,12 +34,12 @@ def _parse_kwargs(args: list[str]) -> dict[str, Any]:
             raise ValueError(msg)
         key, value = arg.split('=', 1)
 
-        # Convert strings into bools
+        # Convert bool-like strings into literal Python bools
         lower = value.lower()
         if lower in ['true', 'y', 'yes']:
-            value = True
+            value = 'True'
         elif lower in ['false', 'n', 'no']:
-            value = False
+            value = 'False'
 
         try:
             # Try Python literal first
