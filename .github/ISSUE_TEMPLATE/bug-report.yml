@@ -37,7 +37,7 @@ body:
         Please run the following wherever you are experiencing the bug, and paste the output below.
         This report helps us track down bugs and will be critical to addressing your bug.
 
-        With python code:
+        With python code (e.g. inside IPython or Jupyter Notebook):
 
         ```python
         # Get system info
