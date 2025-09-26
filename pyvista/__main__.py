@@ -46,9 +46,8 @@ def main(argv: list[str] | None = None) -> None:
 
     parser = argparse.ArgumentParser(prog='PyVista')
 
-    subparsers = parser.add_subparsers(dest='subcommand', required=True)
-
     # Create a generic subparser for each command
+    subparsers = parser.add_subparsers(dest='subcommand', required=True)
     for name in COMMANDS:
         subparsers.add_parser(name, help=f'Run PyVista {name} with kwargs')
 

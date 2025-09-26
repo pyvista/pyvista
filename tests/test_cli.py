@@ -31,8 +31,9 @@ def _run_cli(argv: list[str] | None = None):
     )
 
 
-def test_cli_no_input():
-    result = _run_cli()
+@pytest.mark.parametrize('args', [None, ['foo'], []])
+def test_cli_bad_input(args):
+    result = _run_cli(args)
     assert result.returncode == 1
     stdout = result.stdout
     assert stdout.startswith('usage: PyVista [-h] {--version,report} ...')
@@ -40,8 +41,15 @@ def test_cli_no_input():
     assert 'options:' in stdout
 
 
+def test_cli_bad_kwarg():
+    result = _run_cli(['report', 'foo'])
+    assert result.returncode == 1
+    stderr = result.stderr.strip()
+    assert stderr.endswith("ValueError: Invalid kwarg format: 'foo', expected key=value")
+
+
 @pytest.mark.parametrize(
-    ('cli_kwargs', 'py_kwargs'), [(['gpu=False', 'sort="True"'], {'gpu': False, 'sort': True})]
+    ('cli_kwargs', 'py_kwargs'), [(['gpu=False', 'sort=yes'], {'gpu': False, 'sort': True})]
 )
 def test_cli_report(cli_kwargs, py_kwargs):
     cli_args = ['report', *cli_kwargs]
