@@ -27,9 +27,6 @@ def _parse_kwargs(args: list[str]) -> dict[str, Any]:
     """
     kwargs = {}
     for arg in args:
-        if arg in ('-h', '--help'):
-            # let argparse handle this
-            continue
         if '=' not in arg:
             msg = f'Invalid kwarg format: {arg!r}, expected key=value'
             raise ValueError(msg)
@@ -61,6 +58,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog='pyvista')
     parser.add_argument(
         '--version',
+        '-v',
         action='version',
         version=f'PyVista {pyvista.__version__}',
         help='show PyVista version and exit',

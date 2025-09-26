@@ -73,6 +73,7 @@ PY_KWARGS = {'gpu': False, 'sort': True}
         (['gpu=False', 'sort=True'], PY_KWARGS),
         (['gpu=false', 'sort=true'], PY_KWARGS),
         (['gpu=no', 'sort=yes'], PY_KWARGS),
+        (['gpu=no', 'sort=foo'], PY_KWARGS),
     ],
 )
 def test_report(cli_kwargs, py_kwargs):
@@ -107,8 +108,9 @@ def test_report_help():
 
 
 @pytest.mark.parametrize('as_script', [True, False])
-def test_version(as_script):
-    result = _run_pyvista(['--version'], as_script=as_script)
+@pytest.mark.parametrize('flag', ['-v', '--version'])
+def test_version(as_script, flag):
+    result = _run_pyvista([flag], as_script=as_script)
     actual = result.stdout.strip()
     expected = pv.__version__
     assert actual == f'PyVista {expected}'
