@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         '--version',
         action='version',
-        version=f'PyVista {pyvista.__version__}',
+        version=f'pyvista {pyvista.__version__}',
         help='show PyVista version and exit',
     )
 
