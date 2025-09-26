@@ -44,13 +44,14 @@ def test_no_input(args):
     assert 'options:' in stdout
 
 
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='Different output format on older python')
 def test_invalid_command():
     result = _run_cli(['foo'])
     assert result.returncode == 2
     stderr = result.stderr.strip()
     text = (
         'usage: pyvista [-h] [--version] {report} ...\n'
-        "pyvista: error: argument subcommand: invalid choice: 'foo' (choose from report)"
+        "pyvista: error: argument subcommand: invalid choice: 'foo'"
     )
     assert text in stderr
 
