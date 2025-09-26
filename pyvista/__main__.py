@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 COMMANDS: dict[str, Callable[..., Any]] = {
-    '--version': pyvista.__version__,  # help='Show PyVista version and exit.'
+    '--version': lambda: pyvista.__version__,  # help='Show PyVista version and exit.'
     'report': pyvista.Report,
 }
 

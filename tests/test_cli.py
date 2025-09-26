@@ -32,7 +32,7 @@ def _run_cli(argv: list[str] | None = None):
 
 
 @pytest.mark.parametrize('args', [None, ['foo'], []])
-def test_cli_bad_input(args):
+def test_bad_input(args):
     result = _run_cli(args)
     assert result.returncode == 1
     stdout = result.stdout
@@ -41,7 +41,7 @@ def test_cli_bad_input(args):
     assert 'options:' in stdout
 
 
-def test_cli_bad_kwarg():
+def test_bad_kwarg():
     result = _run_cli(['report', 'foo'])
     assert result.returncode == 1
     stderr = result.stderr.strip()
@@ -51,7 +51,7 @@ def test_cli_bad_kwarg():
 @pytest.mark.parametrize(
     ('cli_kwargs', 'py_kwargs'), [(['gpu=False', 'sort=yes'], {'gpu': False, 'sort': True})]
 )
-def test_cli_report(cli_kwargs, py_kwargs):
+def test_report(cli_kwargs, py_kwargs):
     cli_args = ['report', *cli_kwargs]
     result = _run_cli(cli_args)
     actual = result.stdout.strip()
@@ -72,3 +72,10 @@ def test_cli_report(cli_kwargs, py_kwargs):
     actual_clean = pop_second_line(actual)
     expected_clean = pop_second_line(expected)
     assert actual_clean == expected_clean
+
+
+def test_version():
+    result = _run_cli(['--version'])
+    actual = result.stdout.strip()
+    expected = pv.__version__
+    assert actual == expected
