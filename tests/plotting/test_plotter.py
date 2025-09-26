@@ -607,6 +607,20 @@ def test_add_multiple(sphere):
     assert sphere.n_arrays == 1
 
 
+@pytest.mark.parametrize('input_type', [str, Path])
+def test_add_mesh_from_file(input_type):
+    file = input_type(pv.examples.antfile)
+    pl1 = pv.Plotter()
+    pl1.add_mesh(file)
+    screenshot1 = pl1.screenshot(return_img=True)
+
+    pl2 = pv.Plotter()
+    pl2.add_mesh(pv.read(file))
+    screenshot2 = pl2.screenshot(return_img=True)
+
+    assert pv.compare_images(screenshot1, screenshot2) < 1.0
+
+
 def test_deep_clean(cube):
     pl = pv.Plotter()
     cube_orig = cube.copy()
