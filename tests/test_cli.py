@@ -61,8 +61,16 @@ def test_bad_kwarg():
     assert stderr.endswith("ValueError: Invalid kwarg format: 'foo', expected key=value")
 
 
+PY_KWARGS = {'gpu': False, 'sort': True}
+
+
 @pytest.mark.parametrize(
-    ('cli_kwargs', 'py_kwargs'), [(['gpu=False', 'sort=yes'], {'gpu': False, 'sort': True})]
+    ('cli_kwargs', 'py_kwargs'),
+    [
+        (['gpu=False', 'sort=True'], PY_KWARGS),
+        (['gpu=false', 'sort=true'], PY_KWARGS),
+        (['gpu=no', 'sort=yes'], PY_KWARGS),
+    ],
 )
 def test_report(cli_kwargs, py_kwargs):
     cli_args = ['report', *cli_kwargs]

@@ -33,6 +33,14 @@ def _parse_kwargs(args: list[str]) -> dict[str, Any]:
             msg = f'Invalid kwarg format: {arg!r}, expected key=value'
             raise ValueError(msg)
         key, value = arg.split('=', 1)
+
+        # Convert strings into bools
+        lower = value.lower()
+        if lower in ['true', 'y', 'yes']:
+            value = True
+        elif lower in ['false', 'n', 'no']:
+            value = False
+
         try:
             # Try Python literal first
             kwargs[key] = ast.literal_eval(value)
