@@ -5,11 +5,6 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from types import ModuleType
 
 import scooby
 
@@ -255,7 +250,7 @@ class Report(scooby.Report):
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
         self,
-        additional: Sequence[ModuleType] | Sequence[str] | None = None,
+        additional=None,
         ncol: int = 3,
         text_width: int = 80,
         sort: bool = False,  # noqa: FBT001, FBT002
