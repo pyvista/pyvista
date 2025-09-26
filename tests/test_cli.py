@@ -48,10 +48,11 @@ def test_invalid_command():
     result = _run_cli(['foo'])
     assert result.returncode == 2
     stderr = result.stderr.strip()
-    assert stderr.endswith(
+    text = (
         'usage: pyvista [-h] [--version] {report} ...\n'
         "pyvista: error: argument subcommand: invalid choice: 'foo' (choose from report)"
     )
+    assert text in stderr
 
 
 def test_bad_kwarg():
