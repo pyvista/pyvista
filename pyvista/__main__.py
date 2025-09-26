@@ -17,6 +17,7 @@ COMMANDS: dict[str, Callable[..., Any]] = {
     'report': pyvista.Report,
 }
 COMMANDS_DISPLAY = {'report': 'pyvista.Report()'}
+COMMANDS_URL = {'report': 'https://docs.pyvista.org/api/utilities/_autosummary/pyvista.report'}
 
 
 def _parse_kwargs(args: list[str]) -> dict[str, Any]:
@@ -68,10 +69,14 @@ def main(argv: list[str] | None = None) -> None:
     # Create a generic keyword subparser for each command
     subparsers = parser.add_subparsers(dest='subcommand', required=True)
     for name in COMMANDS:
+        url = COMMANDS_URL[name]
+        display = COMMANDS_DISPLAY[name]
         subparser = subparsers.add_parser(
             name,
-            help=f'run {COMMANDS_DISPLAY[name]!r} with optional key=value kwargs',
+            help=f'run {display!r} with optional key=value kwargs',
             usage='%(prog)s [key=value] ...',
+            epilog=f'See documentation for available keywords and more info:\n{url}',
+            formatter_class=argparse.RawDescriptionHelpFormatter,
         )
         subparser.add_argument(
             'kwargs', nargs='*', help='optional keyword arguments in key=value form'

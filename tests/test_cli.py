@@ -8,6 +8,7 @@ import sys
 import pytest
 
 import pyvista as pv
+from pyvista.__main__ import COMMANDS_URL
 from pyvista.__main__ import main
 
 
@@ -19,7 +20,7 @@ def pop_second_line(text: str) -> str:
     return '\n'.join(lines)
 
 
-def _run_cli(argv: list[str] | None = None, *, as_script: bool = False):
+def _run_pyvista(argv: list[str] | None = None, *, as_script: bool = False):
     args = []
     if not as_script:
         args.extend([sys.executable, '-m'])
@@ -36,7 +37,7 @@ def _run_cli(argv: list[str] | None = None, *, as_script: bool = False):
 
 @pytest.mark.parametrize('args', [None, []])
 def test_no_input(args):
-    result = _run_cli(args)
+    result = _run_pyvista(args)
     assert result.returncode == 1
     stdout = result.stdout
     assert stdout.startswith('usage: pyvista [-h] [--version] {report} ...')
@@ -46,7 +47,7 @@ def test_no_input(args):
 
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='Different output format on older python')
 def test_invalid_command():
-    result = _run_cli(['foo'])
+    result = _run_pyvista(['foo'])
     assert result.returncode == 2
     stderr = result.stderr.strip()
     text = (
@@ -57,7 +58,7 @@ def test_invalid_command():
 
 
 def test_bad_kwarg():
-    result = _run_cli(['report', 'foo'])
+    result = _run_pyvista(['report', 'foo'])
     assert result.returncode == 1
     stderr = result.stderr.strip()
     assert stderr.endswith("ValueError: Invalid kwarg format: 'foo', expected key=value")
@@ -76,7 +77,7 @@ PY_KWARGS = {'gpu': False, 'sort': True}
 )
 def test_report(cli_kwargs, py_kwargs):
     cli_args = ['report', *cli_kwargs]
-    result = _run_cli(cli_args)
+    result = _run_pyvista(cli_args)
     actual = result.stdout.strip()
     expected = str(pv.Report(**py_kwargs)).strip()
 
@@ -97,9 +98,17 @@ def test_report(cli_kwargs, py_kwargs):
     assert actual_clean == expected_clean
 
 
+def test_report_help():
+    result = _run_pyvista(['report', '-h'])
+    url = COMMANDS_URL['report']
+    assert url.startswith('https')
+    epilog = f'See documentation for available keywords and more info:\n{url}'
+    assert epilog in result.stdout
+
+
 @pytest.mark.parametrize('as_script', [True, False])
 def test_version(as_script):
-    result = _run_cli(['--version'], as_script=as_script)
+    result = _run_pyvista(['--version'], as_script=as_script)
     actual = result.stdout.strip()
     expected = pv.__version__
     assert actual == f'PyVista {expected}'
