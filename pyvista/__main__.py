@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 COMMANDS: dict[str, Callable[..., Any]] = {
     'report': pyvista.Report,
 }
-COMMANDS_DISPLAY = {pyvista.Report: 'pyvista.Report()'}
+COMMANDS_DISPLAY = {'report': 'pyvista.Report()'}
 
 
 def _parse_kwargs(args: list[str]) -> dict[str, Any]:
@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> None:
     for name in COMMANDS:
         subparser = subparsers.add_parser(
             name,
-            help=f'run {COMMANDS_DISPLAY[COMMANDS[name]]!r} with optional key=value kwargs',
+            help=f'run {COMMANDS_DISPLAY[name]!r} with optional key=value kwargs',
             usage='%(prog)s [key=value] ...',
         )
         subparser.add_argument(
