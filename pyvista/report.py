@@ -183,6 +183,15 @@ class GPUInfo:
 class Report(scooby.Report):
     """Generate a PyVista software environment report.
 
+    .. versionadded:: 0.47
+
+        The report can now be generated using the shell command:
+
+        .. code-block:: shell
+
+            pyvista report [args ...] [key=value ...]
+
+
     Parameters
     ----------
     additional : sequence[types.ModuleType], sequence[str]
