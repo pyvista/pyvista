@@ -5,6 +5,7 @@ import io
 import subprocess
 import sys
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -40,7 +41,8 @@ def test_no_input(args):
     result = _run_pyvista(args)
     assert result.returncode == 1
     stdout = result.stdout
-    assert stdout.startswith('usage: pyvista [-h] [--version] {report} ...')
+
+    assert stdout.startswith('usage: pyvista [-h] [--version] {report,plot} ...')
     assert 'positional arguments:' in stdout
     assert 'options:' in stdout
 
@@ -51,17 +53,33 @@ def test_invalid_command():
     assert result.returncode == 2
     stderr = result.stderr.strip()
     text = (
-        'usage: pyvista [-h] [--version] {report} ...\n'
+        'usage: pyvista [-h] [--version] {report,plot} ...\n'
         "pyvista: error: argument subcommand: invalid choice: 'foo'"
     )
     assert text in stderr
 
 
 def test_bad_kwarg():
-    result = _run_pyvista(['report', 'foo'])
+    result = _run_pyvista(['report', 'foo=bar'])
     assert result.returncode == 1
     stderr = result.stderr.strip()
-    assert stderr.endswith("ValueError: Invalid kwarg format: 'foo', expected key=value")
+    assert stderr.endswith("TypeError: Report.__init__() got an unexpected keyword argument 'foo'")
+
+
+def test_missing_required_arg():
+    result = _run_pyvista(['plot'])
+    assert result.returncode == 1
+    stderr = result.stderr.strip()
+    assert stderr.endswith("TypeError: plot() missing 1 required positional argument: 'var_item'")
+
+
+def test_arg_after_kwarg():
+    result = _run_pyvista(['report', 'foo=bar', 'foo'])
+    assert result.returncode == 1
+    stderr = result.stderr.strip()
+    assert stderr.endswith(
+        'SyntaxError: Positional argument foo must not follow a keyword argument.'
+    )
 
 
 PY_KWARGS = {'gpu': False, 'sort': True}
@@ -103,7 +121,7 @@ def test_report_help():
     result = _run_pyvista(['report', '-h'])
     url = COMMANDS_URL['report']
     assert url.startswith('https')
-    epilog = f'See documentation for available keywords and more info:\n{url}'
+    epilog = f'See documentation for available arguments and keywords:\n{url}'
     assert epilog in result.stdout
 
 
@@ -113,3 +131,12 @@ def test_version(as_script):
     actual = result.stdout.strip()
     expected = pv.__version__
     assert actual == f'pyvista {expected}'
+
+
+@pytest.mark.parametrize('background', [[0, 0, 0], [255, 255, 255]])
+def test_plot(background):
+    file = pv.examples.antfile
+    result = _run_pyvista(
+        ['plot', file, 'off_screen=True', 'screenshot=True', f'background={background}']
+    )
+    assert str(np.array(background)) in result.stdout
