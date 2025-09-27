@@ -127,7 +127,6 @@ docs = [
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
-  'pytest-pyvista==0.2.0',
   'pytest-sphinx==0.6.3',
   'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
@@ -152,6 +151,8 @@ docs = [
   'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]
+
+test-docs = ['pytest-pyvista==0.2.0']
 
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
