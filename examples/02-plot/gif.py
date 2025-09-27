@@ -14,6 +14,14 @@ This example uses :meth:`~pyvista.Plotter.open_gif` and
 """
 
 # sphinx_gallery_thumbnail_number = 2
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

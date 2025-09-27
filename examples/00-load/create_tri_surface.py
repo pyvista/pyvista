@@ -8,6 +8,14 @@ Create a surface from a set of points through a Delaunay triangulation.
 This example uses :func:`pyvista.PolyDataFilters.delaunay_2d`.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np
