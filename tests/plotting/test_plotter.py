@@ -107,21 +107,21 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.MultiBlock(), 'foo'
+    m.return_value = pv.MultiBlock(), {}
 
     pl = pv.Plotter()
     match = re.escape(
         'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
     )
     with pytest.raises(TypeError, match=match):
-        pl.add_mesh('foo')
+        pl.add_mesh({})
 
 
 def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), 'foo'
+    m.return_value = pv.PolyData(), {}
 
     pl = pv.Plotter()
     with pytest.raises(
@@ -130,7 +130,7 @@ def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
             'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
         ),
     ):
-        pl.add_mesh('foo', smooth_shading=True)
+        pl.add_mesh({}, smooth_shading=True)
 
 
 def test_plotter_add_mesh_scalars_rgb_raises():
