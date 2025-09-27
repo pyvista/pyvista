@@ -3633,11 +3633,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             )
             show_edges = False
 
+        if isinstance(mesh, (str, Path)):
+            mesh = pyvista.read(mesh)  # type: ignore[assignment]
+
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
-        if isinstance(mesh, (str, Path)):
-            mesh = pyvista.read(mesh)
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)  # type: ignore[unreachable]
             if not is_pyvista_dataset(mesh):
