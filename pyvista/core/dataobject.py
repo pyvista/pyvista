@@ -481,6 +481,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
             elif isinstance(self, pyvista.UnstructuredGrid):
                 equal_attrs.append('celltypes')
+                equal_attrs.append('polyhedron_faces')
+                equal_attrs.append('polyhedron_face_locations')
 
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista
