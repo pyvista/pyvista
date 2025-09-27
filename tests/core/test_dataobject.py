@@ -108,6 +108,23 @@ def test_unstructured_grid_eq(hexbeam):
     hexbeam.cell_connectivity[0] += 1
     assert hexbeam != copy
 
+    # test changing polyfaces is detected
+    poly = examples.cells.Polyhedron()
+    poly_copy = poly.copy()
+    assert poly == poly_copy
+
+    # we need to modify the face connectivity in-situ
+    if pv.vtk_version_info < (9, 4):
+        poly_faces = poly.GetFaces()
+    else:
+        poly_faces = poly_copy.GetPolyhedronFaces().GetConnectivityArray()
+    pv.convert_array(poly_faces)[2] += 1
+    assert poly != poly_copy
+
+    # sanity check: ensure that modifying polyfaces doesn't change the
+    # underlying cell connectivity
+    assert np.allclose(poly.cell_connectivity, poly_copy.cell_connectivity)
+
 
 def test_eq_nan_points():
     poly = pv.PolyData([np.nan, np.nan, np.nan])
