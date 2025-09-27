@@ -189,7 +189,7 @@ class Report(scooby.Report):
 
         .. code-block:: shell
 
-            pyvista report [key=value] ...
+            pyvista report [args ...] [key=value ...]
 
 
     Parameters

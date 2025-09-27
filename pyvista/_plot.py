@@ -63,7 +63,7 @@ def plot(  # noqa: PLR0917
 
             .. code-block:: shell
 
-                pyvista report [key=value] ...
+                pyvista plot [args ...] [key=value ...]
 
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
