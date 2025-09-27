@@ -149,7 +149,7 @@ jobs:
           name: doc-failed-test-images
           path: _doc_failed_test_images
 
-      - name: Upload Test Debug Images
+      - name: Upload Generated Images
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
