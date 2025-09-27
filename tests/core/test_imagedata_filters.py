@@ -1859,3 +1859,19 @@ def test_crop_raises():
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         img.crop()
+
+
+def test_magnify():
+    image = pv.ImageData(dimensions=(2, 3, 2))
+    image.point_data['data'] = range(image.n_points)
+
+    # Test default factor
+    magnified_default = image.magnify()
+    assert magnified_default.dimensions == image.dimensions
+    assert isinstance(magnified_default, pv.ImageData)
+
+    # Test with specific factor
+    magnified = image.magnify(factor=[2, 1, 3])
+    assert magnified.dimensions == (4, 3, 6)
+    assert magnified.n_points == 4 * 3 * 6
+    assert 'data' in magnified.point_data

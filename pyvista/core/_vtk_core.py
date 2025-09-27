@@ -460,6 +460,7 @@ from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageFlip as vtkImageFlip
 from vtkmodules.vtkImagingCore import vtkImageInterpolator as vtkImageInterpolator
+from vtkmodules.vtkImagingCore import vtkImageMagnify as vtkImageMagnify
 from vtkmodules.vtkImagingCore import vtkImageMirrorPad as vtkImageMirrorPad
 from vtkmodules.vtkImagingCore import vtkImageResize as vtkImageResize
 from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincInterpolator
