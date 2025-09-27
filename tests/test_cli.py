@@ -133,6 +133,7 @@ def test_version(as_script):
     assert actual == f'pyvista {expected}'
 
 
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='bad X server connection')
 @pytest.mark.parametrize('background', [[0, 0, 0], [255, 255, 255]])
 def test_plot(background):
     file = pv.examples.antfile
