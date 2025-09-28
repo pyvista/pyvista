@@ -162,6 +162,9 @@ Documentation = 'https://docs.pyvista.org/'
 Homepage = 'https://github.com/pyvista/pyvista'
 'Source Code' = 'https://github.com/pyvista/pyvista'
 
+[project.scripts]
+pyvista = "pyvista.__main__:main"
+
 [tool.setuptools.dynamic]
 version = { attr = 'pyvista._version.__version__' }
 
