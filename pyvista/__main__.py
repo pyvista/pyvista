@@ -23,7 +23,7 @@ COMMANDS_DISPLAY = {
 }
 COMMANDS_URL = {
     'report': 'https://docs.pyvista.org/api/utilities/_autosummary/pyvista.report',
-    'plot': 'https://dev.pyvista.org/api/plotting/_autosummary/pyvista.plot.html',
+    'plot': 'https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plot.html',
 }
 
 
