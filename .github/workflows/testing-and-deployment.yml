@@ -185,6 +185,7 @@ jobs:
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
+      PARALLEL: "-n4" # flag for pytest-xdist
     steps:
       - uses: actions/checkout@v5
         with:
@@ -213,6 +214,16 @@ jobs:
 
       - name: Core Testing (no GL)
         run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
+
+      - name: Set PARALLEL flag for vtk>=9.4.0
+        run: |
+          python - <<'EOF'
+          import os
+          from packaging.version import Version
+          v = "${{ matrix.vtk-version }}"
+          p = "-n4" if v=="latest" or Version(v) >= Version("9.4.0") else ""
+          open(os.environ["GITHUB_ENV"], "a").write(f"PARALLEL={p}\n")
+          EOF
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
@@ -326,6 +337,7 @@ jobs:
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
+      PARALLEL: "-n2" # flag for pytest-xdist
     strategy:
       fail-fast: false
       matrix:
