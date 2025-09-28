@@ -43,7 +43,7 @@ def _parse_args_and_kwargs(args: list[str]) -> tuple[list[Any], dict[str, Any]]:
     py_kwargs = {}
     positional = True
     for arg in args:
-        if not '=' in arg:
+        if '=' not in arg:
             # Expect positonal py arg
             if not positional:
                 msg = f'Positional argument {arg} must not follow a keyword argument.'
