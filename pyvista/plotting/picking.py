@@ -592,7 +592,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1121,7 +1121,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1240,7 +1240,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1412,7 +1412,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
