@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
-import argparse
-import ast
 import sys
 from typing import TYPE_CHECKING
 from typing import Any
 
+from cyclopts import App
+
 import pyvista
+from pyvista import Report
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+
+def _report(**kwargs):  # noqa: ANN202
+    return Report(**kwargs)
+
+
 COMMANDS: dict[str, Callable[..., Any]] = {
-    'report': pyvista.Report,
+    'report': _report,
     'plot': pyvista.plot,
 }
 COMMANDS_DISPLAY = {
@@ -27,45 +33,21 @@ COMMANDS_URL = {
 }
 
 
-def _parse_args_and_kwargs(args: list[str]) -> tuple[list[Any], dict[str, Any]]:
-    """Parse CLI args into a list of python args and key=value pairs into a dict."""
+app = App(
+    version=f'{pyvista.__name__} {pyvista.__version__}',
+    help_format='plaintext',
+)
 
-    def _literal_eval(val: str) -> Any:
-        """Evaluate as python literals."""
-        try:
-            # Try Python literal first
-            return ast.literal_eval(val)
-        except (ValueError, SyntaxError):
-            # Fallback: treat as string
-            return val
 
-    py_args = []
-    py_kwargs = {}
-    positional = True
-    for arg in args:
-        if '=' not in arg:
-            # Expect positional py arg
-            if not positional:
-                msg = f'Positional argument {arg} must not follow a keyword argument.'
-                raise SyntaxError(msg)
-            py_args.append(_literal_eval(arg))
-            continue
+for key, val in COMMANDS.items():
+    url = COMMANDS_URL[key]
+    display = COMMANDS_DISPLAY[key]
 
-        # Expect keywords only for the remainder of parsing
-        positional = False
-
-        key, value = arg.split('=', 1)
-
-        # Convert bool-like strings into literal Python bools
-        lower = value.lower()
-        if lower in ['true', 'y', 'yes']:
-            value = 'True'
-        elif lower in ['false', 'n', 'no']:
-            value = 'False'
-
-        py_kwargs[key] = _literal_eval(value)
-
-    return py_args, py_kwargs
+    app.command(
+        val,
+        help_format='plaintext',
+        help=f'See documentation for available arguments and keywords:\n{url}',
+    )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -74,45 +56,7 @@ def main(argv: list[str] | None = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
 
-    # Create top-level parser with --version option
-    parser = argparse.ArgumentParser(prog='pyvista')
-    parser.add_argument(
-        '--version',
-        action='version',
-        version=f'pyvista {pyvista.__version__}',
-        help='show PyVista version and exit',
-    )
-
-    # Create a generic keyword subparser for each command
-    subparsers = parser.add_subparsers(dest='subcommand', required=True)
-    for name in COMMANDS:
-        url = COMMANDS_URL[name]
-        display = COMMANDS_DISPLAY[name]
-        subparser = subparsers.add_parser(
-            name,
-            help=f'run {display!r} with python args and key=value kwargs',
-            usage='%(prog)s [args ...] [key=value ...]',
-            epilog=f'See documentation for available arguments and keywords:\n{url}',
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-        )
-        subparser.add_argument(
-            'args', nargs='*', help='required and/or optional python positional arguments'
-        )
-        subparser.add_argument(
-            'kwargs', nargs='*', help='optional python keyword arguments in key=value form'
-        )
-
-    # Parse primary args
-    if not argv:
-        parser.print_help()
-        sys.exit(1)
-    args = parser.parse_args(argv)
-
-    # Parse remaining args as a Python kwargs dict and execute command as a function
-    py_args, py_kwargs = _parse_args_and_kwargs(getattr(args, 'args', []))
-    func = COMMANDS[args.subcommand]
-    result = func(*py_args, **py_kwargs)
-
+    result = app(tokens=argv)
     if result is not None:
         print(result)  # noqa: T201
 
