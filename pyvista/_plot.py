@@ -23,6 +23,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 if TYPE_CHECKING:
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
+    from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.themes import Theme
 
 
@@ -34,11 +35,11 @@ def plot(  # noqa: PLR0917
     screenshot: str | bool | None = None,
     interactive: bool = True,
     cpos: CameraPositionOptions | None = None,
-    window_size: tuple[float] | None = None,
+    window_size: list[int] | None = None,
     show_bounds: bool = False,
     show_axes: bool | None = None,
     notebook: bool | None = None,
-    background: pyvista.ColorLike | None = None,
+    background: ColorLike | None = None,
     text: str = '',
     return_img: bool = False,
     eye_dome_lighting: bool = False,
@@ -52,7 +53,7 @@ def plot(  # noqa: PLR0917
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
     zoom: str | float | None = None,
     border: bool = False,
-    border_color: pyvista.ColorLike = 'k',
+    border_color: ColorLike = 'k',
     border_width: float = 2.0,
     ssao: bool = False,
     **kwargs,
@@ -74,7 +75,7 @@ def plot(  # noqa: PLR0917
         Opens window in full screen.  When enabled, ignores
         ``window_size``.
 
-    screenshot : str or bool, optional
+    screenshot : str | bool, optional
         Saves screenshot to file when enabled.  See:
         :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
         Default ``False``.
@@ -88,7 +89,7 @@ def plot(  # noqa: PLR0917
     cpos : CameraPositionOptions, optional
         List of camera position, focal point, and view up.
 
-    window_size : sequence, default: :attr:`pyvista.plotting.themes.Theme.window_size`
+    window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
 
     show_bounds : bool, default: False
@@ -120,7 +121,7 @@ def plot(  # noqa: PLR0917
     parallel_projection : bool, default: False
         Enable parallel projection.
 
-    jupyter_backend : str, default: :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
+    jupyter_backend : JupyterBackendOptions, optional
         Jupyter notebook plotting backend to use.  One of the
         following:
 
@@ -130,6 +131,8 @@ def plot(  # noqa: PLR0917
 
         This can also be set globally with
         :func:`pyvista.set_jupyter_backend`.
+
+        Defaults to :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
 
     return_viewer : bool, default: False
         Return the jupyterlab viewer, scene, or display object
@@ -147,12 +150,17 @@ def plot(  # noqa: PLR0917
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+    anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
-        disables anti_aliasing. If a string, should be either ``"fxaa"`` or
-        ``"ssaa"``.
+        disables anti_aliasing. If a string, should be one of the following:
 
-    zoom : float, str, optional
+        * ``"ssaa"`` - Super-Sample Anti-Aliasing
+        * ``"msaa"`` - Multi-Sample Anti-Aliasing
+        * ``"fxaa"`` - Fast Approximate Anti-Aliasing
+
+        Defaults to :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+
+    zoom : float | str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
         is a zoom-in, a value less than 1 is a zoom-out.  Must be greater
         than 0.
