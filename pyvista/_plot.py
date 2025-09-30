@@ -8,7 +8,6 @@ decouple the ``core`` and ``plotting`` APIs.
 
 """
 
-# ruff: noqa: FBT001,FBT002
 from __future__ import annotations
 
 from pathlib import Path
@@ -30,32 +29,32 @@ if TYPE_CHECKING:
 @_deprecate_positional_args(allowed=['var_item'])
 def plot(  # noqa: PLR0917
     var_item,
-    off_screen: bool | None = None,
-    full_screen: bool | None = None,
-    screenshot: str | bool | None = None,
-    interactive: bool = True,
+    off_screen: bool | None = None,  # noqa: FBT001
+    full_screen: bool | None = None,  # noqa: FBT001
+    screenshot: str | bool | None = None,  # noqa: FBT001
+    interactive: bool = True,  # noqa: FBT001, FBT002
     cpos: CameraPositionOptions | None = None,
     window_size: list[int] | None = None,
-    show_bounds: bool = False,
-    show_axes: bool | None = None,
-    notebook: bool | None = None,
+    show_bounds: bool = False,  # noqa: FBT001, FBT002
+    show_axes: bool | None = None,  # noqa: FBT001
+    notebook: bool | None = None,  # noqa: FBT001
     background: ColorLike | None = None,
     text: str = '',
-    return_img: bool = False,
-    eye_dome_lighting: bool = False,
-    volume: bool = False,
-    parallel_projection: bool = False,
+    return_img: bool = False,  # noqa: FBT001, FBT002
+    eye_dome_lighting: bool = False,  # noqa: FBT001, FBT002
+    volume: bool = False,  # noqa: FBT001, FBT002
+    parallel_projection: bool = False,  # noqa: FBT001, FBT002
     jupyter_backend: JupyterBackendOptions | None = None,
-    return_viewer: bool = False,
-    return_cpos: bool = False,
+    return_viewer: bool = False,  # noqa: FBT001, FBT002
+    return_cpos: bool = False,  # noqa: FBT001, FBT002
     jupyter_kwargs: dict | None = None,  # type: ignore[type-arg]
     theme: Theme | None = None,
-    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
     zoom: str | float | None = None,
-    border: bool = False,
+    border: bool = False,  # noqa: FBT001, FBT002
     border_color: ColorLike = 'k',
     border_width: float = 2.0,
-    ssao: bool = False,
+    ssao: bool = False,  # noqa: FBT001, FBT002
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
