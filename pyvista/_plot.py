@@ -8,45 +8,52 @@ decouple the ``core`` and ``plotting`` APIs.
 
 """
 
+# ruff: noqa: FBT001,FBT002
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
+if TYPE_CHECKING:
+    from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting.themes import Theme
+
 
 @_deprecate_positional_args(allowed=['var_item'])
 def plot(  # noqa: PLR0917
     var_item,
-    off_screen=None,
-    full_screen=None,
-    screenshot=None,
-    interactive=True,  # noqa: FBT002
-    cpos=None,
-    window_size=None,
-    show_bounds=False,  # noqa: FBT002
-    show_axes=None,
-    notebook=None,
-    background=None,
-    text='',
-    return_img=False,  # noqa: FBT002
-    eye_dome_lighting=False,  # noqa: FBT002
-    volume=False,  # noqa: FBT002
-    parallel_projection=False,  # noqa: FBT002
-    jupyter_backend=None,
-    return_viewer=False,  # noqa: FBT002
-    return_cpos=False,  # noqa: FBT002
-    jupyter_kwargs=None,
-    theme=None,
-    anti_aliasing=None,
-    zoom=None,
-    border=False,  # noqa: FBT002
-    border_color='k',
-    border_width=2.0,
-    ssao=False,  # noqa: FBT002
+    off_screen: bool | None = None,
+    full_screen: bool | None = None,
+    screenshot: str | bool | None = None,
+    interactive: bool = True,
+    cpos: list | None = None,
+    window_size: tuple[float] | None = None,
+    show_bounds: bool = False,
+    show_axes: bool | None = None,
+    notebook: bool | None = None,
+    background: pyvista.ColorLike | None = None,
+    text: str = '',
+    return_img: bool = False,
+    eye_dome_lighting: bool = False,
+    volume: bool = False,
+    parallel_projection: bool = False,
+    jupyter_backend: JupyterBackendOptions | None = None,
+    return_viewer: bool = False,
+    return_cpos: bool = False,
+    jupyter_kwargs: dict | None = None,
+    theme: Theme | None = None,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
+    zoom: str | float | None = None,
+    border: bool = False,
+    border_color: pyvista.ColorLike = 'k',
+    border_width: float = 2.0,
+    ssao: bool = False,
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
