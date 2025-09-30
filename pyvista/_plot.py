@@ -22,6 +22,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting.themes import Theme
 
 
@@ -32,7 +33,7 @@ def plot(  # noqa: PLR0917
     full_screen: bool | None = None,
     screenshot: str | bool | None = None,
     interactive: bool = True,
-    cpos: list | None = None,
+    cpos: CameraPositionOptions | None = None,
     window_size: tuple[float] | None = None,
     show_bounds: bool = False,
     show_axes: bool | None = None,
@@ -46,7 +47,7 @@ def plot(  # noqa: PLR0917
     jupyter_backend: JupyterBackendOptions | None = None,
     return_viewer: bool = False,
     return_cpos: bool = False,
-    jupyter_kwargs: dict | None = None,
+    jupyter_kwargs: dict | None = None,  # type: ignore[type-arg]
     theme: Theme | None = None,
     anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
     zoom: str | float | None = None,
@@ -84,7 +85,7 @@ def plot(  # noqa: PLR0917
     interactive : bool, default: :attr:`pyvista.plotting.themes.Theme.interactive`
         Allows user to pan and move figure.
 
-    cpos : list, optional
+    cpos : CameraPositionOptions, optional
         List of camera position, focal point, and view up.
 
     window_size : sequence, default: :attr:`pyvista.plotting.themes.Theme.window_size`
