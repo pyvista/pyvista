@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 
 
 @_deprecate_positional_args(allowed=['var_item'])
-def plot(  # noqa: PLR0917
-    var_item,
+def plot(  # noqa: ANN202, PLR0917
+    var_item,  # noqa: ANN001
     off_screen: bool | None = None,  # noqa: FBT001
     full_screen: bool | None = None,  # noqa: FBT001
     screenshot: str | bool | None = None,  # noqa: FBT001
