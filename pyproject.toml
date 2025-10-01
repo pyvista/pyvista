@@ -85,13 +85,13 @@ test = [
   'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
-  'pytest-cov<6.3.0',
+  'pytest-cov<7.1.0',
   'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.2.0',
   'pytest-xdist<3.9.0',
   'pytest<8.5.0',
   'pytest_cases<3.10.0',
-  'pytest_mock<3.15.0',
+  'pytest_mock<3.16.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -220,6 +220,7 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
+run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
