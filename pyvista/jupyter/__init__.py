@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import importlib.util
+from typing import Literal
 from typing import get_args
 
 from typing_extensions import TypeIs
 
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
-from pyvista.plotting._typing import JupyterBackendOptions
 
+JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
 
