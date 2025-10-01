@@ -7,8 +7,10 @@ from pyvista._plot import plot as plot
 
 from . import _vtk as _vtk
 from ._property import Property as Property
+from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart
 from ._typing import ColorLike as ColorLike
+from ._typing import JupyterBackendOptions as JupyterBackendOptions
 from .actor import Actor as Actor
 from .actor_properties import ActorProperties as ActorProperties
 from .affine_widget import AffineWidget3D as AffineWidget3D

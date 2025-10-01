@@ -88,6 +88,7 @@ CameraPositionOptions = (
     | MatrixLike[float]
     | CameraPosition
 )
+JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
 
 
 class BackfaceArgs(TypedDict, total=False):
