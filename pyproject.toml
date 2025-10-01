@@ -145,7 +145,7 @@ docs = [
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
   'trame-vtk==2.9.1',
-  'trame-vuetify==3.0.2',
+  'trame-vuetify==3.1.0',
   'trame==3.12.0',
   'trimesh==4.8.0',
   'vtk-xref==0.1.1',
