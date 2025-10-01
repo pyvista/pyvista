@@ -220,6 +220,7 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
+run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
