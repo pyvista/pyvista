@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Label based on changed files
-        uses: actions/labeler@v5
+        uses: actions/labeler@v6
         with:
           repo-token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
 
