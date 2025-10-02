@@ -535,6 +535,12 @@ from vtkmodules.vtkIOXML import vtkXMLWriter as vtkXMLWriter
 
 with contextlib.suppress(ImportError):
     # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
+    from vtkmodules.vtkImagingMorphological import (
+        vtkImageContinuousDilate3D as vtkImageContinuousDilate3D,
+    )
+    from vtkmodules.vtkImagingMorphological import (
+        vtkImageContinuousErode3D as vtkImageContinuousErode3D,
+    )
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D as vtkImageDilateErode3D
 
 try:
