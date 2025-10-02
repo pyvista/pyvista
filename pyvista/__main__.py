@@ -35,7 +35,6 @@ app = App(
 
 
 for name, func in COMMANDS.items():
-    # print(Report.__init__.__annotations__)
     app.command(func, name=name)
 
 
