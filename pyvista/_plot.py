@@ -87,6 +87,9 @@ def plot(  # noqa: ANN202, PLR0917
 
     cpos : CameraPositionOptions, optional
         List of camera position, focal point, and view up.
+        See the :attr:`pyvista.Plotter.camera_position` for concrete examples
+        on how to use this parameter and :ref:`cameras_api` for a detailed
+        documentation on :class:`pyvista.Camera`.
 
     window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
@@ -121,15 +124,9 @@ def plot(  # noqa: ANN202, PLR0917
         Enable parallel projection.
 
     jupyter_backend : JupyterBackendOptions, optional
-        Jupyter notebook plotting backend to use.  One of the
-        following:
-
-        * ``'none'`` : Do not display in the notebook.
-        * ``'static'`` : Display a static figure.
-        * ``'trame'`` : Display using ``trame``.
-
-        This can also be set globally with
-        :func:`pyvista.set_jupyter_backend`.
+        Jupyter notebook plotting backend to use.
+        See available documentation at :func:`pyvista.set_jupyter_backend`
+        to see all valid values for this parameter along with a detailed documentation.
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
 
