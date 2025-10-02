@@ -4,12 +4,25 @@ import contextlib
 import io
 import subprocess
 import sys
+import textwrap
 
 import pytest
+from rich.console import Console
 
 import pyvista as pv
-from pyvista.__main__ import COMMANDS_URL
+from pyvista.__main__ import app
 from pyvista.__main__ import main
+
+
+@pytest.fixture
+def console():
+    return Console(
+        width=70,
+        force_terminal=True,
+        highlight=False,
+        color_system=None,
+        legacy_windows=False,
+    )
 
 
 def pop_second_line(text: str) -> str:
@@ -99,17 +112,62 @@ def test_report(cli_kwargs, py_kwargs):
     assert actual_clean == expected_clean
 
 
-def test_report_help():
-    result = _run_pyvista(['report', '-h'])
-    url = COMMANDS_URL['report']
-    assert url.startswith('https')
-    epilog = f'See documentation for available keywords and more info:\n{url}'
-    assert epilog in result.stdout
+def test_report_help(capsys: pytest.CaptureFixture, console: Console):
+    app('report --help', console=console)
+
+    assert (
+        textwrap.dedent(
+            """
+            ╭─ Parameters ───────────────────────────────────────────────────────╮
+            │ ADDITIONAL --additional  List of packages or package names to add  │
+            │                          to output information.                    │
+            │ NCOL --ncol              Number of package-columns in html table;  │
+            │                          only has effect if                        │
+            │                          ``mode='HTML'`` or ``mode='html'``.       │
+            │                          [default: 3]                              │
+            │ TEXT-WIDTH --text-width  The text width for non-HTML display       │
+            │                          modes. [default: 80]                      │
+            │ SORT --sort --no-sort    Alphabetically sort the packages.         │
+            │                          [default: False]                          │
+            │ GPU --gpu --no-gpu       Gather information about the GPU.         │
+            │                          Defaults to ``True`` but if               │
+            │                          experiencing rendering issues, pass       │
+            │                          ``False`` to safely generate a            │
+            │                          report. [default: True]                   │
+            │ DOWNLOADS --downloads    Gather information about downloads. If    │
+            │   --no-downloads         ``True``, includes:                       │
+            │                          - The local user data path (where         │
+            │                          downloads are saved)                      │
+            │                          - The VTK Data source (where files are    │
+            │                          downloaded from)                          │
+            │                          - Whether local file caching is enabled   │
+            │                          for the VTK Data source                   │
+            │                                                                    │
+            │                          .. versionadded:: 0.47 [default: False]   │
+            ╰────────────────────────────────────────────────────────────────────╯
+        """
+        )
+        in capsys.readouterr().out
+    )
 
 
-@pytest.mark.parametrize('as_script', [True, False])
-def test_version(as_script):
-    result = _run_pyvista(['--version'], as_script=as_script)
-    actual = result.stdout.strip()
-    expected = pv.__version__
-    assert actual == f'pyvista {expected}'
+def test_version(capsys: pytest.CaptureFixture):
+    main('--version')
+    assert capsys.readouterr().out == f'pyvista {pv.__version__}\n'
+
+
+def test_help(capsys: pytest.CaptureFixture, console: Console):
+    app('--help', console=console)
+
+    assert (
+        textwrap.dedent(
+            """
+        ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ report     Generate a PyVista software environment report.         │
+        │ --help -h  Display this message and exit.                          │
+        │ --version  Display application version.                            │
+        ╰────────────────────────────────────────────────────────────────────╯
+            """
+        )
+        in capsys.readouterr().out
+    )
