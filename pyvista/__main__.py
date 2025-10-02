@@ -2,93 +2,51 @@
 
 from __future__ import annotations
 
-import argparse
-import ast
-import sys
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import get_type_hints
+import warnings
+
+from cyclopts import App
 
 import pyvista
+from pyvista import Report
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+
+# Assign annotations to be able to use the Report class using
+# cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
+Report.__init__.__annotations__ = get_type_hints(Report.__init__)
+
+
 COMMANDS: dict[str, Callable[..., Any]] = {
-    'report': pyvista.Report,
+    'report': Report,
 }
-COMMANDS_DISPLAY = {'report': 'pyvista.Report()'}
-COMMANDS_URL = {'report': 'https://docs.pyvista.org/api/utilities/_autosummary/pyvista.report'}
+
+# help format needs to be `plaintext` due to unsupported `versionadded` sphinx directive in rich.
+# Change to `rst` when cyclopts v4 is out. See https://github.com/BrianPugh/cyclopts/issues/568
+app = App(
+    help_format='plaintext',
+    version=f"f'{pyvista.__name__} {pyvista.__version__}'",
+)
 
 
-def _parse_kwargs(args: list[str]) -> dict[str, Any]:
-    """Parse CLI args of form key=value into a dict.
-
-    Try literal_eval first, fallback to string.
-    """
-    kwargs = {}
-    for arg in args:
-        if '=' not in arg:
-            msg = f'Invalid kwarg format: {arg!r}, expected key=value'
-            raise ValueError(msg)
-        key, value = arg.split('=', 1)
-
-        # Convert bool-like strings into literal Python bools
-        lower = value.lower()
-        if lower in ['true', 'y', 'yes']:
-            value = 'True'
-        elif lower in ['false', 'n', 'no']:
-            value = 'False'
-
-        try:
-            # Try Python literal first
-            kwargs[key] = ast.literal_eval(value)
-        except (ValueError, SyntaxError):
-            # Fallback: treat as string
-            kwargs[key] = value
-    return kwargs
+for name, func in COMMANDS.items():
+    # print(Report.__init__.__annotations__)
+    app.command(func, name=name)
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(argv: list[str] | str | None = None) -> None:
     """PyVista Command-Line Interface entry point."""
-    # Use sys.argv if no arguments were explicitly passed
-    if argv is None:
-        argv = sys.argv[1:]
-
-    # Create top-level parser with --version option
-    parser = argparse.ArgumentParser(prog='pyvista')
-    parser.add_argument(
-        '--version',
-        action='version',
-        version=f'pyvista {pyvista.__version__}',
-        help='show PyVista version and exit',
-    )
-
-    # Create a generic keyword subparser for each command
-    subparsers = parser.add_subparsers(dest='subcommand', required=True)
-    for name in COMMANDS:
-        url = COMMANDS_URL[name]
-        display = COMMANDS_DISPLAY[name]
-        subparser = subparsers.add_parser(
-            name,
-            help=f'run {display!r} with optional key=value kwargs',
-            usage='%(prog)s [key=value] ...',
-            epilog=f'See documentation for available keywords and more info:\n{url}',
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-        )
-        subparser.add_argument(
-            'kwargs', nargs='*', help='optional keyword arguments in key=value form'
-        )
-
-    # Parse primary args
-    if not argv:
-        parser.print_help()
-        sys.exit(1)
-    args = parser.parse_args(argv)
-
-    # Parse remaining args as a Python kwargs dict and execute command as a function
-    kwargs = _parse_kwargs(getattr(args, 'kwargs', []))
-    func = COMMANDS[args.subcommand]
-    result = func(**kwargs)
+    # Ignore warnings emitted because arguments are passed positionally by the
+    # inspect module. See https://docs.python.org/3/library/inspect.html#inspect.BoundArguments.kwargs
+    # and https://github.com/BrianPugh/cyclopts/issues/567
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=PyVistaDeprecationWarning)
+        result = app(tokens=argv)
 
     if result is not None:
         print(result)  # noqa: T201

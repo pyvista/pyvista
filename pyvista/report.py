@@ -180,6 +180,7 @@ class GPUInfo:
         return content
 
 
+@_deprecate_positional_args
 class Report(scooby.Report):
     """Generate a PyVista software environment report.
 
@@ -256,7 +257,6 @@ class Report(scooby.Report):
 
     """
 
-    @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
         self,
         additional=None,
