@@ -7,6 +7,7 @@ from pyvista._plot import plot as plot
 
 from . import _vtk as _vtk
 from ._property import Property as Property
+from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart
 from ._typing import ColorLike as ColorLike
 from .actor import Actor as Actor

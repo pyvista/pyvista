@@ -122,6 +122,8 @@ extensions = [
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
+    'CameraPositionOptions': 'pyvista.CameraPositionOptions',
+    'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
@@ -247,7 +249,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'FontFamilyOptions'),
     (r'py:.*', 'HorizontalOptions'),
     (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', 'JupyterBackendOptions'),
+    (r'py:.*', '.*JupyterBackendOptions'),
     (r'py:.*', '_InterpolationOptions'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)

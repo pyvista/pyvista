@@ -82,6 +82,20 @@ pyvista.InteractionEventType
 
 .. autodata:: InteractionEventType
 
+pyvista.CameraPositionOptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autodata:: CameraPositionOptions
+
+pyvista.JupyterBackendOptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autodata:: JupyterBackendOptions
+
 
 Data Object Types
 -----------------
