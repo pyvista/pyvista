@@ -30,7 +30,7 @@ COMMANDS: dict[str, Callable[..., Any]] = {
 # Change to `rst` when cyclopts v4 is out. See https://github.com/BrianPugh/cyclopts/issues/568
 app = App(
     help_format='plaintext',
-    version=f"f'{pyvista.__name__} {pyvista.__version__}'",
+    version=f'{pyvista.__name__} {pyvista.__version__}',
 )
 
 
