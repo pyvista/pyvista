@@ -83,7 +83,7 @@ pyvista.InteractionEventType
 .. autodata:: InteractionEventType
 
 pyvista.CameraPositionOptions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
