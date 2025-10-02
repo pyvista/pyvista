@@ -90,7 +90,7 @@ pyvista.CameraPositionOptions
 .. autodata:: CameraPositionOptions
 
 pyvista.JupyterBackendOptions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
