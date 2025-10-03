@@ -190,7 +190,9 @@ class Report(scooby.Report):
 
         .. code-block:: shell
 
-            pyvista report [key=value] ...
+            pyvista report --sort ...
+
+        Run `pyvista report --help` for more details on available parameters.
 
 
     Parameters
