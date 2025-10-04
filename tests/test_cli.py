@@ -48,14 +48,22 @@ def _run_pyvista(argv: list[str] | None = None, *, as_script: bool = False):
     )
 
 
-@pytest.mark.parametrize('args', [None, []])
-def test_no_input(args):
-    result = _run_pyvista(args)
-    assert result.returncode == 1
-    stdout = result.stdout
-    assert stdout.startswith('usage: pyvista [-h] [--version] {report} ...')
-    assert 'positional arguments:' in stdout
-    assert 'options:' in stdout
+@pytest.mark.parametrize('args', [[], ''])
+def test_no_input(args, capsys: pytest.CaptureFixture, console: Console):
+    app(args, console=console)
+
+    expected = textwrap.dedent(
+        """\
+        Usage: pyvista COMMAND
+
+        ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ report     Generate a PyVista software environment report.         │
+        │ --help -h  Display this message and exit.                          │
+        │ --version  Display application version.                            │
+        ╰────────────────────────────────────────────────────────────────────╯
+        """
+    )
+    assert expected == capsys.readouterr().out
 
 
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='Different output format on older python')
@@ -115,40 +123,14 @@ def test_report(cli_kwargs, py_kwargs):
 def test_report_help(capsys: pytest.CaptureFixture, console: Console):
     app('report --help', console=console)
 
-    assert (
-        textwrap.dedent(
-            """
-            ╭─ Parameters ───────────────────────────────────────────────────────╮
-            │ ADDITIONAL --additional  List of packages or package names to add  │
-            │                          to output information.                    │
-            │ NCOL --ncol              Number of package-columns in html table;  │
-            │                          only has effect if                        │
-            │                          ``mode='HTML'`` or ``mode='html'``.       │
-            │                          [default: 3]                              │
-            │ TEXT-WIDTH --text-width  The text width for non-HTML display       │
-            │                          modes. [default: 80]                      │
-            │ SORT --sort --no-sort    Alphabetically sort the packages.         │
-            │                          [default: False]                          │
-            │ GPU --gpu --no-gpu       Gather information about the GPU.         │
-            │                          Defaults to ``True`` but if               │
-            │                          experiencing rendering issues, pass       │
-            │                          ``False`` to safely generate a            │
-            │                          report. [default: True]                   │
-            │ DOWNLOADS --downloads    Gather information about downloads. If    │
-            │   --no-downloads         ``True``, includes:                       │
-            │                          - The local user data path (where         │
-            │                          downloads are saved)                      │
-            │                          - The VTK Data source (where files are    │
-            │                          downloaded from)                          │
-            │                          - Whether local file caching is enabled   │
-            │                          for the VTK Data source                   │
-            │                                                                    │
-            │                          .. versionadded:: 0.47 [default: False]   │
-            ╰────────────────────────────────────────────────────────────────────╯
-        """
-        )
-        in capsys.readouterr().out
+    expected = textwrap.dedent(
+        """\
+            Usage: pyvista report [ARGS] [OPTIONS]
+
+            Generate a PyVista software environment report.
+       """
     )
+    assert expected in capsys.readouterr().out
 
 
 def test_version(capsys: pytest.CaptureFixture):
