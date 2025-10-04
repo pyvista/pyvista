@@ -570,6 +570,11 @@ def test_report():
     assert 'User Data Path' not in report.__repr__()
 
 
+def test_report_warnings():
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        pv.Report('vtk', 4, 90, True)
+
+
 def test_report_downloads():
     report = pv.Report(downloads=True)
     repr_ = repr(report)
