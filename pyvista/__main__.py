@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Any
+from functools import wraps
 from typing import get_type_hints
 import warnings
 
@@ -13,29 +12,24 @@ import pyvista
 from pyvista import Report
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-
 # Assign annotations to be able to use the Report class using
 # cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
 Report.__init__.__annotations__ = get_type_hints(Report.__init__)
 
 
-COMMANDS: dict[str, Callable[..., Any]] = {
-    'report': Report,
-}
-
 # help format needs to be `plaintext` due to unsupported `versionadded` sphinx directive in rich.
 # Change to `rst` when cyclopts v4 is out. See https://github.com/BrianPugh/cyclopts/issues/568
 app = App(
+    name=pyvista.__name__,
     help_format='plaintext',
     version=f'{pyvista.__name__} {pyvista.__version__}',
 )
 
 
-for name, func in COMMANDS.items():
-    app.command(func, name=name)
+@app.command
+@wraps(Report)
+def report(*args, **kwargs):  # noqa: ANN201, D103
+    return Report(*args, **kwargs)
 
 
 def main(argv: list[str] | str | None = None) -> None:

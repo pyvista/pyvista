@@ -1,56 +1,39 @@
 from __future__ import annotations
 
-import contextlib
-import io
-import subprocess
-import sys
 import textwrap
+from typing import TYPE_CHECKING
 
 import pytest
+from pytest_cases import parametrize
+from pytest_cases import parametrize_with_cases
 from rich.console import Console
 
 import pyvista as pv
 from pyvista.__main__ import app
 from pyvista.__main__ import main
 
+if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture
-def console():
-    return Console(
+def patch_app_console(monkeypatch: pytest.MonkeyPatch):
+    console = Console(
         width=70,
         force_terminal=True,
         highlight=False,
         color_system=None,
         legacy_windows=False,
     )
-
-
-def pop_second_line(text: str) -> str:
-    """Return text with the second line removed."""
-    lines = text.splitlines()
-    if len(lines) > 1:
-        lines.pop(1)
-    return '\n'.join(lines)
-
-
-def _run_pyvista(argv: list[str] | None = None, *, as_script: bool = False):
-    args = []
-    if not as_script:
-        args.extend([sys.executable, '-m'])
-    args.append('pyvista')
-    if argv:
-        args.extend(argv)
-    return subprocess.run(
-        args,
-        check=False,
-        capture_output=True,
-        encoding='utf-8',
-    )
+    monkeypatch.setattr(app, 'console', console)
 
 
 @pytest.mark.parametrize('args', [[], ''])
-def test_no_input(args, capsys: pytest.CaptureFixture, console: Console):
-    app(args, console=console)
+@pytest.mark.usefixtures('patch_app_console')
+def test_no_input(args, capsys: pytest.CaptureFixture):
+    main(args)
 
     expected = textwrap.dedent(
         """\
@@ -66,62 +49,78 @@ def test_no_input(args, capsys: pytest.CaptureFixture, console: Console):
     assert expected == capsys.readouterr().out
 
 
-@pytest.mark.skipif(sys.version_info < (3, 12), reason='Different output format on older python')
-def test_invalid_command():
-    result = _run_pyvista(['foo'])
-    assert result.returncode == 2
-    stderr = result.stderr.strip()
-    text = (
-        'usage: pyvista [-h] [--version] {report} ...\n'
-        "pyvista: error: argument subcommand: invalid choice: 'foo'"
+@pytest.mark.usefixtures('patch_app_console')
+def test_invalid_command(capsys: pytest.CaptureFixture):
+    expected = textwrap.dedent(
+        """\
+    ╭─ Error ────────────────────────────────────────────────────────────╮
+    │ Unknown command "foo". Available commands: report.                 │
+    ╰────────────────────────────────────────────────────────────────────╯
+    """
     )
-    assert text in stderr
+    with pytest.raises(SystemExit) as e:
+        main('foo')
+    assert e.value.code == 1
+    assert expected == capsys.readouterr().out
 
 
-def test_bad_kwarg():
-    result = _run_pyvista(['report', 'foo'])
-    assert result.returncode == 1
-    stderr = result.stderr.strip()
-    assert stderr.endswith("ValueError: Invalid kwarg format: 'foo', expected key=value")
+@pytest.mark.usefixtures('patch_app_console')
+def test_bad_kwarg(capsys: pytest.CaptureFixture):
+    expected = textwrap.dedent(
+        """\
+    ╭─ Error ────────────────────────────────────────────────────────────╮
+    │ Unknown option: "--foo=1".                                         │
+    ╰────────────────────────────────────────────────────────────────────╯
+    """
+    )
+    with pytest.raises(SystemExit) as e:
+        main('report --foo=1')
+    assert e.value.code == 1
+    assert expected == capsys.readouterr().out
 
 
-PY_KWARGS = {'gpu': False, 'sort': True}
+@pytest.fixture
+def mock_report(mocker: MockerFixture):
+    return mocker.patch.object(pv.__main__, 'Report')
 
 
-@pytest.mark.parametrize(
-    ('cli_kwargs', 'py_kwargs'),
-    [
-        (['gpu=False', 'sort=True'], PY_KWARGS),
-        (['gpu=false', 'sort=true'], PY_KWARGS),
-        (['gpu=no', 'sort=yes'], PY_KWARGS),
-        (['gpu=no', 'sort=foo'], PY_KWARGS),
-    ],
-)
-def test_report(cli_kwargs, py_kwargs):
-    cli_args = ['report', *cli_kwargs]
-    result = _run_pyvista(cli_args)
-    actual = result.stdout.strip()
-    expected = str(pv.Report(**py_kwargs)).strip()
+class Cases_Report:  # noqa: N801
+    def case_no_kw(self):
+        return '', {}
 
-    # Remove the second line (Date) from both
-    actual_clean = pop_second_line(actual)
-    expected_clean = pop_second_line(expected)
-    assert actual_clean == expected_clean
+    @parametrize(downloads=['True', 'yes', 'y', 'true'])
+    @parametrize(sort=['True', 'yes', 'y', 'true'])
+    def case_kw_bool(self, downloads, sort):
+        return f'--downloads={downloads} --sort={sort}', dict(downloads=True, sort=True)
 
-    # Try again by calling main directly
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        main(cli_args)
-    actual = buf.getvalue().strip()
+    @parametrize(downloads=['False', 'no', 'n', 'false'])
+    @parametrize(sort=['False', 'no', 'n', 'false'])
+    def case_kw_bool_no(self, downloads, sort):
+        return f'--downloads={downloads} --sort={sort}', dict(downloads=False, sort=False)
 
-    # Remove the second line (Date) from both
-    actual_clean = pop_second_line(actual)
-    expected_clean = pop_second_line(expected)
-    assert actual_clean == expected_clean
+    def case_bool(self):
+        return '--downloads --sort', dict(downloads=True, sort=True)
+
+    def case_no_bool(self):
+        return '--no-downloads --no-sort', dict(downloads=False, sort=False)
+
+    def case_(self):
+        return '--no-downloads --no-sort', dict(downloads=False, sort=False)
 
 
-def test_report_help(capsys: pytest.CaptureFixture, console: Console):
-    app('report --help', console=console)
+@parametrize_with_cases('tokens, expected_kwargs', cases=Cases_Report)
+def test_report_kwargs(
+    tokens: str,
+    expected_kwargs: dict,
+    mock_report: MagicMock,
+):
+    main(f'report {tokens}')
+    mock_report.assert_called_once_with(**expected_kwargs)
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_report_help(capsys: pytest.CaptureFixture):
+    main('report --help')
 
     expected = textwrap.dedent(
         """\
@@ -138,18 +137,19 @@ def test_version(capsys: pytest.CaptureFixture):
     assert capsys.readouterr().out == f'pyvista {pv.__version__}\n'
 
 
-def test_help(capsys: pytest.CaptureFixture, console: Console):
-    app('--help', console=console)
+@pytest.mark.usefixtures('patch_app_console')
+def test_help(capsys: pytest.CaptureFixture):
+    main('--help')
 
-    assert (
-        textwrap.dedent(
-            """
+    expected = textwrap.dedent(
+        """\
+        Usage: pyvista COMMAND
+
         ╭─ Commands ─────────────────────────────────────────────────────────╮
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
         ╰────────────────────────────────────────────────────────────────────╯
-            """
-        )
-        in capsys.readouterr().out
+        """
     )
+    assert expected == capsys.readouterr().out
