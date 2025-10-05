@@ -71,6 +71,14 @@ def plot(  # noqa: ANN202, PLR0917
         See :func:`Plotter.add_mesh <pyvista.Plotter.add_mesh>` for all
         supported types.
 
+        .. versionadded:: 0.47
+
+            ``plot`` can be invoked with the shell command:
+
+            .. code-block:: shell
+
+                pyvista plot [args ...] [key=value ...]
+
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
         screenshots without a window popping up.  Defaults to the
