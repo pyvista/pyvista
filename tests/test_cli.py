@@ -53,6 +53,13 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
 def test_invalid_command(capsys: pytest.CaptureFixture):
     expected = textwrap.dedent(
         """\
+    Usage: pyvista COMMAND
+
+    ╭─ Commands ─────────────────────────────────────────────────────────╮
+    │ report     Generate a PyVista software environment report.         │
+    │ --help -h  Display this message and exit.                          │
+    │ --version  Display application version.                            │
+    ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown command "foo". Available commands: report.                 │
     ╰────────────────────────────────────────────────────────────────────╯
@@ -65,9 +72,51 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_bad_kwarg(capsys: pytest.CaptureFixture):
+def test_bad_kwarg_report(capsys: pytest.CaptureFixture):
     expected = textwrap.dedent(
         """\
+    Usage: pyvista report [ARGS] [OPTIONS]
+
+    Generate a PyVista software environment report.
+
+    .. versionadded:: 0.47
+
+        The report can now be generated using the shell command:
+
+        .. code-block:: shell
+
+            pyvista report --sort ...
+
+        Run ``pyvista report --help`` for more details on available
+    parameters.
+
+    ╭─ Parameters ───────────────────────────────────────────────────────╮
+    │ ADDITIONAL --additional  List of packages or package names to add  │
+    │                          to output information.                    │
+    │ NCOL --ncol              Number of package-columns in html table;  │
+    │                          only has effect if                        │
+    │                          ``mode='HTML'`` or ``mode='html'``.       │
+    │                          [default: 3]                              │
+    │ TEXT-WIDTH --text-width  The text width for non-HTML display       │
+    │                          modes. [default: 80]                      │
+    │ SORT --sort --no-sort    Alphabetically sort the packages.         │
+    │                          [default: False]                          │
+    │ GPU --gpu --no-gpu       Gather information about the GPU.         │
+    │                          Defaults to ``True`` but if               │
+    │                          experiencing rendering issues, pass       │
+    │                          ``False`` to safely generate a            │
+    │                          report. [default: True]                   │
+    │ DOWNLOADS --downloads    Gather information about downloads. If    │
+    │   --no-downloads         ``True``, includes:                       │
+    │                          - The local user data path (where         │
+    │                          downloads are saved)                      │
+    │                          - The VTK Data source (where files are    │
+    │                          downloaded from)                          │
+    │                          - Whether local file caching is enabled   │
+    │                          for the VTK Data source                   │
+    │                                                                    │
+    │                          .. versionadded:: 0.47 [default: False]   │
+    ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown option: "--foo=1".                                         │
     ╰────────────────────────────────────────────────────────────────────╯

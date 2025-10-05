@@ -23,6 +23,7 @@ app = App(
     name=pyvista.__name__,
     help_format='plaintext',
     version=f'{pyvista.__name__} {pyvista.__version__}',
+    help_on_error=True,
 )
 
 
