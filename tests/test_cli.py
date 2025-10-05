@@ -168,7 +168,7 @@ class CasesReport:
         return '"foo" --ncol 2', (['foo'], 2), {}
 
     def case_additional_textwidth(self):
-        # textwidth is keyword whereas `additional` is positional since inspect.BoundArguments
+        # `textwidth` is keyword whereas `additional` is positional since inspect.BoundArguments
         # enforces it
         return '"foo" --text-width 100', (['foo'],), dict(text_width=100)
 
