@@ -84,7 +84,7 @@ def mock_report(mocker: MockerFixture):
     return mocker.patch.object(pv.__main__, 'Report')
 
 
-class Cases_Report:  # noqa: N801
+class CasesReport:
     def case_no_kw(self):
         return '', {}
 
