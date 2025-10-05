@@ -192,7 +192,7 @@ class Report(scooby.Report):
 
             pyvista report --sort ...
 
-        Run `pyvista report --help` for more details on available parameters.
+        Run ``pyvista report --help`` for more details on available parameters.
 
 
     Parameters
