@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeAlias
 
 import numpy as np
 
@@ -20,15 +21,20 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core._array_like import NumpyArray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.themes import Theme
 
+    PlottableType: TypeAlias = (
+        NumpyArray[float] | pyvista.DataSet | pyvista.MultiBlock | str | Path
+    )
+
 
 @_deprecate_positional_args(allowed=['var_item'])
 def plot(  # noqa: ANN202, PLR0917
-    var_item,  # noqa: ANN001
+    var_item: list[PlottableType] | PlottableType,
     off_screen: bool | None = None,  # noqa: FBT001
     full_screen: bool | None = None,  # noqa: FBT001
     screenshot: str | bool | None = None,  # noqa: FBT001
@@ -270,28 +276,29 @@ def plot(  # noqa: ANN202, PLR0917
             msg = f'Background must be color-like or a file path. Got {background} instead.'
             raise TypeError(msg)
 
-    if isinstance(var_item, list):
-        if len(var_item) == 2:  # might be arrows
-            isarr_0 = isinstance(var_item[0], np.ndarray)
-            isarr_1 = isinstance(var_item[1], np.ndarray)
-            if isarr_0 and isarr_1:
-                pl.add_arrows(var_item[0], var_item[1])
+    # Handle var_item input
+    def _handle_list(var_item: list[PlottableType]) -> None:
+        if len(var_item) == 2 and all(
+            isinstance(item, np.ndarray) for item in var_item
+        ):  # might be arrows
+            pl.add_arrows(var_item[0], var_item[1])
+            return
+
+        for item in var_item:
+            if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
+                pl.add_volume(item, **kwargs)
             else:
-                for item in var_item:
-                    if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                        pl.add_volume(item, **kwargs)
-                    else:
-                        pl.add_mesh(item, **kwargs)
-        else:
-            for item in var_item:
-                if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                    pl.add_volume(item, **kwargs)
-                else:
-                    pl.add_mesh(item, **kwargs)
+                pl.add_mesh(item, **kwargs)
+
+    if isinstance(var_item, list):
+        _handle_list(var_item=var_item)
+
     elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
         pl.add_volume(var_item, **kwargs)
+
     elif isinstance(var_item, pyvista.MultiBlock):
         pl.add_composite(var_item, **kwargs)
+
     else:
         pl.add_mesh(var_item, **kwargs)
 
