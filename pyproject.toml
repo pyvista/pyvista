@@ -152,7 +152,7 @@ docs = [
   { include-group = 'pinned' },
 ]
 
-docs-test = ['pytest-pyvista[vtksz]==0.3.0']
+docs-test = ['pytest-pyvista==0.3.0']
 
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
