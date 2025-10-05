@@ -88,6 +88,7 @@ CameraPositionOptions = (
     | MatrixLike[float]
     | CameraPosition
 )
+CameraPositionOptions.__doc__ = 'Any object used to set a :class:`Camera`.'
 
 
 class BackfaceArgs(TypedDict, total=False):
