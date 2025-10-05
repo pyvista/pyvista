@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 import subprocess
 import sys
 import textwrap
@@ -233,9 +234,11 @@ def test_help(capsys: pytest.CaptureFixture):
     ],
 )
 def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
-    args, exit_code_expected = tokens_err_codes
+    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
 
-    args = f'{sys.executable} -m pyvista ' + args if not as_script else 'pyvista ' + args
+    argv, exit_code_expected = tokens_err_codes
+    args += [*shlex.split(argv)]
+
     process = subprocess.run(
         args,
         check=False,
