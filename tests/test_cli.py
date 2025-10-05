@@ -89,12 +89,12 @@ def test_bad_kwarg_report(capsys: pytest.CaptureFixture):
 
             pyvista report --sort ...
 
-        Run ``pyvista report --help`` for more details on available
+        Run ``pyvista report --help`` for more details on available 
     parameters.
 
     ╭─ Parameters ───────────────────────────────────────────────────────╮
     │ ADDITIONAL --additional  List of packages or package names to add  │
-    │                          to output information.                    │
+    │   --empty-additional     to output information.                    │
     │ NCOL --ncol              Number of package-columns in html table;  │
     │                          only has effect if                        │
     │                          ``mode='HTML'`` or ``mode='html'``.       │
@@ -122,7 +122,7 @@ def test_bad_kwarg_report(capsys: pytest.CaptureFixture):
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown option: "--foo=1".                                         │
     ╰────────────────────────────────────────────────────────────────────╯
-    """
+    """  # noqa: W291, RUF100
     )
     with pytest.raises(SystemExit) as e:
         main('report --foo=1')
