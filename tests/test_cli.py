@@ -134,37 +134,53 @@ def mock_report(mocker: MockerFixture):
 
 
 class CasesReport:
-    def case_no_kw(self):
-        return '', {}
+    def case_empty(self):
+        return '', (), {}
 
     @parametrize(downloads=['True', 'yes', 'y', 'true'])
     @parametrize(sort=['True', 'yes', 'y', 'true'])
     def case_kw_bool(self, downloads, sort):
-        return f'--downloads={downloads} --sort={sort}', dict(downloads=True, sort=True)
+        return f'--downloads={downloads} --sort={sort}', (), dict(downloads=True, sort=True)
 
     @parametrize(downloads=['False', 'no', 'n', 'false'])
     @parametrize(sort=['False', 'no', 'n', 'false'])
     def case_kw_bool_no(self, downloads, sort):
-        return f'--downloads={downloads} --sort={sort}', dict(downloads=False, sort=False)
+        return f'--downloads={downloads} --sort={sort}', (), dict(downloads=False, sort=False)
 
     def case_bool(self):
-        return '--downloads --sort', dict(downloads=True, sort=True)
+        return '--downloads --sort', (), dict(downloads=True, sort=True)
 
     def case_no_bool(self):
-        return '--no-downloads --no-sort', dict(downloads=False, sort=False)
+        return '--no-downloads --no-sort', (), dict(downloads=False, sort=False)
 
-    def case_(self):
-        return '--no-downloads --no-sort', dict(downloads=False, sort=False)
+    def case_additional(self):
+        return '--additional "foo"', (['foo'],), {}
+
+    def case_additional_multiple_kw(self):
+        return '--additional "foo" --additional "bar"', (['foo', 'bar'],), {}
+
+    def case_additional_multiple_args(self):
+        return '"foo" "bar"', (['foo', 'bar'],), {}
+
+    def case_additional_ncol(self):
+        return '"foo" --ncol 2', (['foo'], 2), {}
+
+    def case_additional_textwidth(self):
+        # textwidth is keyword whereas `additional` is positional since inspect.BoundArguments
+        # enforces it
+        return '"foo" --text-width 100', (['foo'],), dict(text_width=100)
 
 
-@parametrize_with_cases('tokens, expected_kwargs', cases=CasesReport)
-def test_report_kwargs(
+@parametrize_with_cases('tokens, expected_args, expected_kwargs', cases=CasesReport)
+def test_report_called(
     tokens: str,
+    expected_args: tuple,
     expected_kwargs: dict,
     mock_report: MagicMock,
 ):
+    """Test that the Report class is called with the expected arguments."""
     main(f'report {tokens}')
-    mock_report.assert_called_once_with(**expected_kwargs)
+    mock_report.assert_called_once_with(*expected_args, **expected_kwargs)
 
 
 @pytest.mark.usefixtures('patch_app_console')

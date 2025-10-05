@@ -261,7 +261,7 @@ class Report(scooby.Report):
 
     def __init__(  # noqa: PLR0917
         self,
-        additional=None,
+        additional: list[str] | None = None,
         ncol: int = 3,
         text_width: int = 80,
         sort: bool = False,  # noqa: FBT001, FBT002
