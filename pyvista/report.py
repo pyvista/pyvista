@@ -293,6 +293,7 @@ class Report(scooby.Report):
             'trame_vuetify',
             'jupyter_server_proxy',
             'nest_asyncio',
+            'cyclopts',
         ]
 
         # Information about the GPU - catch all Exception in case there is a rendering
