@@ -108,7 +108,7 @@ class CasesReport:
         return '--no-downloads --no-sort', dict(downloads=False, sort=False)
 
 
-@parametrize_with_cases('tokens, expected_kwargs', cases=Cases_Report)
+@parametrize_with_cases('tokens, expected_kwargs', cases=CasesReport)
 def test_report_kwargs(
     tokens: str,
     expected_kwargs: dict,
