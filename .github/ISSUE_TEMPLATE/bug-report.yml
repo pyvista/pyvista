@@ -34,12 +34,21 @@ body:
       label: System Information
       placeholder: The log will automatically be formatted! No need to type backticks.
       description: |
-        Please run the following code wherever you are experiencing the bug, and paste the output below.
+        Please run the following wherever you are experiencing the bug, and paste the output below.
         This report helps us track down bugs and will be critical to addressing your bug.
+
+        With python code (e.g. inside IPython or Jupyter Notebook):
+
         ```python
         # Get system info
         import pyvista as pv
         print(pv.Report())
+        ```
+
+        Or with a shell command (requires `pyvista>=0.47`):
+
+        ``` shell
+        pyvista report
         ```
       render: shell
     validations:
