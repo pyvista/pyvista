@@ -21,7 +21,20 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None = None) -> PolyData:
+def Spline(
+    points: VectorLike[float] | MatrixLike[float] | None, 
+    n_points: int | None = None, 
+    x_spline: _vtk.vtkCardinalSpline | None = None,
+    y_spline: _vtk.vtkCardinalSpline | None = None,
+    z_spline: _vtk.vtkCardinalSpline | None = None,
+    closed: bool | None = None, 
+    parameterize_by_length: bool | None = None,
+    get_derivatives : bool | None = None, 
+    left_constraint_type: int | None = None, 
+    left_derivative_value: float | None = None,
+    right_constraint_type: int | None = None, 
+    right_derivative_value: float | None = None
+    ) -> PolyData:
     """Create a spline from points.
 
     Parameters
@@ -66,7 +79,35 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
-
+    if x_spline is not None:
+        spline_function.SetXSpline(x_spline)
+    if y_spline is not None:
+        spline_function.SetYSpline(y_spline)
+    if z_spline is not None:
+        spline_function.SetZSpline(z_spline)
+    if closed is not None: 
+        if closed:
+            spline_function.ClosedOn()
+        else:
+            spline_function.ClosedOff()
+    if parameterize_by_length is not None:
+        if parameterize_by_length:
+            spline_function.ParameterizeByLengthOn()
+        else: 
+            spline_function.ParameterizeByLengthOff()
+    if get_derivatives is not None:
+        if get_derivatives:
+            spline_function.DerivativesAvailableOn()
+        else:
+            spline_function.DerivativesAvailableOff()
+    if left_constraint_type is not None:
+        spline_function.SetLeftConstraint(left_constraint_type)
+    if right_constraint_type is not None:
+        spline_function.SetRightConstraint(right_constraint_type)
+    if left_derivative_value is not None: 
+        spline_function.SetLeftValue(left_derivative_value)
+    if right_derivative_value is not None: 
+        spline_function.SetRightValue(right_derivative_value)         
     # get interpolation density
     u_res = n_points
     if u_res is None:
