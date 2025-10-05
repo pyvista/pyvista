@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -218,3 +220,27 @@ def test_help(capsys: pytest.CaptureFixture):
         """
     )
     assert expected == capsys.readouterr().out
+
+
+@parametrize(
+    as_script=[True, False],
+    tokens_err_codes=[
+        ('--foo', 1),
+        ('report --foo', 1),
+        ('', 0),
+        ('report --help', 0),
+        ('--help', 0),
+    ],
+)
+def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
+    args, exit_code_expected = tokens_err_codes
+
+    args = f'{sys.executable} -m pyvista ' + args if not as_script else 'pyvista ' + args
+    process = subprocess.run(
+        args,
+        check=False,
+        capture_output=True,
+        encoding='utf-8',
+    )
+
+    assert process.returncode == exit_code_expected
