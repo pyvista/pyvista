@@ -33,7 +33,8 @@ def Spline(
     left_constraint_type: int | None = None, 
     left_derivative_value: float | None = None,
     right_constraint_type: int | None = None, 
-    right_derivative_value: float | None = None
+    right_derivative_value: float | None = None, 
+    **kwargs
     ) -> PolyData:
     """Create a spline from points.
 
@@ -46,6 +47,14 @@ def Spline(
     n_points : int, optional
         Number of points to interpolate along the points array. Defaults to
         ``points.shape[0]``.
+    
+    closed : bool, optional
+        close the spline (both ends are joined).
+    
+    parameterize_by_length : bool, optional
+        parametrize by length rather than point index
+    
+    get_derivatives 
 
     Returns
     -------
@@ -101,9 +110,11 @@ def Spline(
         else:
             spline_function.DerivativesAvailableOff()
     if left_constraint_type is not None:
-        spline_function.SetLeftConstraint(left_constraint_type)
+        left_constraint_type_ = _validation.validate_number(left_constraint_type, must_be_in_range=[0, 3], must_be_integer=True)
+        spline_function.SetLeftConstraint(left_constraint_type_)
     if right_constraint_type is not None:
-        spline_function.SetRightConstraint(right_constraint_type)
+        right_constraint_type_ = _validation.validate_number(right_constraint_type, must_be_in_range=[0, 3], must_be_integer=True)
+        spline_function.SetRightConstraint(right_constraint_type_)
     if left_derivative_value is not None: 
         spline_function.SetLeftValue(left_derivative_value)
     if right_derivative_value is not None: 
@@ -114,7 +125,7 @@ def Spline(
         u_res = points_.shape[0]
 
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res=u_res)
+    spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
     return spline.compute_arc_length()
 
 
