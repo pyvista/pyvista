@@ -7,6 +7,9 @@ import textwrap
 from typing import TYPE_CHECKING
 
 import pytest
+from pytest_cases import case
+from pytest_cases import filters
+from pytest_cases import fixture
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 from rich.console import Console
@@ -188,6 +191,161 @@ def test_report_called(
     mock_report.assert_called_once_with(*expected_args, **expected_kwargs)
 
 
+@pytest.fixture
+def mock_plot(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'plot')
+
+
+@fixture
+def default_plot_kwargs():
+    return {
+        'var_item': [],
+        'anti_aliasing': None,
+        'background': None,
+        'border': False,
+        'border_color': 'k',
+        'border_width': 2.0,
+        'eye_dome_lighting': False,
+        'full_screen': None,
+        'interactive': True,
+        'notebook': None,
+        'off_screen': None,
+        'parallel_projection': False,
+        'return_cpos': False,
+        'screenshot': None,
+        'show_axes': None,
+        'show_bounds': False,
+        'ssao': False,
+        'text': '',
+        'volume': False,
+        'window_size': None,
+        'zoom': None,
+    }
+
+
+class CasesPlot:
+    def case_empty(self, default_plot_kwargs: dict):
+        return '', default_plot_kwargs
+
+    def case_files_single_args(self, default_plot_kwargs: dict):
+        """Test when only a single positional argument is given for files."""
+        kwargs = default_plot_kwargs
+        kwargs['var_item'] = [f := 'file.vtp']
+        return f, kwargs
+
+    def case_files_multiple_args(self, default_plot_kwargs: dict):
+        """Test when multiple positional arguments are given for files."""
+        kwargs = default_plot_kwargs
+        kwargs['var_item'] = (files := ['file1.vtp', 'file2.vtp'])
+        return ' '.join(files), kwargs
+
+    @parametrize(with_space=[True, False])
+    def case_files_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
+        """Test when multiple keyword arguments are given for files."""
+        kwargs = default_plot_kwargs
+        kwargs['var_item'] = (files := ['file1.vtp', 'file2.vtp'])
+        prefix = '--files ' if with_space else '--files='
+        return prefix + ' '.join(files), kwargs
+
+    @parametrize(offscreen=['True', 'yes', 'y', 'true'])
+    def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--off-screen={offscreen}'
+        kwargs.update(off_screen=True)
+        return tokens, kwargs
+
+    @parametrize(offscreen=['False', 'no', 'n', 'false'])
+    def case_kw_no_bool(self, default_plot_kwargs: dict, offscreen: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--off-screen={offscreen}'
+        kwargs.update(off_screen=False)
+        return tokens, kwargs
+
+    @parametrize(off_screen=[True, False])
+    def case_kw_no_bool_no_value(self, default_plot_kwargs: dict, off_screen: bool):
+        kwargs = default_plot_kwargs
+        tokens = '--off-screen' if off_screen else '--no-off-screen'
+        kwargs.update(off_screen=off_screen)
+        return tokens, kwargs
+
+    def case_window_size(self, default_plot_kwargs: dict):
+        kwargs = default_plot_kwargs
+        tokens = '--window-size=[100,100]'
+        kwargs.update(window_size=[100, 100])
+        return tokens, kwargs
+
+    def case_window_size_multiple(self, default_plot_kwargs: dict):
+        kwargs = default_plot_kwargs
+        tokens = '--window-size 100 100'
+        kwargs.update(window_size=[100, 100])
+        return tokens, kwargs
+
+    def case_window_size_rounding(self, default_plot_kwargs: dict):
+        """Test when window size is given as float, it is rounded to int."""
+        kwargs = default_plot_kwargs
+        tokens = '--window-size=[100.4,100.6]'
+        kwargs.update(window_size=[100, 101])
+        return tokens, kwargs
+
+    @parametrize(anti_aliasing=['ssaa', 'msaa', 'fxaa'])
+    def case_anti_aliasing(self, default_plot_kwargs: dict, anti_aliasing: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--anti-aliasing={anti_aliasing}'
+        kwargs.update(anti_aliasing=anti_aliasing)
+        return tokens, kwargs
+
+    @case(tags='raises')
+    def case_anti_aliasing_raises(self, default_plot_kwargs: dict):
+        return '--anti-aliasing=foo', default_plot_kwargs
+
+    @case(tags='raises')
+    @parametrize(window_size=['100', '100 200 300', '[100,200,300]'])
+    def case_window_size_wrong_length(self, default_plot_kwargs: dict, window_size: str):
+        """Test when the window size does not have exactly two elements."""
+        return f' --window-size {window_size}', default_plot_kwargs
+
+    @case(tags='raises')
+    @parametrize(window_size=['100 a', 'b a', '[a,b]'])
+    def case_window_size_wrong_type(self, default_plot_kwargs: dict, window_size: str):
+        """Test when the window size does not have the correct type."""
+        return f'--window-size {window_size}', default_plot_kwargs
+
+    @parametrize(
+        kwargs=[
+            ('--color=red', dict(color='red')),
+        ]
+    )
+    def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+        """Test when kwargs are provided to Plotter.show"""
+        default_plot_kwargs.update(**kwargs[1])
+        return kwargs[0], default_plot_kwargs
+
+
+@parametrize_with_cases(
+    'tokens, expected_kwargs',
+    cases=CasesPlot,
+    filter=~filters.has_tag('raises'),
+)
+def test_plot_called(
+    tokens: str,
+    expected_kwargs: dict,
+    mock_plot: MagicMock,
+):
+    """Test that the pv.plot function is called with the expected arguments."""
+    main(f'plot {tokens}')
+    mock_plot.assert_called_once_with(**expected_kwargs)
+
+
+@parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
+@pytest.mark.usefixtures('mock_plot')
+def test_plot_called_raises(tokens: str):
+    """Test that the plot CLI is raising expected exit errors."""
+    with pytest.raises(SystemExit) as e:
+        main(f'plot {tokens}')
+
+    assert e.value.code == 1
+
+
 @pytest.mark.usefixtures('patch_app_console')
 def test_report_help(capsys: pytest.CaptureFixture):
     main('report --help')
@@ -197,6 +355,20 @@ def test_report_help(capsys: pytest.CaptureFixture):
             Usage: pyvista report [ARGS] [OPTIONS]
 
             Generate a PyVista software environment report.
+       """
+    )
+    assert expected in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_help(capsys: pytest.CaptureFixture):
+    main('plot --help')
+
+    expected = textwrap.dedent(
+        """\
+            Usage: pyvista plot [ARGS] [OPTIONS]
+
+            Plot a PyVista, numpy, or vtk object.
        """
     )
     assert expected in capsys.readouterr().out
@@ -231,8 +403,10 @@ def test_help(capsys: pytest.CaptureFixture):
     tokens_err_codes=[
         ('--foo', 1),
         ('report --foo', 1),
+        ('plot --foo', 1),
         ('', 0),
         ('report --help', 0),
+        ('plot --help', 0),
         ('--help', 0),
     ],
 )
