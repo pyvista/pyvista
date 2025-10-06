@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from types import ModuleType  # noqa: TC003
 
 import scooby
 
@@ -261,7 +262,7 @@ class Report(scooby.Report):
 
     def __init__(  # noqa: PLR0917
         self,
-        additional: list[str] | None = None,
+        additional: list[str | ModuleType] | None = None,
         ncol: int = 3,
         text_width: int = 80,
         sort: bool = False,  # noqa: FBT001, FBT002
