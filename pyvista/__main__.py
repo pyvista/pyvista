@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from ast import literal_eval
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Literal
 from typing import get_type_hints
@@ -11,10 +13,14 @@ import warnings
 
 from cyclopts import App
 from cyclopts import Parameter
+from cyclopts import Token
 
 import pyvista
 from pyvista import Report
 from pyvista.core.errors import PyVistaDeprecationWarning
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # from pyvista.plotting._typing import ColorLike, Color
 
@@ -70,6 +76,30 @@ def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG
         raise ValueError(msg)
 
 
+def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
+    for token in tokens:
+        # Check hyphen in keyword value
+        if (key := token.keys[0]) is not None and '-' in key:
+            msg = f'cannot use hyphen `-`, try with --{key.replace("-", "_")}={token.value}'
+            raise ValueError(msg)
+
+        # Coerce using literal_eval with fallback to str value
+        try:
+            return literal_eval(token.value)
+        except (ValueError, SyntaxError):
+            return token.value
+    return None
+
+
+_HELP_KWARGS = """\
+Additional keyword arguments passed to ``Plotter.add_mesh``.
+See documentation for more details https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh#pyvista.Plotter.add_mesh
+
+Note that contrary to other arguments, hyphens CANNOT not be used (ie. use ``--show_edges=True`` instead of ``--show-edges=True``).
+
+"""  # noqa: E501
+
+
 @app.command
 def _plot(
     files: Annotated[
@@ -103,7 +133,10 @@ def _plot(
     border_color: str = 'k',
     border_width: float = 2.0,
     ssao: bool = False,
-    **kwargs,
+    **kwargs: Annotated[
+        dict,
+        Parameter(help=_HELP_KWARGS, converter=_kwargs_converter),
+    ],
 ) -> None:
     pyvista.plot(
         var_item=files or [],
