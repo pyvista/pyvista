@@ -196,13 +196,23 @@ def test_report_called(
 
 
 @pytest.fixture
+def mock_plotter(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'Plotter')
+
+
+@pytest.fixture
 def mock_plot(mocker: MockerFixture):
     return mocker.patch.object(pv, 'plot')
 
 
 @pytest.fixture
-def mock_add_mesh(mocker: MockerFixture):
-    return mocker.patch.object(pv, 'Plotter')().add_mesh
+def mock_add_mesh(mock_plotter: MagicMock):
+    return mock_plotter().add_mesh
+
+
+@pytest.fixture
+def mock_add_volume(mock_plotter: MagicMock):
+    return mock_plotter().add_volume
 
 
 @pytest.fixture
@@ -330,6 +340,22 @@ class CasesPlot:
         default_plot_kwargs.update(var_item=['file.vtp'])
         return tokens, default_plot_kwargs
 
+    @parametrize(
+        kwargs=[
+            ('--mapper smart', dict(mapper='smart')),
+            ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
+        ]
+    )
+    @pytest.mark.usefixtures('mock_files_validator')
+    @case(tags=['kwargs', 'add_volume'])
+    def case_kwargs_volume(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+        """Test when kwargs are provided to Plotter.add_volume"""
+        tokens, kwargs = kwargs
+        tokens += ' --files=file.vtp --volume'
+        default_plot_kwargs.update(**kwargs, volume=True)
+        default_plot_kwargs.update(var_item=['file.vtp'])
+        return tokens, default_plot_kwargs
+
     @case(tags='raises')
     def case_anti_aliasing_raises(self):
         return '--anti-aliasing=foo'
@@ -387,6 +413,7 @@ def test_plot_called(
     expected_kwargs: dict,
     mock_plot: MagicMock,
     mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
     mocker: MockerFixture,
     current_cases: dict[str, Case],
 ):
@@ -395,11 +422,13 @@ def test_plot_called(
     mock_plot.assert_called_once_with(**expected_kwargs)
 
     case = current_cases['tokens']
-    if 'kwargs' in get_case_tags(case_func=case.func):
+    if 'kwargs' in (tags := get_case_tags(case_func=case.func)):
         mocker.stop(mock_plot)
         main(f'plot {tokens}')
+
+        mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
         kwargs = case.params['kwargs'][-1]
-        mock_add_mesh.assert_called_once_with('file.vtp', **kwargs)
+        mock.assert_called_once_with('file.vtp', **kwargs)
 
 
 @parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
