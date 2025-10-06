@@ -108,7 +108,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: runner.environment != 'self-hosted'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         continue-on-error: true
         with:
           python-version: ${{ matrix.python-version }}
@@ -192,7 +192,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -232,7 +232,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -273,7 +273,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -314,7 +314,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -336,7 +336,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -362,7 +362,7 @@ jobs:
           retry_on: timeout
           command: tox run -e py${{ matrix.python-version }}-core
 
-      - name: Core Testing (no GL)
+      - name: Plotting Testing (uses GL)
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
         if: ${{ !cancelled() }}
         with:

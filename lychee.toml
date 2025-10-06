@@ -1,4 +1,5 @@
 accept = [
+  200, # Link is OK
   403, # Skip domains known to return 403 Forbidden to bots
   429, # Network error: Too Many Requests
 ]

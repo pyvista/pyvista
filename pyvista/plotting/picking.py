@@ -485,6 +485,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             warnings.warn(
                 '`use_mesh` is deprecated. See `use_picker` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -591,7 +592,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1052,7 +1053,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # noqa: BLE001  # pragma: no cover
-                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[call-overload]
+                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e), stacklevel=2)  # type: ignore[call-overload]
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)  # type: ignore[union-attr]
@@ -1120,7 +1121,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1239,7 +1240,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1309,6 +1310,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         warnings.warn(
                             'Display representations other than `surface` will result '
                             'in incorrect results.',
+                            stacklevel=2,
                         )
                     smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
@@ -1410,7 +1412,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False

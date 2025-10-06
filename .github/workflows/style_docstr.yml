@@ -15,14 +15,14 @@ permissions:
 
 jobs:
   docstringcheck:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04-self-hosted-gpu
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
           cache: "pip"
@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
 

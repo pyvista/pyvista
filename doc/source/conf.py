@@ -160,6 +160,7 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
     (r'py:.*', '.*MatrixLike'),
@@ -247,6 +248,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'HorizontalOptions'),
     (r'py:.*', 'VerticalOptions'),
     (r'py:.*', 'JupyterBackendOptions'),
+    (r'py:.*', '_InterpolationOptions'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
