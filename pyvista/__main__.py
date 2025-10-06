@@ -38,15 +38,29 @@ def report(*args, **kwargs):  # noqa: ANN201, D103
     return Report(*args, **kwargs)
 
 
+def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
+    if value is not None and len(value) != 2:
+        msg = 'Window size must be a list of two integers.'
+        raise ValueError(msg)
+
+
 @app.command
 def _plot(
-    files: Annotated[list[str], Parameter(consume_multiple=True)],
+    files: Annotated[
+        list[str] | None,
+        Parameter(
+            consume_multiple=True,
+            help='File(s) to plot. Must be readable with ``pv.read``. If nothing is provided, show an empty window.',  # noqa: E501
+        ),
+    ] = None,
     *,
     off_screen: bool | None = None,
     full_screen: bool | None = None,
     screenshot: str | None = None,
     interactive: bool = True,
-    window_size: list[int] | None = None,
+    window_size: Annotated[
+        list[int] | None, Parameter(consume_multiple=True, validator=_validator_window_size)
+    ] = None,
     show_bounds: bool = False,
     show_axes: bool | None = None,
     notebook: bool | None = None,
@@ -56,7 +70,7 @@ def _plot(
     volume: bool = False,
     parallel_projection: bool = False,
     return_cpos: bool = False,
-    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | None = None,
     zoom: float | str | None = None,
     border: bool = False,
     border_color: str = 'k',
@@ -65,7 +79,7 @@ def _plot(
     **kwargs,
 ) -> None:
     pyvista.plot(
-        var_item=files,
+        var_item=files or [],
         off_screen=off_screen,
         full_screen=full_screen,
         screenshot=screenshot,
