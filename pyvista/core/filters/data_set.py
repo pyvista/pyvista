@@ -6023,7 +6023,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         try:
-            alg = _vtk.vtkONNXInference()
+            alg = _vtk.vtkONNXInference()  # type: ignore[attr-defined]
         except AttributeError as e:
             msg = (
                 'ONNX Runtime support is not available in this VTK build. '
