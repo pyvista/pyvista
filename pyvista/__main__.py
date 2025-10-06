@@ -162,7 +162,7 @@ def _plot(
     )
 
 
-_plot.__doc__ = pyvista.plot.__doc__
+_plot.__doc__ = pyvista.plot.__doc__  # Needed by cyclopts to get parameters help
 
 
 def main(argv: list[str] | str | None = None) -> None:
