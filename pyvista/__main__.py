@@ -136,7 +136,7 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter),
     ],
 ) -> None:
-    pyvista.plot(
+    return pyvista.plot(
         var_item=files or [],  # type: ignore[arg-type]
         off_screen=off_screen,
         full_screen=full_screen,
