@@ -271,30 +271,44 @@ class Report(scooby.Report):
     ):
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
-        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
+        core = [
+            'pyvista',
+            'vtk',
+            'numpy',
+            'matplotlib',
+            'scooby',
+            'pooch',
+            'pillow',
+            'typing-extensions',
+            'cyclopts',
+        ]
 
         # Optional packages.
         optional = [
-            'imageio',
+            # Misc.
+            'pytest-pyvista',
             'pyvistaqt',
             'PyQt5',
             'IPython',
-            'colorcet',
-            'cmocean',
-            'ipywidgets',
             'scipy',
             'tqdm',
+            # io extras
+            'imageio',
             'meshio',
-            'jupyterlab',
-            'pytest_pyvista',
+            # colormaps extras
+            'cmcrameri',
+            'cmocean',
+            'colorcet',
+            # jupyter extras (and related)
             'trame',
-            'trame_client',
-            'trame_server',
-            'trame_vtk',
-            'trame_vuetify',
-            'jupyter_server_proxy',
-            'nest_asyncio',
-            'cyclopts',
+            'trame-client',
+            'trame-server',
+            'trame-vtk',
+            'trame-vuetify',
+            'ipywidgets',
+            'jupyter-server-proxy',
+            'jupyterlab',
+            'nest-asyncio',
         ]
 
         # Information about the GPU - catch all Exception in case there is a rendering
