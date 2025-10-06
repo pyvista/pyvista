@@ -43,6 +43,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ plot       Plot a PyVista, numpy, or vtk object.                   │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
@@ -59,12 +60,13 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
+    │ plot       Plot a PyVista, numpy, or vtk object.                   │
     │ report     Generate a PyVista software environment report.         │
     │ --help -h  Display this message and exit.                          │
     │ --version  Display application version.                            │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown command "foo". Available commands: report.                 │
+    │ Unknown command "foo". Available commands: report, plot.           │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -214,6 +216,7 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ plot       Plot a PyVista, numpy, or vtk object.                   │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
