@@ -24,9 +24,6 @@ if TYPE_CHECKING:
 def Spline(
     points: VectorLike[float] | MatrixLike[float] | None, 
     n_points: int | None = None, 
-    x_spline: _vtk.vtkCardinalSpline | None = None,
-    y_spline: _vtk.vtkCardinalSpline | None = None,
-    z_spline: _vtk.vtkCardinalSpline | None = None,
     closed: bool | None = None, 
     parameterize_by_length: bool | None = None,
     get_derivatives : bool | None = None, 
@@ -34,6 +31,7 @@ def Spline(
     left_derivative_value: float | None = None,
     right_constraint_type: int | None = None, 
     right_derivative_value: float | None = None, 
+    split_splines_to_cardinal_splines: bool | None = None,
     **kwargs
     ) -> PolyData:
     """Create a spline from points.
@@ -88,12 +86,7 @@ def Spline(
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
-    if x_spline is not None:
-        spline_function.SetXSpline(x_spline)
-    if y_spline is not None:
-        spline_function.SetYSpline(y_spline)
-    if z_spline is not None:
-        spline_function.SetZSpline(z_spline)
+
     if closed is not None: 
         if closed:
             spline_function.ClosedOn()
@@ -123,9 +116,16 @@ def Spline(
     u_res = n_points
     if u_res is None:
         u_res = points_.shape[0]
-
     u_res -= 1
+
+            
     spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
+    if split_splines_to_cardinal_splines is not None:
+        if split_splines_to_cardinal_splines:
+            _xspline = spline_function.GetXSpline()
+            _yspline = spline_function.GetYSpline()
+            _zspline = spline_function.GetZSpline()
+            return _xspline, _yspline, _zspline
     return spline.compute_arc_length()
 
 
