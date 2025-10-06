@@ -3,6 +3,7 @@ from __future__ import annotations
 import operator
 import re
 import time
+from typing import get_args
 
 import numpy as np
 import pytest
@@ -11,6 +12,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
@@ -1325,9 +1327,7 @@ def test_resample_extend_border(uniform, extend_border, name, value):
 
 
 @pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
-@pytest.mark.parametrize(
-    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
-)
+@pytest.mark.parametrize('interpolation', get_args(_InterpolationOptions))
 @pytest.mark.parametrize('sample_rate', [0.5, 2.0])
 def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
     array = uniform.active_scalars
@@ -1349,6 +1349,28 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
         assert not np.allclose(resampled_array, anti_aliased_array)
     else:
         assert np.allclose(resampled_array, anti_aliased_array)
+
+
+@pytest.mark.parametrize(
+    ('interpolation', 'border_mode', 'expected_array'),
+    [  # Exact values aren't important, we're just checking the values differ between modes
+        ('cubic', 'wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
+        ('cubic', 'mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
+        ('cubic', 'clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
+        ('bspline', 'wrap', [0.5, 0.50799719, 0.80400287, 1.19599713, 1.49200281, 1.5]),
+        ('bspline', 'mirror', [0.3333333, 0.4719961, 0.8026696, 1.1973304, 1.52800391, 1.6666667]),
+        ('bspline', 'clamp', [0.16666667, 0.435995, 0.80133632, 1.19866368, 1.564005, 1.83333333]),
+        ('bspline0', 'clamp', [0.0, 0.0, 1.0, 1.0, 2.0, 2.0]),
+        ('bspline9', 'clamp', [0.326433, 0.55864616, 0.84595512, 1.1540449, 1.44135384, 1.673567]),
+    ],
+)
+def test_resample_border_mode(interpolation, border_mode, expected_array):
+    im = pv.ImageData(dimensions=(3, 1, 1))
+    im.point_data['data'] = np.arange(3, dtype=float).ravel()
+
+    out = im.resample(2, interpolation=interpolation, border_mode=border_mode)
+    array = out['data']
+    assert np.allclose(array, expected_array)
 
 
 @pytest.mark.parametrize(
