@@ -1773,11 +1773,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                warnings.warn('No data to use for scale. scale will be set to False.')
+                warnings.warn(
+                    'No data to use for scale. scale will be set to False.', stacklevel=2
+                )  # pragma: no cover
                 do_scale = False
             except AmbiguousDataError as err:
                 warnings.warn(
-                    f'{err}\nIt is unclear which one to use. scale will be set to False.'
+                    f'{err}\nIt is unclear which one to use. scale will be set to False.',
+                    stacklevel=2,
                 )
                 do_scale = False
             else:
@@ -1807,12 +1810,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn(
-                    'No vector-like data to use for orient. orient will be set to False.'
+                    'No vector-like data to use for orient. orient will be set to False.',
+                    stacklevel=2,
                 )
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
                     f'{err}\nIt is unclear which one to use. orient will be set to False.',
+                    stacklevel=2,
                 )
                 orient = False
 
@@ -2081,6 +2086,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 "Use of `largest=True` is deprecated. Use 'largest' or "
                 "`extraction_mode='largest'` instead.",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             extraction_mode = 'largest'
 
@@ -2115,9 +2121,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                         inplace=True,
                         progress_bar=progress_bar,
                     )  # remove unused points
-            if has_cells:
-                extracted.point_data.remove('vtkOriginalPointIds')
-                extracted.cell_data.remove('vtkOriginalCellIds')
+
             return extracted
 
         # Store active scalars info to restore later if needed
@@ -2305,6 +2309,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             # restore previously active scalars
             output.set_active_scalars(active_name, preference=active_field)
+
+        output.cell_data.pop('vtkOriginalCellIds', None)
+        output.point_data.pop('vtkOriginalPointIds', None)
 
         if inplace:
             try:
@@ -3203,11 +3210,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 warnings.warn(
                     '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
             else:
                 warnings.warn(
                     '``max_time`` parameter is deprecated.  It will be removed in v0.48',
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
                 max_length = max_time
 
@@ -4230,9 +4239,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         selection = _vtk.vtkSelection()
         selection.AddNode(selectionNode)
 
-        # extract
+        # Extract using a shallow copy to avoid the side effect of creating the
+        # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
+        # dataset.
+        #
+        # See: https://github.com/pyvista/pyvista/pull/7946
+        ds_copy = self.copy(deep=False)
+
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(0, ds_copy)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract_sel)
@@ -4335,7 +4350,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # extract
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(0, self.copy(deep=False))
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel)
@@ -5511,7 +5526,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 msg += '\nIts value cannot be False for vtk>=9.5.0.'
                 raise ValueError(msg)
             else:
-                warnings.warn(msg, pyvista.PyVistaDeprecationWarning)
+                warnings.warn(msg, pyvista.PyVistaDeprecationWarning, stacklevel=2)
         elif not vtk_at_least_95:
             # Set default for older VTK:
             main_has_priority = True
@@ -5689,7 +5704,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
             "new filter does not include an array named ``'CellQuality'`"
         )
-        warnings.warn(msg, PyVistaDeprecationWarning)
+        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
 
         alg = _vtk.vtkCellQuality()
         possible_measure_setters = {

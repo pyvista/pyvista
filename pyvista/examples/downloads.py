@@ -67,7 +67,7 @@ _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/
 
 def _warn_invalid_dir_not_used(path, env_var):
     msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
-    warnings.warn(msg)
+    warnings.warn(msg, stacklevel=2)
 
 
 def _get_vtk_data_source() -> tuple[str, bool]:
@@ -118,7 +118,7 @@ def _warn_if_path_not_accessible(path: str | Path, msg: str):
     except (PermissionError, OSError):
         # Warn, don't raise just in case there's an environment issue.
         msg = f'Unable to access path: {path}\n{msg}'
-        warnings.warn(msg)
+        warnings.warn(msg, stacklevel=2)
 
 
 SOURCE, _FILE_CACHE = _get_vtk_data_source()
