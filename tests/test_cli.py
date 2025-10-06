@@ -11,6 +11,7 @@ import pytest
 from pytest_cases import case
 from pytest_cases import filters
 from pytest_cases import fixture
+from pytest_cases import get_case_tags
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 from rich.console import Console
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from unittest.mock import MagicMock
 
+    from pytest_cases.case_parametrizer_new import Case
     from pytest_mock import MockerFixture
 
 
@@ -199,6 +201,11 @@ def mock_plot(mocker: MockerFixture):
 
 
 @pytest.fixture
+def mock_add_mesh(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'Plotter')().add_mesh
+
+
+@pytest.fixture
 def mock_files_validator(mocker: MockerFixture):
     mocker.patch.object(pv.__main__, '_validator_files')
 
@@ -313,10 +320,14 @@ class CasesPlot:
             ('--clim [0.1,1]', dict(clim=[0.1, 1])),
         ]
     )
+    @pytest.mark.usefixtures('mock_files_validator')
+    @case(tags=['kwargs', 'add_mesh'])
     def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
         """Test when kwargs are provided to Plotter.add_mesh"""
         tokens, kwargs = kwargs
+        tokens += ' --files=file.vtp'
         default_plot_kwargs.update(**kwargs)
+        default_plot_kwargs.update(var_item=['file.vtp'])
         return tokens, default_plot_kwargs
 
     @case(tags='raises')
@@ -375,10 +386,20 @@ def test_plot_called(
     tokens: str,
     expected_kwargs: dict,
     mock_plot: MagicMock,
+    mock_add_mesh: MagicMock,
+    mocker: MockerFixture,
+    current_cases: dict[str, Case],
 ):
     """Test that the pv.plot function is called with the expected arguments."""
     main(f'plot {tokens}')
     mock_plot.assert_called_once_with(**expected_kwargs)
+
+    case = current_cases['tokens']
+    if 'kwargs' in get_case_tags(case_func=case.func):
+        mocker.stop(mock_plot)
+        main(f'plot {tokens}')
+        kwargs = case.params['kwargs'][-1]
+        mock_add_mesh.assert_called_once_with('file.vtp', **kwargs)
 
 
 @parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
