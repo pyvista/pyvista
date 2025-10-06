@@ -139,7 +139,7 @@ def _plot(
     ],
 ) -> None:
     pyvista.plot(
-        var_item=files or [],
+        var_item=files or [],  # type: ignore[arg-type]
         off_screen=off_screen,
         full_screen=full_screen,
         screenshot=screenshot,
