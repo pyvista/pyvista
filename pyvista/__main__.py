@@ -22,8 +22,6 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-# from pyvista.plotting._typing import ColorLike, Color
-
 # Assign annotations to be able to use the Report class using
 # cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
 Report.__init__.__annotations__ = get_type_hints(Report.__init__)
