@@ -13,7 +13,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import TypeAlias
 
 import numpy as np
 
@@ -21,15 +20,11 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core._array_like import NumpyArray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import PlottableType
     from pyvista.plotting.themes import Theme
-
-    PlottableType: TypeAlias = (
-        NumpyArray[float] | pyvista.DataSet | pyvista.MultiBlock | str | Path
-    )
 
 
 @_deprecate_positional_args(allowed=['var_item'])
