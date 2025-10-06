@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import shlex
 import subprocess
 import sys
@@ -468,3 +469,27 @@ def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
     )
 
     assert process.returncode == exit_code_expected
+
+
+def test_plot_signature_subset():
+    """
+    Since the `pyvista plot` CLI exposes a subset of the original `pv.plot` arguments,
+    any changes made in the signature of `pv.plot` must be accounted (or not) in the
+    `pyvista plot` CLI.
+
+    This test will fail if the argument names are different.
+    """
+    sig = set(inspect.signature(pv.plot).parameters.keys())
+    sig_sub = set(inspect.signature(pv.__main__._plot).parameters.keys())
+
+    allowed_missing = {
+        'jupyter_backend',
+        'theme',
+        'var_item',
+        'return_viewer',
+        'return_img',
+        'cpos',
+        'jupyter_kwargs',
+    }
+    diff = sig - sig_sub - allowed_missing
+    assert diff == set()
