@@ -7,6 +7,7 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Annotated
+from typing import Any
 from typing import Literal
 from typing import get_type_hints
 import warnings
@@ -77,8 +78,8 @@ def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
     for token in tokens:
         # Check hyphen in keyword value
-        if (key := token.keys[0]) is not None and '-' in key:
-            msg = f'cannot use hyphen `-`, try with --{key.replace("-", "_")}={token.value}'
+        if (h := '-') in (key := token.keys[0]):
+            msg = f'cannot use hyphen `{h}`, try with --{key.replace("-", "_")}={token.value}'
             raise ValueError(msg)
 
         # Coerce using literal_eval with fallback to str value
@@ -132,7 +133,7 @@ def _plot(
     border_width: float = 2.0,
     ssao: bool = False,
     **kwargs: Annotated[
-        dict,
+        Any,
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter),
     ],
 ) -> None:
