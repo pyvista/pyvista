@@ -28,6 +28,7 @@ import pytest
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 from scipy.spatial.transform import Rotation
+from scooby.report import get_distribution_dependencies
 import vtk
 
 import pyvista as pv
@@ -568,6 +569,20 @@ def test_report():
     assert 'GPU Details : None' in report.__repr__()
     assert 'Render Window : None' in report.__repr__()
     assert 'User Data Path' not in report.__repr__()
+
+
+REPORT = str(pv.Report(gpu=False))
+
+
+@pytest.mark.parametrize('package', get_distribution_dependencies('pyvista'))
+def test_report_dependencies(package):
+    if package == 'pyvista[colormaps,io,jupyter]':
+        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
+    elif package == 'vtk!':
+        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
+    elif package == 'jupyter-server-proxy':
+        pytest.xfail('not installed with --test group')
+    assert package in REPORT
 
 
 def test_report_downloads():
