@@ -303,6 +303,21 @@ class CasesPlot:
         kwargs.update(anti_aliasing=anti_aliasing)
         return tokens, kwargs
 
+    @parametrize(
+        kwargs=[
+            ('--color=red', dict(color='red')),
+            ('--color=(0,1,0)', dict(color=(0, 1, 0))),
+            ('--color=[0,1,0]', dict(color=[0, 1, 0])),
+            ('--color=[0.1,1,0]', dict(color=[0.1, 1, 0])),
+            ('--clim [0.1,1]', dict(clim=[0.1, 1])),
+        ]
+    )
+    def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+        """Test when kwargs are provided to Plotter.add_mesh"""
+        tokens, kwargs = kwargs
+        default_plot_kwargs.update(**kwargs)
+        return tokens, default_plot_kwargs
+
     @case(tags='raises')
     def case_anti_aliasing_raises(self):
         return '--anti-aliasing=foo'
@@ -344,15 +359,10 @@ class CasesPlot:
 
         return f'--files {f1.as_posix()}'
 
-    @parametrize(
-        kwargs=[
-            ('--color=red', dict(color='red')),
-        ]
-    )
-    def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
-        """Test when kwargs are provided to Plotter.show"""
-        default_plot_kwargs.update(**kwargs[1])
-        return kwargs[0], default_plot_kwargs
+    @case(tags='raises')
+    def case_kw_contains_hyphen(self):
+        """Test when a supplementary keyword argument is given with an hyphen"""
+        return '--foo-bar bar'
 
 
 @parametrize_with_cases(
