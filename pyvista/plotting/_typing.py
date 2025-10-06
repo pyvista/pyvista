@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeAlias
 from typing import TypedDict
 from typing import Union
 
@@ -20,6 +22,8 @@ from . import _vtk
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
+    from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataset import DataSet
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -31,6 +35,9 @@ if TYPE_CHECKING:
     from .colors import _COLORCET_CMAPS_LITERAL
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
+
+PlottableType: TypeAlias = Union[VectorLike[float], 'DataSet', 'MultiBlock', str, Path]
+
 
 NamedColormaps = Union[
     '_MATPLOTLIB_CMAPS_LITERAL',
