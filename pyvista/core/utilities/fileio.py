@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]
+_CompressionOptions = Literal['zlib', 'lz4', 'lzma'] | None
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 
 if TYPE_CHECKING:
