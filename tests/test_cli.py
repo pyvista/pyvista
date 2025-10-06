@@ -19,6 +19,7 @@ from pyvista.__main__ import app
 from pyvista.__main__ import main
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
@@ -196,6 +197,11 @@ def mock_plot(mocker: MockerFixture):
     return mocker.patch.object(pv, 'plot')
 
 
+@pytest.fixture
+def mock_files_validator(mocker: MockerFixture):
+    mocker.patch.object(pv.__main__, '_validator_files')
+
+
 @fixture
 def default_plot_kwargs():
     return {
@@ -227,12 +233,14 @@ class CasesPlot:
     def case_empty(self, default_plot_kwargs: dict):
         return '', default_plot_kwargs
 
+    @pytest.mark.usefixtures('mock_files_validator')
     def case_files_single_args(self, default_plot_kwargs: dict):
         """Test when only a single positional argument is given for files."""
         kwargs = default_plot_kwargs
         kwargs['var_item'] = [f := 'file.vtp']
         return f, kwargs
 
+    @pytest.mark.usefixtures('mock_files_validator')
     def case_files_multiple_args(self, default_plot_kwargs: dict):
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
@@ -240,6 +248,7 @@ class CasesPlot:
         return ' '.join(files), kwargs
 
     @parametrize(with_space=[True, False])
+    @pytest.mark.usefixtures('mock_files_validator')
     def case_files_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
         """Test when multiple keyword arguments are given for files."""
         kwargs = default_plot_kwargs
@@ -295,20 +304,45 @@ class CasesPlot:
         return tokens, kwargs
 
     @case(tags='raises')
-    def case_anti_aliasing_raises(self, default_plot_kwargs: dict):
-        return '--anti-aliasing=foo', default_plot_kwargs
+    def case_anti_aliasing_raises(self):
+        return '--anti-aliasing=foo'
 
     @case(tags='raises')
     @parametrize(window_size=['100', '100 200 300', '[100,200,300]'])
-    def case_window_size_wrong_length(self, default_plot_kwargs: dict, window_size: str):
+    def case_window_size_wrong_length(self, window_size: str):
         """Test when the window size does not have exactly two elements."""
-        return f' --window-size {window_size}', default_plot_kwargs
+        return f' --window-size {window_size}'
 
     @case(tags='raises')
     @parametrize(window_size=['100 a', 'b a', '[a,b]'])
-    def case_window_size_wrong_type(self, default_plot_kwargs: dict, window_size: str):
+    def case_window_size_wrong_type(self, window_size: str):
         """Test when the window size does not have the correct type."""
-        return f'--window-size {window_size}', default_plot_kwargs
+        return f'--window-size {window_size}'
+
+    @case(tags='raises')
+    def case_files_raises(self, tmp_path: Path):
+        """Test when the file does not exists."""
+        return str(tmp_path / 'file.vtp')
+
+    @case(tags='raises')
+    def case_files_raises_kw(self, tmp_path: Path):
+        """Test when the file does not exists as keyword."""
+        return f'--files={tmp_path / "file.vtp"}'
+
+    @case(tags='raises')
+    def case_files_raises_one_exists(self, tmp_path: Path):
+        """Test when one file does not exists."""
+        (f1 := (tmp_path / 'f1.vtp')).touch()
+        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}'
+
+    @case(tags='raises')
+    def case_files_raises_not_readable(self, tmp_path: Path, mocker: MockerFixture):
+        """Test when a file is not readable by pyvista"""
+        (f1 := (tmp_path / 'f1.vtp')).touch()
+        m = mocker.patch.object(pv, 'read')
+        m.side_effect = Exception('Not readable')
+
+        return f'--files {f1.as_posix()}'
 
     @parametrize(
         kwargs=[

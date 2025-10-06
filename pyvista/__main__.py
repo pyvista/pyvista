@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
+from pathlib import Path
 from typing import Annotated
 from typing import Literal
 from typing import get_type_hints
@@ -44,6 +45,31 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
         raise ValueError(msg)
 
 
+def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
+    if value is None:
+        return
+
+    # Test file exists
+    if not all((files := {v: Path(v).exists() for v in value}).values()):
+        missing = [k for k, v in files.items() if not v]
+        msg = f'File(s) not found: {missing}'
+        raise ValueError(msg)
+
+    # Test file can be read by pyvista
+    def readable(file: str) -> bool:
+        try:
+            pyvista.read(file)
+        except Exception:  # noqa: BLE001
+            return False
+        else:
+            return True
+
+    if not all((files := {v: readable(v) for v in value}).values()):
+        not_readable = [k for k, v in files.items() if not v]
+        msg = f'File(s) not readable by pyvista: {not_readable}'
+        raise ValueError(msg)
+
+
 @app.command
 def _plot(
     files: Annotated[
@@ -51,6 +77,7 @@ def _plot(
         Parameter(
             consume_multiple=True,
             help='File(s) to plot. Must be readable with ``pv.read``. If nothing is provided, show an empty window.',  # noqa: E501
+            validator=_validator_files,
         ),
     ] = None,
     *,
