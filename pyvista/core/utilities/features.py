@@ -160,6 +160,7 @@ def voxelize(  # noqa: PLR0917
     warnings.warn(
         '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
         PyVistaDeprecationWarning,
+        stacklevel=2,
     )
     return _voxelize_legacy(
         mesh=mesh,
@@ -395,6 +396,7 @@ def voxelize_volume(  # noqa: PLR0917
         '`pyvista.voxelize_volume` is deprecated. Use '
         '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
         PyVistaDeprecationWarning,
+        stacklevel=2,
     )
     mesh = wrap(mesh)
     if density is None:

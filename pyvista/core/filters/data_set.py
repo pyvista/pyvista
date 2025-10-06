@@ -1773,11 +1773,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                warnings.warn('No data to use for scale. scale will be set to False.')
+                warnings.warn(
+                    'No data to use for scale. scale will be set to False.', stacklevel=2
+                )  # pragma: no cover
                 do_scale = False
             except AmbiguousDataError as err:
                 warnings.warn(
-                    f'{err}\nIt is unclear which one to use. scale will be set to False.'
+                    f'{err}\nIt is unclear which one to use. scale will be set to False.',
+                    stacklevel=2,
                 )
                 do_scale = False
             else:
@@ -1807,12 +1810,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn(
-                    'No vector-like data to use for orient. orient will be set to False.'
+                    'No vector-like data to use for orient. orient will be set to False.',
+                    stacklevel=2,
                 )
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
                     f'{err}\nIt is unclear which one to use. orient will be set to False.',
+                    stacklevel=2,
                 )
                 orient = False
 
@@ -2081,6 +2086,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 "Use of `largest=True` is deprecated. Use 'largest' or "
                 "`extraction_mode='largest'` instead.",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             extraction_mode = 'largest'
 
@@ -3204,11 +3210,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 warnings.warn(
                     '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
             else:
                 warnings.warn(
                     '``max_time`` parameter is deprecated.  It will be removed in v0.48',
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
                 max_length = max_time
 
@@ -5518,7 +5526,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 msg += '\nIts value cannot be False for vtk>=9.5.0.'
                 raise ValueError(msg)
             else:
-                warnings.warn(msg, pyvista.PyVistaDeprecationWarning)
+                warnings.warn(msg, pyvista.PyVistaDeprecationWarning, stacklevel=2)
         elif not vtk_at_least_95:
             # Set default for older VTK:
             main_has_priority = True
@@ -5696,7 +5704,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
             "new filter does not include an array named ``'CellQuality'`"
         )
-        warnings.warn(msg, PyVistaDeprecationWarning)
+        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
 
         alg = _vtk.vtkCellQuality()
         possible_measure_setters = {
