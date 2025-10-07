@@ -1119,7 +1119,7 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def _get_dilate_erode_alg(
+    def _configure_dilate_erode_alg(
         self: ImageData,
         *,
         kernel_size: int | VectorLike[int],
@@ -1154,7 +1154,7 @@ class ImageDataFilters(DataSetFilters):
             alg = (
                 _vtk.vtkImageContinuousDilate3D()
                 if operation == 'dilation'
-                else _vtk.vtkImageContinuousErode3D
+                else _vtk.vtkImageContinuousErode3D()
             )
 
         alg.SetInputArrayToProcess(
@@ -1245,7 +1245,7 @@ class ImageDataFilters(DataSetFilters):
         """
         association, scalars = self._validate_point_scalars(scalars)
         operation: Literal['dilation'] = 'dilation'
-        alg = self._get_dilate_erode_alg(
+        alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
@@ -1311,7 +1311,7 @@ class ImageDataFilters(DataSetFilters):
         """
         association, scalars = self._validate_point_scalars(scalars)
         operation: Literal['erosion'] = 'erosion'
-        alg = self._get_dilate_erode_alg(
+        alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
@@ -1375,9 +1375,11 @@ class ImageDataFilters(DataSetFilters):
 
         """
         # Opening: erosion followed by dilation
+        # Note: we need to configure both algorithms before getting the output since
+        # the selected erosion/dilation values may be affected by the alg update
         association, scalars = self._validate_point_scalars(scalars)
         erosion: Literal['erosion'] = 'erosion'
-        erosion_alg = self._get_dilate_erode_alg(
+        erosion_alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
@@ -1386,7 +1388,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         dilation: Literal['dilation'] = 'dilation'
-        dilation_alg = self._get_dilate_erode_alg(
+        dilation_alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
@@ -1394,6 +1396,7 @@ class ImageDataFilters(DataSetFilters):
             operation=dilation,
         )
 
+        # Get filter outputs
         erosion_output = ImageDataFilters._get_alg_output_from_input(
             self, erosion_alg, progress_bar=progress_bar, operation=erosion
         )
@@ -1454,9 +1457,11 @@ class ImageDataFilters(DataSetFilters):
 
         """
         # Closing: dilation followed by erosion
+        # Note: we need to configure both algorithms before getting the output since
+        # the selected erosion/dilation values may be affected by the alg update
         association, scalars = self._validate_point_scalars(scalars)
         dilation: Literal['dilation'] = 'dilation'
-        dilation_alg = self._get_dilate_erode_alg(
+        dilation_alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
@@ -1465,7 +1470,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         erosion: Literal['erosion'] = 'erosion'
-        erosion_alg = self._get_dilate_erode_alg(
+        erosion_alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
@@ -1473,6 +1478,7 @@ class ImageDataFilters(DataSetFilters):
             operation=erosion,
         )
 
+        # Get filter outputs
         erosion_output = ImageDataFilters._get_alg_output_from_input(
             self, erosion_alg, progress_bar=progress_bar, operation=erosion
         )
