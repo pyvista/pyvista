@@ -501,12 +501,12 @@ def test_plot_help(capsys: pytest.CaptureFixture):
 
     expected = textwrap.dedent(
         """\
-            Usage: pyvista plot [ARGS] [OPTIONS]
+        Usage: pyvista plot file (file2) [OPTIONS]
 
-            Plot a PyVista, numpy, or vtk object.
-       """
+        Plot a PyVista, numpy, or vtk object.
+        """
     )
-    assert expected in capsys.readouterr().out
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
 
 
 def test_version(capsys: pytest.CaptureFixture):
