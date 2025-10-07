@@ -431,6 +431,33 @@ def test_plot_called(
         mock.assert_called_once_with('file.vtp', **kwargs)
 
 
+@parametrize(
+    tokens_ncalls_args=[
+        ('file1.vtp file2.vtp', 2, ['file1.vtp', 'file2.vtp']),
+        ('', 0, []),
+        ('--files file1.vtp file2.vtp file3.vtp', 3, ['file1.vtp', 'file2.vtp', 'file3.vtp']),
+    ],
+    idgen=lambda **args: args['tokens_ncalls_args'][0],
+)
+@parametrize(func=['add_mesh', 'add_volume'])
+@pytest.mark.usefixtures('mock_files_validator')
+def test_add_mesh_volume_called(
+    tokens_ncalls_args: tuple[str, int, list[str]],
+    mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
+    mocker: MockerFixture,
+    func: str,
+):
+    """Test that the pv.Plotter.add_mesh and add_volume methods are called with the expected arguments."""  # noqa: E501
+    tokens, ncalls, args = tokens_ncalls_args
+    tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
+    main(f'plot {tokens}')
+
+    mock = mock_add_volume if add_volume else mock_add_mesh
+    assert mock.call_count == ncalls
+    assert mock.mock_calls == [mocker.call(a) for a in args]
+
+
 @parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
 @pytest.mark.usefixtures('mock_plot')
 def test_plot_called_raises(tokens: str):
