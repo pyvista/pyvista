@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core.dataset import DataSet
 
 _InterpolationOptions = Literal[
     'nearest',
@@ -1120,13 +1119,84 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def dilate(
-        self,
-        kernel_size=(3, 3, 3),
-        scalars=None,
+    def _get_dilate_erode_alg(
+        self: ImageData,
         *,
-        continuous=False,
-        progress_bar=False,
+        kernel_size: int | VectorLike[int],
+        scalars: str,
+        association: FieldAssociation,
+        binary: VectorLike[float] | bool | None = None,
+        operation: Literal['dilation', 'erosion'],
+    ) -> (
+        _vtk.vtkImageContinuousErode3D
+        | _vtk.vtkImageContinuousDilate3D
+        | _vtk.vtkImageDilateErode3D
+    ):
+        if binary is not None:
+            if isinstance(binary, bool):
+                min_val, max_val = self.get_data_range(scalars, association)
+            else:
+                min_val, max_val = _validation.validate_array(
+                    binary, must_be_sorted={'strict': True}, must_have_shape=2, to_tuple=True
+                )
+
+            if operation == 'dilation':
+                dilate_value = max_val
+                erode_value = min_val
+            else:
+                dilate_value = min_val
+                erode_value = max_val
+
+            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
+            alg.SetDilateValue(dilate_value)  # type: ignore[attr-defined]
+            alg.SetErodeValue(erode_value)  # type: ignore[attr-defined]
+        else:
+            alg = (
+                _vtk.vtkImageContinuousDilate3D()
+                if operation == 'dilation'
+                else _vtk.vtkImageContinuousErode3D
+            )
+
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            association.value,
+            scalars,
+        )
+
+        kernal_sz = _validation.validate_array3(kernel_size, broadcast=True)
+        alg.SetKernelSize(*kernal_sz)
+        return alg
+
+    @staticmethod
+    def _get_alg_output_from_input(mesh, alg, *, progress_bar: bool, operation: str):
+        alg.SetInputDataObject(mesh)
+        _update_alg(alg, progress_bar=progress_bar, message=f'Performing {operation}')
+        return _get_output(alg)
+
+    def _validate_point_scalars(  # type: ignore[misc]
+        self: ImageData, scalars: str | None
+    ) -> tuple[FieldAssociation, str]:
+        if scalars is None:
+            field, scalars = set_default_active_scalars(self)
+            if field == FieldAssociation.CELL:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = self.get_array_association(scalars, preference='point')
+            if field == FieldAssociation.CELL:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        return field, scalars
+
+    def dilate(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
+        *,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
     ):
         """Dilate the image data.
 
@@ -1141,7 +1211,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        continuous : bool, default: False
+        binary : bool, default: False
             If True, use continuous dilation which is suitable for grayscale/continuous
             data. If False, use binary dilation.
 
@@ -1173,43 +1243,26 @@ class ImageDataFilters(DataSetFilters):
         >>> dilated.plot()
 
         """
-        if continuous:
-            alg = _vtk.vtkImageContinuousDilate3D()
-        else:
-            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
-            alg.SetDilateValue(1.0)  # type: ignore[attr-defined]
-            alg.SetErodeValue(0.0)  # type: ignore[attr-defined]
-
-        alg.SetInputDataObject(self)
-        if scalars is None:
-            set_default_active_scalars(cast('DataSet', self))
-            field, scalars = cast('DataSet', self).active_scalars_info
-            if field.value == 1:
-                msg = 'If `scalars` not given, active scalars must be point array.'
-                raise ValueError(msg)
-        else:
-            field = cast('DataSet', self).get_array_association(scalars, preference='point')
-            if field.value == 1:
-                msg = 'Can only process point data, given `scalars` are cell data.'
-                raise ValueError(msg)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
+        association, scalars = self._validate_point_scalars(scalars)
+        operation: Literal['dilation'] = 'dilation'
+        alg = self._get_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary=binary,
+            operation=operation,
         )
-        alg.SetKernelSize(*kernel_size)
-        _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation')
-        return _get_output(alg)
+        return ImageDataFilters._get_alg_output_from_input(
+            self, alg, progress_bar=progress_bar, operation=operation
+        )
 
-    def erode(
-        self,
-        kernel_size=(3, 3, 3),
-        scalars=None,
+    def erode(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
         *,
-        continuous=False,
-        progress_bar=False,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
     ):
         """Erode the image data.
 
@@ -1224,7 +1277,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        continuous : bool, default: False
+        binary : bool, default: False
             If True, use continuous erosion which is suitable for grayscale/continuous
             data. If False, use binary erosion.
 
@@ -1256,42 +1309,26 @@ class ImageDataFilters(DataSetFilters):
         >>> eroded.plot()
 
         """
-        if continuous:
-            alg = _vtk.vtkImageContinuousErode3D()
-        else:
-            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
-            alg.SetDilateValue(0.0)  # type: ignore[attr-defined]
-            alg.SetErodeValue(1.0)  # type: ignore[attr-defined]
-
-        alg.SetInputDataObject(self)
-        if scalars is None:
-            set_default_active_scalars(cast('DataSet', self))
-            field, scalars = cast('DataSet', self).active_scalars_info
-            if field.value == 1:
-                msg = 'If `scalars` not given, active scalars must be point array.'
-                raise ValueError(msg)
-        else:
-            field = cast('DataSet', self).get_array_association(scalars, preference='point')
-            if field.value == 1:
-                msg = 'Can only process point data, given `scalars` are cell data.'
-                raise ValueError(msg)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
+        association, scalars = self._validate_point_scalars(scalars)
+        operation: Literal['erosion'] = 'erosion'
+        alg = self._get_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary=binary,
+            operation=operation,
         )
-        alg.SetKernelSize(*kernel_size)
-        _update_alg(alg, progress_bar=progress_bar, message='Performing Erosion')
-        return _get_output(alg)
+        return ImageDataFilters._get_alg_output_from_input(
+            self, alg, progress_bar=progress_bar, operation=operation
+        )
 
-    def open(
-        self,
-        kernel_size=(3, 3, 3),
-        scalars=None,
+    def open(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
         *,
-        progress_bar=False,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
     ):
         """Perform morphological opening on the image data.
 
@@ -1305,6 +1342,9 @@ class ImageDataFilters(DataSetFilters):
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
+
+        binary
+            Binary or not.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1334,18 +1374,40 @@ class ImageDataFilters(DataSetFilters):
         >>> opened.plot()
 
         """
-        # Opening = erosion followed by dilation
-        # First erode
-        eroded = self.erode(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
-        # Then dilate the result
-        return eroded.dilate(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+        # Opening: erosion followed by dilation
+        association, scalars = self._validate_point_scalars(scalars)
+        erosion: Literal['erosion'] = 'erosion'
+        erosion_alg = self._get_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary=binary,
+            operation=erosion,
+        )
 
-    def close(
-        self,
-        kernel_size=(3, 3, 3),
-        scalars=None,
+        dilation: Literal['dilation'] = 'dilation'
+        dilation_alg = self._get_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary=binary,
+            operation=dilation,
+        )
+
+        erosion_output = ImageDataFilters._get_alg_output_from_input(
+            self, erosion_alg, progress_bar=progress_bar, operation=erosion
+        )
+        return ImageDataFilters._get_alg_output_from_input(
+            erosion_output, dilation_alg, progress_bar=progress_bar, operation=dilation
+        )
+
+    def close(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
         *,
-        progress_bar=False,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
     ):
         """Perform morphological closing on the image data.
 
@@ -1359,6 +1421,9 @@ class ImageDataFilters(DataSetFilters):
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
+
+        binary
+            Binary or not.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1388,11 +1453,32 @@ class ImageDataFilters(DataSetFilters):
         >>> closed.plot()
 
         """
-        # Closing = dilation followed by erosion
-        # First dilate
-        dilated = self.dilate(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
-        # Then erode the result
-        return dilated.erode(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+        # Closing: dilation followed by erosion
+        association, scalars = self._validate_point_scalars(scalars)
+        dilation: Literal['dilation'] = 'dilation'
+        dilation_alg = self._get_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary=binary,
+            operation=dilation,
+        )
+
+        erosion: Literal['erosion'] = 'erosion'
+        erosion_alg = self._get_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary=binary,
+            operation=erosion,
+        )
+
+        erosion_output = ImageDataFilters._get_alg_output_from_input(
+            self, erosion_alg, progress_bar=progress_bar, operation=erosion
+        )
+        return ImageDataFilters._get_alg_output_from_input(
+            erosion_output, dilation_alg, progress_bar=progress_bar, operation=dilation
+        )
 
     @_deprecate_positional_args(allowed=['threshold'])
     def image_threshold(  # noqa: PLR0917

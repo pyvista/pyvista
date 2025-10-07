@@ -3024,7 +3024,7 @@ def test_dilate_continuous():
     point_data[4, 4, 4] = 1.0
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_dilated = volume.dilate(continuous=True)
+    volume_dilated = volume.dilate(binary=True)
     assert isinstance(volume_dilated, pv.ImageData)
     # Check that dilation occurred (max value should be at original position)
     assert volume_dilated.point_data['point_data'].max() == 1.0
@@ -3039,7 +3039,7 @@ def test_erode_continuous():
     point_data[4, 4, 4] = 0.0
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_eroded = volume.erode(continuous=True)
+    volume_eroded = volume.erode(binary=True)
     assert isinstance(volume_eroded, pv.ImageData)
     # Check that erosion occurred
     assert volume_eroded.point_data['point_data'].min() == 0.0
