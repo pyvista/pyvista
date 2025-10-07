@@ -120,7 +120,7 @@ from .helpers import is_inside_bounds as is_inside_bounds
 from .helpers import is_pyvista_dataset as is_pyvista_dataset
 from .helpers import wrap as wrap
 from .misc import AnnotatedIntEnum as AnnotatedIntEnum
-from .misc import StrEnum as StrEnum
+from .misc import StrEnum as StrEnum  #type: ignore [attr-defined]
 from .misc import abstract_class as abstract_class
 from .misc import assert_empty_kwargs as assert_empty_kwargs
 from .misc import check_valid_vector as check_valid_vector
