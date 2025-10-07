@@ -1479,11 +1479,11 @@ class ImageDataFilters(DataSetFilters):
         )
 
         # Get filter outputs
-        erosion_output = ImageDataFilters._get_alg_output_from_input(
-            self, erosion_alg, progress_bar=progress_bar, operation=erosion
+        dilation_output = ImageDataFilters._get_alg_output_from_input(
+            self, dilation_alg, progress_bar=progress_bar, operation=erosion
         )
         return ImageDataFilters._get_alg_output_from_input(
-            erosion_output, dilation_alg, progress_bar=progress_bar, operation=dilation
+            dilation_output, erosion_alg, progress_bar=progress_bar, operation=dilation
         )
 
     @_deprecate_positional_args(allowed=['threshold'])
