@@ -492,7 +492,7 @@ def test_report_help(capsys: pytest.CaptureFixture):
             Generate a PyVista software environment report.
        """
     )
-    assert expected in capsys.readouterr().out
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
 
 
 @pytest.mark.usefixtures('patch_app_console')
