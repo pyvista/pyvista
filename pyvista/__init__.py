@@ -27,6 +27,7 @@ from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers as _wrappers
+from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report
