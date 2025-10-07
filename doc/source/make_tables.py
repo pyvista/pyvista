@@ -38,9 +38,9 @@ from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities import StrEnum
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
-from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
