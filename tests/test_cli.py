@@ -540,6 +540,7 @@ def test_plot_signature_subset():
         'return_img',
         'cpos',
         'jupyter_kwargs',
+        'notebook',
     }
     diff = sig - sig_sub - allowed_missing
     assert diff == set()
