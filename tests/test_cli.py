@@ -232,7 +232,6 @@ def default_plot_kwargs():
         'eye_dome_lighting': False,
         'full_screen': None,
         'interactive': True,
-        'notebook': None,
         'off_screen': None,
         'parallel_projection': False,
         'return_cpos': False,
