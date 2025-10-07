@@ -97,8 +97,9 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
 
 
 _HELP_KWARGS = """\
-Additional keyword arguments passed to ``Plotter.add_mesh``.
-See documentation for more details https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh#pyvista.Plotter.add_mesh
+Additional keyword arguments passed to ``Plotter.add_mesh`` or ``Plotter.add_volume``.
+See documentation for more details https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh
+and https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_volume
 
 Note that contrary to other arguments, hyphens CANNOT not be used (ie. use ``--show_edges=True`` instead of ``--show-edges=True``).
 
