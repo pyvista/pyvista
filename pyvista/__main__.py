@@ -15,6 +15,11 @@ import warnings
 from cyclopts import App
 from cyclopts import Parameter
 from cyclopts import Token
+from rich import box
+from rich.console import Group
+from rich.console import NewLine
+from rich.panel import Panel
+from rich.text import Text
 
 import pyvista
 from pyvista import Report
@@ -136,29 +141,58 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter),
     ],
 ) -> None:
-    return pyvista.plot(
-        var_item=files or [],  # type: ignore[arg-type]
-        off_screen=off_screen,
-        full_screen=full_screen,
-        screenshot=screenshot,
-        interactive=interactive,
-        window_size=window_size,
-        show_bounds=show_bounds,
-        show_axes=show_axes,
-        background=background,
-        text=text,
-        eye_dome_lighting=eye_dome_lighting,
-        volume=volume,
-        parallel_projection=parallel_projection,
-        return_cpos=return_cpos,
-        anti_aliasing=anti_aliasing,
-        zoom=zoom,
-        border=border,
-        border_color=border_color,
-        border_width=border_width,
-        ssao=ssao,
-        **kwargs,
-    )
+    try:
+        res = pyvista.plot(
+            var_item=files or [],  # type: ignore[arg-type]
+            off_screen=off_screen,
+            full_screen=full_screen,
+            screenshot=screenshot,
+            interactive=interactive,
+            window_size=window_size,
+            show_bounds=show_bounds,
+            show_axes=show_axes,
+            background=background,
+            text=text,
+            eye_dome_lighting=eye_dome_lighting,
+            volume=volume,
+            parallel_projection=parallel_projection,
+            return_cpos=return_cpos,
+            anti_aliasing=anti_aliasing,
+            zoom=zoom,
+            border=border,
+            border_color=border_color,
+            border_width=border_width,
+            ssao=ssao,
+            **kwargs,
+        )
+
+    except Exception as ex:
+        # Prevent traceback and output error along with help message
+        console = app._resolve_console(tokens_or_apps=None)
+        app.help_print(tokens='plot', console=console)
+
+        msg = Group(
+            ':warning: The following exception has been raised when calling [u]pv.plot[/u]:',
+            NewLine(),
+            Panel(
+                str(ex), title=f'{type(ex).__name__}', title_align='left', style='bold blink red'
+            ),
+            NewLine(),
+            Text('Please check the provided arguments.'),
+        )
+        panel = Panel(
+            msg,
+            title='Pyvista error',
+            style='red',
+            box=box.ROUNDED,
+            expand=True,
+            title_align='left',
+        )
+
+        console.print(panel)
+        raise SystemExit(1) from ex
+    else:
+        return res
 
 
 _plot.__doc__ = pyvista.plot.__doc__  # Needed by cyclopts to get parameters help

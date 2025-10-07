@@ -404,6 +404,18 @@ class CasesPlot:
         """Test when a supplementary keyword argument is given with an hyphen"""
         return '--foo-bar bar'
 
+    @case(tags='raises')
+    def case_kw_unknown(self, tmp_path: Path):
+        """Test when a supplementary keyword argument does not exists"""
+        pv.Sphere().save(f := tmp_path / 'file.vtp')
+        return f'{f.as_posix()} --foo_bar bar'
+
+    @case(tags='raises')
+    def case_wrong_argument(self, tmp_path: Path):
+        """Test when an argument raises an error"""
+        pv.Sphere().save(f := tmp_path / 'file.vtp')
+        return f'{f.as_posix()} --opacity=foo'
+
 
 @parametrize_with_cases(
     'tokens, expected_kwargs',
@@ -461,7 +473,6 @@ def test_add_mesh_volume_called(
 
 
 @parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
-@pytest.mark.usefixtures('mock_plot')
 def test_plot_called_raises(tokens: str):
     """Test that the plot CLI is raising expected exit errors."""
     with pytest.raises(SystemExit) as e:
