@@ -1897,34 +1897,51 @@ def test_erode():
     )
 
 
-def test_dilate_continuous():
-    """Test the dilate method for continuous data."""
-    point_data = np.zeros((10, 10, 10))
-    point_data[4, 4, 4] = 1.0
+MAX_VAL = 42.0
+MID_VAL = 5.0
+MIN_VAL = 0.0
+
+
+@pytest.mark.parametrize('binary', [True, False, [MIN_VAL, MAX_VAL]])
+def test_dilate_binary(binary):
+    """Test the dilate method with binary option."""
+    point_data = np.ones((10, 10, 10)) * MIN_VAL
+    point_data[4, 4, 4] = MAX_VAL
+    point_data[0, 0, 0] = MID_VAL
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_dilated = volume.dilate(binary=True)
+    volume_dilated = volume.dilate(binary=binary)
     assert isinstance(volume_dilated, pv.ImageData)
     # Check that dilation occurred (max value should be at original position)
-    assert volume_dilated.point_data['point_data'].max() == 1.0
+    assert volume_dilated.point_data['point_data'].max() == MAX_VAL
     # Check that surrounding voxels have been affected
     reshaped = volume_dilated.point_data['point_data'].reshape((10, 10, 10), order='F')
-    assert reshaped[3, 4, 4] > 0  # neighboring voxel should have non-zero value
+    assert reshaped[3, 4, 4] == MAX_VAL  # neighboring voxel should have dilated value
+
+    # Test mid-value is unaffected by filter (there should be exactly one mid value)
+    assert reshaped[0, 0, 0] == MID_VAL
+    assert np.array_equal(np.unique_counts(reshaped).counts, (980, 1, 19))
 
 
-def test_erode_continuous():
-    """Test the erode method for continuous data."""
-    point_data = np.ones((10, 10, 10))
-    point_data[4, 4, 4] = 0.0
+@pytest.mark.parametrize('binary', [True, False, [MIN_VAL, MAX_VAL]])
+def test_erode_binary(binary):
+    """Test the erode method with binary option."""
+    point_data = np.ones((10, 10, 10)) * MAX_VAL
+    point_data[4, 4, 4] = MIN_VAL
+    point_data[0, 0, 0] = MID_VAL
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_eroded = volume.erode(binary=True)
+    volume_eroded = volume.erode(binary=binary)
     assert isinstance(volume_eroded, pv.ImageData)
     # Check that erosion occurred
-    assert volume_eroded.point_data['point_data'].min() == 0.0
+    assert volume_eroded.point_data['point_data'].min() == MIN_VAL
     # Check that surrounding voxels have been affected
     reshaped = volume_eroded.point_data['point_data'].reshape((10, 10, 10), order='F')
-    assert reshaped[3, 4, 4] < 1.0  # neighboring voxel should have reduced value
+    assert reshaped[3, 4, 4] == MIN_VAL  # neighboring voxel should have reduced value
+
+    # Test mid-value is unaffected by filter (there should be exactly one mid value)
+    assert reshaped[0, 0, 0] == MID_VAL
+    assert np.array_equal(np.unique_counts(reshaped).counts, (19, 1, 980))
 
 
 def test_open():
