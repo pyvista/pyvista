@@ -1119,12 +1119,12 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def _configure_dilate_erode_alg(
+    def _configure_dilate_erode_alg(  # type: ignore[misc]
         self: ImageData,
         *,
         kernel_size: int | VectorLike[int],
         scalars: str,
-        association: FieldAssociation,
+        association: Literal[FieldAssociation.POINT],
         binary: VectorLike[float] | bool | None = None,
         operation: Literal['dilation', 'erosion'],
     ) -> (
@@ -1132,6 +1132,11 @@ class ImageDataFilters(DataSetFilters):
         | _vtk.vtkImageContinuousDilate3D
         | _vtk.vtkImageDilateErode3D
     ):
+        alg: (
+            _vtk.vtkImageContinuousErode3D
+            | _vtk.vtkImageContinuousDilate3D
+            | _vtk.vtkImageDilateErode3D
+        )
         if binary is not None:
             if isinstance(binary, bool):
                 min_val, max_val = self.get_data_range(scalars, association)
@@ -1147,9 +1152,9 @@ class ImageDataFilters(DataSetFilters):
                 dilate_value = min_val
                 erode_value = max_val
 
-            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
-            alg.SetDilateValue(dilate_value)  # type: ignore[attr-defined]
-            alg.SetErodeValue(erode_value)  # type: ignore[attr-defined]
+            alg = _vtk.vtkImageDilateErode3D()
+            alg.SetDilateValue(dilate_value)
+            alg.SetErodeValue(erode_value)
         else:
             alg = (
                 _vtk.vtkImageContinuousDilate3D()
@@ -1177,7 +1182,7 @@ class ImageDataFilters(DataSetFilters):
 
     def _validate_point_scalars(  # type: ignore[misc]
         self: ImageData, scalars: str | None
-    ) -> tuple[FieldAssociation, str]:
+    ) -> tuple[Literal[FieldAssociation.POINT], str]:
         if scalars is None:
             field, scalars = set_default_active_scalars(self)
             if field == FieldAssociation.CELL:
@@ -1188,7 +1193,7 @@ class ImageDataFilters(DataSetFilters):
             if field == FieldAssociation.CELL:
                 msg = 'Can only process point data, given `scalars` are cell data.'
                 raise ValueError(msg)
-        return field, scalars
+        return cast('Literal[FieldAssociation.POINT]', field), scalars
 
     def dilate(  # type: ignore[misc]
         self: ImageData,
