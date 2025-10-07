@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ast import literal_eval
+from enum import StrEnum
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -104,7 +105,17 @@ Note that contrary to other arguments, hyphens CANNOT not be used (ie. use ``--s
 """  # noqa: E501
 
 
-@app.command
+class Groups(StrEnum):
+    """Groups for plot CLI arguments."""
+
+    PLOTTER = 'Plotter init'
+    RENDERING = 'Rendering'
+    SUPP = 'Supplementary'
+    IN = 'Inputs'
+    RETURN = 'Return'
+
+
+@app.command(usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]')
 def _plot(
     files: Annotated[
         list[str] | None,
@@ -112,33 +123,41 @@ def _plot(
             consume_multiple=True,
             help='File(s) to plot. Must be readable with ``pv.read``. If nothing is provided, show an empty window.',  # noqa: E501
             validator=_validator_files,
+            group=Groups.IN,
         ),
     ] = None,
     *,
-    off_screen: bool | None = None,
-    full_screen: bool | None = None,
-    screenshot: str | None = None,
-    interactive: bool = True,
+    off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
+    full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
+    screenshot: Annotated[str | None, Parameter(group=Groups.PLOTTER)] = None,
+    interactive: Annotated[bool, Parameter(group=Groups.PLOTTER)] = True,
     window_size: Annotated[
-        list[int] | None, Parameter(consume_multiple=True, validator=_validator_window_size)
+        list[int] | None,
+        Parameter(
+            consume_multiple=True,
+            validator=_validator_window_size,
+            group=Groups.PLOTTER,
+        ),
     ] = None,
-    show_bounds: bool = False,
-    show_axes: bool | None = None,
-    background: str | None = None,
-    text: str = '',
-    eye_dome_lighting: bool = False,
-    volume: bool = False,
-    parallel_projection: bool = False,
-    return_cpos: bool = False,
-    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | None = None,
-    zoom: float | str | None = None,
-    border: bool = False,
-    border_color: str = 'k',
-    border_width: float = 2.0,
-    ssao: bool = False,
+    show_bounds: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    show_axes: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
+    background: Annotated[str | None, Parameter(group=Groups.RENDERING)] = None,
+    text: Annotated[str, Parameter(group=Groups.RENDERING)] = '',
+    eye_dome_lighting: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    volume: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    parallel_projection: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
+    return_cpos: Annotated[bool, Parameter(group=Groups.RETURN)] = False,
+    anti_aliasing: Annotated[
+        Literal['ssaa', 'msaa', 'fxaa'] | None, Parameter(group=Groups.RENDERING)
+    ] = None,
+    zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
+    border: Annotated[bool, Parameter(group=Groups.PLOTTER)] = False,
+    border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
+    border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
+    ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     **kwargs: Annotated[
         Any,
-        Parameter(help=_HELP_KWARGS, converter=_kwargs_converter),
+        Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
     try:
