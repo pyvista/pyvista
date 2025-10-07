@@ -324,9 +324,12 @@ class CasesPlot:
         kwargs=[
             ('--color=red', dict(color='red')),
             ('--color=(0,1,0)', dict(color=(0, 1, 0))),
+            ('--color="(0, 1, 0)"', dict(color=(0, 1, 0))),
+            ('--color="[0, 1, 0]"', dict(color=[0, 1, 0])),
             ('--color=[0,1,0]', dict(color=[0, 1, 0])),
             ('--color=[0.1,1,0]', dict(color=[0.1, 1, 0])),
             ('--clim [0.1,1]', dict(clim=[0.1, 1])),
+            ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
         ]
     )
     @pytest.mark.usefixtures('mock_files_validator')
