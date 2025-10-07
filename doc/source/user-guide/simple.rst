@@ -227,6 +227,7 @@ Command Line
 Starting from version ``0.47``, meshes can be plotted from one (or more) files using a command line tool such that:
 
 .. code-block:: shell
+
     pyvista plot <files> [OPTIONS]
     python -m pyvista plot <files> [OPTIONS]
 
