@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from ast import literal_eval
-from enum import StrEnum
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,6 +24,7 @@ from rich.text import Text
 import pyvista
 from pyvista import Report
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import StrEnum
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
