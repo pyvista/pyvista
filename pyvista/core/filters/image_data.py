@@ -1137,8 +1137,8 @@ class ImageDataFilters(DataSetFilters):
             | _vtk.vtkImageContinuousDilate3D
             | _vtk.vtkImageDilateErode3D
         )
-        if binary is not None:
-            if isinstance(binary, bool):
+        if binary:
+            if binary is True:
                 min_val, max_val = self.get_data_range(scalars, association)
             else:
                 min_val, max_val = _validation.validate_array(
@@ -1354,14 +1354,70 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Erode a binary image.
+        Create a toy example with two non-zero grayscale foreground regions
+        using :meth:`pad_image`.
 
         >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> uni = examples.load_uniform()
-        >>> ithresh = uni.image_threshold([400, 600])
-        >>> eroded = ithresh.erode()
-        >>> eroded.plot()
+        >>> # Create an initial background point
+        >>> im = pv.ImageData(dimensions=(1, 1, 1))
+        >>> im['data'] = [0]
+        >>> # Add a foreground region
+        >>> im = im.pad_image(pad_value=255, pad_size=(4, 3), dimensionality=2)
+        >>> # Add a second foreground region
+        >>> im = im.pad_image(pad_value=128, pad_size=(2, 0, 1, 0))
+        >>> # Add background values to two sides
+        >>> im = im.pad_image(pad_value=0, pad_size=(1, 0))
+
+        Define a custom plotter to plot pixels as cells.
+
+        >>> def image_plotter(image):
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(
+        ...         image.points_to_cells(),
+        ...         cmap='grey',
+        ...         clim=[0, 255],
+        ...         show_scalar_bar=False,
+        ...         show_edges=True,
+        ...         lighting=False,
+        ...     )
+        ...     pl.camera_position = 'xy'
+        ...     pl.camera.tight()
+        ...     return pl
+
+        Show the image.
+
+        >>> image_plotter(im).show()
+
+        Erode it with default settings. Observe that `both` foreground values are eroded.
+
+        >>> eroded = im.erode()
+        >>> image_plotter(eroded).show()
+
+        Use a larger kernel size.
+
+        >>> eroded = im.erode(kernel_size=5)
+        >>> image_plotter(eroded).show()
+
+        Use an asymmetric kernel.
+
+        >>> eroded = im.erode(kernel_size=(2, 4, 1))
+        >>> image_plotter(eroded).show()
+
+        Use binary erosion. By default, the max value (``255`` in this example) is eroded
+        with the min value (``0`` in this example). All other values are unaffected.
+
+        >>> eroded = im.erode(binary=True)
+        >>> image_plotter(eroded).show()
+
+        Equivalently, set the binary values for the erosion explicitly.
+
+        >>> eroded = im.erode(binary=[0, 255])
+        >>> image_plotter(eroded).show()
+
+        Use binary erosion with the other foreground value instead.
+
+        >>> eroded = im.erode(binary=[0, 128])
+        >>> image_plotter(eroded).show()
 
         """
         association, scalars = self._validate_point_scalars(scalars)
