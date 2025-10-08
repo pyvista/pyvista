@@ -88,14 +88,14 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):
             msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
-            app.console.print(
+            app.console.print(  # type: ignore [union-attr]
                 Panel(
                     msg,
                     style='magenta',
                     title='Warning',
                     title_align='left',
                 )
-            )  # type: ignore [union-attr]
+            )
 
         # Coerce using literal_eval with fallback to str value
         try:
