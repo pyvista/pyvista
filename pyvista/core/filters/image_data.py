@@ -1200,7 +1200,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
         """Dilate the image data.
@@ -1316,7 +1316,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
         """Erode the image data.
@@ -1382,7 +1382,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
         """Perform morphological opening on the image data.
@@ -1464,7 +1464,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
         """Perform morphological closing on the image data.
