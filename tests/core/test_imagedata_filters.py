@@ -1919,10 +1919,12 @@ def test_dilate_binary(binary):
     reshaped = volume_dilated.point_data['point_data'].reshape((10, 10, 10), order='F')
     assert reshaped[3, 4, 4] == MAX_VAL  # neighboring voxel should have dilated value
 
-    # Test mid-value is unaffected by filter (there should be exactly one mid value)
     assert reshaped[0, 0, 0] == MID_VAL
     if NUMPY_VERSION_INFO > (2, 0, 0):
-        assert np.array_equal(np.unique_counts(reshaped).counts, (980, 1, 19))
+        # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)
+        expected_counts = (980, 1, 19) if binary else (974, 7, 19)
+        actual_counts = tuple(np.unique_counts(reshaped).counts)
+        assert actual_counts == expected_counts
 
 
 @pytest.mark.parametrize('binary', [True, False, [MIN_VAL, MAX_VAL]])
@@ -1944,7 +1946,10 @@ def test_erode_binary(binary):
     # Test mid-value is unaffected by filter (there should be exactly one mid value)
     assert reshaped[0, 0, 0] == MID_VAL
     if NUMPY_VERSION_INFO > (2, 0, 0):
-        assert np.array_equal(np.unique_counts(reshaped).counts, (19, 1, 980))
+        # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)
+        expected_counts = (19, 1, 980) if binary else (19, 7, 974)
+        actual_counts = tuple(np.unique_counts(reshaped).counts)
+        assert actual_counts == expected_counts
 
 
 def test_open():
