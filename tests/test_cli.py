@@ -537,3 +537,21 @@ def test_plot_signature_subset():
     }
     diff = sig - sig_sub - allowed_missing
     assert diff == set()
+
+
+@parametrize(func=['plot', 'report'])
+@parametrize(ret=['foo', None])
+def test_print(
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    func: str,
+    capsys: pytest.CaptureFixture,
+    ret: str | None,
+):
+    """Test that the output of the functions are sent to stdout."""
+    mock = mock_plot if func == 'plot' else mock_report
+    mock.return_value = ret
+    main(f'{func}')
+
+    expected = f'{ret}\n' if ret is not None else ''
+    assert capsys.readouterr().out == expected
