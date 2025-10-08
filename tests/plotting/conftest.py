@@ -132,13 +132,8 @@ def colorful_tetrahedron():
 
 
 @pytest.fixture(autouse=True)
-def set_default_theme(request: pytest.FixtureRequest):
-    """Reset the testing theme for every test.
-    Use @pytest.mark.no_default_theme to skip this autouse fixture
-    """
-    if 'no_default_theme' in request.keywords:
-        yield
-        return
+def set_default_theme():
+    """Reset the testing theme for every test."""
     pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
     yield
     pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())

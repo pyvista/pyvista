@@ -254,7 +254,6 @@ markers = [
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
-  'no_default_theme: skip setting the default theme for plotting tests',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
