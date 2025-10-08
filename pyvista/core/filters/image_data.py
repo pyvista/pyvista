@@ -1238,14 +1238,64 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Dilate a binary image.
+        Create a toy example with two non-zero grayscale foreground values
+        :meth:`padded <pad_image>` with a background of zeros.
 
         >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> uni = examples.load_uniform()
-        >>> ithresh = uni.image_threshold([400, 600])
-        >>> dilated = ithresh.dilate()
-        >>> dilated.plot()
+        >>> im = pv.ImageData(dimensions=(2, 1, 1))
+        >>> im['data'] = [128, 255]
+        >>> im = im.pad_image(pad_value=0, pad_size=2, dimensionality=2)
+
+        Define a custom plotter to plot pixels as cells.
+
+        >>> def image_plotter(image):
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(
+        ...         image.points_to_cells(),
+        ...         cmap='grey',
+        ...         clim=[0, 255],
+        ...         show_scalar_bar=False,
+        ...         show_edges=True,
+        ...         lighting=False,
+        ...     )
+        ...     pl.camera_position = 'xy'
+        ...     pl.camera.tight()
+        ...     return pl
+
+        Show the image.
+
+        >>> image_plotter(im).show()
+
+        Dilate it with default settings. Observe that `both` foreground values are dilated.
+
+        >>> dilated = im.dilate()
+        >>> image_plotter(dilated).show()
+
+        Use a larger kernel size.
+
+        >>> dilated = im.dilate(kernel_size=5)
+        >>> image_plotter(dilated).show()
+
+        Use an asymmetric kernel.
+
+        >>> dilated = im.dilate(kernel_size=(2, 4, 1))
+        >>> image_plotter(dilated).show()
+
+        Use binary dilation. By default, the max value (``255`` in this example) is dilated
+        with the min value (``0`` in this example). All other values are unaffected.
+
+        >>> dilated = im.dilate(binary=True)
+        >>> image_plotter(dilated).show()
+
+        Equivalently, set the binary values for the dilation explicitly.
+
+        >>> dilated = im.dilate(binary=[0, 255])
+        >>> image_plotter(dilated).show()
+
+        Use binary dilation with the other foreground value instead.
+
+        >>> dilated = im.dilate(binary=[0, 128])
+        >>> image_plotter(dilated).show()
 
         """
         association, scalars = self._validate_point_scalars(scalars)
