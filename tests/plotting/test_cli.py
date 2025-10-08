@@ -4,11 +4,15 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
+from typing import TYPE_CHECKING
 
 from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista.__main__ import main
+
+if TYPE_CHECKING:
+    import pytest
 
 
 @parametrize(
@@ -22,10 +26,18 @@ from pyvista.__main__ import main
 )
 @parametrize(as_script=[True, False])
 @parametrize(with_main=[True, False])
-def test_plot(tmp_path: Path, tokens_kwargs: tuple[str, dict], as_script: bool, with_main: bool):
+def test_plot(
+    tmp_path: Path,
+    tokens_kwargs: tuple[str, dict],
+    as_script: bool,
+    with_main: bool,
+    monkeypatch: pytest.MonkeyPatch,
+):
     """
     Test a real call to `pv.plot` using CLI and compare images to a Plotter output.
     """
+    monkeypatch.setenv('PYVISTA_PLOT_THEME', 'testing')
+
     tokens, kwargs = tokens_kwargs
 
     infile = Path(pv.examples.antfile).as_posix()
