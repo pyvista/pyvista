@@ -24,7 +24,7 @@ from rich.text import Text
 import pyvista
 from pyvista import Report
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities import StrEnum
+from pyvista.core.utilities.misc import StrEnum
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

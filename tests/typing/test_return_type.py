@@ -9,7 +9,6 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.utilities.misc import StrEnum
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -135,8 +134,6 @@ def test_bounds_size(class_with_bounds):
 def test_center_tuple(class_with_center):
     if _vtk.is_vtk_attribute(class_with_center, 'center'):
         pytest.skip('center is defined by vtk, not pyvista.')
-    elif class_with_center is StrEnum:
-        pytest.skip('center is defined by Python enum lib.')
 
     # Define kwargs as required for some cases.
     kwargs = {}
