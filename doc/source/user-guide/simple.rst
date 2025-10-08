@@ -240,6 +240,7 @@ Run the ``--help`` command to see all options:
 
 
 .. code-block:: shell
+
     pyvista plot --help
     python -m pyvista plot --help
 
