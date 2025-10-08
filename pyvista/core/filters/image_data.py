@@ -1202,9 +1202,8 @@ class ImageDataFilters(DataSetFilters):
         alg.SetKernelSize(*kernal_sz)
         return alg
 
-    @staticmethod
-    def _get_alg_output_from_input(mesh, alg, *, progress_bar: bool, operation: str):
-        alg.SetInputDataObject(mesh)
+    def _get_alg_output_from_input(self, alg, *, progress_bar: bool, operation: str):
+        alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message=f'Performing {operation}')
         return _get_output(alg)
 
@@ -1362,9 +1361,7 @@ class ImageDataFilters(DataSetFilters):
             binary_values=binary_values,
             operation=operation,
         )
-        return ImageDataFilters._get_alg_output_from_input(
-            self, alg, progress_bar=progress_bar, operation=operation
-        )
+        return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
 
     def erode(  # type: ignore[misc]
         self: ImageData,
@@ -1511,9 +1508,7 @@ class ImageDataFilters(DataSetFilters):
             binary_values=binary_values,
             operation=operation,
         )
-        return ImageDataFilters._get_alg_output_from_input(
-            self, alg, progress_bar=progress_bar, operation=operation
-        )
+        return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
 
     def open(  # type: ignore[misc]
         self: ImageData,
@@ -1591,12 +1586,12 @@ class ImageDataFilters(DataSetFilters):
             operation=dilation,
         )
 
-        # Get filter outputs
-        erosion_output = ImageDataFilters._get_alg_output_from_input(
-            self, erosion_alg, progress_bar=progress_bar, operation=erosion
+        # Get filter outputs: erode then dilate
+        erosion_output = self._get_alg_output_from_input(
+            erosion_alg, progress_bar=progress_bar, operation=erosion
         )
-        return ImageDataFilters._get_alg_output_from_input(
-            erosion_output, dilation_alg, progress_bar=progress_bar, operation=dilation
+        return erosion_output._get_alg_output_from_input(
+            dilation_alg, progress_bar=progress_bar, operation=dilation
         )
 
     def close(  # type: ignore[misc]
@@ -1675,12 +1670,12 @@ class ImageDataFilters(DataSetFilters):
             operation=erosion,
         )
 
-        # Get filter outputs
-        dilation_output = ImageDataFilters._get_alg_output_from_input(
-            self, dilation_alg, progress_bar=progress_bar, operation=erosion
+        # Get filter outputs: dilate then erode
+        dilation_output = self._get_alg_output_from_input(
+            dilation_alg, progress_bar=progress_bar, operation=erosion
         )
-        return ImageDataFilters._get_alg_output_from_input(
-            dilation_output, erosion_alg, progress_bar=progress_bar, operation=dilation
+        return dilation_output._get_alg_output_from_input(
+            erosion_alg, progress_bar=progress_bar, operation=dilation
         )
 
     @_deprecate_positional_args(allowed=['threshold'])
