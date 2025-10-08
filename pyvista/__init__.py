@@ -6,7 +6,6 @@ import os
 import sys
 from typing import TYPE_CHECKING
 from typing import Literal
-import warnings
 
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
@@ -46,9 +45,6 @@ if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
 
     msg = f'VTK version must be {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)} or greater.'
     raise VTKVersionError(msg)
-
-# catch annoying numpy/vtk future warning:
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
 OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
