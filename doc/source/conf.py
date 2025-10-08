@@ -92,7 +92,6 @@ sys.path.append(str(Path('./_ext').resolve()))
 # ones.
 extensions = [
     'atsphinx.mini18n',
-    'sphinxcontrib.programoutput',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',

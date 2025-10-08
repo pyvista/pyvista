@@ -232,10 +232,16 @@ files using a command line tool such that:
     pyvista plot <files> [OPTIONS]
     python -m pyvista plot <files> [OPTIONS]
 
+.. note::
+    Providing multiple files renders them inside the same window.
+
 Most options available in :func:`pyvista.plot` are exposed by the command line.
 Run the ``--help`` command to see all options:
 
-.. program-output:: pyvista plot --help
+
+.. code-block:: shell
+    pyvista plot --help
+    python -m pyvista plot --help
 
 
 

@@ -66,10 +66,12 @@ def plot(  # noqa: ANN202, PLR0917
 
         .. code-block:: shell
 
-            pyvista plot <filename> --screenshot output.png --off-screen
+            pyvista plot <files> --screenshot output.png --off-screen
 
         Run ``pyvista plot --help`` for more details on available parameters.
 
+        .. note::
+            Providing multiple files renders them inside the same window.
 
     Parameters
     ----------
