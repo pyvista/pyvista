@@ -224,7 +224,8 @@ your use case:
 Command Line
 ------------
 
-Starting from version ``0.47``, meshes can be plotted from one (or more) files using a command line tool such that:
+Starting from version ``0.47``, meshes can be plotted from one (or more)
+files using a command line tool such that:
 
 .. code-block:: shell
 
