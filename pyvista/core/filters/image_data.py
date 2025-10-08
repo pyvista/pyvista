@@ -1119,10 +1119,10 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def _get_binary_values(
+    def _get_binary_values(  # type: ignore[misc]
         self: ImageData,
         scalars: str,
-        association: FieldAssociation.POINT,
+        association: Literal[FieldAssociation.POINT],
         *,
         binary: bool | VectorLike[float] | None,
     ) -> tuple[float, float] | None:
