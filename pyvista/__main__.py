@@ -16,6 +16,7 @@ from cyclopts import App
 from cyclopts import Parameter
 from cyclopts import Token
 from rich import box
+from rich.console import Console
 from rich.console import Group
 from rich.console import NewLine
 from rich.panel import Panel
@@ -41,6 +42,7 @@ app = App(
     help_format='plaintext',
     version=f'{pyvista.__name__} {pyvista.__version__}',
     help_on_error=True,
+    console=Console(),
 )
 
 
@@ -85,8 +87,8 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
     for token in tokens:
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):
-            msg = f'cannot use hyphen `{h}`, try with --{key.replace("-", "_")}={token.value}'
-            raise ValueError(msg)
+            msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
+            app.console.print(Panel(msg, style='magenta', title='Warning', title_align='left'))
 
         # Coerce using literal_eval with fallback to str value
         try:
@@ -98,10 +100,12 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
 
 _HELP_KWARGS = """\
 Additional keyword arguments passed to ``Plotter.add_mesh`` or ``Plotter.add_volume``.
-See documentation for more details https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh
+See the documentation for more details at https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh
 and https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_volume
 
-Note that contrary to other arguments, hyphens CANNOT not be used (ie. use ``--show_edges=True`` instead of ``--show-edges=True``).
+Note that contrary to other CLI arguments, hyphens ``-`` are not converted to underscores ``_`` before being passed
+to the corresponding plotter method. For example, you need to use ``--show_edges=True`` instead of ``--show-edges=True`` to
+show mesh edges in the plotting window.
 
 """  # noqa: E501
 
@@ -188,8 +192,7 @@ def _plot(
 
     except Exception as ex:
         # Prevent traceback and output error along with help message
-        console = app._resolve_console(tokens_or_apps=None)
-        app.help_print(tokens='plot', console=console)
+        app.help_print(tokens='plot')
 
         msg = Group(
             ':warning: The following exception has been raised when calling [u]pv.plot[/u]:',
@@ -209,7 +212,7 @@ def _plot(
             title_align='left',
         )
 
-        console.print(panel)
+        app.console.print(panel)
         raise SystemExit(1) from ex
     else:
         return res

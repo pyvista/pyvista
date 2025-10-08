@@ -400,11 +400,6 @@ class CasesPlot:
         return f'--files {f1.as_posix()}'
 
     @case(tags='raises')
-    def case_kw_contains_hyphen(self):
-        """Test when a supplementary keyword argument is given with an hyphen"""
-        return '--foo-bar bar'
-
-    @case(tags='raises')
     def case_kw_unknown(self, tmp_path: Path):
         """Test when a supplementary keyword argument does not exists"""
         pv.Sphere().save(f := tmp_path / 'file.vtp')
