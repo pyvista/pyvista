@@ -1943,7 +1943,6 @@ def test_erode_binary(binary):
     reshaped = volume_eroded.point_data['point_data'].reshape((10, 10, 10), order='F')
     assert reshaped[3, 4, 4] == MIN_VAL  # neighboring voxel should have reduced value
 
-    # Test mid-value is unaffected by filter (there should be exactly one mid value)
     assert reshaped[0, 0, 0] == MID_VAL
     if NUMPY_VERSION_INFO > (2, 0, 0):
         # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)

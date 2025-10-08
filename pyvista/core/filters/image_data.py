@@ -1203,22 +1203,36 @@ class ImageDataFilters(DataSetFilters):
         binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
-        """Dilate the image data.
+        """Dilate grayscale or binary data.
 
-        This filter dilates the input image data. It can operate on both
-        binary and continuous data depending on the ``continuous`` parameter.
+        This filter replaces a pixel with the maximum over an ellipsoidal neighborhood using
+        :vtk:`vtkImageContinuousDilate3D`. It may be used to dilate grayscale images with multiple
+        values, or binary images with a single background and foreground value.
+
+        Optionally, the ``binary`` keyword may be used to strictly dilate with two values using
+        :vtk:`vtkImageDilateErode3D` instead. This keyword is useful for specific cases:
+
+        - If the input is a binary mask, setting ``binary=True`` produces the same output as
+          ``binary=False``, but the filter is much more performant.
+        - If the input values are grayscale or represent multi-label segmentation masks,
+          setting ``binary=[background_value, foreground_value]`` is useful to `isolate` the
+          erosion to two values, where ``foreground_value`` is eroded with ``background_value``.
 
         Parameters
         ----------
-        kernel_size : sequence[int], default: (3, 3, 3)
-            Determines the size of the kernel along the three axes.
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are dilated, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool, default: False
-            If True, use continuous dilation which is suitable for grayscale/continuous
-            data. If False, use binary dilation.
+        binary : bool | VectorLike[float], default: False
+            If set, :vtk:`vtkImageDilateErode3D` is used to strictly dilate with two values.
+            Set this to ``True`` to dilate the maximum value in ``scalars`` with its minimum value,
+            or set it to two values ``[background_value, foreground_value]`` to dilate
+            ``foreground_value`` with ``background_value`` explicitly.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1319,22 +1333,36 @@ class ImageDataFilters(DataSetFilters):
         binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
-        """Erode the image data.
+        """Erode grayscale or binary data.
 
-        This filter erodes the input image data. It can operate on both
-        binary and continuous data depending on the ``continuous`` parameter.
+        This filter replaces a pixel with the minimum over an ellipsoidal neighborhood using
+        :vtk:`vtkImageContinuousErode3D`. It may be used to erode grayscale images with multiple
+        values, or binary images with a single background and foreground value.
+
+        Optionally, the ``binary`` keyword may be used to strictly erode with two values using
+        :vtk:`vtkImageDilateErode3D` instead. This keyword is useful for specific cases:
+
+        - If the input is a binary mask, setting ``binary=True`` produces the same output as
+          ``binary=False``, but the filter is much more performant.
+        - If the input values are grayscale or represent multi-label segmentation masks,
+          setting ``binary=[background_value, foreground_value]`` is useful to `isolate` the
+          erosion to two values, where ``foreground_value`` is eroded with ``background_value``.
 
         Parameters
         ----------
-        kernel_size : sequence[int], default: (3, 3, 3)
-            Determines the size of the kernel along the three axes.
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are eroded, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool, default: False
-            If True, use continuous erosion which is suitable for grayscale/continuous
-            data. If False, use binary erosion.
+        binary : bool | VectorLike[float], default: False
+            If set, :vtk:`vtkImageDilateErode3D` is used to strictly erode with two values.
+            Set this to ``True`` to erode the maximum value in ``scalars`` with its minimum value,
+            or set it to two values ``[background_value, foreground_value]`` to erode
+            ``foreground_value`` with ``background_value`` explicitly.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
