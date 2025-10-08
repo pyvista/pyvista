@@ -217,8 +217,12 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     any changes made in the signature of `pv.plot` must be synced (or not) in the
     `pyvista plot` CLI.
 
-    This test will fail if the argument names AND the default values are different
-    between those functions.
+    This test will fail if any:
+    - argument names
+    - default values
+    - type annotations
+
+    are different between those functions.
     """
     plot_sig = inspect.signature(pv.plot)
     plot_params = set(plot_sig.parameters.keys())
@@ -247,6 +251,36 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     del cli_defaults[k], plot_defaults[k]
 
     assert cli_defaults == plot_defaults
+
+    # Test the parameters annotations
+
+    # Need to import some types such that inspect eval them using locals()
+    from typing import Literal  # noqa: F401
+
+    from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
+    from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
+    from pyvista.plotting._typing import ColorLike  # noqa: F401
+    from pyvista.plotting._typing import PlottableType  # noqa: F401
+    from pyvista.plotting.themes import Theme  # noqa: F401
+
+    plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
+    cli_annotations = inspect.get_annotations(pv.__main__._plot, eval_str=True)
+
+    cli_annotations = {
+        k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
+    }  # get __origin__ since Annotated type
+    plot_annotations = {k: v for k, v in plot_annotations.items() if k != 'return'}
+
+    # Filter only the ones from cli
+    plot_annotations = {name: plot_annotations[name] for name in cli_annotations}
+
+    # Filter the ones which have intentionally different annotations
+    excludes = {'anti_aliasing', 'background', 'border_color', 'var_item', 'screenshot'}
+
+    plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
+    cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
+
+    assert plot_annotations == cli_annotations
 
 
 class CasesPlot:
