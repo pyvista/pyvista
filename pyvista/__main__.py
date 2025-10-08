@@ -129,9 +129,10 @@ class Groups(StrEnum):
 
 @app.command(usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]')
 def _plot(
-    files: Annotated[
+    var_item: Annotated[
         list[str] | None,
         Parameter(
+            name='files',
             consume_multiple=True,
             help='File(s) to plot. Must be readable with ``pv.read``. If nothing is provided, show an empty window.',  # noqa: E501
             validator=_validator_files,
@@ -174,7 +175,7 @@ def _plot(
 ) -> None:
     try:
         res = pyvista.plot(
-            var_item=files or [],  # type: ignore[arg-type]
+            var_item=var_item or [],  # type: ignore[arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,

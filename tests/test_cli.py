@@ -6,6 +6,7 @@ import subprocess
 import sys
 import textwrap
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 from pytest_cases import case
@@ -179,29 +180,73 @@ def mock_files_validator(mocker: MockerFixture):
 
 
 @fixture
-def default_plot_kwargs():
+def missing_plot_arguments():
+    """Argument names in the `pv.plot` signature which are intentionally removed from the
+    `pv.__main__._plot` function
+    """
+
     return {
-        'var_item': [],
-        'anti_aliasing': None,
-        'background': None,
-        'border': False,
-        'border_color': 'k',
-        'border_width': 2.0,
-        'eye_dome_lighting': False,
-        'full_screen': None,
-        'interactive': True,
-        'off_screen': None,
-        'parallel_projection': False,
-        'return_cpos': False,
-        'screenshot': None,
-        'show_axes': None,
-        'show_bounds': False,
-        'ssao': False,
-        'text': '',
-        'volume': False,
-        'window_size': None,
-        'zoom': None,
+        'jupyter_backend',
+        'theme',
+        'return_viewer',
+        'return_img',
+        'cpos',
+        'jupyter_kwargs',
+        'notebook',
     }
+
+
+@fixture
+def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
+    """Default arguments of `pv.plot`."""
+
+    params = inspect.signature(pv.plot).parameters
+
+    defaults = {
+        p: v.default
+        for p, v in params.items()
+        if (p not in missing_plot_arguments) and (v.kind != v.VAR_KEYWORD)
+    }
+    defaults['var_item'] = []  # because passing empty list to `pv.plot` if None
+    return defaults
+
+
+def test_plot_cli_synced(missing_plot_arguments: set[str]):
+    """
+    Since the `pyvista plot` CLI exposes a subset of the original `pv.plot` arguments,
+    any changes made in the signature of `pv.plot` must be synced (or not) in the
+    `pyvista plot` CLI.
+
+    This test will fail if the argument names AND the default values are different
+    between those functions.
+    """
+    plot_sig = inspect.signature(pv.plot)
+    plot_params = set(plot_sig.parameters.keys())
+
+    # Test the parameters names
+    cli_sig = inspect.signature(pv.__main__._plot)
+    cli_params = set(cli_sig.parameters.keys())
+
+    diff = plot_params - cli_params - missing_plot_arguments
+    assert diff == set(), (
+        f'Found unexpected differences {diff} in the CLI plot signature arguments'
+    )
+
+    # Test the parameters defaults
+    cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
+    plot_defaults = {name: plot_sig.parameters[name].default for name in cli_sig.parameters}
+
+    # The only difference lies for `var_item`.
+    # In `pv.plot`, there is no default value, whereas in `pv.__main__._plot`, a default None
+    # value is set.
+    # The values are checked and then removed to allow testing the remaining defaults
+    k = 'var_item'
+    assert plot_defaults[k] == inspect.Signature.empty
+    assert cli_defaults[k] is None
+
+    del cli_defaults[k], plot_defaults[k]
+
+    assert cli_defaults == plot_defaults
 
 
 class CasesPlot:
@@ -512,31 +557,6 @@ def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
     )
 
     assert process.returncode == exit_code_expected
-
-
-def test_plot_signature_subset():
-    """
-    Since the `pyvista plot` CLI exposes a subset of the original `pv.plot` arguments,
-    any changes made in the signature of `pv.plot` must be accounted (or not) in the
-    `pyvista plot` CLI.
-
-    This test will fail if the argument names are different.
-    """
-    sig = set(inspect.signature(pv.plot).parameters.keys())
-    sig_sub = set(inspect.signature(pv.__main__._plot).parameters.keys())
-
-    allowed_missing = {
-        'jupyter_backend',
-        'theme',
-        'var_item',
-        'return_viewer',
-        'return_img',
-        'cpos',
-        'jupyter_kwargs',
-        'notebook',
-    }
-    diff = sig - sig_sub - allowed_missing
-    assert diff == set()
 
 
 @parametrize(func=['plot', 'report'])
