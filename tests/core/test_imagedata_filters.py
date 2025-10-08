@@ -13,6 +13,7 @@ from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters.image_data import _InterpolationOptions
+from tests.conftest import NUMPY_VERSION_INFO
 from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
@@ -1920,7 +1921,8 @@ def test_dilate_binary(binary):
 
     # Test mid-value is unaffected by filter (there should be exactly one mid value)
     assert reshaped[0, 0, 0] == MID_VAL
-    assert np.array_equal(np.unique_counts(reshaped).counts, (980, 1, 19))
+    if NUMPY_VERSION_INFO > (2, 0, 0):
+        assert np.array_equal(np.unique_counts(reshaped).counts, (980, 1, 19))
 
 
 @pytest.mark.parametrize('binary', [True, False, [MIN_VAL, MAX_VAL]])
@@ -1941,7 +1943,8 @@ def test_erode_binary(binary):
 
     # Test mid-value is unaffected by filter (there should be exactly one mid value)
     assert reshaped[0, 0, 0] == MID_VAL
-    assert np.array_equal(np.unique_counts(reshaped).counts, (19, 1, 980))
+    if NUMPY_VERSION_INFO > (2, 0, 0):
+        assert np.array_equal(np.unique_counts(reshaped).counts, (19, 1, 980))
 
 
 def test_open():
