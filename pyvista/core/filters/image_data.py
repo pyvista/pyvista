@@ -1119,13 +1119,46 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
+    def _get_binary_values(
+        self: ImageData,
+        scalars: str,
+        association: FieldAssociation.POINT,
+        *,
+        binary: bool | VectorLike[float] | None,
+    ) -> tuple[float, float] | None:
+        if binary is None:
+            # Value is unset, so check if the scalars are actually binary
+            array = self.get_array(scalars, association)
+            min_val, max_val = self.get_data_range(scalars, association)
+            # Binary if bool or two adjacent integers or two unique values
+            # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
+            if array.dtype == np.bool or (
+                np.issubdtype(array.dtype, np.integer) and (max_val - min_val) == 1
+            ):
+                return min_val, max_val
+            else:
+                unique = np.unique(array)
+                if unique.size in [1, 2]:
+                    return unique.min(), unique.max()
+            return None  # Scalars are not binary
+
+        elif binary is True:
+            # Use the range to set the values
+            return self.get_data_range(scalars, association)
+        elif binary is False:
+            # Do not return any values
+            return None
+        else:
+            # Binary values are set explicitly
+            return _validation.validate_data_range(binary, name='binary values')
+
     def _configure_dilate_erode_alg(  # type: ignore[misc]
         self: ImageData,
         *,
         kernel_size: int | VectorLike[int],
         scalars: str,
         association: Literal[FieldAssociation.POINT],
-        binary: VectorLike[float] | bool | None = None,
+        binary_values: tuple[float, float] | None,
         operation: Literal['dilation', 'erosion'],
     ) -> (
         _vtk.vtkImageContinuousErode3D
@@ -1137,20 +1170,15 @@ class ImageDataFilters(DataSetFilters):
             | _vtk.vtkImageContinuousDilate3D
             | _vtk.vtkImageDilateErode3D
         )
-        if binary:
-            if binary is True:
-                min_val, max_val = self.get_data_range(scalars, association)
-            else:
-                min_val, max_val = _validation.validate_array(
-                    binary, must_be_sorted={'strict': True}, must_have_shape=2, to_tuple=True
-                )
 
+        if binary_values is not None:
+            background_val, foreground_val = binary_values
             if operation == 'dilation':
-                dilate_value = max_val
-                erode_value = min_val
+                dilate_value = foreground_val
+                erode_value = background_val
             else:
-                dilate_value = min_val
-                erode_value = max_val
+                dilate_value = background_val
+                erode_value = foreground_val
 
             alg = _vtk.vtkImageDilateErode3D()
             alg.SetDilateValue(dilate_value)
@@ -1200,23 +1228,21 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] = False,
+        binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
         """Dilate grayscale or binary data.
 
-        This filter replaces a pixel with the maximum over an ellipsoidal neighborhood using
-        :vtk:`vtkImageContinuousDilate3D`. It may be used to dilate grayscale images with multiple
-        values, or binary images with a single background and foreground value.
+        This filter may be used to dilate grayscale images with continuous data, binary images
+        with a single background and foreground value, or multi-label images.
 
-        Optionally, the ``binary`` keyword may be used to strictly dilate with two values using
-        :vtk:`vtkImageDilateErode3D` instead. This keyword is useful for specific cases:
+        For binary inputs with two unique values, this filter uses :vtk:`vtkImageDilateErode3D`
+        by default to perform fast binary dilation over an ellipsoidal neighborhood. Otherwise,
+        the slower class :vtk:`vtkImageContinuousDilate3D` is used to perform generalized grayscale
+        dilation by replacing each pixel with the maximum over an ellipsoidal neighborhood.
 
-        - If the input is a binary mask, setting ``binary=True`` produces the same output as
-          ``binary=False``, but the filter is much more performant.
-        - If the input values are grayscale or represent multi-label segmentation masks,
-          setting ``binary=[background_value, foreground_value]`` is useful to `isolate` the
-          erosion to two values, where ``foreground_value`` is eroded with ``background_value``.
+        Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
+        filter.
 
         Parameters
         ----------
@@ -1228,11 +1254,25 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], default: False
+        binary : bool | VectorLike[float], optional
+            Control if binary dilation or continuous dilation is used.
+
             If set, :vtk:`vtkImageDilateErode3D` is used to strictly dilate with two values.
             Set this to ``True`` to dilate the maximum value in ``scalars`` with its minimum value,
             or set it to two values ``[background_value, foreground_value]`` to dilate
             ``foreground_value`` with ``background_value`` explicitly.
+
+            Set this to ``False`` to use :vtk:`vtkImageContinuousDilate3D` to perform continuous
+            dilation.
+
+            By default, ``binary`` is `True`` if the input only has two values, and ``False``
+            otherwise.
+
+            .. note::
+                - If the input is a binary mask, setting ``binary=True`` produces the same output
+                  as `binary=False``, but the filter is much more performant.
+                - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
+                  the erosion to two values, e.g. for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1313,12 +1353,13 @@ class ImageDataFilters(DataSetFilters):
 
         """
         association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
         operation: Literal['dilation'] = 'dilation'
         alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
-            binary=binary,
+            binary_values=binary_values,
             operation=operation,
         )
         return ImageDataFilters._get_alg_output_from_input(
@@ -1330,23 +1371,21 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] = False,
+        binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
         """Erode grayscale or binary data.
 
-        This filter replaces a pixel with the minimum over an ellipsoidal neighborhood using
-        :vtk:`vtkImageContinuousErode3D`. It may be used to erode grayscale images with multiple
-        values, or binary images with a single background and foreground value.
+        This filter may be used to erode grayscale images with continuous data, binary images
+        with a single background and foreground value, or multi-label images.
 
-        Optionally, the ``binary`` keyword may be used to strictly erode with two values using
-        :vtk:`vtkImageDilateErode3D` instead. This keyword is useful for specific cases:
+        For binary inputs with two unique values, this filter uses :vtk:`vtkImageDilateErode3D`
+        by default to perform fast binary erosion over an ellipsoidal neighborhood. Otherwise,
+        the slower class :vtk:`vtkImageContinuousErode3D` is used to perform generalized grayscale
+        erosion by replacing each pixel with the minimum over an ellipsoidal neighborhood.
 
-        - If the input is a binary mask, setting ``binary=True`` produces the same output as
-          ``binary=False``, but the filter is much more performant.
-        - If the input values are grayscale or represent multi-label segmentation masks,
-          setting ``binary=[background_value, foreground_value]`` is useful to `isolate` the
-          erosion to two values, where ``foreground_value`` is eroded with ``background_value``.
+        Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
+        filter.
 
         Parameters
         ----------
@@ -1358,11 +1397,25 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], default: False
+        binary : bool | VectorLike[float], optional
+            Control if binary erosion or continuous erosion is used.
+
             If set, :vtk:`vtkImageDilateErode3D` is used to strictly erode with two values.
             Set this to ``True`` to erode the maximum value in ``scalars`` with its minimum value,
             or set it to two values ``[background_value, foreground_value]`` to erode
             ``foreground_value`` with ``background_value`` explicitly.
+
+            Set this to ``False`` to use :vtk:`vtkImageContinuousErode3D` to perform continuous
+            erosion.
+
+            By default, ``binary`` is `True`` if the input only has two values, and ``False``
+            otherwise.
+
+            .. note::
+                - If the input is a binary mask, setting ``binary=True`` produces the same output
+                  as `binary=False``, but the filter is much more performant.
+                - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
+                  the erosion to two values, e.g. for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1449,12 +1502,13 @@ class ImageDataFilters(DataSetFilters):
 
         """
         association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
         operation: Literal['erosion'] = 'erosion'
         alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
-            binary=binary,
+            binary_values=binary_values,
             operation=operation,
         )
         return ImageDataFilters._get_alg_output_from_input(
@@ -1517,12 +1571,14 @@ class ImageDataFilters(DataSetFilters):
         # Note: we need to configure both algorithms before getting the output since
         # the selected erosion/dilation values may be affected by the alg update
         association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
+
         erosion: Literal['erosion'] = 'erosion'
         erosion_alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
-            binary=binary,
+            binary_values=binary_values,
             operation=erosion,
         )
 
@@ -1531,7 +1587,7 @@ class ImageDataFilters(DataSetFilters):
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
-            binary=binary,
+            binary_values=binary_values,
             operation=dilation,
         )
 
@@ -1599,12 +1655,14 @@ class ImageDataFilters(DataSetFilters):
         # Note: we need to configure both algorithms before getting the output since
         # the selected erosion/dilation values may be affected by the alg update
         association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
+
         dilation: Literal['dilation'] = 'dilation'
         dilation_alg = self._configure_dilate_erode_alg(
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
-            binary=binary,
+            binary_values=binary_values,
             operation=dilation,
         )
 
@@ -1613,7 +1671,7 @@ class ImageDataFilters(DataSetFilters):
             kernel_size=kernel_size,
             scalars=scalars,
             association=association,
-            binary=binary,
+            binary_values=binary_values,
             operation=erosion,
         )
 
