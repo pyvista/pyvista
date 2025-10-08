@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import sys
 
+import pytest
 from pytest_cases import parametrize
 
 import pyvista as pv
@@ -22,6 +23,7 @@ from pyvista.__main__ import main
 )
 @parametrize(as_script=[True, False])
 @parametrize(with_main=[True, False])
+@pytest.mark.no_default_theme
 def test_plot(tmp_path: Path, tokens_kwargs: tuple[str, dict], as_script: bool, with_main: bool):
     """
     Test a real call to `pv.plot` using CLI and compare images to a Plotter output.
