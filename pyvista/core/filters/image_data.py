@@ -1281,6 +1281,10 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Dataset that has been dilated.
 
+        See Also
+        --------
+        erode, open, close
+
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
@@ -1422,6 +1426,10 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Dataset that has been eroded.
 
+        See Also
+        --------
+        dilate, open, close
+
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
@@ -1546,6 +1554,10 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Dataset that has been opened.
 
+        See Also
+        --------
+        close, erode, dilate
+
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
@@ -1645,6 +1657,10 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             Dataset that has been closed.
+
+        See Also
+        --------
+        close, erode, dilate
 
         Notes
         -----
