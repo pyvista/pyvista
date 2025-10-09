@@ -1982,6 +1982,32 @@ def test_close():
     assert reshaped[5, 5, 5] == 1
 
 
+@pytest.mark.parametrize('binary', [True, False])
+def test_morphological_filters_bool(binary):
+    im = pv.ImageData(dimensions=(2, 1, 1))
+    im['data'] = np.array((True, False), dtype=bool)
+    eroded = im.erode(binary=binary)
+    assert eroded['data'].dtype == bool
+    assert np.array_equal(eroded['data'], [False, False])
+
+
+def test_morphological_filters_single_value():
+    im = pv.ImageData(dimensions=(1, 1, 1))
+    value = 42.0
+    im['data'] = np.array((value,), dtype=float)
+    eroded = im.erode()
+    assert eroded['data'].dtype == float
+    assert np.array_equal(eroded['data'], [value])
+
+
+def test_morphological_filters_float():
+    im = pv.ImageData(dimensions=(3, 1, 1))
+    im['data'] = [1.0, 2.0, 3.0]
+    eroded = im.erode()
+    assert eroded['data'].dtype == float
+    assert np.array_equal(eroded['data'], [1.0, 1.0, 2.0])
+
+
 def test_morphological_filters_with_scalars():
     """Test morphological filters with specified scalars."""
     volume = pv.ImageData(dimensions=(5, 5, 5))

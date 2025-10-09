@@ -953,7 +953,9 @@ class DataSet(DataSetFilters, DataObject):
         # If array has no tuples return a NaN range
         if arr is None:
             return (np.nan, np.nan)
-        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not (
+            np.issubdtype(arr.dtype, np.number) or np.issubdtype(arr.dtype, np.bool_)
+        ):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
