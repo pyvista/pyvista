@@ -17,6 +17,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
+  'cyclopts>=3.24.0',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',
   'pillow',
@@ -459,7 +460,6 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests/*' = ['D']
 'pyvista/__init__.py' = ['ANN']
-'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']
