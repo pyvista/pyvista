@@ -1132,7 +1132,7 @@ class ImageDataFilters(DataSetFilters):
             min_val, max_val = self.get_data_range(scalars, association)
             # Binary if bool or two adjacent integers or two unique values
             # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
-            if array.dtype == np.bool or (
+            if array.dtype == np.bool_ or (
                 np.issubdtype(array.dtype, np.integer) and (max_val - min_val) == 1
             ):
                 return min_val, max_val
