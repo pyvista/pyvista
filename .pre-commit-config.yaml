@@ -48,7 +48,7 @@ repos:
         args: [--branch, main]
       - id: requirements-txt-fixer
       - id: trailing-whitespace
-        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
+        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv|tests/test_cli\.py)
       - id: check-docstring-first
       - id: end-of-file-fixer
         exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)

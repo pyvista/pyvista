@@ -571,6 +571,11 @@ def test_report():
     assert 'User Data Path' not in report.__repr__()
 
 
+def test_report_warnings():
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        pv.Report('vtk', 4, 90, True)
+
+
 REPORT = str(pv.Report(gpu=False))
 
 
