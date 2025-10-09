@@ -1264,7 +1264,7 @@ class ImageDataFilters(DataSetFilters):
             Set this to ``False`` to use :vtk:`vtkImageContinuousDilate3D` to perform continuous
             dilation.
 
-            By default, ``binary`` is ``True`` if the input only has two values, and ``False``
+            By default, ``binary`` is ``True`` if the input has two unique values, and ``False``
             otherwise.
 
             .. note::
@@ -1409,7 +1409,7 @@ class ImageDataFilters(DataSetFilters):
             Set this to ``False`` to use :vtk:`vtkImageContinuousErode3D` to perform continuous
             erosion.
 
-            By default, ``binary`` is ``True`` if the input only has two values, and ``False``
+            By default, ``binary`` is ``True`` if the input has two unique values, and ``False``
             otherwise.
 
             .. note::
