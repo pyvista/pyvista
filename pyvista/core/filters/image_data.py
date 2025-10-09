@@ -1705,6 +1705,12 @@ class ImageDataFilters(DataSetFilters):
         >>> closed = im.close(kernel_size=25)
         >>> closed.plot(**kwargs)
 
+        Since closing is the inverse of opening, we can alternatively use :meth:`open` to
+        fill the white foreground values instead of the black background.
+
+        >>> opened = im.open(kernel_size=25)
+        >>> opened.plot(**kwargs)
+
         """
         # Closing: dilation followed by erosion
         # Note: we need to configure both algorithms before getting the output since
