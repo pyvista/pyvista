@@ -1264,12 +1264,12 @@ class ImageDataFilters(DataSetFilters):
             Set this to ``False`` to use :vtk:`vtkImageContinuousDilate3D` to perform continuous
             dilation.
 
-            By default, ``binary`` is `True`` if the input only has two values, and ``False``
+            By default, ``binary`` is ``True`` if the input only has two values, and ``False``
             otherwise.
 
             .. note::
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
-                  as `binary=False``, but the filter is much more performant.
+                  as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
                   the erosion to two values, e.g. for multi-label segmentation masks.
 
@@ -1409,12 +1409,12 @@ class ImageDataFilters(DataSetFilters):
             Set this to ``False`` to use :vtk:`vtkImageContinuousErode3D` to perform continuous
             erosion.
 
-            By default, ``binary`` is `True`` if the input only has two values, and ``False``
+            By default, ``binary`` is ``True`` if the input only has two values, and ``False``
             otherwise.
 
             .. note::
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
-                  as `binary=False``, but the filter is much more performant.
+                  as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
                   the erosion to two values, e.g. for multi-label segmentation masks.
 
