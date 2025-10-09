@@ -1230,7 +1230,7 @@ class ImageDataFilters(DataSetFilters):
         binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
-        """Dilate grayscale or binary data.
+        """Morphologically dilate grayscale or binary data.
 
         This filter may be used to dilate grayscale images with continuous data, binary images
         with a single background and foreground value, or multi-label images.
@@ -1371,7 +1371,7 @@ class ImageDataFilters(DataSetFilters):
         binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
-        """Erode grayscale or binary data.
+        """Morphologically erode grayscale or binary data.
 
         This filter may be used to erode grayscale images with continuous data, binary images
         with a single background and foreground value, or multi-label images.
@@ -1518,21 +1518,25 @@ class ImageDataFilters(DataSetFilters):
         binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
-        """Perform morphological opening on the image data.
+        """Perform morphological opening on continuous or binary data.
 
-        Opening is an erosion followed by a dilation. It is used to remove
-        small objects/noise while preserving the shape and size of larger objects.
+        Opening is an :meth:`erosion <erode>` followed by a :meth:`dilation <dilate>`.
+        It is used to remove small objects/noise while preserving the shape and size of larger
+        objects.
 
         Parameters
         ----------
-        kernel_size : sequence[int], default: (3, 3, 3)
-            Determines the size of the kernel along the three axes.
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are opened, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary
-            Binary or not.
+        binary : bool | VectorLike[float], optional
+            Control if binary opening or continuous opening is used. Refer to
+            :meth:`erode` and/or :meth:`dilate` for details about using this keyword.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1552,14 +1556,27 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Perform morphological opening on a binary image.
+        Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
+        for context.
 
-        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> uni = examples.load_uniform()
-        >>> ithresh = uni.image_threshold([400, 600])
-        >>> opened = ithresh.open()
-        >>> opened.plot()
+        >>> im = examples.download_chest()
+        >>> clim = im.get_data_range()
+        >>> kwargs = dict(
+        ...     cmap='grey',
+        ...     clim=clim,
+        ...     lighting=False,
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     show_axes=False,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> im.plot(**kwargs)
+
+        Use ``open`` to remove small objects in the lungs.
+
+        >>> opened = im.open(kernel_size=15)
+        >>> opened.plot(**kwargs)
 
         """
         # Opening: erosion followed by dilation
@@ -1602,21 +1619,24 @@ class ImageDataFilters(DataSetFilters):
         binary: bool | VectorLike[float] = False,
         progress_bar: bool = False,
     ):
-        """Perform morphological closing on the image data.
+        """Perform morphological closing on continuous or binary data.
 
-        Closing is a dilation followed by an erosion. It is used to fill
-        small holes/gaps while preserving the shape and size of larger objects.
+        Closing is a :meth:`dilation <dilate>` followed by an :meth:`erosion <erode>`.
+        It is used to fill small holes/gaps while preserving the shape and size of larger objects.
 
         Parameters
         ----------
-        kernel_size : sequence[int], default: (3, 3, 3)
-            Determines the size of the kernel along the three axes.
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are closed, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary
-            Binary or not.
+        binary : bool | VectorLike[float], optional
+            Control if binary closing or continuous closing is used. Refer to
+            :meth:`dilate` and/or :meth:`erode` for details about using this keyword.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1636,14 +1656,28 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Perform morphological closing on a binary image.
+        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
 
-        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> uni = examples.load_uniform()
-        >>> ithresh = uni.image_threshold([400, 600])
-        >>> closed = ithresh.close()
-        >>> closed.plot()
+        >>> im = examples.download_yinyang()
+
+        Use ``close`` with a relatively small kernel to fill the bottom black edge of the yinyang.
+
+        >>> closed = im.close(kernel_size=5)
+        >>> kwargs = dict(
+        ...     cmap='grey',
+        ...     lighting=False,
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     show_axes=False,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> closed.plot(**kwargs)
+
+        Use a much larger kernel to also fill the small black circle.
+
+        >>> closed = im.close(kernel_size=25)
+        >>> closed.plot(**kwargs)
 
         """
         # Closing: dilation followed by erosion
