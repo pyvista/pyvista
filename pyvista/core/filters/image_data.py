@@ -1129,7 +1129,7 @@ class ImageDataFilters(DataSetFilters):
         if binary is None:
             # Value is unset, so check if the scalars are actually binary
             array = self.get_array(scalars, association)
-            min_val, max_val = self.get_data_range(scalars, association)
+            min_val, max_val = self.get_data_range(array)
             # Binary if bool or two adjacent integers or two unique values
             # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
             if array.dtype == np.bool_ or (
