@@ -914,7 +914,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ... )
 
         """
-        return _vtk.vtk_to_numpy(self.GetVerts().GetData())
+        self.GetVerts().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr)
 
     @verts.setter
     def verts(self, verts: CellArrayLike) -> None:
@@ -941,7 +942,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
 
         """
-        return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
+        self.GetLines().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr).ravel()
 
     @lines.setter
     def lines(self, lines: CellArrayLike) -> None:
@@ -1013,7 +1015,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([3, 0, 1, 2, 3, 3, 2, 1])
 
         """
-        array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        self.GetPolys().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        array = _vtk.vtk_to_numpy(arr)
         # Flag this array as read only to ensure users do not attempt to write to it.
         array.flags['WRITEABLE'] = False
         return array
@@ -1209,7 +1212,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
 
         """
-        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+        self.GetStrips().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr)
 
     @strips.setter
     def strips(self, strips: CellArrayLike) -> None:
@@ -2061,7 +2065,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         # Flag this array as read only to ensure users do not attempt to write to it.
-        array = _vtk.vtk_to_numpy(self._get_cells().GetData())
+        self._get_cells().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        array = _vtk.vtk_to_numpy(arr)
         array.flags['WRITEABLE'] = False
         return array
 
@@ -2129,7 +2134,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces = self.GetPolyhedronFaces()  # vtkCellArray
             if faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
-            return convert_array(faces.GetData())
+
+            faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+            return convert_array(arr)
 
     @property
     def face_locations(self) -> NumpyArray[int]:
@@ -2193,7 +2200,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
             if faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
-            return convert_array(faces.GetData())
+
+            faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+            return convert_array(arr)
 
     @property
     def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
