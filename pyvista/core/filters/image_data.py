@@ -1320,6 +1320,7 @@ class ImageDataFilters(DataSetFilters):
             ...     )
             ...     pl.camera_position = 'xy'
             ...     pl.camera.tight()
+            ...     pl.enable_anti_aliasing()
             ...     return pl
 
             Show the image.
@@ -1474,6 +1475,7 @@ class ImageDataFilters(DataSetFilters):
             ...     )
             ...     pl.camera_position = 'xy'
             ...     pl.camera.tight()
+            ...     pl.enable_anti_aliasing()
             ...     return pl
 
             Show the image.
