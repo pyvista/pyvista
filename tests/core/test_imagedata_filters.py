@@ -1901,7 +1901,6 @@ def test_erode():
     )
 
 
-
 @pytest.mark.parametrize('binary', [True, False, [MORPHOLOGICAL_MIN_VAL, MORPHOLOGICAL_MAX_VAL]])
 def test_dilate_binary(binary):
     """Test the dilate method with binary option."""
