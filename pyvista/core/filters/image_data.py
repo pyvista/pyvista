@@ -1295,64 +1295,67 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Create a toy example with two non-zero grayscale foreground values
-        :meth:`padded <pad_image>` with a background of zeros.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> im = pv.ImageData(dimensions=(2, 1, 1))
-        >>> im['data'] = [128, 255]
-        >>> im = im.pad_image(pad_value=0, pad_size=2, dimensionality=2)
+            Create a toy example with two non-zero grayscale foreground values
+            :meth:`padded <pad_image>` with a background of zeros.
 
-        Define a custom plotter to plot pixels as cells.
+            >>> import pyvista as pv
+            >>> im = pv.ImageData(dimensions=(2, 1, 1))
+            >>> im['data'] = [128, 255]
+            >>> im = im.pad_image(pad_value=0, pad_size=2, dimensionality=2)
 
-        >>> def image_plotter(image):
-        ...     pl = pv.Plotter()
-        ...     pl.add_mesh(
-        ...         image.points_to_cells(),
-        ...         cmap='grey',
-        ...         clim=[0, 255],
-        ...         show_scalar_bar=False,
-        ...         show_edges=True,
-        ...         lighting=False,
-        ...     )
-        ...     pl.camera_position = 'xy'
-        ...     pl.camera.tight()
-        ...     return pl
+            Define a custom plotter to plot pixels as cells.
 
-        Show the image.
+            >>> def image_plotter(image):
+            ...     pl = pv.Plotter()
+            ...     pl.add_mesh(
+            ...         image.points_to_cells(),
+            ...         cmap='grey',
+            ...         clim=[0, 255],
+            ...         show_scalar_bar=False,
+            ...         show_edges=True,
+            ...         lighting=False,
+            ...     )
+            ...     pl.camera_position = 'xy'
+            ...     pl.camera.tight()
+            ...     return pl
 
-        >>> image_plotter(im).show()
+            Show the image.
 
-        Dilate it with default settings. Observe that `both` foreground values are dilated.
+            >>> image_plotter(im).show()
 
-        >>> dilated = im.dilate()
-        >>> image_plotter(dilated).show()
+            Dilate it with default settings. Observe that `both` foreground values are dilated.
 
-        Use a larger kernel size.
+            >>> dilated = im.dilate()
+            >>> image_plotter(dilated).show()
 
-        >>> dilated = im.dilate(kernel_size=5)
-        >>> image_plotter(dilated).show()
+            Use a larger kernel size.
 
-        Use an asymmetric kernel.
+            >>> dilated = im.dilate(kernel_size=5)
+            >>> image_plotter(dilated).show()
 
-        >>> dilated = im.dilate(kernel_size=(2, 4, 1))
-        >>> image_plotter(dilated).show()
+            Use an asymmetric kernel.
 
-        Use binary dilation. By default, the max value (``255`` in this example) is dilated
-        with the min value (``0`` in this example). All other values are unaffected.
+            >>> dilated = im.dilate(kernel_size=(2, 4, 1))
+            >>> image_plotter(dilated).show()
 
-        >>> dilated = im.dilate(binary=True)
-        >>> image_plotter(dilated).show()
+            Use binary dilation. By default, the max value (``255`` in this example) is dilated
+            with the min value (``0`` in this example). All other values are unaffected.
 
-        Equivalently, set the binary values for the dilation explicitly.
+            >>> dilated = im.dilate(binary=True)
+            >>> image_plotter(dilated).show()
 
-        >>> dilated = im.dilate(binary=[0, 255])
-        >>> image_plotter(dilated).show()
+            Equivalently, set the binary values for the dilation explicitly.
 
-        Use binary dilation with the other foreground value instead.
+            >>> dilated = im.dilate(binary=[0, 255])
+            >>> image_plotter(dilated).show()
 
-        >>> dilated = im.dilate(binary=[0, 128])
-        >>> image_plotter(dilated).show()
+            Use binary dilation with the other foreground value instead.
+
+            >>> dilated = im.dilate(binary=[0, 128])
+            >>> image_plotter(dilated).show()
 
         """
         association, scalars = self._validate_point_scalars(scalars)
@@ -1440,70 +1443,73 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Create a toy example with two non-zero grayscale foreground regions
-        using :meth:`pad_image`.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> # Create an initial background point
-        >>> im = pv.ImageData(dimensions=(1, 1, 1))
-        >>> im['data'] = [0]
-        >>> # Add a foreground region
-        >>> im = im.pad_image(pad_value=255, pad_size=(4, 3), dimensionality=2)
-        >>> # Add a second foreground region
-        >>> im = im.pad_image(pad_value=128, pad_size=(2, 0, 1, 0))
-        >>> # Add background values to two sides
-        >>> im = im.pad_image(pad_value=0, pad_size=(1, 0))
+            Create a toy example with two non-zero grayscale foreground regions
+            using :meth:`pad_image`.
 
-        Define a custom plotter to plot pixels as cells.
+            >>> import pyvista as pv
+            >>> # Create an initial background point
+            >>> im = pv.ImageData(dimensions=(1, 1, 1))
+            >>> im['data'] = [0]
+            >>> # Add a foreground region
+            >>> im = im.pad_image(pad_value=255, pad_size=(4, 3), dimensionality=2)
+            >>> # Add a second foreground region
+            >>> im = im.pad_image(pad_value=128, pad_size=(2, 0, 1, 0))
+            >>> # Add background values to two sides
+            >>> im = im.pad_image(pad_value=0, pad_size=(1, 0))
 
-        >>> def image_plotter(image):
-        ...     pl = pv.Plotter()
-        ...     pl.add_mesh(
-        ...         image.points_to_cells(),
-        ...         cmap='grey',
-        ...         clim=[0, 255],
-        ...         show_scalar_bar=False,
-        ...         show_edges=True,
-        ...         lighting=False,
-        ...     )
-        ...     pl.camera_position = 'xy'
-        ...     pl.camera.tight()
-        ...     return pl
+            Define a custom plotter to plot pixels as cells.
 
-        Show the image.
+            >>> def image_plotter(image):
+            ...     pl = pv.Plotter()
+            ...     pl.add_mesh(
+            ...         image.points_to_cells(),
+            ...         cmap='grey',
+            ...         clim=[0, 255],
+            ...         show_scalar_bar=False,
+            ...         show_edges=True,
+            ...         lighting=False,
+            ...     )
+            ...     pl.camera_position = 'xy'
+            ...     pl.camera.tight()
+            ...     return pl
 
-        >>> image_plotter(im).show()
+            Show the image.
 
-        Erode it with default settings. Observe that `both` foreground values are eroded.
+            >>> image_plotter(im).show()
 
-        >>> eroded = im.erode()
-        >>> image_plotter(eroded).show()
+            Erode it with default settings. Observe that `both` foreground values are eroded.
 
-        Use a larger kernel size.
+            >>> eroded = im.erode()
+            >>> image_plotter(eroded).show()
 
-        >>> eroded = im.erode(kernel_size=5)
-        >>> image_plotter(eroded).show()
+            Use a larger kernel size.
 
-        Use an asymmetric kernel.
+            >>> eroded = im.erode(kernel_size=5)
+            >>> image_plotter(eroded).show()
 
-        >>> eroded = im.erode(kernel_size=(2, 4, 1))
-        >>> image_plotter(eroded).show()
+            Use an asymmetric kernel.
 
-        Use binary erosion. By default, the max value (``255`` in this example) is eroded
-        with the min value (``0`` in this example). All other values are unaffected.
+            >>> eroded = im.erode(kernel_size=(2, 4, 1))
+            >>> image_plotter(eroded).show()
 
-        >>> eroded = im.erode(binary=True)
-        >>> image_plotter(eroded).show()
+            Use binary erosion. By default, the max value (``255`` in this example) is eroded
+            with the min value (``0`` in this example). All other values are unaffected.
 
-        Equivalently, set the binary values for the erosion explicitly.
+            >>> eroded = im.erode(binary=True)
+            >>> image_plotter(eroded).show()
 
-        >>> eroded = im.erode(binary=[0, 255])
-        >>> image_plotter(eroded).show()
+            Equivalently, set the binary values for the erosion explicitly.
 
-        Use binary erosion with the other foreground value instead.
+            >>> eroded = im.erode(binary=[0, 255])
+            >>> image_plotter(eroded).show()
 
-        >>> eroded = im.erode(binary=[0, 128])
-        >>> image_plotter(eroded).show()
+            Use binary erosion with the other foreground value instead.
+
+            >>> eroded = im.erode(binary=[0, 128])
+            >>> image_plotter(eroded).show()
 
         """
         association, scalars = self._validate_point_scalars(scalars)
