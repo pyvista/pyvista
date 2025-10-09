@@ -351,6 +351,16 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
     pyvista.set_new_attribute
         Function for setting any new attribute on a PyVista object.
 
+    Notes
+    -----
+    Allowing new attributes by default outside ``__init__`` and/or without formally defining
+    class properties was found to be a source of bugs for both developers and users of PyVista.
+    It's very easy to set the wrong attribute name (e.g. ``interpolate`` vs. ``interpolation``)
+    without any errors being generated, and users transitioning from older versions of PyVista
+    would have code that sets attributes which were once valid, but have since been deprecated and
+    removed. Attempting to set an attribute which is not already defined now raises an
+    ``AttributeError`` to clearly signal that there is a potential problem with this line of code.
+
     Examples
     --------
     Get the default attribute mode.
