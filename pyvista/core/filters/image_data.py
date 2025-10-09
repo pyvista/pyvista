@@ -3918,9 +3918,11 @@ class ImageDataFilters(DataSetFilters):
         ...         cmap='grey',
         ...         clim=clim,
         ...         show_scalar_bar=False,
+        ...         line_width=3,
         ...     )
         ...     pl.view_xy()
         ...     pl.camera.tight()
+        ...     pl.enable_anti_aliasing()
         ...     return pl
 
         Show the image.
