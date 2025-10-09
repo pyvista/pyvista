@@ -2933,7 +2933,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             culling,
             name,
             nan_color,
-            texture,
+            _texture,
             rgb,
             interpolation,
             remove_existing_actor,

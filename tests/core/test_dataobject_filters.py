@@ -209,7 +209,7 @@ def test_clip_empty(crinkle):
     out = pv.PolyData().clip(crinkle=crinkle, return_clipped=False)
     assert out.is_empty
 
-    out1, out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
+    out1, _out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
     assert out1.is_empty
 
     out = pv.PolyData().clip_box(crinkle=crinkle)

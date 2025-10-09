@@ -146,7 +146,7 @@ def test_scraper_raise(tmpdir):
     assert not Path(img_fname).is_file()
     Path(out_dir).mkdir(parents=True)
 
-    with pytest.raises(RuntimeError, match='pyvista.BUILDING_GALLERY'):
+    with pytest.raises(RuntimeError, match=r'pyvista.BUILDING_GALLERY'):
         scraper(block, block_vars, gallery_conf)
 
     plotter.close()

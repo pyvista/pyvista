@@ -123,13 +123,13 @@ def test_progress_monitor_raises(mocker: MockerFixture):
 
     with pytest.raises(
         ImportError,
-        match='Please install `tqdm` to monitor algorithms.',
+        match=r'Please install `tqdm` to monitor algorithms.',
     ):
         ProgressMonitor('algo')
 
 
 def test_create_grid_raises():
-    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+    with pytest.raises(NotImplementedError, match=r'Please specify dimensions.'):
         create_grid(pv.Sphere(), dimensions=None)
 
 
@@ -375,7 +375,7 @@ def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
     # use the globefile as a dummy because pv.read() checks for the existence of the file
     pv.read(ex.globefile, force_ext='.e')
-    args, kwargs = read_exodus_mock.call_args
+    args, _kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == Path(ex.globefile)
 
@@ -741,7 +741,7 @@ def test_observer():
 
 @pytest.mark.parametrize('point', [1, object(), None])
 def test_valid_vector_raises(point):
-    with pytest.raises(TypeError, match='foo must be a length three iterable of floats.'):
+    with pytest.raises(TypeError, match=r'foo must be a length three iterable of floats.'):
         check_valid_vector(point=point, name='foo')
 
 
@@ -768,7 +768,7 @@ def test_annotated_int_enum_from_any_raises(value):
 def test_lines_segments_from_points(points):
     with pytest.raises(
         ValueError,
-        match='An even number of points must be given to define each segment.',
+        match=r'An even number of points must be given to define each segment.',
     ):
         line_segments_from_points(points=points)
 
@@ -952,7 +952,7 @@ def test_merge(sphere, cube, datasets):
     with pytest.raises(ValueError, match='Expected at least one'):
         pv.merge([])
 
-    with pytest.raises(TypeError, match='Expected pyvista.DataSet'):
+    with pytest.raises(TypeError, match=r'Expected pyvista.DataSet'):
         pv.merge([None, sphere])
 
     # check polydata
@@ -2329,7 +2329,7 @@ def test_parse_interaction_event(
 def test_parse_interaction_event_raises_str():
     with pytest.raises(
         ValueError,
-        match='Expected.*start.*end.*always.*foo was given',
+        match=r'Expected.*start.*end.*always.*foo was given',
     ):
         _parse_interaction_event('foo')
 
@@ -2337,7 +2337,7 @@ def test_parse_interaction_event_raises_str():
 def test_parse_interaction_event_raises_wrong_type():
     with pytest.raises(
         TypeError,
-        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+        match=r'.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
     ):
         _parse_interaction_event(1)
 
