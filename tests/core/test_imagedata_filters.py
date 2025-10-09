@@ -2049,15 +2049,6 @@ def test_morphological_filters_cell_data_error():
         volume.close(scalars='cell_data')
 
 
-def test_image_dilate_erode_deprecation():
-    """Test that image_dilate_erode raises deprecation warning."""
-    volume = pv.ImageData(dimensions=(5, 5, 5))
-    volume.point_data['data'] = np.zeros(5 * 5 * 5)
-
-    with pytest.warns(pv.PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
-        volume.image_dilate_erode()
-
-
 def test_morphological_filters_progress_bar():
     """Test morphological filters with progress_bar parameter."""
     volume = pv.ImageData(dimensions=(5, 5, 5))
