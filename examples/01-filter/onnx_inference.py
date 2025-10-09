@@ -246,7 +246,7 @@ def inverse_problem_example(stress_threshold=100e6):
     return result.x
 
 
-optimal_force = inverse_problem_example(mesh)
+optimal_force = inverse_problem_example()
 print('\nInverse Problem Solution:')
 print(f'Maximum safe force: {optimal_force:.1f} N')
 print('(Keeps stress below 100 MPa threshold)')
