@@ -1982,7 +1982,7 @@ def test_close():
     assert reshaped[5, 5, 5] == 1
 
 
-@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('binary', [True, False, None])
 def test_morphological_filters_bool(binary):
     im = pv.ImageData(dimensions=(2, 1, 1))
     im['data'] = np.array((True, False), dtype=bool)
