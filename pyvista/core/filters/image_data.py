@@ -1317,6 +1317,7 @@ class ImageDataFilters(DataSetFilters):
             ...         show_scalar_bar=False,
             ...         show_edges=True,
             ...         lighting=False,
+            ...         line_width=3,
             ...     )
             ...     pl.camera_position = 'xy'
             ...     pl.camera.tight()
@@ -1472,6 +1473,7 @@ class ImageDataFilters(DataSetFilters):
             ...         show_scalar_bar=False,
             ...         show_edges=True,
             ...         lighting=False,
+            ...         line_width=3,
             ...     )
             ...     pl.camera_position = 'xy'
             ...     pl.camera.tight()
