@@ -1271,7 +1271,7 @@ class ImageDataFilters(DataSetFilters):
                 - If the input is a binary mask, setting ``binary=True`` produces the same output
                   as ``binary=False``, but the filter is much more performant.
                 - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the erosion to two values, e.g. for multi-label segmentation masks.
+                  the dilation to two values, e.g. for multi-label segmentation masks.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
