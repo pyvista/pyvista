@@ -1090,6 +1090,16 @@ def test_get_data_range(hexbeam):
     assert np.allclose(rng, (1, 40))
 
 
+def test_get_data_range_bool():
+    mesh = pv.ImageData(dimensions=(2, 1, 1))
+    mesh['data'] = [True, False]
+    assert mesh['data'].dtype == bool
+    rng = mesh.get_data_range()
+    assert rng[0].dtype == bool
+    assert rng[1].dtype == bool
+    assert rng == (np.bool_(False), np.bool_(True))
+
+
 def test_actual_memory_size(hexbeam):
     size = hexbeam.actual_memory_size
     assert isinstance(size, int)

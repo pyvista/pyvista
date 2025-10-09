@@ -16,7 +16,6 @@ from itertools import starmap
 import os
 from pathlib import Path
 import re
-import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
@@ -41,6 +40,7 @@ from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
+from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
@@ -53,16 +53,6 @@ from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
 from pyvista.plotting.colors import _VTK_COLORS
 from pyvista.plotting.colors import _format_color_dict
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        def __str__(self) -> str:
-            return self.value
-
 
 if TYPE_CHECKING:
     from types import FunctionType

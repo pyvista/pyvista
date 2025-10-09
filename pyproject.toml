@@ -17,6 +17,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
+  'cyclopts>=3.24.0',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',
   'pillow',
@@ -43,7 +44,7 @@ io = ['imageio', 'meshio>=5.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
-  'nest_asyncio',
+  'nest-asyncio',
   'trame-client>=2.12.7',
   'trame-server>=2.11.7',
   'trame-vtk>=2.5.8',
@@ -80,24 +81,24 @@ test = [
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'meshio<5.4.0',
-  'nest_asyncio<1.6.1',
+  'nest-asyncio<1.6.1',
   'numpydoc<1.10.0',
   'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
-  'pytest-cov<6.3.0',
+  'pytest-cases<3.10.0',
+  'pytest-cov<7.1.0',
+  'pytest-mock<3.16.0',
   'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.2.0',
   'pytest-xdist<3.9.0',
   'pytest<8.5.0',
-  'pytest_cases<3.10.0',
-  'pytest_mock<3.15.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
+  'sphinx-design<0.7.0',
   'sphinx-gallery<0.20.0',
   'sphinx<8.3.0',
-  'sphinx_design<0.7.0',
   'sympy<1.15.0',
   'tqdm<4.68.0',
   'trame-vtk>=2.5.8,<2.9.1',
@@ -118,7 +119,7 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'joblib==1.5.2',
-  'jupyter_sphinx==0.5.3',
+  'jupyter-sphinx==0.5.3',
   'jupyterlab==4.4.9',
   'lxml==6.0.2',
   'meshio==5.3.5',
@@ -220,6 +221,7 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
+run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
@@ -458,7 +460,6 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests/*' = ['D']
 'pyvista/__init__.py' = ['ANN']
-'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']

@@ -107,21 +107,21 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.MultiBlock(), 'foo'
+    m.return_value = pv.MultiBlock(), {}
 
     pl = pv.Plotter()
     match = re.escape(
         'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
     )
     with pytest.raises(TypeError, match=match):
-        pl.add_mesh('foo')
+        pl.add_mesh({})
 
 
 def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), 'foo'
+    m.return_value = pv.PolyData(), {}
 
     pl = pv.Plotter()
     with pytest.raises(
@@ -130,7 +130,7 @@ def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
             'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
         ),
     ):
-        pl.add_mesh('foo', smooth_shading=True)
+        pl.add_mesh({}, smooth_shading=True)
 
 
 def test_plotter_add_mesh_scalars_rgb_raises():
@@ -605,6 +605,20 @@ def test_add_multiple(sphere):
     pl.add_mesh(sphere, scalars='data', copy_mesh=True)
     pl.show()
     assert sphere.n_arrays == 1
+
+
+@pytest.mark.parametrize('input_type', [str, Path])
+def test_add_mesh_from_file(input_type):
+    file = input_type(pv.examples.antfile)
+    pl1 = pv.Plotter()
+    pl1.add_mesh(file)
+    screenshot1 = pl1.screenshot(return_img=True)
+
+    pl2 = pv.Plotter()
+    pl2.add_mesh(pv.read(file))
+    screenshot2 = pl2.screenshot(return_img=True)
+
+    assert pv.compare_images(screenshot1, screenshot2) < 1.0
 
 
 def test_deep_clean(cube):
