@@ -1661,7 +1661,7 @@ class ImageDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>> im = examples.download_yinyang()
 
-        Use ``close`` with a relatively small kernel to fill the bottom black edge of the yinyang.
+        Use ``close`` with a relatively small kernel to fill the top black edge of the yinyang.
 
         >>> closed = im.close(kernel_size=5)
         >>> kwargs = dict(
