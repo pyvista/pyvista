@@ -27,8 +27,12 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: A
     if ('plotting' in env_conf.name) and os.environ['RUNNER_OS'] == 'Linux':
         # Test the vtk version from TOX_FACTOR env variable
         reg = re.compile('.*-vtk_(.*)$')
-        if not (m := re.match(reg, os.environ['TOX_FACTOR'])):
+        if not (factor := os.environ.get('TOX_FACTOR')):
             return
+
+        if not (m := re.match(reg, factor)):
+            msg = 'The `TOX_FACTOR` env variable is malformed. Could not get the vtk version.'
+            raise ValueError(msg)
 
         vtk_version = m.group(1)
         val = '-n4' if vtk_version == 'latest' or Version(vtk_version) >= Version('9.4.0') else ''
