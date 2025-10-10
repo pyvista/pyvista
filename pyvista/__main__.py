@@ -10,7 +10,6 @@ from typing import Annotated
 from typing import Any
 from typing import Literal
 from typing import NoReturn
-from typing import cast
 from typing import get_type_hints
 import warnings
 
@@ -48,16 +47,29 @@ app = App(
 )
 
 
+def _console_error(message: str | Group, title: str = 'PyVista Error') -> NoReturn:
+    panel = Panel(
+        message,
+        title=title,
+        style='bold red',
+        box=box.ROUNDED,
+        expand=True,
+        title_align='left',
+    )
+    app.console.print(panel)  # type: ignore [union-attr]
+    raise SystemExit(1)
+
+
 @app.command
 @wraps(Report)
-def report(*args, **kwargs):  # noqa: ANN201, D103
+def _report(*args, **kwargs) -> Report:
     return Report(*args, **kwargs)
 
 
 @app.command(
     usage=f'Usage: [bold]{pyvista.__name__} convert input_file output_spec',
 )
-def convert(
+def _convert(
     file_in: Annotated[
         str,
         Parameter(
@@ -93,20 +105,6 @@ def convert(
         # → bar/foo.xyz
 
     """
-    console: Console = cast('Console', app.console)
-
-    def console_error(message: str, title: str = 'Error') -> NoReturn:
-        panel = Panel(
-            message,
-            title=title,
-            style='bold red',
-            box=box.ROUNDED,
-            expand=True,
-            title_align='left',
-        )
-        console.print(panel)
-        raise SystemExit(1)
-
     out_spec_path = Path(file_out)
 
     # Parse output specification
@@ -127,9 +125,9 @@ def convert(
     try:
         mesh.save(out_path)
     except Exception as e:  # noqa: BLE001
-        console_error(f'Failed to save output file:\n{e}', title='Write error')
+        _console_error(f'Failed to save output file:\n{e}')
 
-    console.print(f'[green]Saved:[/green] {out_path}')
+    app.console.print(f'[green]Saved:[/green] {out_path}')  # type: ignore [union-attr]
 
 
 def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
@@ -292,7 +290,7 @@ def _plot(
             **kwargs,
         )
 
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001
         # Prevent traceback and output error along with help message
         app.help_print(tokens='plot')
 
@@ -305,17 +303,7 @@ def _plot(
             NewLine(),
             Text('Please check the provided arguments.'),
         )
-        panel = Panel(
-            msg,
-            title='Pyvista error',
-            style='red',
-            box=box.ROUNDED,
-            expand=True,
-            title_align='left',
-        )
-
-        app.console.print(panel)  # type: ignore [union-attr]
-        raise SystemExit(1) from ex
+        _console_error(msg)
     else:
         return res
 
