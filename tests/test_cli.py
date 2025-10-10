@@ -261,6 +261,26 @@ def test_convert_save_error(tmp_ant_file, capsys):
     assert e.value.code == 1
 
 
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_help(capsys: pytest.CaptureFixture):
+    main('convert --help')
+
+    expected = textwrap.dedent(
+        """\
+            Usage: pyvista convert FILE-IN FILE-OUT
+
+            Convert a mesh file to another format. Examples:
+            
+            $ pyvista convert foo.abc bar.xyz
+            Saved: bar.xyz
+            
+            $ pyvista convert foo.abc '*.xyz'
+            Saved: foo.xyz
+       """  # noqa: W293
+    )
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:10])
+
+
 @pytest.fixture
 def mock_plotter(mocker: MockerFixture):
     return mocker.patch.object(pv, 'Plotter')

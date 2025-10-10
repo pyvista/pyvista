@@ -85,7 +85,7 @@ def _convert(
         ),
     ],
 ) -> None:
-    """Convert a mesh file to another format. Sample usage:
+    """Convert a mesh file to another format. Examples:
 
     $ pyvista convert foo.abc bar.xyz
     Saved: bar.xyz
