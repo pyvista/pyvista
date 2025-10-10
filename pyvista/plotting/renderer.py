@@ -2995,6 +2995,11 @@ class Renderer(
         >>> pl.show()
 
         """
+        if self.cube_axes_actor is not None:
+            warnings.warn(
+                "Cube axes text uses TextActor3D because `set_scale` is called after `show_bounds`."
+                "If you are not intened to scale text, call `show_bounds` after `set_scale`.",
+            )
         if xscale is None:
             xscale = self.scale[0]
         if yscale is None:
