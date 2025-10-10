@@ -57,7 +57,16 @@ def report(*args, **kwargs):  # noqa: ANN201, D103
 @app.command(
     usage=f'Usage: [bold]{pyvista.__name__} convert input_file output_spec',
 )
-def convert(file_in: str, out_spec: str) -> None:
+def convert(
+    file_in: Annotated[
+        str,
+        Parameter(
+            help='File to convert. Must be readable with ``pyvista.read``.',
+            validator=_validator_files,
+        ),
+    ],
+    out_spec: str,
+) -> None:
     """Convert a mesh file to another format.
 
     Examples
@@ -92,15 +101,6 @@ def convert(file_in: str, out_spec: str) -> None:
         console.print(panel)
         raise SystemExit(1)
 
-    in_path = Path(file_in)
-    if not in_path.exists():
-        console_error(f'Input file not found: {file_in}')
-
-    try:
-        mesh = pyvista.read(in_path)
-    except Exception as e:  # noqa: BLE001
-        console_error(f'Failed to read input file: {in_path}\n{e}')
-
     out_spec_path = Path(out_spec)
     # Disallow pure directory targets
     if out_spec_path.is_dir() or str(out_spec_path).endswith('/'):
@@ -114,7 +114,7 @@ def convert(file_in: str, out_spec: str) -> None:
     out_suffix = out_spec_path.suffix
     if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
-        out_stem = spec_stem.replace('*', in_path.stem, 1)
+        out_stem = spec_stem.replace('*', Path(file_in).stem, 1)
     elif out_spec_path.suffix:
         # Explicit filename with extension
         out_stem = out_spec_path.stem
@@ -129,6 +129,7 @@ def convert(file_in: str, out_spec: str) -> None:
     out_path = out_dir / f'{out_stem}{out_suffix}'
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    mesh = pyvista.read(file_in)
     try:
         mesh.save(out_path)
     except Exception as e:  # noqa: BLE001
@@ -143,14 +144,21 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
         raise ValueError(msg)
 
 
-def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
+def _validator_files(type_: type, value: list[str] | str | None) -> None:  # noqa: ARG001
     if value is None:
         return
+    elif isinstance(value, str):
+        values: list[str] = [value]
+    else:
+        values = value
+
+    file = 'File' if len(values) == 1 else 'Files'
 
     # Test file exists
-    if not all((files := {v: Path(v).exists() for v in value}).values()):
+    if not all((files := {v: Path(v).exists() for v in values}).values()):
         missing = [k for k, v in files.items() if not v]
-        msg = f'File(s) not found: {missing}'
+        missing = missing[0] if len(missing) == 1 else missing
+        msg = f'{file} not found: {missing}'
         raise ValueError(msg)
 
     # Test file can be read by pyvista
@@ -162,9 +170,10 @@ def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG
         else:
             return True
 
-    if not all((files := {v: readable(v) for v in value}).values()):
+    if not all((files := {v: readable(v) for v in values}).values()):
         not_readable = [k for k, v in files.items() if not v]
-        msg = f'File(s) not readable by pyvista: {not_readable}'
+        not_readable = not_readable[0] if len(not_readable) == 1 else not_readable
+        msg = f'{file} not readable by pyvista: {not_readable}'
         raise ValueError(msg)
 
 
@@ -219,7 +228,7 @@ def _plot(
         Parameter(
             name='files',
             consume_multiple=True,
-            help='File(s) to plot. Must be readable with ``pv.read``. If nothing is provided, show an empty window.',  # noqa: E501
+            help='File(s) to plot. Must be readable with ``pyvista.read``. If nothing is provided, show an empty window.',  # noqa: E501
             validator=_validator_files,
             group=Groups.IN,
         ),
