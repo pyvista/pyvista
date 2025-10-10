@@ -588,6 +588,12 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
     from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 
+# 9.5+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkFiltersGeneral import (
+        vtkAxisAlignedReflectionFilter as vtkAxisAlignedReflectionFilter,
+    )
+
 
 class VersionInfo(NamedTuple):
     """Version information as a named tuple."""
