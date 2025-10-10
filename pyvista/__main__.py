@@ -67,7 +67,7 @@ def _report(*args, **kwargs) -> Report:
 
 
 @app.command(
-    usage=f'Usage: [bold]{pyvista.__name__} convert input_file output_spec',
+    usage=f'Usage: [bold]{pyvista.__name__} convert FILE-IN FILE-OUT',
 )
 def _convert(
     file_in: Annotated[
@@ -85,26 +85,15 @@ def _convert(
         ),
     ],
 ) -> None:
-    """Convert a mesh file to another format.
+    """Convert a mesh file to another format. Sample usage:
 
-    Examples
-    --------
-    Convert and specify only the extension:
+    $ pyvista convert foo.abc bar.xyz
+    Saved: bar.xyz
 
-        pyvista convert foo.abc *.xyz
-        # → foo.xyz
+    $ pyvista convert foo.abc '*.xyz'
+    Saved: foo.xyz
 
-    Convert with an output directory and extension:
-
-        pyvista convert foo.abc bar/*.xyz
-        # → bar/foo.xyz
-
-    Convert to a fully specified output path:
-
-        pyvista convert foo.abc bar/foo.xyz
-        # → bar/foo.xyz
-
-    """
+    """  # noqa: D400, D415
     out_spec_path = Path(file_out)
 
     # Parse output specification
