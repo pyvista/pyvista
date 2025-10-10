@@ -201,11 +201,8 @@ def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_dir_only_error(tmp_ant_file, capsys):
     """Passing only a directory as output should raise a console error."""
-    cmd = f'convert {tmp_ant_file} {tmp_ant_file.parent}'
-    args = shlex.split(cmd, posix=True)
-
     with pytest.raises(SystemExit) as e:
-        main(args)
+        main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
     out = capsys.readouterr().out
     assert '╭─ Error ──────────────────' in out
