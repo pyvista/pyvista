@@ -209,7 +209,7 @@ def test_convert_dir_only_error(tmp_ant_file, capsys):
         main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ──────────────────' in out
+    assert '╭─ Error ─' in out
     assert 'Invalid value' in out
     assert 'Output file must have a file extension.' in out
     assert e.value.code == 1
@@ -221,7 +221,7 @@ def test_convert_file_not_found(capsys):
     with pytest.raises(SystemExit) as e:
         main(f'convert {file_in} *.ply')
     out = capsys.readouterr().out
-    assert '╭─ Error ──────────────────' in out
+    assert '╭─ Error ─' in out
     assert 'Invalid value' in out
     assert 'File not found: ' in out
     assert f' {file_in} ' in out  # Pad with spaces to ensure it's not a list "[file_in]"
@@ -240,9 +240,24 @@ def test_convert_read_error(tmp_path, capsys):
         main(f'convert {str(file_in)!r} *.ply')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ──────────────────' in out
+    assert '╭─ Error ─' in out
     assert 'File not readable by pyvista:' in out
     assert name in out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_save_error(tmp_ant_file, capsys):
+    invalid_suffix = '.foo'
+    output_path = tmp_ant_file.with_suffix(invalid_suffix)
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(tmp_ant_file)!r} {str(output_path)!r}')
+
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out
+    assert 'Failed to save output file: ' in out
+    assert output_path.name in out
+    assert 'Invalid file extension' in out
     assert e.value.code == 1
 
 

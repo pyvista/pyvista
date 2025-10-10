@@ -125,7 +125,7 @@ def _convert(
     try:
         mesh.save(out_path)
     except Exception as e:  # noqa: BLE001
-        _console_error(f'Failed to save output file:\n{e}')
+        _console_error(f'Failed to save output file: {out_path}\n{e}')
 
     app.console.print(f'[green]Saved:[/green] {out_path}')  # type: ignore [union-attr]
 
