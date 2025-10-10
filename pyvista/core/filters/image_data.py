@@ -1198,7 +1198,7 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )
 
-        kernal_sz = _validation.validate_array3(kernel_size, broadcast=True)
+        kernal_sz = _validation.validate_array3(kernel_size, broadcast=True, name='kernel_size')
         alg.SetKernelSize(*kernal_sz)
         return alg
 
@@ -1242,6 +1242,8 @@ class ImageDataFilters(DataSetFilters):
 
         Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
         filter.
+
+        .. versionadded:: 0.47
 
         Parameters
         ----------
@@ -1393,6 +1395,8 @@ class ImageDataFilters(DataSetFilters):
         Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
         filter.
 
+        .. versionadded:: 0.47
+
         Parameters
         ----------
         kernel_size : int | VectorLike[int], default: (3, 3, 3)
@@ -1533,7 +1537,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] = False,
+        binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
         """Perform morphological opening on continuous or binary data.
@@ -1541,6 +1545,8 @@ class ImageDataFilters(DataSetFilters):
         Opening is an :meth:`erosion <erode>` followed by a :meth:`dilation <dilate>`.
         It is used to remove small objects/noise while preserving the shape and size of larger
         objects.
+
+        .. versionadded:: 0.47
 
         Parameters
         ----------
@@ -1638,13 +1644,15 @@ class ImageDataFilters(DataSetFilters):
         kernel_size: int | VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] = False,
+        binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
         """Perform morphological closing on continuous or binary data.
 
         Closing is a :meth:`dilation <dilate>` followed by an :meth:`erosion <erode>`.
         It is used to fill small holes/gaps while preserving the shape and size of larger objects.
+
+        .. versionadded:: 0.47
 
         Parameters
         ----------
