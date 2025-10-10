@@ -10,6 +10,7 @@ from typing import Annotated
 from typing import Any
 from typing import Literal
 from typing import NoReturn
+from typing import cast
 from typing import get_type_hints
 import warnings
 
@@ -77,6 +78,7 @@ def convert(file_in: str, out_spec: str) -> None:
         # → bar/foo.xyz
 
     """
+    console: Console = cast('Console', app.console)
 
     def console_error(message: str, title: str = 'Error') -> NoReturn:
         panel = Panel(
@@ -87,7 +89,7 @@ def convert(file_in: str, out_spec: str) -> None:
             expand=True,
             title_align='left',
         )
-        app.console.print(panel)
+        console.print(panel)
         raise SystemExit(1)
 
     def console_warning(message: str, title: str = 'Warning') -> None:
@@ -99,7 +101,7 @@ def convert(file_in: str, out_spec: str) -> None:
             expand=True,
             title_align='left',
         )
-        app.console.print(panel)
+        console.print(panel)
 
     in_path = Path(file_in)
     if not in_path.exists():
@@ -110,30 +112,30 @@ def convert(file_in: str, out_spec: str) -> None:
     except Exception as e:  # noqa: BLE001
         console_error(f'Failed to read input file:\n{e}', title='Read error')
 
-    out_spec = Path(out_spec)
+    out_spec_path = Path(out_spec)
     in_stem = in_path.stem
     in_suffix = in_path.suffix
 
     # Disallow pure directory targets
-    if out_spec.is_dir() or str(out_spec).endswith('/'):
+    if out_spec_path.is_dir() or str(out_spec_path).endswith('/'):
         console_error(
-            f'Invalid value for output: {out_spec!r}\n'
+            f'Invalid value for output: {out_spec_path!r}\n'
             "Specify a filename or extension (e.g. 'bar/*.xyz' or 'bar/foo.xyz')."
         )
 
     # Parse output specification
-    out_dir = out_spec.parent
-    out_suffix = out_spec.suffix
-    if '*' in (spec_stem := str(out_spec.stem)):
+    out_dir = out_spec_path.parent
+    out_suffix = out_spec_path.suffix
+    if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
         out_stem = spec_stem.replace('*', in_stem, 1)
-    elif out_spec.suffix:
+    elif out_spec_path.suffix:
         # Explicit filename with extension
-        out_stem = out_spec.stem
+        out_stem = out_spec_path.stem
     else:
         # No extension, invalid (would just copy)
         console_error(
-            f"Output '{out_spec}' has no extension or wildcard.\n"
+            f"Output '{out_spec_path}' has no extension or wildcard.\n"
             "Specify an extension or pattern (e.g. '*.vtp' or 'bar/*.ply')."
         )
 
@@ -142,7 +144,7 @@ def convert(file_in: str, out_spec: str) -> None:
         console_warning(f"Input and output extensions are both '{in_suffix}'.")
 
     # Construct final output path
-    out_path = out_dir / f'{out_stem}{out_suffix}' if out_dir else Path(f'{out_stem}{out_suffix}')
+    out_path = out_dir / f'{out_stem}{out_suffix}'
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -150,7 +152,7 @@ def convert(file_in: str, out_spec: str) -> None:
     except Exception as e:  # noqa: BLE001
         console_error(f'Failed to save output file:\n{e}', title='Write error')
 
-    app.console.print(f'[green]Saved:[/green] {out_path}')
+    console.print(f'[green]Saved:[/green] {out_path}')
 
 
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
