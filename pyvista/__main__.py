@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
 from typing import Literal
+from typing import NoReturn
 from typing import get_type_hints
 import warnings
 
@@ -50,6 +51,106 @@ app = App(
 @wraps(Report)
 def report(*args, **kwargs):  # noqa: ANN201, D103
     return Report(*args, **kwargs)
+
+
+@app.command(
+    usage=f'Usage: [bold]{pyvista.__name__} convert input_file output_spec',
+)
+def convert(file_in: str, out_spec: str) -> None:
+    """Convert a mesh file to another format.
+
+    Examples
+    --------
+    Convert and specify only the extension:
+
+        pyvista convert foo.abc *.xyz
+        # → foo.xyz
+
+    Convert with an output directory and extension:
+
+        pyvista convert foo.abc bar/*.xyz
+        # → bar/foo.xyz
+
+    Convert to a fully specified output path:
+
+        pyvista convert foo.abc bar/foo.xyz
+        # → bar/foo.xyz
+
+    """
+
+    def console_error(message: str, title: str = 'Error') -> NoReturn:
+        panel = Panel(
+            message,
+            title=title,
+            style='bold red',
+            box=box.ROUNDED,
+            expand=True,
+            title_align='left',
+        )
+        app.console.print(panel)
+        raise SystemExit(1)
+
+    def console_warning(message: str, title: str = 'Warning') -> None:
+        panel = Panel(
+            message,
+            title=title,
+            style='bold yellow',
+            box=box.ROUNDED,
+            expand=True,
+            title_align='left',
+        )
+        app.console.print(panel)
+
+    in_path = Path(file_in)
+    if not in_path.exists():
+        console_error(f'Input file not found: [bold]{file_in}[/bold]')
+
+    try:
+        mesh = pyvista.read(in_path)
+    except Exception as e:  # noqa: BLE001
+        console_error(f'Failed to read input file:\n{e}', title='Read error')
+
+    out_spec = Path(out_spec)
+    in_stem = in_path.stem
+    in_suffix = in_path.suffix
+
+    # Disallow pure directory targets
+    if out_spec.is_dir() or str(out_spec).endswith('/'):
+        console_error(
+            f'Invalid value for output: {out_spec!r}\n'
+            "Specify a filename or extension (e.g. 'bar/*.xyz' or 'bar/foo.xyz')."
+        )
+
+    # Parse output specification
+    out_dir = out_spec.parent
+    out_suffix = out_spec.suffix
+    if '*' in (spec_stem := str(out_spec.stem)):
+        # Pattern like "*.stl" or "bar/*.stl"
+        out_stem = spec_stem.replace('*', in_stem, 1)
+    elif out_spec.suffix:
+        # Explicit filename with extension
+        out_stem = out_spec.stem
+    else:
+        # No extension, invalid (would just copy)
+        console_error(
+            f"Output '{out_spec}' has no extension or wildcard.\n"
+            "Specify an extension or pattern (e.g. '*.vtp' or 'bar/*.ply')."
+        )
+
+    # Warn same-extension copy
+    if out_suffix == in_suffix:
+        console_warning(f"Input and output extensions are both '{in_suffix}'.")
+
+    # Construct final output path
+    out_path = out_dir / f'{out_stem}{out_suffix}' if out_dir else Path(f'{out_stem}{out_suffix}')
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        mesh.save(out_path)
+    except Exception as e:  # noqa: BLE001
+        console_error(f'Failed to save output file:\n{e}', title='Write error')
+
+    app.console.print(f'[green]Saved:[/green] {out_path}')
 
 
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
@@ -110,11 +211,11 @@ Additional keyword arguments passed to ``Plotter.add_mesh`` or ``Plotter.add_vol
 See the documentation for more details at https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh
 and https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_volume
 
-Note that contrary to other CLI arguments, hyphens ``-`` are not converted to underscores ``_`` before being passed
-to the corresponding plotter method. For example, you need to use ``--show_edges=True`` instead of ``--show-edges=True`` to
-show mesh edges in the plotting window.
+Note that contrary to other CLI arguments, hyphens ``-`` are not converted to underscores ``_``
+before being passed to the corresponding plotter method. For example, you need to use
+``--show_edges=True`` instead of ``--show-edges=True`` to show mesh edges in the plotting window.
 
-"""  # noqa: E501
+"""
 
 
 class Groups(StrEnum):

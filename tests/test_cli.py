@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import inspect
+import os
+from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import sys
 import textwrap
@@ -22,7 +25,6 @@ from pyvista.__main__ import app
 from pyvista.__main__ import main
 
 if TYPE_CHECKING:
-    from pathlib import Path
     from unittest.mock import MagicMock
 
     from pytest_cases.case_parametrizer_new import Case
@@ -51,6 +53,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ convert    Convert a mesh file to another format.                  │
         │ plot       Plot a PyVista, numpy, or vtk object.                   │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
@@ -68,13 +71,14 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
+    │ convert    Convert a mesh file to another format.                  │
     │ plot       Plot a PyVista, numpy, or vtk object.                   │
     │ report     Generate a PyVista software environment report.         │
     │ --help -h  Display this message and exit.                          │
     │ --version  Display application version.                            │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown command "foo". Available commands: report, plot.           │
+    │ Unknown command "foo". Available commands: report, convert, plot.  │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -85,7 +89,8 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_bad_kwarg_report(capsys: pytest.CaptureFixture):
+@pytest.mark.parametrize('command', ['report', 'convert'])  # 'plot'
+def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
     expected = textwrap.dedent(
         """\
     ╭─ Error ────────────────────────────────────────────────────────────╮
@@ -94,7 +99,7 @@ def test_bad_kwarg_report(capsys: pytest.CaptureFixture):
     """
     )
     with pytest.raises(SystemExit) as e:
-        main('report --foo=1')
+        main(f'{command} --foo=1')
     assert e.value.code == 1
     assert expected == '\n'.join(capsys.readouterr().out.split('\n')[-4:])
 
@@ -152,6 +157,70 @@ def test_report_called(
     """Test that the Report class is called with the expected arguments."""
     main(f'report {tokens}')
     mock_report.assert_called_once_with(*expected_args, **expected_kwargs)
+
+
+class CasesConvert:
+    """CLI argument parsing cases for `convert`."""
+
+    def case_name_and_ext(self):
+        return 'ant.ply ant.vtp', 'ant.vtp'
+
+    def case_dir_and_name_and_ext(self):
+        return 'ant.ply foo/ant.vtp', 'foo/ant.vtp'
+
+    def case_ext_only(self):
+        return "ant.ply '*.vtp'", 'ant.vtp'
+
+    def case_dir_and_ext(self):
+        return "ant.ply 'bar/*.vtp'", 'bar/ant.vtp'
+
+
+@pytest.fixture
+def tmp_ant_file(tmp_path):
+    """Return a temp path to the ant file for tests."""
+    src = Path(pv.examples.antfile)
+    dst = tmp_path / src.name
+    shutil.copy(src, dst)
+
+    # Change cwd to tmp_path temporarily
+    old_cwd = Path.cwd()
+    try:
+        os.chdir(tmp_path)
+        yield dst
+    finally:
+        os.chdir(old_cwd)
+
+
+@parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
+def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
+    """Ensure `convert` runs without errors and calls save()."""
+    main(f'convert {tokens}')
+    assert Path(expected_file).is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_dir_only_error(tmp_ant_file, capsys):
+    """Passing only a directory as output should raise a console error."""
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {tmp_ant_file} {tmp_ant_file.parent}')
+    out = capsys.readouterr().out
+    assert '╭─ Error ──────────────────' in out
+    assert 'Invalid value for output:' in out
+    assert 'Specify a filename or extension' in out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_missing_input(capsys):
+    """Missing input file should produce a console error."""
+    file_in = 'missing.vtp'
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {file_in} *.ply')
+    out = capsys.readouterr().out
+    assert '╭─ Error ──────────────────' in out
+    assert 'Input file not found: ' in out
+    assert file_in in out
+    assert e.value.code == 1
 
 
 @pytest.fixture
@@ -555,6 +624,7 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ convert    Convert a mesh file to another format.                  │
         │ plot       Plot a PyVista, numpy, or vtk object.                   │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
