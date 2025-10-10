@@ -12,7 +12,6 @@ repos:
       - id: blackdoc
         args: ["--skip-string-normalization"]
         types_or: [rst]
-        additional_dependencies: ["black==25.1.0"]
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
