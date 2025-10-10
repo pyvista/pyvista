@@ -28,6 +28,15 @@ if TYPE_CHECKING:
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # noqa: D101
+        def __str__(self) -> str:
+            return self.value
+
 
 def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
