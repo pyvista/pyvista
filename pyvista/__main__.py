@@ -156,7 +156,7 @@ def _validator_files(type_: type, value: list[str] | str | None) -> None:  # noq
 
     # Test file exists
     if not all((files := {v: Path(v).exists() for v in values}).values()):
-        missing = [k for k, v in files.items() if not v]
+        missing: str | list[str] = [k for k, v in files.items() if not v]
         missing = missing[0] if len(missing) == 1 else missing
         msg = f'{file} not found: {missing}'
         raise ValueError(msg)
@@ -171,7 +171,7 @@ def _validator_files(type_: type, value: list[str] | str | None) -> None:  # noq
             return True
 
     if not all((files := {v: readable(v) for v in values}).values()):
-        not_readable = [k for k, v in files.items() if not v]
+        not_readable: str | list[str] = [k for k, v in files.items() if not v]
         not_readable = not_readable[0] if len(not_readable) == 1 else not_readable
         msg = f'{file} not readable by pyvista: {not_readable}'
         raise ValueError(msg)
