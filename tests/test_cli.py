@@ -194,7 +194,7 @@ def tmp_ant_file(tmp_path):
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
 def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
     """Ensure `convert` runs without errors and calls save()."""
-    main(f'convert {tokens}')
+    main(shlex.split(f'convert {tokens}', posix=True))
     assert Path(expected_file).is_file()
 
 
