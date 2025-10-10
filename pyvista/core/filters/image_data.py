@@ -4032,6 +4032,56 @@ class ImageDataFilters(DataSetFilters):
 
         return dimensions_mask, dimensions_result
 
+    def magnify(
+        self, *, factor: VectorLike[int] = (1, 1, 1), progress_bar: bool = False
+    ) -> pyvista.ImageData:
+        """Magnify an image by an integer value.
+
+        Parameters
+        ----------
+        factor : VectorLike[int], optional
+           The integer magnification factors in the i-j-k directions.
+           Initially, factors are set to 1 in all directions.
+
+        progress_bar : bool, default: False
+           Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+           Magnified image.
+
+        Examples
+        --------
+        Download an image and magnify it anisotropically.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_gourds(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> image_data = reader.read()
+
+        Create a plotter and display the original and magnified images side by side.
+
+        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> plotter.add_mesh(image_data)
+        >>> plotter.camera_position = 'xy'
+        >>> plotter.subplot(0, 1)
+        >>> plotter.add_mesh(image_data.magnify(factor=[2, 1, 1]))
+        >>> plotter.camera_position = 'xy'
+        >>> plotter.show()  # doctest: +SKIP
+
+        """
+        factor_validated = _validation.validate_array(
+            factor, must_have_shape=3, must_be_integer=True, name='factor'
+        )
+        _validation.check_instance(progress_bar, bool)
+        alg = _vtk.vtkImageMagnify()
+        alg.SetInputDataObject(self)
+        alg.SetMagnificationFactors(factor_validated.tolist())
+        _update_alg(alg, progress_bar=progress_bar, message='Magnifying Image')
+        return _get_output(alg)
+
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
