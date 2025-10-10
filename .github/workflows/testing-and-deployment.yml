@@ -185,6 +185,7 @@ jobs:
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
+      PARALLEL: "-n4" # flag for pytest-xdist
     steps:
       - uses: actions/checkout@v5
         with:
@@ -326,6 +327,7 @@ jobs:
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
+      PARALLEL: "-n2" # flag for pytest-xdist
     strategy:
       fail-fast: false
       matrix:
