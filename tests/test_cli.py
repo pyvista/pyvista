@@ -269,16 +269,17 @@ def test_convert_help(capsys: pytest.CaptureFixture):
         """\
             Usage: pyvista convert FILE-IN FILE-OUT
 
-            Convert a mesh file to another format. Examples:
-            
-            $ pyvista convert foo.abc bar.xyz
-            Saved: bar.xyz
-            
-            $ pyvista convert foo.abc '*.xyz'
-            Saved: foo.xyz
-       """  # noqa: W293
+            Convert a mesh file to another format.
+
+            Sample usage:
+              $ pyvista convert foo.abc bar.xyz
+              Saved: bar.xyz
+
+              $ pyvista convert foo.abc '*.xyz'
+              Saved: foo.xyz
+       """
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:10])
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:11])
 
 
 @pytest.fixture
