@@ -65,7 +65,13 @@ def convert(
             validator=_validator_files,
         ),
     ],
-    out_spec: str,
+    file_out: Annotated[
+        str,
+        Parameter(
+            help="Output file. If a wildcard '*' is used, it is replaced with the input name.",
+            validator=_validator_has_extension,
+        ),
+    ],
 ) -> None:
     """Convert a mesh file to another format.
 
@@ -101,13 +107,7 @@ def convert(
         console.print(panel)
         raise SystemExit(1)
 
-    out_spec_path = Path(out_spec)
-    # Disallow pure directory targets
-    if out_spec_path.is_dir() or str(out_spec_path).endswith('/'):
-        console_error(
-            f'Invalid value for output: {out_spec_path!r}\n'
-            "Specify a filename or extension (e.g. 'bar/*.xyz' or 'bar/foo.xyz')."
-        )
+    out_spec_path = Path(file_out)
 
     # Parse output specification
     out_dir = out_spec_path.parent
@@ -115,15 +115,9 @@ def convert(
     if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
         out_stem = spec_stem.replace('*', Path(file_in).stem, 1)
-    elif out_spec_path.suffix:
+    else:
         # Explicit filename with extension
         out_stem = out_spec_path.stem
-    else:
-        # No extension, invalid (would just copy)
-        console_error(
-            f"Output '{out_spec_path}' has no extension or wildcard.\n"
-            "Specify an extension or pattern (e.g. '*.vtp' or 'bar/*.ply')."
-        )
 
     # Construct final output path
     out_path = out_dir / f'{out_stem}{out_suffix}'
@@ -136,6 +130,12 @@ def convert(
         console_error(f'Failed to save output file:\n{e}', title='Write error')
 
     console.print(f'[green]Saved:[/green] {out_path}')
+
+
+def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
+    if not Path(value).suffix:
+        msg = 'Output file must have a file extension.'
+        raise ValueError(msg)
 
 
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001

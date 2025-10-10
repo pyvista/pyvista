@@ -210,8 +210,8 @@ def test_convert_dir_only_error(tmp_ant_file, capsys):
 
     out = capsys.readouterr().out
     assert '╭─ Error ──────────────────' in out
-    assert 'Invalid value for output:' in out
-    assert 'Specify a filename or extension' in out
+    assert 'Invalid value' in out
+    assert 'Output file must have a file extension.' in out
     assert e.value.code == 1
 
 
@@ -222,6 +222,7 @@ def test_convert_file_not_found(capsys):
         main(f'convert {file_in} *.ply')
     out = capsys.readouterr().out
     assert '╭─ Error ──────────────────' in out
+    assert 'Invalid value' in out
     assert 'File not found: ' in out
     assert f' {file_in} ' in out  # Pad with spaces to ensure it's not a list "[file_in]"
     assert e.value.code == 1
