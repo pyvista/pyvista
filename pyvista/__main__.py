@@ -92,30 +92,16 @@ def convert(file_in: str, out_spec: str) -> None:
         console.print(panel)
         raise SystemExit(1)
 
-    def console_warning(message: str, title: str = 'Warning') -> None:
-        panel = Panel(
-            message,
-            title=title,
-            style='bold yellow',
-            box=box.ROUNDED,
-            expand=True,
-            title_align='left',
-        )
-        console.print(panel)
-
     in_path = Path(file_in)
     if not in_path.exists():
-        console_error(f'Input file not found: [bold]{file_in}[/bold]')
+        console_error(f'Input file not found: {file_in}')
 
     try:
         mesh = pyvista.read(in_path)
     except Exception as e:  # noqa: BLE001
-        console_error(f'Failed to read input file:\n{e}', title='Read error')
+        console_error(f'Failed to read input file: {in_path}\n{e}')
 
     out_spec_path = Path(out_spec)
-    in_stem = in_path.stem
-    in_suffix = in_path.suffix
-
     # Disallow pure directory targets
     if out_spec_path.is_dir() or str(out_spec_path).endswith('/'):
         console_error(
@@ -128,7 +114,7 @@ def convert(file_in: str, out_spec: str) -> None:
     out_suffix = out_spec_path.suffix
     if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
-        out_stem = spec_stem.replace('*', in_stem, 1)
+        out_stem = spec_stem.replace('*', in_path.stem, 1)
     elif out_spec_path.suffix:
         # Explicit filename with extension
         out_stem = out_spec_path.stem
@@ -138,10 +124,6 @@ def convert(file_in: str, out_spec: str) -> None:
             f"Output '{out_spec_path}' has no extension or wildcard.\n"
             "Specify an extension or pattern (e.g. '*.vtp' or 'bar/*.ply')."
         )
-
-    # Warn same-extension copy
-    if out_suffix == in_suffix:
-        console_warning(f"Input and output extensions are both '{in_suffix}'.")
 
     # Construct final output path
     out_path = out_dir / f'{out_stem}{out_suffix}'

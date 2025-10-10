@@ -162,16 +162,22 @@ def test_report_called(
 class CasesConvert:
     """CLI argument parsing cases for `convert`."""
 
-    def case_name_and_ext(self):
-        return 'ant.ply ant.vtp', 'ant.vtp'
+    def case_new_ext(self):
+        return 'ant.ply new.vtp', 'new.vtp'
 
-    def case_dir_and_name_and_ext(self):
-        return 'ant.ply foo/ant.vtp', 'foo/ant.vtp'
+    def case_same_ext(self):
+        return 'ant.ply ant.ply', 'ant.ply'
 
-    def case_ext_only(self):
+    def case_dir(self):
+        return 'ant.ply foo/new.vtp', 'foo/new.vtp'
+
+    def case_nested_dir(self):
+        return 'ant.ply foo/bar/new.vtp', 'foo/bar/new.vtp'
+
+    def case_wildcard_ext(self):
         return "ant.ply '*.vtp'", 'ant.vtp'
 
-    def case_dir_and_ext(self):
+    def case_wildcard_dir(self):
         return "ant.ply 'bar/*.vtp'", 'bar/ant.vtp'
 
 
@@ -193,14 +199,12 @@ def tmp_ant_file(tmp_path):
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
 def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
-    """Ensure `convert` runs without errors and calls save()."""
     main(shlex.split(f'convert {tokens}', posix=True))
     assert Path(expected_file).is_file()
 
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_dir_only_error(tmp_ant_file, capsys):
-    """Passing only a directory as output should raise a console error."""
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
@@ -212,8 +216,7 @@ def test_convert_dir_only_error(tmp_ant_file, capsys):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_missing_input(capsys):
-    """Missing input file should produce a console error."""
+def test_convert_file_not_found(capsys):
     file_in = 'missing.vtp'
     with pytest.raises(SystemExit) as e:
         main(f'convert {file_in} *.ply')
@@ -221,6 +224,23 @@ def test_convert_missing_input(capsys):
     assert '╭─ Error ──────────────────' in out
     assert 'Input file not found: ' in out
     assert file_in in out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_read_error(tmp_path, capsys):
+    # Create a dummy .vtp file with empty contents
+    name = 'dummy.vtp'
+    file_in = tmp_path / name
+    file_in.write_text('')
+
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {file_in} *.ply')
+
+    out = capsys.readouterr().out
+    assert '╭─ Error ──────────────────' in out
+    assert 'Failed to read input file:' in out
+    assert name in out
     assert e.value.code == 1
 
 
