@@ -3665,6 +3665,10 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         return status_method(name)
 
 
+class FidesReader(BaseReader):
+    """FidesReader for Read ADIOS2 streams using Fides data model."""
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
