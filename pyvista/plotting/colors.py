@@ -1529,7 +1529,7 @@ class Color(_NoNewAttrMixin):
             else:  # pragma: no cover
                 msg = f'Unexpected color type: {type(color)}'
                 raise TypeError(msg)
-            self._name = color_names.get(self.hex_rgb)
+            self._name = color_names.get(self.hex_rgb, None)
         except ValueError as e:
             msg = (
                 '\n'
