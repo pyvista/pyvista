@@ -1017,9 +1017,12 @@ def download_topo_global(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_topo_global()
-    >>> dataset.plot(cmap='gist_earth')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_topo_global()
+        >>> dataset.plot(cmap='gist_earth')
 
     .. seealso::
 
