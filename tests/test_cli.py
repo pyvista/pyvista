@@ -175,10 +175,10 @@ class CasesConvert:
         return 'ant.ply foo/bar/new.vtp', 'foo/bar/new.vtp'
 
     def case_wildcard_ext(self):
-        return "ant.ply '*.vtp'", 'ant.vtp'
+        return 'ant.ply .vtp', 'ant.vtp'
 
     def case_wildcard_dir(self):
-        return "ant.ply 'bar/*.vtp'", 'bar/ant.vtp'
+        return 'ant.ply bar/.vtp', 'bar/ant.vtp'
 
 
 @pytest.fixture
@@ -219,7 +219,7 @@ def test_convert_dir_only_error(tmp_ant_file, capsys):
 def test_convert_file_not_found(capsys):
     file_in = 'missing.vtp'
     with pytest.raises(SystemExit) as e:
-        main(f'convert {file_in} *.ply')
+        main(f'convert {file_in} .ply')
     out = capsys.readouterr().out
     assert '╭─ Error ─' in out
     assert f'File not found: {file_in}' in out
@@ -235,7 +235,7 @@ def test_convert_read_error(tmp_path, capsys):
     assert file_in.is_file()
 
     with pytest.raises(SystemExit) as e:
-        main(f'convert {str(file_in)!r} *.ply')
+        main(f'convert {str(file_in)!r} .ply')
 
     out = capsys.readouterr().out
     assert '╭─ Error ─' in out
@@ -273,7 +273,7 @@ def test_convert_help(capsys: pytest.CaptureFixture):
               $ pyvista convert foo.abc bar.xyz
               Saved: bar.xyz
 
-              $ pyvista convert foo.abc '*.xyz'
+              $ pyvista convert foo.abc .xyz
               Saved: foo.xyz
        """
     )

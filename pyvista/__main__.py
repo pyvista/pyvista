@@ -90,7 +90,8 @@ def _convert(
     file_out: Annotated[
         str,
         Parameter(
-            help="Output file. If a wildcard '*' is used, it is replaced with the input name.",
+            help='Output file. If only an file extension is given, '
+            'the output has the same name as the input.',
             validator=_validator_has_extension,
         ),
     ],
@@ -101,7 +102,7 @@ def _convert(
       $ pyvista convert foo.abc bar.xyz
       Saved: bar.xyz
 
-      $ pyvista convert foo.abc '*.xyz'
+      $ pyvista convert foo.abc .xyz
       Saved: foo.xyz
 
     """
@@ -111,15 +112,16 @@ def _convert(
     path_in = file_in[0].path  # type: ignore[attr-defined]
 
     # Parse output specification
-    out_spec_path = Path(file_out)
-    out_dir = out_spec_path.parent
-    out_suffix = out_spec_path.suffix
-    if '*' in (spec_stem := str(out_spec_path.stem)):
-        # Pattern like "*.stl" or "bar/*.stl"
-        out_stem = spec_stem.replace('*', path_in.stem, 1)
+    path_out = Path(file_out)
+    out_dir = path_out.parent
+    if not path_out.suffix:
+        # Extension-only, use the input stem
+        out_stem = path_in.stem
+        out_suffix = path_out.stem
     else:
-        # Explicit filename with extension
-        out_stem = out_spec_path.stem
+        # Explicit filename provided
+        out_stem = path_out.stem
+        out_suffix = path_out.suffix
 
     # Construct final output path
     out_path = out_dir / f'{out_stem}{out_suffix}'
@@ -134,7 +136,10 @@ def _convert(
 
 
 def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
-    if not Path(value).suffix:
+    path = Path(value)
+    has_suffix = bool(path.suffix)
+    is_suffix = not path.suffix and path.stem.startswith('.')
+    if not (has_suffix or is_suffix):
         msg = 'Output file must have a file extension.'
         raise ValueError(msg)
 
