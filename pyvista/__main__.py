@@ -31,7 +31,7 @@ from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from pyvista import _DataSetOrMultiBlockType
+    from pyvista import DataObject
 
 # Assign annotations to be able to use the Report class using
 # cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
@@ -107,7 +107,7 @@ def _convert(
     out_suffix = out_spec_path.suffix
     if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
-        out_stem = spec_stem.replace('*', path_in.stem, 1)
+        out_stem = spec_stem.replace('*', path_in.stem, 1)  # type: ignore[attr-defined]
     else:
         # Explicit filename with extension
         out_stem = out_spec_path.stem
@@ -117,7 +117,7 @@ def _convert(
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        mesh_in.save(out_path)
+        mesh_in.save(out_path)  # type: ignore[attr-defined]
     except Exception as e:  # noqa: BLE001
         _console_error(f'Failed to save output file: {out_path}\n{e}')
 
@@ -139,7 +139,7 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
 def _converter_files(
     type_: type,  # noqa: ARG001
     tokens: Sequence[Token],
-) -> tuple[list[_DataSetOrMultiBlockType], list[Path]]:
+) -> tuple[list[DataObject], list[Path]]:
     values: list[str] = [t.value for t in tokens]
     if len(values) == 0:
         return [], []
