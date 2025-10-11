@@ -99,7 +99,7 @@ def test_threshold_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
-    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+    with pytest.raises(ValueError, match=r'No arrays present to threshold.'):
         pv.Sphere().threshold(1.0)
 
 
@@ -109,7 +109,9 @@ def test_contour_raises(mocker: MockerFixture):
     m = mocker.patch.object(data_set, 'set_default_active_scalars')
     m().name = 'foo'
 
-    with pytest.raises(ValueError, match='Input dataset for the contour filter must have scalar.'):
+    with pytest.raises(
+        ValueError, match=r'Input dataset for the contour filter must have scalar.'
+    ):
         pv.PolyData().contour()
 
 
@@ -118,7 +120,7 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
-    with pytest.raises(ValueError, match='No vectors present to warp by vector.'):
+    with pytest.raises(ValueError, match=r'No vectors present to warp by vector.'):
         pv.Sphere().warp_by_vector()
 
 
@@ -2219,7 +2221,7 @@ def test_split_values_extract_values_component(
     expected_volume,
 ):
     # Add second component to fixture for test as needed
-    small_box, big_box, labeled_data = add_component_to_labeled_data(
+    _small_box, _big_box, labeled_data = add_component_to_labeled_data(
         labeled_data,
         component_offset,
     )
@@ -3128,7 +3130,7 @@ def test_concatenate_structured(structured_grids_split_coincident):
 
 
 def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
 
     # test invalid dimensions
     with pytest.raises(ValueError):  # noqa: PT011
@@ -3139,13 +3141,13 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
 
 
 def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=3)
 
 
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=1)
@@ -3158,7 +3160,7 @@ def test_concatenate_structured_disconnected(structured_grids_split_disconnected
 
 
 def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     point_data = voi_1.point_data.pop('point_data')
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=1)
