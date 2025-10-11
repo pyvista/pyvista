@@ -3921,9 +3921,12 @@ def download_crater_topo(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_crater_topo()
-    >>> dataset.plot(cmap='gist_earth', cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_crater_topo()
+        >>> dataset.plot(cmap='gist_earth', cpos='xy')
 
     .. seealso::
 
