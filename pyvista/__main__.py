@@ -31,6 +31,8 @@ from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from pyvista import _DataSetOrMultiBlockType
+
 # Assign annotations to be able to use the Report class using
 # cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
 Report.__init__.__annotations__ = get_type_hints(Report.__init__)
@@ -74,7 +76,7 @@ def _convert(
         str,
         Parameter(
             help='File to convert. Must be readable with ``pyvista.read``.',
-            validator=_validator_files,
+            converter=_converter_files,
         ),
     ],
     file_out: Annotated[
@@ -95,14 +97,17 @@ def _convert(
       Saved: foo.xyz
 
     """
-    out_spec_path = Path(file_out)
+    # get input mesh and input path from file_in str token
+    # which was converted to tuple[meshes, paths]
+    mesh_in, path_in = file_in[0][0], file_in[1][0]
 
     # Parse output specification
+    out_spec_path = Path(file_out)
     out_dir = out_spec_path.parent
     out_suffix = out_spec_path.suffix
     if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
-        out_stem = spec_stem.replace('*', Path(file_in).stem, 1)
+        out_stem = spec_stem.replace('*', path_in.stem, 1)
     else:
         # Explicit filename with extension
         out_stem = out_spec_path.stem
@@ -111,9 +116,8 @@ def _convert(
     out_path = out_dir / f'{out_stem}{out_suffix}'
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    mesh = pyvista.read(file_in)
     try:
-        mesh.save(out_path)
+        mesh_in.save(out_path)
     except Exception as e:  # noqa: BLE001
         _console_error(f'Failed to save output file: {out_path}\n{e}')
 
@@ -132,37 +136,36 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
         raise ValueError(msg)
 
 
-def _validator_files(type_: type, value: list[str] | str | None) -> None:  # noqa: ARG001
-    if value is None:
-        return
-    elif isinstance(value, str):
-        values: list[str] = [value]
-    else:
-        values = value
+def _converter_files(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> tuple[list[_DataSetOrMultiBlockType], list[Path]]:
+    values: list[str] = [t.value for t in tokens]
+    if len(values) == 0:
+        return [], []
 
-    file = 'File' if len(values) == 1 else 'Files'
+    literal_file = 'File' if len(values) == 1 else 'Files'
 
     # Test file exists
     if not all((files := {v: Path(v).exists() for v in values}).values()):
         missing: str | list[str] = [k for k, v in files.items() if not v]
         missing = missing[0] if len(missing) == 1 else missing
-        msg = f'{file} not found: {missing}'
+        msg = f'{literal_file} not found: {missing}'
         raise ValueError(msg)
 
     # Test file can be read by pyvista
-    def readable(file: str) -> bool:
+    meshes = []
+    paths = []
+    for file in values:
         try:
-            pyvista.read(file)
+            meshes.append(pyvista.read(file))
         except Exception:  # noqa: BLE001
-            return False
+            msg = f'File not readable by PyVista: {file}'
+            raise ValueError(msg)
         else:
-            return True
+            paths.append(Path(file))
 
-    if not all((files := {v: readable(v) for v in values}).values()):
-        not_readable: str | list[str] = [k for k, v in files.items() if not v]
-        not_readable = not_readable[0] if len(not_readable) == 1 else not_readable
-        msg = f'{file} not readable by pyvista: {not_readable}'
-        raise ValueError(msg)
+    return meshes, paths
 
 
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
@@ -217,7 +220,7 @@ def _plot(
             name='files',
             consume_multiple=True,
             help='File(s) to plot. Must be readable with ``pyvista.read``. If nothing is provided, show an empty window.',  # noqa: E501
-            validator=_validator_files,
+            converter=_converter_files,
             group=Groups.IN,
         ),
     ] = None,
@@ -255,9 +258,11 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
+    # Converter has already read files as meshes
+    meshes = var_item[0]
     try:
         res = pyvista.plot(
-            var_item=var_item or [],  # type: ignore[arg-type]
+            var_item=meshes,
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,
