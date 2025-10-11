@@ -31,8 +31,9 @@ def button(click, icon, tooltip):  # numpydoc ignore=PR01
                 icon=True,
                 v_bind=('props',),
                 variant='text',
-                size='small',
+                size='default',
                 click=click,
+                density='comfortable',
             ):
                 vuetify.VIcon(icon)
         html.Span(tooltip)
@@ -47,9 +48,8 @@ def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
                     v_model=model,
                     true_icon=icons[0],
                     false_icon=icons[1],
-                    density='compact',
+                    density='comfortable',
                     hide_details=True,
-                    classes='ma-1 py-1',
                 )
         html.Span(tooltip)
 
