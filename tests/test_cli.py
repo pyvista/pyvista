@@ -182,7 +182,7 @@ class CasesConvert:
 
 
 @pytest.fixture
-def tmp_ant_file(tmp_path):
+def tmp_ant_file_str_path(tmp_path):
     """Return a temp path to the ant file for tests."""
     src = Path(pv.examples.antfile)
     dst = tmp_path / src.name
@@ -192,21 +192,37 @@ def tmp_ant_file(tmp_path):
     old_cwd = Path.cwd()
     try:
         os.chdir(tmp_path)
-        yield dst
+        yield str(dst)
+    finally:
+        os.chdir(old_cwd)
+
+
+@pytest.fixture
+def tmp_uniform_file_str_path(tmp_path):
+    """Return a temp path to the ant file for tests."""
+    src = Path(pv.examples.uniformfile)
+    dst = tmp_path / src.name
+    shutil.copy(src, dst)
+
+    # Change cwd to tmp_path temporarily
+    old_cwd = Path.cwd()
+    try:
+        os.chdir(tmp_path)
+        yield str(dst)
     finally:
         os.chdir(old_cwd)
 
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
-def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
+def test_convert_called(tokens, expected_file, tmp_ant_file_str_path):  # noqa: ARG001
     main(shlex.split(f'convert {tokens}', posix=True))
     assert Path(expected_file).is_file()
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_dir_only_error(tmp_ant_file, capsys):
+def test_convert_dir_only_error(tmp_ant_file_str_path, capsys):
     with pytest.raises(SystemExit) as e:
-        main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
+        main(f'convert {tmp_ant_file_str_path!r} {tmp_ant_file_str_path.parent!r}')
 
     out = capsys.readouterr().out
     assert '╭─ Error ─' in out
@@ -245,11 +261,11 @@ def test_convert_read_error(tmp_path, capsys):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_save_error(tmp_ant_file, capsys):
+def test_convert_save_error(tmp_ant_file_str_path, capsys):
     invalid_suffix = '.foo'
-    output_path = tmp_ant_file.with_suffix(invalid_suffix)
+    output_path = tmp_ant_file_str_path.with_suffix(invalid_suffix)
     with pytest.raises(SystemExit) as e:
-        main(f'convert {str(tmp_ant_file)!r} {str(output_path)!r}')
+        main(f'convert {tmp_ant_file_str_path!r} {output_path!r}')
 
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out
@@ -300,11 +316,6 @@ def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
 
 
-@pytest.fixture
-def mock_files_convert(mocker: MockerFixture):
-    mocker.patch.object(pv.__main__, '_converter_files')
-
-
 @fixture
 def missing_plot_arguments():
     """Argument names in the `pv.plot` signature which are intentionally removed from the
@@ -323,7 +334,7 @@ def missing_plot_arguments():
 
 
 @fixture
-def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
+def default_plot_kwargs(missing_plot_arguments: set[str], tmp_ant_file_str_path) -> dict[str, Any]:
     """Default arguments of `pv.plot`."""
 
     params = inspect.signature(pv.plot).parameters
@@ -333,7 +344,7 @@ def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
         for p, v in params.items()
         if (p not in missing_plot_arguments) and (v.kind != v.VAR_KEYWORD)
     }
-    defaults['var_item'] = []  # because passing empty list to `pv.plot` if None
+    defaults['var_item'] = [tmp_ant_file_str_path]  # because has no default
     return defaults
 
 
@@ -413,28 +424,33 @@ class CasesPlot:
     def case_empty(self, default_plot_kwargs: dict):
         return '', default_plot_kwargs
 
-    @pytest.mark.usefixtures('mock_files_convert')
-    def case_files_single_args(self, default_plot_kwargs: dict):
+    def case_files_single_args(self, default_plot_kwargs: dict, tmp_ant_file_str_path):
         """Test when only a single positional argument is given for files."""
         kwargs = default_plot_kwargs
-        kwargs['var_item'] = [f := 'file.vtp']
-        return f, kwargs
+        kwargs['var_item'] = [pv.read(tmp_ant_file_str_path)]
+        return tmp_ant_file_str_path, kwargs
 
-    @pytest.mark.usefixtures('mock_files_convert')
-    def case_files_multiple_args(self, default_plot_kwargs: dict):
+    def case_files_multiple_args(
+        self, default_plot_kwargs: dict, tmp_ant_file_str_path, tmp_uniform_file_str_path
+    ):
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
-        kwargs['var_item'] = (files := ['file1.vtp', 'file2.vtp'])
-        return ' '.join(files), kwargs
+        kwargs['var_item'] = [pv.read(tmp_ant_file_str_path), pv.read(tmp_uniform_file_str_path)]
+        return f'{tmp_ant_file_str_path!r} {tmp_uniform_file_str_path!r}', kwargs
 
     @parametrize(with_space=[True, False])
-    @pytest.mark.usefixtures('mock_files_convert')
-    def case_files_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
+    def case_files_multiple_kwargs(
+        self,
+        default_plot_kwargs: dict,
+        with_space: bool,
+        tmp_ant_file_str_path,
+        tmp_uniform_file_str_path,
+    ):
         """Test when multiple keyword arguments are given for files."""
         kwargs = default_plot_kwargs
-        kwargs['var_item'] = (files := ['file1.vtp', 'file2.vtp'])
+        kwargs['var_item'] = [pv.read(tmp_ant_file_str_path), pv.read(tmp_uniform_file_str_path)]
         prefix = '--files ' if with_space else '--files='
-        return prefix + ' '.join(files), kwargs
+        return f'{prefix}{tmp_ant_file_str_path!r} {tmp_uniform_file_str_path!r}', kwargs
 
     @parametrize(offscreen=['True', 'yes', 'y', 'true'])
     def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
@@ -495,7 +511,6 @@ class CasesPlot:
             ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_convert')
     @case(tags=['kwargs', 'add_mesh'])
     def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
         """Test when kwargs are provided to Plotter.add_mesh"""
@@ -511,7 +526,6 @@ class CasesPlot:
             ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_convert')
     @case(tags=['kwargs', 'add_volume'])
     def case_kwargs_volume(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
         """Test when kwargs are provided to Plotter.add_volume"""
@@ -612,7 +626,6 @@ def test_plot_called(
     idgen=lambda **args: args['tokens_ncalls_args'][0],
 )
 @parametrize(func=['add_mesh', 'add_volume'])
-@pytest.mark.usefixtures('mock_files_convert')
 def test_add_mesh_volume_called(
     tokens_ncalls_args: tuple[str, int, list[str]],
     mock_add_mesh: MagicMock,
