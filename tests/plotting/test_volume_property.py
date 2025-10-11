@@ -15,7 +15,7 @@ def vol_prop():
 
 @pytest.mark.parametrize('lut', ['foo', None, True, object(), []])
 def test_apply_lookup_table_raises(vol_prop: VolumeProperty, lut):
-    with pytest.raises(TypeError, match='`lookup_table` must be a `pyvista.LookupTable`'):
+    with pytest.raises(TypeError, match=r'`lookup_table` must be a `pyvista.LookupTable`'):
         vol_prop.apply_lookup_table(lut)
 
 

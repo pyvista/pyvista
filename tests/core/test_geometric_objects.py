@@ -235,7 +235,7 @@ def test_solid_sphere_resolution_errors():
         match=re.escape('max theta and min theta must be within 2 * np.pi'),
     ):
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
-    with pytest.raises(ValueError, match='maximum phi cannot be > np.pi'):
+    with pytest.raises(ValueError, match=r'maximum phi cannot be > np.pi'):
         pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
 
     with pytest.raises(ValueError, match='radius is not monotonically increasing'):
@@ -737,7 +737,7 @@ def test_rectangle_not_enough_points():
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
 
-    with pytest.raises(TypeError, match='Points must be given as length 3 np.ndarray or list'):
+    with pytest.raises(TypeError, match=r'Points must be given as length 3 np.ndarray or list'):
         pv.Rectangle([pointa, pointb])
 
 

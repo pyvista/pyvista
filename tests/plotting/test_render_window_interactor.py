@@ -56,7 +56,7 @@ def test_process_events_raises(mocker: MockerFixture):
 
     with pytest.raises(
         RuntimeError,
-        match='Render window interactor must be initialized before processing events.',
+        match=r'Render window interactor must be initialized before processing events.',
     ):
         pl.iren.process_events()
 

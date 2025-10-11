@@ -76,7 +76,7 @@ def test_plotter_anti_aliasing_raises():
     pl.close()
     with pytest.raises(
         AttributeError,
-        match='The render window has been closed.',
+        match=r'The render window has been closed.',
     ):
         pl.enable_anti_aliasing(aa_type='msaa')
 
@@ -92,13 +92,13 @@ def test_plotter_store_mouse_position_raises():
     pl.iren = None
     with pytest.raises(
         RuntimeError,
-        match='This plotting window is not interactive.',
+        match=r'This plotting window is not interactive.',
     ):
         pl.store_mouse_position()
 
     with pytest.raises(
         RuntimeError,
-        match='This plotting window is not interactive.',
+        match=r'This plotting window is not interactive.',
     ):
         pl.store_click_position()
 
@@ -303,7 +303,7 @@ def test_add_volume_scalar_raises(mocker: MockerFixture):
     pl = pv.Plotter()
     with pytest.raises(
         TypeError,
-        match='Non-numeric scalars are currently not supported for volume rendering.',
+        match=r'Non-numeric scalars are currently not supported for volume rendering.',
     ):
         pl.add_volume(pv.ImageData(), scalars='foo')
 
@@ -327,7 +327,7 @@ def test_update_scalar_bar_range_raises():
     with pytest.raises(TypeError, match=match):
         pl.update_scalar_bar_range(clim=[1, 2, 3])
 
-    with pytest.raises(AttributeError, match='This plotter does not have an active mapper.'):
+    with pytest.raises(AttributeError, match=r'This plotter does not have an active mapper.'):
         pl.update_scalar_bar_range(clim=[1, 2], name=None)
 
 
@@ -336,7 +336,7 @@ def test_save_graphic_raises():
     pl.close()
 
     with pytest.raises(
-        AttributeError, match='This plotter is closed and unable to save a screenshot.'
+        AttributeError, match=r'This plotter is closed and unable to save a screenshot.'
     ):
         pl.save_graphic(filename='foo.svg')
 
@@ -778,7 +778,7 @@ def test_multi_block_color_cycler():
         'sphere4': pv.Sphere(center=(4, 0, 0)),
     }
     spheres = pv.MultiBlock(data)
-    actor, mapper = plotter.add_composite(spheres)
+    _actor, mapper = plotter.add_composite(spheres)
 
     # pass custom cycler
     mapper.set_unique_colors(['red', 'green', 'blue'])

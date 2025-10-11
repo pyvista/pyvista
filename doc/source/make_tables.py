@@ -1479,7 +1479,7 @@ class ColormapTable(DocTable):
 
         # Sort colormaps based on selected method
         weights = np.ones((n_samples,))
-        sorted_groups, order = sort_color_groups_by_similarity(
+        _sorted_groups, order = sort_color_groups_by_similarity(
             grouped_colors, start_index, weights
         )
         return [data[i] for i in order]

@@ -89,7 +89,7 @@ def test_show_bounds_invalid_axes_ranges():
         plotter.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
-    with pytest.raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
+    with pytest.raises(ValueError, match=r'[xmin, xmax, ymin, max, zmin, zmax]'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
 
@@ -527,7 +527,7 @@ def test_prop_collection_setitem(prop_collection):
     assert prop_collection.keys() == ['b', 'b', 'a']
 
     # Test setitem index error
-    with pytest.raises(IndexError, match='Index out of range.'):
+    with pytest.raises(IndexError, match=r'Index out of range.'):
         prop_collection[-4] = c
 
     # Test setitem name

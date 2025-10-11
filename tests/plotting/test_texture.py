@@ -10,7 +10,7 @@ from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_texture():
-    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
+    with pytest.raises(TypeError, match=r'Cannot create a pyvista.Texture from'):
         texture = pv.Texture(range(10))
 
     texture = pv.Texture(examples.mapfile)
@@ -90,7 +90,7 @@ def test_texture_rotate_ccw(texture):
 def test_texture_from_images(image):
     texture = pv.Texture([image] * 6)
     assert texture.cube_map
-    with pytest.raises(TypeError, match='pyvista.ImageData'):
+    with pytest.raises(TypeError, match=r'pyvista.ImageData'):
         pv.Texture(['foo'] * 6)
 
 

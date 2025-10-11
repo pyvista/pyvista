@@ -600,7 +600,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.GetRange(r)
         return r
 
-    @range.setter
+    @range.setter  # noqa: A003
     def range(self, val) -> None:
         if val is None:
             self.behavior = 'auto'

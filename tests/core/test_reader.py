@@ -29,7 +29,7 @@ except ModuleNotFoundError:
 
 def test_read_raises():
     with pytest.raises(
-        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+        ValueError, match=r'Only one of `file_format` and `force_ext` may be specified.'
     ):
         pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
 
@@ -784,7 +784,7 @@ def test_openfoam_case_type():
     assert reader.case_type == 'decomposed'
     reader.case_type = 'reconstructed'
     assert reader.case_type == 'reconstructed'
-    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+    with pytest.raises(ValueError, match=r"Unknown case type 'wrong_value'."):
         reader.case_type = 'wrong_value'
 
 

@@ -80,7 +80,7 @@ def test_compare_images_raises(mocker: MockerFixture):
 
     mocker.patch.object(regression, 'remove_alpha', new=Foo())
 
-    with pytest.raises(RuntimeError, match='Input images are not the same size.'):
+    with pytest.raises(RuntimeError, match=r'Input images are not the same size.'):
         pv.compare_images(pv.ImageData(), pv.ImageData())
 
     with pytest.raises(TypeError, match='may not be an image'):

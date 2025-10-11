@@ -347,7 +347,7 @@ def test_ray_trace(sphere):
 def test_ray_trace_origin():
     # https://github.com/pyvista/pyvista/issues/5372
     plane = pv.Plane(i_resolution=1, j_resolution=1)
-    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    _pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
     assert len(cells) == 1
     assert cells[0] == 0
 
@@ -697,7 +697,9 @@ def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
 
     if extension == '.vtkhdf' and not binary:
-        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+        with pytest.raises(
+            ValueError, match=r'.vtkhdf files can only be written in binary format'
+        ):
             sphere.save(filename, binary=binary)
         return
 
@@ -1322,7 +1324,7 @@ def test_n_faces():
         # Should raise an AttributeError
         with pytest.raises(
             AttributeError,
-            match='The non-strict behavior of `pv.PolyData.n_faces` has been removed',
+            match=r'The non-strict behavior of `pv.PolyData.n_faces` has been removed',
         ):
             _ = mesh.n_faces
     else:

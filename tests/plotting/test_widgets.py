@@ -65,30 +65,30 @@ def test_add_plane_widget_raises():
 def test_add_slider_widget_raises():
     pl = pv.Plotter()
     pl.close()
-    with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
+    with pytest.raises(RuntimeError, match=r'Cannot add a widget to a closed plotter.'):
         pl.add_slider_widget(lambda *x: True, rng=[0, 1])  # noqa: ARG005
 
 
 def test_add_mesh_threshold_raises():
     pl = pv.Plotter()
     with pytest.raises(
-        TypeError, match='MultiBlock datasets are not supported for threshold widget.'
+        TypeError, match=r'MultiBlock datasets are not supported for threshold widget.'
     ):
         pl.add_mesh_threshold(mesh=pv.MultiBlock())
 
     pl = pv.Plotter()
-    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+    with pytest.raises(ValueError, match=r'No arrays present to threshold.'):
         pl.add_mesh_threshold(mesh=pv.PolyData())
 
 
 def test_add_mesh_isovalue_raises():
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match='MultiBlock datasets are not supported for this widget.'):
+    with pytest.raises(TypeError, match=r'MultiBlock datasets are not supported for this widget.'):
         pl.add_mesh_isovalue(mesh=pv.MultiBlock())
 
     pl = pv.Plotter()
     with pytest.raises(
-        ValueError, match='Input dataset for the contour filter must have data arrays.'
+        ValueError, match=r'Input dataset for the contour filter must have data arrays.'
     ):
         pl.add_mesh_isovalue(mesh=pv.PolyData())
 
@@ -103,7 +103,7 @@ def test_add_mesh_isovalue_raises():
 def test_add_mesh_isovalue_pointset_raises():
     pl = pv.Plotter()
     with pytest.raises(
-        TypeError, match='PointSets are 0-dimensional and thus cannot produce contours.'
+        TypeError, match=r'PointSets are 0-dimensional and thus cannot produce contours.'
     ):
         pl.add_mesh_isovalue(mesh=pv.PointSet())
 
@@ -111,7 +111,7 @@ def test_add_mesh_isovalue_pointset_raises():
 def test_add_measurement_widget_raises():
     pl = pv.Plotter()
     pl.close()
-    with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
+    with pytest.raises(RuntimeError, match=r'Cannot add a widget to a closed plotter.'):
         pl.add_measurement_widget()
 
 
@@ -359,7 +359,7 @@ def test_measurement_widget(random_hills):
     p.add_measurement_widget(callback=distance_callback)
     p.view_xy()
     p.show(auto_close=False)
-    width, height = p.window_size
+    _width, _height = p.window_size
 
     p.iren._mouse_left_button_click(300, 300)
     p.iren._mouse_left_button_click(700, 700)
@@ -630,7 +630,7 @@ def test_affine_widget(sphere):
     with pytest.raises(TypeError, match='callable'):
         pl.add_affine_transform_widget(actor, interact_callback='foo')
 
-    with pytest.raises(ValueError, match='(3, 3)'):
+    with pytest.raises(ValueError, match=r'(3, 3)'):
         pl.add_affine_transform_widget(actor, axes=np.eye(5))
 
     axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
@@ -809,7 +809,7 @@ def test_logo_widget():
     pl.show()
 
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
+    with pytest.raises(TypeError, match=r'must be a pyvista.ImageData or a file path'):
         pl.add_logo_widget(logo=0)
 
 

@@ -33,7 +33,7 @@ def test_wrap_pyvista_ndarray(sphere):
 def test_wrap_raises():
     with pytest.raises(
         NotImplementedError,
-        match='NumPy array could not be wrapped pyvista.',
+        match=r'NumPy array could not be wrapped pyvista.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
 
@@ -223,12 +223,12 @@ def test_array_association():
 
     # missing cases
     mesh.clear_data()
-    with pytest.raises(KeyError, match='not present in this dataset.'):
+    with pytest.raises(KeyError, match=r'not present in this dataset.'):
         assoc = mesh.get_array_association('missing')
     assoc = pv.get_array_association(mesh, 'missing', err=False)
     assert assoc == FieldAssociation.NONE
 
-    with pytest.raises(ValueError, match='not supported.'):
+    with pytest.raises(ValueError, match=r'not supported.'):
         mesh.get_array_association('name', preference='row')
 
 

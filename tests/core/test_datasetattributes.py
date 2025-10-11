@@ -57,7 +57,7 @@ def insert_string_array(hexbeam_point_attributes):
 
 @pytest.mark.parametrize('i', [1, None, object(), True])
 def test_setitem_raises(i):
-    with pytest.raises(TypeError, match='Only strings are valid keys for DataSetAttributes.'):
+    with pytest.raises(TypeError, match=r'Only strings are valid keys for DataSetAttributes.'):
         pv.Sphere().point_data[i] = 1
 
 
@@ -343,14 +343,14 @@ def test_add_should_contain_exact_array(insert_arange_narray):
 
 
 def test_getters_should_return_same_result(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     result_a = dsa.get_array('sample_array')
     result_b = dsa['sample_array']
     assert np.array_equal(result_a, result_b)
 
 
 def test_contains_should_contain_when_added(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     assert 'sample_array' in dsa
 
 
@@ -399,19 +399,19 @@ def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
 
 
 def test_should_remove_array(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     dsa.remove('sample_array')
     assert 'sample_array' not in dsa
 
 
 def test_should_del_array(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     del dsa['sample_array']
     assert 'sample_array' not in dsa
 
 
 def test_should_pop_array(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     dsa.pop('sample_array')
     assert 'sample_array' not in dsa
 
@@ -435,7 +435,7 @@ def test_pop_should_return_string_array(insert_string_array):
 
 
 def test_should_pop_array_invalid(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     key = 'invalid_key'
     assert key not in dsa
     default = 20
@@ -481,39 +481,39 @@ def test_length_should_increment_on_set_array(hexbeam_point_attributes):
 
 
 def test_length_should_decrement_on_remove(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.remove('sample_array')
     assert len(dsa) == initial_len - 1
 
 
 def test_length_should_decrement_on_pop(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.pop('sample_array')
     assert len(dsa) == initial_len - 1
 
 
 def test_length_should_be_0_on_clear(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     assert len(dsa) != 0
     dsa.clear()
     assert len(dsa) == 0
 
 
 def test_keys_should_be_strings(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     for name in dsa.keys():
         assert isinstance(name, str)
 
 
 def test_key_should_exist(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     assert 'sample_array' in dsa.keys()
 
 
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     for arr in dsa.values():
         assert type(arr) is pv.pyvista_ndarray
 
@@ -665,7 +665,7 @@ def test_active_texture_coordinates_name(plane):
 @pytest.mark.skip_windows("windows doesn't support np.complex256")
 @pytest.mark.skip_mac('Test fails on Apple silicon (M1/M2)', processor='arm')
 def test_complex_raises(plane):
-    with pytest.raises(ValueError, match='Only numpy.complex64'):
+    with pytest.raises(ValueError, match=r'Only numpy.complex64'):
         plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
 
 
