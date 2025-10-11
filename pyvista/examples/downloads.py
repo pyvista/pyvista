@@ -473,9 +473,12 @@ def download_puppy(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_puppy()
-    >>> dataset.plot(cpos='xy', rgba=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_puppy()
+        >>> dataset.plot(cpos='xy', rgba=True)
 
     .. seealso::
 
@@ -6114,19 +6117,22 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.download_parched_canal_4k()
-    >>> texture.dimensions
-    (4096, 2048)
+    .. pyvista-plot::
+        :force_static:
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
-    underlying image before plotting.
+        >>> from pyvista import examples
+        >>> texture = examples.download_parched_canal_4k()
+        >>> texture.dimensions
+        (4096, 2048)
 
-    >>> _ = texture.to_image().resample(0.25, inplace=True)
-    >>> texture.dimensions
-    (1024, 512)
+        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        underlying image before plotting.
 
-    >>> texture.plot(cpos='xy')
+        >>> _ = texture.to_image().resample(0.25, inplace=True)
+        >>> texture.dimensions
+        (1024, 512)
+
+        >>> texture.plot(cpos='xy')
 
     .. seealso::
 
@@ -7217,19 +7223,22 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.download_dikhololo_night()
-    >>> texture.dimensions
-    (4096, 2048)
+    .. pyvista-plot::
+        :force_static:
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
-    underlying image before plotting.
+        >>> from pyvista import examples
+        >>> texture = examples.download_dikhololo_night()
+        >>> texture.dimensions
+        (4096, 2048)
 
-    >>> _ = texture.to_image().resample(0.25, inplace=True)
-    >>> texture.dimensions
-    (1024, 512)
+        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        underlying image before plotting.
 
-    >>> texture.plot(cpos='xy')
+        >>> _ = texture.to_image().resample(0.25, inplace=True)
+        >>> texture.dimensions
+        (1024, 512)
+
+        >>> texture.plot(cpos='xy')
 
     .. seealso::
 
