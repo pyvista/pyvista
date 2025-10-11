@@ -4748,13 +4748,13 @@ class ImageDataFilters(DataSetFilters):
         :func:`~pyvista.examples.downloads.download_puppy` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
-        >>> puppy = examples.download_puppy()
-        >>> puppy.dimensions
-        (1600, 1200, 1)
-
         >>> bird = examples.download_bird()
         >>> bird.dimensions
         (458, 342, 1)
+
+        >>> gourds = examples.download_gourds()
+        >>> gourds.dimensions
+        (640, 480, 1)
 
         Use ``reference_image`` to resample the bird to match the gourds geometry or
         vice-versa.
