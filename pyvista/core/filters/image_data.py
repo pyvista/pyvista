@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Iterable
+from collections.abc import Sequence
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -30,8 +31,6 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from numpy.typing import NDArray
 
     from pyvista import ImageData
@@ -5359,6 +5358,88 @@ class ImageDataFilters(DataSetFilters):
         output.copy_structure(self)
         output[array_name] = array_out
         return output
+
+    def stack(
+        self: ImageData,  # type: ignore[misc]
+        images: ImageData | Sequence[ImageData],
+        axis='x',
+    ):
+        """Stack :class:`~pyvista.ImageData` objects along an axis.
+
+        Parameters
+        ----------
+        images : ImageData | Sequence[ImageData]
+            The input image(s) to stack. All must have the same scalar type and
+            identical dimensions except along the stacking axis.
+
+        axis : int | str, default: 'x'
+            Axis along which the images are stacked:
+            - 0 or 'x': x-axis
+            - 1 or 'y': y-axis
+            - 2 or 'z': z-axis
+
+        Returns
+        -------
+        ImageData
+            The stacked image.
+
+        Examples
+        --------
+        Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> image = examples.download_beach()
+
+        Stack it with itself along the x-axis.
+
+        >>> stacked = image.stack(image, axis='x')
+        >>> kwargs = dict(
+        ...     rgb=True,
+        ...     lighting=False,
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     show_axes=False,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> stacked.plot(**kwargs)
+
+        Stack it with itself along the y-axis.
+
+        >>> stacked = image.stack(image, axis='y')
+        >>> stacked.plot(**kwargs)
+
+        """
+        mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+        if not images:
+            msg = 'No images provided for stacking.'
+            raise ValueError(msg)
+
+        images_ = images if isinstance(images, Sequence) else [images]
+
+        # Validate inputs
+        self_dims = self.dimensions
+        for i, img in enumerate(images_):
+            _validation.check_instance(img, pyvista.ImageData)
+            if img.GetScalarType() != self.GetScalarType():
+                msg = f'Scalar type mismatch at index {i}.'
+                raise ValueError(msg)
+            dims = img.dimensions
+            if dims != self_dims:
+                # Allow mismatch only along stacking axis
+                for ax in range(3):
+                    if ax != axis and dims[ax] != self_dims[ax]:
+                        msg = f'Image {i} shape mismatch on axis {ax}.'
+                        raise ValueError(msg)
+
+        appender = _vtk.vtkImageAppend()
+        appender.SetAppendAxis(mapping[axis])
+
+        for img in [self, *images_]:
+            appender.AddInputData(img)
+
+        _update_alg(appender)
+        return _get_output(appender)
 
 
 def _validate_padding(pad_size):
