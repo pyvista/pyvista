@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
 import shlex
 import subprocess
 import sys
@@ -22,7 +23,6 @@ from pyvista.__main__ import app
 from pyvista.__main__ import main
 
 if TYPE_CHECKING:
-    from pathlib import Path
     from unittest.mock import MagicMock
 
     from pytest_cases.case_parametrizer_new import Case
@@ -174,7 +174,7 @@ def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
 
 
-@pytest.fixture
+@fixture
 def mock_files_validator(mocker: MockerFixture):
     mocker.patch.object(pv.__main__, '_validator_files')
 
@@ -207,8 +207,16 @@ def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
         for p, v in params.items()
         if (p not in missing_plot_arguments) and (v.kind != v.VAR_KEYWORD)
     }
-    defaults['var_item'] = []  # because passing empty list to `pv.plot` if None
+    defaults['var_item'] = ['file.vtp']  # because has no default
     return defaults
+
+
+@fixture
+def default_tokens(default_plot_kwargs: dict, mock_files_validator) -> str:  # noqa: ARG001
+    """Minimum tokens for `pyvista plot` CLI.
+    Note that the files validator is mocked
+    """
+    return f' --files={default_plot_kwargs["var_item"][0]} '
 
 
 def test_plot_cli_synced(missing_plot_arguments: set[str]):
@@ -239,16 +247,6 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     # Test the parameters defaults
     cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
     plot_defaults = {name: plot_sig.parameters[name].default for name in cli_sig.parameters}
-
-    # The only difference lies for `var_item`.
-    # In `pv.plot`, there is no default value, whereas in `pv.__main__._plot`, a default None
-    # value is set.
-    # The values are checked and then removed to allow testing the remaining defaults
-    k = 'var_item'
-    assert plot_defaults[k] == inspect.Signature.empty
-    assert cli_defaults[k] is None
-
-    del cli_defaults[k], plot_defaults[k]
 
     assert cli_defaults == plot_defaults
 
@@ -284,9 +282,6 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
 
 class CasesPlot:
-    def case_empty(self, default_plot_kwargs: dict):
-        return '', default_plot_kwargs
-
     @pytest.mark.usefixtures('mock_files_validator')
     def case_files_single_args(self, default_plot_kwargs: dict):
         """Test when only a single positional argument is given for files."""
@@ -311,54 +306,77 @@ class CasesPlot:
         return prefix + ' '.join(files), kwargs
 
     @parametrize(offscreen=['True', 'yes', 'y', 'true'])
-    def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
+    def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str, default_tokens: str):
         kwargs = default_plot_kwargs
-        tokens = f'--off-screen={offscreen}'
+        tokens = default_tokens + f'--off-screen={offscreen}'
         kwargs.update(off_screen=True)
         return tokens, kwargs
 
     @parametrize(offscreen=['False', 'no', 'n', 'false'])
-    def case_kw_no_bool(self, default_plot_kwargs: dict, offscreen: str):
+    def case_kw_no_bool(self, default_plot_kwargs: dict, offscreen: str, default_tokens: str):
         kwargs = default_plot_kwargs
-        tokens = f'--off-screen={offscreen}'
+        tokens = default_tokens + f'--off-screen={offscreen}'
         kwargs.update(off_screen=False)
         return tokens, kwargs
 
     @parametrize(off_screen=[True, False])
-    def case_kw_no_bool_no_value(self, default_plot_kwargs: dict, off_screen: bool):
+    def case_kw_no_bool_no_value(
+        self,
+        default_plot_kwargs: dict,
+        off_screen: bool,
+        default_tokens: str,
+    ):
         kwargs = default_plot_kwargs
-        tokens = '--off-screen' if off_screen else '--no-off-screen'
+        tokens = default_tokens + ('--off-screen' if off_screen else '--no-off-screen')
         kwargs.update(off_screen=off_screen)
         return tokens, kwargs
 
-    def case_window_size(self, default_plot_kwargs: dict):
+    def case_window_size(
+        self,
+        default_plot_kwargs: dict,
+        default_tokens: str,
+    ):
         kwargs = default_plot_kwargs
-        tokens = '--window-size=[100,100]'
+        tokens = default_tokens + '--window-size=[100,100]'
         kwargs.update(window_size=[100, 100])
         return tokens, kwargs
 
-    def case_window_size_multiple(self, default_plot_kwargs: dict):
+    def case_window_size_multiple(
+        self,
+        default_plot_kwargs: dict,
+        default_tokens: str,
+    ):
         kwargs = default_plot_kwargs
-        tokens = '--window-size 100 100'
+        tokens = default_tokens + '--window-size 100 100'
         kwargs.update(window_size=[100, 100])
         return tokens, kwargs
 
-    def case_window_size_rounding(self, default_plot_kwargs: dict):
+    def case_window_size_rounding(
+        self,
+        default_plot_kwargs: dict,
+        default_tokens: str,
+    ):
         """Test when window size is given as float, it is rounded to int."""
         kwargs = default_plot_kwargs
-        tokens = '--window-size=[100.4,100.6]'
+        tokens = default_tokens + '--window-size=[100.4,100.6]'
         kwargs.update(window_size=[100, 101])
         return tokens, kwargs
 
     @parametrize(anti_aliasing=['ssaa', 'msaa', 'fxaa'])
-    def case_anti_aliasing(self, default_plot_kwargs: dict, anti_aliasing: str):
+    def case_anti_aliasing(
+        self,
+        default_plot_kwargs: dict,
+        anti_aliasing: str,
+        default_tokens: str,
+    ):
         kwargs = default_plot_kwargs
-        tokens = f'--anti-aliasing={anti_aliasing}'
+        tokens = default_tokens + f'--anti-aliasing={anti_aliasing}'
         kwargs.update(anti_aliasing=anti_aliasing)
         return tokens, kwargs
 
+    # region kwargs cases
     @parametrize(
-        kwargs=[
+        tokens_kwargs=[
             ('--color=red', dict(color='red')),
             ('--color=(0,1,0)', dict(color=(0, 1, 0))),
             ('--color="(0, 1, 0)"', dict(color=(0, 1, 0))),
@@ -369,52 +387,59 @@ class CasesPlot:
             ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_validator')
     @case(tags=['kwargs', 'add_mesh'])
-    def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+    def case_kwargs_add_mesh(
+        self,
+        tokens_kwargs: tuple[str, dict],
+    ):
         """Test when kwargs are provided to Plotter.add_mesh"""
-        tokens, kwargs = kwargs
-        tokens += ' --files=file.vtp'
-        default_plot_kwargs.update(**kwargs)
-        default_plot_kwargs.update(var_item=['file.vtp'])
-        return tokens, default_plot_kwargs
+        return tokens_kwargs
 
     @parametrize(
-        kwargs=[
+        tokens_kwargs=[
             ('--mapper smart', dict(mapper='smart')),
             ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_validator')
     @case(tags=['kwargs', 'add_volume'])
-    def case_kwargs_volume(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+    def case_kwargs_add_volume(
+        self,
+        tokens_kwargs: tuple[str, dict],
+    ):
         """Test when kwargs are provided to Plotter.add_volume"""
-        tokens, kwargs = kwargs
-        tokens += ' --files=file.vtp --volume'
-        default_plot_kwargs.update(**kwargs, volume=True)
-        default_plot_kwargs.update(var_item=['file.vtp'])
-        return tokens, default_plot_kwargs
+        tokens, kwargs = tokens_kwargs
+        tokens += ' --volume'
+        return tokens, kwargs
+
+    # endregion kwargs cases
+
+    # region raises cases
 
     @case(tags='raises')
-    def case_anti_aliasing_raises(self):
-        return '--anti-aliasing=foo'
+    def case_anti_aliasing_raises(self, default_tokens: str):
+        return default_tokens + '--anti-aliasing=foo'
 
     @case(tags='raises')
     @parametrize(window_size=['100', '100 200 300', '[100,200,300]'])
-    def case_window_size_wrong_length(self, window_size: str):
+    def case_window_size_wrong_length(self, window_size: str, default_tokens: str):
         """Test when the window size does not have exactly two elements."""
-        return f' --window-size {window_size}'
+        return default_tokens + f' --window-size {window_size}'
 
     @case(tags='raises')
     @parametrize(window_size=['100 a', 'b a', '[a,b]'])
-    def case_window_size_wrong_type(self, window_size: str):
+    def case_window_size_wrong_type(self, window_size: str, default_tokens: str):
         """Test when the window size does not have the correct type."""
-        return f'--window-size {window_size}'
+        return default_tokens + f'--window-size {window_size}'
 
     @case(tags='raises')
     def case_files_raises(self, tmp_path: Path):
         """Test when the file does not exists."""
         return str(tmp_path / 'file.vtp')
+
+    @case(tags='raises')
+    def case_files_no_files(self):
+        """Test when no files are passed"""
+        return ''
 
     @case(tags='raises')
     def case_files_raises_kw(self, tmp_path: Path):
@@ -448,39 +473,54 @@ class CasesPlot:
         pv.Sphere().save(f := tmp_path / 'file.vtp')
         return f'{f.as_posix()} --opacity=foo'
 
+    # endregion raises cases
+
 
 @parametrize_with_cases(
     'tokens, expected_kwargs',
     cases=CasesPlot,
-    filter=~filters.has_tag('raises'),
+    filter=~filters.has_tags('raises', 'kwargs'),
 )
 def test_plot_called(
     tokens: str,
     expected_kwargs: dict,
     mock_plot: MagicMock,
-    mock_add_mesh: MagicMock,
-    mock_add_volume: MagicMock,
-    mocker: MockerFixture,
-    current_cases: dict[str, Case],
 ):
     """Test that the pv.plot function is called with the expected arguments."""
     main(f'plot {tokens}')
     mock_plot.assert_called_once_with(**expected_kwargs)
 
-    case = current_cases['tokens']
-    if 'kwargs' in (tags := get_case_tags(case_func=case.func)):
-        mocker.stop(mock_plot)
-        main(f'plot {tokens}')
 
-        mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
-        kwargs = case.params['kwargs'][-1]
-        mock.assert_called_once_with('file.vtp', **kwargs)
+@parametrize_with_cases(
+    'tokens, expected_kwargs',
+    cases=CasesPlot,
+    has_tag='kwargs',
+)
+def test_plot_called_kwargs(
+    tokens,
+    expected_kwargs,
+    mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
+    current_cases: dict[str, Case],
+):
+    """
+    Test that the pl.add_mesh or pl.add_volume function is called with the expected arguments
+    when supplementary kw arguments are added to the command line.
+    """
+
+    file = Path(pv.examples.antfile).as_posix()
+    main(f'plot --files {file} {tokens}')
+
+    case = current_cases['tokens']
+    tags = get_case_tags(case_func=case.func)
+
+    mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
+    mock.assert_called_once_with(file, **expected_kwargs)
 
 
 @parametrize(
     tokens_ncalls_args=[
         ('file1.vtp file2.vtp', 2, ['file1.vtp', 'file2.vtp']),
-        ('', 0, []),
         ('--files file1.vtp file2.vtp file3.vtp', 3, ['file1.vtp', 'file2.vtp', 'file3.vtp']),
     ],
     idgen=lambda **args: args['tokens_ncalls_args'][0],
@@ -494,7 +534,9 @@ def test_add_mesh_volume_called(
     mocker: MockerFixture,
     func: str,
 ):
-    """Test that the pv.Plotter.add_mesh and add_volume methods are called with the expected arguments."""  # noqa: E501
+    """Test that the pv.Plotter.add_mesh and add_volume methods are called
+    a number of expected times with the correct arguments.
+    """
     tokens, ncalls, args = tokens_ncalls_args
     tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
     main(f'plot {tokens}')
@@ -595,6 +637,7 @@ def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
 
 @parametrize(func=['plot', 'report'])
 @parametrize(ret=['foo', None])
+@pytest.mark.usefixtures('mock_files_validator')
 def test_print(
     mock_plot: MagicMock,
     mock_report: MagicMock,
@@ -605,7 +648,9 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
-    main(f'{func}')
+
+    tokens = func if func == 'report' else f'{func} --files=file.vtp'
+    main(tokens)
 
     expected = f'{ret}\n' if ret is not None else ''
     assert capsys.readouterr().out == expected
