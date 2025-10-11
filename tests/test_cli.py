@@ -486,23 +486,29 @@ class CasesPlotFiles:
     @case(tags='raises')
     def case_not_exists(self, tmp_path: Path):
         """Test when the file does not exists."""
-        return str((tmp_path / 'file.vtp').as_posix())
+        return str((tmp_path / 'file.vtp').as_posix()), ['1 file not found']
+
+    @case(tags='raises')
+    def case_not_exists2(self, tmp_path: Path):
+        """Test when the filed do not exists."""
+        files = [str((tmp_path / f'file_{i}.vtp').as_posix()) for i in range(4)]
+        return ' '.join(files), ['4 files not found']
 
     @case(tags='raises')
     def case_not_exists_kw(self, tmp_path: Path):
         """Test when the file does not exists as keyword."""
-        return f'--files={(tmp_path / "file.vtp").as_posix()}'
+        return f'--files={(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
 
     @case(tags='raises')
     def case_empty(self):
         """Test when no files are passed"""
-        return ''
+        return '', ['Command "plot" parameter "--files" requires an argument.']
 
     @case(tags='raises')
     def case_one_exists(self, tmp_path: Path):
         """Test when one file does not exists."""
         (f1 := (tmp_path / 'f1.vtp')).touch()
-        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}'
+        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
 
     @case(tags='raises')
     def case_not_readable(self, tmp_path: Path, mocker: MockerFixture):
@@ -511,7 +517,7 @@ class CasesPlotFiles:
         m = mocker.patch.object(pv, 'read')
         m.side_effect = Exception('Not readable')
 
-        return f'--files {f1.as_posix()}'
+        return f'--files {f1.as_posix()}', ['1 file not readable by pyvista:']
 
 
 @parametrize_with_cases(
@@ -528,13 +534,17 @@ def test_plot_called_files(
     mock_plot.assert_called_once_with(**expected_kwargs)
 
 
-@parametrize_with_cases('tokens', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
-def test_plot_files_raises(tokens: str):
+@parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
+def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
     """Test that errors are correctly raised for the --files argument"""
     with pytest.raises(SystemExit) as e:
         main(f'plot {tokens}')
 
     assert e.value.code == 1
+
+    out = capsys.readouterr().out
+    for error in errors:
+        assert error in out, out
 
 
 @parametrize(
