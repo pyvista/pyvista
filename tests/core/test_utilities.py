@@ -1408,10 +1408,11 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
     eggs = 'eggs'
 
     match = (
-        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
-        'Use `pv.set_new_attribute` to set new attributes.'
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.\n'
+        'Setting new private variables (with `_` prefix) is allowed by default.'
     )
-    with pytest.raises(pv.PyVistaAttributeError, match=match):
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
         setattr(a, ham, eggs)
 
     match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
@@ -2456,6 +2457,37 @@ def test_vtk_snake_case():
     with pv.vtk_snake_case('warning'):
         with pytest.warns(RuntimeWarning, match=match):
             _ = pv.PolyData().information
+
+
+def test_allow_new_attributes():
+    match = (
+        "Attribute '_?foo' does not exist and cannot be added to class 'PolyData'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.'
+    )
+
+    def set_private():
+        _ = pv.PolyData()._foo = 42
+
+    def set_public():
+        _ = pv.PolyData().foo = 42
+
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
+
+    pv.allow_new_attributes('private')
+    assert pv.allow_new_attributes() == 'private'
+    set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
+
+    pv.allow_new_attributes(True)
+    assert pv.allow_new_attributes() is True
+    set_private()
+    set_public()
 
 
 T = TypeVar('T')
