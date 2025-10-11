@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
 import shlex
 import subprocess
 import sys
@@ -22,7 +23,6 @@ from pyvista.__main__ import app
 from pyvista.__main__ import main
 
 if TYPE_CHECKING:
-    from pathlib import Path
     from unittest.mock import MagicMock
 
     from pytest_cases.case_parametrizer_new import Case
@@ -374,8 +374,9 @@ class CasesPlot:
         kwargs.update(anti_aliasing=anti_aliasing)
         return tokens, kwargs
 
+    # region kwargs cases
     @parametrize(
-        kwargs=[
+        tokens_kwargs=[
             ('--color=red', dict(color='red')),
             ('--color=(0,1,0)', dict(color=(0, 1, 0))),
             ('--color="(0, 1, 0)"', dict(color=(0, 1, 0))),
@@ -387,38 +388,32 @@ class CasesPlot:
         ]
     )
     @case(tags=['kwargs', 'add_mesh'])
-    def case_kwargs(
+    def case_kwargs_add_mesh(
         self,
-        default_plot_kwargs: dict,
-        kwargs: tuple[str, dict],
-        default_tokens: str,
+        tokens_kwargs: tuple[str, dict],
     ):
         """Test when kwargs are provided to Plotter.add_mesh"""
-        tokens, kwargs = kwargs
-        tokens += default_tokens
-        default_plot_kwargs.update(**kwargs)
-        default_plot_kwargs.update(var_item=['file.vtp'])
-        return tokens, default_plot_kwargs
+        return tokens_kwargs
 
     @parametrize(
-        kwargs=[
+        tokens_kwargs=[
             ('--mapper smart', dict(mapper='smart')),
             ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
         ]
     )
     @case(tags=['kwargs', 'add_volume'])
-    def case_kwargs_volume(
+    def case_kwargs_add_volume(
         self,
-        default_plot_kwargs: dict,
-        kwargs: tuple[str, dict],
-        default_tokens: str,
+        tokens_kwargs: tuple[str, dict],
     ):
         """Test when kwargs are provided to Plotter.add_volume"""
-        tokens, kwargs = kwargs
-        tokens += ' --volume' + default_tokens
-        default_plot_kwargs.update(**kwargs, volume=True)
-        default_plot_kwargs.update(var_item=['file.vtp'])
-        return tokens, default_plot_kwargs
+        tokens, kwargs = tokens_kwargs
+        tokens += ' --volume'
+        return tokens, kwargs
+
+    # endregion kwargs cases
+
+    # region raises cases
 
     @case(tags='raises')
     def case_anti_aliasing_raises(self, default_tokens: str):
@@ -478,33 +473,49 @@ class CasesPlot:
         pv.Sphere().save(f := tmp_path / 'file.vtp')
         return f'{f.as_posix()} --opacity=foo'
 
+    # endregion raises cases
+
 
 @parametrize_with_cases(
     'tokens, expected_kwargs',
     cases=CasesPlot,
-    filter=~filters.has_tag('raises'),
+    filter=~filters.has_tags('raises', 'kwargs'),
 )
 def test_plot_called(
     tokens: str,
     expected_kwargs: dict,
     mock_plot: MagicMock,
-    mock_add_mesh: MagicMock,
-    mock_add_volume: MagicMock,
-    mocker: MockerFixture,
-    current_cases: dict[str, Case],
 ):
     """Test that the pv.plot function is called with the expected arguments."""
     main(f'plot {tokens}')
     mock_plot.assert_called_once_with(**expected_kwargs)
 
-    case = current_cases['tokens']
-    if 'kwargs' in (tags := get_case_tags(case_func=case.func)):
-        mocker.stop(mock_plot)
-        main(f'plot {tokens}')
 
-        mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
-        kwargs = case.params['kwargs'][-1]
-        mock.assert_called_once_with('file.vtp', **kwargs)
+@parametrize_with_cases(
+    'tokens, expected_kwargs',
+    cases=CasesPlot,
+    has_tag='kwargs',
+)
+def test_plot_called_kwargs(
+    tokens,
+    expected_kwargs,
+    mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
+    current_cases: dict[str, Case],
+):
+    """
+    Test that the pl.add_mesh or pl.add_volume function is called with the expected arguments
+    when supplementary kw arguments are added to the command line.
+    """
+
+    file = Path(pv.examples.antfile).as_posix()
+    main(f'plot --files {file} {tokens}')
+
+    case = current_cases['tokens']
+    tags = get_case_tags(case_func=case.func)
+
+    mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
+    mock.assert_called_once_with(file, **expected_kwargs)
 
 
 @parametrize(
@@ -523,7 +534,9 @@ def test_add_mesh_volume_called(
     mocker: MockerFixture,
     func: str,
 ):
-    """Test that the pv.Plotter.add_mesh and add_volume methods are called with the expected arguments."""  # noqa: E501
+    """Test that the pv.Plotter.add_mesh and add_volume methods are called
+    a number of expected times with the correct arguments.
+    """
     tokens, ncalls, args = tokens_ncalls_args
     tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
     main(f'plot {tokens}')
