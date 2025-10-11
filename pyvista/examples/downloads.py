@@ -7219,7 +7219,17 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
     --------
     >>> from pyvista import examples
     >>> texture = examples.download_dikhololo_night()
-    >>> texture.plot()
+    >>> texture.dimensions
+    (4096, 2048)
+
+    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+    underlying image before plotting.
+
+    >>> _ = texture.to_image().resample(0.25, inplace=True)
+    >>> texture.dimensions
+    (1024, 512)
+
+    >>> texture.plot(cpos='xy')
 
     .. seealso::
 
