@@ -141,9 +141,6 @@ def _converter_files(
     tokens: Sequence[Token],
 ) -> tuple[list[DataObject], list[Path]]:
     values: list[str] = [t.value for t in tokens]
-    if len(values) == 0:
-        return [], []
-
     literal_file = 'File' if len(values) == 1 else 'Files'
 
     # Test file exists
