@@ -168,6 +168,31 @@ def _converter_files(
     return meshes, paths
 
 
+def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
+    if value is None:
+        return
+
+    # Test file exists
+    if not all((files := {v: Path(v).exists() for v in value}).values()):
+        missing = [k for k, v in files.items() if not v]
+        msg = f'File(s) not found: {missing}'
+        raise ValueError(msg)
+
+    # Test file can be read by pyvista
+    def readable(file: str) -> bool:
+        try:
+            pyvista.read(file)
+        except Exception:  # noqa: BLE001
+            return False
+        else:
+            return True
+
+    if not all((files := {v: readable(v) for v in value}).values()):
+        not_readable = [k for k, v in files.items() if not v]
+        msg = f'File(s) not readable by pyvista: {not_readable}'
+        raise ValueError(msg)
+
+
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
     for token in tokens:
         # Check hyphen in keyword value
@@ -220,7 +245,7 @@ def _plot(
             name='files',
             consume_multiple=True,
             help='File(s) to plot. Must be readable with ``pyvista.read``. If nothing is provided, show an empty window.',  # noqa: E501
-            converter=_converter_files,
+            validator=_validator_files,
             group=Groups.IN,
         ),
     ] = None,
@@ -258,11 +283,9 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
-    # Converter has already read files as meshes
-    meshes = var_item[0]
     try:
         res = pyvista.plot(
-            var_item=meshes,
+            var_item=var_item or [],  # type: ignore[arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,

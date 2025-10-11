@@ -301,8 +301,8 @@ def mock_add_volume(mock_plotter: MagicMock):
 
 
 @pytest.fixture
-def mock_files_convert(mocker: MockerFixture):
-    mocker.patch.object(pv.__main__, '_converter_files')
+def mock_files_validator(mocker: MockerFixture):
+    mocker.patch.object(pv.__main__, '_validator_files')
 
 
 @fixture
@@ -413,14 +413,14 @@ class CasesPlot:
     def case_empty(self, default_plot_kwargs: dict):
         return '', default_plot_kwargs
 
-    @pytest.mark.usefixtures('mock_files_convert')
+    @pytest.mark.usefixtures('mock_files_validator')
     def case_files_single_args(self, default_plot_kwargs: dict):
         """Test when only a single positional argument is given for files."""
         kwargs = default_plot_kwargs
         kwargs['var_item'] = [f := 'file.vtp']
         return f, kwargs
 
-    @pytest.mark.usefixtures('mock_files_convert')
+    @pytest.mark.usefixtures('mock_files_validator')
     def case_files_multiple_args(self, default_plot_kwargs: dict):
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
@@ -428,7 +428,7 @@ class CasesPlot:
         return ' '.join(files), kwargs
 
     @parametrize(with_space=[True, False])
-    @pytest.mark.usefixtures('mock_files_convert')
+    @pytest.mark.usefixtures('mock_files_validator')
     def case_files_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
         """Test when multiple keyword arguments are given for files."""
         kwargs = default_plot_kwargs
@@ -495,7 +495,7 @@ class CasesPlot:
             ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_convert')
+    @pytest.mark.usefixtures('mock_files_validator')
     @case(tags=['kwargs', 'add_mesh'])
     def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
         """Test when kwargs are provided to Plotter.add_mesh"""
@@ -511,7 +511,7 @@ class CasesPlot:
             ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_convert')
+    @pytest.mark.usefixtures('mock_files_validator')
     @case(tags=['kwargs', 'add_volume'])
     def case_kwargs_volume(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
         """Test when kwargs are provided to Plotter.add_volume"""
@@ -612,7 +612,7 @@ def test_plot_called(
     idgen=lambda **args: args['tokens_ncalls_args'][0],
 )
 @parametrize(func=['add_mesh', 'add_volume'])
-@pytest.mark.usefixtures('mock_files_convert')
+@pytest.mark.usefixtures('mock_files_validator')
 def test_add_mesh_volume_called(
     tokens_ncalls_args: tuple[str, int, list[str]],
     mock_add_mesh: MagicMock,
