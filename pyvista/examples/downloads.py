@@ -1217,9 +1217,12 @@ def download_lidar(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_lidar()
-    >>> dataset.plot(cmap='gist_earth')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_lidar()
+        >>> dataset.plot(cmap='gist_earth')
 
     .. seealso::
 
