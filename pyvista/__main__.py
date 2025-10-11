@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
 from typing import Literal
+from typing import NamedTuple
 from typing import NoReturn
 from typing import get_type_hints
 import warnings
@@ -25,6 +26,7 @@ from rich.text import Text
 
 import pyvista
 from pyvista import Report
+from pyvista.core.dataobject import DataObject
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
@@ -32,6 +34,12 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyvista import DataObject
+
+
+class _MeshAndPath(NamedTuple):
+    mesh: DataObject
+    path: Path
+
 
 # Assign annotations to be able to use the Report class using
 # cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
@@ -98,8 +106,9 @@ def _convert(
 
     """
     # get input mesh and input path from file_in str token
-    # which was converted to tuple[meshes, paths]
-    mesh_in, path_in = file_in[0][0], file_in[1][0]
+    # which was converted to a (mesh, path) pair
+    mesh_in = file_in[0].mesh  # type: ignore[attr-defined]
+    path_in = file_in[0].path  # type: ignore[attr-defined]
 
     # Parse output specification
     out_spec_path = Path(file_out)
@@ -107,7 +116,7 @@ def _convert(
     out_suffix = out_spec_path.suffix
     if '*' in (spec_stem := str(out_spec_path.stem)):
         # Pattern like "*.stl" or "bar/*.stl"
-        out_stem = spec_stem.replace('*', path_in.stem, 1)  # type: ignore[attr-defined]
+        out_stem = spec_stem.replace('*', path_in.stem, 1)
     else:
         # Explicit filename with extension
         out_stem = out_spec_path.stem
@@ -117,7 +126,7 @@ def _convert(
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        mesh_in.save(out_path)  # type: ignore[attr-defined]
+        mesh_in.save(out_path)
     except Exception as e:  # noqa: BLE001
         _console_error(f'Failed to save output file: {out_path}\n{e}')
 
@@ -139,7 +148,7 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
 def _converter_files(
     type_: type,  # noqa: ARG001
     tokens: Sequence[Token],
-) -> tuple[list[DataObject], list[Path]]:
+) -> list[_MeshAndPath]:
     values: list[str] = [t.value for t in tokens]
     literal_file = 'File' if len(values) == 1 else 'Files'
 
@@ -151,18 +160,17 @@ def _converter_files(
         raise ValueError(msg)
 
     # Test file can be read by pyvista
-    meshes = []
-    paths = []
+    meshes_and_paths: list[_MeshAndPath] = []
     for file in values:
         try:
-            meshes.append(pyvista.read(file))
+            mesh = pyvista.read(file)
         except Exception:  # noqa: BLE001
             msg = f'File not readable by PyVista: {file}'
             raise ValueError(msg)
         else:
-            paths.append(Path(file))
+            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
 
-    return meshes, paths
+    return meshes_and_paths
 
 
 def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
