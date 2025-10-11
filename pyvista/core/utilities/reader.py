@@ -2353,9 +2353,9 @@ class JPEGReader(BaseReader):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.planets.download_mars_surface(load=False)
+    >>> filename = examples.download_bird(load=False)
     >>> Path(filename).name
-    'mars.jpg'
+    'Pileated.jpg'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -2497,15 +2497,18 @@ class TIFFReader(BaseReader):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_crater_imagery(load=False)
-    >>> Path(filename).name
-    'BJ34_GeoTifv1-04_crater_clip.tif'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_crater_imagery(load=False)
+        >>> Path(filename).name
+        'BJ34_GeoTifv1-04_crater_clip.tif'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot()
 
     """
 
