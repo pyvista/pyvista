@@ -1680,7 +1680,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        close, erode, dilate
+        open, erode, dilate
 
         Notes
         -----
