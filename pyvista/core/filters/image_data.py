@@ -62,6 +62,7 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
+_StackModeOptions = Literal['extents', 'pad-crop', 'resample'] | None
 
 
 @abstract_class
@@ -5367,7 +5368,7 @@ class ImageDataFilters(DataSetFilters):
         images: ImageData | Sequence[ImageData],
         axis: _AxisOptions = 'x',
         *,
-        mode: Literal['extents', 'pad-crop', 'resample', None] = None,  # noqa: PYI061
+        mode: _StackModeOptions = None,
         resample_kwargs: dict[str, Any] | None = None,
     ):
         """Stack :class:`~pyvista.ImageData` objects along an axis.
@@ -5384,6 +5385,7 @@ class ImageDataFilters(DataSetFilters):
             - 0 or 'x': x-axis
             - 1 or 'y': y-axis
             - 2 or 'z': z-axis
+
         mode : str, optional
             Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
             images being stacked do not match the input dimensions.
@@ -5455,10 +5457,15 @@ class ImageDataFilters(DataSetFilters):
         >>> stacked.plot(**kwargs)
 
         """
+        # validate axis
         options = get_args(_AxisOptions)
-        _validation.check_contains(options, must_contain=axis)
+        _validation.check_contains(options, must_contain=axis, name='axis')
         mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
         axis_num = mapping[axis]
+
+        # validate mode
+        options = get_args(_StackModeOptions)
+        _validation.check_contains(options, must_contain=mode, name='mode')
 
         if not images:
             msg = 'No images provided for stacking.'
