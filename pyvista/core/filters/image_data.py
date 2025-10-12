@@ -5494,10 +5494,6 @@ class ImageDataFilters(DataSetFilters):
         else:
             axis_num = 0
 
-        if not images:
-            msg = 'No images provided for stacking.'
-            raise ValueError(msg)
-
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
         self_dims = self.dimensions
