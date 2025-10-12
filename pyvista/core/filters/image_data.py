@@ -5371,35 +5371,6 @@ class ImageDataFilters(DataSetFilters):
         mode: _StackModeOptions = None,
         resample_kwargs: dict[str, Any] | None = None,
     ):
-        """Stack :class:`~pyvista.ImageData` objects along an axis.
-
-        Parameters
-        ----------
-        images : ImageData | Sequence[ImageData]
-            The input image(s) to stack. All must have the same scalar type and
-            identical dimensions except along the stacking axis.
-
-        axis : int | str, default: 'x'
-            Axis along which the images are stacked:
-
-            - 0 or ``'x'``: x-axis
-            - 1 or ``'y'``: y-axis
-            - 2 or ``'z'``: z-axis
-
-        mode : str, optional
-            Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
-            images being stacked do not match the input dimensions.
-
-        resample_kwargs : dict, optional
-            Keyword arguments passed to :meth:`resample` when using ``resample`` mode. Specify
-            ``interpolation``, ``border_mode``, ``anti_aliasing``.
-
-        Returns
-        -------
-        ImageData
-            The stacked image.
-
-        """
         # validate axis
         options = get_args(_AxisOptions)
         _validation.check_contains(options, must_contain=axis, name='axis')
