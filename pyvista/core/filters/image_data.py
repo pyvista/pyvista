@@ -31,6 +31,8 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from numpy.typing import NDArray
 
     from pyvista import ImageData
@@ -59,6 +61,7 @@ _InterpolationOptions = Literal[
     'bspline8',
     'bspline9',
 ]
+_AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 
 
 @abstract_class
@@ -5362,7 +5365,10 @@ class ImageDataFilters(DataSetFilters):
     def stack(  # type: ignore[misc]
         self: ImageData,
         images: ImageData | Sequence[ImageData],
-        axis='x',
+        axis: _AxisOptions = 'x',
+        *,
+        mode: Literal['extents', 'pad-crop', 'resample', None] = None,
+        resample_kwargs: dict[str, Any] | None = None,
     ):
         """Stack :class:`~pyvista.ImageData` objects along an axis.
 
@@ -5374,9 +5380,17 @@ class ImageDataFilters(DataSetFilters):
 
         axis : int | str, default: 'x'
             Axis along which the images are stacked:
+
             - 0 or 'x': x-axis
             - 1 or 'y': y-axis
             - 2 or 'z': z-axis
+        mode : str, optional
+            Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
+            images being stacked do not match the input dimensions.
+
+        resample_kwargs : dict, optional
+            Keyword arguments passed to :meth:`resample` when using ``resample`` mode. Specify
+            ``interpolation``, ``border_mode``, ``anti_aliasing``.
 
         Returns
         -------
@@ -5389,11 +5403,18 @@ class ImageDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> image = examples.download_beach()
+        >>> beach = examples.download_beach()
+
+        Use :meth:`select_values` to make a second version with white values converted to black
+        to distinguish it from the original.
+
+        >>> beach_black = beach.select_values(
+        ...     [255, 255, 255], fill_value=[0, 0, 0], invert=True
+        ... )
 
         Stack it with itself along the x-axis.
 
-        >>> stacked = image.stack(image, axis='x')
+        >>> stacked = beach.stack(beach_black, axis='x')
         >>> kwargs = dict(
         ...     rgb=True,
         ...     lighting=False,
@@ -5406,36 +5427,85 @@ class ImageDataFilters(DataSetFilters):
 
         Stack it with itself along the y-axis.
 
-        >>> stacked = image.stack(image, axis='y')
+        >>> stacked = beach.stack(beach_black, axis='y')
+        >>> stacked.plot(**kwargs)
+
+        By default, stacking requires that all off-axis dimensions match the input. Use the
+        ``mode`` keyword to enable stacking images with mismatched dimensions.
+
+        Load a second 2D image with different dimensions:
+        :func:`~pyvista.examples.downloads.download_bird`.
+
+        >>> bird = examples.download_bird()
+        >>> bird.dimensions
+        (458, 342, 1)
+        >>> beach.dimensions
+        (100, 100, 1)
+
+        Stack the images using the ``resample`` mode to automatically resample the image. Linear
+        interpolation with antialiasing is used to avoid sampling artifacts.
+
+        >>> stacked = beach.stack(
+        ...     bird,
+        ...     mode='resample',
+        ...     resample_kwargs={'interpolation': 'linear', 'anti_aliasing': True},
+        ... )
+        >>> stacked.dimensions
+        (233, 100, 1)
         >>> stacked.plot(**kwargs)
 
         """
+        options = get_args(_AxisOptions)
+        _validation.check_contains(options, must_contain=axis)
         mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+        axis_num = mapping[axis]
+
         if not images:
             msg = 'No images provided for stacking.'
             raise ValueError(msg)
 
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
-        # Validate inputs
         self_dims = self.dimensions
         all_dtypes: set[np.generic] = set()
         all_scalars: list[str] = []
         for i, img in enumerate(all_images):
             if i > 0:
                 _validation.check_instance(img, pyvista.ImageData)
-                if (dims := img.dimensions) != self_dims:
-                    # Allow mismatch only along stacking axis
-                    for ax in range(3):
-                        if ax != axis and dims[ax] != self_dims[ax]:
-                            msg = f'Image {i} shape mismatch on axis {ax}.'
-                            raise ValueError(msg)
 
             # Create shallow copies so we can set/modify scalars if needed
             shallow_copy = img.copy(deep=False)
             _, scalars = shallow_copy._validate_point_scalars()
             all_scalars.append(scalars)
             all_dtypes.add(shallow_copy.active_scalars.dtype)
+
+            if i > 0 and mode != 'extents':
+                if (dims := img.dimensions) != self_dims:
+                    # Need to deal with the dimensions mismatch
+                    if mode is None:
+                        # Allow mismatch only along stacking axis
+                        for ax in range(3):
+                            if ax != axis and dims[ax] != self_dims[ax]:
+                                msg = (
+                                    f'Image {i} shape mismatch on axis {ax}. Use the `mode` '
+                                    f'keyword to allow stacking with mismatched dimensions.'
+                                )
+                                raise ValueError(msg)
+                    elif mode == 'resample':
+                        kwargs = {}
+                        if resample_kwargs:
+                            _validation.check_instance(resample_kwargs, dict)
+                            allowed_kwargs = ('anti_aliasing', 'interpolation', 'border_mode')
+                            for kwarg in resample_kwargs.keys():
+                                _validation.check_contains(
+                                    allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
+                                )
+                            kwargs = resample_kwargs
+
+                        computed_kwargs = _compute_resample_kwargs(self, img, axis=axis_num)
+                        kwargs.update(computed_kwargs)
+                        kwargs['inplace'] = True
+                        shallow_copy.resample(**resample_kwargs)
 
             # Replace input with shallow copy
             all_images[i] = shallow_copy
@@ -5447,14 +5517,15 @@ class ImageDataFilters(DataSetFilters):
                 array = img.point_data[img.active_scalars_name]
                 img.point_data[img.active_scalars_name] = array.astype(dtype_out, copy=False)
 
-        appender = _vtk.vtkImageAppend()
-        appender.SetAppendAxis(mapping[axis])
+        alg = _vtk.vtkImageAppend()
+        alg.SetAppendAxis(axis_num)
+        alg.SetPreserveExtents(mode == 'extents')
 
         for img in all_images:
-            appender.AddInputData(img)
+            alg.AddInputData(img)
 
-        _update_alg(appender)
-        return _get_output(appender)
+        _update_alg(alg)
+        return _get_output(alg)
 
 
 def _validate_padding(pad_size):
@@ -5505,3 +5576,26 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
+
+
+def _compute_resample_kwargs(
+    ref_image: ImageData, img: ImageData, axis: int
+) -> dict[str, NumpyArray[float]]:
+    """Compute resampling keywords for stacking img with ref_image along an axis."""
+    ref_dims = np.array(ref_image.dimensions, dtype=float)
+    img_dims = np.array(img.dimensions, dtype=float)
+
+    is_2d_ref = ref_image.dimensionality == 2
+    is_2d_img = img.dimensionality == 2
+
+    if is_2d_ref and is_2d_img:
+        # 2D slices: match stacking axis, scale others proportionally
+        off_axis = np.arange(3) != axis
+        not_singleton = ref_dims != 1
+        fixed_axis = off_axis & not_singleton
+        sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
+        return {'sample_rate': sample_rate}
+    else:
+        new_dims = ref_dims.copy()  # match non-stacking axes exactly
+        new_dims[axis] = img_dims[axis]  # stacking axis remains unchanged
+        return {'dimensions': new_dims}
