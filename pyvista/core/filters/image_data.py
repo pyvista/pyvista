@@ -62,7 +62,7 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
-_StackModeOptions = Literal['extents', 'pad-crop', 'resample'] | None
+_StackModeOptions = Literal['extents', 'pad-crop', 'resample', None]  # noqa: PYI061
 
 
 @abstract_class
@@ -5474,7 +5474,7 @@ class ImageDataFilters(DataSetFilters):
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
         self_dims = self.dimensions
-        all_dtypes: set[np.generic] = set()
+        all_dtypes: set[np.dtype] = set()
         all_scalars: list[str] = []
         for i, img in enumerate(all_images):
             if i > 0:
@@ -5484,7 +5484,7 @@ class ImageDataFilters(DataSetFilters):
             shallow_copy = img.copy(deep=False)
             _, scalars = shallow_copy._validate_point_scalars()
             all_scalars.append(scalars)
-            all_dtypes.add(shallow_copy.active_scalars.dtype)
+            all_dtypes.add(img.point_data[scalars].dtype)
 
             if i > 0 and mode != 'extents':
                 if (dims := img.dimensions) != self_dims:
@@ -5512,7 +5512,7 @@ class ImageDataFilters(DataSetFilters):
                         computed_kwargs = _compute_resample_kwargs(self, img, axis=axis_num)
                         kwargs.update(computed_kwargs)
                         kwargs['inplace'] = True
-                        shallow_copy.resample(**resample_kwargs)
+                        shallow_copy.resample(**kwargs)
 
             # Replace input with shallow copy
             all_images[i] = shallow_copy
@@ -5520,9 +5520,9 @@ class ImageDataFilters(DataSetFilters):
         if len(all_dtypes) > 1:
             # Need to cast all scalars to the same dtype
             dtype_out = np.result_type(*all_dtypes)
-            for img in all_images:
-                array = img.point_data[img.active_scalars_name]
-                img.point_data[img.active_scalars_name] = array.astype(dtype_out, copy=False)
+            for img, scalars in zip(all_images, all_scalars):
+                array = img.point_data[scalars]
+                img.point_data[scalars] = array.astype(dtype_out, copy=False)
 
         alg = _vtk.vtkImageAppend()
         alg.SetAppendAxis(axis_num)
