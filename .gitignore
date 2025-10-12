@@ -25,6 +25,7 @@ dist/
 
 
 # doc generated
+tests/tinypages/_build
 doc/_build
 wiki/
 **/beam.gif

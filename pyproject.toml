@@ -153,7 +153,7 @@ docs = [
   { include-group = 'pinned' },
 ]
 
-docs-test = ['pytest-pyvista==0.3.1', 'pytest-xdist<3.9.0']
+docs-test = ['pytest-pyvista==0.3.1']
 
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
@@ -221,7 +221,6 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
-run.parallel = true
 run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
