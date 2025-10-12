@@ -4750,31 +4750,31 @@ class ImageDataFilters(DataSetFilters):
         :func:`~pyvista.examples.downloads.download_puppy` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
-        >>> puppy = examples.download_puppy()
-        >>> puppy.dimensions
-        (1600, 1200, 1)
+        >>> bird = examples.download_bird()
+        >>> bird.dimensions
+        (458, 342, 1)
 
         >>> gourds = examples.download_gourds()
         >>> gourds.dimensions
         (640, 480, 1)
 
-        Use ``reference_image`` to resample the puppy to match the gourds geometry or
+        Use ``reference_image`` to resample the bird to match the gourds geometry or
         vice-versa.
 
-        >>> puppy_resampled = puppy.resample(reference_image=gourds)
-        >>> puppy_resampled.dimensions
+        >>> bird_resampled = bird.resample(reference_image=gourds)
+        >>> bird_resampled.dimensions
         (640, 480, 1)
 
-        >>> gourds_resampled = gourds.resample(reference_image=puppy)
+        >>> gourds_resampled = gourds.resample(reference_image=bird)
         >>> gourds_resampled.dimensions
-        (1600, 1200, 1)
+        (458, 342, 1)
 
-        Downsample the puppy image to 1/10th its original resolution using ``'lanczos'``
+        Downsample the gourds image to 1/10th its original resolution using ``'lanczos'``
         interpolation.
 
-        >>> downsampled = puppy.resample(0.1, 'lanczos')
+        >>> downsampled = gourds.resample(1 / 8, 'lanczos')
         >>> downsampled.dimensions
-        (160, 120, 1)
+        (80, 60, 1)
 
         Compare the downsampled image to the original and zoom in to show detail.
 
@@ -4788,13 +4788,13 @@ class ImageDataFilters(DataSetFilters):
         ...     plt.camera.zoom(3.0)
         ...     return plt
 
-        >>> plt = compare_images_plotter(puppy, downsampled)
+        >>> plt = compare_images_plotter(gourds, downsampled)
         >>> plt.show()
 
         Note that downsampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
-        >>> downsampled2 = puppy.resample(0.1, 'lanczos', anti_aliasing=True)
+        >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
 
         Compare down-sampling with aliasing (left) to without aliasing (right).
 

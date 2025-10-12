@@ -273,7 +273,7 @@ image_cache_dir = 'tests/plotting/image_cache'
 image_format = 'png'
 include_vtksz = true
 max_image_size = 400 # pixels
-max_vtksz_file_size = 50 # MB
+max_vtksz_file_size = 25 # MB
 
 [tool.mypy]
 check_untyped_defs = true
