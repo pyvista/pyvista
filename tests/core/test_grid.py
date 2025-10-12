@@ -101,7 +101,7 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match='Cannot work with input type'):
         pv.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError, match='points must have real numbers.'):
+    with pytest.raises(TypeError, match=r'points must have real numbers.'):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
@@ -114,7 +114,7 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match='requires the following arrays'):
         pv.UnstructuredGrid(*range(5))
 
-    with pytest.raises(TypeError, match='All input types must be sequences.'):
+    with pytest.raises(TypeError, match=r'All input types must be sequences.'):
         pv.UnstructuredGrid(*range(3))
 
 
@@ -389,7 +389,9 @@ def test_triangulate_inplace(hexbeam):
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if extension == '.vtkhdf' and not binary:
-        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+        with pytest.raises(
+            ValueError, match=r'.vtkhdf files can only be written in binary format'
+        ):
             hexbeam.save(filename, binary=binary)
         return
 
@@ -1556,7 +1558,7 @@ def test_explicit_structured_grid_save():
 
 
 def test_explicit_structured_grid_save_raises():
-    with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
+    with pytest.raises(ValueError, match=r'Cannot save texture of a pointset.'):
         examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
 
 
@@ -1790,7 +1792,7 @@ def test_structured_grid_cast_to_explicit_structured_grid_raises():
     grid = pv.StructuredGrid(x, y, z)
     with pytest.raises(
         TypeError,
-        match='Only 3D structured grid can be casted to an explicit structured grid.',
+        match=r'Only 3D structured grid can be casted to an explicit structured grid.',
     ):
         grid.cast_to_explicit_structured_grid()
 
@@ -1983,7 +1985,7 @@ def test_imagedata_slice_index_range(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with index range equal to dimensions
@@ -2013,7 +2015,7 @@ def test_imagedata_slice_index_range_upper_bounds(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with upper range larger than dimensions
@@ -2035,7 +2037,7 @@ def test_imagedata_slice_index_negative_range(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with negative stop index

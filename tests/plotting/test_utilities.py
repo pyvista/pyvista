@@ -63,6 +63,6 @@ def test_algo_to_mesh_handler_raises(mocker: MockerFixture):
     m.return_value = None
 
     with pytest.raises(
-        pv.PyVistaPipelineError, match='The passed algorithm is failing to produce an output.'
+        pv.PyVistaPipelineError, match=r'The passed algorithm is failing to produce an output.'
     ):
         algorithms.algorithm_to_mesh_handler(vtk.vtkAlgorithm())

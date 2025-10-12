@@ -1008,7 +1008,7 @@ def test_chart_mpl(pl):
     loc = (0.25, 0.25)
 
     # Test constructor
-    f, ax = plt.subplots()
+    f, _ax = plt.subplots()
     chart = pv.ChartMPL(f, size=size, loc=loc)
     assert chart.size == size
     assert chart.loc == loc
