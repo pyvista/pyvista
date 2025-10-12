@@ -7,6 +7,7 @@ from typing import get_args
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
 from pyvista import examples
@@ -2139,3 +2140,65 @@ def test_stack(axis, dimensions_out, dtypes):
     image_array = stacked_image['A']
     assert stacked_image.dimensions == dimensions_out
     assert np.array_equal(image_array, [0, 1])
+
+
+class CasesResample:
+    # 1D WITH 1D CASES
+    def case_1d_x_with_1d_x_along_x(self):
+        return (20, 1, 1), (30, 1, 1), 'x', (50, 1, 1)
+
+    def case_1d_x_with_1d_x_along_y(self):
+        return (20, 1, 1), (30, 1, 1), 'y', (20, 2, 1)
+
+    def case_1d_x_with_1d_x_along_z(self):
+        return (20, 1, 1), (30, 1, 1), 'z', (20, 1, 2)
+
+    # 2D WITH 2D CASES
+    def case_2d_xy_with_2d_xy_along_x(self):
+        return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
+
+    def case_2d_xy_with_2d_xy_along_y(self):
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
+
+    def case_2d_xy_with_2d_xy_along_z(self):
+        return (20, 40, 1), (30, 50, 1), 'z', (20, 40, 2)
+
+    def case_2d_yz_with_2d_xy_along_x(self):
+        return (1, 20, 40), (30, 50, 1), 'x', (31, 20, 40)
+
+    def case_2d_yz_with_2d_xy_along_y(self):
+        return (1, 20, 40), (30, 50, 1), 'y', (1, 2020, 40)
+
+    def case_2d_yz_with_2d_xy_along_z(self):
+        return (1, 20, 40), (30, 50, 1), 'z', (1, 20, 41)
+
+    # 3D WITH 3D CASES
+    def case_3d_with_3d_along_x(self):
+        return (10, 20, 30), (40, 50, 60), 'x', (50, 20, 30)
+
+    def case_3d_with_3d_along_y(self):
+        return (10, 20, 30), (40, 50, 60), 'y', (10, 70, 30)
+
+    def case_3d_with_3d_along_z(self):
+        return (10, 20, 30), (40, 50, 60), 'z', (10, 20, 90)
+
+    # MIXED DIMENSIONALITY CASES
+    def case_1d_x_with_2d_yz_along_x(self):
+        return (10, 1, 1), (1, 20, 30), 'x', (11, 1, 1)
+
+    def case_1d_x_with_3d_along_x(self):
+        return (10, 1, 1), (20, 30, 40), 'x', (30, 1, 1)
+
+    def case_2d_xy_with_3d_along_x(self):
+        return (10, 20, 1), (30, 40, 50), 'x', (40, 20, 1)
+
+
+@parametrize_with_cases('dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResample)
+def test_stack_resample(dimensions_a, dimensions_b, axis, dimensions_out):
+    image_a = pv.ImageData(dimensions=dimensions_a)
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=dimensions_b)
+    image_b['data'] = range(image_b.n_points)
+
+    stacked_image = image_a.stack(image_b, axis=axis, mode='resample')
+    assert stacked_image.dimensions == dimensions_out
