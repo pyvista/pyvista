@@ -5410,14 +5410,14 @@ class ImageDataFilters(DataSetFilters):
         Use :meth:`select_values` to make a second version with white values converted to black
         to distinguish it from the original.
 
-        >>> beach_black = beach.select_values(
-        ...     [255, 255, 255], fill_value=[0, 0, 0], invert=True
-        ... )
+        >>> white = [255, 255, 255]
+        >>> black = [0, 0, 0]
+        >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
 
         Stack it with itself along the x-axis.
 
         >>> stacked = beach.stack(beach_black, axis='x')
-        >>> kwargs = dict(
+        >>> plot_kwargs = dict(
         ...     rgb=True,
         ...     lighting=False,
         ...     cpos='xy',
@@ -5425,12 +5425,12 @@ class ImageDataFilters(DataSetFilters):
         ...     show_axes=False,
         ...     show_scalar_bar=False,
         ... )
-        >>> stacked.plot(**kwargs)
+        >>> stacked.plot(**plot_kwargs)
 
         Stack it with itself along the y-axis.
 
         >>> stacked = beach.stack(beach_black, axis='y')
-        >>> stacked.plot(**kwargs)
+        >>> stacked.plot(**plot_kwargs)
 
         By default, stacking requires that all off-axis dimensions match the input. Use the
         ``mode`` keyword to enable stacking images with mismatched dimensions.
@@ -5447,14 +5447,35 @@ class ImageDataFilters(DataSetFilters):
         Stack the images using the ``resample`` mode to automatically resample the image. Linear
         interpolation with antialiasing is used to avoid sampling artifacts.
 
+        >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
         >>> stacked = beach.stack(
-        ...     bird,
-        ...     mode='resample',
-        ...     resample_kwargs={'interpolation': 'linear', 'anti_aliasing': True},
+        ...     bird, mode='resample', resample_kwargs=resample_kwargs
         ... )
         >>> stacked.dimensions
         (233, 100, 1)
-        >>> stacked.plot(**kwargs)
+        >>> stacked.plot(**plot_kwargs)
+
+        Use the ``'extents'`` mode. Using this mode naively may not produce the desired result,
+        e.g. if we stack ``beach`` with ``bird``, the ``beach`` image is completely overwritten
+        since their :attr:`~pyvista.ImageData.extent`s overlap completely.
+
+        >>> beach.extent
+        (0, 99, 0, 99, 0, 0)
+        >>> bird.extent
+        (0, 457, 0, 341, 0, 0)
+
+        >>> stacked = beach.stack(bird, mode='extents')
+        >>> stacked.plot(**plot_kwargs)
+
+        Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
+        instead.
+
+        >>> beach.offset = (-50, -50, 0)
+        >>> beach.extent
+        (-50, 49, -50, 49, 0, 0)
+
+        >>> stacked = beach.stack(bird, mode='extents')
+        >>> stacked.plot(**plot_kwargs)
 
         """
         # validate axis
