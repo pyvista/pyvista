@@ -2206,3 +2206,22 @@ def test_stack_resample(dimensions_a, dimensions_b, axis, dimensions_out):
 
     stacked_image = image_a.stack(image_b, axis=axis, mode='resample')
     assert stacked_image.dimensions == dimensions_out
+
+
+def test_stack_resample_kwargs():
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = [0]
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = [1, 2]
+    resample_kwargs = dict(interpolation='linear', border_mode='wrap', anti_aliasing=True)
+    stacked_image = image_a.stack(
+        image_b, axis=0, mode='resample', resample_kwargs=resample_kwargs
+    )
+    assert isinstance(stacked_image, pv.ImageData)
+
+    match = (
+        "resample_kwargs 'dimensions' is not valid. resample_kwargs must be one of: \n\t"
+        "('anti_aliasing', 'interpolation', 'border_mode')"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.stack(image_b, mode='resample', resample_kwargs={'dimensions': (1, 2, 3)})
