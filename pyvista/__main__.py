@@ -178,7 +178,7 @@ def _plot(
 ) -> None:
     try:
         res = pyvista.plot(
-            var_item=var_item,  # type ignore: [arg-type]
+            var_item=var_item,  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,
