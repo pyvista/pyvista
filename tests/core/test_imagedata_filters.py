@@ -2122,9 +2122,12 @@ def test_morphological_filters_custom_kernel_size():
 @pytest.mark.parametrize(
     ('axis', 'dimensions_out'), [(0, (2, 1, 1)), (1, (1, 2, 1)), (2, (1, 1, 2))]
 )
-def test_stack_like_hstack(axis, dimensions_out):
-    array_a = np.array([0])
-    array_b = np.array([1])
+@pytest.mark.parametrize(
+    'dtypes', [(int, float), (float, float), (int, int), (np.int64, np.uint8)]
+)
+def test_stack(axis, dimensions_out, dtypes):
+    array_a = np.array([0], dtype=dtypes[0])
+    array_b = np.array([1], dtype=dtypes[1])
 
     image_a = pv.ImageData(dimensions=(1, 1, 1))
     image_a['A'] = array_a

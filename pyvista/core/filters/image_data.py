@@ -1207,7 +1207,7 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def _validate_point_scalars(  # type: ignore[misc]
-        self: ImageData, scalars: str | None
+        self: ImageData, scalars: str | None = None
     ) -> tuple[Literal[FieldAssociation.POINT], str]:
         if scalars is None:
             field, scalars = set_default_active_scalars(self)
@@ -5359,8 +5359,8 @@ class ImageDataFilters(DataSetFilters):
         output[array_name] = array_out
         return output
 
-    def stack(
-        self: ImageData,  # type: ignore[misc]
+    def stack(  # type: ignore[misc]
+        self: ImageData,
         images: ImageData | Sequence[ImageData],
         axis='x',
     ):
@@ -5415,27 +5415,42 @@ class ImageDataFilters(DataSetFilters):
             msg = 'No images provided for stacking.'
             raise ValueError(msg)
 
-        images_ = images if isinstance(images, Sequence) else [images]
+        all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
         # Validate inputs
         self_dims = self.dimensions
-        for i, img in enumerate(images_):
-            _validation.check_instance(img, pyvista.ImageData)
-            if img.GetScalarType() != self.GetScalarType():
-                msg = f'Scalar type mismatch at index {i}.'
-                raise ValueError(msg)
-            dims = img.dimensions
-            if dims != self_dims:
-                # Allow mismatch only along stacking axis
-                for ax in range(3):
-                    if ax != axis and dims[ax] != self_dims[ax]:
-                        msg = f'Image {i} shape mismatch on axis {ax}.'
-                        raise ValueError(msg)
+        all_dtypes: set[np.generic] = set()
+        all_scalars: list[str] = []
+        for i, img in enumerate(all_images):
+            if i > 0:
+                _validation.check_instance(img, pyvista.ImageData)
+                if (dims := img.dimensions) != self_dims:
+                    # Allow mismatch only along stacking axis
+                    for ax in range(3):
+                        if ax != axis and dims[ax] != self_dims[ax]:
+                            msg = f'Image {i} shape mismatch on axis {ax}.'
+                            raise ValueError(msg)
+
+            # Create shallow copies so we can set/modify scalars if needed
+            shallow_copy = img.copy(deep=False)
+            _, scalars = shallow_copy._validate_point_scalars()
+            all_scalars.append(scalars)
+            all_dtypes.add(shallow_copy.active_scalars.dtype)
+
+            # Replace input with shallow copy
+            all_images[i] = shallow_copy
+
+        if len(all_dtypes) > 1:
+            # Need to cast all scalars to the same dtype
+            dtype_out = np.result_type(*all_dtypes)
+            for img in all_images:
+                array = img.point_data[img.active_scalars_name]
+                img.point_data[img.active_scalars_name] = array.astype(dtype_out, copy=False)
 
         appender = _vtk.vtkImageAppend()
         appender.SetAppendAxis(mapping[axis])
 
-        for img in [self, *images_]:
+        for img in all_images:
             appender.AddInputData(img)
 
         _update_alg(appender)
