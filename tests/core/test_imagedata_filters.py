@@ -2146,6 +2146,35 @@ def test_stack(axis, dimensions_out, dtypes):
     assert actual_dtype == expected_dtype
 
 
+def test_stack_dimensions_mismatch():
+    array_a = np.array([0])
+    array_b = np.array([1, 2])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = array_b
+
+    stacked_image = image_a.stack(image_b, axis=0)
+    assert stacked_image.dimensions == (3, 1, 1)
+
+    array_a = np.array([0, 1])
+    array_b = np.array([2, 3])
+
+    image_a = pv.ImageData(dimensions=(1, 2, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = array_b
+
+    match = (
+        'Image 0 dimensions (2, 1, 1) must match the input dimensions (1, 2, 1) along axis 0.\n'
+        'Use the `mode` keyword to allow stacking with mismatched dimensions.'
+    )
+
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.stack(image_b, axis=0)
+
+
 class CasesResample:
     # 1D WITH 1D CASES
     def case_1d_x_with_1d_x_along_x(self):

@@ -5515,8 +5515,10 @@ class ImageDataFilters(DataSetFilters):
                         for ax in range(3):
                             if ax != axis and dims[ax] != self_dims[ax]:
                                 msg = (
-                                    f'Image {i} shape mismatch on axis {ax}. Use the `mode` '
-                                    f'keyword to allow stacking with mismatched dimensions.'
+                                    f'Image {i - 1} dimensions {img.dimensions} must match the '
+                                    f'input dimensions {self.dimensions} along axis {axis}.\n'
+                                    f'Use the `mode` keyword to allow stacking with mismatched '
+                                    f'dimensions.'
                                 )
                                 raise ValueError(msg)
                     elif mode == 'resample':
