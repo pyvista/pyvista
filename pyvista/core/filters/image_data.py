@@ -5367,7 +5367,7 @@ class ImageDataFilters(DataSetFilters):
         images: ImageData | Sequence[ImageData],
         axis: _AxisOptions = 'x',
         *,
-        mode: Literal['extents', 'pad-crop', 'resample', None] = None,
+        mode: Literal['extents', 'pad-crop', 'resample', None] = None,  # noqa: PYI061
         resample_kwargs: dict[str, Any] | None = None,
     ):
         """Stack :class:`~pyvista.ImageData` objects along an axis.
