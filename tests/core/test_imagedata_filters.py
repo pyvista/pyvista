@@ -2141,6 +2141,10 @@ def test_stack(axis, dimensions_out, dtypes):
     assert stacked_image.dimensions == dimensions_out
     assert np.array_equal(image_array, [0, 1])
 
+    expected_dtype = np.result_type(*dtypes)
+    actual_dtype = image_array.dtype
+    assert actual_dtype == expected_dtype
+
 
 class CasesResample:
     # 1D WITH 1D CASES
