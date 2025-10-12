@@ -434,8 +434,8 @@ def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
     from pyvista.trame import jupyter
 
     monkeypatch.setattr(jupyter, 'HTML', object)
-    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+    with pytest.raises(ImportError, match=r'Please install `ipywidgets`.'):
         jupyter.Widget(viewer=None, src=None)
 
-    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+    with pytest.raises(ImportError, match=r'Please install `ipywidgets`.'):
         jupyter.EmbeddableWidget(plotter=None, width=None, height=None)
