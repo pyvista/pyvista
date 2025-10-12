@@ -5366,7 +5366,7 @@ class ImageDataFilters(DataSetFilters):
     def stack(  # type: ignore[misc]
         self: ImageData,
         images: ImageData | Sequence[ImageData],
-        axis: _AxisOptions = 'x',
+        axis: _AxisOptions | None = None,
         *,
         mode: _StackModeOptions = None,
         resample_kwargs: dict[str, Any] | None = None,
@@ -5478,15 +5478,21 @@ class ImageDataFilters(DataSetFilters):
         >>> stacked.plot(**plot_kwargs)
 
         """
-        # validate axis
-        options = get_args(_AxisOptions)
-        _validation.check_contains(options, must_contain=axis, name='axis')
-        mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
-        axis_num = mapping[axis]
-
-        # validate mode
+        # Validate mode
         options = get_args(_StackModeOptions)
         _validation.check_contains(options, must_contain=mode, name='mode')
+
+        # Validate axis
+        if axis is not None:
+            if mode == 'extents':
+                msg = "The axis keyword cannot be used with 'extents' mode."
+                raise ValueError(msg)
+            options = get_args(_AxisOptions)
+            _validation.check_contains(options, must_contain=axis, name='axis')
+            mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+            axis_num = mapping[axis]
+        else:
+            axis_num = 0
 
         if not images:
             msg = 'No images provided for stacking.'
@@ -5619,13 +5625,13 @@ def _compute_resample_kwargs(
     is_2d_img = img.dimensionality == 2
 
     if is_2d_ref and is_2d_img:
-        # 2D slices: match stacking axis, scale others proportionally
+        # Try to preserve image aspect ratio when images are 2D along the same dimensions
         off_axis = np.arange(3) != axis
         not_singleton = ref_dims != 1
         fixed_axis = off_axis & not_singleton
         has_one_fixed_axis = np.count_nonzero(fixed_axis) == 1
         if has_one_fixed_axis:
-            # We can resample the image proportionally to match the single fixed axis
+            # Resample the image proportionally to match the single fixed axis
             sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
             return {'sample_rate': sample_rate}
 

@@ -2254,3 +2254,29 @@ def test_stack_resample_kwargs():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         image_a.stack(image_b, mode='resample', resample_kwargs={'dimensions': (1, 2, 3)})
+
+
+def test_stack_extents():
+    array_a = np.array([0])
+    array_b = np.array([1])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(1, 1, 1))
+    image_b['B'] = array_b
+
+    stacked = image_a.stack(image_b, mode='extents')
+    assert stacked.dimensions == (1, 1, 1)
+    assert np.array_equal(stacked.active_scalars, array_b)
+
+    offset = (-1, 0, 0)
+    image_a.offset = offset
+    stacked = image_a.stack(image_b, mode='extents')
+    assert stacked.dimensions == (2, 1, 1)
+    assert stacked.offset == offset
+    expected = np.hstack((array_a, array_b))
+    assert np.array_equal(stacked.active_scalars, expected)
+
+    match = "The axis keyword cannot be used with 'extents' mode."
+    with pytest.raises(ValueError, match=match):
+        image_a.stack(image_b, axis=0, mode='extents')
