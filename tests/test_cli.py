@@ -379,31 +379,55 @@ class CasesPlot:
 
     @case(tags='raises')
     def case_anti_aliasing_raises(self):
-        return '--anti-aliasing=foo'
+        return '--anti-aliasing=foo', [
+            'Invalid value for "--anti-aliasing": unable to convert "foo" into',
+            "one of {'ssaa', 'msaa', 'fxaa'}.",
+        ]
 
     @case(tags='raises')
     @parametrize(window_size=['100', '100 200 300', '[100,200,300]'])
     def case_window_size_wrong_length(self, window_size: str):
         """Test when the window size does not have exactly two elements."""
-        return f' --window-size {window_size}'
+        if window_size == '100':
+            errors = [
+                'Invalid value "[100]" for "--window-size". Window size must be a',
+                'list of two integers.',
+            ]
+        elif window_size in {'100 200 300', '[100,200,300]'}:
+            errors = [
+                'Invalid value "[100, 200, 300]" for "--window-size". Window size ',
+                'must be a list of two integers.',
+            ]
+
+        return f' --window-size {window_size}', errors
 
     @case(tags='raises')
-    @parametrize(window_size=['100 a', 'b a', '[a,b]'])
+    @parametrize(window_size=['100 a', 'b a'])
     def case_window_size_wrong_type(self, window_size: str):
         """Test when the window size does not have the correct type."""
-        return f'--window-size {window_size}'
+        obj = 'a' if window_size == '100 a' else 'b'
+        return f'--window-size {window_size}', [
+            f'Invalid value for "--window-size": unable to convert "{obj}" into int.',
+        ]
 
     @case(tags='raises')
-    def case_kw_unknown(self, tmp_path: Path):
+    def case_kw_unknown(self):
         """Test when a supplementary keyword argument does not exists"""
-        pv.Sphere().save(f := tmp_path / 'file.vtp')
-        return f'{f.as_posix()} --foo_bar bar'
+        return '--foo_bar bar', [
+            '⚠ The following exception has been raised when calling pv.plot: ',
+            '"foo_bar" is an invalid keyword argument for  ',
+            '`_common_arg_parser`  ',
+            'Please check the provided arguments.',
+        ]
 
     @case(tags='raises')
-    def case_wrong_argument(self, tmp_path: Path):
+    def case_wrong_argument(self):
         """Test when an argument raises an error"""
-        pv.Sphere().save(f := tmp_path / 'file.vtp')
-        return f'{f.as_posix()} --opacity=foo'
+        return ' --opacity=foo', [
+            '⚠ The following exception has been raised when calling pv.plot: ',
+            'Opacity transfer function (foo) unknown. Valid options:',
+            "'sigmoid_10', 'sigmoid_15', 'sigmoid_20', 'foreground',",
+        ]
 
     # endregion raises cases
 
@@ -451,13 +475,20 @@ def test_plot_called_kwargs(
     mock.assert_called_once_with(file, **expected_kwargs)
 
 
-@parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
-def test_plot_called_raises(tokens: str):
+@parametrize_with_cases('tokens, errors', cases=CasesPlot, has_tag='raises')
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
     """Test that the plot CLI is raising expected exit errors."""
+
+    file = Path(pv.examples.antfile).as_posix()
     with pytest.raises(SystemExit) as e:
-        main(f'plot {tokens}')
+        main(f'plot --files {file} {tokens}')
 
     assert e.value.code == 1
+
+    out = capsys.readouterr().out
+    for error in errors:
+        assert error in out, out
 
 
 class CasesPlotFiles:
