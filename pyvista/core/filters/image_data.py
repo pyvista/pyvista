@@ -5399,63 +5399,6 @@ class ImageDataFilters(DataSetFilters):
         ImageData
             The stacked image.
 
-        Examples
-        --------
-        Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> beach = examples.download_beach()
-
-        Use :meth:`select_values` to make a second version with white values converted to black
-        to distinguish it from the original.
-
-        >>> beach_black = beach.select_values(
-        ...     [255, 255, 255], fill_value=[0, 0, 0], invert=True
-        ... )
-
-        Stack it with itself along the x-axis.
-
-        >>> stacked = beach.stack(beach_black, axis='x')
-        >>> kwargs = dict(
-        ...     rgb=True,
-        ...     lighting=False,
-        ...     cpos='xy',
-        ...     zoom='tight',
-        ...     show_axes=False,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> stacked.plot(**kwargs)
-
-        Stack it with itself along the y-axis.
-
-        >>> stacked = beach.stack(beach_black, axis='y')
-        >>> stacked.plot(**kwargs)
-
-        By default, stacking requires that all off-axis dimensions match the input. Use the
-        ``mode`` keyword to enable stacking images with mismatched dimensions.
-
-        Load a second 2D image with different dimensions:
-        :func:`~pyvista.examples.downloads.download_bird`.
-
-        >>> bird = examples.download_bird()
-        >>> bird.dimensions
-        (458, 342, 1)
-        >>> beach.dimensions
-        (100, 100, 1)
-
-        Stack the images using the ``resample`` mode to automatically resample the image. Linear
-        interpolation with antialiasing is used to avoid sampling artifacts.
-
-        >>> stacked = beach.stack(
-        ...     bird,
-        ...     mode='resample',
-        ...     resample_kwargs={'interpolation': 'linear', 'anti_aliasing': True},
-        ... )
-        >>> stacked.dimensions
-        (233, 100, 1)
-        >>> stacked.plot(**kwargs)
-
         """
         # validate axis
         options = get_args(_AxisOptions)
