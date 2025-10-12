@@ -13,9 +13,13 @@ from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters.image_data import _InterpolationOptions
+from tests.conftest import NUMPY_VERSION_INFO
 from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
+MORPHOLOGICAL_MAX_VAL = 42.0
+MORPHOLOGICAL_MID_VAL = 5.0
+MORPHOLOGICAL_MIN_VAL = 0.0
 
 
 @pytest.fixture
@@ -1001,7 +1005,7 @@ def test_label_connectivity(segmented_grid):
 def test_label_connectivity_point_data(segmented_grid):
     # Test default parameters
     segmented_points = segmented_grid.cells_to_points()
-    connected, labels, sizes = segmented_points.label_connectivity(scalar_range='foreground')
+    connected, labels, _sizes = segmented_points.label_connectivity(scalar_range='foreground')
     assert isinstance(connected, pv.ImageData)
     assert connected.bounds == segmented_points.bounds
     assert 'RegionId' in connected.point_data
@@ -1013,14 +1017,14 @@ def test_label_connectivity_point_data(segmented_grid):
 def test_label_connectivity_scalar(segmented_grid):
     segmented_grid.cell_data['AdditionalData'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     segmented_grid.set_active_scalars(name='AdditionalData')
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, _sizes = segmented_grid.label_connectivity(
         scalars='Data', scalar_range='foreground'
     )
     assert all(labels == [1, 2, 3])
 
 
 def test_label_connectivity_largest_region(segmented_grid):
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, sizes = segmented_grid.label_connectivity(
         scalar_range='foreground', extraction_mode='largest'
     )
     # Test that only one region was labelled
@@ -1037,7 +1041,7 @@ def test_label_connectivity_seed_points(segmented_grid):
         ' issues when transforming or applying filters. Casting to ``np.float32``.'
         ' Disable this by passing ``force_float=False``.',
     ):
-        connected, labels, sizes = segmented_grid.label_connectivity(
+        _connected, labels, sizes = segmented_grid.label_connectivity(
             scalar_range='foreground',
             extraction_mode='seeded',
             point_seeds=points,
@@ -1053,7 +1057,7 @@ def test_label_connectivity_seed_points(segmented_grid):
 def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):  # noqa: N802
     points = pv.PolyData()
     points.points = [(2, 1, 0), (0, 0, 1)]
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, sizes = segmented_grid.label_connectivity(
         scalar_range='foreground',
         extraction_mode='seeded',
         point_seeds=points,
@@ -1068,7 +1072,7 @@ def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):  # noqa: N80
 
 def test_label_connectivity_scalar_range_whole_number(segmented_grid):
     # Exclude the cell with a 2 value
-    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[1, 1])
+    _connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[1, 1])
     # Test that three distinct connected regions were labelled
     assert all(labels == [1, 2, 3])
     # Test that the first region id has 1 cell
@@ -1077,7 +1081,7 @@ def test_label_connectivity_scalar_range_whole_number(segmented_grid):
 
 def test_label_connectivity_scalar_range_fractional_number(segmented_grid):
     # Exclude the cell with a 2 value
-    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[0.5, 1.5])
+    _connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[0.5, 1.5])
     # Test that three distinct connected regions were labelled
     assert all(labels == [1, 2, 3])
     # Test that the first region id has 1 cell
@@ -1086,7 +1090,7 @@ def test_label_connectivity_scalar_range_fractional_number(segmented_grid):
 
 def test_label_connectivity_auto_scalar_range(segmented_grid):
     # Exclude the cell with a 2 value
-    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='auto')
+    _connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='auto')
     # Test that only one connected regions was labelled
     assert all(labels == 1)
     # Test that the region has 12 cell
@@ -1094,7 +1098,7 @@ def test_label_connectivity_auto_scalar_range(segmented_grid):
 
 
 def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    connected, labels, _sizes = segmented_grid.label_connectivity(
         scalar_range='vtk_default', inplace=True
     )
     # Test that three distinct connected regions were labelled
@@ -1104,7 +1108,7 @@ def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
 
 
 def test_label_connectivity_constant_label(segmented_grid):
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    _connected, labels, _sizes = segmented_grid.label_connectivity(
         label_mode='constant', constant_value=10
     )
     assert all(l in (0, 10) for l in labels)
@@ -1112,14 +1116,14 @@ def test_label_connectivity_constant_label(segmented_grid):
 
 def test_label_connectivity_inplace_with_float_casting(segmented_grid):
     segmented_points = segmented_grid.cells_to_points()
-    connected, labels, sizes = segmented_grid.label_connectivity(
+    connected, _labels, _sizes = segmented_grid.label_connectivity(
         inplace=True, scalar_range=[0.5, 2.5]
     )
     assert connected == segmented_grid
     assert 'RegionId' in connected.cell_data
     assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
 
-    connected, labels, sizes = segmented_points.label_connectivity(
+    connected, _labels, _sizes = segmented_points.label_connectivity(
         inplace=True, scalar_range=[0.5, 2.5]
     )
     assert connected == segmented_points
@@ -1130,12 +1134,12 @@ def test_label_connectivity_inplace_with_float_casting(segmented_grid):
 def test_label_connectivity_invalid_parameters(segmented_grid):
     with pytest.raises(
         ValueError,
-        match='Invalid `extraction_mode` "invalid", use "all", "largest", or "seeded".',
+        match=r'Invalid `extraction_mode` "invalid", use "all", "largest", or "seeded".',
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='invalid')
     with pytest.raises(
         ValueError,
-        match='`point_seeds` must be specified when `extraction_mode="seeded"`.',
+        match=r'`point_seeds` must be specified when `extraction_mode="seeded"`.',
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
     match = re.escape(
@@ -1145,11 +1149,11 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError,
-        match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".',
+        match=r'Invalid `label_mode` "invalid", use "size", "constant", or "seeds".',
     ):
         _ = segmented_grid.label_connectivity(label_mode='invalid')
     with pytest.raises(
-        ValueError, match='`point_seeds` must be specified when `label_mode="seeds"`.'
+        ValueError, match=r'`point_seeds` must be specified when `label_mode="seeds"`.'
     ):
         _ = segmented_grid.label_connectivity(label_mode='seeds')
     with pytest.raises(
@@ -1160,7 +1164,7 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         _ = segmented_grid.label_connectivity(scalar_range=[1.0, 2.0, 3.0])
     with pytest.raises(
         ValueError,
-        match='`constant_value` must be provided when `extraction_mode`is "constant".',
+        match=r'`constant_value` must be provided when `extraction_mode`is "constant".',
     ):
         _ = segmented_grid.label_connectivity(label_mode='constant')
 
@@ -1859,3 +1863,257 @@ def test_crop_raises():
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         img.crop()
+
+
+def test_dilate():
+    """Test the dilate method for binary data."""
+    point_data = np.zeros((10, 10, 10))
+    point_data[4, 4, 4] = 1
+    point_data_dilated = point_data.copy()
+    point_data_dilated[3:6, 3:6, 4] = 1  # "activate" all voxels within diameter 3 around (4,4,4)
+    point_data_dilated[3:6, 4, 3:6] = 1
+    point_data_dilated[4, 3:6, 3:6] = 1
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.dilate()
+    assert isinstance(volume_dilated, pv.ImageData)
+    assert np.array_equal(
+        volume_dilated.point_data['point_data'],
+        point_data_dilated.flatten(order='F'),
+    )
+
+
+def test_erode():
+    """Test the erode method for binary data."""
+    point_data = np.ones((10, 10, 10))
+    point_data[4, 4, 4] = 0
+    point_data_eroded = point_data.copy()
+    point_data_eroded[3:6, 3:6, 4] = 0  # erode all voxels within diameter 3 around (4,4,4)
+    point_data_eroded[3:6, 4, 3:6] = 0
+    point_data_eroded[4, 3:6, 3:6] = 0
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.erode()
+    assert isinstance(volume_eroded, pv.ImageData)
+    assert np.array_equal(
+        volume_eroded.point_data['point_data'],
+        point_data_eroded.flatten(order='F'),
+    )
+
+
+@pytest.mark.parametrize('binary', [True, False, [MORPHOLOGICAL_MIN_VAL, MORPHOLOGICAL_MAX_VAL]])
+def test_dilate_binary(binary):
+    """Test the dilate method with binary option."""
+    point_data = np.ones((10, 10, 10)) * MORPHOLOGICAL_MIN_VAL
+    point_data[4, 4, 4] = MORPHOLOGICAL_MAX_VAL
+    point_data[0, 0, 0] = MORPHOLOGICAL_MID_VAL
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_dilated = volume.dilate(binary=binary)
+    assert isinstance(volume_dilated, pv.ImageData)
+    # Check that dilation occurred (max value should be at original position)
+    assert volume_dilated.point_data['point_data'].max() == MORPHOLOGICAL_MAX_VAL
+    # Check that surrounding voxels have been affected
+    reshaped = volume_dilated.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # neighboring voxel should have dilated value
+    assert reshaped[3, 4, 4] == MORPHOLOGICAL_MAX_VAL
+
+    assert reshaped[0, 0, 0] == MORPHOLOGICAL_MID_VAL
+    if NUMPY_VERSION_INFO > (2, 0, 0):
+        # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)
+        expected_counts = (980, 1, 19) if binary else (974, 7, 19)
+        actual_counts = tuple(np.unique_counts(reshaped).counts)
+        assert actual_counts == expected_counts
+
+
+@pytest.mark.parametrize('binary', [True, False, [MORPHOLOGICAL_MIN_VAL, MORPHOLOGICAL_MAX_VAL]])
+def test_erode_binary(binary):
+    """Test the erode method with binary option."""
+    point_data = np.ones((10, 10, 10)) * MORPHOLOGICAL_MAX_VAL
+    point_data[4, 4, 4] = MORPHOLOGICAL_MIN_VAL
+    point_data[0, 0, 0] = MORPHOLOGICAL_MID_VAL
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_eroded = volume.erode(binary=binary)
+    assert isinstance(volume_eroded, pv.ImageData)
+    # Check that erosion occurred
+    assert volume_eroded.point_data['point_data'].min() == MORPHOLOGICAL_MIN_VAL
+    # Check that surrounding voxels have been affected
+    reshaped = volume_eroded.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # neighboring voxel should have eroded value
+    assert reshaped[3, 4, 4] == MORPHOLOGICAL_MIN_VAL
+
+    assert reshaped[0, 0, 0] == MORPHOLOGICAL_MID_VAL
+    if NUMPY_VERSION_INFO > (2, 0, 0):
+        # Test mid-value is unaffected by filter if binary (there should be exactly one mid value)
+        expected_counts = (19, 1, 980) if binary else (19, 7, 974)
+        actual_counts = tuple(np.unique_counts(reshaped).counts)
+        assert actual_counts == expected_counts
+
+
+def test_open():
+    """Test the morphological open operation."""
+    # Create data with small noise that should be removed
+    point_data = np.zeros((10, 10, 10))
+    point_data[4:7, 4:7, 4:7] = 1  # main object
+    point_data[1, 1, 1] = 1  # small noise
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_opened = volume.open()
+    assert isinstance(volume_opened, pv.ImageData)
+    reshaped = volume_opened.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # Check that noise is removed
+    assert reshaped[1, 1, 1] == 0
+    # Check that main object is preserved (at least partially)
+    assert reshaped[5, 5, 5] == 1
+
+
+def test_close():
+    """Test the morphological close operation."""
+    # Create data with a small hole that should be filled
+    point_data = np.ones((10, 10, 10))
+    point_data[4:7, 4:7, 4:7] = 0  # hole in the middle
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume_closed = volume.close(kernel_size=(5, 5, 5))
+    assert isinstance(volume_closed, pv.ImageData)
+    reshaped = volume_closed.point_data['point_data'].reshape((10, 10, 10), order='F')
+    # Check that hole is filled (at least partially)
+    assert reshaped[5, 5, 5] == 1
+
+
+@pytest.mark.parametrize('binary', [True, False, None])
+def test_morphological_filters_bool(binary):
+    im = pv.ImageData(dimensions=(2, 1, 1))
+    im['data'] = np.array((True, False), dtype=bool)
+    eroded = im.erode(binary=binary)
+    assert eroded['data'].dtype == bool
+    assert np.array_equal(eroded['data'], [False, False])
+
+
+def test_morphological_filters_single_value():
+    im = pv.ImageData(dimensions=(1, 1, 1))
+    value = 42.0
+    im['data'] = np.array((value,), dtype=float)
+    eroded = im.erode()
+    assert eroded['data'].dtype == float
+    assert np.array_equal(eroded['data'], [value])
+
+
+def test_morphological_filters_float():
+    im = pv.ImageData(dimensions=(3, 1, 1))
+    im['data'] = [1.0, 2.0, 3.0]
+    eroded = im.erode()
+    assert eroded['data'].dtype == float
+    assert np.array_equal(eroded['data'], [1.0, 1.0, 2.0])
+
+
+def test_morphological_filters_with_scalars():
+    """Test morphological filters with specified scalars."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    data1 = np.zeros((5, 5, 5))
+    data1[2, 2, 2] = 1
+    data2 = np.ones((5, 5, 5))
+    volume.point_data['data1'] = data1.flatten(order='F')
+    volume.point_data['data2'] = data2.flatten(order='F')
+
+    # Test with specified scalars
+    dilated = volume.dilate(scalars='data1')
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(scalars='data2')
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(scalars='data1')
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(scalars='data2')
+    assert isinstance(closed, pv.ImageData)
+
+
+def test_morphological_filters_cell_data_error():
+    """Test that morphological filters raise error for cell data."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    volume.cell_data['cell_data'] = np.zeros(4 * 4 * 4)
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.dilate(scalars='cell_data')
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.erode(scalars='cell_data')
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.open(scalars='cell_data')
+
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.close(scalars='cell_data')
+
+
+def test_morphological_filters_progress_bar():
+    """Test morphological filters with progress_bar parameter."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    data = np.zeros((5, 5, 5))
+    data[2, 2, 2] = 1
+    volume.point_data['data'] = data.flatten(order='F')
+
+    # Test progress_bar parameter for all morphological operations
+    dilated = volume.dilate(progress_bar=True)
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(progress_bar=True)
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(progress_bar=True)
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(progress_bar=True)
+    assert isinstance(closed, pv.ImageData)
+
+
+def test_morphological_filters_no_active_scalars_cell_data():
+    """Test morphological filters error when active scalars are cell data."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    volume.cell_data['cell_data'] = np.zeros(4 * 4 * 4)
+    volume.set_active_scalars('cell_data', preference='cell')
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.dilate()
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.erode()
+
+    # For open and close, the error will come from the internal dilate/erode calls
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.open()
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.close()
+
+
+def test_morphological_filters_custom_kernel_size():
+    """Test morphological filters with custom kernel sizes."""
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    data = np.zeros((10, 10, 10))
+    data[5, 5, 5] = 1
+    volume.point_data['data'] = data.flatten(order='F')
+
+    # Test with different kernel sizes
+    dilated = volume.dilate(kernel_size=(5, 5, 5))
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(kernel_size=(2, 2, 2))
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(kernel_size=(4, 4, 4))
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(kernel_size=(3, 2, 1))
+    assert isinstance(closed, pv.ImageData)

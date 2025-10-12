@@ -90,7 +90,7 @@ test = [
   'pytest-cov<7.1.0',
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<3.3.0',
-  'pytest-pyvista==0.2.0',
+  'pytest-pyvista==0.3.1',
   'pytest-xdist<3.9.0',
   'pytest<8.5.0',
   'retry-requests<2.1.0',
@@ -153,7 +153,7 @@ docs = [
   { include-group = 'pinned' },
 ]
 
-docs-test = ['pytest-pyvista==0.2.0']
+docs-test = ['pytest-pyvista==0.3.1', 'pytest-xdist<3.9.0']
 
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
@@ -221,6 +221,7 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
+run.parallel = true
 run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
@@ -244,12 +245,9 @@ filterwarnings = [
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
+  'always:(?s).*This test has multiple cached images.*:UserWarning',
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
-
-failed_image_dir = '_failed_test_images'
-generated_image_dir = '_generated_test_images'
-image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
@@ -264,6 +262,19 @@ markers = [
 minversion = "7"
 testpaths = 'tests'
 xfail_strict = true
+
+# pytest-pyvista options
+doc_failed_image_dir = '_doc_failed_test_images'
+doc_generated_image_dir = '_doc_generated_test_images'
+doc_image_cache_dir = 'tests/doc/doc_image_cache'
+doc_image_format = 'jpg'
+doc_images_dir = 'doc/_build/html/_images'
+failed_image_dir = '_failed_test_images'
+generated_image_dir = '_generated_test_images'
+image_cache_dir = 'tests/plotting/image_cache'
+image_format = 'png'
+max_image_size = 400 # pixels
+max_vtksz_file_size = 25 # MB
 
 [tool.mypy]
 check_untyped_defs = true

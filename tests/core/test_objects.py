@@ -227,6 +227,6 @@ def test_from_dict_raises(mocker: MockerFixture):
     m = mocker.MagicMock()
     m.ndim = 1
     with pytest.raises(
-        ValueError, match='Dictionary must contain only NumPy arrays with maximum of 2D.'
+        ValueError, match=r'Dictionary must contain only NumPy arrays with maximum of 2D.'
     ):
         pv.Table(dict(a=m))
