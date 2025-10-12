@@ -535,6 +535,7 @@ def test_plot_called_files(
 
 
 @parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
+@pytest.mark.usefixtures('patch_app_console')
 def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
     """Test that errors are correctly raised for the --files argument"""
     with pytest.raises(SystemExit) as e:

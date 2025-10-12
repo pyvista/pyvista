@@ -66,7 +66,7 @@ def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG
     if not all((files := {v: Path(v).exists() for v in value}).values()):
         missing = [k for k, v in files.items() if not v]
         n = len(missing)
-        msg = f'{n} file{"s" if n > 2 else ""} not found: {missing}'
+        msg = f'\n{n} file{"s" if n > 2 else ""} not found: {missing}'
         raise ValueError(msg)
 
     # Test file can be read by pyvista
@@ -81,7 +81,7 @@ def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG
     if not all((files := {v: readable(v) for v in value}).values()):
         not_readable = [k for k, v in files.items() if not v]
         n = len(not_readable)
-        msg = f'{n} file{"s" if n > 2 else ""} not readable by pyvista: {not_readable}'
+        msg = f'\n{n} file{"s" if n > 2 else ""} not readable by pyvista: {not_readable}'
         raise ValueError(msg)
 
 
