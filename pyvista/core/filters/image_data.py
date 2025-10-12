@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Iterable
+from collections.abc import Sequence
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -30,7 +31,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from typing import Any
 
     from numpy.typing import NDArray
 
@@ -60,6 +61,8 @@ _InterpolationOptions = Literal[
     'bspline8',
     'bspline9',
 ]
+_AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
+_StackModeOptions = Literal['extents', 'pad-crop', 'resample', None]  # noqa: PYI061
 
 
 @abstract_class
@@ -1208,7 +1211,7 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def _validate_point_scalars(  # type: ignore[misc]
-        self: ImageData, scalars: str | None
+        self: ImageData, scalars: str | None = None
     ) -> tuple[Literal[FieldAssociation.POINT], str]:
         if scalars is None:
             field, scalars = set_default_active_scalars(self)
@@ -5360,6 +5363,91 @@ class ImageDataFilters(DataSetFilters):
         output[array_name] = array_out
         return output
 
+    def stack(  # type: ignore[misc]
+        self: ImageData,
+        images: ImageData | Sequence[ImageData],
+        axis: _AxisOptions = 'x',
+        *,
+        mode: _StackModeOptions = None,
+        resample_kwargs: dict[str, Any] | None = None,
+    ):
+        # validate axis
+        options = get_args(_AxisOptions)
+        _validation.check_contains(options, must_contain=axis, name='axis')
+        mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+        axis_num = mapping[axis]
+
+        # validate mode
+        options = get_args(_StackModeOptions)
+        _validation.check_contains(options, must_contain=mode, name='mode')
+
+        if not images:
+            msg = 'No images provided for stacking.'
+            raise ValueError(msg)
+
+        all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
+
+        self_dims = self.dimensions
+        all_dtypes: set[np.dtype] = set()
+        all_scalars: list[str] = []
+        for i, img in enumerate(all_images):
+            if i > 0:
+                _validation.check_instance(img, pyvista.ImageData)
+
+            # Create shallow copies so we can set/modify scalars if needed
+            shallow_copy = img.copy(deep=False)
+            _, scalars = shallow_copy._validate_point_scalars()
+            all_scalars.append(scalars)
+            all_dtypes.add(img.point_data[scalars].dtype)
+
+            if i > 0 and mode != 'extents':
+                if (dims := img.dimensions) != self_dims:
+                    # Need to deal with the dimensions mismatch
+                    if mode is None:
+                        # Allow mismatch only along stacking axis
+                        for ax in range(3):
+                            if ax != axis and dims[ax] != self_dims[ax]:
+                                msg = (
+                                    f'Image {i} shape mismatch on axis {ax}. Use the `mode` '
+                                    f'keyword to allow stacking with mismatched dimensions.'
+                                )
+                                raise ValueError(msg)
+                    elif mode == 'resample':
+                        kwargs = {}
+                        if resample_kwargs:
+                            _validation.check_instance(resample_kwargs, dict)
+                            allowed_kwargs = ('anti_aliasing', 'interpolation', 'border_mode')
+                            for kwarg in resample_kwargs.keys():
+                                _validation.check_contains(
+                                    allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
+                                )
+                            kwargs = resample_kwargs
+
+                        computed_kwargs = _compute_resample_kwargs(self, img, axis=axis_num)
+                        kwargs.update(computed_kwargs)
+                        kwargs['inplace'] = True
+                        shallow_copy.resample(**kwargs)
+
+            # Replace input with shallow copy
+            all_images[i] = shallow_copy
+
+        if len(all_dtypes) > 1:
+            # Need to cast all scalars to the same dtype
+            dtype_out = np.result_type(*all_dtypes)
+            for img, scalars in zip(all_images, all_scalars):
+                array = img.point_data[scalars]
+                img.point_data[scalars] = array.astype(dtype_out, copy=False)
+
+        alg = _vtk.vtkImageAppend()
+        alg.SetAppendAxis(axis_num)
+        alg.SetPreserveExtents(mode == 'extents')
+
+        for img in all_images:
+            alg.AddInputData(img)
+
+        _update_alg(alg)
+        return _get_output(alg)
+
 
 def _validate_padding(pad_size):
     # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
@@ -5409,3 +5497,26 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
+
+
+def _compute_resample_kwargs(
+    ref_image: ImageData, img: ImageData, axis: int
+) -> dict[str, NumpyArray[float]]:
+    """Compute resampling keywords for stacking img with ref_image along an axis."""
+    ref_dims = np.array(ref_image.dimensions, dtype=float)
+    img_dims = np.array(img.dimensions, dtype=float)
+
+    is_2d_ref = ref_image.dimensionality == 2
+    is_2d_img = img.dimensionality == 2
+
+    if is_2d_ref and is_2d_img:
+        # 2D slices: match stacking axis, scale others proportionally
+        off_axis = np.arange(3) != axis
+        not_singleton = ref_dims != 1
+        fixed_axis = off_axis & not_singleton
+        sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
+        return {'sample_rate': sample_rate}
+    else:
+        new_dims = ref_dims.copy()  # match non-stacking axes exactly
+        new_dims[axis] = img_dims[axis]  # stacking axis remains unchanged
+        return {'dimensions': new_dims}

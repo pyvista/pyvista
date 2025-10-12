@@ -191,6 +191,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
+    (r'py:.*', '.*Options'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
