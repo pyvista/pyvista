@@ -228,7 +228,7 @@ class Text(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextAc
         """
         return self.GetInput()
 
-    @input.setter
+    @input.setter  # noqa: A003
     def input(self, text: str):
         self.SetInput(text)
 
