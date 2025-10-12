@@ -5382,9 +5382,9 @@ class ImageDataFilters(DataSetFilters):
         axis : int | str, default: 'x'
             Axis along which the images are stacked:
 
-            - 0 or 'x': x-axis
-            - 1 or 'y': y-axis
-            - 2 or 'z': z-axis
+            - 0 or ``'x'``: x-axis
+            - 1 or ``'y'``: y-axis
+            - 2 or ``'z'``: z-axis
 
         mode : str, optional
             Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
