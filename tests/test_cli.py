@@ -204,30 +204,30 @@ def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_dir_only_error(tmp_ant_file, capsys):
+def test_convert_dir_only_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out
-    assert 'Invalid value' in out
-    assert 'Output file must have a file extension.' in out
+    assert '╭─ Error ─' in out, out
+    assert 'Invalid value' in out, out
+    assert 'Output file must have a file extension.' in out, out
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_file_not_found(capsys):
+def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     file_in = 'missing.vtp'
     with pytest.raises(SystemExit) as e:
         main(f'convert {file_in} .ply')
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out
-    assert f'File not found: {file_in}' in out
+    assert '╭─ Error ─' in out, out
+    assert f'1 file not found: {file_in}' in out, out
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_read_error(tmp_path, capsys):
+def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     # Create a dummy .vtp file with empty contents
     name = 'dummy.vtp'
     file_in = tmp_path / name
@@ -238,24 +238,23 @@ def test_convert_read_error(tmp_path, capsys):
         main(f'convert {str(file_in)!r} .ply')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out
-    assert 'File not readable by PyVista:' in out
-    assert name in out
+    assert '╭─ Error ─' in out, out
+    assert '1 file not readable by PyVista:' in out, out
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_save_error(tmp_ant_file, capsys):
+def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     invalid_suffix = '.foo'
     output_path = tmp_ant_file.with_suffix(invalid_suffix)
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(output_path)!r}')
 
     out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out
-    assert 'Failed to save output file: ' in out
-    assert output_path.name in out
-    assert 'Invalid file extension' in out
+    assert '╭─ PyVista Error ─' in out, out
+    assert 'Failed to save output file: ' in out, out
+    assert output_path.name in out, out
+    assert 'Invalid file extension' in out, out
     assert e.value.code == 1
 
 
@@ -288,6 +287,11 @@ def mock_plotter(mocker: MockerFixture):
 @pytest.fixture
 def mock_plot(mocker: MockerFixture):
     return mocker.patch.object(pv, 'plot')
+
+
+@pytest.fixture
+def mock_pv_read(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'read')
 
 
 @pytest.fixture
@@ -561,6 +565,7 @@ class CasesPlot:
     cases=CasesPlot,
     filter=~(filters.has_tag('raises') | filters.has_tag('kwargs')),
 )
+@pytest.mark.usefixtures('mock_pv_read')
 def test_plot_called(
     tokens: str,
     expected_kwargs: dict,
@@ -569,7 +574,7 @@ def test_plot_called(
     """Test that the pv.plot function is called with the expected arguments."""
     file = Path(pv.examples.antfile).as_posix()
     main(f'plot --files={file} {tokens}')
-    mock_plot.assert_called_once_with(var_item=[file], **expected_kwargs)
+    mock_plot.assert_called_once_with(var_item=[pv.read(file)], **expected_kwargs)
 
 
 @parametrize_with_cases(
@@ -596,7 +601,7 @@ def test_plot_called_kwargs(
     tags = get_case_tags(case_func=case.func)
 
     mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
-    mock.assert_called_once_with(file, **expected_kwargs)
+    mock.assert_called_once_with(pv.read(file), **expected_kwargs)
 
 
 @parametrize_with_cases('tokens, errors', cases=CasesPlot, has_tag='raises')
@@ -618,23 +623,31 @@ def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.Captu
 class CasesPlotFiles:
     """Cases used to test the --files argument of the plot CLI"""
 
+    @pytest.mark.usefixtures('mock_pv_read')
     def case_single_args(self, default_plot_kwargs: dict):
         """Test when only a single positional argument is given for files."""
         kwargs = default_plot_kwargs
-        kwargs['var_item'] = [f := Path(pv.examples.antfile).as_posix()]
+        f = Path(pv.examples.antfile).as_posix()
+        kwargs['var_item'] = [pv.read(f)]
         return f, kwargs
 
+    @pytest.mark.usefixtures('mock_pv_read')
     def case_multiple_args(self, default_plot_kwargs: dict):
         """Test when multiple positional arguments are given for files."""
         kwargs = default_plot_kwargs
-        kwargs['var_item'] = (files := [Path(pv.examples.antfile).as_posix()] * 2)
+        files = [Path(pv.examples.antfile).as_posix()] * 2
+        kwargs['var_item'] = [pv.read(f) for f in files]
         return ' '.join(files), kwargs
 
     @parametrize(with_space=[True, False])
+    @pytest.mark.usefixtures('mock_pv_read')
     def case_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
         """Test when multiple keyword arguments are given for files."""
         kwargs = default_plot_kwargs
-        kwargs['var_item'] = (files := [Path(pv.examples.antfile).as_posix()] * 2)
+
+        files = [Path(pv.examples.antfile).as_posix()] * 2
+        kwargs['var_item'] = [pv.read(f) for f in files]
+
         prefix = '--files ' if with_space else '--files='
         return prefix + ' '.join(files), kwargs
 
@@ -672,7 +685,7 @@ class CasesPlotFiles:
         m = mocker.patch.object(pv, 'read')
         m.side_effect = Exception('Not readable')
 
-        return f'--files {f1.as_posix()}', ['1 file not readable by pyvista:']
+        return f'--files {f1.as_posix()}', ['1 file not readable by PyVista:']
 
 
 @parametrize_with_cases(
@@ -711,6 +724,7 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
     idgen=lambda **args: args['tokens_ncalls_args'][0],
 )
 @parametrize(func=['add_mesh', 'add_volume'])
+@pytest.mark.usefixtures('mock_pv_read')
 def test_add_mesh_volume_called(
     tokens_ncalls_args: tuple[str, int, list[str]],
     mock_add_mesh: MagicMock,
@@ -733,7 +747,7 @@ def test_add_mesh_volume_called(
 
     mock = mock_add_volume if add_volume else mock_add_mesh
     assert mock.call_count == ncalls
-    assert mock.mock_calls == [mocker.call(a) for a in args]
+    assert mock.mock_calls == [mocker.call(pv.read(a)) for a in args]
 
 
 @pytest.mark.usefixtures('patch_app_console')
