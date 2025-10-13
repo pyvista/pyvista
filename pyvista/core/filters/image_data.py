@@ -5546,8 +5546,8 @@ class ImageDataFilters(DataSetFilters):
         >>> stacked.plot(**plot_kwargs)
 
         Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
-        using the input's extent. This crops the lower-left portion of ``bird``, since the `
-        `beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
+        using the input's extent. This crops the lower-left portion of ``bird``, since the
+        ``beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
 
         >>> beach.offset = (0, 0, 0)
         >>> stacked = beach.stack(bird, mode='crop-extents')
