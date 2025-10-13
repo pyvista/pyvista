@@ -2315,21 +2315,21 @@ def test_stack_extents():
     image_b = pv.ImageData(dimensions=(1, 1, 1))
     image_b['B'] = array_b
 
-    stacked = image_a.stack(image_b, mode='extents')
+    stacked = image_a.stack(image_b, mode='preserve-extents')
     assert stacked.dimensions == (1, 1, 1)
     assert np.array_equal(stacked.active_scalars, array_b)
 
     offset = (-1, 0, 0)
     image_a.offset = offset
-    stacked = image_a.stack(image_b, mode='extents')
+    stacked = image_a.stack(image_b, mode='preserve-extents')
     assert stacked.dimensions == (2, 1, 1)
     assert stacked.offset == offset
     expected = np.hstack((array_a, array_b))
     assert np.array_equal(stacked.active_scalars, expected)
 
-    match = "The axis keyword cannot be used with 'extents' mode."
+    match = "The axis keyword cannot be used with 'preserve-extents' mode."
     with pytest.raises(ValueError, match=match):
-        image_a.stack(image_b, axis=0, mode='extents')
+        image_a.stack(image_b, axis=0, mode='preserve-extents')
 
 
 def test_stack_crop_dimension():
@@ -2358,7 +2358,7 @@ def test_stack_crop_extent():
     image_b = pv.ImageData(dimensions=(2, 1, 1))
     image_b['B'] = array_b
 
-    stacked = image_a.stack(image_b, mode='crop-extent')
+    stacked = image_a.stack(image_b, mode='crop-extents')
     assert stacked.dimensions == (2, 1, 1)
     expected = np.hstack((array_a, expected_cropped_b))
     assert np.array_equal(stacked.active_scalars, expected)

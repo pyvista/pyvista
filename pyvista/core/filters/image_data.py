@@ -62,7 +62,9 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
-_StackModeOptions = Literal['strict', 'extents', 'crop-extent', 'crop-dimensions', 'resample']
+_StackModeOptions = Literal[
+    'strict', 'preserve-extents', 'crop-extents', 'crop-dimensions', 'resample'
+]
 _StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
 _StackComponentPolicyOptions = Literal['strict', 'promote']
 
@@ -5475,16 +5477,16 @@ class ImageDataFilters(DataSetFilters):
         (233, 100, 1)
         >>> stacked.plot(**plot_kwargs)
 
-        Use the ``'extents'`` mode. Using this mode naively may not produce the desired result,
-        e.g. if we stack ``beach`` with ``bird``, the ``beach`` image is completely overwritten
-        since their :attr:`~pyvista.ImageData.extent`s fully overlap.
+        Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
+        result, e.g. if we stack ``beach`` with ``bird``, the ``beach`` image is completely
+        overwritten since their :attr:`~pyvista.ImageData.extent`s fully overlap.
 
         >>> beach.extent
         (0, 99, 0, 99, 0, 0)
         >>> bird.extent
         (0, 457, 0, 341, 0, 0)
 
-        >>> stacked = beach.stack(bird, mode='extents')
+        >>> stacked = beach.stack(bird, mode='preserve-extents')
         >>> stacked.extent
         (0, 457, 0, 341, 0, 0)
         >>> stacked.plot(**plot_kwargs)
@@ -5496,14 +5498,14 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.extent
         (-50, 49, -50, 49, 0, 0)
 
-        >>> stacked = beach.stack(bird, mode='extents')
+        >>> stacked = beach.stack(bird, mode='preserve-extents')
         >>> stacked.extent
         (-50, 457, -50, 341, 0, 0)
         >>> stacked.plot(**plot_kwargs)
 
         Reverse the stacking order.
 
-        >>> stacked = bird.stack(beach, mode='extents')
+        >>> stacked = bird.stack(beach, mode='preserve-extents')
         >>> stacked.plot(**plot_kwargs)
 
         Use ``'crop-dimensions'`` to center-crop the images to match the input's
@@ -5517,12 +5519,12 @@ class ImageDataFilters(DataSetFilters):
         >>> stacked = bird.stack(beach, mode='crop-dimensions')
         >>> stacked.plot(**plot_kwargs)
 
-        Reset the offset and use ``'crop-extent'`` mode to automatically :meth:`crop` each image
+        Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
         using the input's extent. This crops the lower-left portion of ``bird``, since the `
         `beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
 
         >>> beach.offset = (0, 0, 0)
-        >>> stacked = beach.stack(bird, mode='crop-extent')
+        >>> stacked = beach.stack(bird, mode='crop-extents')
         >>> stacked.plot(**plot_kwargs)
 
         Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
@@ -5546,8 +5548,8 @@ class ImageDataFilters(DataSetFilters):
 
         # Validate axis
         if axis is not None:
-            if mode == 'extents':
-                msg = "The axis keyword cannot be used with 'extents' mode."
+            if mode == 'preserve-extents':
+                msg = "The axis keyword cannot be used with 'preserve-extents' mode."
                 raise ValueError(msg)
             options = get_args(_AxisOptions)
             _validation.check_contains(options, must_contain=axis, name='axis')
@@ -5595,7 +5597,7 @@ class ImageDataFilters(DataSetFilters):
             if i == 0 and mode in ['resample', 'crop-dimensions']:
                 # These modes should not be affected by offset, so we zero it
                 img_shallow_copy.offset = (0, 0, 0)
-            if i > 0 and mode != 'extents':
+            if i > 0 and mode != 'preserve-extents':
                 if (dims := img.dimensions) != self_dimensions:
                     # Need to deal with the dimensions mismatch
                     if mode == 'strict':
@@ -5625,7 +5627,7 @@ class ImageDataFilters(DataSetFilters):
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
                         img_shallow_copy.offset = (0, 0, 0)
 
-                    elif mode == 'crop-extent':
+                    elif mode == 'crop-extents':
                         img_shallow_copy = img_shallow_copy.crop(extent=self_extent)
                     elif mode == 'crop-dimensions':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
@@ -5691,7 +5693,7 @@ class ImageDataFilters(DataSetFilters):
 
         alg = _vtk.vtkImageAppend()
         alg.SetAppendAxis(axis_num)
-        alg.SetPreserveExtents(mode == 'extents')
+        alg.SetPreserveExtents(mode == 'preserve-extents')
 
         for img in all_images:
             alg.AddInputData(img)
