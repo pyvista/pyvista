@@ -177,7 +177,7 @@ def _converter_files(
 
     # Test file can be read by pyvista
     meshes_and_paths: list[_MeshAndPath] = []
-    not_readable: list[Path] = []
+    not_readable: list[str] = []
     for file in values:
         try:
             mesh = pyvista.read(file)
@@ -286,10 +286,10 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
-    items: list[_MeshAndPath] = var_item
+    items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
     try:
         res = pyvista.plot(
-            var_item=[m.mesh for m in items],
+            var_item=[m.mesh for m in items],  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,
