@@ -62,7 +62,7 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
-_StackModeOptions = Literal['extents', 'pad-crop', 'resample', None]  # noqa: PYI061
+_StackModeOptions = Literal['extents', 'crop-extent', 'crop-dimensions', 'resample']
 
 
 @abstract_class
@@ -5368,10 +5368,10 @@ class ImageDataFilters(DataSetFilters):
         images: ImageData | Sequence[ImageData],
         axis: _AxisOptions | None = None,
         *,
-        mode: _StackModeOptions = None,
+        mode: _StackModeOptions | None = None,
         resample_kwargs: dict[str, Any] | None = None,
     ):
-        """Stack :class:`~pyvista.ImageData` objects along an axis.
+        """Stack :class:`~pyvista.ImageData` along an axis.
 
         Parameters
         ----------
@@ -5382,9 +5382,9 @@ class ImageDataFilters(DataSetFilters):
         axis : int | str, default: 'x'
             Axis along which the images are stacked:
 
-            - 0 or ``'x'``: x-axis
-            - 1 or ``'y'``: y-axis
-            - 2 or ``'z'``: z-axis
+            - ``0`` or ``'x'``: x-axis
+            - ``1`` or ``'y'``: y-axis
+            - ``2`` or ``'z'``: z-axis
 
         mode : str, optional
             Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
@@ -5414,7 +5414,7 @@ class ImageDataFilters(DataSetFilters):
         >>> black = [0, 0, 0]
         >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
 
-        Stack it with itself along the x-axis.
+        Stack them along the x-axis.
 
         >>> stacked = beach.stack(beach_black, axis='x')
         >>> plot_kwargs = dict(
@@ -5427,7 +5427,7 @@ class ImageDataFilters(DataSetFilters):
         ... )
         >>> stacked.plot(**plot_kwargs)
 
-        Stack it with itself along the y-axis.
+        Stack them along the y-axis.
 
         >>> stacked = beach.stack(beach_black, axis='y')
         >>> stacked.plot(**plot_kwargs)
@@ -5457,7 +5457,7 @@ class ImageDataFilters(DataSetFilters):
 
         Use the ``'extents'`` mode. Using this mode naively may not produce the desired result,
         e.g. if we stack ``beach`` with ``bird``, the ``beach`` image is completely overwritten
-        since their :attr:`~pyvista.ImageData.extent`s overlap completely.
+        since their :attr:`~pyvista.ImageData.extent`s fully overlap.
 
         >>> beach.extent
         (0, 99, 0, 99, 0, 0)
@@ -5465,6 +5465,8 @@ class ImageDataFilters(DataSetFilters):
         (0, 457, 0, 341, 0, 0)
 
         >>> stacked = beach.stack(bird, mode='extents')
+        >>> stacked.extent
+        (0, 457, 0, 341, 0, 0)
         >>> stacked.plot(**plot_kwargs)
 
         Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
@@ -5475,12 +5477,39 @@ class ImageDataFilters(DataSetFilters):
         (-50, 49, -50, 49, 0, 0)
 
         >>> stacked = beach.stack(bird, mode='extents')
+        >>> stacked.extent
+        (-50, 457, -50, 341, 0, 0)
+        >>> stacked.plot(**plot_kwargs)
+
+        Reverse the stacking order.
+
+        >>> stacked = bird.stack(beach, mode='extents')
+        >>> stacked.plot(**plot_kwargs)
+
+        Use ``'crop-dimensions'`` to center-crop the images to match the input's
+        dimensions.
+
+        >>> stacked = beach.stack(bird, mode='crop-dimensions')
+        >>> stacked.plot(**plot_kwargs)
+
+        Reverse the stacking order.
+
+        >>> stacked = bird.stack(beach, mode='crop-dimensions')
+        >>> stacked.plot(**plot_kwargs)
+
+        Reset the offset and use ``'crop-extent'`` mode to automatically :meth:`crop` each image
+        using the input's extent. This crops the lower-left portion of ``bird``, since the `
+        `beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
+
+        >>> beach.offset = (0, 0, 0)
+        >>> stacked = beach.stack(bird, mode='crop-extent')
         >>> stacked.plot(**plot_kwargs)
 
         """
         # Validate mode
-        options = get_args(_StackModeOptions)
-        _validation.check_contains(options, must_contain=mode, name='mode')
+        if mode is not None:
+            options = get_args(_StackModeOptions)
+            _validation.check_contains(options, must_contain=mode, name='mode')
 
         # Validate axis
         if axis is not None:
@@ -5496,26 +5525,30 @@ class ImageDataFilters(DataSetFilters):
 
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
-        self_dims = self.dimensions
+        self_dimensions = self.dimensions
+        self_extent = self.extent
         all_dtypes: set[np.dtype] = set()
         all_scalars: list[str] = []
         for i, img in enumerate(all_images):
             if i > 0:
                 _validation.check_instance(img, pyvista.ImageData)
 
-            # Create shallow copies so we can set/modify scalars if needed
-            shallow_copy = img.copy(deep=False)
-            _, scalars = shallow_copy._validate_point_scalars()
+            # Create shallow copies so we can safely set/modify scalars if needed
+            img_shallow_copy = img.copy(deep=False)
+            _, scalars = img_shallow_copy._validate_point_scalars()
             all_scalars.append(scalars)
             all_dtypes.add(img.point_data[scalars].dtype)
 
+            if i == 0 and mode in ['resample', 'crop-dimensions']:
+                # These modes should not be affected by offset, so we zero it
+                img_shallow_copy.offset = (0, 0, 0)
             if i > 0 and mode != 'extents':
-                if (dims := img.dimensions) != self_dims:
+                if (dims := img.dimensions) != self_dimensions:
                     # Need to deal with the dimensions mismatch
                     if mode is None:
                         # Allow mismatch only along stacking axis
                         for ax in range(3):
-                            if ax != axis and dims[ax] != self_dims[ax]:
+                            if ax != axis and dims[ax] != self_dimensions[ax]:
                                 msg = (
                                     f'Image {i - 1} dimensions {img.dimensions} must match the '
                                     f'input dimensions {self.dimensions} along axis {axis}.\n'
@@ -5536,11 +5569,17 @@ class ImageDataFilters(DataSetFilters):
 
                         computed_kwargs = _compute_resample_kwargs(self, img, axis=axis_num)
                         kwargs.update(computed_kwargs)
-                        kwargs['inplace'] = True
-                        shallow_copy.resample(**kwargs)
+                        img_shallow_copy = img_shallow_copy.resample(**kwargs)
+                        img_shallow_copy.offset = (0, 0, 0)
+
+                    elif mode == 'crop-extent':
+                        img_shallow_copy = img_shallow_copy.crop(extent=self_extent)
+                    elif mode == 'crop-dimensions':
+                        img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
+                        img_shallow_copy.offset = (0, 0, 0)
 
             # Replace input with shallow copy
-            all_images[i] = shallow_copy
+            all_images[i] = img_shallow_copy
 
         if len(all_dtypes) > 1:
             # Need to cast all scalars to the same dtype
@@ -5557,7 +5596,9 @@ class ImageDataFilters(DataSetFilters):
             alg.AddInputData(img)
 
         _update_alg(alg)
-        return _get_output(alg)
+        output = _get_output(alg)
+        output.offset = self.offset
+        return output
 
 
 def _validate_padding(pad_size):

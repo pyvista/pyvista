@@ -2280,3 +2280,35 @@ def test_stack_extents():
     match = "The axis keyword cannot be used with 'extents' mode."
     with pytest.raises(ValueError, match=match):
         image_a.stack(image_b, axis=0, mode='extents')
+
+
+def test_stack_crop_dimension():
+    array_a = np.array([0])
+    array_b = np.arange(9)
+    expected_cropped_b = array_b[4]  # midpoint
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(3, 3, 1))
+    image_b['B'] = array_b
+
+    stacked = image_a.stack(image_b, mode='crop-dimensions')
+    assert stacked.dimensions == (2, 1, 1)
+    expected = np.hstack((array_a, expected_cropped_b))
+    assert np.array_equal(stacked.active_scalars, expected)
+
+
+def test_stack_crop_extent():
+    array_a = np.array([0])
+    array_b = np.array([1, 2])
+    expected_cropped_b = array_b[0]  # extent shared by first point only
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = array_b
+
+    stacked = image_a.stack(image_b, mode='crop-extent')
+    assert stacked.dimensions == (2, 1, 1)
+    expected = np.hstack((array_a, expected_cropped_b))
+    assert np.array_equal(stacked.active_scalars, expected)
