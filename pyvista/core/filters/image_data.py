@@ -5382,8 +5382,15 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         images : ImageData | Sequence[ImageData]
-            The input image(s) to stack. All must have the same scalar type and
-            identical dimensions except along the stacking axis.
+            The input image(s) to stack. By default, all images must have:
+
+            #. identical dimensions except along the stacking axis,
+            #. the same scalar dtype, and
+            #. the same number of scalar components.
+
+            Use ``mode`` to allow stacking images with mismatched dimensions,
+            ``dtype_policy`` to allow stacking images with different dtypes, and/or
+            ``component_policy`` to allow stacking images with differing number of components.
 
         axis : int | str, default: 'x'
             Axis along which the images are stacked:
