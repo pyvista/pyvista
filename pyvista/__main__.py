@@ -70,6 +70,43 @@ def _console_error(message: str | Group, title: str = 'PyVista Error') -> NoRetu
     raise SystemExit(1)
 
 
+def _converter_files(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_MeshAndPath]:
+    values: list[str] = [t.value for t in tokens]
+    literal_file = 'File' if len(values) == 1 else 'Files'
+
+    # Test file exists
+    if not all((files := {v: Path(v).exists() for v in values}).values()):
+        missing: str | list[str] = [k for k, v in files.items() if not v]
+        missing = missing[0] if len(missing) == 1 else missing
+        msg = f'{literal_file} not found: {missing}'
+        raise ValueError(msg)
+
+    # Test file can be read by pyvista
+    meshes_and_paths: list[_MeshAndPath] = []
+    for file in values:
+        try:
+            mesh = pyvista.read(file)
+        except Exception:  # noqa: BLE001
+            msg = f'File not readable by PyVista: {file}'
+            raise ValueError(msg)
+        else:
+            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
+
+    return meshes_and_paths
+
+
+def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
+    path = Path(value)
+    has_suffix = bool(path.suffix)
+    is_suffix = not path.suffix and path.stem.startswith('.')
+    if not (has_suffix or is_suffix):
+        msg = 'Output file must have a file extension.'
+        raise ValueError(msg)
+
+
 @app.command
 @wraps(Report)
 def _report(*args, **kwargs) -> Report:
@@ -135,47 +172,10 @@ def _convert(
     app.console.print(f'[green]Saved:[/green] {out_path}')  # type: ignore [union-attr]
 
 
-def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
-    path = Path(value)
-    has_suffix = bool(path.suffix)
-    is_suffix = not path.suffix and path.stem.startswith('.')
-    if not (has_suffix or is_suffix):
-        msg = 'Output file must have a file extension.'
-        raise ValueError(msg)
-
-
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
     if value is not None and len(value) != 2:
         msg = 'Window size must be a list of two integers.'
         raise ValueError(msg)
-
-
-def _converter_files(
-    type_: type,  # noqa: ARG001
-    tokens: Sequence[Token],
-) -> list[_MeshAndPath]:
-    values: list[str] = [t.value for t in tokens]
-    literal_file = 'File' if len(values) == 1 else 'Files'
-
-    # Test file exists
-    if not all((files := {v: Path(v).exists() for v in values}).values()):
-        missing: str | list[str] = [k for k, v in files.items() if not v]
-        missing = missing[0] if len(missing) == 1 else missing
-        msg = f'{literal_file} not found: {missing}'
-        raise ValueError(msg)
-
-    # Test file can be read by pyvista
-    meshes_and_paths: list[_MeshAndPath] = []
-    for file in values:
-        try:
-            mesh = pyvista.read(file)
-        except Exception:  # noqa: BLE001
-            msg = f'File not readable by PyVista: {file}'
-            raise ValueError(msg)
-        else:
-            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
-
-    return meshes_and_paths
 
 
 def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
