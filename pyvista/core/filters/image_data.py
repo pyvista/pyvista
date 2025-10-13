@@ -5650,7 +5650,7 @@ class ImageDataFilters(DataSetFilters):
                 array = img.point_data[scalars]
                 img.point_data[scalars] = array.astype(dtype_out, copy=False)
         else:
-            dtype_out = all_images[0].active_scalars.dtype
+            dtype_out = all_images[0].point_data[all_scalars[0]].dtype
 
         if len(set(all_n_components)) > 1:
             # Need to ensure all scalars have the same number of components
@@ -5674,7 +5674,7 @@ class ImageDataFilters(DataSetFilters):
                     if n_components < target_n_components:
                         array = img.point_data[scalars]
                         if n_components < 3:
-                            array = np.vstack((array, array, array)).T
+                            array = np.vstack((array, array, array)).T   # type: ignore[assignment]
                         if target_n_components == 4:
                             fill_value = (
                                 np.iinfo(dtype_out).max
@@ -5683,7 +5683,7 @@ class ImageDataFilters(DataSetFilters):
                             )
                             new_array = np.full((len(array), 4), fill_value, dtype=dtype_out)
                             new_array[:, :3] = array
-                            array = new_array
+                            array = new_array  # type: ignore[assignment]
 
                         img.point_data[scalars] = array
 
