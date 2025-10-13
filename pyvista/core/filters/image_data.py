@@ -5529,7 +5529,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> yinyang = examples.download_yinyang()
 
-        Use ``component_policy`` stack grayscale images with RGB(A) images.
+        Use ``component_policy`` to stack grayscale images with RGB(A) images.
 
         >>> stacked = yinyang.stack(
         ...     [bird, beach], mode='resample', component_policy='promote'
