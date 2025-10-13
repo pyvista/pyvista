@@ -52,7 +52,7 @@ jobs:
       - name: Build Documentation
         run: tox run -e docs-build
 
-      - name: Dump Sphinx Warnings and Errors
+      - name: Dump Sphinx Build Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
@@ -63,8 +63,9 @@ jobs:
       - name: Dump Sphinx Execution Error Logs
         if: always()
         run: |
+          shopt -s nullglob
           for f in /tmp/sphinx-err-*.log; do
-            [ -e "$f" ] && cat "$f"
+            cat "$f"
           done
 
       - uses: actions/checkout@v5
