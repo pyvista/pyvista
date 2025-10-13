@@ -2194,6 +2194,37 @@ def test_stack_dimensions_mismatch():
         image_a.stack(image_b, axis=0)
 
 
+def test_stack_component_policy():
+    gray_array = np.array([0], dtype=np.uint8)
+    rgb_array = np.array([[1, 2, 3]], dtype=np.uint8)
+    gray = pv.ImageData(dimensions=(1, 1, 1))
+    gray['A'] = gray_array
+    rgb = pv.ImageData(dimensions=(1, 1, 1))
+    rgb['A'] = rgb_array
+
+    match = (
+        r'The number of components in the scalar arrays do not match. Got n components: {1, 3}.\n'
+        r"Set the component policy to 'promote' to automatically increase the number of "
+        r'components as needed.'
+    )
+    with pytest.raises(ValueError, match=match):
+        gray.stack(rgb)
+
+    stacked = gray.stack(rgb, component_policy='promote')
+    expected_array = np.vstack((np.broadcast_to(gray_array, (1, 3)), rgb_array))
+    assert np.array_equal(stacked.active_scalars, expected_array)
+
+    rgba_array = np.array([[1, 2, 3, 255]], dtype=np.uint8)
+    rgba = pv.ImageData(dimensions=(1, 1, 1))
+    rgba['A'] = rgba_array
+
+    stacked = gray.stack(rgba, component_policy='promote')
+    expected_gray_rgba = np.broadcast_to(gray_array, (1, 4)).copy()
+    expected_gray_rgba[0][3] = 255
+    expected_array = np.vstack((expected_gray_rgba, rgba_array))
+    assert np.array_equal(stacked.active_scalars, expected_array)
+
+
 class CasesResample:
     # 1D WITH 1D CASES
     def case_1d_x_with_1d_x_along_x(self):

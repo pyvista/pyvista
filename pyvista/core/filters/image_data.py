@@ -64,6 +64,7 @@ _InterpolationOptions = Literal[
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _StackModeOptions = Literal['extents', 'crop-extent', 'crop-dimensions', 'resample']
 _StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
+_StackComponentPolicyOptions = Literal['strict', 'promote']
 
 
 @abstract_class
@@ -5371,7 +5372,8 @@ class ImageDataFilters(DataSetFilters):
         *,
         mode: _StackModeOptions | None = None,
         resample_kwargs: dict[str, Any] | None = None,
-        dtype_policy: _StackDTypePolicyOptions| None = None,
+        dtype_policy: _StackDTypePolicyOptions | None = None,
+        component_policy: _StackComponentPolicyOptions | None = None,
     ):
         """Stack :class:`~pyvista.ImageData` along an axis.
 
@@ -5400,6 +5402,13 @@ class ImageDataFilters(DataSetFilters):
               stacking.
             - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
               unsafe as it may downcast values and lose precision.
+
+        component_policy : 'strict' | 'promote', default: 'strict'
+            - ``'strict'``: Do not modify the number of components of any scalars. All images being
+              stacked must have the number of components, else a ``ValueError`` is raised.
+            - ``'promote'``: Increase the number of components if necessary. Grayscale scalars
+              with one component may be promoted to RGB or RGBA scalars by duplicating values,
+              and RGB scalars may be promoted to RGBA scalars by including an opacity component.
 
         resample_kwargs : dict, optional
             Keyword arguments passed to :meth:`resample` when using ``resample`` mode. Specify
@@ -5516,6 +5525,17 @@ class ImageDataFilters(DataSetFilters):
         >>> stacked = beach.stack(bird, mode='crop-extent')
         >>> stacked.plot(**plot_kwargs)
 
+        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+
+        >>> yinyang = examples.download_yinyang()
+
+        Use ``component_policy`` stack grayscale images with RGB(A) images.
+
+        >>> stacked = yinyang.stack(
+        ...     [bird, beach], mode='resample', component_policy='promote'
+        ... )
+        >>> stacked.plot(**plot_kwargs)
+
         """
         # Validate mode
         if mode is not None:
@@ -5541,21 +5561,34 @@ class ImageDataFilters(DataSetFilters):
         else:
             dtype_policy = 'strict'
 
+        # Validate component policy
+        if component_policy is not None:
+            options = get_args(_StackComponentPolicyOptions)
+            _validation.check_contains(
+                options, must_contain=component_policy, name='component_policy'
+            )
+        else:
+            component_policy = 'strict'
+
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
         self_dimensions = self.dimensions
         self_extent = self.extent
         all_dtypes: list[np.dtype] = []
+        all_n_components: list[int] = []
         all_scalars: list[str] = []
         for i, img in enumerate(all_images):
             if i > 0:
                 _validation.check_instance(img, pyvista.ImageData)
 
-            # Create shallow copies so we can safely set/modify scalars if needed
+            # Create shallow copies so we can safely modify if needed
             img_shallow_copy = img.copy(deep=False)
             _, scalars = img_shallow_copy._validate_point_scalars()
             all_scalars.append(scalars)
-            all_dtypes.append(img.point_data[scalars].dtype)
+            array = img.point_data[scalars]
+            all_dtypes.append(array.dtype)
+            n_components = array.shape[1] if array.ndim == 2 else array.ndim
+            all_n_components.append(n_components)
 
             if i == 0 and mode in ['resample', 'crop-dimensions']:
                 # These modes should not be affected by offset, so we zero it
@@ -5616,6 +5649,43 @@ class ImageDataFilters(DataSetFilters):
             for img, scalars in zip(all_images, all_scalars):
                 array = img.point_data[scalars]
                 img.point_data[scalars] = array.astype(dtype_out, copy=False)
+        else:
+            dtype_out = all_images[0].active_scalars.dtype
+
+        if len(set(all_n_components)) > 1:
+            # Need to ensure all scalars have the same number of components
+            if component_policy == 'strict':
+                msg = (
+                    f'The number of components in the scalar arrays do not match. Got n '
+                    f'components: {set(all_n_components)}.\nSet the component policy to '
+                    f"'promote' to automatically increase the number of components as needed."
+                )
+                raise ValueError(msg)
+            else:  # component_policy == 'promote'
+                if not set(all_n_components) < {1, 3, 4}:
+                    msg = (
+                        'Unable to promote scalars. Only promotion for grayscale (1 component), '
+                        'RGB (3 components),\n and RGBA (4 components) is supported. Got'
+                        f'{all_n_components}'
+                    )
+                    raise ValueError(msg)
+                target_n_components = max(all_n_components)
+                for img, n_components, scalars in zip(all_images, all_n_components, all_scalars):
+                    if n_components < target_n_components:
+                        array = img.point_data[scalars]
+                        if n_components < 3:
+                            array = np.vstack((array, array, array)).T
+                        if target_n_components == 4:
+                            fill_value = (
+                                np.iinfo(dtype_out).max
+                                if np.issubdtype(dtype_out, np.integer)
+                                else 1.0
+                            )
+                            new_array = np.full((len(array), 4), fill_value, dtype=dtype_out)
+                            new_array[:, :3] = array
+                            array = new_array
+
+                        img.point_data[scalars] = array
 
         alg = _vtk.vtkImageAppend()
         alg.SetAppendAxis(axis_num)
