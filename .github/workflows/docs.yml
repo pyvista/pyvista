@@ -60,6 +60,13 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
+      - name: Dump Sphinx Execution Error Logs
+        if: always()
+        run: |
+          for f in /tmp/sphinx-err-*.log; do
+            [ -e "$f" ] && cat "$f"
+          done
+
       - uses: actions/checkout@v5
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         with:
