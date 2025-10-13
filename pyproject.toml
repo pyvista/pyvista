@@ -153,7 +153,7 @@ docs = [
   { include-group = 'pinned' },
 ]
 
-docs-test = ['pytest-pyvista==0.3.1', 'pytest-xdist<3.9.0']
+docs-test = ['pytest-pyvista[vtksz]==0.3.1', 'pytest-xdist<3.9.0']
 
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
@@ -271,6 +271,7 @@ failed_image_dir = '_failed_test_images'
 generated_image_dir = '_generated_test_images'
 image_cache_dir = 'tests/plotting/image_cache'
 image_format = 'png'
+include_vtksz = true
 max_image_size = 400 # pixels
 max_vtksz_file_size = 25 # MB
 
