@@ -136,7 +136,6 @@ Miscellaneous
    :toctree: _autosummary
 
    set_new_attribute
-   allow_new_attributes
    start_xvfb
    Report
    vtk_verbosity
