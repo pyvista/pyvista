@@ -52,7 +52,7 @@ jobs:
       - name: Build Documentation
         run: tox run -e docs-build
 
-      - name: Dump Sphinx Warnings and Errors
+      - name: Dump Sphinx Build Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
