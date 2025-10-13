@@ -316,7 +316,82 @@ _AllowNewAttributesOptions = Literal['private', True, False]
 
 
 class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
-    """Context manager to control setting new attributes on PyVista classes."""
+    """Context manager to control setting new attributes on PyVista classes.
+
+    Python allows arbitrarily setting new attributes on objects at any time,
+    but PyVista's classes do not always allow this. By default, setting a
+    new attribute is only allowed when the attribute's name has a leading
+    underscore "``_``", i.e. it is a private attribute; attempting to
+    set a new public attribute raises an ``AttributeError``.
+
+    This context manager may be used to allow or disallow setting `any` new
+    attribute, public or private, either globally or within a context.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    mode : 'private' | bool
+        Control if setting new attributes is allowed.
+
+        - ``'private'``: Allow setting private attributes, but do not allow setting public
+          attributes.
+        - ``True``: Allow setting any new attribute, either private or public.
+        - ``False``: Do not allow setting new attributes, regardless if they are private or public.
+
+        ``'private'`` is used by default, ``True`` removes all restrictions, and ``False``
+        is most strict.
+
+        .. note::
+
+            An attribute is considered private if its name has a leading underscore "``_``".
+
+    Notes
+    -----
+    Allowing new attributes by default outside ``__init__`` and/or without formally defining
+    class properties was found to be a source of bugs for both developers and users of PyVista.
+    It's very easy to set the wrong attribute name (e.g. ``interpolate`` vs. ``interpolation``)
+    without any errors being generated, and users transitioning from older versions of PyVista
+    would have code that sets attributes which were once valid, but have since been deprecated and
+    removed. Attempting to set an attribute which is not already defined now raises an
+    ``AttributeError`` to clearly signal that there is a potential problem with this line of code.
+
+    Examples
+    --------
+    Get the default attribute mode.
+
+    >>> import pyvista as pv
+    >>> pv.allow_new_attributes()
+    'private'
+
+    Setting new `private` attributes on PyVista objects is allowed by default.
+
+    >>> mesh = pv.PolyData()
+    >>> mesh._foo = 42  # OK
+    >>> mesh.foo = 42  # ERROR # doctest: +SKIP
+
+    Do not allow setting new attributes.
+
+    >>> _ = pv.allow_new_attributes(False)
+    >>> mesh._foo = 42  # ERROR # doctest:+SKIP
+    >>> mesh.foo = 42  # ERROR # doctest:+SKIP
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.allow_new_attributes('private')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.allow_new_attributes(True):
+    ...     mesh._foo = 42  # OK
+    ...     mesh.foo = 42  # OK
+
+    >>> pv.allow_new_attributes()
+    'private'
+
+    """
 
     @property
     def _state(self) -> _AllowNewAttributesOptions:
