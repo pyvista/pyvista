@@ -192,7 +192,7 @@ def plot(  # noqa: ANN202, PLR0917
 
     ssao : bool, optional
         Enable surface space ambient occlusion (SSAO). See
-        :func:`Plotter.enable_ssao` for more details.
+        :func:`pyvista.Plotter.enable_ssao` for more details.
 
     **kwargs : dict, optional
         See :func:`pyvista.Plotter.add_mesh` for additional options.
