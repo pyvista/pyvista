@@ -41,6 +41,7 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
         legacy_windows=False,
     )
     monkeypatch.setattr(app, 'console', console)
+    monkeypatch.setattr(app, 'error_console', console)
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -645,7 +646,7 @@ def test_report_help(capsys: pytest.CaptureFixture):
 
     expected = textwrap.dedent(
         """\
-            Usage: pyvista report [ARGS] [OPTIONS]
+            Usage: pyvista report [ARGS]
 
             Generate a PyVista software environment report.
        """

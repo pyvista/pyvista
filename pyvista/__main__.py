@@ -54,6 +54,7 @@ app = App(
     version=f'{pyvista.__name__} {pyvista.__version__}',
     help_on_error=True,
     console=Console(),
+    result_action='return_value',
 )
 
 
@@ -103,7 +104,7 @@ def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
     has_suffix = bool(path.suffix)
     is_suffix = not path.suffix and path.stem.startswith('.')
     if not (has_suffix or is_suffix):
-        msg = 'Output file must have a file extension.'
+        msg = '\nOutput file must have a file extension.'
         raise ValueError(msg)
 
 
