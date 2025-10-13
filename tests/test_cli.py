@@ -89,7 +89,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-@pytest.mark.parametrize('command', ['report', 'convert'])  # 'plot'
+@pytest.mark.parametrize('command', ['report', 'convert'])
 def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
     expected = textwrap.dedent(
         """\
