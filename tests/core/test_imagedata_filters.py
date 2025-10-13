@@ -2124,9 +2124,17 @@ def test_morphological_filters_custom_kernel_size():
     ('axis', 'dimensions_out'), [(0, (2, 1, 1)), (1, (1, 2, 1)), (2, (1, 1, 2))]
 )
 @pytest.mark.parametrize(
-    'dtypes', [(int, float), (float, float), (int, int), (np.int64, np.uint8)]
+    ('dtypes', 'dtype_policy'),
+    [
+        ((int, float), 'promote'),
+        ((int, float), 'match'),
+        ((float, float), 'strict'),
+        ((int, int), 'strict'),
+        ((np.int64, np.uint8), 'promote'),
+        ((np.uint8, np.int32), 'match'),
+    ],
 )
-def test_stack(axis, dimensions_out, dtypes):
+def test_stack(axis, dimensions_out, dtypes, dtype_policy):
     array_a = np.array([0], dtype=dtypes[0])
     array_b = np.array([1], dtype=dtypes[1])
 
@@ -2135,13 +2143,24 @@ def test_stack(axis, dimensions_out, dtypes):
     image_b = pv.ImageData(dimensions=(1, 1, 1))
     image_b['B'] = array_b
 
-    stacked_image = image_a.stack(image_b, axis=axis)
+    if dtype_policy == 'strict':
+        stacked_image = image_a.stack(image_b, axis=axis)
+    else:
+        match = (
+            r'The dtypes of the scalar arrays do not match\. '
+            r"Got multiple dtypes: \{dtype\('[A-Za-z0-9_]+'\), dtype\('[A-Za-z0-9_]+'\)\}\.\n"
+            r"Set the dtype policy to 'promote' or 'match' to cast the inputs to a single dtype\."
+        )
+        with pytest.raises(TypeError, match=match):
+            image_a.stack(image_b, axis=axis)
+        stacked_image = image_a.stack(image_b, axis=axis, dtype_policy=dtype_policy)
+
     assert stacked_image.array_names == ['A']
     image_array = stacked_image['A']
     assert stacked_image.dimensions == dimensions_out
     assert np.array_equal(image_array, [0, 1])
 
-    expected_dtype = np.result_type(*dtypes)
+    expected_dtype = np.result_type(*dtypes) if dtype_policy == 'promote' else dtypes[0]
     actual_dtype = image_array.dtype
     assert actual_dtype == expected_dtype
 

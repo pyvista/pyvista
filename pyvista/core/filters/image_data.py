@@ -63,6 +63,7 @@ _InterpolationOptions = Literal[
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _StackModeOptions = Literal['extents', 'crop-extent', 'crop-dimensions', 'resample']
+_StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
 
 
 @abstract_class
@@ -5370,6 +5371,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         mode: _StackModeOptions | None = None,
         resample_kwargs: dict[str, Any] | None = None,
+        dtype_policy: _StackDTypePolicyOptions = 'strict',
     ):
         """Stack :class:`~pyvista.ImageData` along an axis.
 
@@ -5389,6 +5391,15 @@ class ImageDataFilters(DataSetFilters):
         mode : str, optional
             Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
             images being stacked do not match the input dimensions.
+
+        dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
+            - ``'strict'``: Do not cast any scalar array dtypes. All images being stacked must
+              have the same dtype, else a ``TypeError`` is raised.
+            - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
+              image scalars. This option safely casts all input arrays to a common dtype before
+              stacking.
+            - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
+              unsafe.
 
         resample_kwargs : dict, optional
             Keyword arguments passed to :meth:`resample` when using ``resample`` mode. Specify
@@ -5527,7 +5538,7 @@ class ImageDataFilters(DataSetFilters):
 
         self_dimensions = self.dimensions
         self_extent = self.extent
-        all_dtypes: set[np.dtype] = set()
+        all_dtypes: list[np.dtype] = []
         all_scalars: list[str] = []
         for i, img in enumerate(all_images):
             if i > 0:
@@ -5537,7 +5548,7 @@ class ImageDataFilters(DataSetFilters):
             img_shallow_copy = img.copy(deep=False)
             _, scalars = img_shallow_copy._validate_point_scalars()
             all_scalars.append(scalars)
-            all_dtypes.add(img.point_data[scalars].dtype)
+            all_dtypes.append(img.point_data[scalars].dtype)
 
             if i == 0 and mode in ['resample', 'crop-dimensions']:
                 # These modes should not be affected by offset, so we zero it
@@ -5581,9 +5592,20 @@ class ImageDataFilters(DataSetFilters):
             # Replace input with shallow copy
             all_images[i] = img_shallow_copy
 
-        if len(all_dtypes) > 1:
+        if len(set(all_dtypes)) > 1:
             # Need to cast all scalars to the same dtype
-            dtype_out = np.result_type(*all_dtypes)
+            if dtype_policy == 'strict':
+                msg = (
+                    f'The dtypes of the scalar arrays do not match. Got multiple '
+                    f"dtypes: {set(all_dtypes)}.\nSet the dtype policy to 'promote' or "
+                    f"'match' to cast the inputs to a single dtype."
+                )
+                raise TypeError(msg)
+            elif dtype_policy == 'promote':
+                dtype_out = np.result_type(*all_dtypes)
+            else:  # dtype_policy == 'match'
+                dtype_out = all_dtypes[0]
+
             for img, scalars in zip(all_images, all_scalars):
                 array = img.point_data[scalars]
                 img.point_data[scalars] = array.astype(dtype_out, copy=False)
