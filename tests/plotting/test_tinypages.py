@@ -27,7 +27,7 @@ ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
 @pytest.mark.skip_check_gc
-def test_tinypages(tmp_path, ename, evalue):
+def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # sanitise the environment namespace
     for hook in ENVIRONMENT_HOOKS:
         os.environ.pop(hook, None)
@@ -54,6 +54,7 @@ def test_tinypages(tmp_path, ename, evalue):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
+
     proc = Popen(
         cmd,
         stdout=PIPE,

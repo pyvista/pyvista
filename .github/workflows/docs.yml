@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: "pip"
@@ -125,7 +125,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: "pip"
@@ -146,15 +146,15 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: doc-debug-images-failed
-          path: _doc_debug_images_failed
+          name: doc-failed-test-images
+          path: _doc_failed_test_images
 
-      - name: Upload Test Debug Images
+      - name: Upload Generated Images
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: doc-debug-images
-          path: _doc_debug_images
+          name: doc-generated-test-images
+          path: _doc_generated_test_images
 
   preview:
     name: Preview Development Documentation
@@ -217,7 +217,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install Dependencies

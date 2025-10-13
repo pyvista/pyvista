@@ -76,7 +76,7 @@ def test_plotter_anti_aliasing_raises():
     pl.close()
     with pytest.raises(
         AttributeError,
-        match='The render window has been closed.',
+        match=r'The render window has been closed.',
     ):
         pl.enable_anti_aliasing(aa_type='msaa')
 
@@ -92,13 +92,13 @@ def test_plotter_store_mouse_position_raises():
     pl.iren = None
     with pytest.raises(
         RuntimeError,
-        match='This plotting window is not interactive.',
+        match=r'This plotting window is not interactive.',
     ):
         pl.store_mouse_position()
 
     with pytest.raises(
         RuntimeError,
-        match='This plotting window is not interactive.',
+        match=r'This plotting window is not interactive.',
     ):
         pl.store_click_position()
 
@@ -107,21 +107,21 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.MultiBlock(), 'foo'
+    m.return_value = pv.MultiBlock(), {}
 
     pl = pv.Plotter()
     match = re.escape(
         'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
     )
     with pytest.raises(TypeError, match=match):
-        pl.add_mesh('foo')
+        pl.add_mesh({})
 
 
 def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), 'foo'
+    m.return_value = pv.PolyData(), {}
 
     pl = pv.Plotter()
     with pytest.raises(
@@ -130,7 +130,7 @@ def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
             'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
         ),
     ):
-        pl.add_mesh('foo', smooth_shading=True)
+        pl.add_mesh({}, smooth_shading=True)
 
 
 def test_plotter_add_mesh_scalars_rgb_raises():
@@ -303,7 +303,7 @@ def test_add_volume_scalar_raises(mocker: MockerFixture):
     pl = pv.Plotter()
     with pytest.raises(
         TypeError,
-        match='Non-numeric scalars are currently not supported for volume rendering.',
+        match=r'Non-numeric scalars are currently not supported for volume rendering.',
     ):
         pl.add_volume(pv.ImageData(), scalars='foo')
 
@@ -327,7 +327,7 @@ def test_update_scalar_bar_range_raises():
     with pytest.raises(TypeError, match=match):
         pl.update_scalar_bar_range(clim=[1, 2, 3])
 
-    with pytest.raises(AttributeError, match='This plotter does not have an active mapper.'):
+    with pytest.raises(AttributeError, match=r'This plotter does not have an active mapper.'):
         pl.update_scalar_bar_range(clim=[1, 2], name=None)
 
 
@@ -336,7 +336,7 @@ def test_save_graphic_raises():
     pl.close()
 
     with pytest.raises(
-        AttributeError, match='This plotter is closed and unable to save a screenshot.'
+        AttributeError, match=r'This plotter is closed and unable to save a screenshot.'
     ):
         pl.save_graphic(filename='foo.svg')
 
@@ -607,6 +607,20 @@ def test_add_multiple(sphere):
     assert sphere.n_arrays == 1
 
 
+@pytest.mark.parametrize('input_type', [str, Path])
+def test_add_mesh_from_file(input_type):
+    file = input_type(pv.examples.antfile)
+    pl1 = pv.Plotter()
+    pl1.add_mesh(file)
+    screenshot1 = pl1.screenshot(return_img=True)
+
+    pl2 = pv.Plotter()
+    pl2.add_mesh(pv.read(file))
+    screenshot2 = pl2.screenshot(return_img=True)
+
+    assert pv.compare_images(screenshot1, screenshot2) < 1.0
+
+
 def test_deep_clean(cube):
     pl = pv.Plotter()
     cube_orig = cube.copy()
@@ -764,7 +778,7 @@ def test_multi_block_color_cycler():
         'sphere4': pv.Sphere(center=(4, 0, 0)),
     }
     spheres = pv.MultiBlock(data)
-    actor, mapper = plotter.add_composite(spheres)
+    _actor, mapper = plotter.add_composite(spheres)
 
     # pass custom cycler
     mapper.set_unique_colors(['red', 'green', 'blue'])
@@ -886,14 +900,14 @@ def test_plotter_shape():
     assert isinstance(pl.shape[0], int)
 
 
-@pytest.mark.parametrize(
-    'filename_mtl',
-    [
-        None,
-        Path(pv.examples.download_doorman(load=False)).with_suffix('.mtl'),
-    ],
-)
-def test_import_obj_with_filename_mtl(filename_mtl):
+def test_import_obj_with_filename_mtl():
     filename = Path(pv.examples.download_doorman(load=False))
+
+    # test with and without setting filename_mtl
     plotter = pv.Plotter()
-    plotter.import_obj(filename, filename_mtl=filename_mtl)
+    plotter.import_obj(filename, filename_mtl=None)
+    assert plotter.actors
+
+    plotter = pv.Plotter()
+    plotter.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
+    assert plotter.actors

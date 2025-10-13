@@ -124,6 +124,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import FontFamilyOptions
     from pyvista.plotting._typing import LightingOptions
     from pyvista.plotting._typing import OpacityOptions
+    from pyvista.plotting._typing import PlottableType
     from pyvista.plotting._typing import ScalarBarArgs
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
@@ -2933,7 +2934,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             culling,
             name,
             nan_color,
-            texture,
+            _texture,
             rgb,
             interpolation,
             remove_existing_actor,
@@ -3090,7 +3091,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh(  # noqa: PLR0917
         self,
-        mesh: MatrixLike[float] | VectorLike[float] | DataSet | MultiBlock | _vtk.vtkAlgorithm,
+        mesh: MatrixLike[float] | PlottableType | _vtk.vtkAlgorithm,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
         scalars: str | NumpyArray[float] | None = None,
@@ -3158,7 +3159,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : DataSet | MultiBlock | :vtk:`vtkAlgorithm`
+        mesh : DataSet | MultiBlock | :vtk:`vtkAlgorithm` | str | Path
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points. Plotting also supports VTK algorithm
@@ -3166,6 +3167,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             When passing an algorithm, the rendering pipeline will be
             connected to the passed algorithm to dynamically update
             the scene (see :ref:`plotting_algorithms_example` for examples).
+
+            .. versionadded:: 0.47
+
+                Support adding a mesh directly from file.
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
@@ -3622,6 +3627,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 stacklevel=2,
             )
             show_edges = False
+
+        if isinstance(mesh, (str, Path)):
+            mesh = pyvista.read(mesh)  # type: ignore[assignment]
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 

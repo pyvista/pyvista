@@ -108,7 +108,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: runner.environment != 'self-hosted'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         continue-on-error: true
         with:
           python-version: ${{ matrix.python-version }}
@@ -185,6 +185,7 @@ jobs:
 
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
+      PARALLEL: "-n4" # flag for pytest-xdist
     steps:
       - uses: actions/checkout@v5
         with:
@@ -192,7 +193,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -232,7 +233,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -242,15 +243,6 @@ jobs:
           pip install build twine
           python -m build
           twine check --strict dist/*
-
-      - name: Upload to PyPi
-        if: matrix.python-version == '3.10' && startsWith(github.ref, 'refs/tags/v')
-        run: |
-          twine upload --skip-existing dist/pyvista*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-          TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
   VTK-dev:
     # For PRs, only run this job if the 'vtk-dev-testing' label is applied
@@ -273,7 +265,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -314,7 +306,7 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -326,6 +318,7 @@ jobs:
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
+      PARALLEL: "-n2" # flag for pytest-xdist
     strategy:
       fail-fast: false
       matrix:
@@ -336,7 +329,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -384,3 +377,33 @@ jobs:
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  # Publish to PyPI using trusted publishing
+  release:
+    name: Release
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
+    needs: [Linux, windows, macOS]
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pyvista
+    permissions:
+      id-token: write # this permission is mandatory for trusted publishing
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+
+      - name: Build package
+        run: |
+          pip install build
+          python -m build
+
+      - name: Upload to PyPi
+        if: matrix.python-version == '3.13' && startsWith(github.ref, 'refs/tags/v')
+        uses: pypa/gh-action-pypi-publish@ab69e431e9c9f48a3310be0a56527c679f56e04d

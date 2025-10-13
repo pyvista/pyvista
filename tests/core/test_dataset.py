@@ -161,7 +161,7 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
         assert data['new_array'].shape == (0,)
     else:
         # Expect error for all other cases
-        with pytest.raises(ValueError, match='Invalid array shape.'):
+        with pytest.raises(ValueError, match=r'Invalid array shape.'):
             data['new_array'] = empty_array
 
 
@@ -505,7 +505,7 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
     m.ndim = 1
 
     sphere = pv.Sphere(radius=math.pi)
-    with pytest.raises(ValueError, match='Active vectors are not vectors.'):
+    with pytest.raises(ValueError, match=r'Active vectors are not vectors.'):
         sphere.arrows  # noqa: B018
 
 
@@ -973,10 +973,10 @@ def test_find_cells_along_line():
 
 def test_find_cells_along_line_raises():
     mesh = pv.Cube()
-    with pytest.raises(TypeError, match='Point A must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point A must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0], [0, 0, 1])
 
-    with pytest.raises(TypeError, match='Point B must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point B must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0, -1], [0, 0])
 
 
@@ -1029,7 +1029,7 @@ def test_find_cells_within_bounds_raises():
     mesh = pv.Cube()
     with pytest.raises(
         TypeError,
-        match='Bounds must be a length six tuple of floats.',
+        match=r'Bounds must be a length six tuple of floats.',
     ):
         mesh.find_cells_within_bounds([0, 0])
 
@@ -1088,6 +1088,16 @@ def test_get_data_range(hexbeam):
     rng = hexbeam.get_data_range('sample_cell_scalars', preference='cell')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
+
+
+def test_get_data_range_bool():
+    mesh = pv.ImageData(dimensions=(2, 1, 1))
+    mesh['data'] = [True, False]
+    assert mesh['data'].dtype == bool
+    rng = mesh.get_data_range()
+    assert rng[0].dtype == bool
+    assert rng[1].dtype == bool
+    assert rng == (np.bool_(False), np.bool_(True))
 
 
 def test_actual_memory_size(hexbeam):
