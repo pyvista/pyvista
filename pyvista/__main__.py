@@ -67,7 +67,7 @@ def _console_error(message: str | Group, title: str = 'PyVista Error') -> NoRetu
         expand=True,
         title_align='left',
     )
-    app.console.print(panel)  # type: ignore [union-attr]
+    app.error_console.print(panel)  # type: ignore [union-attr]
     raise SystemExit(1)
 
 
