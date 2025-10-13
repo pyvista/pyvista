@@ -5371,7 +5371,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         mode: _StackModeOptions | None = None,
         resample_kwargs: dict[str, Any] | None = None,
-        dtype_policy: _StackDTypePolicyOptions = 'strict',
+        dtype_policy: _StackDTypePolicyOptions| None = None,
     ):
         """Stack :class:`~pyvista.ImageData` along an axis.
 
@@ -5399,7 +5399,7 @@ class ImageDataFilters(DataSetFilters):
               image scalars. This option safely casts all input arrays to a common dtype before
               stacking.
             - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
-              unsafe.
+              unsafe as it may downcast values and lose precision.
 
         resample_kwargs : dict, optional
             Keyword arguments passed to :meth:`resample` when using ``resample`` mode. Specify
@@ -5533,6 +5533,13 @@ class ImageDataFilters(DataSetFilters):
             axis_num = mapping[axis]
         else:
             axis_num = 0
+
+        # Validate dtype policy
+        if dtype_policy is not None:
+            options = get_args(_StackDTypePolicyOptions)
+            _validation.check_contains(options, must_contain=dtype_policy, name='dtype_policy')
+        else:
+            dtype_policy = 'strict'
 
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
