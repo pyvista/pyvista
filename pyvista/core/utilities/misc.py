@@ -368,6 +368,11 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
 
+    See Also
+    --------
+    pyvista.allow_new_attributes
+        Context manager for controlling if setting new attributes is allowed.
+
     Examples
     --------
     Set a new custom attribute on a mesh.

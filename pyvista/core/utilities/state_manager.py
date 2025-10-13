@@ -346,6 +346,11 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
 
             An attribute is considered private if its name has a leading underscore "``_``".
 
+    See Also
+    --------
+    pyvista.set_new_attribute
+        Function for setting any new attribute on a PyVista object.
+
     Notes
     -----
     Allowing new attributes by default outside ``__init__`` and/or without formally defining
