@@ -10,6 +10,7 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import cast
+from typing import get_args
 import warnings
 
 import numpy as np
@@ -41,6 +42,13 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
 from .utilities.misc import abstract_class
+
+_AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
+_StackModeOptions = Literal[
+    'strict', 'resample', 'crop-dimensions', 'crop-extents', 'preserve-extents'
+]
+_StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
+_StackComponentPolicyOptions = Literal['strict', 'promote']
 
 
 @abstract_class
@@ -1236,3 +1244,395 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self: Self, matrix: TransformLike
     ) -> None:  # numpydoc ignore=GL08
         self.index_to_physical_matrix = pyvista.Transform(matrix).inverse_matrix
+
+    def stack(  # type: ignore[misc]
+        self: ImageData,
+        images: ImageData | Sequence[ImageData],
+        axis: _AxisOptions | None = None,
+        *,
+        mode: _StackModeOptions | None = None,
+        resample_kwargs: dict[str, Any] | None = None,
+        dtype_policy: _StackDTypePolicyOptions | None = None,
+        component_policy: _StackComponentPolicyOptions | None = None,
+    ) -> ImageData:
+        """Stack :class:`~pyvista.ImageData` along an axis.
+
+        Parameters
+        ----------
+        images : ImageData | Sequence[ImageData]
+            The input image(s) to stack. The default active scalars are used for all images.
+            By default, all images must have:
+
+            #. identical dimensions except along the stacking axis,
+            #. the same scalar dtype, and
+            #. the same number of scalar components.
+
+            Use ``mode`` to allow stacking images with mismatched dimensions,
+            ``dtype_policy`` to allow stacking images with different dtypes, and/or
+            ``component_policy`` to allow stacking images with differing number of components.
+
+        axis : int | str, default: 'x'
+            Axis along which the images are stacked:
+
+            - ``0`` or ``'x'``: x-axis
+            - ``1`` or ``'y'``: y-axis
+            - ``2`` or ``'z'``: z-axis
+
+        mode : str, default: 'strict'
+            Stacking mode to use. This determines how images are placed in the output. All modes
+            operate along the specified ``axis`` except for ``'preserve-extents'``. Specify one of:
+
+            - ``'strict'``: all images must have identical dimensions except along the stacking
+              axis.
+            - ``'resample'``: :meth:`resample` any images being stacked such that their dimensions
+              match the input. Off-axis dimensions are resampled, and the on-axis dimension is not.
+              If 2D images are stacked with a 2D input, the aspect ratios of the stacked images are
+              preserved.
+            - ``'crop-dimensions'``: :meth:`crop` images being stacked such that their dimensions
+              match the input dimensions exactly. The images are center-cropped.
+            - ``'crop-extents'``: :meth:`crop` images being stacked using the extent of the input
+              to crop each image such that all images have the same extent before stacking.
+            - ``'preserve-extents'``: the extent of all images are preserved and used to place the
+              images in the output. The whole extent of the output is the union of the input whole
+              extents. The origin and spacing is taken from the first input.
+
+            .. note::
+                For the ``crop`` and ``preserve-extents`` modes, any portion of the output not
+                covered by the inputs is set to zero.
+
+        dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
+            - ``'strict'``: Do not cast any scalar array dtypes. All images being stacked must
+              have the same dtype, else a ``TypeError`` is raised.
+            - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
+              image scalars. This option safely casts all input arrays to a common dtype before
+              stacking.
+            - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
+              unsafe as it may downcast values and lose precision.
+
+        component_policy : 'strict' | 'promote', default: 'strict'
+            - ``'strict'``: Do not modify the number of components of any scalars. All images being
+              stacked must have the number of components, else a ``ValueError`` is raised.
+            - ``'promote'``: Increase the number of components if necessary. Grayscale scalars
+              with one component may be promoted to RGB or RGBA scalars by duplicating values,
+              and RGB scalars may be promoted to RGBA scalars by including an opacity component.
+
+        resample_kwargs : dict, optional
+            Keyword arguments passed to :meth:`resample` when using ``'resample'`` mode. Specify
+            ``interpolation``, ``border_mode``, ``anti_aliasing`` options.
+
+        Returns
+        -------
+        ImageData
+            The stacked image.
+
+        Examples
+        --------
+        Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> beach = examples.download_beach()
+
+        Use :meth:`select_values` to make a second version with white values converted to black
+        to distinguish it from the original.
+
+        >>> white = [255, 255, 255]
+        >>> black = [0, 0, 0]
+        >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
+
+        Stack them along the x-axis.
+
+        >>> stacked = beach.stack(beach_black, axis='x')
+        >>> plot_kwargs = dict(
+        ...     rgb=True,
+        ...     lighting=False,
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     show_axes=False,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> stacked.plot(**plot_kwargs)
+
+        Stack them along the y-axis.
+
+        >>> stacked = beach.stack(beach_black, axis='y')
+        >>> stacked.plot(**plot_kwargs)
+
+        By default, stacking requires that all off-axis dimensions match the input. Use the
+        ``mode`` keyword to enable stacking images with mismatched dimensions.
+
+        Load a second 2D image with different dimensions:
+        :func:`~pyvista.examples.downloads.download_bird`.
+
+        >>> bird = examples.download_bird()
+        >>> bird.dimensions
+        (458, 342, 1)
+        >>> beach.dimensions
+        (100, 100, 1)
+
+        Stack the images using the ``resample`` mode to automatically resample the image. Linear
+        interpolation with antialiasing is used to avoid sampling artifacts.
+
+        >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
+        >>> stacked = beach.stack(
+        ...     bird, mode='resample', resample_kwargs=resample_kwargs
+        ... )
+        >>> stacked.dimensions
+        (233, 100, 1)
+        >>> stacked.plot(**plot_kwargs)
+
+        Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
+        result, e.g. if we stack ``beach`` with ``bird``, the ``beach`` image is completely
+        overwritten since their :attr:`~pyvista.ImageData.extent`s fully overlap.
+
+        >>> beach.extent
+        (0, 99, 0, 99, 0, 0)
+        >>> bird.extent
+        (0, 457, 0, 341, 0, 0)
+
+        >>> stacked = beach.stack(bird, mode='preserve-extents')
+        >>> stacked.extent
+        (0, 457, 0, 341, 0, 0)
+        >>> stacked.plot(**plot_kwargs)
+
+        Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
+        instead.
+
+        >>> beach.offset = (-50, -50, 0)
+        >>> beach.extent
+        (-50, 49, -50, 49, 0, 0)
+
+        >>> stacked = beach.stack(bird, mode='preserve-extents')
+        >>> stacked.extent
+        (-50, 457, -50, 341, 0, 0)
+        >>> stacked.plot(**plot_kwargs)
+
+        Reverse the stacking order.
+
+        >>> stacked = bird.stack(beach, mode='preserve-extents')
+        >>> stacked.plot(**plot_kwargs)
+
+        Use ``'crop-dimensions'`` to center-crop the images to match the input's
+        dimensions.
+
+        >>> stacked = beach.stack(bird, mode='crop-dimensions')
+        >>> stacked.plot(**plot_kwargs)
+
+        Reverse the stacking order.
+
+        >>> stacked = bird.stack(beach, mode='crop-dimensions')
+        >>> stacked.plot(**plot_kwargs)
+
+        Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
+        using the input's extent. This crops the lower-left portion of ``bird``, since the `
+        `beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
+
+        >>> beach.offset = (0, 0, 0)
+        >>> stacked = beach.stack(bird, mode='crop-extents')
+        >>> stacked.plot(**plot_kwargs)
+
+        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+
+        >>> yinyang = examples.download_yinyang()
+
+        Use ``component_policy`` to stack grayscale images with RGB(A) images.
+
+        >>> stacked = yinyang.stack(
+        ...     [bird, beach], mode='resample', component_policy='promote'
+        ... )
+        >>> stacked.plot(**plot_kwargs)
+
+        """
+        from pyvista.core.filters import _get_output  # noqa: PLC0415
+        from pyvista.core.filters import _update_alg  # noqa: PLC0415
+
+        def _compute_resample_kwargs(
+            ref_image: ImageData, img: ImageData, axis: int
+        ) -> dict[str, NumpyArray[float]]:
+            """Compute resampling keywords for stacking img with ref_image along an axis."""
+            ref_dims = np.array(ref_image.dimensions, dtype=int)
+            img_dims = np.array(img.dimensions, dtype=int)
+
+            is_2d_ref = ref_image.dimensionality == 2
+            is_2d_img = img.dimensionality == 2
+
+            if is_2d_ref and is_2d_img:
+                # Try to preserve image aspect ratio when images are 2D along the same dimensions
+                off_axis = np.arange(3) != axis
+                not_singleton = ref_dims != 1
+                fixed_axis = off_axis & not_singleton
+                has_one_fixed_axis = np.count_nonzero(fixed_axis) == 1
+                if has_one_fixed_axis:
+                    # Resample the image proportionally to match the single fixed axis
+                    sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
+                    return {'sample_rate': sample_rate}
+
+            # Image must match the reference's non-stacking axes exactly,
+            # but we leave the image's stacking axis unchanged
+            new_dims = ref_dims.copy()
+            new_dims[axis] = img_dims[axis]
+            return {'dimensions': new_dims}
+
+        # Validate mode
+        if mode is not None:
+            options = get_args(_StackModeOptions)
+            _validation.check_contains(options, must_contain=mode, name='mode')
+        else:
+            mode = 'strict'
+
+        # Validate axis
+        if axis is not None:
+            if mode == 'preserve-extents':
+                msg = "The axis keyword cannot be used with 'preserve-extents' mode."
+                raise ValueError(msg)
+            options = get_args(_AxisOptions)
+            _validation.check_contains(options, must_contain=axis, name='axis')
+            mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+            axis_num = mapping[axis]
+        else:
+            axis_num = 0
+
+        # Validate dtype policy
+        if dtype_policy is not None:
+            options = get_args(_StackDTypePolicyOptions)
+            _validation.check_contains(options, must_contain=dtype_policy, name='dtype_policy')
+        else:
+            dtype_policy = 'strict'
+
+        # Validate component policy
+        if component_policy is not None:
+            options = get_args(_StackComponentPolicyOptions)
+            _validation.check_contains(
+                options, must_contain=component_policy, name='component_policy'
+            )
+        else:
+            component_policy = 'strict'
+
+        all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
+
+        self_dimensions = self.dimensions
+        self_extent = self.extent
+        all_dtypes: list[np.dtype] = []
+        all_n_components: list[int] = []
+        all_scalars: list[str] = []
+        for i, img in enumerate(all_images):
+            if i > 0:
+                _validation.check_instance(img, pyvista.ImageData)
+
+            # Create shallow copies so we can safely modify if needed
+            img_shallow_copy = img.copy(deep=False)
+            _, scalars = img_shallow_copy._validate_point_scalars()
+            all_scalars.append(scalars)
+            array = img.point_data[scalars]
+            all_dtypes.append(array.dtype)
+            n_components = array.shape[1] if array.ndim == 2 else array.ndim
+            all_n_components.append(n_components)
+
+            if i == 0 and mode in ['resample', 'crop-dimensions']:
+                # These modes should not be affected by offset, so we zero it
+                img_shallow_copy.offset = (0, 0, 0)
+            if i > 0 and mode != 'preserve-extents':
+                if (dims := img.dimensions) != self_dimensions:
+                    # Need to deal with the dimensions mismatch
+                    if mode == 'strict':
+                        # Allow mismatch only along stacking axis
+                        for ax in range(3):
+                            if ax != axis and dims[ax] != self_dimensions[ax]:
+                                msg = (
+                                    f'Image {i - 1} dimensions {img.dimensions} must match the '
+                                    f'input dimensions {self.dimensions} along axis {axis}.\n'
+                                    f'Use the `mode` keyword to allow stacking with mismatched '
+                                    f'dimensions.'
+                                )
+                                raise ValueError(msg)
+                    elif mode == 'resample':
+                        kwargs = {}
+                        if resample_kwargs:
+                            _validation.check_instance(resample_kwargs, dict)
+                            allowed_kwargs = ('anti_aliasing', 'interpolation', 'border_mode')
+                            for kwarg in resample_kwargs.keys():
+                                _validation.check_contains(
+                                    allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
+                                )
+                            kwargs = resample_kwargs
+
+                        computed_kwargs = _compute_resample_kwargs(self, img, axis=axis_num)
+                        kwargs.update(computed_kwargs)
+                        img_shallow_copy = img_shallow_copy.resample(**kwargs)
+                        img_shallow_copy.offset = (0, 0, 0)
+
+                    elif mode == 'crop-extents':
+                        img_shallow_copy = img_shallow_copy.crop(extent=self_extent)
+                    elif mode == 'crop-dimensions':
+                        img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
+                        img_shallow_copy.offset = (0, 0, 0)
+
+            # Replace input with shallow copy
+            all_images[i] = img_shallow_copy
+
+        if len(set(all_dtypes)) > 1:
+            # Need to cast all scalars to the same dtype
+            if dtype_policy == 'strict':
+                msg = (
+                    f'The dtypes of the scalar arrays do not match. Got multiple '
+                    f"dtypes: {set(all_dtypes)}.\nSet the dtype policy to 'promote' or "
+                    f"'match' to cast the inputs to a single dtype."
+                )
+                raise TypeError(msg)
+            elif dtype_policy == 'promote':
+                dtype_out = np.result_type(*all_dtypes)
+            else:  # dtype_policy == 'match'
+                dtype_out = all_dtypes[0]
+
+            for img, scalars in zip(all_images, all_scalars):
+                array = img.point_data[scalars]
+                img.point_data[scalars] = array.astype(dtype_out, copy=False)
+        else:
+            dtype_out = all_images[0].point_data[all_scalars[0]].dtype
+
+        if len(set(all_n_components)) > 1:
+            # Need to ensure all scalars have the same number of components
+            if component_policy == 'strict':
+                msg = (
+                    f'The number of components in the scalar arrays do not match. Got n '
+                    f'components: {set(all_n_components)}.\nSet the component policy to '
+                    f"'promote' to automatically increase the number of components as needed."
+                )
+                raise ValueError(msg)
+            else:  # component_policy == 'promote'
+                if not set(all_n_components) < {1, 3, 4}:
+                    msg = (
+                        'Unable to promote scalars. Only promotion for grayscale (1 component), '
+                        'RGB (3 components),\n and RGBA (4 components) is supported. Got'
+                        f'{all_n_components}'
+                    )
+                    raise ValueError(msg)
+                target_n_components = max(all_n_components)
+                for img, n_components, scalars in zip(all_images, all_n_components, all_scalars):
+                    if n_components < target_n_components:
+                        array = img.point_data[scalars]
+                        if n_components < 3:
+                            array = np.vstack((array, array, array)).T  # type: ignore[assignment]
+                        if target_n_components == 4:
+                            fill_value = (
+                                np.iinfo(dtype_out).max
+                                if np.issubdtype(dtype_out, np.integer)
+                                else 1.0
+                            )
+                            new_array = np.full((len(array), 4), fill_value, dtype=dtype_out)
+                            new_array[:, :3] = array
+                            array = new_array  # type: ignore[assignment]
+
+                        img.point_data[scalars] = array
+
+        alg = _vtk.vtkImageAppend()
+        alg.SetAppendAxis(axis_num)
+        alg.SetPreserveExtents(mode == 'preserve-extents')
+
+        for img in all_images:
+            alg.AddInputData(img)
+
+        _update_alg(alg)
+        output = _get_output(alg)
+        output.offset = self.offset
+        return output
