@@ -5565,6 +5565,34 @@ class ImageDataFilters(DataSetFilters):
         >>> stacked.plot(**plot_kwargs)
 
         """
+
+        def _compute_resample_kwargs(
+            ref_image: ImageData, img: ImageData, axis: int
+        ) -> dict[str, NumpyArray[float]]:
+            """Compute resampling keywords for stacking img with ref_image along an axis."""
+            ref_dims = np.array(ref_image.dimensions, dtype=int)
+            img_dims = np.array(img.dimensions, dtype=int)
+
+            is_2d_ref = ref_image.dimensionality == 2
+            is_2d_img = img.dimensionality == 2
+
+            if is_2d_ref and is_2d_img:
+                # Try to preserve image aspect ratio when images are 2D along the same dimensions
+                off_axis = np.arange(3) != axis
+                not_singleton = ref_dims != 1
+                fixed_axis = off_axis & not_singleton
+                has_one_fixed_axis = np.count_nonzero(fixed_axis) == 1
+                if has_one_fixed_axis:
+                    # Resample the image proportionally to match the single fixed axis
+                    sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
+                    return {'sample_rate': sample_rate}
+
+            # Image must match the reference's non-stacking axes exactly,
+            # but we leave the image's stacking axis unchanged
+            new_dims = ref_dims.copy()
+            new_dims[axis] = img_dims[axis]
+            return {'dimensions': new_dims}
+
         # Validate mode
         if mode is not None:
             options = get_args(_StackModeOptions)
@@ -5778,31 +5806,3 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
-
-
-def _compute_resample_kwargs(
-    ref_image: ImageData, img: ImageData, axis: int
-) -> dict[str, NumpyArray[float]]:
-    """Compute resampling keywords for stacking img with ref_image along an axis."""
-    ref_dims = np.array(ref_image.dimensions, dtype=int)
-    img_dims = np.array(img.dimensions, dtype=int)
-
-    is_2d_ref = ref_image.dimensionality == 2
-    is_2d_img = img.dimensionality == 2
-
-    if is_2d_ref and is_2d_img:
-        # Try to preserve image aspect ratio when images are 2D along the same dimensions
-        off_axis = np.arange(3) != axis
-        not_singleton = ref_dims != 1
-        fixed_axis = off_axis & not_singleton
-        has_one_fixed_axis = np.count_nonzero(fixed_axis) == 1
-        if has_one_fixed_axis:
-            # Resample the image proportionally to match the single fixed axis
-            sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
-            return {'sample_rate': sample_rate}
-
-    # Image must match the reference's non-stacking axes exactly,
-    # but we leave the image's stacking axis unchanged
-    new_dims = ref_dims.copy()
-    new_dims[axis] = img_dims[axis]
-    return {'dimensions': new_dims}
