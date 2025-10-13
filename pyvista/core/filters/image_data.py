@@ -62,7 +62,7 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
-_StackModeOptions = Literal['extents', 'crop-extent', 'crop-dimensions', 'resample']
+_StackModeOptions = Literal['strict', 'extents', 'crop-extent', 'crop-dimensions', 'resample']
 _StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
 _StackComponentPolicyOptions = Literal['strict', 'promote']
 
@@ -5541,6 +5541,8 @@ class ImageDataFilters(DataSetFilters):
         if mode is not None:
             options = get_args(_StackModeOptions)
             _validation.check_contains(options, must_contain=mode, name='mode')
+        else:
+            mode = 'strict'
 
         # Validate axis
         if axis is not None:
@@ -5596,7 +5598,7 @@ class ImageDataFilters(DataSetFilters):
             if i > 0 and mode != 'extents':
                 if (dims := img.dimensions) != self_dimensions:
                     # Need to deal with the dimensions mismatch
-                    if mode is None:
+                    if mode == 'strict':
                         # Allow mismatch only along stacking axis
                         for ax in range(3):
                             if ax != axis and dims[ax] != self_dimensions[ax]:
@@ -5674,7 +5676,7 @@ class ImageDataFilters(DataSetFilters):
                     if n_components < target_n_components:
                         array = img.point_data[scalars]
                         if n_components < 3:
-                            array = np.vstack((array, array, array)).T   # type: ignore[assignment]
+                            array = np.vstack((array, array, array)).T  # type: ignore[assignment]
                         if target_n_components == 4:
                             fill_value = (
                                 np.iinfo(dtype_out).max
