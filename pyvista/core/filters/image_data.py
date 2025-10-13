@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataset import DataSet
 
 _InterpolationOptions = Literal[
     'nearest',
@@ -1119,161 +1120,30 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def _get_binary_values(  # type: ignore[misc]
-        self: ImageData,
-        scalars: str,
-        association: Literal[FieldAssociation.POINT],
+    def dilate(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
         *,
-        binary: bool | VectorLike[float] | None,
-    ) -> tuple[float, float] | None:
-        if binary is None:
-            # Value is unset, so check if the scalars are actually binary
-            array = self.get_array(scalars, association)
-            min_val, max_val = self.get_data_range(array)
-            # Binary if bool or two adjacent integers or two unique values
-            # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
-            if array.dtype == np.bool_ or (
-                np.issubdtype(array.dtype, np.integer) and (max_val - min_val) == 1
-            ):
-                return min_val, max_val
-            else:
-                unique = np.unique(array)
-                if unique.size in [1, 2]:
-                    return unique.min(), unique.max()
-            return None  # Scalars are not binary
-
-        elif binary is True:
-            # Use the range to set the values
-            return self.get_data_range(scalars, association)
-        elif binary is False:
-            # Do not return any values
-            return None
-        else:
-            # Binary values are set explicitly
-            return _validation.validate_data_range(binary, name='binary values')
-
-    def _configure_dilate_erode_alg(  # type: ignore[misc]
-        self: ImageData,
-        *,
-        kernel_size: int | VectorLike[int],
-        scalars: str,
-        association: Literal[FieldAssociation.POINT],
-        binary_values: tuple[float, float] | None,
-        operation: Literal['dilation', 'erosion'],
-    ) -> (
-        _vtk.vtkImageContinuousErode3D
-        | _vtk.vtkImageContinuousDilate3D
-        | _vtk.vtkImageDilateErode3D
+        continuous=False,
+        progress_bar=False,
     ):
-        alg: (
-            _vtk.vtkImageContinuousErode3D
-            | _vtk.vtkImageContinuousDilate3D
-            | _vtk.vtkImageDilateErode3D
-        )
+        """Dilate the image data.
 
-        if binary_values is not None:
-            background_val, foreground_val = binary_values
-            if operation == 'dilation':
-                dilate_value = foreground_val
-                erode_value = background_val
-            else:
-                dilate_value = background_val
-                erode_value = foreground_val
-
-            alg = _vtk.vtkImageDilateErode3D()
-            alg.SetDilateValue(dilate_value)
-            alg.SetErodeValue(erode_value)
-        else:
-            alg = (
-                _vtk.vtkImageContinuousDilate3D()
-                if operation == 'dilation'
-                else _vtk.vtkImageContinuousErode3D()
-            )
-
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            association.value,
-            scalars,
-        )
-
-        kernal_sz = _validation.validate_array3(kernel_size, broadcast=True, name='kernel_size')
-        alg.SetKernelSize(*kernal_sz)
-        return alg
-
-    def _get_alg_output_from_input(self, alg, *, progress_bar: bool, operation: str):
-        alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar=progress_bar, message=f'Performing {operation}')
-        return _get_output(alg)
-
-    def _validate_point_scalars(  # type: ignore[misc]
-        self: ImageData, scalars: str | None
-    ) -> tuple[Literal[FieldAssociation.POINT], str]:
-        if scalars is None:
-            field, scalars = set_default_active_scalars(self)
-            if field == FieldAssociation.CELL:
-                msg = 'If `scalars` not given, active scalars must be point array.'
-                raise ValueError(msg)
-        else:
-            field = self.get_array_association(scalars, preference='point')
-            if field == FieldAssociation.CELL:
-                msg = 'Can only process point data, given `scalars` are cell data.'
-                raise ValueError(msg)
-        return cast('Literal[FieldAssociation.POINT]', field), scalars
-
-    def dilate(  # type: ignore[misc]
-        self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
-        scalars: str | None = None,
-        *,
-        binary: bool | VectorLike[float] | None = None,
-        progress_bar: bool = False,
-    ):
-        """Morphologically dilate grayscale or binary data.
-
-        This filter may be used to dilate grayscale images with continuous data, binary images
-        with a single background and foreground value, or multi-label images.
-
-        For binary inputs with two unique values, this filter uses :vtk:`vtkImageDilateErode3D`
-        by default to perform fast binary dilation over an ellipsoidal neighborhood. Otherwise,
-        the slower class :vtk:`vtkImageContinuousDilate3D` is used to perform generalized grayscale
-        dilation by replacing each pixel with the maximum over an ellipsoidal neighborhood.
-
-        Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
-        filter.
-
-        .. versionadded:: 0.47
+        This filter dilates the input image data. It can operate on both
+        binary and continuous data depending on the ``continuous`` parameter.
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are dilated, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], optional
-            Control if binary dilation or continuous dilation is used.
-
-            If set, :vtk:`vtkImageDilateErode3D` is used to strictly dilate with two values.
-            Set this to ``True`` to dilate the maximum value in ``scalars`` with its minimum value,
-            or set it to two values ``[background_value, foreground_value]`` to dilate
-            ``foreground_value`` with ``background_value`` explicitly.
-
-            Set this to ``False`` to use :vtk:`vtkImageContinuousDilate3D` to perform continuous
-            dilation.
-
-            By default, ``binary`` is ``True`` if the input has two unique values, and ``False``
-            otherwise.
-
-            .. note::
-                - If the input is a binary mask, setting ``binary=True`` produces the same output
-                  as ``binary=False``, but the filter is much more performant.
-                - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the dilation to two values, e.g. for multi-label segmentation masks.
+        continuous : bool, default: False
+            If True, use continuous dilation which is suitable for grayscale/continuous
+            data. If False, use binary dilation.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1282,10 +1152,6 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             Dataset that has been dilated.
-
-        See Also
-        --------
-        erode, open, close
 
         Notes
         -----
@@ -1297,135 +1163,70 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        .. pyvista-plot::
-            :force_static:
+        Dilate a binary image.
 
-            Create a toy example with two non-zero grayscale foreground values
-            :meth:`padded <pad_image>` with a background of zeros.
-
-            >>> import pyvista as pv
-            >>> im = pv.ImageData(dimensions=(2, 1, 1))
-            >>> im['data'] = [128, 255]
-            >>> im = im.pad_image(pad_value=0, pad_size=2, dimensionality=2)
-
-            Define a custom plotter to plot pixels as cells.
-
-            >>> def image_plotter(image):
-            ...     pl = pv.Plotter()
-            ...     pl.add_mesh(
-            ...         image.points_to_cells(),
-            ...         cmap='grey',
-            ...         clim=[0, 255],
-            ...         show_scalar_bar=False,
-            ...         show_edges=True,
-            ...         lighting=False,
-            ...         line_width=3,
-            ...     )
-            ...     pl.camera_position = 'xy'
-            ...     pl.camera.tight()
-            ...     pl.enable_anti_aliasing()
-            ...     return pl
-
-            Show the image.
-
-            >>> image_plotter(im).show()
-
-            Dilate it with default settings. Observe that `both` foreground values are dilated.
-
-            >>> dilated = im.dilate()
-            >>> image_plotter(dilated).show()
-
-            Use a larger kernel size.
-
-            >>> dilated = im.dilate(kernel_size=5)
-            >>> image_plotter(dilated).show()
-
-            Use an asymmetric kernel.
-
-            >>> dilated = im.dilate(kernel_size=(2, 4, 1))
-            >>> image_plotter(dilated).show()
-
-            Use binary dilation. By default, the max value (``255`` in this example) is dilated
-            with the min value (``0`` in this example). All other values are unaffected.
-
-            >>> dilated = im.dilate(binary=True)
-            >>> image_plotter(dilated).show()
-
-            Equivalently, set the binary values for the dilation explicitly.
-
-            >>> dilated = im.dilate(binary=[0, 255])
-            >>> image_plotter(dilated).show()
-
-            Use binary dilation with the other foreground value instead.
-
-            >>> dilated = im.dilate(binary=[0, 128])
-            >>> image_plotter(dilated).show()
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> dilated = ithresh.dilate()
+        >>> dilated.plot()
 
         """
-        association, scalars = self._validate_point_scalars(scalars)
-        binary_values = self._get_binary_values(scalars, association, binary=binary)
-        operation: Literal['dilation'] = 'dilation'
-        alg = self._configure_dilate_erode_alg(
-            kernel_size=kernel_size,
-            scalars=scalars,
-            association=association,
-            binary_values=binary_values,
-            operation=operation,
+        if continuous:
+            alg = _vtk.vtkImageContinuousDilate3D()
+        else:
+            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
+            alg.SetDilateValue(1.0)  # type: ignore[attr-defined]
+            alg.SetErodeValue(0.0)  # type: ignore[attr-defined]
+
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            set_default_active_scalars(cast('DataSet', self))
+            field, scalars = cast('DataSet', self).active_scalars_info
+            if field.value == 1:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = cast('DataSet', self).get_array_association(scalars, preference='point')
+            if field.value == 1:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )
-        return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
+        alg.SetKernelSize(*kernel_size)
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation')
+        return _get_output(alg)
 
-    def erode(  # type: ignore[misc]
-        self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
-        scalars: str | None = None,
+    def erode(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
         *,
-        binary: bool | VectorLike[float] | None = None,
-        progress_bar: bool = False,
+        continuous=False,
+        progress_bar=False,
     ):
-        """Morphologically erode grayscale or binary data.
+        """Erode the image data.
 
-        This filter may be used to erode grayscale images with continuous data, binary images
-        with a single background and foreground value, or multi-label images.
-
-        For binary inputs with two unique values, this filter uses :vtk:`vtkImageDilateErode3D`
-        by default to perform fast binary erosion over an ellipsoidal neighborhood. Otherwise,
-        the slower class :vtk:`vtkImageContinuousErode3D` is used to perform generalized grayscale
-        erosion by replacing each pixel with the minimum over an ellipsoidal neighborhood.
-
-        Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
-        filter.
-
-        .. versionadded:: 0.47
+        This filter erodes the input image data. It can operate on both
+        binary and continuous data depending on the ``continuous`` parameter.
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are eroded, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], optional
-            Control if binary erosion or continuous erosion is used.
-
-            If set, :vtk:`vtkImageDilateErode3D` is used to strictly erode with two values.
-            Set this to ``True`` to erode the maximum value in ``scalars`` with its minimum value,
-            or set it to two values ``[background_value, foreground_value]`` to erode
-            ``foreground_value`` with ``background_value`` explicitly.
-
-            Set this to ``False`` to use :vtk:`vtkImageContinuousErode3D` to perform continuous
-            erosion.
-
-            By default, ``binary`` is ``True`` if the input has two unique values, and ``False``
-            otherwise.
-
-            .. note::
-                - If the input is a binary mask, setting ``binary=True`` produces the same output
-                  as ``binary=False``, but the filter is much more performant.
-                - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
-                  the erosion to two values, e.g. for multi-label segmentation masks.
+        continuous : bool, default: False
+            If True, use continuous erosion which is suitable for grayscale/continuous
+            data. If False, use binary erosion.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1449,118 +1250,65 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        .. pyvista-plot::
-            :force_static:
+        Erode a binary image.
 
-            Create a toy example with two non-zero grayscale foreground regions
-            using :meth:`pad_image`.
-
-            >>> import pyvista as pv
-            >>> # Create an initial background point
-            >>> im = pv.ImageData(dimensions=(1, 1, 1))
-            >>> im['data'] = [0]
-            >>> # Add a foreground region
-            >>> im = im.pad_image(pad_value=255, pad_size=(4, 3), dimensionality=2)
-            >>> # Add a second foreground region
-            >>> im = im.pad_image(pad_value=128, pad_size=(2, 0, 1, 0))
-            >>> # Add background values to two sides
-            >>> im = im.pad_image(pad_value=0, pad_size=(1, 0))
-
-            Define a custom plotter to plot pixels as cells.
-
-            >>> def image_plotter(image):
-            ...     pl = pv.Plotter()
-            ...     pl.add_mesh(
-            ...         image.points_to_cells(),
-            ...         cmap='grey',
-            ...         clim=[0, 255],
-            ...         show_scalar_bar=False,
-            ...         show_edges=True,
-            ...         lighting=False,
-            ...         line_width=3,
-            ...     )
-            ...     pl.camera_position = 'xy'
-            ...     pl.camera.tight()
-            ...     pl.enable_anti_aliasing()
-            ...     return pl
-
-            Show the image.
-
-            >>> image_plotter(im).show()
-
-            Erode it with default settings. Observe that `both` foreground values are eroded.
-
-            >>> eroded = im.erode()
-            >>> image_plotter(eroded).show()
-
-            Use a larger kernel size.
-
-            >>> eroded = im.erode(kernel_size=5)
-            >>> image_plotter(eroded).show()
-
-            Use an asymmetric kernel.
-
-            >>> eroded = im.erode(kernel_size=(2, 4, 1))
-            >>> image_plotter(eroded).show()
-
-            Use binary erosion. By default, the max value (``255`` in this example) is eroded
-            with the min value (``0`` in this example). All other values are unaffected.
-
-            >>> eroded = im.erode(binary=True)
-            >>> image_plotter(eroded).show()
-
-            Equivalently, set the binary values for the erosion explicitly.
-
-            >>> eroded = im.erode(binary=[0, 255])
-            >>> image_plotter(eroded).show()
-
-            Use binary erosion with the other foreground value instead.
-
-            >>> eroded = im.erode(binary=[0, 128])
-            >>> image_plotter(eroded).show()
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> eroded = ithresh.erode()
+        >>> eroded.plot()
 
         """
-        association, scalars = self._validate_point_scalars(scalars)
-        binary_values = self._get_binary_values(scalars, association, binary=binary)
-        operation: Literal['erosion'] = 'erosion'
-        alg = self._configure_dilate_erode_alg(
-            kernel_size=kernel_size,
-            scalars=scalars,
-            association=association,
-            binary_values=binary_values,
-            operation=operation,
+        if continuous:
+            alg = _vtk.vtkImageContinuousErode3D()
+        else:
+            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
+            alg.SetDilateValue(0.0)  # type: ignore[attr-defined]
+            alg.SetErodeValue(1.0)  # type: ignore[attr-defined]
+
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            set_default_active_scalars(cast('DataSet', self))
+            field, scalars = cast('DataSet', self).active_scalars_info
+            if field.value == 1:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = cast('DataSet', self).get_array_association(scalars, preference='point')
+            if field.value == 1:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )
-        return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
+        alg.SetKernelSize(*kernel_size)
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Erosion')
+        return _get_output(alg)
 
-    def open(  # type: ignore[misc]
-        self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
-        scalars: str | None = None,
+    def open(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
         *,
-        binary: bool | VectorLike[float] | None = None,
-        progress_bar: bool = False,
+        progress_bar=False,
     ):
-        """Perform morphological opening on continuous or binary data.
+        """Perform morphological opening on the image data.
 
-        Opening is an :meth:`erosion <erode>` followed by a :meth:`dilation <dilate>`.
-        It is used to remove small objects/noise while preserving the shape and size of larger
-        objects.
-
-        .. versionadded:: 0.47
+        Opening is an erosion followed by a dilation. It is used to remove
+        small objects/noise while preserving the shape and size of larger objects.
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are opened, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
-
-        binary : bool | VectorLike[float], optional
-            Control if binary opening or continuous opening is used. Refer to
-            :meth:`erode` and/or :meth:`dilate` for details about using this keyword.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1570,10 +1318,6 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Dataset that has been opened.
 
-        See Also
-        --------
-        close, erode, dilate
-
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
@@ -1584,89 +1328,41 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
-        for context.
+        Perform morphological opening on a binary image.
 
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> im = examples.download_chest()
-        >>> clim = im.get_data_range()
-        >>> kwargs = dict(
-        ...     cmap='grey',
-        ...     clim=clim,
-        ...     lighting=False,
-        ...     cpos='xy',
-        ...     zoom='tight',
-        ...     show_axes=False,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> im.plot(**kwargs)
-
-        Use ``open`` to remove small objects in the lungs.
-
-        >>> opened = im.open(kernel_size=15)
-        >>> opened.plot(**kwargs)
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> opened = ithresh.open()
+        >>> opened.plot()
 
         """
-        # Opening: erosion followed by dilation
-        # Note: we need to configure both algorithms before getting the output since
-        # the selected erosion/dilation values may be affected by the alg update
-        association, scalars = self._validate_point_scalars(scalars)
-        binary_values = self._get_binary_values(scalars, association, binary=binary)
+        # Opening = erosion followed by dilation
+        # First erode
+        eroded = self.erode(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+        # Then dilate the result
+        return eroded.dilate(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
 
-        erosion: Literal['erosion'] = 'erosion'
-        erosion_alg = self._configure_dilate_erode_alg(
-            kernel_size=kernel_size,
-            scalars=scalars,
-            association=association,
-            binary_values=binary_values,
-            operation=erosion,
-        )
-
-        dilation: Literal['dilation'] = 'dilation'
-        dilation_alg = self._configure_dilate_erode_alg(
-            kernel_size=kernel_size,
-            scalars=scalars,
-            association=association,
-            binary_values=binary_values,
-            operation=dilation,
-        )
-
-        # Get filter outputs: erode then dilate
-        erosion_output = self._get_alg_output_from_input(
-            erosion_alg, progress_bar=progress_bar, operation=erosion
-        )
-        return erosion_output._get_alg_output_from_input(
-            dilation_alg, progress_bar=progress_bar, operation=dilation
-        )
-
-    def close(  # type: ignore[misc]
-        self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
-        scalars: str | None = None,
+    def close(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
         *,
-        binary: bool | VectorLike[float] | None = None,
-        progress_bar: bool = False,
+        progress_bar=False,
     ):
-        """Perform morphological closing on continuous or binary data.
+        """Perform morphological closing on the image data.
 
-        Closing is a :meth:`dilation <dilate>` followed by an :meth:`erosion <erode>`.
-        It is used to fill small holes/gaps while preserving the shape and size of larger objects.
-
-        .. versionadded:: 0.47
+        Closing is a dilation followed by an erosion. It is used to fill
+        small holes/gaps while preserving the shape and size of larger objects.
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
-            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
-            are closed, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
-            result for 2D images.
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
-
-        binary : bool | VectorLike[float], optional
-            Control if binary closing or continuous closing is used. Refer to
-            :meth:`dilate` and/or :meth:`erode` for details about using this keyword.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1676,10 +1372,6 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Dataset that has been closed.
 
-        See Also
-        --------
-        open, erode, dilate
-
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
@@ -1690,67 +1382,21 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+        Perform morphological closing on a binary image.
 
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> im = examples.download_yinyang()
-
-        Use ``close`` with a relatively small kernel to fill the top black edge of the yinyang.
-
-        >>> closed = im.close(kernel_size=5)
-        >>> kwargs = dict(
-        ...     cmap='grey',
-        ...     lighting=False,
-        ...     cpos='xy',
-        ...     zoom='tight',
-        ...     show_axes=False,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> closed.plot(**kwargs)
-
-        Use a much larger kernel to also fill the small black circle.
-
-        >>> closed = im.close(kernel_size=25)
-        >>> closed.plot(**kwargs)
-
-        Since closing is the inverse of opening, we can alternatively use :meth:`open` to
-        fill the white foreground values instead of the black background.
-
-        >>> opened = im.open(kernel_size=25)
-        >>> opened.plot(**kwargs)
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> closed = ithresh.close()
+        >>> closed.plot()
 
         """
-        # Closing: dilation followed by erosion
-        # Note: we need to configure both algorithms before getting the output since
-        # the selected erosion/dilation values may be affected by the alg update
-        association, scalars = self._validate_point_scalars(scalars)
-        binary_values = self._get_binary_values(scalars, association, binary=binary)
-
-        dilation: Literal['dilation'] = 'dilation'
-        dilation_alg = self._configure_dilate_erode_alg(
-            kernel_size=kernel_size,
-            scalars=scalars,
-            association=association,
-            binary_values=binary_values,
-            operation=dilation,
-        )
-
-        erosion: Literal['erosion'] = 'erosion'
-        erosion_alg = self._configure_dilate_erode_alg(
-            kernel_size=kernel_size,
-            scalars=scalars,
-            association=association,
-            binary_values=binary_values,
-            operation=erosion,
-        )
-
-        # Get filter outputs: dilate then erode
-        dilation_output = self._get_alg_output_from_input(
-            dilation_alg, progress_bar=progress_bar, operation=erosion
-        )
-        return dilation_output._get_alg_output_from_input(
-            erosion_alg, progress_bar=progress_bar, operation=dilation
-        )
+        # Closing = dilation followed by erosion
+        # First dilate
+        dilated = self.dilate(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+        # Then erode the result
+        return dilated.erode(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['threshold'])
     def image_threshold(  # noqa: PLR0917
