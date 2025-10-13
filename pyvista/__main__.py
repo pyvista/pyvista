@@ -170,7 +170,7 @@ def _convert(
     except Exception as e:  # noqa: BLE001
         _console_error(f'Failed to save output file: {out_path}\n{e}')
 
-    app.console.print(f'[green]Saved:[/green] {out_path}')  # type: ignore [union-attr]
+    app.console.print(f'[green]Saved:[/green] {out_path}')
 
 
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
@@ -209,7 +209,7 @@ def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, 
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):
             msg = f'A hyphen `{h}` has been used as supplementary keyword argument and is not converted to underscore `_`. Did you mean --{key.replace("-", "_")}={token.value} ?'  # noqa: E501
-            app.console.print(  # type: ignore [union-attr]
+            app.console.print(
                 Panel(
                     msg,
                     style='magenta',
