@@ -63,7 +63,7 @@ _InterpolationOptions = Literal[
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _StackModeOptions = Literal[
-    'strict', 'preserve-extents', 'crop-extents', 'crop-dimensions', 'resample'
+    'strict', 'resample', 'crop-dimensions', 'crop-extents', 'preserve-extents'
 ]
 _StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
 _StackComponentPolicyOptions = Literal['strict', 'promote']
@@ -5382,7 +5382,8 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         images : ImageData | Sequence[ImageData]
-            The input image(s) to stack. By default, all images must have:
+            The input image(s) to stack. The default active scalars are used for all images.
+            By default, all images must have:
 
             #. identical dimensions except along the stacking axis,
             #. the same scalar dtype, and
@@ -5399,9 +5400,27 @@ class ImageDataFilters(DataSetFilters):
             - ``1`` or ``'y'``: y-axis
             - ``2`` or ``'z'``: z-axis
 
-        mode : str, optional
-            Stacking mode to use when the off-axis :attr:`~pyvista.ImageData.dimensions` of the
-            images being stacked do not match the input dimensions.
+        mode : str, default: 'strict'
+            Stacking mode to use. This determines how images are placed in the output. All modes
+            operate along the specified ``axis`` except for ``'preserve-extents'``. Specify one of:
+
+            - ``'strict'``: all images must have identical dimensions except along the stacking
+              axis.
+            - ``'resample'``: :meth:`resample` any images being stacked such that their dimensions
+              match the input. Off-axis dimensions are resampled, and the on-axis dimension is not.
+              If 2D images are stacked with a 2D input, the aspect ratios of the stacked images are
+              preserved.
+            - ``'crop-dimensions'``: :meth:`crop` images being stacked such that their dimensions
+              match the input dimensions exactly. The images are center-cropped.
+            - ``'crop-extents'``: :meth:`crop` images being stacked using the extent of the input
+              to crop each image such that all images have the same extent before stacking.
+            - ``'preserve-extents'``: the extent of all images are preserved and used to place the
+              images in the output. The whole extent of the output is the union of the input whole
+              extents. The origin and spacing is taken from the first input.
+
+            .. note::
+                For the ``crop`` and ``preserve-extents`` modes, any portion of the output not
+                covered by the inputs is set to zero.
 
         dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
             - ``'strict'``: Do not cast any scalar array dtypes. All images being stacked must
@@ -5420,8 +5439,8 @@ class ImageDataFilters(DataSetFilters):
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
 
         resample_kwargs : dict, optional
-            Keyword arguments passed to :meth:`resample` when using ``resample`` mode. Specify
-            ``interpolation``, ``border_mode``, ``anti_aliasing``.
+            Keyword arguments passed to :meth:`resample` when using ``'resample'`` mode. Specify
+            ``interpolation``, ``border_mode``, ``anti_aliasing`` options.
 
         Returns
         -------
