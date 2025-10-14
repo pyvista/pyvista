@@ -5463,141 +5463,143 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
+        .. pyvista-plot::
+            :force_static:
+            Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> beach = examples.download_beach()
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> beach = examples.download_beach()
 
-        Use :meth:`select_values` to make a second version with white values converted to black
-        to distinguish it from the original.
+            Use :meth:`select_values` to make a second version with white values converted to black
+            to distinguish it from the original.
 
-        >>> white = [255, 255, 255]
-        >>> black = [0, 0, 0]
-        >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
+            >>> white = [255, 255, 255]
+            >>> black = [0, 0, 0]
+            >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
 
-        Concatenate them along the x-axis.
+            Concatenate them along the x-axis.
 
-        >>> concatenated = beach.concatenate(beach_black, axis='x')
-        >>> plot_kwargs = dict(
-        ...     rgb=True,
-        ...     lighting=False,
-        ...     cpos='xy',
-        ...     zoom='tight',
-        ...     show_axes=False,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(beach_black, axis='x')
+            >>> plot_kwargs = dict(
+            ...     rgb=True,
+            ...     lighting=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ...     show_axes=False,
+            ...     show_scalar_bar=False,
+            ... )
+            >>> concatenated.plot(**plot_kwargs)
 
-        Concatenate them along the y-axis.
+            Concatenate them along the y-axis.
 
-        >>> concatenated = beach.concatenate(beach_black, axis='y')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(beach_black, axis='y')
+            >>> concatenated.plot(**plot_kwargs)
 
-        By default, concatenating requires that all off-axis dimensions match the input. Use the
-        ``mode`` keyword to enable concatenation with mismatched dimensions.
+            By default, concatenating requires that all off-axis dimensions match the input. Use the
+            ``mode`` keyword to enable concatenation with mismatched dimensions.
 
-        Load a second 2D image with different dimensions:
-        :func:`~pyvista.examples.downloads.download_bird`.
+            Load a second 2D image with different dimensions:
+            :func:`~pyvista.examples.downloads.download_bird`.
 
-        >>> bird = examples.download_bird()
-        >>> bird.dimensions
-        (458, 342, 1)
-        >>> beach.dimensions
-        (100, 100, 1)
+            >>> bird = examples.download_bird()
+            >>> bird.dimensions
+            (458, 342, 1)
+            >>> beach.dimensions
+            (100, 100, 1)
 
-        Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
-        concatenated image. Linear interpolation with antialiasing is used to avoid sampling
-        artifacts.
+            Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
+            concatenated image. Linear interpolation with antialiasing is used to avoid sampling
+            artifacts.
 
-        >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
-        >>> concatenated = beach.concatenate(
-        ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
-        ... )
-        >>> concatenated.dimensions
-        (233, 100, 1)
-        >>> concatenated.plot(**plot_kwargs)
+            >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (233, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
 
-        Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may distort
-        the image.
+            Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may distort
+            the image.
 
-        >>> concatenated = beach.concatenate(
-        ...     bird, mode='resample-off-axis', resample_kwargs=resample_kwargs
-        ... )
-        >>> concatenated.dimensions
-        (558, 100, 1)
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-off-axis', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (558, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
 
-        Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
-        result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is completely
-        overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
+            Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
+            result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is completely
+            overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
 
-        >>> beach.extent
-        (0, 99, 0, 99, 0, 0)
-        >>> bird.extent
-        (0, 457, 0, 341, 0, 0)
+            >>> beach.extent
+            (0, 99, 0, 99, 0, 0)
+            >>> bird.extent
+            (0, 457, 0, 341, 0, 0)
 
-        >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
-        >>> concatenated.extent
-        (0, 457, 0, 341, 0, 0)
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+            >>> concatenated.extent
+            (0, 457, 0, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
 
-        Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
-        instead.
+            Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
+            instead.
 
-        >>> beach.offset = (-50, -50, 0)
-        >>> beach.extent
-        (-50, 49, -50, 49, 0, 0)
+            >>> beach.offset = (-50, -50, 0)
+            >>> beach.extent
+            (-50, 49, -50, 49, 0, 0)
 
-        >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
-        >>> concatenated.extent
-        (-50, 457, -50, 341, 0, 0)
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+            >>> concatenated.extent
+            (-50, 457, -50, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
 
-        Reverse the concatenating order.
+            Reverse the concatenating order.
 
-        >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
+            >>> concatenated.plot(**plot_kwargs)
 
-        Use ``'crop-off-axis'`` to only crop off-axis dimensions.
+            Use ``'crop-off-axis'`` to only crop off-axis dimensions.
 
-        >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
+            >>> concatenated.plot(**plot_kwargs)
 
-        Reverse the concatenating order.
+            Reverse the concatenating order.
 
-        >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
+            >>> concatenated.plot(**plot_kwargs)
 
-        Use ``'crop-center'`` to center-crop the images to match the input's
-        dimensions.
+            Use ``'crop-center'`` to center-crop the images to match the input's
+            dimensions.
 
-        >>> concatenated = beach.concatenate(bird, mode='crop-center')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = beach.concatenate(bird, mode='crop-center')
+            >>> concatenated.plot(**plot_kwargs)
 
-        Reverse the concatenating order.
+            Reverse the concatenating order.
 
-        >>> concatenated = bird.concatenate(beach, mode='crop-center')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = bird.concatenate(beach, mode='crop-center')
+            >>> concatenated.plot(**plot_kwargs)
 
-        Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
-        using the input's extent. This crops the lower-left portion of ``bird``, since the
-        ``beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
+            Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
+            using the input's extent. This crops the lower-left portion of ``bird``, since the
+            ``beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
 
-        >>> beach.offset = (0, 0, 0)
-        >>> concatenated = beach.concatenate(bird, mode='crop-extents')
-        >>> concatenated.plot(**plot_kwargs)
+            >>> beach.offset = (0, 0, 0)
+            >>> concatenated = beach.concatenate(bird, mode='crop-extents')
+            >>> concatenated.plot(**plot_kwargs)
 
-        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+            Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
 
-        >>> yinyang = examples.download_yinyang()
+            >>> yinyang = examples.download_yinyang()
 
-        Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
+            Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
 
-        >>> concatenated = yinyang.concatenate(
-        ...     beach, mode='resample-proportional', component_policy='promote'
-        ... )
-        >>> concatenated.plot(**plot_kwargs)
+            >>> concatenated = yinyang.concatenate(
+            ...     beach, mode='resample-proportional', component_policy='promote'
+            ... )
+            >>> concatenated.plot(**plot_kwargs)
 
         """
 
