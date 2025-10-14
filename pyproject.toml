@@ -153,11 +153,7 @@ docs = [
   { include-group = 'pinned' },
 ]
 
-docs-test = [
-  'pytest-pyvista[vtksz]==0.3.1',
-  'pytest-xdist<3.9.0',
-  { include-group = 'docs' },
-]
+docs-test = ['pytest-pyvista[vtksz]==0.3.1', 'pytest-xdist<3.9.0']
 
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
