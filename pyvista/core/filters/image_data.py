@@ -5507,7 +5507,7 @@ class ImageDataFilters(DataSetFilters):
 
         Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
         result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is completely
-        overwritten since their :attr:`~pyvista.ImageData.extent`s fully overlap.
+        overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
 
         >>> beach.extent
         (0, 99, 0, 99, 0, 0)
