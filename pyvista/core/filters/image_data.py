@@ -5379,6 +5379,8 @@ class ImageDataFilters(DataSetFilters):
     ):
         """Concatenate :class:`~pyvista.ImageData` along an axis.
 
+        .. versionadded:: 0.47
+
         Parameters
         ----------
         images : ImageData | Sequence[ImageData]
