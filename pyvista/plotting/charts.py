@@ -2984,7 +2984,7 @@ class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.
        ...     29499,
        ... ]
        >>> chart = pv.Chart2D()
-       >>> plot = chart.stack(x, [n_e, n_h, n_f])
+       >>> plot = chart.concatenate(x, [n_e, n_h, n_f])
        >>> plot.labels = ['Electric', 'Hybrid', 'Fossil']
        >>> chart.x_axis.label = 'Year'
        >>> chart.x_axis.tick_locations = x
@@ -3039,7 +3039,7 @@ class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+           >>> plot = chart.concatenate([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
            >>> plot.x
            pyvista_ndarray([0, 1, 2])
            >>> chart.show()
@@ -3060,7 +3060,7 @@ class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+           >>> plot = chart.concatenate([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
            >>> plot.ys
            (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
            >>> chart.show()
@@ -3088,7 +3088,7 @@ class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
+           >>> plot = chart.concatenate([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
            >>> chart.show()
 
            Update the stack sizes.
@@ -3623,7 +3623,7 @@ class Chart2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
+           >>> plot = chart.concatenate([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
            >>> chart.show()
 
         """

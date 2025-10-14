@@ -2134,7 +2134,7 @@ def test_morphological_filters_custom_kernel_size():
         ((np.uint8, np.int32), 'match'),
     ],
 )
-def test_stack(axis, dimensions_out, dtypes, dtype_policy):
+def test_concatenate(axis, dimensions_out, dtypes, dtype_policy):
     array_a = np.array([0], dtype=dtypes[0])
     array_b = np.array([1], dtype=dtypes[1])
 
@@ -2144,7 +2144,7 @@ def test_stack(axis, dimensions_out, dtypes, dtype_policy):
     image_b['B'] = array_b
 
     if dtype_policy == 'strict':
-        stacked_image = image_a.stack(image_b, axis=axis)
+        concatenated_image = image_a.concatenate(image_b, axis=axis)
     else:
         match = (
             r'The dtypes of the scalar arrays do not match\. '
@@ -2152,12 +2152,12 @@ def test_stack(axis, dimensions_out, dtypes, dtype_policy):
             r"Set the dtype policy to 'promote' or 'match' to cast the inputs to a single dtype\."
         )
         with pytest.raises(TypeError, match=match):
-            image_a.stack(image_b, axis=axis)
-        stacked_image = image_a.stack(image_b, axis=axis, dtype_policy=dtype_policy)
+            image_a.concatenate(image_b, axis=axis)
+        concatenated_image = image_a.concatenate(image_b, axis=axis, dtype_policy=dtype_policy)
 
-    assert stacked_image.array_names == ['A']
-    image_array = stacked_image['A']
-    assert stacked_image.dimensions == dimensions_out
+    assert concatenated_image.array_names == ['A']
+    image_array = concatenated_image['A']
+    assert concatenated_image.dimensions == dimensions_out
     assert np.array_equal(image_array, [0, 1])
 
     expected_dtype = np.result_type(*dtypes) if dtype_policy == 'promote' else dtypes[0]
@@ -2165,7 +2165,7 @@ def test_stack(axis, dimensions_out, dtypes, dtype_policy):
     assert actual_dtype == expected_dtype
 
 
-def test_stack_dimensions_mismatch():
+def test_concatenate_dimensions_mismatch():
     array_a = np.array([0])
     array_b = np.array([1, 2])
 
@@ -2174,8 +2174,8 @@ def test_stack_dimensions_mismatch():
     image_b = pv.ImageData(dimensions=(2, 1, 1))
     image_b['B'] = array_b
 
-    stacked_image = image_a.stack(image_b, axis=0)
-    assert stacked_image.dimensions == (3, 1, 1)
+    concatenated_image = image_a.concatenate(image_b, axis=0)
+    assert concatenated_image.dimensions == (3, 1, 1)
 
     array_a = np.array([0, 1])
     array_b = np.array([2, 3])
@@ -2187,14 +2187,14 @@ def test_stack_dimensions_mismatch():
 
     match = (
         'Image 0 dimensions (2, 1, 1) must match the input dimensions (1, 2, 1) along axis 0.\n'
-        'Use the `mode` keyword to allow stacking with mismatched dimensions.'
+        'Use the `mode` keyword to allow concatenation with mismatched dimensions.'
     )
 
     with pytest.raises(ValueError, match=re.escape(match)):
-        image_a.stack(image_b, axis=0)
+        image_a.concatenate(image_b, axis=0)
 
 
-def test_stack_component_policy():
+def test_concatenate_component_policy():
     gray_array = np.array([0], dtype=np.uint8)
     rgb_array = np.array([[1, 2, 3]], dtype=np.uint8)
     gray = pv.ImageData(dimensions=(1, 1, 1))
@@ -2208,21 +2208,21 @@ def test_stack_component_policy():
         r'components as needed.'
     )
     with pytest.raises(ValueError, match=match):
-        gray.stack(rgb)
+        gray.concatenate(rgb)
 
-    stacked = gray.stack(rgb, component_policy='promote')
+    concatenated = gray.concatenate(rgb, component_policy='promote')
     expected_array = np.vstack((np.broadcast_to(gray_array, (1, 3)), rgb_array))
-    assert np.array_equal(stacked.active_scalars, expected_array)
+    assert np.array_equal(concatenated.active_scalars, expected_array)
 
     rgba_array = np.array([[1, 2, 3, 255]], dtype=np.uint8)
     rgba = pv.ImageData(dimensions=(1, 1, 1))
     rgba['A'] = rgba_array
 
-    stacked = gray.stack(rgba, component_policy='promote')
+    concatenated = gray.concatenate(rgba, component_policy='promote')
     expected_gray_rgba = np.broadcast_to(gray_array, (1, 4)).copy()
     expected_gray_rgba[0][3] = 255
     expected_array = np.vstack((expected_gray_rgba, rgba_array))
-    assert np.array_equal(stacked.active_scalars, expected_array)
+    assert np.array_equal(concatenated.active_scalars, expected_array)
 
 
 class CasesResample:
@@ -2277,36 +2277,36 @@ class CasesResample:
 
 
 @parametrize_with_cases('dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResample)
-def test_stack_resample(dimensions_a, dimensions_b, axis, dimensions_out):
+def test_concatenate_resample(dimensions_a, dimensions_b, axis, dimensions_out):
     image_a = pv.ImageData(dimensions=dimensions_a)
     image_a['data'] = range(image_a.n_points)
     image_b = pv.ImageData(dimensions=dimensions_b)
     image_b['data'] = range(image_b.n_points)
 
-    stacked_image = image_a.stack(image_b, axis=axis, mode='resample')
-    assert stacked_image.dimensions == dimensions_out
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample')
+    assert concatenated_image.dimensions == dimensions_out
 
 
-def test_stack_resample_kwargs():
+def test_concatenate_resample_kwargs():
     image_a = pv.ImageData(dimensions=(1, 1, 1))
     image_a['A'] = [0]
     image_b = pv.ImageData(dimensions=(2, 1, 1))
     image_b['B'] = [1, 2]
     resample_kwargs = dict(interpolation='linear', border_mode='wrap', anti_aliasing=True)
-    stacked_image = image_a.stack(
+    concatenated_image = image_a.concatenate(
         image_b, axis=0, mode='resample', resample_kwargs=resample_kwargs
     )
-    assert isinstance(stacked_image, pv.ImageData)
+    assert isinstance(concatenated_image, pv.ImageData)
 
     match = (
         "resample_kwargs 'dimensions' is not valid. resample_kwargs must be one of: \n\t"
         "('anti_aliasing', 'interpolation', 'border_mode')"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        image_a.stack(image_b, mode='resample', resample_kwargs={'dimensions': (1, 2, 3)})
+        image_a.concatenate(image_b, mode='resample', resample_kwargs={'dimensions': (1, 2, 3)})
 
 
-def test_stack_extents():
+def test_concatenate_extents():
     array_a = np.array([0])
     array_b = np.array([1])
 
@@ -2315,24 +2315,24 @@ def test_stack_extents():
     image_b = pv.ImageData(dimensions=(1, 1, 1))
     image_b['B'] = array_b
 
-    stacked = image_a.stack(image_b, mode='preserve-extents')
-    assert stacked.dimensions == (1, 1, 1)
-    assert np.array_equal(stacked.active_scalars, array_b)
+    concatenated = image_a.concatenate(image_b, mode='preserve-extents')
+    assert concatenated.dimensions == (1, 1, 1)
+    assert np.array_equal(concatenated.active_scalars, array_b)
 
     offset = (-1, 0, 0)
     image_a.offset = offset
-    stacked = image_a.stack(image_b, mode='preserve-extents')
-    assert stacked.dimensions == (2, 1, 1)
-    assert stacked.offset == offset
+    concatenated = image_a.concatenate(image_b, mode='preserve-extents')
+    assert concatenated.dimensions == (2, 1, 1)
+    assert concatenated.offset == offset
     expected = np.hstack((array_a, array_b))
-    assert np.array_equal(stacked.active_scalars, expected)
+    assert np.array_equal(concatenated.active_scalars, expected)
 
     match = "The axis keyword cannot be used with 'preserve-extents' mode."
     with pytest.raises(ValueError, match=match):
-        image_a.stack(image_b, axis=0, mode='preserve-extents')
+        image_a.concatenate(image_b, axis=0, mode='preserve-extents')
 
 
-def test_stack_crop_dimension():
+def test_concatenate_crop_dimension():
     array_a = np.array([0])
     array_b = np.arange(9)
     expected_cropped_b = array_b[4]  # midpoint
@@ -2342,10 +2342,10 @@ def test_stack_crop_dimension():
     image_b = pv.ImageData(dimensions=(3, 3, 1))
     image_b['B'] = array_b
 
-    stacked = image_a.stack(image_b, mode='crop-dimensions')
-    assert stacked.dimensions == (2, 1, 1)
+    concatenated = image_a.concatenate(image_b, mode='crop-dimensions')
+    assert concatenated.dimensions == (2, 1, 1)
     expected = np.hstack((array_a, expected_cropped_b))
-    assert np.array_equal(stacked.active_scalars, expected)
+    assert np.array_equal(concatenated.active_scalars, expected)
 
 
 def test_stack_crop_extent():
@@ -2358,7 +2358,7 @@ def test_stack_crop_extent():
     image_b = pv.ImageData(dimensions=(2, 1, 1))
     image_b['B'] = array_b
 
-    stacked = image_a.stack(image_b, mode='crop-extents')
-    assert stacked.dimensions == (2, 1, 1)
+    concatenated = image_a.concatenate(image_b, mode='crop-extents')
+    assert concatenated.dimensions == (2, 1, 1)
     expected = np.hstack((array_a, expected_cropped_b))
-    assert np.array_equal(stacked.active_scalars, expected)
+    assert np.array_equal(concatenated.active_scalars, expected)

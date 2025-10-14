@@ -62,11 +62,11 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
-_StackModeOptions = Literal[
+_ConcatenateModeOptions = Literal[
     'strict', 'resample', 'crop-dimensions', 'crop-extents', 'preserve-extents'
 ]
-_StackDTypePolicyOptions = Literal['strict', 'promote', 'match']
-_StackComponentPolicyOptions = Literal['strict', 'promote']
+_ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
+_ConcatenateComponentPolicyOptions = Literal['strict', 'promote']
 
 
 @abstract_class
@@ -5367,73 +5367,75 @@ class ImageDataFilters(DataSetFilters):
         output[array_name] = array_out
         return output
 
-    def stack(  # type: ignore[misc]
+    def concatenate(  # type: ignore[misc]
         self: ImageData,
         images: ImageData | Sequence[ImageData],
         axis: _AxisOptions | None = None,
         *,
-        mode: _StackModeOptions | None = None,
+        mode: _ConcatenateModeOptions | None = None,
         resample_kwargs: dict[str, Any] | None = None,
-        dtype_policy: _StackDTypePolicyOptions | None = None,
-        component_policy: _StackComponentPolicyOptions | None = None,
+        dtype_policy: _ConcatenateDTypePolicyOptions | None = None,
+        component_policy: _ConcatenateComponentPolicyOptions | None = None,
     ):
-        """Stack :class:`~pyvista.ImageData` along an axis.
+        """Concatenate :class:`~pyvista.ImageData` along an axis.
 
         Parameters
         ----------
         images : ImageData | Sequence[ImageData]
-            The input image(s) to stack. The default active scalars are used for all images.
+            The input image(s) to concatenate. The default active scalars are used for all images.
             By default, all images must have:
 
-            #. identical dimensions except along the stacking axis,
+            #. identical dimensions except along the specified ``axis``,
             #. the same scalar dtype, and
             #. the same number of scalar components.
 
-            Use ``mode`` to allow stacking images with mismatched dimensions,
-            ``dtype_policy`` to allow stacking images with different dtypes, and/or
-            ``component_policy`` to allow stacking images with differing number of components.
+            Use ``mode`` if the inputs have mismatched dimensions, ``dtype_policy`` if they have
+            different dtypes, and/or ``component_policy`` they differ in the number of scalar
+            components.
 
         axis : int | str, default: 'x'
-            Axis along which the images are stacked:
+            Axis along which the images are concatenated:
 
             - ``0`` or ``'x'``: x-axis
             - ``1`` or ``'y'``: y-axis
             - ``2`` or ``'z'``: z-axis
 
         mode : str, default: 'strict'
-            Stacking mode to use. This determines how images are placed in the output. All modes
-            operate along the specified ``axis`` except for ``'preserve-extents'``. Specify one of:
+            Concatenation mode to use. This determines how images are placed in the output. All
+            modes operate along the specified ``axis`` except for ``'preserve-extents'``.
+            Specify one of:
 
-            - ``'strict'``: all images must have identical dimensions except along the stacking
-              axis.
-            - ``'resample'``: :meth:`resample` any images being stacked such that their dimensions
-              match the input. Off-axis dimensions are resampled, and the on-axis dimension is not.
-              If 2D images are stacked with a 2D input, the aspect ratios of the stacked images are
-              preserved.
-            - ``'crop-dimensions'``: :meth:`crop` images being stacked such that their dimensions
+            - ``'strict'``: all images must have identical dimensions except along the specified
+              ``axis``.
+            - ``'resample'``: :meth:`resample` concatenated images such that their dimensions
+              match the input. Off-axis dimensions are resampled, but on-axis dimensions are not.
+              If 2D images are concatenated with a 2D input, the aspect ratios of the concatenated
+              images are preserved.
+            - ``'crop-dimensions'``: :meth:`crop` concatenated images such that their dimensions
               match the input dimensions exactly. The images are center-cropped.
-            - ``'crop-extents'``: :meth:`crop` images being stacked using the extent of the input
-              to crop each image such that all images have the same extent before stacking.
+            - ``'crop-extents'``: :meth:`crop` concatenated images using the extent of the input
+              to crop each image such that all images have the same extent before concatenating.
             - ``'preserve-extents'``: the extent of all images are preserved and used to place the
               images in the output. The whole extent of the output is the union of the input whole
-              extents. The origin and spacing is taken from the first input.
+              extents. The origin and spacing is taken from the first input. ``axis`` is not used
+              by this mode.
 
             .. note::
                 For the ``crop`` and ``preserve-extents`` modes, any portion of the output not
                 covered by the inputs is set to zero.
 
         dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
-            - ``'strict'``: Do not cast any scalar array dtypes. All images being stacked must
+            - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
               have the same dtype, else a ``TypeError`` is raised.
             - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
               image scalars. This option safely casts all input arrays to a common dtype before
-              stacking.
+              concatenating.
             - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
               unsafe as it may downcast values and lose precision.
 
         component_policy : 'strict' | 'promote', default: 'strict'
             - ``'strict'``: Do not modify the number of components of any scalars. All images being
-              stacked must have the number of components, else a ``ValueError`` is raised.
+              concatenated must have the number of components, else a ``ValueError`` is raised.
             - ``'promote'``: Increase the number of components if necessary. Grayscale scalars
               with one component may be promoted to RGB or RGBA scalars by duplicating values,
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
@@ -5445,7 +5447,7 @@ class ImageDataFilters(DataSetFilters):
         Returns
         -------
         ImageData
-            The stacked image.
+            The concatenated image.
 
         Examples
         --------
@@ -5462,9 +5464,9 @@ class ImageDataFilters(DataSetFilters):
         >>> black = [0, 0, 0]
         >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
 
-        Stack them along the x-axis.
+        Concatenate them along the x-axis.
 
-        >>> stacked = beach.stack(beach_black, axis='x')
+        >>> concatenated = beach.concatenate(beach_black, axis='x')
         >>> plot_kwargs = dict(
         ...     rgb=True,
         ...     lighting=False,
@@ -5473,15 +5475,15 @@ class ImageDataFilters(DataSetFilters):
         ...     show_axes=False,
         ...     show_scalar_bar=False,
         ... )
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated.plot(**plot_kwargs)
 
-        Stack them along the y-axis.
+        Concatenate them along the y-axis.
 
-        >>> stacked = beach.stack(beach_black, axis='y')
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated = beach.concatenate(beach_black, axis='y')
+        >>> concatenated.plot(**plot_kwargs)
 
-        By default, stacking requires that all off-axis dimensions match the input. Use the
-        ``mode`` keyword to enable stacking images with mismatched dimensions.
+        By default, concatenating requires that all off-axis dimensions match the input. Use the
+        ``mode`` keyword to enable concatenation with mismatched dimensions.
 
         Load a second 2D image with different dimensions:
         :func:`~pyvista.examples.downloads.download_bird`.
@@ -5492,19 +5494,19 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.dimensions
         (100, 100, 1)
 
-        Stack the images using the ``resample`` mode to automatically resample the image. Linear
-        interpolation with antialiasing is used to avoid sampling artifacts.
+        Concatenate using the ``resample`` mode to automatically resample the image.
+        Linear interpolation with antialiasing is used to avoid sampling artifacts.
 
         >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
-        >>> stacked = beach.stack(
+        >>> concatenated = beach.concatenate(
         ...     bird, mode='resample', resample_kwargs=resample_kwargs
         ... )
-        >>> stacked.dimensions
+        >>> concatenated.dimensions
         (233, 100, 1)
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated.plot(**plot_kwargs)
 
         Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
-        result, e.g. if we stack ``beach`` with ``bird``, the ``beach`` image is completely
+        result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is completely
         overwritten since their :attr:`~pyvista.ImageData.extent`s fully overlap.
 
         >>> beach.extent
@@ -5512,10 +5514,10 @@ class ImageDataFilters(DataSetFilters):
         >>> bird.extent
         (0, 457, 0, 341, 0, 0)
 
-        >>> stacked = beach.stack(bird, mode='preserve-extents')
-        >>> stacked.extent
+        >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+        >>> concatenated.extent
         (0, 457, 0, 341, 0, 0)
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated.plot(**plot_kwargs)
 
         Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
         instead.
@@ -5524,52 +5526,52 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.extent
         (-50, 49, -50, 49, 0, 0)
 
-        >>> stacked = beach.stack(bird, mode='preserve-extents')
-        >>> stacked.extent
+        >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+        >>> concatenated.extent
         (-50, 457, -50, 341, 0, 0)
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated.plot(**plot_kwargs)
 
-        Reverse the stacking order.
+        Reverse the concatenating order.
 
-        >>> stacked = bird.stack(beach, mode='preserve-extents')
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
+        >>> concatenated.plot(**plot_kwargs)
 
         Use ``'crop-dimensions'`` to center-crop the images to match the input's
         dimensions.
 
-        >>> stacked = beach.stack(bird, mode='crop-dimensions')
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated = beach.concatenate(bird, mode='crop-dimensions')
+        >>> concatenated.plot(**plot_kwargs)
 
-        Reverse the stacking order.
+        Reverse the concatenating order.
 
-        >>> stacked = bird.stack(beach, mode='crop-dimensions')
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated = bird.concatenate(beach, mode='crop-dimensions')
+        >>> concatenated.plot(**plot_kwargs)
 
         Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
         using the input's extent. This crops the lower-left portion of ``bird``, since the
         ``beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
 
         >>> beach.offset = (0, 0, 0)
-        >>> stacked = beach.stack(bird, mode='crop-extents')
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated = beach.concatenate(bird, mode='crop-extents')
+        >>> concatenated.plot(**plot_kwargs)
 
         Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
 
         >>> yinyang = examples.download_yinyang()
 
-        Use ``component_policy`` to stack grayscale images with RGB(A) images.
+        Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
 
-        >>> stacked = yinyang.stack(
+        >>> concatenated = yinyang.concatenate(
         ...     [bird, beach], mode='resample', component_policy='promote'
         ... )
-        >>> stacked.plot(**plot_kwargs)
+        >>> concatenated.plot(**plot_kwargs)
 
         """
 
         def _compute_resample_kwargs(
             ref_image: ImageData, img: ImageData, axis: int
         ) -> dict[str, NumpyArray[float]]:
-            """Compute resampling keywords for stacking img with ref_image along an axis."""
+            """Compute resampling keywords for concatenating img with ref_image along an axis."""
             ref_dims = np.array(ref_image.dimensions, dtype=int)
             img_dims = np.array(img.dimensions, dtype=int)
 
@@ -5587,15 +5589,15 @@ class ImageDataFilters(DataSetFilters):
                     sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
                     return {'sample_rate': sample_rate}
 
-            # Image must match the reference's non-stacking axes exactly,
-            # but we leave the image's stacking axis unchanged
+            # Image must match the reference's non-concatenating axes exactly,
+            # but we leave the image's concatenating axis unchanged
             new_dims = ref_dims.copy()
             new_dims[axis] = img_dims[axis]
             return {'dimensions': new_dims}
 
         # Validate mode
         if mode is not None:
-            options = get_args(_StackModeOptions)
+            options = get_args(_ConcatenateModeOptions)
             _validation.check_contains(options, must_contain=mode, name='mode')
         else:
             mode = 'strict'
@@ -5614,14 +5616,14 @@ class ImageDataFilters(DataSetFilters):
 
         # Validate dtype policy
         if dtype_policy is not None:
-            options = get_args(_StackDTypePolicyOptions)
+            options = get_args(_ConcatenateDTypePolicyOptions)
             _validation.check_contains(options, must_contain=dtype_policy, name='dtype_policy')
         else:
             dtype_policy = 'strict'
 
         # Validate component policy
         if component_policy is not None:
-            options = get_args(_StackComponentPolicyOptions)
+            options = get_args(_ConcatenateComponentPolicyOptions)
             _validation.check_contains(
                 options, must_contain=component_policy, name='component_policy'
             )
@@ -5655,14 +5657,14 @@ class ImageDataFilters(DataSetFilters):
                 if (dims := img.dimensions) != self_dimensions:
                     # Need to deal with the dimensions mismatch
                     if mode == 'strict':
-                        # Allow mismatch only along stacking axis
+                        # Allow mismatch only along concatenating axis
                         for ax in range(3):
                             if ax != axis and dims[ax] != self_dimensions[ax]:
                                 msg = (
                                     f'Image {i - 1} dimensions {img.dimensions} must match the '
                                     f'input dimensions {self.dimensions} along axis {axis}.\n'
-                                    f'Use the `mode` keyword to allow stacking with mismatched '
-                                    f'dimensions.'
+                                    f'Use the `mode` keyword to allow concatenation with '
+                                    f'mismatched dimensions.'
                                 )
                                 raise ValueError(msg)
                     elif mode == 'resample':
