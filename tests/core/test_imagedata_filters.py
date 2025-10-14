@@ -2309,7 +2309,7 @@ class CasesResampleProportional:
 @parametrize_with_cases(
     'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleProportional
 )
-def test_concatenate_resample_proportional(dimensions_a, dimensions_b, axis, dimensions_out):
+def test_concatenate_resample_uniform(dimensions_a, dimensions_b, axis, dimensions_out):
     image_a = pv.ImageData(dimensions=dimensions_a)
     image_a['data'] = range(image_a.n_points)
     image_b = pv.ImageData(dimensions=dimensions_b)
@@ -2319,14 +2319,15 @@ def test_concatenate_resample_proportional(dimensions_a, dimensions_b, axis, dim
     assert concatenated_image.dimensions == dimensions_out
 
 
-def test_concatenate_resample_kwargs():
+@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-uniform'])
+def test_concatenate_resample_kwargs(mode):
     image_a = pv.ImageData(dimensions=(1, 1, 1))
     image_a['A'] = [0]
     image_b = pv.ImageData(dimensions=(2, 1, 1))
     image_b['B'] = [1, 2]
     resample_kwargs = dict(interpolation='linear', border_mode='wrap', anti_aliasing=True)
     concatenated_image = image_a.concatenate(
-        image_b, axis=0, mode='resample-off-axis', resample_kwargs=resample_kwargs
+        image_b, axis=0, mode=mode, resample_kwargs=resample_kwargs
     )
     assert isinstance(concatenated_image, pv.ImageData)
 
@@ -2340,7 +2341,7 @@ def test_concatenate_resample_kwargs():
         )
 
 
-def test_concatenate_extents():
+def test_concatenate_preserve_extents():
     array_a = np.array([0])
     array_b = np.array([1])
 
@@ -2366,10 +2367,9 @@ def test_concatenate_extents():
         image_a.concatenate(image_b, axis=0, mode='preserve-extents')
 
 
-def test_concatenate_crop_dimension():
+def test_concatenate_crop():
     array_a = np.array([0])
     array_b = np.arange(9)
-    expected_cropped_b = array_b[4]  # midpoint
 
     image_a = pv.ImageData(dimensions=(1, 1, 1))
     image_a['A'] = array_a
@@ -2378,11 +2378,16 @@ def test_concatenate_crop_dimension():
 
     concatenated = image_a.concatenate(image_b, mode='crop-center')
     assert concatenated.dimensions == (2, 1, 1)
-    expected = np.hstack((array_a, expected_cropped_b))
+    expected = np.hstack((array_a, array_b[4]))
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+    concatenated = image_a.concatenate(image_b, mode='crop-off-axis')
+    assert concatenated.dimensions == (4, 1, 1)
+    expected = np.hstack((array_a, array_b[3:6]))
     assert np.array_equal(concatenated.active_scalars, expected)
 
 
-def test_stack_crop_extent():
+def test_concatenate_crop_extents():
     array_a = np.array([0])
     array_b = np.array([1, 2])
     expected_cropped_b = array_b[0]  # extent shared by first point only

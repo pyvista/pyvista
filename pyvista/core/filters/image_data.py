@@ -66,6 +66,7 @@ _ConcatenateModeOptions = Literal[
     'strict',
     'resample-off-axis',
     'resample-uniform',
+    'crop-off-axis',
     'crop-center',
     'crop-extents',
     'preserve-extents',
@@ -5419,6 +5420,8 @@ class ImageDataFilters(DataSetFilters):
             - ``'resample-uniform'``: Uniformly :meth:`resample` concatenated images to match the
               input. This mode is only available if _all_ off-axis dimensions can be
               proportionally resampled, which is not always possible for 3D cases.
+            - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
+              to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-center'``: Use :meth:`crop` to center-crop concatenated images such that
               their dimensions match the input dimensions exactly.
             - ``'crop-extents'``: :meth:`crop` concatenated images using the extent of the input
@@ -5503,8 +5506,8 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.dimensions
         (100, 100, 1)
 
-        Concatenate using ``'resample-uniform'`` mode to automatically resample images.
-        Linear interpolation with antialiasing is used to avoid sampling artifacts.
+        Concatenate using ``'resample-uniform'`` mode preserve the aspect ratio of the concatenated
+        image. Linear interpolation with antialiasing is used to avoid sampling artifacts.
 
         >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
         >>> concatenated = beach.concatenate(
@@ -5555,6 +5558,16 @@ class ImageDataFilters(DataSetFilters):
         >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
         >>> concatenated.plot(**plot_kwargs)
 
+        Use ``'crop-off-axis'`` to only crop off-axis dimensions.
+
+        >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
+        >>> concatenated.plot(**plot_kwargs)
+
+        Reverse the concatenating order.
+
+        >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
+        >>> concatenated.plot(**plot_kwargs)
+
         Use ``'crop-center'`` to center-crop the images to match the input's
         dimensions.
 
@@ -5581,7 +5594,7 @@ class ImageDataFilters(DataSetFilters):
         Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
 
         >>> concatenated = yinyang.concatenate(
-        ...     [bird, beach], mode='resample-off-axis', component_policy='promote'
+        ...     beach, mode='resample-uniform', component_policy='promote'
         ... )
         >>> concatenated.plot(**plot_kwargs)
 
@@ -5605,7 +5618,10 @@ class ImageDataFilters(DataSetFilters):
             fixed_axes = off_axis & not_singleton
 
             # Resample the image proportionally to match the axes
-            sample_rate = (ref_dims[fixed_axes] / img_dims[fixed_axes]).tolist()[0]
+            sample_rate_array = ref_dims[fixed_axes] / img_dims[fixed_axes]
+            if sample_rate_array.size == 0:
+                return 1.0
+            sample_rate = sample_rate_array.tolist()[0]
             n_fixed_axes = np.count_nonzero(fixed_axes)
 
             if n_fixed_axes == 1:
@@ -5675,9 +5691,6 @@ class ImageDataFilters(DataSetFilters):
             n_components = array.shape[1] if array.ndim == 2 else array.ndim
             all_n_components.append(n_components)
 
-            if (i == 0 and mode.startswith('resample')) or mode == 'crop-center':
-                # These modes should not be affected by offset, so we zero it
-                img_shallow_copy.offset = (0, 0, 0)
             if i > 0 and mode != 'preserve-extents':
                 if (dims := img.dimensions) != self_dimensions:
                     # Need to deal with the dimensions mismatch
@@ -5711,13 +5724,20 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['sample_rate'] = _compute_sample_rate(self, img)
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
-                        img_shallow_copy.offset = (0, 0, 0)
 
+                    elif mode == 'crop-off-axis':
+                        dimensions = _compute_dimensions(
+                            self.dimensions, img_shallow_copy.dimensions
+                        )
+                        img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
                     elif mode == 'crop-extents':
                         img_shallow_copy = img_shallow_copy.crop(extent=self_extent)
                     elif mode == 'crop-center':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
-                        img_shallow_copy.offset = (0, 0, 0)
+
+            if mode in ['resample-off-axis', 'resample-uniform', 'crop-off-axis', 'crop-center']:
+                # These modes should not be affected by offset, so we zero it
+                img_shallow_copy.offset = (0, 0, 0)
 
             # Replace input with shallow copy
             all_images[i] = img_shallow_copy
