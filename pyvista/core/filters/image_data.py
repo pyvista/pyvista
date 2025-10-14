@@ -65,7 +65,7 @@ _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
     'strict',
     'resample-off-axis',
-    'resample-proportional',
+    'resample-uniform',
     'crop-center',
     'crop-extents',
     'preserve-extents',
@@ -5503,12 +5503,12 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.dimensions
         (100, 100, 1)
 
-        Concatenate using ``'resample-proportional'`` mode to automatically resample images.
+        Concatenate using ``'resample-uniform'`` mode to automatically resample images.
         Linear interpolation with antialiasing is used to avoid sampling artifacts.
 
         >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
         >>> concatenated = beach.concatenate(
-        ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
+        ...     bird, mode='resample-uniform', resample_kwargs=resample_kwargs
         ... )
         >>> concatenated.dimensions
         (233, 100, 1)
@@ -5707,7 +5707,7 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['dimensions'] = _compute_dimensions(
                                 self.dimensions, img.dimensions
                             )
-                        else:  # mode == 'resample-proportional
+                        else:  # mode == 'resample-uniform
                             kwargs['sample_rate'] = _compute_sample_rate(self, img)
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)

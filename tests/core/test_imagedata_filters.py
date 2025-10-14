@@ -2315,7 +2315,7 @@ def test_concatenate_resample_proportional(dimensions_a, dimensions_b, axis, dim
     image_b = pv.ImageData(dimensions=dimensions_b)
     image_b['data'] = range(image_b.n_points)
 
-    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-proportional')
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-uniform')
     assert concatenated_image.dimensions == dimensions_out
 
 
