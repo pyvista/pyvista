@@ -5465,6 +5465,7 @@ class ImageDataFilters(DataSetFilters):
         --------
         .. pyvista-plot::
             :force_static:
+
             Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
 
             >>> import pyvista as pv
@@ -5496,8 +5497,8 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = beach.concatenate(beach_black, axis='y')
             >>> concatenated.plot(**plot_kwargs)
 
-            By default, concatenating requires that all off-axis dimensions match the input. Use the
-            ``mode`` keyword to enable concatenation with mismatched dimensions.
+            By default, concatenating requires that all off-axis dimensions match the input. Use
+            the ``mode`` keyword to enable concatenation with mismatched dimensions.
 
             Load a second 2D image with different dimensions:
             :func:`~pyvista.examples.downloads.download_bird`.
@@ -5520,8 +5521,8 @@ class ImageDataFilters(DataSetFilters):
             (233, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
-            Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may distort
-            the image.
+            Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may
+            distort the image.
 
             >>> concatenated = beach.concatenate(
             ...     bird, mode='resample-off-axis', resample_kwargs=resample_kwargs
@@ -5530,9 +5531,9 @@ class ImageDataFilters(DataSetFilters):
             (558, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
-            Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
-            result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is completely
-            overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
+            Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the
+            desired result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is
+            completely overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
 
             >>> beach.extent
             (0, 99, 0, 99, 0, 0)
@@ -5544,8 +5545,8 @@ class ImageDataFilters(DataSetFilters):
             (0, 457, 0, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
 
-            Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial overlap
-            instead.
+            Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial
+            overlap instead.
 
             >>> beach.offset = (-50, -50, 0)
             >>> beach.extent
@@ -5582,9 +5583,10 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = bird.concatenate(beach, mode='crop-center')
             >>> concatenated.plot(**plot_kwargs)
 
-            Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
-            using the input's extent. This crops the lower-left portion of ``bird``, since the
-            ``beach`` extent corresponds to the bottom lower left portion of the ``bird`` extent.
+            Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each
+            image using the input's extent. This crops the lower-left portion of ``bird``, since
+            the ``beach`` extent corresponds to the bottom lower left portion of the ``bird``
+            extent.
 
             >>> beach.offset = (0, 0, 0)
             >>> concatenated = beach.concatenate(bird, mode='crop-extents')
