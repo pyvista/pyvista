@@ -66,7 +66,7 @@ _ConcatenateModeOptions = Literal[
     'strict',
     'resample-off-axis',
     'resample-proportional',
-    'crop-dimensions',
+    'crop-center',
     'crop-extents',
     'preserve-extents',
 ]
@@ -5419,8 +5419,8 @@ class ImageDataFilters(DataSetFilters):
             - ``'resample-uniform'``: Uniformly :meth:`resample` concatenated images to match the
               input. This mode is only available if _all_ off-axis dimensions can be
               proportionally resampled, which is not always possible for 3D cases.
-            - ``'crop-dimensions'``: :meth:`crop` concatenated images such that their dimensions
-              match the input dimensions exactly. The images are center-cropped.
+            - ``'crop-center'``: Use :meth:`crop` to center-crop concatenated images such that
+              their dimensions match the input dimensions exactly.
             - ``'crop-extents'``: :meth:`crop` concatenated images using the extent of the input
               to crop each image such that all images have the same extent before concatenating.
             - ``'preserve-extents'``: the extent of all images are preserved and used to place the
@@ -5503,7 +5503,7 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.dimensions
         (100, 100, 1)
 
-        Concatenate using the ``'resample-proportional'`` mode to automatically resample images.
+        Concatenate using ``'resample-proportional'`` mode to automatically resample images.
         Linear interpolation with antialiasing is used to avoid sampling artifacts.
 
         >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
@@ -5555,15 +5555,15 @@ class ImageDataFilters(DataSetFilters):
         >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
         >>> concatenated.plot(**plot_kwargs)
 
-        Use ``'crop-dimensions'`` to center-crop the images to match the input's
+        Use ``'crop-center'`` to center-crop the images to match the input's
         dimensions.
 
-        >>> concatenated = beach.concatenate(bird, mode='crop-dimensions')
+        >>> concatenated = beach.concatenate(bird, mode='crop-center')
         >>> concatenated.plot(**plot_kwargs)
 
         Reverse the concatenating order.
 
-        >>> concatenated = bird.concatenate(beach, mode='crop-dimensions')
+        >>> concatenated = bird.concatenate(beach, mode='crop-center')
         >>> concatenated.plot(**plot_kwargs)
 
         Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each image
@@ -5675,7 +5675,7 @@ class ImageDataFilters(DataSetFilters):
             n_components = array.shape[1] if array.ndim == 2 else array.ndim
             all_n_components.append(n_components)
 
-            if (i == 0 and mode.startswith('resample')) or mode == 'crop-dimensions':
+            if (i == 0 and mode.startswith('resample')) or mode == 'crop-center':
                 # These modes should not be affected by offset, so we zero it
                 img_shallow_copy.offset = (0, 0, 0)
             if i > 0 and mode != 'preserve-extents':
@@ -5715,7 +5715,7 @@ class ImageDataFilters(DataSetFilters):
 
                     elif mode == 'crop-extents':
                         img_shallow_copy = img_shallow_copy.crop(extent=self_extent)
-                    elif mode == 'crop-dimensions':
+                    elif mode == 'crop-center':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
                         img_shallow_copy.offset = (0, 0, 0)
 
