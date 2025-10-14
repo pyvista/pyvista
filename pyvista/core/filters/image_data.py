@@ -63,7 +63,12 @@ _InterpolationOptions = Literal[
 ]
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
-    'strict', 'resample', 'crop-dimensions', 'crop-extents', 'preserve-extents'
+    'strict',
+    'resample-off-axis',
+    'resample-proportional',
+    'crop-dimensions',
+    'crop-extents',
+    'preserve-extents',
 ]
 _ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
 _ConcatenateComponentPolicyOptions = Literal['strict', 'promote']
@@ -5409,10 +5414,11 @@ class ImageDataFilters(DataSetFilters):
 
             - ``'strict'``: all images must have identical dimensions except along the specified
               ``axis``.
-            - ``'resample'``: :meth:`resample` concatenated images such that their dimensions
-              match the input. Off-axis dimensions are resampled, but on-axis dimensions are not.
-              If 2D images are concatenated with a 2D input, the aspect ratios of the concatenated
-              images are preserved.
+            - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
+              to match the input. The on-axis dimension is `not` resampled.
+            - ``'resample-uniform'``: Uniformly :meth:`resample` concatenated images to match the
+              input. This mode is only available if _all_ off-axis dimensions can be
+              proportionally resampled, which is not always possible for 3D cases.
             - ``'crop-dimensions'``: :meth:`crop` concatenated images such that their dimensions
               match the input dimensions exactly. The images are center-cropped.
             - ``'crop-extents'``: :meth:`crop` concatenated images using the extent of the input
@@ -5443,8 +5449,9 @@ class ImageDataFilters(DataSetFilters):
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
 
         resample_kwargs : dict, optional
-            Keyword arguments passed to :meth:`resample` when using ``'resample'`` mode. Specify
-            ``interpolation``, ``border_mode``, ``anti_aliasing`` options.
+            Keyword arguments passed to :meth:`resample` when using ``'resample-off-axis'`` or
+            ``'reample-proportional'`` modes. Specify ``interpolation``, ``border_mode`` or
+            ``anti_aliasing`` options.
 
         Returns
         -------
@@ -5496,15 +5503,25 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.dimensions
         (100, 100, 1)
 
-        Concatenate using the ``resample`` mode to automatically resample the image.
+        Concatenate using the ``'resample-proportional'`` mode to automatically resample images.
         Linear interpolation with antialiasing is used to avoid sampling artifacts.
 
         >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
         >>> concatenated = beach.concatenate(
-        ...     bird, mode='resample', resample_kwargs=resample_kwargs
+        ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
         ... )
         >>> concatenated.dimensions
         (233, 100, 1)
+        >>> concatenated.plot(**plot_kwargs)
+
+        Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may distort
+        the image.
+
+        >>> concatenated = beach.concatenate(
+        ...     bird, mode='resample-off-axis', resample_kwargs=resample_kwargs
+        ... )
+        >>> concatenated.dimensions
+        (558, 100, 1)
         >>> concatenated.plot(**plot_kwargs)
 
         Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the desired
@@ -5564,38 +5581,44 @@ class ImageDataFilters(DataSetFilters):
         Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
 
         >>> concatenated = yinyang.concatenate(
-        ...     [bird, beach], mode='resample', component_policy='promote'
+        ...     [bird, beach], mode='resample-off-axis', component_policy='promote'
         ... )
         >>> concatenated.plot(**plot_kwargs)
 
         """
 
-        def _compute_resample_kwargs(
-            ref_image: ImageData, img: ImageData, axis: int
-        ) -> dict[str, NumpyArray[float]]:
-            """Compute resampling keywords for concatenating img with ref_image along an axis."""
-            ref_dims = np.array(ref_image.dimensions, dtype=int)
-            img_dims = np.array(img.dimensions, dtype=int)
-
-            is_2d_ref = ref_image.dimensionality == 2
-            is_2d_img = img.dimensionality == 2
-
-            if is_2d_ref and is_2d_img:
-                # Try to preserve image aspect ratio when images are 2D along the same dimensions
-                off_axis = np.arange(3) != axis
-                not_singleton = ref_dims != 1
-                fixed_axis = off_axis & not_singleton
-                has_one_fixed_axis = np.count_nonzero(fixed_axis) == 1
-                if has_one_fixed_axis:
-                    # Resample the image proportionally to match the single fixed axis
-                    sample_rate = ref_dims[fixed_axis] / img_dims[fixed_axis]
-                    return {'sample_rate': sample_rate}
-
+        def _compute_dimensions(
+            reference_dimensions: tuple[int, int, int], image_dimensions: tuple[int, int, int]
+        ) -> tuple[int, int, int]:
             # Image must match the reference's non-concatenating axes exactly,
             # but we leave the image's concatenating axis unchanged
-            new_dims = ref_dims.copy()
-            new_dims[axis] = img_dims[axis]
-            return {'dimensions': new_dims}
+            new_dims = list(reference_dimensions)
+            new_dims[axis_num] = image_dimensions[axis_num]
+            return tuple(new_dims)
+
+        def _compute_sample_rate(reference_image: ImageData, image: ImageData) -> float:
+            ref_dims = np.array(reference_image.dimensions)
+            img_dims = np.array(image.dimensions)
+            # Try to preserve image aspect ratio
+            off_axis = np.arange(3) != axis_num
+            not_singleton = ref_dims != 1
+            fixed_axes = off_axis & not_singleton
+
+            # Resample the image proportionally to match the axes
+            sample_rate = (ref_dims[fixed_axes] / img_dims[fixed_axes]).tolist()[0]
+            n_fixed_axes = np.count_nonzero(fixed_axes)
+
+            if n_fixed_axes == 1:
+                # No issues resampling to match the single axis
+                return sample_rate
+            elif n_fixed_axes == 2:
+                # We must check that both axes have the same proportion for both images
+                ref_ratio = ref_dims[fixed_axes][0] / ref_dims[fixed_axes][1]
+                img_ratio = img_dims[fixed_axes][0] / img_dims[fixed_axes][1]
+                if np.isclose(ref_ratio, img_ratio):
+                    return sample_rate
+
+            raise ValueError
 
         # Validate mode
         if mode is not None:
@@ -5652,7 +5675,7 @@ class ImageDataFilters(DataSetFilters):
             n_components = array.shape[1] if array.ndim == 2 else array.ndim
             all_n_components.append(n_components)
 
-            if i == 0 and mode in ['resample', 'crop-dimensions']:
+            if (i == 0 and mode.startswith('resample')) or mode == 'crop-dimensions':
                 # These modes should not be affected by offset, so we zero it
                 img_shallow_copy.offset = (0, 0, 0)
             if i > 0 and mode != 'preserve-extents':
@@ -5669,7 +5692,7 @@ class ImageDataFilters(DataSetFilters):
                                     f'mismatched dimensions.'
                                 )
                                 raise ValueError(msg)
-                    elif mode == 'resample':
+                    elif mode.startswith('resample'):
                         kwargs = {}
                         if resample_kwargs:
                             _validation.check_instance(resample_kwargs, dict)
@@ -5678,10 +5701,15 @@ class ImageDataFilters(DataSetFilters):
                                 _validation.check_contains(
                                     allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
                                 )
-                            kwargs = resample_kwargs
+                            kwargs.update(resample_kwargs)
 
-                        computed_kwargs = _compute_resample_kwargs(self, img, axis=axis_num)
-                        kwargs.update(computed_kwargs)
+                        if mode == 'resample-off-axis':
+                            kwargs['dimensions'] = _compute_dimensions(
+                                self.dimensions, img.dimensions
+                            )
+                        else:  # mode == 'resample-proportional
+                            kwargs['sample_rate'] = _compute_sample_rate(self, img)
+
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
                         img_shallow_copy.offset = (0, 0, 0)
 

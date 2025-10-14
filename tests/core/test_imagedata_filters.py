@@ -2225,7 +2225,7 @@ def test_concatenate_component_policy():
     assert np.array_equal(concatenated.active_scalars, expected_array)
 
 
-class CasesResample:
+class CasesResampleOffAxis:
     # 1D WITH 1D CASES
     def case_1d_x_with_1d_x_along_x(self):
         return (20, 1, 1), (30, 1, 1), 'x', (50, 1, 1)
@@ -2238,10 +2238,10 @@ class CasesResample:
 
     # 2D WITH 2D CASES
     def case_2d_xy_with_2d_xy_along_x(self):
-        return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
+        return (20, 40, 1), (30, 50, 1), 'x', (50, 40, 1)
 
     def case_2d_xy_with_2d_xy_along_y(self):
-        return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 90, 1)
 
     def case_2d_xy_with_2d_xy_along_z(self):
         return (20, 40, 1), (30, 50, 1), 'z', (20, 40, 2)
@@ -2250,7 +2250,7 @@ class CasesResample:
         return (1, 20, 40), (30, 50, 1), 'x', (31, 20, 40)
 
     def case_2d_yz_with_2d_xy_along_y(self):
-        return (1, 20, 40), (30, 50, 1), 'y', (1, 2020, 40)
+        return (1, 20, 40), (30, 50, 1), 'y', (1, 70, 40)
 
     def case_2d_yz_with_2d_xy_along_z(self):
         return (1, 20, 40), (30, 50, 1), 'z', (1, 20, 41)
@@ -2276,14 +2276,46 @@ class CasesResample:
         return (10, 20, 1), (30, 40, 50), 'x', (40, 20, 1)
 
 
-@parametrize_with_cases('dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResample)
-def test_concatenate_resample(dimensions_a, dimensions_b, axis, dimensions_out):
+@parametrize_with_cases(
+    'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleOffAxis
+)
+def test_concatenate_resample_off_axis(dimensions_a, dimensions_b, axis, dimensions_out):
     image_a = pv.ImageData(dimensions=dimensions_a)
     image_a['data'] = range(image_a.n_points)
     image_b = pv.ImageData(dimensions=dimensions_b)
     image_b['data'] = range(image_b.n_points)
 
-    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample')
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-off-axis')
+    assert concatenated_image.dimensions == dimensions_out
+
+
+class CasesResampleProportional:
+    def case_2d_xy_along_x(self):
+        return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
+
+    def case_2d_xy_along_y(self):
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
+
+    def case_2d_yz_along_y(self):
+        return (1, 20, 40), (1, 30, 50), 'y', (1, 44, 40)
+
+    def case_2d_yz_along_z(self):
+        return (1, 20, 40), (1, 30, 50), 'z', (1, 20, 73)
+
+    def case_3d_proportional_along_z(self):
+        return (256, 256, 1), (128, 128, 50), 'z', (256, 256, 101)
+
+
+@parametrize_with_cases(
+    'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleProportional
+)
+def test_concatenate_resample_proportional(dimensions_a, dimensions_b, axis, dimensions_out):
+    image_a = pv.ImageData(dimensions=dimensions_a)
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=dimensions_b)
+    image_b['data'] = range(image_b.n_points)
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-proportional')
     assert concatenated_image.dimensions == dimensions_out
 
 
@@ -2294,7 +2326,7 @@ def test_concatenate_resample_kwargs():
     image_b['B'] = [1, 2]
     resample_kwargs = dict(interpolation='linear', border_mode='wrap', anti_aliasing=True)
     concatenated_image = image_a.concatenate(
-        image_b, axis=0, mode='resample', resample_kwargs=resample_kwargs
+        image_b, axis=0, mode='resample-off-axis', resample_kwargs=resample_kwargs
     )
     assert isinstance(concatenated_image, pv.ImageData)
 
@@ -2303,7 +2335,9 @@ def test_concatenate_resample_kwargs():
         "('anti_aliasing', 'interpolation', 'border_mode')"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        image_a.concatenate(image_b, mode='resample', resample_kwargs={'dimensions': (1, 2, 3)})
+        image_a.concatenate(
+            image_b, mode='resample-off-axis', resample_kwargs={'dimensions': (1, 2, 3)}
+        )
 
 
 def test_concatenate_extents():
