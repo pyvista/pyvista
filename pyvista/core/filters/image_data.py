@@ -5418,7 +5418,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` resampled.
             - ``'resample-uniform'``: Uniformly :meth:`resample` concatenated images to match the
-              input. This mode is only available if _all_ off-axis dimensions can be
+              input. This mode is only available if `all` off-axis dimensions can be
               proportionally resampled, which is not always possible for 3D cases.
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
@@ -5607,7 +5607,7 @@ class ImageDataFilters(DataSetFilters):
             # but we leave the image's concatenating axis unchanged
             new_dims = list(reference_dimensions)
             new_dims[axis_num] = image_dimensions[axis_num]
-            return tuple(new_dims)
+            return cast('tuple[int, int, int]', tuple(new_dims))
 
         def _compute_sample_rate(reference_image: ImageData, image: ImageData) -> float:
             ref_dims = np.array(reference_image.dimensions)
