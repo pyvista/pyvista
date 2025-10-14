@@ -5425,8 +5425,8 @@ class ImageDataFilters(DataSetFilters):
             - ``'crop-center'``: Use :meth:`crop` to center-crop concatenated images such that
               their dimensions match the input dimensions exactly.
             - ``'crop-extents'``: :meth:`crop` concatenated images using the extent of the input
-              to crop each image such that all images have the same extent before concatenating.
-            - ``'preserve-extents'``: the extent of all images are preserved and used to place the
+              before concatenating.
+            - ``'preserve-extents'``: the extents of all images are preserved and used to place the
               images in the output. The whole extent of the output is the union of the input whole
               extents. The origin and spacing is taken from the first input. ``axis`` is not used
               by this mode.
