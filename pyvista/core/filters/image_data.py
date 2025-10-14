@@ -65,7 +65,7 @@ _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
     'strict',
     'resample-off-axis',
-    'resample-uniform',
+    'resample-proportional',
     'crop-off-axis',
     'crop-center',
     'crop-extents',
@@ -5398,7 +5398,7 @@ class ImageDataFilters(DataSetFilters):
             #. the same number of scalar components.
 
             Use ``mode`` if the inputs have mismatched dimensions, ``dtype_policy`` if they have
-            different dtypes, and/or ``component_policy`` they differ in the number of scalar
+            different dtypes, and/or ``component_policy`` if they differ in the number of scalar
             components.
 
         axis : int | str, default: 'x'
@@ -5417,9 +5417,9 @@ class ImageDataFilters(DataSetFilters):
               ``axis``.
             - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` resampled.
-            - ``'resample-uniform'``: Uniformly :meth:`resample` concatenated images to match the
-              input. This mode is only available if `all` off-axis dimensions can be
-              proportionally resampled, which is not always possible for 3D cases.
+            - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
+              preserve their aspect ratio(s). For 3D cases, this may not be possible, and a
+              ``ValueError`` may be raised.
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-center'``: Use :meth:`crop` to center-crop concatenated images such that
@@ -5506,12 +5506,13 @@ class ImageDataFilters(DataSetFilters):
         >>> beach.dimensions
         (100, 100, 1)
 
-        Concatenate using ``'resample-uniform'`` mode preserve the aspect ratio of the concatenated
-        image. Linear interpolation with antialiasing is used to avoid sampling artifacts.
+        Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
+        concatenated image. Linear interpolation with antialiasing is used to avoid sampling
+        artifacts.
 
         >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
         >>> concatenated = beach.concatenate(
-        ...     bird, mode='resample-uniform', resample_kwargs=resample_kwargs
+        ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
         ... )
         >>> concatenated.dimensions
         (233, 100, 1)
@@ -5594,7 +5595,7 @@ class ImageDataFilters(DataSetFilters):
         Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
 
         >>> concatenated = yinyang.concatenate(
-        ...     beach, mode='resample-uniform', component_policy='promote'
+        ...     beach, mode='resample-proportional', component_policy='promote'
         ... )
         >>> concatenated.plot(**plot_kwargs)
 
@@ -5635,8 +5636,8 @@ class ImageDataFilters(DataSetFilters):
                     return sample_rate
 
             msg = (
-                f'Unable to uniformly resample image with dimensions {image.dimensions} to match'
-                f'\ndimensions to concatenate along axis {axis}.'
+                f'Unable to proportionally resample image with dimensions {image.dimensions} to '
+                f'match\ninput dimensions {self.dimensions} for concatenation along axis {axis}.'
             )
             raise ValueError(msg)
 
@@ -5725,7 +5726,7 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['dimensions'] = _compute_dimensions(
                                 self.dimensions, img.dimensions
                             )
-                        else:  # mode == 'resample-uniform
+                        else:  # mode == 'resample-proportional
                             kwargs['sample_rate'] = _compute_sample_rate(self, img)
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
@@ -5740,7 +5741,12 @@ class ImageDataFilters(DataSetFilters):
                     elif mode == 'crop-center':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
 
-            if mode in ['resample-off-axis', 'resample-uniform', 'crop-off-axis', 'crop-center']:
+            if mode in [
+                'resample-off-axis',
+                'resample-proportional',
+                'crop-off-axis',
+                'crop-center',
+            ]:
                 # These modes should not be affected by offset, so we zero it
                 img_shallow_copy.offset = (0, 0, 0)
 

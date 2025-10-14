@@ -2326,7 +2326,7 @@ def test_concatenate_resample_uniform(dimensions_a, dimensions_b, axis, dimensio
     image_b = pv.ImageData(dimensions=dimensions_b)
     image_b['data'] = range(image_b.n_points)
 
-    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-uniform')
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-proportional')
     assert concatenated_image.dimensions == dimensions_out
 
 
@@ -2337,14 +2337,14 @@ def test_concatenate_resample_uniform_raises():
     image_b['data'] = range(image_b.n_points)
 
     match = (
-        'Unable to uniformly resample image with dimensions (2, 2, 2) to match\n'
-        'dimensions to concatenate along axis x.'
+        'Unable to proportionally resample image with dimensions (2, 2, 2) to match\n'
+        'input dimensions (2, 2, 3) for concatenation along axis x.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        image_a.concatenate(image_b, mode='resample-uniform')
+        image_a.concatenate(image_b, mode='resample-proportional')
 
 
-@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-uniform'])
+@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-proportional'])
 def test_concatenate_resample_kwargs(mode):
     image_a = pv.ImageData(dimensions=(1, 1, 1))
     image_a['A'] = [0]
