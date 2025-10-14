@@ -2224,6 +2224,14 @@ def test_concatenate_component_policy():
     expected_array = np.vstack((expected_gray_rgba, rgba_array))
     assert np.array_equal(concatenated.active_scalars, expected_array)
 
+def test_concatenate_component_policy_raises(beach):
+    im = pv.ImageData(dimensions=(1,1,1))
+    im['data'] = np.array([[1,2]], dtype=np.uint8)
+    match = ("Unable to promote scalar components. Only promotion for grayscale (1 component), "
+             "RGB (3 components),\nand RGBA (4 components) is supported. Got: {2, 3}")
+    with pytest.raises(ValueError, match=re.escape(match)):
+        im.concatenate(beach, mode='crop-off-axis',component_policy='promote')
+
 
 class CasesResampleOffAxis:
     # 1D WITH 1D CASES
