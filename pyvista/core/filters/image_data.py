@@ -5385,12 +5385,12 @@ class ImageDataFilters(DataSetFilters):
     ):
         """Combine multiple images into one.
 
-        This filter uses :vtk:`vtkImageAppend` to combine multiple inputs. By default, images are
+        This filter uses :vtk:`vtkImageAppend` to combine multiple images. By default, images are
         concatenated along the specified ``axis``, and all images must have:
 
-            #. identical dimensions except along the specified ``axis``,
-            #. the same scalar dtype, and
-            #. the same number of scalar components.
+        #. identical dimensions except along the specified ``axis``,
+        #. the same scalar dtype, and
+        #. the same number of scalar components.
 
         Use ``mode`` for cases with mismatched dimensions, ``dtype_policy`` for cases with
         mismatched dtypes, and/or ``component_policy`` for cases with mismatched scalar components.
