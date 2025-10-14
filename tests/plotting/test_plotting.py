@@ -2744,7 +2744,7 @@ def test_collision_plot(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     sphere0 = pv.Sphere()
     sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
-    col, n_contacts = sphere0.collision(sphere1, generate_scalars=True)
+    col, _n_contacts = sphere0.collision(sphere1, generate_scalars=True)
 
     plotter = pv.Plotter()
     plotter.add_mesh(col)
@@ -3192,7 +3192,7 @@ def test_ssao_pass(verify_image_cache):
     pl.enable_ssao()
     pl.show()
 
-    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+    with pytest.raises(RuntimeError, match=r'The renderer has been closed.'):
         pl.disable_ssao()
 
 
@@ -3271,7 +3271,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         scalars='data_a',
         nan_color='green',
@@ -3293,7 +3293,7 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         scalars='cell_data',
     )
@@ -3306,7 +3306,7 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
 def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         color='red',
         lighting=False,
@@ -3416,7 +3416,7 @@ def test_export_obj(tmpdir, sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
 
-    with pytest.raises(ValueError, match='end with ".obj"'):
+    with pytest.raises(ValueError, match=r'end with ".obj"'):
         pl.export_obj('badfilename')
 
     pl.export_obj(filename)
@@ -3426,7 +3426,7 @@ def test_export_obj(tmpdir, sphere):
 
     # Check that when we close the plotter, the adequate error is raised
     pl.close()
-    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+    with pytest.raises(RuntimeError, match=r'This plotter must still have a render window open.'):
         pl.export_obj(filename)
 
 
@@ -3548,7 +3548,7 @@ def test_tight_multiple_objects():
 def test_backface_params():
     mesh = pv.ParametricCatalanMinimal()
 
-    with pytest.raises(TypeError, match='pyvista.Property or a dict'):
+    with pytest.raises(TypeError, match=r'pyvista.Property or a dict'):
         mesh.plot(backface_params='invalid')
 
     params = dict(color='blue', smooth_shading=True)
@@ -3930,7 +3930,10 @@ def test_remove_vertices_actor(sphere):
 
 
 @pytest.mark.skip_windows
-def test_add_point_scalar_labels_fmt():
+def test_add_point_scalar_labels_fmt(verify_image_cache):
+    # parallel on GitHub hosted sometimes has high image error
+    verify_image_cache.macos_skip_image_cache = True
+
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)

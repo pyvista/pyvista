@@ -95,7 +95,7 @@ def test_multiple_lines_source():
     assert np.array_equal(algo.points, points)
     with pytest.raises(ValueError, match='Array of points must have three values per point'):
         algo.points = points[:, :1]
-    with pytest.raises(ValueError, match='>=2 points need to define multiple lines.'):
+    with pytest.raises(ValueError, match=r'>=2 points need to define multiple lines.'):
         algo.points = points[0, :]
 
 
