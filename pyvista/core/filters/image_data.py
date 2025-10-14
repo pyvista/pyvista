@@ -5383,7 +5383,21 @@ class ImageDataFilters(DataSetFilters):
         dtype_policy: _ConcatenateDTypePolicyOptions | None = None,
         component_policy: _ConcatenateComponentPolicyOptions | None = None,
     ):
-        """Concatenate :class:`~pyvista.ImageData` along an axis.
+        """Combine multiple images into one.
+
+        This filter uses :vtk:`vtkImageAppend` to combine multiple inputs. By default, images are
+        concatenated along the specified ``axis``, and all images must have:
+
+            #. identical dimensions except along the specified ``axis``,
+            #. the same scalar dtype, and
+            #. the same number of scalar components.
+
+        Use ``mode`` for cases with mismatched dimensions, ``dtype_policy`` for cases with
+        mismatched dtypes, and/or ``component_policy`` for cases with mismatched scalar components.
+
+        The output has the same :attr:`~pyvista.ImageData.origin` and
+        :attr:`~pyvista.ImageData.spacing` as the first input. The origin and spacing of all other
+        inputs are ignored.
 
         .. versionadded:: 0.47
 
@@ -5391,15 +5405,6 @@ class ImageDataFilters(DataSetFilters):
         ----------
         images : ImageData | Sequence[ImageData]
             The input image(s) to concatenate. The default active scalars are used for all images.
-            By default, all images must have:
-
-            #. identical dimensions except along the specified ``axis``,
-            #. the same scalar dtype, and
-            #. the same number of scalar components.
-
-            Use ``mode`` if the inputs have mismatched dimensions, ``dtype_policy`` if they have
-            different dtypes, and/or ``component_policy`` if they differ in the number of scalar
-            components.
 
         axis : int | str, default: 'x'
             Axis along which the images are concatenated:
@@ -5497,7 +5502,7 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = beach.concatenate(beach_black, axis='y')
             >>> concatenated.plot(**plot_kwargs)
 
-            By default, concatenating requires that all off-axis dimensions match the input. Use
+            By default, concatenation requires that all off-axis dimensions match the input. Use
             the ``mode`` keyword to enable concatenation with mismatched dimensions.
 
             Load a second 2D image with different dimensions:
@@ -5557,7 +5562,7 @@ class ImageDataFilters(DataSetFilters):
             (-50, 457, -50, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
 
-            Reverse the concatenating order.
+            Reverse the concatenation order.
 
             >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
             >>> concatenated.plot(**plot_kwargs)
@@ -5567,7 +5572,7 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
             >>> concatenated.plot(**plot_kwargs)
 
-            Reverse the concatenating order.
+            Reverse the concatenation order.
 
             >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
             >>> concatenated.plot(**plot_kwargs)
@@ -5578,7 +5583,7 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = beach.concatenate(bird, mode='crop-center')
             >>> concatenated.plot(**plot_kwargs)
 
-            Reverse the concatenating order.
+            Reverse the concatenation order.
 
             >>> concatenated = bird.concatenate(beach, mode='crop-center')
             >>> concatenated.plot(**plot_kwargs)
