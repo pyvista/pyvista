@@ -5634,7 +5634,11 @@ class ImageDataFilters(DataSetFilters):
                 if np.isclose(ref_ratio, img_ratio):
                     return sample_rate
 
-            raise ValueError
+            msg = (
+                f'Unable to uniformly resample image with dimensions {image.dimensions} to match'
+                f'\ndimensions to concatenate along axis {axis}.'
+            )
+            raise ValueError(msg)
 
         # Validate mode
         if mode is not None:
@@ -5653,6 +5657,7 @@ class ImageDataFilters(DataSetFilters):
             mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
             axis_num = mapping[axis]
         else:
+            axis = 'x'
             axis_num = 0
 
         # Validate dtype policy
@@ -5774,9 +5779,9 @@ class ImageDataFilters(DataSetFilters):
             else:  # component_policy == 'promote'
                 if not set(all_n_components) < {1, 3, 4}:
                     msg = (
-                        'Unable to promote scalar components. Only promotion for grayscale (1 component), '
-                        'RGB (3 components),\nand RGBA (4 components) is supported. Got: '
-                        f'{set(all_n_components)}'
+                        'Unable to promote scalar components. Only promotion for grayscale (1 '
+                        'component), RGB (3 components),\nand RGBA (4 components) is supported. '
+                        f'Got: {set(all_n_components)}'
                     )
                     raise ValueError(msg)
                 target_n_components = max(all_n_components)

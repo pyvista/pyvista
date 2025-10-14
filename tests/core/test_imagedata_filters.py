@@ -2224,13 +2224,16 @@ def test_concatenate_component_policy():
     expected_array = np.vstack((expected_gray_rgba, rgba_array))
     assert np.array_equal(concatenated.active_scalars, expected_array)
 
+
 def test_concatenate_component_policy_raises(beach):
-    im = pv.ImageData(dimensions=(1,1,1))
-    im['data'] = np.array([[1,2]], dtype=np.uint8)
-    match = ("Unable to promote scalar components. Only promotion for grayscale (1 component), "
-             "RGB (3 components),\nand RGBA (4 components) is supported. Got: {2, 3}")
+    im = pv.ImageData(dimensions=(1, 1, 1))
+    im['data'] = np.array([[1, 2]], dtype=np.uint8)
+    match = (
+        'Unable to promote scalar components. Only promotion for grayscale (1 component), '
+        'RGB (3 components),\nand RGBA (4 components) is supported. Got: {2, 3}'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
-        im.concatenate(beach, mode='crop-off-axis',component_policy='promote')
+        im.concatenate(beach, mode='crop-off-axis', component_policy='promote')
 
 
 class CasesResampleOffAxis:
@@ -2325,6 +2328,20 @@ def test_concatenate_resample_uniform(dimensions_a, dimensions_b, axis, dimensio
 
     concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-uniform')
     assert concatenated_image.dimensions == dimensions_out
+
+
+def test_concatenate_resample_uniform_raises():
+    image_a = pv.ImageData(dimensions=(2, 2, 3))
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=(2, 2, 2))
+    image_b['data'] = range(image_b.n_points)
+
+    match = (
+        'Unable to uniformly resample image with dimensions (2, 2, 2) to match\n'
+        'dimensions to concatenate along axis x.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate(image_b, mode='resample-uniform')
 
 
 @pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-uniform'])
