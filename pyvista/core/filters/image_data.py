@@ -5422,7 +5422,7 @@ class ImageDataFilters(DataSetFilters):
               ``axis``.
             - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` resampled.
-            - ``'resample-match'``: Use :meth:`resample` all dimensions of concatenated images
+            - ``'resample-match'``: :meth:`resample` all dimensions of concatenated images
               to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
               except the on-axis dimension is `also` resampled.
             - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
