@@ -1965,14 +1965,20 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
-    """Create a rectangle defined by 3 points.
+    """Create a rectangle defined by 2 or 3 points.
 
-    The 3 points must define an orthogonal set of vectors.
+    When 2 points are provided, they define diagonally opposite corners of the rectangle.
+    When 3 points are provided, they must define an orthogonal set of vectors.
 
     Parameters
     ----------
     points : array_like[float], optional
-        Points of the rectangle. Defaults to a unit square in xy-plane.
+        Points of the rectangle. Can be either:
+
+        * 2 points defining diagonally opposite corners
+        * 3 points defining an orthogonal set of vectors
+
+        Defaults to a unit square in xy-plane.
 
     Returns
     -------
@@ -1981,6 +1987,16 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
 
     Examples
     --------
+    Create a rectangle from two diagonal points.
+
+    >>> import pyvista as pv
+    >>> pointa = [0.0, 0.0, 0.0]
+    >>> pointb = [1.0, 1.0, 0.0]
+    >>> rectangle = pv.Rectangle([pointa, pointb])
+    >>> rectangle.plot(show_edges=True, line_width=5)
+
+    Create a rectangle from three orthogonal points.
+
     >>> import pyvista as pv
     >>> pointa = [1.0, 0.0, 0.0]
     >>> pointb = [1.0, 1.0, 0.0]
@@ -1991,53 +2007,76 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     """
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-    if len(points) != 3:
-        msg = 'Points must be given as length 3 np.ndarray or list'
-        raise TypeError(msg)
-
+    
     points, _ = _coerce_pointslike_arg(points)
-
-    point_0 = points[0]
-    point_1 = points[1]
-    point_2 = points[2]
-
-    vec_01 = point_1 - point_0
-    vec_02 = point_2 - point_0
-    vec_12 = point_2 - point_1
-
-    mag_01 = np.linalg.norm(vec_01)
-    mag_02 = np.linalg.norm(vec_02)
-    mag_12 = np.linalg.norm(vec_12)
-
-    if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
-        msg = 'Unable to build a rectangle with less than three different points'
-        raise ValueError(msg)
-
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
-
-    null_scalar_products = [
-        val
-        for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12]
-        if np.isclose(val, 0)
-    ]
-    if len(null_scalar_products) == 0:
-        msg = 'The three points should defined orthogonal vectors'
-        raise ValueError(msg)
-
-    points = np.array([point_0, point_1, point_2, point_0])
-    if np.isclose(scalar_pdct_01_02, 0):
-        points[3] = point_0 + vec_01 + vec_02
-        cells = np.array([[4, 0, 1, 3, 2]])
-    elif np.isclose(scalar_pdct_01_12, 0):
-        points[3] = point_1 + vec_12 - vec_01
+    
+    if len(points) == 2:
+        # Two points define diagonally opposite corners
+        point_0 = points[0]
+        point_1 = points[1]
+        
+        # Check that points are different
+        if np.allclose(point_0, point_1):
+            msg = 'Unable to build a rectangle with two identical points'
+            raise ValueError(msg)
+        
+        # Create the four corners from the two diagonal points
+        # The other two corners share x,y,z coordinates from the diagonal points
+        point_2 = np.array([point_1[0], point_0[1], point_0[2]])
+        point_3 = np.array([point_0[0], point_1[1], point_1[2]])
+        
+        points_array = np.array([point_0, point_2, point_1, point_3])
         cells = np.array([[4, 0, 1, 2, 3]])
-    else:
-        points[3] = point_2 - vec_02 - vec_12
-        cells = np.array([[4, 0, 2, 1, 3]])
+        
+        return wrap(pyvista.PolyData(points_array, cells))
+    
+    elif len(points) == 3:
+        # Three points define an orthogonal set of vectors (original behavior)
+        point_0 = points[0]
+        point_1 = points[1]
+        point_2 = points[2]
 
-    return wrap(pyvista.PolyData(points, cells))
+        vec_01 = point_1 - point_0
+        vec_02 = point_2 - point_0
+        vec_12 = point_2 - point_1
+
+        mag_01 = np.linalg.norm(vec_01)
+        mag_02 = np.linalg.norm(vec_02)
+        mag_12 = np.linalg.norm(vec_12)
+
+        if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
+            msg = 'Unable to build a rectangle with less than three different points'
+            raise ValueError(msg)
+
+        scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+        scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+        scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
+
+        null_scalar_products = [
+            val
+            for val in [scalar_pdct_01_02, scalar_pdct_01_12, scalar_pdct_02_12]
+            if np.isclose(val, 0)
+        ]
+        if len(null_scalar_products) == 0:
+            msg = 'The three points should defined orthogonal vectors'
+            raise ValueError(msg)
+
+        points_array = np.array([point_0, point_1, point_2, point_0])
+        if np.isclose(scalar_pdct_01_02, 0):
+            points_array[3] = point_0 + vec_01 + vec_02
+            cells = np.array([[4, 0, 1, 3, 2]])
+        elif np.isclose(scalar_pdct_01_12, 0):
+            points_array[3] = point_1 + vec_12 - vec_01
+            cells = np.array([[4, 0, 1, 2, 3]])
+        else:
+            points_array[3] = point_2 - vec_02 - vec_12
+            cells = np.array([[4, 0, 2, 1, 3]])
+
+        return wrap(pyvista.PolyData(points_array, cells))
+    
+    else:
+        msg = 'Points must be given as length 2 or 3 np.ndarray or list'
+        raise TypeError(msg)
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
