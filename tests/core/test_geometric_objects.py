@@ -736,7 +736,9 @@ def test_rectangle_two_identical_points():
 def test_rectangle_not_enough_points():
     pointa = [3.0, 1.0, 1.0]
 
-    with pytest.raises(TypeError, match=r'Points must be given as length 2 or 3 np.ndarray or list'):
+    with pytest.raises(
+        TypeError, match=r'Points must be given as length 2 or 3 np.ndarray or list'
+    ):
         pv.Rectangle([pointa])
 
 
@@ -744,13 +746,15 @@ def test_rectangle_two_points():
     """Test creating rectangle from two diagonal points."""
     pointa = [0.0, 0.0, 0.0]
     pointb = [1.0, 1.0, 0.0]
-    expected_points = np.array([
-        [0.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0],
-        [1.0, 1.0, 0.0],
-        [0.0, 1.0, 0.0],
-    ])
-    
+    expected_points = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ]
+    )
+
     mesh = pv.Rectangle([pointa, pointb])
     assert mesh.n_points == 4
     assert mesh.n_cells == 1

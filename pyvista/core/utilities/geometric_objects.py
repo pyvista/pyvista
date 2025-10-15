@@ -2007,29 +2007,29 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     """
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-    
+
     points, _ = _coerce_pointslike_arg(points)
-    
+
     if len(points) == 2:
         # Two points define diagonally opposite corners
         point_0 = points[0]
         point_1 = points[1]
-        
+
         # Check that points are different
         if np.allclose(point_0, point_1):
             msg = 'Unable to build a rectangle with two identical points'
             raise ValueError(msg)
-        
+
         # Create the four corners from the two diagonal points
         # The other two corners share x,y,z coordinates from the diagonal points
         point_2 = np.array([point_1[0], point_0[1], point_0[2]])
         point_3 = np.array([point_0[0], point_1[1], point_1[2]])
-        
+
         points_array = np.array([point_0, point_2, point_1, point_3])
         cells = np.array([[4, 0, 1, 2, 3]])
-        
+
         return wrap(pyvista.PolyData(points_array, cells))
-    
+
     elif len(points) == 3:
         # Three points define an orthogonal set of vectors (original behavior)
         point_0 = points[0]
@@ -2073,7 +2073,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
             cells = np.array([[4, 0, 2, 1, 3]])
 
         return wrap(pyvista.PolyData(points_array, cells))
-    
+
     else:
         msg = 'Points must be given as length 2 or 3 np.ndarray or list'
         raise TypeError(msg)
