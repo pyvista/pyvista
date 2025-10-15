@@ -2406,7 +2406,7 @@ def test_concatenate_crop():
     image_b = pv.ImageData(dimensions=(3, 3, 1))
     image_b['B'] = array_b
 
-    concatenated = image_a.concatenate(image_b, mode='crop-center')
+    concatenated = image_a.concatenate(image_b, mode='crop-match')
     assert concatenated.dimensions == (2, 1, 1)
     expected = np.hstack((array_a, array_b[4]))
     assert np.array_equal(concatenated.active_scalars, expected)

@@ -67,7 +67,7 @@ _ConcatenateModeOptions = Literal[
     'resample-off-axis',
     'resample-proportional',
     'crop-off-axis',
-    'crop-center',
+    'crop-match',
     'preserve-extents',
 ]
 _ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
@@ -5426,7 +5426,7 @@ class ImageDataFilters(DataSetFilters):
               ``ValueError`` may be raised.
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
-            - ``'crop-center'``: Use :meth:`crop` to center-crop concatenated images such that
+            - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that
               their dimensions match the input dimensions exactly.
             - ``'preserve-extents'``: the extents of all images are preserved and used to place the
               images in the output. The whole extent of the output is the union of the input whole
@@ -5574,15 +5574,15 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
             >>> concatenated.plot(**plot_kwargs)
 
-            Use ``'crop-center'`` to center-crop the images to match the input's
+            Use ``'crop-match'`` to center-crop the images to match the input's
             dimensions.
 
-            >>> concatenated = beach.concatenate(bird, mode='crop-center')
+            >>> concatenated = beach.concatenate(bird, mode='crop-match')
             >>> concatenated.plot(**plot_kwargs)
 
             Reverse the concatenation order.
 
-            >>> concatenated = bird.concatenate(beach, mode='crop-center')
+            >>> concatenated = bird.concatenate(beach, mode='crop-match')
             >>> concatenated.plot(**plot_kwargs)
 
             Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
@@ -5736,14 +5736,14 @@ class ImageDataFilters(DataSetFilters):
                             self.dimensions, img_shallow_copy.dimensions
                         )
                         img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
-                    elif mode == 'crop-center':
+                    elif mode == 'crop-match':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
 
             if mode in [
                 'resample-off-axis',
                 'resample-proportional',
                 'crop-off-axis',
-                'crop-center',
+                'crop-match',
             ]:
                 # These modes should not be affected by offset, so we zero it
                 img_shallow_copy.offset = (0, 0, 0)
