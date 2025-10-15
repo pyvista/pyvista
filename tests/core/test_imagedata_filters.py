@@ -2204,13 +2204,13 @@ def test_concatenate_component_policy():
 
     match = (
         r'The number of components in the scalar arrays do not match. Got n components: {1, 3}.\n'
-        r"Set the component policy to 'promote' to automatically increase the number of "
+        r"Set the component policy to 'promote_rgba' to automatically increase the number of "
         r'components as needed.'
     )
     with pytest.raises(ValueError, match=match):
         gray.concatenate(rgb)
 
-    concatenated = gray.concatenate(rgb, component_policy='promote')
+    concatenated = gray.concatenate(rgb, component_policy='promote_rgba')
     expected_array = np.vstack((np.broadcast_to(gray_array, (1, 3)), rgb_array))
     assert np.array_equal(concatenated.active_scalars, expected_array)
 
@@ -2218,7 +2218,7 @@ def test_concatenate_component_policy():
     rgba = pv.ImageData(dimensions=(1, 1, 1))
     rgba['A'] = rgba_array
 
-    concatenated = gray.concatenate(rgba, component_policy='promote')
+    concatenated = gray.concatenate(rgba, component_policy='promote_rgba')
     expected_gray_rgba = np.broadcast_to(gray_array, (1, 4)).copy()
     expected_gray_rgba[0][3] = 255
     expected_array = np.vstack((expected_gray_rgba, rgba_array))
@@ -2233,7 +2233,7 @@ def test_concatenate_component_policy_raises(beach):
         'RGB (3 components),\nand RGBA (4 components) is supported. Got: {2, 3}'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        im.concatenate(beach, mode='crop-off-axis', component_policy='promote')
+        im.concatenate(beach, mode='crop-off-axis', component_policy='promote_rgba')
 
 
 class CasesResampleOffAxis:

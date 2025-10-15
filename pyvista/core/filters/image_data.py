@@ -72,7 +72,7 @@ _ConcatenateModeOptions = Literal[
     'preserve-extents',
 ]
 _ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
-_ConcatenateComponentPolicyOptions = Literal['strict', 'promote']
+_ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 
 
 @abstract_class
@@ -5449,10 +5449,10 @@ class ImageDataFilters(DataSetFilters):
             - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
               unsafe as it may downcast values and lose precision.
 
-        component_policy : 'strict' | 'promote', default: 'strict'
+        component_policy : 'strict' | 'promote_rgba', default: 'strict'
             - ``'strict'``: Do not modify the number of components of any scalars. All images being
               concatenated must have the number of components, else a ``ValueError`` is raised.
-            - ``'promote'``: Increase the number of components if necessary. Grayscale scalars
+            - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
               with one component may be promoted to RGB or RGBA scalars by duplicating values,
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
 
@@ -5604,7 +5604,7 @@ class ImageDataFilters(DataSetFilters):
             Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
 
             >>> concatenated = yinyang.concatenate(
-            ...     beach, mode='resample-proportional', component_policy='promote'
+            ...     beach, mode='resample-proportional', component_policy='promote_rgba'
             ... )
             >>> concatenated.plot(**plot_kwargs)
 
@@ -5788,10 +5788,10 @@ class ImageDataFilters(DataSetFilters):
                 msg = (
                     f'The number of components in the scalar arrays do not match. Got n '
                     f'components: {set(all_n_components)}.\nSet the component policy to '
-                    f"'promote' to automatically increase the number of components as needed."
+                    f"'promote_rgba' to automatically increase the number of components as needed."
                 )
                 raise ValueError(msg)
-            else:  # component_policy == 'promote'
+            else:  # component_policy == 'promote_rgba'
                 if not set(all_n_components) < {1, 3, 4}:
                     msg = (
                         'Unable to promote scalar components. Only promotion for grayscale (1 '
