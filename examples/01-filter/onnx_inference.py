@@ -7,8 +7,10 @@ ONNX Model Inference for Surrogate Modeling
 Demonstrate ONNX Runtime integration for machine learning inference in PyVista.
 
 This example shows how to use ONNX (Open Neural Network eXchange) models for
-fast inference directly within PyVista pipelines. This feature enables surrogate
-modeling, parameter studies, and inverse problems in scientific visualization.
+fast inference directly within PyVista pipelines using the
+:meth:`~pyvista.DataSetFilters.infer_scalars_with_onnx` method. This feature
+enables surrogate modeling, parameter studies, and inverse problems in
+scientific visualization.
 
 ONNX Runtime support was introduced in VTK 9.6.0 and allows integration of
 machine learning models trained in PyTorch, TensorFlow, Scikit-learn, or other
