@@ -131,7 +131,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        run: tox run -r -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
