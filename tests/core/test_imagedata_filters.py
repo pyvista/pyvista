@@ -2416,18 +2416,3 @@ def test_concatenate_crop():
     expected = np.hstack((array_a, array_b[3:6]))
     assert np.array_equal(concatenated.active_scalars, expected)
 
-
-def test_concatenate_crop_extents():
-    array_a = np.array([0])
-    array_b = np.array([1, 2])
-    expected_cropped_b = array_b[0]  # extent shared by first point only
-
-    image_a = pv.ImageData(dimensions=(1, 1, 1))
-    image_a['A'] = array_a
-    image_b = pv.ImageData(dimensions=(2, 1, 1))
-    image_b['B'] = array_b
-
-    concatenated = image_a.concatenate(image_b, mode='crop-extents')
-    assert concatenated.dimensions == (2, 1, 1)
-    expected = np.hstack((array_a, expected_cropped_b))
-    assert np.array_equal(concatenated.active_scalars, expected)

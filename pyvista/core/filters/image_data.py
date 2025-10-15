@@ -68,7 +68,6 @@ _ConcatenateModeOptions = Literal[
     'resample-proportional',
     'crop-off-axis',
     'crop-center',
-    'crop-extents',
     'preserve-extents',
 ]
 _ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
@@ -5429,8 +5428,6 @@ class ImageDataFilters(DataSetFilters):
               to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-center'``: Use :meth:`crop` to center-crop concatenated images such that
               their dimensions match the input dimensions exactly.
-            - ``'crop-extents'``: :meth:`crop` concatenated images using the extent of the input
-              before concatenating.
             - ``'preserve-extents'``: the extents of all images are preserved and used to place the
               images in the output. The whole extent of the output is the union of the input whole
               extents. The origin and spacing is taken from the first input. ``axis`` is not used
@@ -5588,15 +5585,6 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated = bird.concatenate(beach, mode='crop-center')
             >>> concatenated.plot(**plot_kwargs)
 
-            Reset the offset and use ``'crop-extents'`` mode to automatically :meth:`crop` each
-            image using the input's extent. This crops the lower-left portion of ``bird``, since
-            the ``beach`` extent corresponds to the bottom lower left portion of the ``bird``
-            extent.
-
-            >>> beach.offset = (0, 0, 0)
-            >>> concatenated = beach.concatenate(bird, mode='crop-extents')
-            >>> concatenated.plot(**plot_kwargs)
-
             Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
 
             >>> yinyang = examples.download_yinyang()
@@ -5690,7 +5678,6 @@ class ImageDataFilters(DataSetFilters):
         all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
 
         self_dimensions = self.dimensions
-        self_extent = self.extent
         all_dtypes: list[np.dtype] = []
         all_n_components: list[int] = []
         all_scalars: list[str] = []
@@ -5749,8 +5736,6 @@ class ImageDataFilters(DataSetFilters):
                             self.dimensions, img_shallow_copy.dimensions
                         )
                         img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
-                    elif mode == 'crop-extents':
-                        img_shallow_copy = img_shallow_copy.crop(extent=self_extent)
                     elif mode == 'crop-center':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
 
