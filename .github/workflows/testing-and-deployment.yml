@@ -213,7 +213,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
+        run: tox run -r -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
