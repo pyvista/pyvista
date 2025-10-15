@@ -6013,7 +6013,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         See Also
         --------
-        pyvista.examples : Example datasets for testing.
         :ref:`onnx_inference_example` : Full example demonstrating ONNX inference workflow.
 
         References
