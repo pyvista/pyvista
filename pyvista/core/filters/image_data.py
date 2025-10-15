@@ -5453,8 +5453,10 @@ class ImageDataFilters(DataSetFilters):
             - ``'strict'``: Do not modify the number of components of any scalars. All images being
               concatenated must have the same number of components, else a ``ValueError`` is raised.
             - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
-              with one component may be promoted to RGB or RGBA scalars by duplicating values,
+              with one component may be promoted to RGB scalars by duplicating values,
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
+              For integer dtypes, the opacity is set to the max int representable by the dtype;
+              for floats it is set to ``1.0``.
 
         resample_kwargs : dict, optional
             Keyword arguments passed to :meth:`resample` when using ``'resample-off-axis'`` or
