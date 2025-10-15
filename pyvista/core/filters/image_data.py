@@ -5458,7 +5458,7 @@ class ImageDataFilters(DataSetFilters):
 
         resample_kwargs : dict, optional
             Keyword arguments passed to :meth:`resample` when using ``'resample-off-axis'`` or
-            ``'reample-proportional'`` modes. Specify ``interpolation``, ``border_mode`` or
+            ``'resample-proportional'`` modes. Specify ``interpolation``, ``border_mode`` or
             ``anti_aliasing`` options.
 
         Returns
