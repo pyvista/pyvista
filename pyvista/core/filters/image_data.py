@@ -65,6 +65,7 @@ _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
     'strict',
     'resample-off-axis',
+    'resample-match',
     'resample-proportional',
     'crop-off-axis',
     'crop-match',
@@ -5421,13 +5422,17 @@ class ImageDataFilters(DataSetFilters):
               ``axis``.
             - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` resampled.
+            - ``'resample-match'``: Use :meth:`resample` all dimensions of concatenated images
+              to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
+              except the on-axis dimension is `also` resampled.
             - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
               preserve their aspect ratio(s). For 3D cases, this may not be possible, and a
               ``ValueError`` may be raised.
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that
-              their dimensions match the input dimensions exactly.
+              their dimensions match the input dimensions exactly. This is similar to
+              ``'crop-off-axis'``, except the on-axis dimension is `also` cropped.
             - ``'preserve-extents'``: the extents of all images are preserved and used to place the
               images in the output. The whole extent of the output is the union of the input whole
               extents. The origin and spacing is taken from the first input. ``axis`` is not used
@@ -5531,6 +5536,16 @@ class ImageDataFilters(DataSetFilters):
             ... )
             >>> concatenated.dimensions
             (558, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-match'`` to only resample all dimensions to match the input. This
+            option may also distort the image.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-match', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (200, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the
@@ -5726,6 +5741,8 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['dimensions'] = _compute_dimensions(
                                 self.dimensions, img.dimensions
                             )
+                        elif mode == 'resample-match':
+                            kwargs['dimensions'] = self_dimensions
                         else:  # mode == 'resample-proportional
                             kwargs['sample_rate'] = _compute_sample_rate(self, img)
 
@@ -5739,12 +5756,7 @@ class ImageDataFilters(DataSetFilters):
                     elif mode == 'crop-match':
                         img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
 
-            if mode in [
-                'resample-off-axis',
-                'resample-proportional',
-                'crop-off-axis',
-                'crop-match',
-            ]:
+            if mode.startswith(('resample', 'crop')):
                 # These modes should not be affected by offset, so we zero it
                 img_shallow_copy.offset = (0, 0, 0)
 

@@ -2319,13 +2319,13 @@ class CasesResampleProportional:
         return (1, 20, 40), (1, 30, 50), 'z', (1, 20, 73)
 
     def case_3d_proportional_along_z(self):
-        return (256, 256, 1), (128, 128, 50), 'z', (256, 256, 101)
+        return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
 
 
 @parametrize_with_cases(
     'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleProportional
 )
-def test_concatenate_resample_uniform(dimensions_a, dimensions_b, axis, dimensions_out):
+def test_concatenate_resample_proportional_match(dimensions_a, dimensions_b, axis, dimensions_out):
     image_a = pv.ImageData(dimensions=dimensions_a)
     image_a['data'] = range(image_a.n_points)
     image_b = pv.ImageData(dimensions=dimensions_b)
@@ -2334,8 +2334,18 @@ def test_concatenate_resample_uniform(dimensions_a, dimensions_b, axis, dimensio
     concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-proportional')
     assert concatenated_image.dimensions == dimensions_out
 
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-match')
+    expected_dims = list(dimensions_a)
+    if axis == 'x':
+        expected_dims[0] = expected_dims[0] * 2
+    if axis == 'y':
+        expected_dims[1] = expected_dims[1] * 2
+    if axis == 'z':
+        expected_dims[2] = expected_dims[2] * 2
+    assert concatenated_image.dimensions == tuple(expected_dims)
 
-def test_concatenate_resample_uniform_raises():
+
+def test_concatenate_resample_proportional_raises():
     image_a = pv.ImageData(dimensions=(2, 2, 3))
     image_a['data'] = range(image_a.n_points)
     image_b = pv.ImageData(dimensions=(2, 2, 2))
@@ -2349,7 +2359,7 @@ def test_concatenate_resample_uniform_raises():
         image_a.concatenate(image_b, mode='resample-proportional')
 
 
-@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-proportional'])
+@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-proportional', 'resample-match'])
 def test_concatenate_resample_kwargs(mode):
     image_a = pv.ImageData(dimensions=(1, 1, 1))
     image_a['A'] = [0]
@@ -2415,4 +2425,3 @@ def test_concatenate_crop():
     assert concatenated.dimensions == (4, 1, 1)
     expected = np.hstack((array_a, array_b[3:6]))
     assert np.array_equal(concatenated.active_scalars, expected)
-
