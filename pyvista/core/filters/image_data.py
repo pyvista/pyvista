@@ -5451,7 +5451,8 @@ class ImageDataFilters(DataSetFilters):
 
         component_policy : 'strict' | 'promote_rgba', default: 'strict'
             - ``'strict'``: Do not modify the number of components of any scalars. All images being
-              concatenated must have the same number of components, else a ``ValueError`` is raised.
+              concatenated must have the same number of components, else a ``ValueError`` is
+              raised.
             - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
               with one component may be promoted to RGB scalars by duplicating values,
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
