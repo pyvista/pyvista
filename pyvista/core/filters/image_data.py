@@ -5646,7 +5646,8 @@ class ImageDataFilters(DataSetFilters):
 
             msg = (
                 f'Unable to proportionally resample image with dimensions {image.dimensions} to '
-                f'match\ninput dimensions {self.dimensions} for concatenation along axis {axis}.'
+                f'match\ninput dimensions {self.dimensions} for concatenation along axis '
+                f'{axis_num}.'
             )
             raise ValueError(msg)
 
@@ -5658,16 +5659,16 @@ class ImageDataFilters(DataSetFilters):
             mode = 'strict'
 
         # Validate axis
+        mapping_axis_to_num = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+        mapping_axis_to_str = {'x': 'x', 'y': 'y', 'z': 'z', 0: 'x', 1: 'y', 2: 'z'}
         if axis is not None:
             if mode == 'preserve-extents':
                 msg = "The axis keyword cannot be used with 'preserve-extents' mode."
                 raise ValueError(msg)
             options = get_args(_AxisOptions)
             _validation.check_contains(options, must_contain=axis, name='axis')
-            mapping = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
-            axis_num = mapping[axis]
+            axis_num = mapping_axis_to_num[axis]
         else:
-            axis = 'x'
             axis_num = 0
 
         # Validate dtype policy
@@ -5712,12 +5713,15 @@ class ImageDataFilters(DataSetFilters):
                     if mode == 'strict':
                         # Allow mismatch only along concatenating axis
                         for ax in range(3):
-                            if ax != axis and dims[ax] != self_dimensions[ax]:
+                            if ax != axis_num and dims[ax] != self_dimensions[ax]:
+                                image_num = f'{i - 1} ' if len(all_images) > 2 else ''
+                                this_axis = mapping_axis_to_str[ax]
                                 msg = (
-                                    f'Image {i - 1} dimensions {img.dimensions} must match the '
-                                    f'input dimensions {self.dimensions} along axis {axis}.\n'
-                                    f'Use the `mode` keyword to allow concatenation with '
-                                    f'mismatched dimensions.'
+                                    f'Image {image_num}dimensions {img.dimensions} must '
+                                    f'match off-axis dimensions {self.dimensions} for axis '
+                                    f'{axis_num}.\nGot {this_axis} dimension {dims[ax]}, expected '
+                                    f'{self_dimensions[ax]}. Use the `mode` keyword to allow '
+                                    f'concatenation with\nmismatched dimensions.'
                                 )
                                 raise ValueError(msg)
                     elif mode.startswith('resample'):

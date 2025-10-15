@@ -2177,21 +2177,26 @@ def test_concatenate_dimensions_mismatch():
     concatenated_image = image_a.concatenate(image_b, axis=0)
     assert concatenated_image.dimensions == (3, 1, 1)
 
-    array_a = np.array([0, 1])
-    array_b = np.array([2, 3])
-
-    image_a = pv.ImageData(dimensions=(1, 2, 1))
-    image_a['A'] = array_a
-    image_b = pv.ImageData(dimensions=(2, 1, 1))
-    image_b['B'] = array_b
+    image_a = pv.ImageData(dimensions=(1, 2, 3))
+    image_a['A'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=(4, 5, 6))
+    image_b['B'] = range(image_b.n_points)
 
     match = (
-        'Image 0 dimensions (2, 1, 1) must match the input dimensions (1, 2, 1) along axis 0.\n'
-        'Use the `mode` keyword to allow concatenation with mismatched dimensions.'
+        'Image dimensions (4, 5, 6) must match off-axis dimensions (1, 2, 3) for axis 0.\n'
+        'Got y dimension 5, expected 2. Use the `mode` keyword to allow concatenation with\n'
+        'mismatched dimensions.'
     )
-
     with pytest.raises(ValueError, match=re.escape(match)):
         image_a.concatenate(image_b, axis=0)
+
+    match = (
+        'Image 1 dimensions (4, 5, 6) must match off-axis dimensions (1, 2, 3) for axis 2.\n'
+        'Got x dimension 4, expected 1. Use the `mode` keyword to allow concatenation with\n'
+        'mismatched dimensions.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate([image_a, image_b], axis=2)
 
 
 def test_concatenate_component_policy():
@@ -2338,7 +2343,7 @@ def test_concatenate_resample_uniform_raises():
 
     match = (
         'Unable to proportionally resample image with dimensions (2, 2, 2) to match\n'
-        'input dimensions (2, 2, 3) for concatenation along axis x.'
+        'input dimensions (2, 2, 3) for concatenation along axis 0.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         image_a.concatenate(image_b, mode='resample-proportional')
