@@ -733,7 +733,9 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
-    main(f'{func}')
+    with pytest.raises(SystemExit) as e:
+        main(f'{func}')
 
+    assert e.value.code == 0
     expected = f'{ret}\n' if ret is not None else ''
     assert capsys.readouterr().out == expected
