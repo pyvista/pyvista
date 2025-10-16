@@ -90,7 +90,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-@pytest.mark.parametrize('command', ['report', 'convert'])  # 'plot'
+@pytest.mark.parametrize('command', ['report', 'convert'])
 def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
     expected = textwrap.dedent(
         """\
@@ -205,30 +205,30 @@ def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_dir_only_error(tmp_ant_file, capsys):
+def test_convert_dir_only_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out
-    assert 'Invalid value' in out
-    assert 'Output file must have a file extension.' in out
+    assert '╭─ Error ─' in out, out
+    assert 'Invalid value' in out, out
+    assert 'Output file must have a file extension.' in out, out
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_file_not_found(capsys):
+def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     file_in = 'missing.vtp'
     with pytest.raises(SystemExit) as e:
         main(f'convert {file_in} .ply')
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out
-    assert f'File not found: {file_in}' in out
+    assert '╭─ Error ─' in out, out
+    assert f'1 file not found: {file_in}' in out, out
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_read_error(tmp_path, capsys):
+def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     # Create a dummy .vtp file with empty contents
     name = 'dummy.vtp'
     file_in = tmp_path / name
@@ -239,24 +239,23 @@ def test_convert_read_error(tmp_path, capsys):
         main(f'convert {str(file_in)!r} .ply')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out
-    assert 'File not readable by PyVista:' in out
-    assert name in out
+    assert '╭─ Error ─' in out, out
+    assert '1 file not readable by PyVista:' in out, out
     assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_convert_save_error(tmp_ant_file, capsys):
+def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     invalid_suffix = '.foo'
     output_path = tmp_ant_file.with_suffix(invalid_suffix)
     with pytest.raises(SystemExit) as e:
         main(f'convert {str(tmp_ant_file)!r} {str(output_path)!r}')
 
     out = capsys.readouterr().out
-    assert '╭─ PyVista Error ─' in out
-    assert 'Failed to save output file: ' in out
-    assert output_path.name in out
-    assert 'Invalid file extension' in out
+    assert '╭─ PyVista Error ─' in out, out
+    assert 'Failed to save output file: ' in out, out
+    assert output_path.name in out, out
+    assert 'Invalid file extension' in out, out
     assert e.value.code == 1
 
 
@@ -292,6 +291,11 @@ def mock_plot(mocker: MockerFixture):
 
 
 @pytest.fixture
+def mock_pv_read(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'read')
+
+
+@pytest.fixture
 def mock_add_mesh(mock_plotter: MagicMock):
     return mock_plotter().add_mesh
 
@@ -299,11 +303,6 @@ def mock_add_mesh(mock_plotter: MagicMock):
 @pytest.fixture
 def mock_add_volume(mock_plotter: MagicMock):
     return mock_plotter().add_volume
-
-
-@pytest.fixture
-def mock_files_validator(mocker: MockerFixture):
-    mocker.patch.object(pv.__main__, '_validator_files')
 
 
 @fixture
@@ -329,13 +328,13 @@ def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
 
     params = inspect.signature(pv.plot).parameters
 
-    defaults = {
+    return {
         p: v.default
         for p, v in params.items()
-        if (p not in missing_plot_arguments) and (v.kind != v.VAR_KEYWORD)
+        if (p not in missing_plot_arguments)
+        and (v.kind != v.VAR_KEYWORD)
+        and v.default is not v.empty
     }
-    defaults['var_item'] = []  # because passing empty list to `pv.plot` if None
-    return defaults
 
 
 def test_plot_cli_synced(missing_plot_arguments: set[str]):
@@ -366,16 +365,6 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     # Test the parameters defaults
     cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
     plot_defaults = {name: plot_sig.parameters[name].default for name in cli_sig.parameters}
-
-    # The only difference lies for `var_item`.
-    # In `pv.plot`, there is no default value, whereas in `pv.__main__._plot`, a default None
-    # value is set.
-    # The values are checked and then removed to allow testing the remaining defaults
-    k = 'var_item'
-    assert plot_defaults[k] == inspect.Signature.empty
-    assert cli_defaults[k] is None
-
-    del cli_defaults[k], plot_defaults[k]
 
     assert cli_defaults == plot_defaults
 
@@ -411,32 +400,6 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
 
 
 class CasesPlot:
-    def case_empty(self, default_plot_kwargs: dict):
-        return '', default_plot_kwargs
-
-    @pytest.mark.usefixtures('mock_files_validator')
-    def case_files_single_args(self, default_plot_kwargs: dict):
-        """Test when only a single positional argument is given for files."""
-        kwargs = default_plot_kwargs
-        kwargs['var_item'] = [f := 'file.vtp']
-        return f, kwargs
-
-    @pytest.mark.usefixtures('mock_files_validator')
-    def case_files_multiple_args(self, default_plot_kwargs: dict):
-        """Test when multiple positional arguments are given for files."""
-        kwargs = default_plot_kwargs
-        kwargs['var_item'] = (files := ['file1.vtp', 'file2.vtp'])
-        return ' '.join(files), kwargs
-
-    @parametrize(with_space=[True, False])
-    @pytest.mark.usefixtures('mock_files_validator')
-    def case_files_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
-        """Test when multiple keyword arguments are given for files."""
-        kwargs = default_plot_kwargs
-        kwargs['var_item'] = (files := ['file1.vtp', 'file2.vtp'])
-        prefix = '--files ' if with_space else '--files='
-        return prefix + ' '.join(files), kwargs
-
     @parametrize(offscreen=['True', 'yes', 'y', 'true'])
     def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
         kwargs = default_plot_kwargs
@@ -452,25 +415,38 @@ class CasesPlot:
         return tokens, kwargs
 
     @parametrize(off_screen=[True, False])
-    def case_kw_no_bool_no_value(self, default_plot_kwargs: dict, off_screen: bool):
+    def case_kw_no_bool_no_value(
+        self,
+        default_plot_kwargs: dict,
+        off_screen: bool,
+    ):
         kwargs = default_plot_kwargs
         tokens = '--off-screen' if off_screen else '--no-off-screen'
         kwargs.update(off_screen=off_screen)
         return tokens, kwargs
 
-    def case_window_size(self, default_plot_kwargs: dict):
+    def case_window_size(
+        self,
+        default_plot_kwargs: dict,
+    ):
         kwargs = default_plot_kwargs
         tokens = '--window-size=[100,100]'
         kwargs.update(window_size=[100, 100])
         return tokens, kwargs
 
-    def case_window_size_multiple(self, default_plot_kwargs: dict):
+    def case_window_size_multiple(
+        self,
+        default_plot_kwargs: dict,
+    ):
         kwargs = default_plot_kwargs
         tokens = '--window-size 100 100'
         kwargs.update(window_size=[100, 100])
         return tokens, kwargs
 
-    def case_window_size_rounding(self, default_plot_kwargs: dict):
+    def case_window_size_rounding(
+        self,
+        default_plot_kwargs: dict,
+    ):
         """Test when window size is given as float, it is rounded to int."""
         kwargs = default_plot_kwargs
         tokens = '--window-size=[100.4,100.6]'
@@ -478,14 +454,19 @@ class CasesPlot:
         return tokens, kwargs
 
     @parametrize(anti_aliasing=['ssaa', 'msaa', 'fxaa'])
-    def case_anti_aliasing(self, default_plot_kwargs: dict, anti_aliasing: str):
+    def case_anti_aliasing(
+        self,
+        default_plot_kwargs: dict,
+        anti_aliasing: str,
+    ):
         kwargs = default_plot_kwargs
         tokens = f'--anti-aliasing={anti_aliasing}'
         kwargs.update(anti_aliasing=anti_aliasing)
         return tokens, kwargs
 
+    # region kwargs cases
     @parametrize(
-        kwargs=[
+        tokens_kwargs=[
             ('--color=red', dict(color='red')),
             ('--color=(0,1,0)', dict(color=(0, 1, 0))),
             ('--color="(0, 1, 0)"', dict(color=(0, 1, 0))),
@@ -496,148 +477,278 @@ class CasesPlot:
             ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_validator')
     @case(tags=['kwargs', 'add_mesh'])
-    def case_kwargs(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+    def case_kwargs_add_mesh(
+        self,
+        tokens_kwargs: tuple[str, dict],
+    ):
         """Test when kwargs are provided to Plotter.add_mesh"""
-        tokens, kwargs = kwargs
-        tokens += ' --files=file.vtp'
-        default_plot_kwargs.update(**kwargs)
-        default_plot_kwargs.update(var_item=['file.vtp'])
-        return tokens, default_plot_kwargs
+        tokens, kwargs = tokens_kwargs
+        return tokens, kwargs
 
     @parametrize(
-        kwargs=[
+        tokens_kwargs=[
             ('--mapper smart', dict(mapper='smart')),
             ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
         ]
     )
-    @pytest.mark.usefixtures('mock_files_validator')
     @case(tags=['kwargs', 'add_volume'])
-    def case_kwargs_volume(self, default_plot_kwargs: dict, kwargs: tuple[str, dict]):
+    def case_kwargs_add_volume(
+        self,
+        tokens_kwargs: tuple[str, dict],
+    ):
         """Test when kwargs are provided to Plotter.add_volume"""
-        tokens, kwargs = kwargs
-        tokens += ' --files=file.vtp --volume'
-        default_plot_kwargs.update(**kwargs, volume=True)
-        default_plot_kwargs.update(var_item=['file.vtp'])
-        return tokens, default_plot_kwargs
+        tokens, kwargs = tokens_kwargs
+        tokens += ' --volume'
+        return tokens, kwargs
+
+    # endregion kwargs cases
+
+    # region raises cases
 
     @case(tags='raises')
     def case_anti_aliasing_raises(self):
-        return '--anti-aliasing=foo'
+        return '--anti-aliasing=foo', [
+            'Invalid value for "--anti-aliasing": unable to convert "foo" into',
+            "one of {'ssaa', 'msaa', 'fxaa'}.",
+        ]
 
     @case(tags='raises')
     @parametrize(window_size=['100', '100 200 300', '[100,200,300]'])
     def case_window_size_wrong_length(self, window_size: str):
         """Test when the window size does not have exactly two elements."""
-        return f' --window-size {window_size}'
+        if window_size == '100':
+            errors = [
+                'Invalid value "[100]" for "--window-size". Window size must be a',
+                'list of two integers.',
+            ]
+        elif window_size in {'100 200 300', '[100,200,300]'}:
+            errors = [
+                'Invalid value "[100, 200, 300]" for "--window-size". Window size ',
+                'must be a list of two integers.',
+            ]
+
+        return f' --window-size {window_size}', errors
 
     @case(tags='raises')
-    @parametrize(window_size=['100 a', 'b a', '[a,b]'])
+    @parametrize(window_size=['100 a', 'b a'])
     def case_window_size_wrong_type(self, window_size: str):
         """Test when the window size does not have the correct type."""
-        return f'--window-size {window_size}'
+        obj = 'a' if window_size == '100 a' else 'b'
+        return f'--window-size {window_size}', [
+            f'Invalid value for "--window-size": unable to convert "{obj}" into int.',
+        ]
 
     @case(tags='raises')
-    def case_files_raises(self, tmp_path: Path):
-        """Test when the file does not exists."""
-        return str(tmp_path / 'file.vtp')
-
-    @case(tags='raises')
-    def case_files_raises_kw(self, tmp_path: Path):
-        """Test when the file does not exists as keyword."""
-        return f'--files={tmp_path / "file.vtp"}'
-
-    @case(tags='raises')
-    def case_files_raises_one_exists(self, tmp_path: Path):
-        """Test when one file does not exists."""
-        (f1 := (tmp_path / 'f1.vtp')).touch()
-        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}'
-
-    @case(tags='raises')
-    def case_files_raises_not_readable(self, tmp_path: Path, mocker: MockerFixture):
-        """Test when a file is not readable by pyvista"""
-        (f1 := (tmp_path / 'f1.vtp')).touch()
-        m = mocker.patch.object(pv, 'read')
-        m.side_effect = Exception('Not readable')
-
-        return f'--files {f1.as_posix()}'
-
-    @case(tags='raises')
-    def case_kw_unknown(self, tmp_path: Path):
+    def case_kw_unknown(self):
         """Test when a supplementary keyword argument does not exists"""
-        pv.Sphere().save(f := tmp_path / 'file.vtp')
-        return f'{f.as_posix()} --foo_bar bar'
+        return '--foo_bar bar', [
+            '⚠ The following exception has been raised when calling pv.plot: ',
+            '"foo_bar" is an invalid keyword argument for  ',
+            '`_common_arg_parser`  ',
+            'Please check the provided arguments.',
+        ]
 
     @case(tags='raises')
-    def case_wrong_argument(self, tmp_path: Path):
+    def case_wrong_argument(self):
         """Test when an argument raises an error"""
-        pv.Sphere().save(f := tmp_path / 'file.vtp')
-        return f'{f.as_posix()} --opacity=foo'
+        return ' --opacity=foo', [
+            '⚠ The following exception has been raised when calling pv.plot: ',
+            'Opacity transfer function (foo) unknown. Valid options:',
+            "'sigmoid_10', 'sigmoid_15', 'sigmoid_20', 'foreground',",
+        ]
+
+    # endregion raises cases
 
 
 @parametrize_with_cases(
     'tokens, expected_kwargs',
     cases=CasesPlot,
-    filter=~filters.has_tag('raises'),
+    filter=~(filters.has_tag('raises') | filters.has_tag('kwargs')),
 )
+@pytest.mark.usefixtures('mock_pv_read')
 def test_plot_called(
     tokens: str,
     expected_kwargs: dict,
     mock_plot: MagicMock,
-    mock_add_mesh: MagicMock,
-    mock_add_volume: MagicMock,
-    mocker: MockerFixture,
-    current_cases: dict[str, Case],
 ):
     """Test that the pv.plot function is called with the expected arguments."""
+    file = Path(pv.examples.antfile).as_posix()
+    main(f'plot --files={file} {tokens}')
+    mock_plot.assert_called_once_with(var_item=[pv.read(file)], **expected_kwargs)
+
+
+@parametrize_with_cases(
+    'tokens, expected_kwargs',
+    cases=CasesPlot,
+    has_tag='kwargs',
+)
+def test_plot_called_kwargs(
+    tokens,
+    expected_kwargs,
+    mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
+    current_cases: dict[str, Case],
+):
+    """
+    Test that the pl.add_mesh or pl.add_volume function is called with the expected arguments
+    when supplementary kw arguments are added to the command line.
+    """
+
+    file = Path(pv.examples.antfile).as_posix()
+    main(f'plot --files {file} {tokens}')
+
+    case = current_cases['tokens']
+    tags = get_case_tags(case_func=case.func)
+
+    mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
+    mock.assert_called_once_with(pv.read(file), **expected_kwargs)
+
+
+@parametrize_with_cases('tokens, errors', cases=CasesPlot, has_tag='raises')
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
+    """Test that the plot CLI is raising expected exit errors."""
+
+    file = Path(pv.examples.antfile).as_posix()
+    with pytest.raises(SystemExit) as e:
+        main(f'plot --files {file} {tokens}')
+
+    assert e.value.code == 1
+
+    out = capsys.readouterr().out
+    for error in errors:
+        assert error in out, out
+
+
+class CasesPlotFiles:
+    """Cases used to test the --files argument of the plot CLI"""
+
+    @pytest.mark.usefixtures('mock_pv_read')
+    def case_single_args(self, default_plot_kwargs: dict):
+        """Test when only a single positional argument is given for files."""
+        kwargs = default_plot_kwargs
+        f = Path(pv.examples.antfile).as_posix()
+        kwargs['var_item'] = [pv.read(f)]
+        return f, kwargs
+
+    @pytest.mark.usefixtures('mock_pv_read')
+    def case_multiple_args(self, default_plot_kwargs: dict):
+        """Test when multiple positional arguments are given for files."""
+        kwargs = default_plot_kwargs
+        files = [Path(pv.examples.antfile).as_posix()] * 2
+        kwargs['var_item'] = [pv.read(f) for f in files]
+        return ' '.join(files), kwargs
+
+    @parametrize(with_space=[True, False])
+    @pytest.mark.usefixtures('mock_pv_read')
+    def case_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
+        """Test when multiple keyword arguments are given for files."""
+        kwargs = default_plot_kwargs
+
+        files = [Path(pv.examples.antfile).as_posix()] * 2
+        kwargs['var_item'] = [pv.read(f) for f in files]
+
+        prefix = '--files ' if with_space else '--files='
+        return prefix + ' '.join(files), kwargs
+
+    @case(tags='raises')
+    def case_not_exists(self, tmp_path: Path):
+        """Test when the file does not exists."""
+        return str((tmp_path / 'file.vtp').as_posix()), ['1 file not found']
+
+    @case(tags='raises')
+    def case_not_exists2(self, tmp_path: Path):
+        """Test when the filed do not exists."""
+        files = [str((tmp_path / f'file_{i}.vtp').as_posix()) for i in range(4)]
+        return ' '.join(files), ['4 files not found']
+
+    @case(tags='raises')
+    def case_not_exists_kw(self, tmp_path: Path):
+        """Test when the file does not exists as keyword."""
+        return f'--files={(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
+
+    @case(tags='raises')
+    def case_empty(self):
+        """Test when no files are passed"""
+        return '', ['Command "plot" parameter "--files" requires an argument.']
+
+    @case(tags='raises')
+    def case_one_exists(self, tmp_path: Path):
+        """Test when one file does not exists."""
+        (f1 := (tmp_path / 'f1.vtp')).touch()
+        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
+
+    @case(tags='raises')
+    def case_not_readable(self, tmp_path: Path, mocker: MockerFixture):
+        """Test when a file is not readable by pyvista"""
+        (f1 := (tmp_path / 'f1.vtp')).touch()
+        m = mocker.patch.object(pv, 'read')
+        m.side_effect = Exception('Not readable')
+
+        return f'--files {f1.as_posix()}', ['1 file not readable by PyVista:']
+
+
+@parametrize_with_cases(
+    'tokens, expected_kwargs', cases=CasesPlotFiles, filter=~filters.has_tag('raises')
+)
+def test_plot_called_files(
+    tokens: str,
+    expected_kwargs: dict,
+    mock_plot: MagicMock,
+):
+    """Test that the pv.plot function is called with the expected arguments
+    for the --files argument"""
     main(f'plot {tokens}')
     mock_plot.assert_called_once_with(**expected_kwargs)
 
-    case = current_cases['tokens']
-    if 'kwargs' in (tags := get_case_tags(case_func=case.func)):
-        mocker.stop(mock_plot)
+
+@parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
+    """Test that errors are correctly raised for the --files argument"""
+    with pytest.raises(SystemExit) as e:
         main(f'plot {tokens}')
 
-        mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
-        kwargs = case.params['kwargs'][-1]
-        mock.assert_called_once_with('file.vtp', **kwargs)
+    assert e.value.code == 1
+
+    out = capsys.readouterr().out
+    for error in errors:
+        assert error in out, out
 
 
 @parametrize(
     tokens_ncalls_args=[
-        ('file1.vtp file2.vtp', 2, ['file1.vtp', 'file2.vtp']),
-        ('', 0, []),
-        ('--files file1.vtp file2.vtp file3.vtp', 3, ['file1.vtp', 'file2.vtp', 'file3.vtp']),
+        ('file1.ply file2.ply', 2, ['file1.ply', 'file2.ply']),
+        ('--files file1.ply file2.ply file3.ply', 3, ['file1.ply', 'file2.ply', 'file3.ply']),
     ],
     idgen=lambda **args: args['tokens_ncalls_args'][0],
 )
 @parametrize(func=['add_mesh', 'add_volume'])
-@pytest.mark.usefixtures('mock_files_validator')
+@pytest.mark.usefixtures('mock_pv_read')
 def test_add_mesh_volume_called(
     tokens_ncalls_args: tuple[str, int, list[str]],
     mock_add_mesh: MagicMock,
     mock_add_volume: MagicMock,
     mocker: MockerFixture,
     func: str,
+    tmp_path: Path,
 ):
-    """Test that the pv.Plotter.add_mesh and add_volume methods are called with the expected arguments."""  # noqa: E501
+    """Test that the pv.Plotter.add_mesh and add_volume methods are called
+    a number of expected times with the correct arguments.
+    """
     tokens, ncalls, args = tokens_ncalls_args
     tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
+
+    for a in args:
+        shutil.copy(pv.examples.antfile, tmp_path / a)
+
+    os.chdir(tmp_path)
     main(f'plot {tokens}')
 
     mock = mock_add_volume if add_volume else mock_add_mesh
     assert mock.call_count == ncalls
-    assert mock.mock_calls == [mocker.call(a) for a in args]
-
-
-@parametrize_with_cases('tokens', cases=CasesPlot, has_tag='raises')
-def test_plot_called_raises(tokens: str):
-    """Test that the plot CLI is raising expected exit errors."""
-    with pytest.raises(SystemExit) as e:
-        main(f'plot {tokens}')
-
-    assert e.value.code == 1
+    assert mock.mock_calls == [mocker.call(pv.read(a)) for a in args]
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -733,8 +844,9 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
+    tokens = func if func == 'report' else f'{func} --files={Path(pv.examples.antfile).as_posix()}'
     with pytest.raises(SystemExit) as e:
-        main(f'{func}')
+        main(tokens)
 
     assert e.value.code == 0
     expected = f'{ret}\n' if ret is not None else ''

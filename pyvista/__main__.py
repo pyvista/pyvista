@@ -172,35 +172,64 @@ def _convert(
     app.console.print(f'[green]Saved:[/green] {out_path}')
 
 
+def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
+    path = Path(value)
+    has_suffix = bool(path.suffix)
+    is_suffix = not path.suffix and path.stem.startswith('.')
+    if not (has_suffix or is_suffix):
+        msg = '\nOutput file must have a file extension.'
+        raise ValueError(msg)
+
+
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
     if value is not None and len(value) != 2:
         msg = 'Window size must be a list of two integers.'
         raise ValueError(msg)
 
 
-def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
-    if value is None:
-        return
+def _converter_files(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_MeshAndPath]:
+    """Helper function used to read provided files.
+
+    Raises errors if:
+
+    - any file does not exits
+    - any file is not readable with ``pv.read``
+
+    """  # noqa: D401
+    values: list[str] = [t.value for t in tokens]
 
     # Test file exists
-    if not all((files := {v: Path(v).exists() for v in value}).values()):
-        missing = [k for k, v in files.items() if not v]
-        msg = f'File(s) not found: {missing}'
+    if not all((files := {v: Path(v).exists() for v in values}).values()):
+        missing: str | list[str] = [k for k, v in files.items() if not v]
+        n_missings = len(missing)
+
+        literal_file = 'file' if n_missings == 1 else 'files'
+        missing = missing[0] if n_missings == 1 else missing
+
+        msg = f'{n_missings} {literal_file} not found: {missing}'
         raise ValueError(msg)
 
     # Test file can be read by pyvista
-    def readable(file: str) -> bool:
+    meshes_and_paths: list[_MeshAndPath] = []
+    not_readable: list[str] = []
+    for file in values:
         try:
-            pyvista.read(file)
+            mesh = pyvista.read(file)
         except Exception:  # noqa: BLE001
-            return False
+            not_readable.append(file)
         else:
-            return True
+            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
 
-    if not all((files := {v: readable(v) for v in value}).values()):
-        not_readable = [k for k, v in files.items() if not v]
-        msg = f'File(s) not readable by pyvista: {not_readable}'
+    if len(not_readable) > 0:
+        n = len(not_readable)
+        literal_file = 'file' if n == 1 else 'files'
+        msg = f'{n} {literal_file} not readable by PyVista:\n{not_readable}'
         raise ValueError(msg)
+
+    return meshes_and_paths
 
 
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
@@ -250,15 +279,16 @@ class Groups(StrEnum):
 @app.command(usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]')
 def _plot(
     var_item: Annotated[
-        list[str] | None,
+        list[str],
         Parameter(
             name='files',
             consume_multiple=True,
-            help='File(s) to plot. Must be readable with ``pyvista.read``. If nothing is provided, show an empty window.',  # noqa: E501
-            validator=_validator_files,
+            help='File(s) to plot. Must be readable with ``pyvista.read``.',
+            converter=_converter_files,
             group=Groups.IN,
+            negative='',
         ),
-    ] = None,
+    ],
     *,
     off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
     full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
@@ -293,9 +323,10 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
+    items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
     try:
         res = pyvista.plot(
-            var_item=var_item or [],  # type: ignore[arg-type]
+            var_item=[m.mesh for m in items],  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,
