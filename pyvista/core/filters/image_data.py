@@ -5498,7 +5498,6 @@ class ImageDataFilters(DataSetFilters):
             ...     zoom='tight',
             ...     show_axes=False,
             ...     show_scalar_bar=False,
-            ...     show_edges=True,
             ... )
             >>> concatenated.plot(**plot_kwargs)
 
