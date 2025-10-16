@@ -2321,6 +2321,8 @@ class CasesResampleProportional:
     def case_3d_proportional_along_z(self):
         return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
 
+    def case_3d_proportional_along_z_pad(self):
+        return (256, 257, 2), (128, 128, 50), 'z', (256, 256, 102)
 
 @parametrize_with_cases(
     'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleProportional
@@ -2343,20 +2345,6 @@ def test_concatenate_resample_proportional_match(dimensions_a, dimensions_b, axi
     if axis == 'z':
         expected_dims[2] = expected_dims[2] * 2
     assert concatenated_image.dimensions == tuple(expected_dims)
-
-
-def test_concatenate_resample_proportional_raises():
-    image_a = pv.ImageData(dimensions=(2, 2, 3))
-    image_a['data'] = range(image_a.n_points)
-    image_b = pv.ImageData(dimensions=(2, 2, 2))
-    image_b['data'] = range(image_b.n_points)
-
-    match = (
-        'Unable to proportionally resample image with dimensions (2, 2, 2) to match\n'
-        'input dimensions (2, 2, 3) for concatenation along axis 0.'
-    )
-    with pytest.raises(ValueError, match=re.escape(match)):
-        image_a.concatenate(image_b, mode='resample-proportional')
 
 
 @pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-proportional', 'resample-match'])
