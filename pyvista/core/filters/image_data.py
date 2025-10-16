@@ -5625,7 +5625,9 @@ class ImageDataFilters(DataSetFilters):
             new_dims[axis_num] = image_dimensions[axis_num]
             return cast('tuple[int, int, int]', tuple(new_dims))
 
-        def _compute_sample_rate(reference_image: ImageData, image: ImageData) -> tuple[float, bool]:
+        def _compute_sample_rate(
+            reference_image: ImageData, image: ImageData
+        ) -> tuple[float, bool]:
             ref_dims = np.array(reference_image.dimensions)
             img_dims = np.array(image.dimensions)
             # Try to preserve image aspect ratio
@@ -5735,7 +5737,7 @@ class ImageDataFilters(DataSetFilters):
                                     allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
                                 )
                             kwargs.update(resample_kwargs)
-                        
+
                         pad_result = False
                         if mode == 'resample-off-axis':
                             kwargs['dimensions'] = _compute_dimensions(
@@ -5748,10 +5750,7 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['sample_rate'] = sample_rate
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
-                        if (
-                            img_shallow_copy.dimensions != self_dimensions
-                            and pad_result
-                        ):
+                        if img_shallow_copy.dimensions != self_dimensions and pad_result:
                             # Pad out 3D case where one axis is mismatched
                             xyz_padding = np.abs(
                                 np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
