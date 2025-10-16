@@ -2322,7 +2322,7 @@ class CasesResampleProportional:
         return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
 
     def case_3d_proportional_along_z_pad(self):
-        return (256, 257, 2), (128, 128, 50), 'z', (256, 256, 102)
+        return (256, 256, 2), (128, 127, 50), 'z', (256, 256, 102)
 
 
 @parametrize_with_cases(

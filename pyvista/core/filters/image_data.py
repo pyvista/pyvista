@@ -5627,7 +5627,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _compute_sample_rate(
             reference_image: ImageData, image: ImageData
-        ) -> tuple[float, bool]:
+        ) -> tuple[np.float64, np.int64 | None]:
             ref_dims = np.array(reference_image.dimensions)
             img_dims = np.array(image.dimensions)
             # Try to preserve image aspect ratio
@@ -5636,24 +5636,26 @@ class ImageDataFilters(DataSetFilters):
             fixed_axes = off_axis & not_singleton
 
             # Resample the image proportionally to match the axes
-            sample_rate_array = ref_dims[fixed_axes] / img_dims[fixed_axes]
-            if sample_rate_array.size == 0:
-                return 1.0, False
-            sample_rate = sample_rate_array.tolist()[0]
+            sample_rate_array = ref_dims / img_dims
+            if sample_rate_array[fixed_axes].size == 0:
+                return np.float64(1.0), None
+            sample_rate = sample_rate_array[fixed_axes].tolist()[0]
             n_fixed_axes = np.count_nonzero(fixed_axes)
 
             if n_fixed_axes == 1:
                 # No issues resampling to match the single axis
-                return sample_rate, False
+                return sample_rate, None
             elif n_fixed_axes == 2:
                 # We must check that both axes have the same proportion for both images
                 ref_ratio = ref_dims[fixed_axes][0] / ref_dims[fixed_axes][1]
                 img_ratio = img_dims[fixed_axes][0] / img_dims[fixed_axes][1]
                 if np.isclose(ref_ratio, img_ratio):
-                    return sample_rate, False
+                    return sample_rate, None
             # Need to choose between two sampling rates
             # We pick the smaller rate then pad out the image later
-            return sample_rate_array.min(), True
+            sample_rate = sample_rate_array[fixed_axes].min()
+            pad_axis = np.where((sample_rate_array == sample_rate) & not_singleton)[0][0]
+            return sample_rate, pad_axis
 
         # Validate mode
         if mode is not None:
@@ -5738,7 +5740,7 @@ class ImageDataFilters(DataSetFilters):
                                 )
                             kwargs.update(resample_kwargs)
 
-                        pad_result = False
+                        pad_axis = None
                         if mode == 'resample-off-axis':
                             kwargs['dimensions'] = _compute_dimensions(
                                 self_dimensions, img.dimensions
@@ -5746,16 +5748,18 @@ class ImageDataFilters(DataSetFilters):
                         elif mode == 'resample-match':
                             kwargs['dimensions'] = self_dimensions
                         else:  # mode == 'resample-proportional
-                            sample_rate, pad_result = _compute_sample_rate(self, img)
+                            sample_rate, pad_axis = _compute_sample_rate(self, img)
                             kwargs['sample_rate'] = sample_rate
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
-                        if img_shallow_copy.dimensions != self_dimensions and pad_result:
+                        if pad_axis:
                             # Pad out 3D case where one axis is mismatched
                             xyz_padding = np.abs(
                                 np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
                             )
-                            pad_size = (0, xyz_padding[0], 0, xyz_padding[1], 0, xyz_padding[2])
+                            pad_size = np.zeros((6,), dtype=int)
+                            pad_ind = pad_axis * 2 + 1
+                            pad_size[pad_ind] = xyz_padding[pad_axis]
                             img_shallow_copy = img_shallow_copy.pad_image(pad_size=pad_size)
 
                     elif mode == 'crop-off-axis':
