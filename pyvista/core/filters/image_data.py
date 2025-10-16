@@ -5649,13 +5649,9 @@ class ImageDataFilters(DataSetFilters):
                 img_ratio = img_dims[fixed_axes][0] / img_dims[fixed_axes][1]
                 if np.isclose(ref_ratio, img_ratio):
                     return sample_rate
-
-            msg = (
-                f'Unable to proportionally resample image with dimensions {image.dimensions} to '
-                f'match\ninput dimensions {self.dimensions} for concatenation along axis '
-                f'{axis_num}.'
-            )
-            raise ValueError(msg)
+            # Need to choose between two sampling rates
+            # We pick the smaller rate then pad out the image later
+            return sample_rate_array.min()
 
         # Validate mode
         if mode is not None:
@@ -5742,7 +5738,7 @@ class ImageDataFilters(DataSetFilters):
 
                         if mode == 'resample-off-axis':
                             kwargs['dimensions'] = _compute_dimensions(
-                                self.dimensions, img.dimensions
+                                self_dimensions, img.dimensions
                             )
                         elif mode == 'resample-match':
                             kwargs['dimensions'] = self_dimensions
@@ -5750,10 +5746,17 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['sample_rate'] = _compute_sample_rate(self, img)
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
+                        if img_shallow_copy.dimensions != self_dimensions:
+                            # Pad out 3D case where one axis is mismatched
+                            xyz_padding = np.abs(
+                                np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
+                            )
+                            pad_size = (0, xyz_padding[0], 0, xyz_padding[1], 0, xyz_padding[2])
+                            img_shallow_copy = img_shallow_copy.pad_image(pad_size=pad_size)
 
                     elif mode == 'crop-off-axis':
                         dimensions = _compute_dimensions(
-                            self.dimensions, img_shallow_copy.dimensions
+                            self_dimensions, img_shallow_copy.dimensions
                         )
                         img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
                     elif mode == 'crop-match':
