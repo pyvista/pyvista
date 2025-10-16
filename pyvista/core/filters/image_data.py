@@ -5746,7 +5746,7 @@ class ImageDataFilters(DataSetFilters):
                             kwargs['sample_rate'] = _compute_sample_rate(self, img)
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
-                        if img_shallow_copy.dimensions != self_dimensions:
+                        if img_shallow_copy.dimensions != self_dimensions and mode == 'resample-proportional':
                             # Pad out 3D case where one axis is mismatched
                             xyz_padding = np.abs(
                                 np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
