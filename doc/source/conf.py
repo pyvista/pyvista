@@ -94,7 +94,6 @@ extensions = [
     'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
-    'cyclopts.sphinx_ext',
     'notfound.extension',
     'numpydoc',
     'pyvista.ext.plot_directive',
