@@ -244,11 +244,8 @@ Run the ``--help`` command to see all options:
     pyvista plot --help
     python -m pyvista plot --help
 
-.. admonition:: Show help
-    :class: hint dropdown
-
-    .. cyclopts:: pyvista.__main__:app
-        :commands: plot
+.. cyclopts:: pyvista.__main__:app
+    :commands: plot
 
 
 Exporting
