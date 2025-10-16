@@ -5439,8 +5439,7 @@ class ImageDataFilters(DataSetFilters):
               by this mode.
 
             .. note::
-                For the ``crop`` and ``preserve-extents`` modes, any portion of the output not
-                covered by the inputs is set to zero.
+                Images may be padded with zeros in some cases when there are mismatched dimensions.
 
         dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
             - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
@@ -5499,6 +5498,7 @@ class ImageDataFilters(DataSetFilters):
             ...     zoom='tight',
             ...     show_axes=False,
             ...     show_scalar_bar=False,
+            ...     show_edges=True,
             ... )
             >>> concatenated.plot(**plot_kwargs)
 
@@ -5531,6 +5531,20 @@ class ImageDataFilters(DataSetFilters):
             (233, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
+            Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The
+            ``bird``'s aspecte ratio is preserved and padded with zeros so that it can be stacked
+            on top of ``beach``.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird,
+            ...     axis='z',
+            ...     mode='resample-proportional',
+            ...     resample_kwargs=resample_kwargs,
+            ... )
+            >>> concatenated.dimensions
+            (100, 100, 2)
+            >>> concatenated.plot(**plot_kwargs)
+
             Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may
             distort the image.
 
@@ -5541,7 +5555,7 @@ class ImageDataFilters(DataSetFilters):
             (558, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
-            Use ``'resample-match'`` to only resample all dimensions to match the input. This
+            Use ``'resample-match'`` to resample all dimensions to match the input exactly. This
             option may also distort the image.
 
             >>> concatenated = beach.concatenate(
@@ -5580,27 +5594,37 @@ class ImageDataFilters(DataSetFilters):
             Reverse the concatenation order.
 
             >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
+            >>> concatenated.extent
+            (-50, 457, -50, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
 
             Use ``'crop-off-axis'`` to only crop off-axis dimensions.
 
             >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
+            >>> concatenated.dimensions
+            (558, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Reverse the concatenation order.
 
             >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
+            >>> concatenated.dimensions
+            (558, 342, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Use ``'crop-match'`` to center-crop the images to match the input's
             dimensions.
 
             >>> concatenated = beach.concatenate(bird, mode='crop-match')
+            >>> concatenated.dimensions
+            (200, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Reverse the concatenation order.
 
             >>> concatenated = bird.concatenate(beach, mode='crop-match')
+            >>> concatenated.dimensions
+            (558, 342, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
@@ -5614,6 +5638,12 @@ class ImageDataFilters(DataSetFilters):
             ... )
             >>> concatenated.plot(**plot_kwargs)
 
+            The grayscale portion of the image is promoted to RGB in this case and the entire
+            image has 3 components:
+
+            >>> concatenated.active_scalars.shape
+            (292068, 3)
+
         """
 
         def _compute_dimensions(
@@ -5625,7 +5655,9 @@ class ImageDataFilters(DataSetFilters):
             new_dims[axis_num] = image_dimensions[axis_num]
             return cast('tuple[int, int, int]', tuple(new_dims))
 
-        def _compute_sample_rate(reference_image: ImageData, image: ImageData) -> float:
+        def _compute_sample_rate(
+            reference_image: ImageData, image: ImageData
+        ) -> tuple[np.float64, np.int64 | None]:
             ref_dims = np.array(reference_image.dimensions)
             img_dims = np.array(image.dimensions)
             # Try to preserve image aspect ratio
@@ -5634,28 +5666,26 @@ class ImageDataFilters(DataSetFilters):
             fixed_axes = off_axis & not_singleton
 
             # Resample the image proportionally to match the axes
-            sample_rate_array = ref_dims[fixed_axes] / img_dims[fixed_axes]
-            if sample_rate_array.size == 0:
-                return 1.0
-            sample_rate = sample_rate_array.tolist()[0]
+            sample_rate_array = ref_dims / img_dims
+            if sample_rate_array[fixed_axes].size == 0:
+                return np.float64(1.0), None
+            sample_rate = sample_rate_array[fixed_axes].tolist()[0]
             n_fixed_axes = np.count_nonzero(fixed_axes)
 
             if n_fixed_axes == 1:
                 # No issues resampling to match the single axis
-                return sample_rate
+                return sample_rate, None
             elif n_fixed_axes == 2:
                 # We must check that both axes have the same proportion for both images
                 ref_ratio = ref_dims[fixed_axes][0] / ref_dims[fixed_axes][1]
                 img_ratio = img_dims[fixed_axes][0] / img_dims[fixed_axes][1]
                 if np.isclose(ref_ratio, img_ratio):
-                    return sample_rate
-
-            msg = (
-                f'Unable to proportionally resample image with dimensions {image.dimensions} to '
-                f'match\ninput dimensions {self.dimensions} for concatenation along axis '
-                f'{axis_num}.'
-            )
-            raise ValueError(msg)
+                    return sample_rate, None
+            # Need to choose between two sampling rates
+            # We pick the smaller rate then pad out the image later
+            sample_rate = sample_rate_array[fixed_axes].min()
+            pad_axis = np.where((sample_rate_array == sample_rate) & not_singleton)[0][0]
+            return sample_rate, pad_axis
 
         # Validate mode
         if mode is not None:
@@ -5740,20 +5770,31 @@ class ImageDataFilters(DataSetFilters):
                                 )
                             kwargs.update(resample_kwargs)
 
+                        pad_axis = None
                         if mode == 'resample-off-axis':
                             kwargs['dimensions'] = _compute_dimensions(
-                                self.dimensions, img.dimensions
+                                self_dimensions, img.dimensions
                             )
                         elif mode == 'resample-match':
                             kwargs['dimensions'] = self_dimensions
                         else:  # mode == 'resample-proportional
-                            kwargs['sample_rate'] = _compute_sample_rate(self, img)
+                            sample_rate, pad_axis = _compute_sample_rate(self, img)
+                            kwargs['sample_rate'] = sample_rate
 
                         img_shallow_copy = img_shallow_copy.resample(**kwargs)
+                        if pad_axis is not None:
+                            # Pad out 3D case where one axis is mismatched
+                            xyz_padding = np.abs(
+                                np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
+                            )
+                            pad_size = np.zeros((6,), dtype=int)
+                            pad_ind = pad_axis * 2 + 1
+                            pad_size[pad_ind] = xyz_padding[pad_axis]
+                            img_shallow_copy = img_shallow_copy.pad_image(pad_size=pad_size)
 
                     elif mode == 'crop-off-axis':
                         dimensions = _compute_dimensions(
-                            self.dimensions, img_shallow_copy.dimensions
+                            self_dimensions, img_shallow_copy.dimensions
                         )
                         img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
                     elif mode == 'crop-match':
@@ -5830,7 +5871,8 @@ class ImageDataFilters(DataSetFilters):
 
         _update_alg(alg)
         output = _get_output(alg)
-        output.offset = self.offset
+        if mode != 'preserve-extents':
+            output.offset = self.offset
         return output
 
 
