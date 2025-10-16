@@ -54,6 +54,7 @@ app = App(
     version=f'{pyvista.__name__} {pyvista.__version__}',
     help_on_error=True,
     console=Console(),
+    result_action='return_value',
 )
 
 
@@ -377,7 +378,10 @@ def main(argv: list[str] | str | None = None) -> None:
     # and https://github.com/BrianPugh/cyclopts/issues/567
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=PyVistaDeprecationWarning)
-        app(tokens=argv)
+        result = app(tokens=argv)
+
+    if result is not None:
+        print(result)  # noqa: T201
 
 
 if __name__ == '__main__':

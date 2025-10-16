@@ -845,9 +845,7 @@ def test_print(
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
     tokens = func if func == 'report' else f'{func} --files={Path(pv.examples.antfile).as_posix()}'
-    with pytest.raises(SystemExit) as e:
-        main(tokens)
+    main(tokens)
 
-    assert e.value.code == 0
     expected = f'{ret}\n' if ret is not None else ''
     assert capsys.readouterr().out == expected
