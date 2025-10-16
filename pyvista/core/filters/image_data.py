@@ -5531,6 +5531,20 @@ class ImageDataFilters(DataSetFilters):
             (233, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
+            Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The
+            ``bird``'s aspecte ratio is preserved and padded with zeros so that it can be stacked
+            on top of ``beach``.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird,
+            ...     axis='z',
+            ...     mode='resample-proportional',
+            ...     resample_kwargs=resample_kwargs,
+            ... )
+            >>> concatenated.dimensions
+            (100, 100, 2)
+            >>> concatenated.plot(**plot_kwargs)
+
             Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may
             distort the image.
 
