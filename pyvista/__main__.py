@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
 from typing import Literal
+from typing import NamedTuple
+from typing import NoReturn
 from typing import get_type_hints
 import warnings
 
@@ -24,11 +26,20 @@ from rich.text import Text
 
 import pyvista
 from pyvista import Report
+from pyvista.core.dataobject import DataObject
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from pyvista import DataObject
+
+
+class _MeshAndPath(NamedTuple):
+    mesh: DataObject
+    path: Path
+
 
 # Assign annotations to be able to use the Report class using
 # cyclopts when __future__ annotations are enabled. See https://github.com/BrianPugh/cyclopts/issues/570
@@ -46,10 +57,91 @@ app = App(
 )
 
 
+def _console_error(message: str | Group, title: str = 'PyVista Error') -> NoReturn:
+    panel = Panel(
+        message,
+        title=title,
+        style='bold red',
+        box=box.ROUNDED,
+        expand=True,
+        title_align='left',
+    )
+    app.console.print(panel)  # type: ignore [union-attr]
+    raise SystemExit(1)
+
+
 @app.command
 @wraps(Report)
-def report(*args, **kwargs):  # noqa: ANN201, D103
+def _report(*args, **kwargs) -> Report:
     return Report(*args, **kwargs)
+
+
+@app.command(
+    usage=f'Usage: [bold]{pyvista.__name__} convert FILE-IN FILE-OUT',
+)
+def _convert(
+    file_in: Annotated[
+        str,
+        Parameter(
+            help='File to convert. Must be readable with ``pyvista.read``.',
+            converter=_converter_files,
+        ),
+    ],
+    file_out: Annotated[
+        str,
+        Parameter(
+            help='Output file. If only an file extension is given, '
+            'the output has the same name as the input.',
+            validator=_validator_has_extension,
+        ),
+    ],
+) -> None:
+    """Convert a mesh file to another format.
+
+    Sample usage:
+      $ pyvista convert foo.abc bar.xyz
+      Saved: bar.xyz
+
+      $ pyvista convert foo.abc .xyz
+      Saved: foo.xyz
+
+    """
+    # get input mesh and input path from file_in str token
+    # which was converted to a (mesh, path) pair
+    mesh_in = file_in[0].mesh  # type: ignore[attr-defined]
+    path_in = file_in[0].path  # type: ignore[attr-defined]
+
+    # Parse output specification
+    path_out = Path(file_out)
+    out_dir = path_out.parent
+    if not path_out.suffix:
+        # Extension-only, use the input stem
+        out_stem = path_in.stem
+        out_suffix = path_out.stem
+    else:
+        # Explicit filename provided
+        out_stem = path_out.stem
+        out_suffix = path_out.suffix
+
+    # Construct final output path
+    out_path = out_dir / f'{out_stem}{out_suffix}'
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        mesh_in.save(out_path)
+    except Exception as e:  # noqa: BLE001
+        _console_error(f'Failed to save output file: {out_path}\n{e}')
+
+    app.console.print(f'[green]Saved:[/green] {out_path}')  # type: ignore [union-attr]
+
+
+def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
+    path = Path(value)
+    has_suffix = bool(path.suffix)
+    is_suffix = not path.suffix and path.stem.startswith('.')
+    if not (has_suffix or is_suffix):
+        msg = '\nOutput file must have a file extension.'
+        raise ValueError(msg)
 
 
 def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
@@ -58,29 +150,49 @@ def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noq
         raise ValueError(msg)
 
 
-def _validator_files(type_: type, value: list[str] | None) -> None:  # noqa: ARG001
-    if value is None:
-        return
+def _converter_files(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_MeshAndPath]:
+    """Helper function used to read provided files.
+
+    Raises errors if:
+
+    - any file does not exits
+    - any file is not readable with ``pv.read``
+
+    """  # noqa: D401
+    values: list[str] = [t.value for t in tokens]
 
     # Test file exists
-    if not all((files := {v: Path(v).exists() for v in value}).values()):
-        missing = [k for k, v in files.items() if not v]
-        msg = f'File(s) not found: {missing}'
+    if not all((files := {v: Path(v).exists() for v in values}).values()):
+        missing: str | list[str] = [k for k, v in files.items() if not v]
+        n_missings = len(missing)
+
+        literal_file = 'file' if n_missings == 1 else 'files'
+        missing = missing[0] if n_missings == 1 else missing
+
+        msg = f'{n_missings} {literal_file} not found: {missing}'
         raise ValueError(msg)
 
     # Test file can be read by pyvista
-    def readable(file: str) -> bool:
+    meshes_and_paths: list[_MeshAndPath] = []
+    not_readable: list[str] = []
+    for file in values:
         try:
-            pyvista.read(file)
+            mesh = pyvista.read(file)
         except Exception:  # noqa: BLE001
-            return False
+            not_readable.append(file)
         else:
-            return True
+            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
 
-    if not all((files := {v: readable(v) for v in value}).values()):
-        not_readable = [k for k, v in files.items() if not v]
-        msg = f'File(s) not readable by pyvista: {not_readable}'
+    if len(not_readable) > 0:
+        n = len(not_readable)
+        literal_file = 'file' if n == 1 else 'files'
+        msg = f'{n} {literal_file} not readable by PyVista:\n{not_readable}'
         raise ValueError(msg)
+
+    return meshes_and_paths
 
 
 def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
@@ -110,11 +222,11 @@ Additional keyword arguments passed to ``Plotter.add_mesh`` or ``Plotter.add_vol
 See the documentation for more details at https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_mesh
 and https://docs.pyvista.org/api/plotting/_autosummary/pyvista.plotter.add_volume
 
-Note that contrary to other CLI arguments, hyphens ``-`` are not converted to underscores ``_`` before being passed
-to the corresponding plotter method. For example, you need to use ``--show_edges=True`` instead of ``--show-edges=True`` to
-show mesh edges in the plotting window.
+Note that contrary to other CLI arguments, hyphens ``-`` are not converted to underscores ``_``
+before being passed to the corresponding plotter method. For example, you need to use
+``--show_edges=True`` instead of ``--show-edges=True`` to show mesh edges in the plotting window.
 
-"""  # noqa: E501
+"""
 
 
 class Groups(StrEnum):
@@ -130,15 +242,16 @@ class Groups(StrEnum):
 @app.command(usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]')
 def _plot(
     var_item: Annotated[
-        list[str] | None,
+        list[str],
         Parameter(
             name='files',
             consume_multiple=True,
-            help='File(s) to plot. Must be readable with ``pv.read``. If nothing is provided, show an empty window.',  # noqa: E501
-            validator=_validator_files,
+            help='File(s) to plot. Must be readable with ``pyvista.read``.',
+            converter=_converter_files,
             group=Groups.IN,
+            negative='',
         ),
-    ] = None,
+    ],
     *,
     off_screen: Annotated[bool | None, Parameter(group=Groups.PLOTTER)] = None,
     full_screen: Annotated[bool | None, Parameter(group=Groups.RENDERING)] = None,
@@ -173,9 +286,10 @@ def _plot(
         Parameter(help=_HELP_KWARGS, converter=_kwargs_converter, group=Groups.SUPP),
     ],
 ) -> None:
+    items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
     try:
         res = pyvista.plot(
-            var_item=var_item or [],  # type: ignore[arg-type]
+            var_item=[m.mesh for m in items],  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
             screenshot=screenshot,
@@ -198,7 +312,7 @@ def _plot(
             **kwargs,
         )
 
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001
         # Prevent traceback and output error along with help message
         app.help_print(tokens='plot')
 
@@ -211,17 +325,7 @@ def _plot(
             NewLine(),
             Text('Please check the provided arguments.'),
         )
-        panel = Panel(
-            msg,
-            title='Pyvista error',
-            style='red',
-            box=box.ROUNDED,
-            expand=True,
-            title_align='left',
-        )
-
-        app.console.print(panel)  # type: ignore [union-attr]
-        raise SystemExit(1) from ex
+        _console_error(msg)
     else:
         return res
 

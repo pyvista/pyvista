@@ -123,13 +123,13 @@ def test_progress_monitor_raises(mocker: MockerFixture):
 
     with pytest.raises(
         ImportError,
-        match='Please install `tqdm` to monitor algorithms.',
+        match=r'Please install `tqdm` to monitor algorithms.',
     ):
         ProgressMonitor('algo')
 
 
 def test_create_grid_raises():
-    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+    with pytest.raises(NotImplementedError, match=r'Please specify dimensions.'):
         create_grid(pv.Sphere(), dimensions=None)
 
 
@@ -375,7 +375,7 @@ def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
     # use the globefile as a dummy because pv.read() checks for the existence of the file
     pv.read(ex.globefile, force_ext='.e')
-    args, kwargs = read_exodus_mock.call_args
+    args, _kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == Path(ex.globefile)
 
@@ -746,7 +746,7 @@ def test_observer():
 
 @pytest.mark.parametrize('point', [1, object(), None])
 def test_valid_vector_raises(point):
-    with pytest.raises(TypeError, match='foo must be a length three iterable of floats.'):
+    with pytest.raises(TypeError, match=r'foo must be a length three iterable of floats.'):
         check_valid_vector(point=point, name='foo')
 
 
@@ -773,7 +773,7 @@ def test_annotated_int_enum_from_any_raises(value):
 def test_lines_segments_from_points(points):
     with pytest.raises(
         ValueError,
-        match='An even number of points must be given to define each segment.',
+        match=r'An even number of points must be given to define each segment.',
     ):
         line_segments_from_points(points=points)
 
@@ -957,7 +957,7 @@ def test_merge(sphere, cube, datasets):
     with pytest.raises(ValueError, match='Expected at least one'):
         pv.merge([])
 
-    with pytest.raises(TypeError, match='Expected pyvista.DataSet'):
+    with pytest.raises(TypeError, match=r'Expected pyvista.DataSet'):
         pv.merge([None, sphere])
 
     # check polydata
@@ -1408,10 +1408,11 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
     eggs = 'eggs'
 
     match = (
-        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
-        'Use `pv.set_new_attribute` to set new attributes.'
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.\n'
+        'Setting new private variables (with `_` prefix) is allowed by default.'
     )
-    with pytest.raises(pv.PyVistaAttributeError, match=match):
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
         setattr(a, ham, eggs)
 
     match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
@@ -2334,7 +2335,7 @@ def test_parse_interaction_event(
 def test_parse_interaction_event_raises_str():
     with pytest.raises(
         ValueError,
-        match='Expected.*start.*end.*always.*foo was given',
+        match=r'Expected.*start.*end.*always.*foo was given',
     ):
         _parse_interaction_event('foo')
 
@@ -2342,7 +2343,7 @@ def test_parse_interaction_event_raises_str():
 def test_parse_interaction_event_raises_wrong_type():
     with pytest.raises(
         TypeError,
-        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+        match=r'.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
     ):
         _parse_interaction_event(1)
 
@@ -2456,6 +2457,37 @@ def test_vtk_snake_case():
     with pv.vtk_snake_case('warning'):
         with pytest.warns(RuntimeWarning, match=match):
             _ = pv.PolyData().information
+
+
+def test_allow_new_attributes():
+    match = (
+        "Attribute '_?foo' does not exist and cannot be added to class 'PolyData'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.'
+    )
+
+    def set_private():
+        _ = pv.PolyData()._foo = 42
+
+    def set_public():
+        _ = pv.PolyData().foo = 42
+
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
+
+    pv.allow_new_attributes('private')
+    assert pv.allow_new_attributes() == 'private'
+    set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
+
+    pv.allow_new_attributes(True)
+    assert pv.allow_new_attributes() is True
+    set_private()
+    set_public()
 
 
 T = TypeVar('T')

@@ -100,7 +100,7 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi[4] = vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pv.UnstructuredGrid)
 
-    with pytest.raises(ValueError, match='Cannot nest a composite dataset in itself.'):
+    with pytest.raises(ValueError, match=r'Cannot nest a composite dataset in itself.'):
         multi.append(multi)
 
     with pytest.raises(TypeError, match='dataset should not be or contain an array'):
@@ -1195,7 +1195,7 @@ def test_recursive_iterator_raises():
     with pytest.raises(ValueError, match=match):
         multi.recursive_iterator('blocks', prepend_names=True)
 
-    with pytest.raises(ValueError, match='String separator cannot be empty.'):
+    with pytest.raises(ValueError, match=r'String separator cannot be empty.'):
         multi.recursive_iterator(separator='')
 
 
