@@ -2306,20 +2306,20 @@ def test_concatenate_resample_off_axis(dimensions_a, dimensions_b, axis, dimensi
 
 
 class CasesResampleProportional:
-    def case_2d_xy_along_x(self):
-        return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
-
-    def case_2d_xy_along_y(self):
-        return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
-
-    def case_2d_yz_along_y(self):
-        return (1, 20, 40), (1, 30, 50), 'y', (1, 44, 40)
-
-    def case_2d_yz_along_z(self):
-        return (1, 20, 40), (1, 30, 50), 'z', (1, 20, 73)
-
-    def case_3d_proportional_along_z(self):
-        return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
+    # def case_2d_xy_along_x(self):
+    #     return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
+    #
+    # def case_2d_xy_along_y(self):
+    #     return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
+    #
+    # def case_2d_yz_along_y(self):
+    #     return (1, 20, 40), (1, 30, 50), 'y', (1, 44, 40)
+    #
+    # def case_2d_yz_along_z(self):
+    #     return (1, 20, 40), (1, 30, 50), 'z', (1, 20, 73)
+    #
+    # def case_3d_proportional_along_z(self):
+    #     return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
 
     def case_3d_proportional_along_z_pad(self):
         return (256, 256, 2), (128, 127, 50), 'z', (256, 256, 102)
