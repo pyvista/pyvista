@@ -5426,8 +5426,7 @@ class ImageDataFilters(DataSetFilters):
               to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
               except the on-axis dimension is `also` resampled.
             - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
-              preserve their aspect ratio(s). For 3D cases, this may not be possible, and a
-              ``ValueError`` may be raised.
+              preserve their aspect ratio(s).
             - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
               to match the input. The on-axis dimension is `not` cropped.
             - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that
