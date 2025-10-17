@@ -14,6 +14,15 @@ https://asa.scitation.org/doi/10.1121/1.401643.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+#   "scipy",
+# ]
+# ///
+
 # %%
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
