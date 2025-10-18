@@ -2205,6 +2205,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             msg = f"Invalid `region_assignment_mode` '{region_assignment_mode}' . Must be in {list(modes.keys())}"  # noqa: E501
             raise ValueError(msg)
 
+        if region_assignment_mode == 'unspecified' and extraction_mode == 'specified':
+            warnings.warn(
+                'Using the `unspecified` region assignment mode with the `specified` extraction mode can be unintuitive. Ignore this warning if this was intentional.',  # noqa: E501
+                UserWarning,
+                stacklevel=2,
+            )
+
         alg.SetRegionIdAssignmentMode(modes[region_assignment_mode])
 
         if scalar_range is not None:
