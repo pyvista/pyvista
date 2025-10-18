@@ -1991,7 +1991,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             region has ID ``0``).
 
         region_assignment_mode : str, default: "descending"
-            Strategy used to assign connected region IDs if `label_regions` is True.
+            Strategy used to assign connected region IDs if ``label_regions`` is True.
             Can be either:
 
             - ``ascending``: IDs are sorted by increasing order of cell count
