@@ -1998,6 +1998,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             - ``descending``: IDs are sorted by decreasing order of cell counts
             - ``unspecified``: no particular order
 
+            .. versionadded:: 0.47
+
         region_ids : sequence[int], optional
             Region ids to extract. Only used if ``extraction_mode`` is
             ``specified``.
