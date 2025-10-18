@@ -284,6 +284,21 @@ def test_themes(theme):
         pv.set_plot_theme('testing')
 
 
+@pytest.fixture
+def reset_registry_themes():
+    reg = pv.plotting.themes._registry_themes.copy()
+    yield
+    pv.plotting.themes._registry_themes = reg
+
+
+@pytest.mark.usefixtures('reset_registry_themes')
+def test_register_theme():
+    @pv.plotting.themes.register_theme('my_theme')
+    class MyTheme(pv.plotting.themes.Theme): ...
+
+    assert 'my_theme' in pv.plotting.themes._registry_themes
+
+
 def test_raises_register_theme():
     match = re.escape('Theme with name "default" is already registered.')
     with pytest.raises(ValueError, match=match):
