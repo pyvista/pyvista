@@ -32,7 +32,7 @@ pyvista.
 
 from __future__ import annotations
 
-from enum import Enum
+import inspect
 from itertools import chain
 import json
 import os
@@ -63,12 +63,12 @@ if TYPE_CHECKING:
 
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
-    if 'PYVISTA_PLOT_THEME' in os.environ:
+    if (k := 'PYVISTA_PLOT_THEME') in os.environ:
         try:
-            theme = os.environ['PYVISTA_PLOT_THEME']
+            theme = os.environ[k]
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ', '.join(_registry_themes.keys())
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
@@ -135,13 +135,10 @@ def set_plot_theme(theme):
     import pyvista  # noqa: PLC0415
 
     if isinstance(theme, str):
-        theme = theme.lower()
-        try:
-            new_theme_type = _NATIVE_THEMES[theme].value
-        except KeyError:
+        if theme not in (reg := _registry_themes):
             msg = f"Theme {theme} not found in PyVista's native themes."
             raise ValueError(msg)
-        pyvista.global_theme.load_theme(new_theme_type())
+        pyvista.global_theme.load_theme(reg[theme])
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -3305,6 +3302,30 @@ class Theme(_ThemeConfig):
         self._logo_file = path
 
 
+_registry_themes: dict[str, Theme] = {'vtk': Theme()}
+
+
+def register_theme(theme: str):  # noqa: D103
+    def decorator_register(cls: type):
+        if theme in _registry_themes:
+            msg = f'Theme with name "{theme}" is already registered.'
+            raise ValueError(msg)
+
+        if not inspect.isclass(cls):
+            msg = f'The decorator can only be applied to classes, not {type(cls)}'
+            raise TypeError(msg)
+
+        if not issubclass(cls, Theme):
+            msg = 'The decorated class must be a subclass of "Theme".'
+            raise TypeError(msg)
+
+        _registry_themes[theme] = cls()
+        return cls
+
+    return decorator_register
+
+
+@register_theme('dark')
 class DarkTheme(Theme):
     """Dark mode theme.
 
@@ -3340,6 +3361,7 @@ class DarkTheme(Theme):
         self.axes.z_color = 'blue'
 
 
+@register_theme('paraview')
 class ParaViewTheme(Theme):
     """A paraview-like theme.
 
@@ -3375,6 +3397,8 @@ class ParaViewTheme(Theme):
         self.axes.z_color = 'green'
 
 
+@register_theme('document')
+@register_theme('default')
 class DocumentTheme(Theme):
     """A document theme well suited for papers and presentations.
 
@@ -3421,6 +3445,7 @@ class DocumentTheme(Theme):
         self.axes.z_color = 'blue'
 
 
+@register_theme('document_pro')
 class DocumentProTheme(DocumentTheme):
     """A more professional document theme.
 
@@ -3446,6 +3471,7 @@ class DocumentProTheme(DocumentTheme):
         self.depth_peeling.enabled = True
 
 
+@register_theme('document_build')
 class _DocumentBuildTheme(DocumentTheme):
     """Theme used for building the documentation."""
 
@@ -3461,6 +3487,7 @@ class _DocumentBuildTheme(DocumentTheme):
         self.resample_environment_texture = True
 
 
+@register_theme('testing')
 class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
 
@@ -3486,14 +3513,14 @@ class _TestingTheme(Theme):
         self.resample_environment_texture = True
 
 
-class _NATIVE_THEMES(Enum):  # noqa: N801
-    """Global built-in themes available to PyVista."""
+# class _NATIVE_THEMES(Enum):
+#     """Global built-in themes available to PyVista."""
 
-    paraview = ParaViewTheme
-    document = DocumentTheme
-    document_pro = DocumentProTheme
-    document_build = _DocumentBuildTheme
-    dark = DarkTheme
-    default = document
-    testing = _TestingTheme
-    vtk = Theme
+#     paraview = ParaViewTheme
+#     document = DocumentTheme
+#     document_pro = DocumentProTheme
+#     document_build = _DocumentBuildTheme
+#     dark = DarkTheme
+#     default = document
+#     testing = _TestingTheme
+#     vtk = Theme
