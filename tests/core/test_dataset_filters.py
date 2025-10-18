@@ -1136,8 +1136,8 @@ def test_connectivity_scalar_range(
     assert len(conn_with_full_range.array_names) == 3
 
 
-@pytest.mark.parametrize('region_assignement_mode', ['ascending', 'descending', 'unspecified'])
-def test_connectivity_all(foot_bones: pv.PolyData, region_assignement_mode: str):
+@pytest.mark.parametrize('region_assignment_mode', ['ascending', 'descending', 'unspecified'])
+def test_connectivity_all(foot_bones: pv.PolyData, region_assignment_mode: str):
     conn = foot_bones.connectivity('all')
     assert conn.n_cells == foot_bones.n_cells
 
@@ -1145,7 +1145,7 @@ def test_connectivity_all(foot_bones: pv.PolyData, region_assignement_mode: str)
     conn = foot_bones.connectivity(
         'all',
         label_regions=True,
-        region_assignment_mode=region_assignement_mode,
+        region_assignment_mode=region_assignment_mode,
     )
     region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
     assert np.array_equal(region_ids, list(range(26)))
@@ -1179,9 +1179,9 @@ def test_connectivity_all(foot_bones: pv.PolyData, region_assignement_mode: str)
         32,
     ]
 
-    if region_assignement_mode != 'unspecified':
+    if region_assignment_mode != 'unspecified':
         assert counts.tolist() == (
-            n_cells[::-1] if region_assignement_mode == 'ascending' else n_cells
+            n_cells[::-1] if region_assignment_mode == 'ascending' else n_cells
         )
 
 
