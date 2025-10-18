@@ -82,6 +82,7 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .themes import _registry_themes
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -459,6 +460,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
+        .. versionadded:: 0.47.0
+            A theme can be set via a string from a set of registered
+            values. See example the below.
+
         Returns
         -------
         pyvista.Theme
@@ -475,11 +480,23 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
+
+        >>> pl = pv.Plotter()
+        >>> pl.theme = 'dark'
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> pl.show()
+
         """
         return self._theme
 
     @theme.setter
-    def theme(self, theme: Theme) -> None:
+    def theme(self, theme: Theme | str) -> None:
+        if isinstance(theme, str):
+            theme = (reg := _registry_themes).get(theme)
+            if theme is None:
+                msg = f'Theme "{theme}" not found. The available themes are:\n{list(reg.keys())}'
+                raise ValueError(msg)
+
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
                 'Expected a pyvista theme like '
