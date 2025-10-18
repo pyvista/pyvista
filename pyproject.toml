@@ -17,7 +17,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
-  'cyclopts>=3.24.0',
+  'cyclopts==4.0.0b1',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',
   'pillow',
