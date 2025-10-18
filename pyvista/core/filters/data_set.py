@@ -1904,7 +1904,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
         label_regions: bool = True,  # noqa: FBT001, FBT002
-        region_assignement_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
+        region_assignment_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
         region_ids: VectorLike[int] | None = None,
         point_ids: VectorLike[int] | None = None,
         cell_ids: VectorLike[int] | None = None,
@@ -1990,7 +1990,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             assigned by region cell count in descending order (i.e. the largest
             region has ID ``0``).
 
-        region_assignement_mode : str, default: ascending
+        region_assignment_mode : str, default: ascending
             Strategy used to assign connected region IDs if `label_regions` is True.
             Can be either:
 
@@ -2201,11 +2201,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             'descending': alg.CELL_COUNT_DESCENDING,
             'unspecified': alg.UNSPECIFIED,
         }
-        if region_assignement_mode not in modes:
-            msg = f'Invalid `region_assignement_mode`. Must be in {list(modes.keys())}'
+        if region_assignment_mode not in modes:
+            msg = f"Invalid `region_assignment_mode` '{region_assignment_mode}' . Must be in {list(modes.keys())}"  # noqa: E501
             raise ValueError(msg)
 
-        alg.SetRegionIdAssignmentMode(modes[region_assignement_mode])
+        alg.SetRegionIdAssignmentMode(modes[region_assignment_mode])
 
         if scalar_range is not None:
             alg.ScalarConnectivityOn()
