@@ -3305,7 +3305,7 @@ class Theme(_ThemeConfig):
 _registry_themes: dict[str, Theme] = {'vtk': Theme()}
 
 
-def register_theme(theme: str):  # noqa: D103
+def register_theme(theme: str, cls: type | None = None):  # noqa: D103
     def decorator_register(cls: type):
         if theme in _registry_themes:
             msg = f'Theme with name "{theme}" is already registered.'
@@ -3322,7 +3322,10 @@ def register_theme(theme: str):  # noqa: D103
         _registry_themes[theme] = cls()
         return cls
 
-    return decorator_register
+    if cls is None:
+        return decorator_register
+
+    return decorator_register(cls)
 
 
 @register_theme('dark')
