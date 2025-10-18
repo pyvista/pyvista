@@ -699,7 +699,9 @@ class CellArray(
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
-        imported_size = self.GetNumberOfConnectivityEntries()
+
+        self.ExportLegacyFormat(idarr := _vtk.vtkIdTypeArray())
+        imported_size = _vtk.vtk_to_numpy(idarr).size
 
         # https://github.com/pyvista/pyvista/pull/5404
         if imported_size != cells.size:

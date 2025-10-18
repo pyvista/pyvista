@@ -6219,7 +6219,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise ValueError(msg)
         writer.CompressOff()
         writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
-        writer.SetInput(self.render_window)
+        writer.SetRenderWindow(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
         writer.SetWrite3DPropsAsRasterImage(raster)
