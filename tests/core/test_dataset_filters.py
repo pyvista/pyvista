@@ -1196,28 +1196,54 @@ def test_connectivity_largest(foot_bones):
     assert counts == [598]
 
 
-def test_connectivity_specified(foot_bones):
+@pytest.mark.parametrize('region_assignment_mode', ['ascending', 'descending'])
+def test_connectivity_specified(foot_bones: pv.PolyData, region_assignment_mode: str):
     # test all regions
     all_regions = list(range(26))
-    conn = foot_bones.connectivity('specified', region_ids=all_regions)
+    conn = foot_bones.connectivity(
+        'specified',
+        region_ids=all_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == foot_bones.n_cells
 
     # test irrelevant region IDs
     test_regions = [*all_regions, 77, 99]
-    conn = foot_bones.connectivity('specified', test_regions)
+    conn = foot_bones.connectivity(
+        'specified',
+        test_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == foot_bones.n_cells
 
     # test some regions
-    some_regions = [1, 2, 4, 5]
-    expected_n_cells = 586 + 392 + 228 + 212
-    conn = foot_bones.connectivity('specified', some_regions)
+    some_regions = [1, 2, 4, 5] if region_assignment_mode == 'descending' else [1, 5, 6, 10]
+    expected_n_cells = (
+        (586 + 392 + 228 + 212) if region_assignment_mode == 'descending' else (46 + 48 + 60 + 74)
+    )
+    conn = foot_bones.connectivity(
+        'specified',
+        some_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == expected_n_cells
 
     # test correct labels
-    conn = foot_bones.connectivity('specified', some_regions, label_regions=True)
-    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    conn = foot_bones.connectivity(
+        'specified',
+        some_regions,
+        label_regions=True,
+        region_assignment_mode=region_assignment_mode,
+    )
+    region_ids = np.unique(conn.cell_data['RegionId'])
     assert np.array_equal(region_ids, [0, 1, 2, 3])
-    assert np.array_equal(counts, [586, 392, 228, 212])
+
+    n_cells = [
+        conn.threshold([i] * 2, scalars='RegionId', preference='cell').n_cells for i in region_ids
+    ]
+    assert n_cells == (
+        [586, 392, 228, 212] if region_assignment_mode == 'descending' else [46, 48, 60, 74]
+    )
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
