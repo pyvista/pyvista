@@ -1990,7 +1990,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             assigned by region cell count in descending order (i.e. the largest
             region has ID ``0``).
 
-        region_assignment_mode : str, default: ascending
+        region_assignment_mode : str, default: "ascending"
             Strategy used to assign connected region IDs if `label_regions` is True.
             Can be either:
 
