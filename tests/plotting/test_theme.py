@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 
 from hypothesis import HealthCheck
@@ -275,14 +274,35 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
+@pytest.mark.parametrize('theme', pv.plotting.themes._registry_themes)
 def test_themes(theme):
     try:
-        pv.set_plot_theme(theme.name)
-        assert pv.global_theme == theme.value()
+        pv.set_plot_theme(theme)
+        assert pv.global_theme == pv.plotting.themes._registry_themes[theme]
     finally:
         # always return to testing theme
         pv.set_plot_theme('testing')
+
+
+def test_raises_register_theme():
+    match = re.escape('Theme with name "default" is already registered.')
+    with pytest.raises(ValueError, match=match):
+
+        @pv.plotting.themes.register_theme('default')
+        class MyTheme(pv.plotting.themes.Theme):
+            pass
+
+    match = re.escape("The decorator can only be applied to classes, not <class 'function'>")
+    with pytest.raises(TypeError, match=match):
+
+        @pv.plotting.themes.register_theme('foo')
+        def func(): ...
+
+    match = re.escape('The decorated class must be a subclass of "Theme".')
+    with pytest.raises(TypeError, match=match):
+
+        @pv.plotting.themes.register_theme('foo')
+        class MyTheme: ...
 
 
 def test_invalid_theme():
@@ -505,6 +525,11 @@ def test_plotter_set_theme():
     assert pl.theme != pv.global_theme
     assert pl.theme == my_theme
 
+    pl = pv.Plotter()
+    assert pl.theme == pv.global_theme
+    pl.theme = 'dark'
+    assert pl.theme == pv.plotting.themes.DarkTheme()
+
 
 @pytest.mark.filterwarnings(
     'ignore:The jupyter_extension_available flag is read only and is automatically '
@@ -663,13 +688,10 @@ def test_user_theme():
         pv.set_plot_theme('testing')
 
 
-def test_set_plot_theme_from_env():
-    os.environ['PYVISTA_PLOT_THEME'] = 'not a valid theme'
-    try:
-        with pytest.warns(UserWarning, match='Invalid'):
-            _set_plot_theme_from_env()
-    finally:
-        os.environ.pop('PYVISTA_PLOT_THEME', None)
+def test_set_plot_theme_from_env(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv('PYVISTA_PLOT_THEME', 'not a valid theme')
+    with pytest.warns(UserWarning, match='Invalid'):
+        _set_plot_theme_from_env()
 
 
 def test_trame_config():
