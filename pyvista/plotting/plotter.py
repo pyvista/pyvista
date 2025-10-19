@@ -497,6 +497,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 msg = f'Theme "{theme}" not found. The available themes are:\n{list(reg.keys())}'
                 raise ValueError(msg)
 
+            theme = theme()
+
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
                 'Expected a pyvista theme like '

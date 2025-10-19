@@ -276,12 +276,8 @@ def test_colorbar_position_y(default_theme):
 
 @pytest.mark.parametrize('theme', pv.plotting.themes._registry_themes)
 def test_themes(theme):
-    try:
-        pv.set_plot_theme(theme)
-        assert pv.global_theme == pv.plotting.themes._registry_themes[theme]
-    finally:
-        # always return to testing theme
-        pv.set_plot_theme('testing')
+    pv.set_plot_theme(theme)
+    assert pv.global_theme == pv.plotting.themes._registry_themes[theme]()
 
 
 @pytest.fixture
