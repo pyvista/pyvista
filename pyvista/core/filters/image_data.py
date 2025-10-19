@@ -5379,9 +5379,10 @@ class ImageDataFilters(DataSetFilters):
         axis: _AxisOptions | None = None,
         *,
         mode: _ConcatenateModeOptions | None = None,
-        resample_kwargs: dict[str, Any] | None = None,
         dtype_policy: _ConcatenateDTypePolicyOptions | None = None,
         component_policy: _ConcatenateComponentPolicyOptions | None = None,
+        background_value: float | VectorLike[float] = 0.0,
+        resample_kwargs: dict[str, Any] | None = None,
     ):
         """Combine multiple images into one.
 
@@ -5438,7 +5439,8 @@ class ImageDataFilters(DataSetFilters):
               by this mode.
 
             .. note::
-                Images may be padded with zeros in some cases when there are mismatched dimensions.
+                Images may be padded with ``background_value`` in some cases when there are
+                mismatched dimensions.
 
         dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
             - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
@@ -5458,6 +5460,10 @@ class ImageDataFilters(DataSetFilters):
               and RGB scalars may be promoted to RGBA scalars by including an opacity component.
               For integer dtypes, the opacity is set to the max int representable by the dtype;
               for floats it is set to ``1.0``.
+
+        background_value : float | VectorLike[float], default: 0
+            Value or multi-component vector to use as background. The output may be padded with
+            this value for some ``modes`` when there are mismatched dimensions.
 
         resample_kwargs : dict, optional
             Keyword arguments passed to :meth:`resample` when using ``'resample-off-axis'`` or
@@ -5530,7 +5536,7 @@ class ImageDataFilters(DataSetFilters):
             >>> concatenated.plot(**plot_kwargs)
 
             Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The
-            ``bird``'s aspecte ratio is preserved and padded with zeros so that it can be stacked
+            ``bird``'s aspect ratio is preserved and padded with zeros so that it can be stacked
             on top of ``beach``.
 
             >>> concatenated = beach.concatenate(
@@ -5589,9 +5595,12 @@ class ImageDataFilters(DataSetFilters):
             (-50, 457, -50, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
 
-            Reverse the concatenation order.
+            Reverse the concatenation order, and use a green background value.
 
-            >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
+            >>> green = pv.Color('green').int_rgb
+            >>> concatenated = bird.concatenate(
+            ...     beach, mode='preserve-extents', background_value=green
+            ... )
             >>> concatenated.extent
             (-50, 457, -50, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
@@ -5618,9 +5627,11 @@ class ImageDataFilters(DataSetFilters):
             (200, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
-            Reverse the concatenation order.
+            Reverse the concatenation order, and use a grey background value.
 
-            >>> concatenated = bird.concatenate(beach, mode='crop-match')
+            >>> concatenated = bird.concatenate(
+            ...     beach, mode='crop-match', background_value=128
+            ... )
             >>> concatenated.dimensions
             (558, 342, 1)
             >>> concatenated.plot(**plot_kwargs)
@@ -5727,20 +5738,23 @@ class ImageDataFilters(DataSetFilters):
         all_dtypes: list[np.dtype] = []
         all_n_components: list[int] = []
         all_scalars: list[str] = []
+        all_extents: list[tuple[int, int, int, int, int, int]] = []
         for i, img in enumerate(all_images):
             if i > 0:
                 _validation.check_instance(img, pyvista.ImageData)
 
             # Create shallow copies so we can safely modify if needed
-            img_shallow_copy = img.copy(deep=False)
-            _, scalars = img_shallow_copy._validate_point_scalars()
+            img_copy = img.copy(deep=False)
+            _, scalars = img_copy._validate_point_scalars()
             all_scalars.append(scalars)
             array = img.point_data[scalars]
             all_dtypes.append(array.dtype)
             n_components = array.shape[1] if array.ndim == 2 else array.ndim
             all_n_components.append(n_components)
 
-            if i > 0 and mode != 'preserve-extents':
+            if mode == 'preserve-extents':
+                all_extents.append(img.extent)
+            elif i > 0:
                 if (dims := img.dimensions) != self_dimensions:
                     # Need to deal with the dimensions mismatch
                     if mode == 'strict':
@@ -5779,31 +5793,46 @@ class ImageDataFilters(DataSetFilters):
                             sample_rate, pad_axis = _compute_sample_rate(self, img)
                             kwargs['sample_rate'] = sample_rate
 
-                        img_shallow_copy = img_shallow_copy.resample(**kwargs)
+                        img_copy = img_copy.resample(**kwargs)
                         if pad_axis is not None:
                             # Pad out 3D case where one axis is mismatched
                             xyz_padding = np.abs(
-                                np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
+                                np.array(img_copy.dimensions) - np.array(self_dimensions)
                             )
                             pad_size = np.zeros((6,), dtype=int)
                             pad_ind = pad_axis * 2 + 1
                             pad_size[pad_ind] = xyz_padding[pad_axis]
-                            img_shallow_copy = img_shallow_copy.pad_image(pad_size=pad_size)
+                            img_copy = img_copy.pad_image(
+                                pad_size=pad_size, pad_value=background_value
+                            )
 
-                    elif mode == 'crop-off-axis':
-                        dimensions = _compute_dimensions(
-                            self_dimensions, img_shallow_copy.dimensions
-                        )
-                        img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
-                    elif mode == 'crop-match':
-                        img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
+                    elif mode.startswith('crop'):
+                        if mode == 'crop-off-axis':
+                            dimensions = _compute_dimensions(self_dimensions, img_copy.dimensions)
+                            img_copy = img_copy.crop(dimensions=dimensions)
+                        elif mode == 'crop-match':
+                            img_copy = img_copy.crop(dimensions=self_dimensions)
+
+                        if not np.array_equal(background_value, 0):
+                            # vtkImageAppend pads with zeros by default, if we want any other value
+                            # though we need to pad these values ourselves beforehand
+                            dimensions_padding = np.zeros((3,), dtype=int)
+                            dimensions_diff = np.array(self_dimensions) - img_copy.dimensions
+                            needs_padding = (dimensions_diff > 0) & (np.arange(3) != axis_num)
+                            dimensions_padding[needs_padding] = dimensions_diff[needs_padding]
+                            pad_size = np.zeros((6,), dtype=int)
+                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1  # type: ignore[assignment]
+                            pad_size[pad_ind] = dimensions_padding[needs_padding]
+                            img_copy = img_copy.pad_image(
+                                pad_size=pad_size, pad_value=background_value
+                            )
 
             if mode.startswith(('resample', 'crop')):
                 # These modes should not be affected by offset, so we zero it
-                img_shallow_copy.offset = (0, 0, 0)
+                img_copy.offset = (0, 0, 0)
 
-            # Replace input with shallow copy
-            all_images[i] = img_shallow_copy
+            # Replace input with modified copy
+            all_images[i] = img_copy
 
         if len(set(all_dtypes)) > 1:
             # Need to cast all scalars to the same dtype
@@ -5825,6 +5854,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             dtype_out = all_images[0].point_data[all_scalars[0]].dtype
 
+        target_n_components = max(all_n_components)
         if len(set(all_n_components)) > 1:
             # Need to ensure all scalars have the same number of components
             if component_policy == 'strict':
@@ -5842,7 +5872,7 @@ class ImageDataFilters(DataSetFilters):
                         f'Got: {set(all_n_components)}'
                     )
                     raise ValueError(msg)
-                target_n_components = max(all_n_components)
+
                 for img, n_components, scalars in zip(all_images, all_n_components, all_scalars):
                     if n_components < target_n_components:
                         array = img.point_data[scalars]
@@ -5859,6 +5889,28 @@ class ImageDataFilters(DataSetFilters):
                             array = new_array  # type: ignore[assignment]
 
                         img.point_data[scalars] = array
+
+        if mode == 'preserve-extents' and not np.array_equal(background_value, 0):
+            # vtkImageAppend pads with zeros by default, but if we want any other value
+            # we create a new background image and insert it as the first image
+
+            # Compute whole extent of all images
+            extents = np.array(all_extents)
+            mins = extents.min(axis=0)[0::2]
+            maxs = extents.max(axis=0)[1::2]
+
+            whole_extent = np.zeros((6,), dtype=int)
+            whole_extent[0::2] = mins
+            whole_extent[1::2] = maxs
+
+            # Create background image
+            background_img = pyvista.ImageData(origin=self.origin, spacing=self.spacing)
+            background_img.extent = whole_extent
+            target_shape = (background_img.n_points, target_n_components)
+            value = np.array(background_value, dtype=dtype_out)
+            background_img.point_data['data'] = np.broadcast_to(value, target_shape)
+
+            all_images.insert(0, background_img)
 
         alg = _vtk.vtkImageAppend()
         alg.SetAppendAxis(axis_num)
