@@ -2418,15 +2418,23 @@ def test_concatenate_crop():
 
 @pytest.mark.parametrize('background_value', [127, 128])
 @pytest.mark.parametrize('mode', ['crop-match', 'resample-proportional', 'preserve-extents'])
-@pytest.mark.parametrize(('origin','spacing'), [((0,0,0 ), (1, 1, 1)),((1,2,3 ), (0.1, 0.2, 0.3))])
-def test_concatenate_background_value(background_value, mode, origin,spacing):
+@pytest.mark.parametrize(
+    ('origin', 'spacing'), [((0, 0, 0), (1, 1, 1)), ((1, 2, 3), (0.1, 0.2, 0.3))]
+)
+def test_concatenate_background_value(background_value, mode, origin, spacing):
     image_a = pv.ImageData(dimensions=(10, 11, 12), origin=origin, spacing=spacing)
     image_a['A'] = np.ones((image_a.n_points,))
+    user_dict = {'foo': 'bar'}
+    image_a.user_dict = user_dict
+
     image_b = pv.ImageData(dimensions=(6, 5, 4))
     image_b.offset = (-5, -5, -5)
     image_b['B'] = np.zeros((image_b.n_points,))
 
     concatenated = image_a.concatenate(image_b, mode=mode, background_value=background_value)
     assert background_value in concatenated.active_scalars
+
+    # Make sure the output preserves the input geometry and field data
     assert concatenated.origin == origin
     assert concatenated.spacing == spacing
+    assert concatenated.user_dict == user_dict

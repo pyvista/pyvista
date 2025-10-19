@@ -5905,6 +5905,7 @@ class ImageDataFilters(DataSetFilters):
 
             # Create background image
             background_img = pyvista.ImageData(origin=self.origin, spacing=self.spacing)
+            background_img.field_data.update(self.field_data)
             background_img.extent = whole_extent
             target_shape = (background_img.n_points, target_n_components)
             value = np.array(background_value, dtype=dtype_out)
