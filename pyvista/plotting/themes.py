@@ -32,7 +32,6 @@ pyvista.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
 import inspect
 from itertools import chain
 import json
@@ -3327,12 +3326,6 @@ def register_theme(theme: str, cls: type | None = None):  # noqa: D103
         return decorator_register
 
     return decorator_register(cls)
-
-
-@contextmanager
-def register_temp_theme(theme: str, cls: type):  # noqa: D103
-    yield register_theme(theme=theme, cls=cls)
-    _registry_themes.pop(theme)
 
 
 @register_theme('dark')

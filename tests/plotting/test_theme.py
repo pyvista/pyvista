@@ -293,19 +293,10 @@ def reset_registry_themes():
 
 @pytest.mark.usefixtures('reset_registry_themes')
 def test_register_theme():
-    @pv.plotting.themes.register_theme(t := 'my_theme')
+    @pv.plotting.themes.register_theme('my_theme')
     class MyTheme(pv.plotting.themes.Theme): ...
 
-    assert t in pv.plotting.themes._registry_themes
-
-
-def test_register_temp_theme():
-    class MyTheme(pv.plotting.themes.Theme): ...
-
-    with pv.plotting.themes.register_temp_theme(t := 'my_theme', MyTheme):
-        assert t in pv.plotting.themes._registry_themes
-
-    assert t not in pv.plotting.themes._registry_themes
+    assert 'my_theme' in pv.plotting.themes._registry_themes
 
 
 def test_raises_register_theme():
