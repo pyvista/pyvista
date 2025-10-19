@@ -5678,7 +5678,7 @@ class ImageDataFilters(DataSetFilters):
             sample_rate_array = ref_dims / img_dims
             if sample_rate_array[fixed_axes].size == 0:
                 return np.float64(1.0), None
-            sample_rate = sample_rate_array[fixed_axes].tolist()[0]
+            sample_rate = sample_rate_array[fixed_axes][0]
             n_fixed_axes = np.count_nonzero(fixed_axes)
 
             if n_fixed_axes == 1:
@@ -5693,7 +5693,7 @@ class ImageDataFilters(DataSetFilters):
             # Need to choose between two sampling rates
             # We pick the smaller rate then pad out the image later
             sample_rate = sample_rate_array[fixed_axes].min()
-            pad_axis = np.where((sample_rate_array == sample_rate) & not_singleton)[0][0]
+            pad_axis = np.where((sample_rate_array != sample_rate) & fixed_axes)[0][0]
             return sample_rate, pad_axis
 
         # Validate mode
