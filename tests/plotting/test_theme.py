@@ -328,12 +328,8 @@ def test_invalid_theme_type_error():
 
 def test_set_theme():
     theme = pv.plotting.themes.DarkTheme()
-    try:
-        pv.set_plot_theme(theme)
-        assert pv.global_theme == theme
-    finally:
-        # always return to testing theme
-        pv.set_plot_theme('testing')
+    pv.set_plot_theme(theme)
+    assert pv.global_theme == theme
 
 
 def test_invalid_load_theme(default_theme):
@@ -670,33 +666,28 @@ def test_user_theme():
     sphere = pv.Sphere()
     lines = sphere.extract_all_edges()
     points = pv.PolyData(sphere.points)
-    try:
-        pv.set_plot_theme(theme)
+    pv.set_plot_theme(theme)
 
-        pl = pv.Plotter()
-        assert pl.background_color == theme.background
-        sactor = pl.add_mesh(sphere)
-        assert sactor.prop.color == theme.color
-        assert sactor.prop.interpolation.value == theme.lighting_params.interpolation
-        assert sactor.prop.ambient == theme.lighting_params.ambient
-        assert sactor.prop.diffuse == theme.lighting_params.diffuse
-        assert sactor.prop.specular == theme.lighting_params.specular
+    pl = pv.Plotter()
+    assert pl.background_color == theme.background
+    sactor = pl.add_mesh(sphere)
+    assert sactor.prop.color == theme.color
+    assert sactor.prop.interpolation.value == theme.lighting_params.interpolation
+    assert sactor.prop.ambient == theme.lighting_params.ambient
+    assert sactor.prop.diffuse == theme.lighting_params.diffuse
+    assert sactor.prop.specular == theme.lighting_params.specular
 
-        lactor = pl.add_mesh(lines)
-        assert lactor.prop.render_lines_as_tubes == theme.render_lines_as_tubes
-        assert lactor.prop.line_width == theme.line_width
+    lactor = pl.add_mesh(lines)
+    assert lactor.prop.render_lines_as_tubes == theme.render_lines_as_tubes
+    assert lactor.prop.line_width == theme.line_width
 
-        pactor = pl.add_mesh(points)
-        assert pactor.prop.point_size == theme.point_size
+    pactor = pl.add_mesh(points)
+    assert pactor.prop.point_size == theme.point_size
 
-        pl = pv.Plotter()
-        sactor = pl.add_mesh(sphere, pbr=True)
-        assert sactor.prop.roughness == theme.lighting_params.roughness
-        assert sactor.prop.metallic == theme.lighting_params.metallic
-
-    finally:
-        # always return to testing theme
-        pv.set_plot_theme('testing')
+    pl = pv.Plotter()
+    sactor = pl.add_mesh(sphere, pbr=True)
+    assert sactor.prop.roughness == theme.lighting_params.roughness
+    assert sactor.prop.metallic == theme.lighting_params.metallic
 
 
 def test_set_plot_theme_from_env(monkeypatch: pytest.MonkeyPatch):
