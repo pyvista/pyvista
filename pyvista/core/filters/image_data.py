@@ -5806,14 +5806,16 @@ class ImageDataFilters(DataSetFilters):
                                 pad_size=pad_size, pad_value=background_value
                             )
 
-                    elif mode.startswith('crop'):
-                        if mode == 'crop-off-axis':
-                            dimensions = _compute_dimensions(self_dimensions, img_copy.dimensions)
-                            img_copy = img_copy.crop(dimensions=dimensions)
-                        elif mode == 'crop-match':
-                            img_copy = img_copy.crop(dimensions=self_dimensions)
+                    elif mode == 'crop-off-axis':
+                        dimensions = _compute_dimensions(self_dimensions, img_copy.dimensions)
+                        img_copy = img_copy.crop(dimensions=dimensions)
+                    else:  # mode == 'crop-match'
+                        img_copy = img_copy.crop(dimensions=self_dimensions)
 
-                        if not np.array_equal(background_value, 0):
+                        if (
+                            not np.array_equal(background_value, 0)
+                            and img_copy.dimensions != self_dimensions
+                        ):
                             # vtkImageAppend pads with zeros by default, if we want any other value
                             # though we need to pad these values ourselves beforehand
                             dimensions_padding = np.zeros((3,), dtype=int)
