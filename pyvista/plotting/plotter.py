@@ -459,6 +459,20 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
+        .. note::
+            Assigning the ``theme`` attribute to a plotter object does not affect global appearance
+            settings such as ``background``, which are set at instantiation.
+            To this respect, you need to set the theme such that:
+
+            .. code-block:: python
+
+                import pyvista as pv
+
+                pl = pv.Plotter(theme=theme)
+
+            However, actor appearance settings such as ``edge_color`` for example are correctly
+            taken into account.
+
         Returns
         -------
         pyvista.Theme
