@@ -82,6 +82,7 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .themes import _get_theme
 from .themes import _registry_themes
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -302,7 +303,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         lighting: LightingOptions | None = 'light kit',
-        theme: Theme | None = None,
+        theme: Theme | str | None = None,
         image_scale: int | None = None,
         **kwargs,
     ) -> None:
@@ -318,19 +319,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
 
+        # copy global theme to ensure local plot theme is fixed
+        # after creation.
         self._theme = Theme()
-        if theme is None:
-            # copy global theme to ensure local plot theme is fixed
-            # after creation.
-            self._theme.load_theme(pyvista.global_theme)
-        else:
-            if not isinstance(theme, Theme):
-                msg = (  # type: ignore[unreachable]
-                    'Expected ``pyvista.plotting.themes.Theme`` for '
-                    f'``theme``, not {type(theme).__name__}.'
-                )
-                raise TypeError(msg)
-            self._theme.load_theme(theme)
+        theme = pyvista.global_theme if theme is None else _get_theme(theme)
+        self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
 

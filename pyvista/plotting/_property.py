@@ -11,6 +11,7 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from . import _vtk
 from .colors import Color
 from .opts import InterpolationType
+from .themes import _get_theme
 
 
 class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
@@ -187,13 +188,11 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         edge_opacity=None,
     ):
         """Initialize this property."""
+        # copy global theme to ensure local property theme is fixed
+        # after creation.
         self._theme = pyvista.themes.Theme()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pyvista.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        theme = pyvista.global_theme if theme is None else _get_theme(theme)
+        self._theme.load_theme(theme)
 
         if interpolation is None:
             interpolation = self._theme.lighting_params.interpolation

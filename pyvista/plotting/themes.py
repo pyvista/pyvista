@@ -68,6 +68,27 @@ if TYPE_CHECKING:
     from ._typing import ColormapOptions
 
 
+def _get_theme(theme: str | Theme):
+    """Helper function to check and get a theme.
+
+    - if string, lookup in registry
+    - if `Theme` instance, return as is
+
+    Otherwise, raise appropriate error.
+    """  # noqa: D401
+    if isinstance(theme, str):
+        return _registry_themes[theme]
+
+    if isinstance(theme, Theme):
+        return theme
+
+    msg = (  # type: ignore[unreachable]
+        'Expected ``pyvista.plotting.themes.Theme`` or `str` for ``theme``, '
+        f'not {type(theme).__name__}.'
+    )
+    raise TypeError(msg)
+
+
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if (k := 'PYVISTA_PLOT_THEME') in os.environ:

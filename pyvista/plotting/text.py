@@ -19,6 +19,7 @@ from . import _vtk
 from .colors import Color
 from .prop3d import _Prop3DMixin
 from .themes import Theme
+from .themes import _get_theme
 from .tools import FONTS
 
 if TYPE_CHECKING:
@@ -548,12 +549,12 @@ class TextProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTextProper
     ):
         """Initialize text's property."""
         super().__init__()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pyvista.global_theme)
-        else:
-            self._theme.load_theme(theme)
+
+        # copy global theme to ensure local property theme is fixed
+        # after creation.
+        theme = pyvista.global_theme if theme is None else _get_theme(theme)
+        self._theme.load_theme(theme)
+
         self.color = color
         self.font_family = font_family
         if orientation is not None:
