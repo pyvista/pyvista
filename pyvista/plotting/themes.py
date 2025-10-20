@@ -3318,13 +3318,13 @@ class _ThemesRegistry(dict):
         item = super().__getitem__(key)
         return item()
 
-    def get(self, key: str):
+    def get(self, key: str, /):
         if (value := super().get(key)) is not None:
             return value()
         return None
 
 
-_registry_themes: _ThemesRegistry[str, Theme] = _ThemesRegistry(vtk=Theme)
+_registry_themes: _ThemesRegistry[str, type[Theme]] = _ThemesRegistry(vtk=Theme)
 
 
 def register_theme(theme: str, cls: type | None = None):  # noqa: D103
