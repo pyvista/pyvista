@@ -1246,6 +1246,14 @@ def test_connectivity_specified(foot_bones: pv.PolyData, region_assignment_mode:
     )
 
 
+def test_connectivity_specified_warning(foot_bones: pv.PolyData):
+    match = re.escape(
+        'Using the `unspecified` region assignment mode with the `specified` extraction mode can be unintuitive. Ignore this warning if this was intentional'  # noqa: E501
+    )
+    with pytest.warns(UserWarning, match=match):
+        foot_bones.connectivity('specified', region_assignment_mode='unspecified', region_ids=[0])
+
+
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 def test_connectivity_specified_returns_empty(connected_datasets, dataset_index):
     dataset = connected_datasets[dataset_index]
