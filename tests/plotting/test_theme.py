@@ -17,6 +17,7 @@ import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
+from pyvista.plotting.themes import _ThemesRegistry
 
 
 @pytest.fixture
@@ -281,21 +282,55 @@ def test_themes(theme):
 
 
 @pytest.fixture
-def reset_registry_themes():
-    reg = pv.plotting.themes._registry_themes.copy()
-    yield
-    pv.plotting.themes._registry_themes = reg
+def empty_registry_themes(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv.plotting.themes, '_registry_themes', _ThemesRegistry())
 
 
-@pytest.mark.usefixtures('reset_registry_themes')
-def test_register_theme():
-    @pv.plotting.themes.register_theme('my_theme')
+@pytest.mark.usefixtures('empty_registry_themes')
+def test_register_theme_as_type():
+    @pv.plotting.themes.register_theme(k := 'my_theme')
     class MyTheme(pv.plotting.themes.Theme): ...
 
-    assert 'my_theme' in pv.plotting.themes._registry_themes
+    assert k in pv.plotting.themes._registry_themes
+    assert pv.plotting.themes._registry_themes[k] == MyTheme()
 
 
+@pytest.mark.usefixtures('empty_registry_themes')
+def test_register_theme_as_obj():
+    my_theme = pv.themes.DocumentTheme()
+    my_theme.font.size = 100
+
+    pv.plotting.themes.register_theme(k := 'my_theme', my_theme)
+
+    assert k in pv.plotting.themes._registry_themes
+    assert pv.plotting.themes._registry_themes[k] == my_theme
+
+
+def test_theme_registry_new_objects():
+    """Test that when accessing a theme stored in the registry, a fresh new object is created"""
+
+    custom = DarkTheme()
+    custom.font.size = 100
+
+    reg = _ThemesRegistry(cls=Theme, obj=custom)
+
+    theme1, theme2 = reg['cls'], reg['cls']
+    assert theme1 == theme2
+    assert theme1 is not theme2
+
+    theme1, theme2 = reg['obj'], reg['obj']
+    assert theme1 == theme2
+    assert theme1 == custom
+    assert theme2 == custom
+    assert theme1 is not theme2
+    assert theme1 is not custom
+    assert theme2 is not custom
+
+
+@pytest.mark.usefixtures('empty_registry_themes')
 def test_raises_register_theme():
+    pv.plotting.themes._registry_themes['default'] = Theme()
+
     match = re.escape('Theme with name "default" is already registered.')
     with pytest.raises(ValueError, match=match):
 
@@ -303,7 +338,7 @@ def test_raises_register_theme():
         class MyTheme(pv.plotting.themes.Theme):
             pass
 
-    match = re.escape("The decorator can only be applied to classes, not <class 'function'>")
+    match = re.escape('The input must be an instance of "Theme", not "<class \'function\'>')
     with pytest.raises(TypeError, match=match):
 
         @pv.plotting.themes.register_theme('foo')
@@ -314,6 +349,10 @@ def test_raises_register_theme():
 
         @pv.plotting.themes.register_theme('foo')
         class MyTheme: ...
+
+    match = re.escape('The input must be an instance of "Theme", not "<class \'int\'>')
+    with pytest.raises(TypeError, match=match):
+        pv.plotting.themes.register_theme('foo', 1)
 
 
 def test_invalid_theme():

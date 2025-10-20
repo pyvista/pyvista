@@ -38,6 +38,7 @@ import json
 import os
 import pathlib
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 from typing import Any
 import warnings
@@ -50,6 +51,12 @@ from .colors import get_cmap_safe
 from .colors import get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -3310,44 +3317,55 @@ class Theme(_ThemeConfig):
         self._logo_file = path
 
 
-class _ThemesRegistry(dict):
+class _ThemesRegistry(dict[str, type[Theme] | Theme]):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def __getitem__(self, key: str):
         item = super().__getitem__(key)
-        return item()
+        if inspect.isclass(item) and issubclass(item, Theme):
+            return item()
 
+        theme = Theme()
+        theme.load_theme(item)
+        return theme
+
+    @override
     def get(self, key: str, /):
-        if (value := super().get(key)) is not None:
-            return value()
-        return None
+        try:
+            return self[key]
+        except KeyError:
+            return None
 
 
-_registry_themes: _ThemesRegistry[str, type[Theme]] = _ThemesRegistry(vtk=Theme)
+_registry_themes = _ThemesRegistry(vtk=Theme)
 
 
-def register_theme(theme: str, cls: type | None = None):  # noqa: D103
-    def decorator_register(cls: type):
+def register_theme(theme: str, obj: type[Theme] | Theme | None = None):  # noqa: D103
+    def decorator_register(obj: type[Theme] | Theme):
         if theme in _registry_themes:
             msg = f'Theme with name "{theme}" is already registered.'
             raise ValueError(msg)
 
-        if not inspect.isclass(cls):
-            msg = f'The decorator can only be applied to classes, not {type(cls)}'
+        if inspect.isclass(obj):
+            if not issubclass(obj, Theme):
+                msg = 'The decorated class must be a subclass of "Theme".'
+                raise TypeError(msg)
+
+            _registry_themes[theme] = obj
+            return obj
+
+        if not isinstance(obj, Theme):
+            msg = f'The input must be an instance of "Theme", not "{type(obj)}"'
             raise TypeError(msg)
 
-        if not issubclass(cls, Theme):
-            msg = 'The decorated class must be a subclass of "Theme".'
-            raise TypeError(msg)
+        _registry_themes[theme] = obj
+        return obj
 
-        _registry_themes[theme] = cls
-        return cls
-
-    if cls is None:
+    if obj is None:
         return decorator_register
 
-    return decorator_register(cls)
+    return decorator_register(obj)
 
 
 @register_theme('dark')
