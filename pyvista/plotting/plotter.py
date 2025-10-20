@@ -264,8 +264,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         * ``'three lights'``: illumination using 3 lights.
         * ``'none'``: no light sources at instantiation.
 
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme.
+
+        .. versionchanged:: 0.47.0
+            A theme can be set via a string from a set of registered
+            values.
+            Run :func:`pyvista.list_registered_themes` to get all available themes
+            and :func:`pyvista.register_theme` to register your custom theme.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
