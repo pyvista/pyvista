@@ -344,6 +344,30 @@ def test_register_theme_override():
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
+def test_unregister_theme():
+    pv.plotting.themes.register_theme(k := 'default', Theme())
+    assert k in pv.plotting.themes._registry_themes
+    pv.plotting.themes.unregister_theme(k)
+    assert k not in pv.plotting.themes._registry_themes
+
+
+@pytest.mark.usefixtures('empty_registry_themes')
+def test_unregister_theme_raises():
+    with pytest.raises(KeyError, match=(k := 'default')):
+        pv.plotting.themes.unregister_theme(k)
+
+
+@pytest.mark.usefixtures('empty_registry_themes')
+def test_unregister_all_themes():
+    pv.plotting.themes.register_theme('default', Theme())
+    pv.plotting.themes.register_theme('test', Theme())
+
+    pv.themes.unregister_all_themes()
+
+    assert len(pv.themes._registry_themes) == 0
+
+
+@pytest.mark.usefixtures('empty_registry_themes')
 def test_raises_register_theme():
     pv.plotting.themes._registry_themes[(k := 'default')] = Theme()
 

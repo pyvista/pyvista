@@ -3373,6 +3373,14 @@ def register_theme(  # noqa: D103
     return decorator_register(obj)
 
 
+def unregister_theme(theme: str):  # noqa: D103
+    del _registry_themes[theme]
+
+
+def unregister_all_themes():  # noqa: D103
+    _registry_themes.clear()
+
+
 @register_theme('dark')
 class DarkTheme(Theme):
     """Dark mode theme.
