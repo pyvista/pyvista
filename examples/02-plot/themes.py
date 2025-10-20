@@ -176,15 +176,16 @@ cpos = pl.show()
 
 my_theme.background = 'red'
 my_theme.edge_color = 'purple'
+my_theme.show_edges = True
 
 pl = pv.Plotter()
 pl.theme = my_theme
-pl.add_mesh(pv.Cube())
+pl.add_mesh(pv.Sphere())
 cpos = pl.show()
 
 # %% Instead, set the theme to the ``Plotter`` instantiation
 pl = pv.Plotter(theme=my_theme)
-pl.add_mesh(pv.Cube())
+pl.add_mesh(pv.Sphere())
 cpos = pl.show()
 
 
