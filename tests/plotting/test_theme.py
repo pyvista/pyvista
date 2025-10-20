@@ -491,8 +491,10 @@ def test_theme_eq():
     assert defa_theme0 != 'apple'
 
 
+@pytest.mark.filterwarnings('ignore:Assigning a theme for a plotter instance:UserWarning')
 def test_plotter_set_theme():
-    # test that the plotter theme is set to the new theme
+    """Test that the plotter theme is set to the new theme"""
+
     my_theme = pv.plotting.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pv.Plotter(theme=my_theme)
@@ -504,6 +506,16 @@ def test_plotter_set_theme():
     pl.theme = my_theme
     assert pl.theme != pv.global_theme
     assert pl.theme == my_theme
+
+
+def test_plotter_set_theme_warning():
+    """Test that a warning is raised when setting a theme to a plotter instance."""
+    pl = pv.Plotter()
+    match = re.escape(
+        'Assigning a theme for a plotter instance might not have the intended effect on global plotting parameters such as background. You might need to set it at initialization.'  # noqa: E501
+    )
+    with pytest.warns(UserWarning, match=match):
+        pl.theme = pv.themes.DarkTheme()
 
 
 @pytest.mark.filterwarnings(
