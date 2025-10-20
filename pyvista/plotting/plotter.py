@@ -459,7 +459,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
-        .. versionadded:: 0.47.0
+        .. versionchanged:: 0.47.0
             A theme can be set via a string from a set of registered
             values. See example the below.
 
