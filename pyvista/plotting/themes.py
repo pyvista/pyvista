@@ -79,7 +79,7 @@ def _get_theme(theme: str | Theme):
     if isinstance(theme, str):
         _theme = (reg := _registry_themes).get(theme)
         if _theme is None:
-            msg = f'Theme "{_theme}" not found. The available themes are:\n{list(reg.keys())}'
+            msg = f'Theme "{theme}" not found. The available themes are:\n{list(reg.keys())}'
             raise ValueError(msg)
 
         return _theme

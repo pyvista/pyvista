@@ -403,9 +403,11 @@ def test_raises_register_theme():
         pv.plotting.themes.register_theme('foo', 1)
 
 
+@pytest.mark.usefixtures('empty_registry_themes')
 def test_invalid_theme():
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.set_plot_theme('this is not a valid theme')
+    pv.register_theme('valid')
+    with pytest.raises(ValueError, match=(theme := 'invalid')):
+        pv.set_plot_theme(theme)
 
 
 def test_invalid_theme_type_error():
