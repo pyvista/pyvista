@@ -77,7 +77,12 @@ def _get_theme(theme: str | Theme):
     Otherwise, raise appropriate error.
     """  # noqa: D401
     if isinstance(theme, str):
-        return _registry_themes[theme]
+        _theme = (reg := _registry_themes).get(theme)
+        if _theme is None:
+            msg = f'Theme "{_theme}" not found. The available themes are:\n{list(reg.keys())}'
+            raise ValueError(msg)
+
+        return _theme
 
     if isinstance(theme, Theme):
         return theme
@@ -131,13 +136,13 @@ def load_theme(filename):
     return Theme.from_dict(theme_dict)
 
 
-def set_plot_theme(theme):
+def set_plot_theme(theme: str | Theme):
     """Set the plotting parameters to a predefined theme using a string.
 
     Parameters
     ----------
-    theme : str
-        The theme name. Available predefined theme names include (non-exhaustive):
+    theme : str | Theme
+        The theme name of value. Available predefined theme names include (non-exhaustive):
 
         - ``'dark'``,
         - ``'default'``,
@@ -178,18 +183,7 @@ def set_plot_theme(theme):
     """
     import pyvista  # noqa: PLC0415
 
-    if isinstance(theme, str):
-        if theme not in (reg := _registry_themes):
-            msg = f"Theme {theme} not found in PyVista's native themes."
-            raise ValueError(msg)
-        pyvista.global_theme.load_theme(reg[theme])
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        msg = (
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
-        raise TypeError(msg)
+    pyvista.global_theme.load_theme(_get_theme(theme=theme))
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots

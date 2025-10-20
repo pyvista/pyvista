@@ -83,7 +83,6 @@ from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
 from .themes import _get_theme
-from .themes import _registry_themes
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -490,20 +489,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme: Theme | str) -> None:
-        if isinstance(theme, str):
-            theme = (reg := _registry_themes).get(theme)
-            if theme is None:
-                msg = f'Theme "{theme}" not found. The available themes are:\n{list(reg.keys())}'
-                raise ValueError(msg)
-
-        if not isinstance(theme, pyvista.plotting.themes.Theme):
-            msg = (
-                'Expected a pyvista theme like '
-                '``pyvista.plotting.themes.Theme``, '
-                f'not {type(theme).__name__}.'
-            )
-            raise TypeError(msg)
-        self._theme.load_theme(theme)
+        self._theme.load_theme(_get_theme(theme))
 
     @_deprecate_positional_args(allowed=['filename'])
     def import_gltf(self, filename: str | Path, set_camera: bool = True) -> None:  # noqa: FBT001, FBT002
