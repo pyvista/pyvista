@@ -7,6 +7,7 @@ from typing import get_args
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
 from pyvista import examples
@@ -2117,3 +2118,299 @@ def test_morphological_filters_custom_kernel_size():
 
     closed = volume.close(kernel_size=(3, 2, 1))
     assert isinstance(closed, pv.ImageData)
+
+
+@pytest.mark.parametrize(
+    ('axis', 'dimensions_out'), [(0, (2, 1, 1)), (1, (1, 2, 1)), (2, (1, 1, 2))]
+)
+@pytest.mark.parametrize(
+    ('dtypes', 'dtype_policy'),
+    [
+        ((int, float), 'promote'),
+        ((int, float), 'match'),
+        ((float, float), 'strict'),
+        ((int, int), 'strict'),
+        ((np.int64, np.uint8), 'promote'),
+        ((np.uint8, np.int32), 'match'),
+    ],
+)
+def test_concatenate(axis, dimensions_out, dtypes, dtype_policy):
+    array_a = np.array([0], dtype=dtypes[0])
+    array_b = np.array([1], dtype=dtypes[1])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(1, 1, 1))
+    image_b['B'] = array_b
+
+    if dtype_policy == 'strict':
+        concatenated_image = image_a.concatenate(image_b, axis=axis)
+    else:
+        match = (
+            r'The dtypes of the scalar arrays do not match\. '
+            r"Got multiple dtypes: \{dtype\('[A-Za-z0-9_]+'\), dtype\('[A-Za-z0-9_]+'\)\}\.\n"
+            r"Set the dtype policy to 'promote' or 'match' to cast the inputs to a single dtype\."
+        )
+        with pytest.raises(TypeError, match=match):
+            image_a.concatenate(image_b, axis=axis)
+        concatenated_image = image_a.concatenate(image_b, axis=axis, dtype_policy=dtype_policy)
+
+    assert concatenated_image.array_names == ['A']
+    image_array = concatenated_image['A']
+    assert concatenated_image.dimensions == dimensions_out
+    assert np.array_equal(image_array, [0, 1])
+
+    expected_dtype = np.result_type(*dtypes) if dtype_policy == 'promote' else dtypes[0]
+    actual_dtype = image_array.dtype
+    assert actual_dtype == expected_dtype
+
+
+def test_concatenate_dimensions_mismatch():
+    array_a = np.array([0])
+    array_b = np.array([1, 2])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = array_b
+
+    concatenated_image = image_a.concatenate(image_b, axis=0)
+    assert concatenated_image.dimensions == (3, 1, 1)
+
+    image_a = pv.ImageData(dimensions=(1, 2, 3))
+    image_a['A'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=(4, 5, 6))
+    image_b['B'] = range(image_b.n_points)
+
+    match = (
+        'Image dimensions (4, 5, 6) must match off-axis dimensions (1, 2, 3) for axis 0.\n'
+        'Got y dimension 5, expected 2. Use the `mode` keyword to allow concatenation with\n'
+        'mismatched dimensions.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate(image_b, axis=0)
+
+    match = (
+        'Image 1 dimensions (4, 5, 6) must match off-axis dimensions (1, 2, 3) for axis 2.\n'
+        'Got x dimension 4, expected 1. Use the `mode` keyword to allow concatenation with\n'
+        'mismatched dimensions.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate([image_a, image_b], axis=2)
+
+
+def test_concatenate_component_policy():
+    gray_array = np.array([0], dtype=np.uint8)
+    rgb_array = np.array([[1, 2, 3]], dtype=np.uint8)
+    gray = pv.ImageData(dimensions=(1, 1, 1))
+    gray['A'] = gray_array
+    rgb = pv.ImageData(dimensions=(1, 1, 1))
+    rgb['A'] = rgb_array
+
+    match = (
+        r'The number of components in the scalar arrays do not match. Got n components: {1, 3}.\n'
+        r"Set the component policy to 'promote_rgba' to automatically increase the number of "
+        r'components as needed.'
+    )
+    with pytest.raises(ValueError, match=match):
+        gray.concatenate(rgb)
+
+    concatenated = gray.concatenate(rgb, component_policy='promote_rgba')
+    expected_array = np.vstack((np.broadcast_to(gray_array, (1, 3)), rgb_array))
+    assert np.array_equal(concatenated.active_scalars, expected_array)
+
+    rgba_array = np.array([[1, 2, 3, 255]], dtype=np.uint8)
+    rgba = pv.ImageData(dimensions=(1, 1, 1))
+    rgba['A'] = rgba_array
+
+    concatenated = gray.concatenate(rgba, component_policy='promote_rgba')
+    expected_gray_rgba = np.broadcast_to(gray_array, (1, 4)).copy()
+    expected_gray_rgba[0][3] = 255
+    expected_array = np.vstack((expected_gray_rgba, rgba_array))
+    assert np.array_equal(concatenated.active_scalars, expected_array)
+
+
+def test_concatenate_component_policy_raises(beach):
+    im = pv.ImageData(dimensions=(1, 1, 1))
+    im['data'] = np.array([[1, 2]], dtype=np.uint8)
+    match = (
+        'Unable to promote scalar components. Only promotion for grayscale (1 component), '
+        'RGB (3 components),\nand RGBA (4 components) is supported. Got: {2, 3}'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        im.concatenate(beach, mode='crop-off-axis', component_policy='promote_rgba')
+
+
+class CasesResampleOffAxis:
+    # 1D WITH 1D CASES
+    def case_1d_x_with_1d_x_along_x(self):
+        return (20, 1, 1), (30, 1, 1), 'x', (50, 1, 1)
+
+    def case_1d_x_with_1d_x_along_y(self):
+        return (20, 1, 1), (30, 1, 1), 'y', (20, 2, 1)
+
+    def case_1d_x_with_1d_x_along_z(self):
+        return (20, 1, 1), (30, 1, 1), 'z', (20, 1, 2)
+
+    # 2D WITH 2D CASES
+    def case_2d_xy_with_2d_xy_along_x(self):
+        return (20, 40, 1), (30, 50, 1), 'x', (50, 40, 1)
+
+    def case_2d_xy_with_2d_xy_along_y(self):
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 90, 1)
+
+    def case_2d_xy_with_2d_xy_along_z(self):
+        return (20, 40, 1), (30, 50, 1), 'z', (20, 40, 2)
+
+    def case_2d_yz_with_2d_xy_along_x(self):
+        return (1, 20, 40), (30, 50, 1), 'x', (31, 20, 40)
+
+    def case_2d_yz_with_2d_xy_along_y(self):
+        return (1, 20, 40), (30, 50, 1), 'y', (1, 70, 40)
+
+    def case_2d_yz_with_2d_xy_along_z(self):
+        return (1, 20, 40), (30, 50, 1), 'z', (1, 20, 41)
+
+    # 3D WITH 3D CASES
+    def case_3d_with_3d_along_x(self):
+        return (10, 20, 30), (40, 50, 60), 'x', (50, 20, 30)
+
+    def case_3d_with_3d_along_y(self):
+        return (10, 20, 30), (40, 50, 60), 'y', (10, 70, 30)
+
+    def case_3d_with_3d_along_z(self):
+        return (10, 20, 30), (40, 50, 60), 'z', (10, 20, 90)
+
+    # MIXED DIMENSIONALITY CASES
+    def case_1d_x_with_2d_yz_along_x(self):
+        return (10, 1, 1), (1, 20, 30), 'x', (11, 1, 1)
+
+    def case_1d_x_with_3d_along_x(self):
+        return (10, 1, 1), (20, 30, 40), 'x', (30, 1, 1)
+
+    def case_2d_xy_with_3d_along_x(self):
+        return (10, 20, 1), (30, 40, 50), 'x', (40, 20, 1)
+
+
+@parametrize_with_cases(
+    'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleOffAxis
+)
+def test_concatenate_resample_off_axis(dimensions_a, dimensions_b, axis, dimensions_out):
+    image_a = pv.ImageData(dimensions=dimensions_a)
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=dimensions_b)
+    image_b['data'] = range(image_b.n_points)
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-off-axis')
+    assert concatenated_image.dimensions == dimensions_out
+
+
+class CasesResampleProportional:
+    def case_2d_xy_along_x(self):
+        return (20, 40, 1), (30, 50, 1), 'x', (44, 40, 1)
+
+    def case_2d_xy_along_y(self):
+        return (20, 40, 1), (30, 50, 1), 'y', (20, 73, 1)
+
+    def case_2d_yz_along_y(self):
+        return (1, 20, 40), (1, 30, 50), 'y', (1, 44, 40)
+
+    def case_2d_yz_along_z(self):
+        return (1, 20, 40), (1, 30, 50), 'z', (1, 20, 73)
+
+    def case_3d_proportional_along_z_same_proportion(self):
+        return (256, 256, 2), (128, 128, 50), 'z', (256, 256, 102)
+
+    def case_3d_proportional_along_z_different_proportion(self):
+        return (256, 256, 2), (128, 127, 50), 'z', (256, 256, 102)
+
+
+@parametrize_with_cases(
+    'dimensions_a, dimensions_b, axis, dimensions_out', cases=CasesResampleProportional
+)
+def test_concatenate_resample_proportional_match(dimensions_a, dimensions_b, axis, dimensions_out):
+    image_a = pv.ImageData(dimensions=dimensions_a)
+    image_a['data'] = range(image_a.n_points)
+    image_b = pv.ImageData(dimensions=dimensions_b)
+    image_b['data'] = range(image_b.n_points)
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-proportional')
+    assert concatenated_image.dimensions == dimensions_out
+
+    concatenated_image = image_a.concatenate(image_b, axis=axis, mode='resample-match')
+    expected_dims = list(dimensions_a)
+    if axis == 'x':
+        expected_dims[0] = expected_dims[0] * 2
+    if axis == 'y':
+        expected_dims[1] = expected_dims[1] * 2
+    if axis == 'z':
+        expected_dims[2] = expected_dims[2] * 2
+    assert concatenated_image.dimensions == tuple(expected_dims)
+
+
+@pytest.mark.parametrize('mode', ['resample-off-axis', 'resample-proportional', 'resample-match'])
+def test_concatenate_resample_kwargs(mode):
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = [0]
+    image_b = pv.ImageData(dimensions=(2, 1, 1))
+    image_b['B'] = [1, 2]
+    resample_kwargs = dict(interpolation='linear', border_mode='wrap', anti_aliasing=True)
+    concatenated_image = image_a.concatenate(
+        image_b, axis=0, mode=mode, resample_kwargs=resample_kwargs
+    )
+    assert isinstance(concatenated_image, pv.ImageData)
+
+    match = (
+        "resample_kwargs 'dimensions' is not valid. resample_kwargs must be one of: \n\t"
+        "('anti_aliasing', 'interpolation', 'border_mode')"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image_a.concatenate(
+            image_b, mode='resample-off-axis', resample_kwargs={'dimensions': (1, 2, 3)}
+        )
+
+
+def test_concatenate_preserve_extents():
+    array_a = np.array([0])
+    array_b = np.array([1])
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(1, 1, 1))
+    image_b['B'] = array_b
+
+    concatenated = image_a.concatenate(image_b, mode='preserve-extents')
+    assert concatenated.dimensions == (1, 1, 1)
+    assert np.array_equal(concatenated.active_scalars, array_b)
+
+    offset = (-1, 0, 0)
+    image_a.offset = offset
+    concatenated = image_a.concatenate(image_b, mode='preserve-extents')
+    assert concatenated.dimensions == (2, 1, 1)
+    assert concatenated.offset == offset
+    expected = np.hstack((array_a, array_b))
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+    match = "The axis keyword cannot be used with 'preserve-extents' mode."
+    with pytest.raises(ValueError, match=match):
+        image_a.concatenate(image_b, axis=0, mode='preserve-extents')
+
+
+def test_concatenate_crop():
+    array_a = np.array([0])
+    array_b = np.arange(9)
+
+    image_a = pv.ImageData(dimensions=(1, 1, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(3, 3, 1))
+    image_b['B'] = array_b
+
+    concatenated = image_a.concatenate(image_b, mode='crop-match')
+    assert concatenated.dimensions == (2, 1, 1)
+    expected = np.hstack((array_a, array_b[4]))
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+    concatenated = image_a.concatenate(image_b, mode='crop-off-axis')
+    assert concatenated.dimensions == (4, 1, 1)
+    expected = np.hstack((array_a, array_b[3:6]))
+    assert np.array_equal(concatenated.active_scalars, expected)

@@ -109,8 +109,16 @@ def set_plot_theme(theme):
     Parameters
     ----------
     theme : str
-        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
-        or ``'paraview'``.
+        The theme name.  Available predefined theme names include:
+
+        - ``'dark'``,
+        - ``'default'``,
+        - ``'document'``,
+        - ``'document_build'``,
+        - ``'document_pro'``,
+        - ``'paraview'``,
+        - ``'testing'`` and
+        - ``'vtk'``.
 
     Examples
     --------
