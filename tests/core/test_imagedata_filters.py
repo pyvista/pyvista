@@ -2438,3 +2438,4 @@ def test_concatenate_background_value(background_value, mode, origin, spacing):
     assert concatenated.origin == origin
     assert concatenated.spacing == spacing
     assert concatenated.user_dict == user_dict
+    assert concatenated.active_scalars_name == image_a.active_scalars_name

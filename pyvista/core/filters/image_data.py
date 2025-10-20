@@ -5911,7 +5911,7 @@ class ImageDataFilters(DataSetFilters):
             background_img.extent = whole_extent
             target_shape = (background_img.n_points, target_n_components)
             value = np.array(background_value, dtype=dtype_out)
-            background_img.point_data['data'] = np.broadcast_to(value, target_shape)
+            background_img.point_data[all_scalars[0]] = np.broadcast_to(value, target_shape)
 
             all_images.insert(0, background_img)
 
