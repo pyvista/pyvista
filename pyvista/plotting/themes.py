@@ -138,7 +138,7 @@ def set_plot_theme(theme):
         if theme not in (reg := _registry_themes):
             msg = f"Theme {theme} not found in PyVista's native themes."
             raise ValueError(msg)
-        pyvista.global_theme.load_theme(reg[theme]())
+        pyvista.global_theme.load_theme(reg[theme])
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -3302,7 +3302,21 @@ class Theme(_ThemeConfig):
         self._logo_file = path
 
 
-_registry_themes: dict[str, type] = {'vtk': Theme}
+class _ThemesRegistry(dict):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __getitem__(self, key: str):
+        item = super().__getitem__(key)
+        return item()
+
+    def get(self, key: str):
+        if (value := super().get(key)) is not None:
+            return value()
+        return None
+
+
+_registry_themes: _ThemesRegistry[str, Theme] = _ThemesRegistry(vtk=Theme)
 
 
 def register_theme(theme: str, cls: type | None = None):  # noqa: D103
