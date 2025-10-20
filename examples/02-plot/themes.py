@@ -166,7 +166,24 @@ cpos = pv.Sphere().plot(theme=my_theme)
 # Alternatively, set the theme of an instance of ``Plotter``.
 
 pl = pv.Plotter(theme=my_theme)
-# pl.theme = my_theme  # alternatively use the setter
+pl.add_mesh(pv.Cube())
+cpos = pl.show()
+
+# %%
+# Note that assigning the ``theme`` attribute of a ``Plotter`` instance
+# does not affect global appearance such as background, because they are set at instantiation.
+# However, actor appearance settings such as ``edge_color`` are correctly taken into account
+
+my_theme.background = 'red'
+my_theme.edge_color = 'purple'
+
+pl = pv.Plotter()
+pl.theme = my_theme
+pl.add_mesh(pv.Cube())
+cpos = pl.show()
+
+# %% Instead, set the theme to the ``Plotter`` instantiation
+pl = pv.Plotter(theme=my_theme)
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 
