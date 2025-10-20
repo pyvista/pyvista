@@ -368,6 +368,14 @@ def test_unregister_all_themes():
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
+def test_list_registered_themes():
+    pv.plotting.themes.register_theme(k1 := 'default', Theme())
+    pv.plotting.themes.register_theme(k2 := 'foo', Theme)
+
+    assert pv.themes.list_registered_themes() == [k1, k2]
+
+
+@pytest.mark.usefixtures('empty_registry_themes')
 def test_raises_register_theme():
     pv.plotting.themes._registry_themes[(k := 'default')] = Theme()
 

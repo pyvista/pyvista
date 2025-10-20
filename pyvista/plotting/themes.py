@@ -3381,6 +3381,10 @@ def unregister_all_themes():  # noqa: D103
     _registry_themes.clear()
 
 
+def list_registered_themes():  # noqa: D103
+    return list(_registry_themes.keys())
+
+
 @register_theme('dark')
 class DarkTheme(Theme):
     """Dark mode theme.
