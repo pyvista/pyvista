@@ -22,7 +22,7 @@ from pyvista.plotting.themes import _ThemesRegistry
 
 @pytest.fixture
 def default_theme():
-    return pv.plotting.themes.Theme()
+    return pv.themes.Theme()
 
 
 @pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
@@ -56,7 +56,7 @@ def test_depth_peeling_config(default_theme, parm):
 
 
 def test_depth_peeling_eq(default_theme):
-    my_theme = pv.plotting.themes.Theme()
+    my_theme = pv.themes.Theme()
     my_theme.depth_peeling.enabled = not my_theme.depth_peeling.enabled
     assert my_theme.depth_peeling != default_theme.depth_peeling
     assert my_theme.depth_peeling != 1
@@ -80,14 +80,14 @@ def test_silhouette_config(default_theme, parm):
 
 
 def test_depth_silhouette_eq(default_theme):
-    my_theme = pv.plotting.themes.Theme()
+    my_theme = pv.themes.Theme()
     my_theme.silhouette.opacity = 0.11111
     assert my_theme.silhouette != default_theme.silhouette
     assert my_theme.silhouette != 1
 
 
 def test_depth_silhouette_opacity_outside_clamp():
-    my_theme = pv.plotting.themes.Theme()
+    my_theme = pv.themes.Theme()
     with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
     with pytest.raises(ValueError):  # noqa: PT011
@@ -123,7 +123,7 @@ def test_slider_style_config_eq(default_theme):
 
 
 def test_slider_style_eq(default_theme):
-    my_theme = pv.plotting.themes.Theme()
+    my_theme = pv.themes.Theme()
     my_theme.slider_styles.modern.slider_length *= 2
     assert default_theme.slider_styles != my_theme.slider_styles
 
@@ -152,10 +152,10 @@ def test_font():
 
 
 def test_font_eq(default_theme):
-    defa_theme = pv.plotting.themes.Theme()
+    defa_theme = pv.themes.Theme()
     assert defa_theme.font == default_theme.font
 
-    paraview_theme = pv.plotting.themes.ParaViewTheme()
+    paraview_theme = pv.themes.ParaViewTheme()
     assert paraview_theme.font != default_theme.font
     assert paraview_theme.font != 1
 
@@ -186,9 +186,9 @@ def test_font_fmt(default_theme):
 
 
 def test_axes_eq(default_theme):
-    assert default_theme.axes == pv.plotting.themes.Theme().axes
+    assert default_theme.axes == pv.themes.Theme().axes
 
-    theme = pv.plotting.themes.Theme()
+    theme = pv.themes.Theme()
     theme.axes.box = True
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
@@ -244,7 +244,7 @@ def test_axes_show(default_theme):
 
 
 def test_colorbar_eq(default_theme):
-    theme = pv.plotting.themes.Theme()
+    theme = pv.themes.Theme()
     assert default_theme.colorbar_horizontal == theme.colorbar_horizontal
 
     assert default_theme.colorbar_horizontal != 1
@@ -275,24 +275,24 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme', pv.plotting.themes._registry_themes)
+@pytest.mark.parametrize('theme', pv.themes._registry_themes)
 def test_themes(theme):
     pv.set_plot_theme(theme)
-    assert pv.global_theme == pv.plotting.themes._registry_themes[theme]
+    assert pv.global_theme == pv.themes._registry_themes[theme]
 
 
 @pytest.fixture
 def empty_registry_themes(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(pv.plotting.themes, '_registry_themes', _ThemesRegistry())
+    monkeypatch.setattr(pv.themes, '_registry_themes', _ThemesRegistry())
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_register_theme_as_type():
-    @pv.plotting.themes.register_theme(k := 'my_theme')
-    class MyTheme(pv.plotting.themes.Theme): ...
+    @pv.themes.register_theme(k := 'my_theme')
+    class MyTheme(pv.themes.Theme): ...
 
-    assert k in pv.plotting.themes._registry_themes
-    assert pv.plotting.themes._registry_themes[k] == MyTheme()
+    assert k in pv.themes._registry_themes
+    assert pv.themes._registry_themes[k] == MyTheme()
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
@@ -300,10 +300,10 @@ def test_register_theme_as_obj():
     my_theme = pv.themes.DocumentTheme()
     my_theme.font.size = 100
 
-    pv.plotting.themes.register_theme(k := 'my_theme', my_theme)
+    pv.themes.register_theme(k := 'my_theme', my_theme)
 
-    assert k in pv.plotting.themes._registry_themes
-    assert pv.plotting.themes._registry_themes[k] == my_theme
+    assert k in pv.themes._registry_themes
+    assert pv.themes._registry_themes[k] == my_theme
 
 
 def test_theme_registry_new_objects():
@@ -329,38 +329,38 @@ def test_theme_registry_new_objects():
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_register_theme_override():
-    pv.plotting.themes.register_theme(k := 'default', Theme())
+    pv.themes.register_theme(k := 'default', Theme())
 
     # Override with instance
     my_theme = Theme()
     my_theme.font.size = 100
-    pv.plotting.themes.register_theme(k, my_theme, override=True)
+    pv.themes.register_theme(k, my_theme, override=True)
 
-    assert pv.plotting.themes._registry_themes[k] == my_theme
+    assert pv.themes._registry_themes[k] == my_theme
 
     # Override with class
-    pv.plotting.themes.register_theme(k, DarkTheme, override=True)
-    assert pv.plotting.themes._registry_themes[k] == DarkTheme()
+    pv.themes.register_theme(k, DarkTheme, override=True)
+    assert pv.themes._registry_themes[k] == DarkTheme()
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_unregister_theme():
-    pv.plotting.themes.register_theme(k := 'default', Theme())
-    assert k in pv.plotting.themes._registry_themes
-    pv.plotting.themes.unregister_theme(k)
-    assert k not in pv.plotting.themes._registry_themes
+    pv.themes.register_theme(k := 'default', Theme())
+    assert k in pv.themes._registry_themes
+    pv.themes.unregister_theme(k)
+    assert k not in pv.themes._registry_themes
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_unregister_theme_raises():
     with pytest.raises(KeyError, match=(k := 'default')):
-        pv.plotting.themes.unregister_theme(k)
+        pv.themes.unregister_theme(k)
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_unregister_all_themes():
-    pv.plotting.themes.register_theme('default', Theme())
-    pv.plotting.themes.register_theme('test', Theme())
+    pv.themes.register_theme('default', Theme())
+    pv.themes.register_theme('test', Theme())
 
     pv.themes.unregister_all_themes()
 
@@ -369,38 +369,38 @@ def test_unregister_all_themes():
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_list_registered_themes():
-    pv.plotting.themes.register_theme(k1 := 'default', Theme())
-    pv.plotting.themes.register_theme(k2 := 'foo', Theme)
+    pv.themes.register_theme(k1 := 'default', Theme())
+    pv.themes.register_theme(k2 := 'foo', Theme)
 
     assert pv.themes.list_registered_themes() == [k1, k2]
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
 def test_raises_register_theme():
-    pv.plotting.themes._registry_themes[(k := 'default')] = Theme()
+    pv.themes._registry_themes[(k := 'default')] = Theme()
 
     match = re.escape(f'Theme with name "{k}" is already registered.')
     with pytest.raises(ValueError, match=match):
 
-        @pv.plotting.themes.register_theme(k)
-        class MyTheme(pv.plotting.themes.Theme):
+        @pv.themes.register_theme(k)
+        class MyTheme(pv.themes.Theme):
             pass
 
     match = re.escape('The input must be an instance of "Theme", not "<class \'function\'>')
     with pytest.raises(TypeError, match=match):
 
-        @pv.plotting.themes.register_theme('foo')
+        @pv.themes.register_theme('foo')
         def func(): ...
 
     match = re.escape('The decorated class must be a subclass of "Theme".')
     with pytest.raises(TypeError, match=match):
 
-        @pv.plotting.themes.register_theme('foo')
+        @pv.themes.register_theme('foo')
         class MyTheme: ...
 
     match = re.escape('The input must be an instance of "Theme", not "<class \'int\'>')
     with pytest.raises(TypeError, match=match):
-        pv.plotting.themes.register_theme('foo', 1)
+        pv.themes.register_theme('foo', 1)
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
@@ -416,7 +416,7 @@ def test_invalid_theme_type_error():
 
 
 def test_set_theme():
-    theme = pv.plotting.themes.DarkTheme()
+    theme = pv.themes.DarkTheme()
     pv.set_plot_theme(theme)
     assert pv.global_theme == theme
 
@@ -597,10 +597,10 @@ def test_theme_slots(default_theme):
 
 
 def test_theme_eq():
-    defa_theme0 = pv.plotting.themes.Theme()
-    defa_theme1 = pv.plotting.themes.Theme()
+    defa_theme0 = pv.themes.Theme()
+    defa_theme1 = pv.themes.Theme()
     assert defa_theme0 == defa_theme1
-    dark_theme = pv.plotting.themes.DarkTheme()
+    dark_theme = pv.themes.DarkTheme()
     assert defa_theme0 != dark_theme
 
     # for coverage
@@ -609,7 +609,7 @@ def test_theme_eq():
 
 def test_plotter_set_theme():
     # test that the plotter theme is set to the new theme
-    my_theme = pv.plotting.themes.Theme()
+    my_theme = pv.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pv.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
@@ -624,7 +624,7 @@ def test_plotter_set_theme():
     pl = pv.Plotter()
     assert pl.theme == pv.global_theme
     pl.theme = 'dark'
-    assert pl.theme == pv.plotting.themes.DarkTheme()
+    assert pl.theme == pv.themes.DarkTheme()
 
 
 @pytest.mark.filterwarnings(
@@ -633,12 +633,12 @@ def test_plotter_set_theme():
 )
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
-    pv.plotting.themes.DarkTheme().save(filename)
+    pv.themes.DarkTheme().save(filename)
     loaded_theme = pv.load_theme(filename)
-    assert loaded_theme == pv.plotting.themes.DarkTheme()
+    assert loaded_theme == pv.themes.DarkTheme()
 
     default_theme.load_theme(filename)
-    assert default_theme == pv.plotting.themes.DarkTheme()
+    assert default_theme == pv.themes.DarkTheme()
 
 
 @pytest.mark.filterwarnings(
@@ -647,21 +647,21 @@ def test_load_theme(tmpdir, default_theme):
 )
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
-    dark_theme = pv.plotting.themes.DarkTheme()
+    dark_theme = pv.themes.DarkTheme()
 
     def fun(plotter):
         pass
 
     dark_theme.before_close_callback = fun
-    assert dark_theme != pv.plotting.themes.DarkTheme()
+    assert dark_theme != pv.themes.DarkTheme()
     dark_theme.save(filename)
 
     # fun is stripped from the theme
     loaded_theme = pv.load_theme(filename)
-    assert loaded_theme == pv.plotting.themes.DarkTheme()
+    assert loaded_theme == pv.themes.DarkTheme()
 
     default_theme.load_theme(filename)
-    assert default_theme == pv.plotting.themes.DarkTheme()
+    assert default_theme == pv.themes.DarkTheme()
 
 
 def test_anti_aliasing(default_theme):
@@ -786,7 +786,7 @@ def test_set_plot_theme_from_env(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_trame_config():
-    trame_config = pv.plotting.themes._TrameConfig()
+    trame_config = pv.themes._TrameConfig()
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
