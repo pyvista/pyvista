@@ -116,7 +116,7 @@ def set_plot_theme(theme):
     Parameters
     ----------
     theme : str
-        The theme name.  Available predefined theme names include:
+        The theme name. Available predefined theme names include (non-exhaustive):
 
         - ``'dark'``,
         - ``'default'``,
@@ -126,6 +126,9 @@ def set_plot_theme(theme):
         - ``'paraview'``,
         - ``'testing'`` and
         - ``'vtk'``.
+
+        .. versionadded:: 0.47
+            Run :func:`pyvista.list_registered_themes` to get all available themes.
 
     Examples
     --------
@@ -145,6 +148,11 @@ def set_plot_theme(theme):
     Set to the ParaView theme.
 
     >>> pv.set_plot_theme('paraview')
+
+    From ``v0.47.0``, list all available themes:
+
+    >>> pv.list_registered_themes()
+    ['vtk', 'dark', 'paraview', 'default', 'document', 'document_pro', 'document_build', 'testing']
 
     """
     import pyvista  # noqa: PLC0415
