@@ -328,13 +328,29 @@ def test_theme_registry_new_objects():
 
 
 @pytest.mark.usefixtures('empty_registry_themes')
-def test_raises_register_theme():
-    pv.plotting.themes._registry_themes['default'] = Theme()
+def test_register_theme_override():
+    pv.plotting.themes.register_theme(k := 'default', Theme())
 
-    match = re.escape('Theme with name "default" is already registered.')
+    # Override with instance
+    my_theme = Theme()
+    my_theme.font.size = 100
+    pv.plotting.themes.register_theme(k, my_theme, override=True)
+
+    assert pv.plotting.themes._registry_themes[k] == my_theme
+
+    # Override with class
+    pv.plotting.themes.register_theme(k, DarkTheme, override=True)
+    assert pv.plotting.themes._registry_themes[k] == DarkTheme()
+
+
+@pytest.mark.usefixtures('empty_registry_themes')
+def test_raises_register_theme():
+    pv.plotting.themes._registry_themes[(k := 'default')] = Theme()
+
+    match = re.escape(f'Theme with name "{k}" is already registered.')
     with pytest.raises(ValueError, match=match):
 
-        @pv.plotting.themes.register_theme('default')
+        @pv.plotting.themes.register_theme(k)
         class MyTheme(pv.plotting.themes.Theme):
             pass
 

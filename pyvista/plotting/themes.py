@@ -3341,10 +3341,15 @@ class _ThemesRegistry(dict[str, type[Theme] | Theme]):
 _registry_themes = _ThemesRegistry(vtk=Theme)
 
 
-def register_theme(theme: str, obj: type[Theme] | Theme | None = None):  # noqa: D103
+def register_theme(  # noqa: D103
+    theme: str,
+    obj: type[Theme] | Theme | None = None,
+    *,
+    override: bool = False,
+):
     def decorator_register(obj: type[Theme] | Theme):
-        if theme in _registry_themes:
-            msg = f'Theme with name "{theme}" is already registered.'
+        if theme in _registry_themes and not override:
+            msg = f'Theme with name "{theme}" is already registered. Use `override` to replace the existing value.'  # noqa: E501
             raise ValueError(msg)
 
         if inspect.isclass(obj):
