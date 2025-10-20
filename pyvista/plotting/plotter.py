@@ -487,6 +487,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 f'not {type(theme).__name__}.'
             )
             raise TypeError(msg)
+
+        msg = (
+            'Assigning a theme for a plotter instance might not have the intended effect on '
+            'global plotting parameters such as background. '
+            'You might need to set it at initialization.'
+        )
+        warnings.warn(msg, UserWarning, stacklevel=2)
         self._theme.load_theme(theme)
 
     @_deprecate_positional_args(allowed=['filename'])
