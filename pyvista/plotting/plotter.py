@@ -459,7 +459,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
-        .. warning::
+        .. version-deprecated:: 0.47
             Assigning the ``theme`` attribute to a plotter object does not affect global appearance
             settings such as ``background``, which are set at instantiation.
             To this respect, you need to set the theme such that:
@@ -494,6 +494,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme: Theme) -> None:
+        # Deprecated on 0.47.0, estimated removal on v0.48.0
+        msg = (
+            'Assigning a theme for a plotter instance is deprecated '
+            'and will removed in a future version of PyVista. '
+            'Set the theme when initializing the plotter instance instead.'
+        )
+        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
                 'Expected a pyvista theme like '
@@ -502,12 +510,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             )
             raise TypeError(msg)
 
-        msg = (
-            'Assigning a theme for a plotter instance might not have the intended effect on '
-            'global plotting parameters such as background. '
-            'You might need to set it at initialization.'
-        )
-        warnings.warn(msg, UserWarning, stacklevel=2)
         self._theme.load_theme(theme)
 
     @_deprecate_positional_args(allowed=['filename'])
