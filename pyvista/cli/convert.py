@@ -54,7 +54,6 @@ def _convert(
 
     pyvista convert foo.abc .xyz
     Saved: foo.xyz
-
     ```
     """
     # get input mesh and input path from file_in str token

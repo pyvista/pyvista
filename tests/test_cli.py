@@ -42,6 +42,7 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -55,7 +56,8 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
         │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot a PyVista, numpy, or vtk object.                   │
+        │ plot       Plot one or more mesh files in an interactive window    │
+        │            that can be customized with various options.            │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
@@ -73,7 +75,8 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
     │ convert    Convert a mesh file to another format.                  │
-    │ plot       Plot a PyVista, numpy, or vtk object.                   │
+    │ plot       Plot one or more mesh files in an interactive window    │
+    │            that can be customized with various options.            │
     │ report     Generate a PyVista software environment report.         │
     │ --help -h  Display this message and exit.                          │
     │ --version  Display application version.                            │
@@ -270,14 +273,17 @@ def test_convert_help(capsys: pytest.CaptureFixture):
             Convert a mesh file to another format.
 
             Sample usage:
-              $ pyvista convert foo.abc bar.xyz
-              Saved: bar.xyz
+            ```bash
+            pyvista convert foo.abc bar.xyz
+            Saved: bar.xyz
 
-              $ pyvista convert foo.abc .xyz
-              Saved: foo.xyz
-       """
+            pyvista convert foo.abc .xyz
+            Saved: foo.xyz
+            ```
+  """
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:11])
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
+    # assert expected == capsys.readouterr().out
 
 
 @pytest.fixture
@@ -775,10 +781,11 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         """\
         Usage: pyvista plot file (file2) [OPTIONS]
 
-        Plot a PyVista, numpy, or vtk object.
-        """
+        Plot one or more mesh files in an interactive window that can be 
+        customized with various options.
+        """  # noqa: W291
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:5])
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -796,7 +803,8 @@ def test_help(capsys: pytest.CaptureFixture):
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
         │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot a PyVista, numpy, or vtk object.                   │
+        │ plot       Plot one or more mesh files in an interactive window    │
+        │            that can be customized with various options.            │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
