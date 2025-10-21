@@ -54,7 +54,7 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.0.0',
+  'cyclopts<4.1.0',
   'matplotlib<3.10.7',
   'numpy<2.4.0',
   'pillow<11.4.0',
