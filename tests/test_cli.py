@@ -107,7 +107,7 @@ def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
 
 @pytest.fixture
 def mock_report(mocker: MockerFixture):
-    return mocker.patch.object(pv.__main__, 'Report')
+    return mocker.patch.object(pv.cli.report, 'Report')
 
 
 class CasesReport:
@@ -308,7 +308,7 @@ def mock_add_volume(mock_plotter: MagicMock):
 @fixture
 def missing_plot_arguments():
     """Argument names in the `pv.plot` signature which are intentionally removed from the
-    `pv.__main__._plot` function
+    `pv.cli.plot._plot` function
     """
 
     return {
@@ -354,7 +354,9 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     plot_params = set(plot_sig.parameters.keys())
 
     # Test the parameters names
-    cli_sig = inspect.signature(pv.__main__._plot)
+    from pyvista.cli.plot import _plot
+
+    cli_sig = inspect.signature(_plot)
     cli_params = set(cli_sig.parameters.keys())
 
     diff = plot_params - cli_params - missing_plot_arguments
@@ -380,7 +382,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     from pyvista.plotting.themes import Theme  # noqa: F401
 
     plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
-    cli_annotations = inspect.get_annotations(pv.__main__._plot, eval_str=True)
+    cli_annotations = inspect.get_annotations(_plot, eval_str=True)
 
     cli_annotations = {
         k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
