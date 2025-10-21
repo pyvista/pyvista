@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Iterable
+from collections.abc import Sequence
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -30,7 +31,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from typing import Any
 
     from numpy.typing import NDArray
 
@@ -60,6 +61,18 @@ _InterpolationOptions = Literal[
     'bspline8',
     'bspline9',
 ]
+_AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
+_ConcatenateModeOptions = Literal[
+    'strict',
+    'resample-off-axis',
+    'resample-match',
+    'resample-proportional',
+    'crop-off-axis',
+    'crop-match',
+    'preserve-extents',
+]
+_ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
+_ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 
 
 @abstract_class
@@ -1208,7 +1221,7 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def _validate_point_scalars(  # type: ignore[misc]
-        self: ImageData, scalars: str | None
+        self: ImageData, scalars: str | None = None
     ) -> tuple[Literal[FieldAssociation.POINT], str]:
         if scalars is None:
             field, scalars = set_default_active_scalars(self)
@@ -5358,6 +5371,506 @@ class ImageDataFilters(DataSetFilters):
         output = pyvista.ImageData()
         output.copy_structure(self)
         output[array_name] = array_out
+        return output
+
+    def concatenate(  # type: ignore[misc]
+        self: ImageData,
+        images: ImageData | Sequence[ImageData],
+        axis: _AxisOptions | None = None,
+        *,
+        mode: _ConcatenateModeOptions | None = None,
+        resample_kwargs: dict[str, Any] | None = None,
+        dtype_policy: _ConcatenateDTypePolicyOptions | None = None,
+        component_policy: _ConcatenateComponentPolicyOptions | None = None,
+    ):
+        """Combine multiple images into one.
+
+        This filter uses :vtk:`vtkImageAppend` to combine multiple images. By default, images are
+        concatenated along the specified ``axis``, and all images must have:
+
+        #. identical dimensions except along the specified ``axis``,
+        #. the same scalar dtype, and
+        #. the same number of scalar components.
+
+        Use ``mode`` for cases with mismatched dimensions, ``dtype_policy`` for cases with
+        mismatched dtypes, and/or ``component_policy`` for cases with mismatched scalar components.
+
+        The output has the same :attr:`~pyvista.ImageData.origin` and
+        :attr:`~pyvista.ImageData.spacing` as the first input. The origin and spacing of all other
+        inputs are ignored.
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        images : ImageData | Sequence[ImageData]
+            The input image(s) to concatenate. The default active scalars are used for all images.
+
+        axis : int | str, default: 'x'
+            Axis along which the images are concatenated:
+
+            - ``0`` or ``'x'``: x-axis
+            - ``1`` or ``'y'``: y-axis
+            - ``2`` or ``'z'``: z-axis
+
+        mode : str, default: 'strict'
+            Concatenation mode to use. This determines how images are placed in the output. All
+            modes operate along the specified ``axis`` except for ``'preserve-extents'``.
+            Specify one of:
+
+            - ``'strict'``: all images must have identical dimensions except along the specified
+              ``axis``.
+            - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
+              to match the input. The on-axis dimension is `not` resampled.
+            - ``'resample-match'``: :meth:`resample` all dimensions of concatenated images
+              to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
+              except the on-axis dimension is `also` resampled.
+            - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
+              preserve their aspect ratio(s).
+            - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
+              to match the input. The on-axis dimension is `not` cropped.
+            - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that
+              their dimensions match the input dimensions exactly. This is similar to
+              ``'crop-off-axis'``, except the on-axis dimension is `also` cropped.
+            - ``'preserve-extents'``: the extents of all images are preserved and used to place the
+              images in the output. The whole extent of the output is the union of the input whole
+              extents. The origin and spacing is taken from the first input. ``axis`` is not used
+              by this mode.
+
+            .. note::
+                Images may be padded with zeros in some cases when there are mismatched dimensions.
+
+        dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
+            - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
+              have the same dtype, else a ``TypeError`` is raised.
+            - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
+              image scalars. This option safely casts all input arrays to a common dtype before
+              concatenating.
+            - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
+              unsafe as it may downcast values and lose precision.
+
+        component_policy : 'strict' | 'promote_rgba', default: 'strict'
+            - ``'strict'``: Do not modify the number of components of any scalars. All images being
+              concatenated must have the same number of components, else a ``ValueError`` is
+              raised.
+            - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
+              with one component may be promoted to RGB scalars by duplicating values,
+              and RGB scalars may be promoted to RGBA scalars by including an opacity component.
+              For integer dtypes, the opacity is set to the max int representable by the dtype;
+              for floats it is set to ``1.0``.
+
+        resample_kwargs : dict, optional
+            Keyword arguments passed to :meth:`resample` when using ``'resample-off-axis'`` or
+            ``'resample-proportional'`` modes. Specify ``interpolation``, ``border_mode`` or
+            ``anti_aliasing`` options.
+
+        Returns
+        -------
+        ImageData
+            The concatenated image.
+
+        Examples
+        --------
+        .. pyvista-plot::
+            :force_static:
+
+            Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
+
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> beach = examples.download_beach()
+
+            Use :meth:`select_values` to make a second version with white values converted to black
+            to distinguish it from the original.
+
+            >>> white = [255, 255, 255]
+            >>> black = [0, 0, 0]
+            >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
+
+            Concatenate them along the x-axis.
+
+            >>> concatenated = beach.concatenate(beach_black, axis='x')
+            >>> plot_kwargs = dict(
+            ...     rgb=True,
+            ...     lighting=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ...     show_axes=False,
+            ...     show_scalar_bar=False,
+            ... )
+            >>> concatenated.plot(**plot_kwargs)
+
+            Concatenate them along the y-axis.
+
+            >>> concatenated = beach.concatenate(beach_black, axis='y')
+            >>> concatenated.plot(**plot_kwargs)
+
+            By default, concatenation requires that all off-axis dimensions match the input. Use
+            the ``mode`` keyword to enable concatenation with mismatched dimensions.
+
+            Load a second 2D image with different dimensions:
+            :func:`~pyvista.examples.downloads.download_bird`.
+
+            >>> bird = examples.download_bird()
+            >>> bird.dimensions
+            (458, 342, 1)
+            >>> beach.dimensions
+            (100, 100, 1)
+
+            Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
+            concatenated image. Linear interpolation with antialiasing is used to avoid sampling
+            artifacts.
+
+            >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (233, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The
+            ``bird``'s aspecte ratio is preserved and padded with zeros so that it can be stacked
+            on top of ``beach``.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird,
+            ...     axis='z',
+            ...     mode='resample-proportional',
+            ...     resample_kwargs=resample_kwargs,
+            ... )
+            >>> concatenated.dimensions
+            (100, 100, 2)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may
+            distort the image.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-off-axis', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (558, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-match'`` to resample all dimensions to match the input exactly. This
+            option may also distort the image.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-match', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (200, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the
+            desired result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is
+            completely overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
+
+            >>> beach.extent
+            (0, 99, 0, 99, 0, 0)
+            >>> bird.extent
+            (0, 457, 0, 341, 0, 0)
+
+            >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+            >>> concatenated.extent
+            (0, 457, 0, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial
+            overlap instead.
+
+            >>> beach.offset = (-50, -50, 0)
+            >>> beach.extent
+            (-50, 49, -50, 49, 0, 0)
+
+            >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+            >>> concatenated.extent
+            (-50, 457, -50, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Reverse the concatenation order.
+
+            >>> concatenated = bird.concatenate(beach, mode='preserve-extents')
+            >>> concatenated.extent
+            (-50, 457, -50, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'crop-off-axis'`` to only crop off-axis dimensions.
+
+            >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
+            >>> concatenated.dimensions
+            (558, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Reverse the concatenation order.
+
+            >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
+            >>> concatenated.dimensions
+            (558, 342, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'crop-match'`` to center-crop the images to match the input's
+            dimensions.
+
+            >>> concatenated = beach.concatenate(bird, mode='crop-match')
+            >>> concatenated.dimensions
+            (200, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Reverse the concatenation order.
+
+            >>> concatenated = bird.concatenate(beach, mode='crop-match')
+            >>> concatenated.dimensions
+            (558, 342, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+
+            >>> yinyang = examples.download_yinyang()
+
+            Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
+
+            >>> concatenated = yinyang.concatenate(
+            ...     beach, mode='resample-proportional', component_policy='promote_rgba'
+            ... )
+            >>> concatenated.plot(**plot_kwargs)
+
+            The grayscale portion of the image is promoted to RGB in this case and the entire
+            image has 3 components:
+
+            >>> concatenated.active_scalars.shape
+            (292068, 3)
+
+        """
+
+        def _compute_dimensions(
+            reference_dimensions: tuple[int, int, int], image_dimensions: tuple[int, int, int]
+        ) -> tuple[int, int, int]:
+            # Image must match the reference's non-concatenating axes exactly,
+            # but we leave the image's concatenating axis unchanged
+            new_dims = list(reference_dimensions)
+            new_dims[axis_num] = image_dimensions[axis_num]
+            return cast('tuple[int, int, int]', tuple(new_dims))
+
+        def _compute_sample_rate(
+            reference_image: ImageData, image: ImageData
+        ) -> tuple[np.float64, np.int64 | None]:
+            ref_dims = np.array(reference_image.dimensions)
+            img_dims = np.array(image.dimensions)
+            # Try to preserve image aspect ratio
+            off_axis = np.arange(3) != axis_num
+            not_singleton = ref_dims != 1
+            fixed_axes = off_axis & not_singleton
+
+            # Resample the image proportionally to match the axes
+            sample_rate_array = ref_dims / img_dims
+            if sample_rate_array[fixed_axes].size == 0:
+                return np.float64(1.0), None
+            sample_rate = sample_rate_array[fixed_axes].tolist()[0]
+            n_fixed_axes = np.count_nonzero(fixed_axes)
+
+            if n_fixed_axes == 1:
+                # No issues resampling to match the single axis
+                return sample_rate, None
+            elif n_fixed_axes == 2:
+                # We must check that both axes have the same proportion for both images
+                ref_ratio = ref_dims[fixed_axes][0] / ref_dims[fixed_axes][1]
+                img_ratio = img_dims[fixed_axes][0] / img_dims[fixed_axes][1]
+                if np.isclose(ref_ratio, img_ratio):
+                    return sample_rate, None
+            # Need to choose between two sampling rates
+            # We pick the smaller rate then pad out the image later
+            sample_rate = sample_rate_array[fixed_axes].min()
+            pad_axis = np.where((sample_rate_array == sample_rate) & not_singleton)[0][0]
+            return sample_rate, pad_axis
+
+        # Validate mode
+        if mode is not None:
+            options = get_args(_ConcatenateModeOptions)
+            _validation.check_contains(options, must_contain=mode, name='mode')
+        else:
+            mode = 'strict'
+
+        # Validate axis
+        mapping_axis_to_num = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+        mapping_axis_to_str = {'x': 'x', 'y': 'y', 'z': 'z', 0: 'x', 1: 'y', 2: 'z'}
+        if axis is not None:
+            if mode == 'preserve-extents':
+                msg = "The axis keyword cannot be used with 'preserve-extents' mode."
+                raise ValueError(msg)
+            options = get_args(_AxisOptions)
+            _validation.check_contains(options, must_contain=axis, name='axis')
+            axis_num = mapping_axis_to_num[axis]
+        else:
+            axis_num = 0
+
+        # Validate dtype policy
+        if dtype_policy is not None:
+            options = get_args(_ConcatenateDTypePolicyOptions)
+            _validation.check_contains(options, must_contain=dtype_policy, name='dtype_policy')
+        else:
+            dtype_policy = 'strict'
+
+        # Validate component policy
+        if component_policy is not None:
+            options = get_args(_ConcatenateComponentPolicyOptions)
+            _validation.check_contains(
+                options, must_contain=component_policy, name='component_policy'
+            )
+        else:
+            component_policy = 'strict'
+
+        all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
+
+        self_dimensions = self.dimensions
+        all_dtypes: list[np.dtype] = []
+        all_n_components: list[int] = []
+        all_scalars: list[str] = []
+        for i, img in enumerate(all_images):
+            if i > 0:
+                _validation.check_instance(img, pyvista.ImageData)
+
+            # Create shallow copies so we can safely modify if needed
+            img_shallow_copy = img.copy(deep=False)
+            _, scalars = img_shallow_copy._validate_point_scalars()
+            all_scalars.append(scalars)
+            array = img.point_data[scalars]
+            all_dtypes.append(array.dtype)
+            n_components = array.shape[1] if array.ndim == 2 else array.ndim
+            all_n_components.append(n_components)
+
+            if i > 0 and mode != 'preserve-extents':
+                if (dims := img.dimensions) != self_dimensions:
+                    # Need to deal with the dimensions mismatch
+                    if mode == 'strict':
+                        # Allow mismatch only along concatenating axis
+                        for ax in range(3):
+                            if ax != axis_num and dims[ax] != self_dimensions[ax]:
+                                image_num = f'{i - 1} ' if len(all_images) > 2 else ''
+                                this_axis = mapping_axis_to_str[ax]
+                                msg = (
+                                    f'Image {image_num}dimensions {img.dimensions} must '
+                                    f'match off-axis dimensions {self.dimensions} for axis '
+                                    f'{axis_num}.\nGot {this_axis} dimension {dims[ax]}, expected '
+                                    f'{self_dimensions[ax]}. Use the `mode` keyword to allow '
+                                    f'concatenation with\nmismatched dimensions.'
+                                )
+                                raise ValueError(msg)
+                    elif mode.startswith('resample'):
+                        kwargs = {}
+                        if resample_kwargs:
+                            _validation.check_instance(resample_kwargs, dict)
+                            allowed_kwargs = ('anti_aliasing', 'interpolation', 'border_mode')
+                            for kwarg in resample_kwargs.keys():
+                                _validation.check_contains(
+                                    allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
+                                )
+                            kwargs.update(resample_kwargs)
+
+                        pad_axis = None
+                        if mode == 'resample-off-axis':
+                            kwargs['dimensions'] = _compute_dimensions(
+                                self_dimensions, img.dimensions
+                            )
+                        elif mode == 'resample-match':
+                            kwargs['dimensions'] = self_dimensions
+                        else:  # mode == 'resample-proportional
+                            sample_rate, pad_axis = _compute_sample_rate(self, img)
+                            kwargs['sample_rate'] = sample_rate
+
+                        img_shallow_copy = img_shallow_copy.resample(**kwargs)
+                        if pad_axis is not None:
+                            # Pad out 3D case where one axis is mismatched
+                            xyz_padding = np.abs(
+                                np.array(img_shallow_copy.dimensions) - np.array(self_dimensions)
+                            )
+                            pad_size = np.zeros((6,), dtype=int)
+                            pad_ind = pad_axis * 2 + 1
+                            pad_size[pad_ind] = xyz_padding[pad_axis]
+                            img_shallow_copy = img_shallow_copy.pad_image(pad_size=pad_size)
+
+                    elif mode == 'crop-off-axis':
+                        dimensions = _compute_dimensions(
+                            self_dimensions, img_shallow_copy.dimensions
+                        )
+                        img_shallow_copy = img_shallow_copy.crop(dimensions=dimensions)
+                    elif mode == 'crop-match':
+                        img_shallow_copy = img_shallow_copy.crop(dimensions=self_dimensions)
+
+            if mode.startswith(('resample', 'crop')):
+                # These modes should not be affected by offset, so we zero it
+                img_shallow_copy.offset = (0, 0, 0)
+
+            # Replace input with shallow copy
+            all_images[i] = img_shallow_copy
+
+        if len(set(all_dtypes)) > 1:
+            # Need to cast all scalars to the same dtype
+            if dtype_policy == 'strict':
+                msg = (
+                    f'The dtypes of the scalar arrays do not match. Got multiple '
+                    f"dtypes: {set(all_dtypes)}.\nSet the dtype policy to 'promote' or "
+                    f"'match' to cast the inputs to a single dtype."
+                )
+                raise TypeError(msg)
+            elif dtype_policy == 'promote':
+                dtype_out = np.result_type(*all_dtypes)
+            else:  # dtype_policy == 'match'
+                dtype_out = all_dtypes[0]
+
+            for img, scalars in zip(all_images, all_scalars):
+                array = img.point_data[scalars]
+                img.point_data[scalars] = array.astype(dtype_out, copy=False)
+        else:
+            dtype_out = all_images[0].point_data[all_scalars[0]].dtype
+
+        if len(set(all_n_components)) > 1:
+            # Need to ensure all scalars have the same number of components
+            if component_policy == 'strict':
+                msg = (
+                    f'The number of components in the scalar arrays do not match. Got n '
+                    f'components: {set(all_n_components)}.\nSet the component policy to '
+                    f"'promote_rgba' to automatically increase the number of components as needed."
+                )
+                raise ValueError(msg)
+            else:  # component_policy == 'promote_rgba'
+                if not set(all_n_components) < {1, 3, 4}:
+                    msg = (
+                        'Unable to promote scalar components. Only promotion for grayscale (1 '
+                        'component), RGB (3 components),\nand RGBA (4 components) is supported. '
+                        f'Got: {set(all_n_components)}'
+                    )
+                    raise ValueError(msg)
+                target_n_components = max(all_n_components)
+                for img, n_components, scalars in zip(all_images, all_n_components, all_scalars):
+                    if n_components < target_n_components:
+                        array = img.point_data[scalars]
+                        if n_components < 3:
+                            array = np.vstack((array, array, array)).T  # type: ignore[assignment]
+                        if target_n_components == 4:
+                            fill_value = (
+                                np.iinfo(dtype_out).max
+                                if np.issubdtype(dtype_out, np.integer)
+                                else 1.0
+                            )
+                            new_array = np.full((len(array), 4), fill_value, dtype=dtype_out)
+                            new_array[:, :3] = array
+                            array = new_array  # type: ignore[assignment]
+
+                        img.point_data[scalars] = array
+
+        alg = _vtk.vtkImageAppend()
+        alg.SetAppendAxis(axis_num)
+        alg.SetPreserveExtents(mode == 'preserve-extents')
+
+        for img in all_images:
+            alg.AddInputData(img)
+
+        _update_alg(alg)
+        output = _get_output(alg)
+        if mode != 'preserve-extents':
+            output.offset = self.offset
         return output
 
 
