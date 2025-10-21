@@ -132,10 +132,9 @@ def colorful_tetrahedron():
 
 
 @pytest.fixture(autouse=True)
-def set_default_theme(monkeypatch: pytest.MonkeyPatch):
+def set_default_theme():
     """Reset the testing theme for every test."""
     pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
-    monkeypatch.delenv('PYVISTA_PLOT_THEME', raising=False)
     yield
     pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
 
