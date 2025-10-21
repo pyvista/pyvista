@@ -1994,11 +1994,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Strategy used to assign connected region IDs if ``label_regions`` is True.
             Can be either:
 
-            - ``ascending``: IDs are sorted by increasing order of cell count
-            - ``descending``: IDs are sorted by decreasing order of cell counts
-            - ``unspecified``: no particular order
+            - ``"ascending"``: IDs are sorted by increasing order of cell count
+            - ``"descending"``: IDs are sorted by decreasing order of cell counts
+            - ``"unspecified"``: no particular order
 
             .. versionadded:: 0.47
+
+            .. admonition:: ParaView compatibility
+                :class: note dropdown
+
+                The default value ``"descending"`` differs from ParaView's, which
+                is set to ``"unspecified"`` (verified for 5.11 and 6.0 versions).
 
         region_ids : sequence[int], optional
             Region ids to extract. Only used if ``extraction_mode`` is
