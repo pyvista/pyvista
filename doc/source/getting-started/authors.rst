@@ -22,6 +22,8 @@ section, please be sure to head over to the `Contributors Graph`_.
 .. include:: ../../../AUTHORS.rst
 
 
+.. include:: ../../../CONTRIBUTORS.rst
+
 
 License
 -------
