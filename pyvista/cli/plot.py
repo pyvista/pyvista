@@ -81,6 +81,7 @@ class Groups(StrEnum):
 @app.command(
     usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]',
     help_formatter=HELP_FORMATTER,
+    help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
 )
 def _plot(
     var_item: Annotated[

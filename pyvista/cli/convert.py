@@ -48,12 +48,14 @@ def _convert(
     """Convert a mesh file to another format.
 
     Sample usage:
-      $ pyvista convert foo.abc bar.xyz
-      Saved: bar.xyz
+    ```bash
+    pyvista convert foo.abc bar.xyz
+    Saved: bar.xyz
 
-      $ pyvista convert foo.abc .xyz
-      Saved: foo.xyz
+    pyvista convert foo.abc .xyz
+    Saved: foo.xyz
 
+    ```
     """
     # get input mesh and input path from file_in str token
     # which was converted to a (mesh, path) pair

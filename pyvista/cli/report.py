@@ -15,7 +15,7 @@ from .utils import HELP_FORMATTER
 Report.__init__.__annotations__ = get_type_hints(Report.__init__)
 
 
-@app.command(help_formatter=HELP_FORMATTER)
+@app.command(help_formatter=HELP_FORMATTER, help='Generate a PyVista software environment report.')
 @wraps(Report)
 def _report(*args, **kwargs) -> Report:
     return Report(*args, **kwargs)
