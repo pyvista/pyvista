@@ -7,13 +7,12 @@ from rich.console import Console
 
 import pyvista
 
-# help format needs to be `plaintext` due to unsupported `versionadded` sphinx directive in rich.
-# Change to `rst` when cyclopts v4 is out. See https://github.com/BrianPugh/cyclopts/issues/568
 app = App(
     name=pyvista.__name__,
-    help_format='plaintext',
+    help_format='md',
     version=f'{pyvista.__name__} {pyvista.__version__}',
     help_on_error=True,
     console=Console(),
     result_action='return_value',
+    help_formatter='default',
 )

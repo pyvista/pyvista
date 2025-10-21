@@ -10,6 +10,7 @@ from cyclopts import Parameter
 import pyvista
 
 from .app import app
+from .utils import HELP_FORMATTER
 from .utils import _console_error
 from .utils import _converter_files
 
@@ -25,6 +26,7 @@ def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
 
 @app.command(
     usage=f'Usage: [bold]{pyvista.__name__} convert FILE-IN FILE-OUT',
+    help_formatter=HELP_FORMATTER,
 )
 def _convert(
     file_in: Annotated[

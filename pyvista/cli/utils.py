@@ -1,6 +1,6 @@
 """Utilities for command line interface.
 
-Mostly contains converters, validators and console error helper.
+Mostly contains converters, validators, console error helper and help formatters.
 
 """
 
@@ -11,8 +11,13 @@ from typing import TYPE_CHECKING
 from typing import NamedTuple
 from typing import NoReturn
 
+from cyclopts.help import ColumnSpec
+from cyclopts.help import DefaultFormatter
+from cyclopts.help import HelpEntry
+from cyclopts.help import TableSpec
 from rich import box
 from rich.panel import Panel
+from rich.text import Text
 
 import pyvista
 from pyvista.core.dataobject import DataObject
@@ -25,6 +30,43 @@ if TYPE_CHECKING:
     from rich.console import Group
 
     from pyvista import DataObject
+
+
+def default(entry: HelpEntry):  # noqa: ANN201, D103
+    return d if (d := entry.default) is not None else '-'
+
+
+def names(entry: HelpEntry):  # noqa: ANN201, D103
+    names = Text(' '.join(entry.names), style='cyan')
+    return (Text('* ', style='red') + names) if entry.required else names
+
+
+def description(entry: HelpEntry):  # noqa: ANN201, D103
+    return entry.description
+
+
+HELP_FORMATTER = DefaultFormatter(
+    table_spec=TableSpec(show_header=True),
+    column_specs=[
+        ColumnSpec(
+            renderer=names,
+            header='Option',
+            header_style='bold purple',
+            style='cyan',
+        ),
+        ColumnSpec(
+            renderer=default,
+            header='Default',
+            style='bold',
+            header_style='bold purple',
+        ),
+        ColumnSpec(
+            renderer=description,
+            header='Description',
+            header_style='bold purple',
+        ),
+    ],
+)
 
 
 class _MeshAndPath(NamedTuple):

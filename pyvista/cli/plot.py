@@ -19,6 +19,7 @@ import pyvista
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 from .app import app
+from .utils import HELP_FORMATTER
 from .utils import _console_error
 from .utils import _converter_files
 from .utils import _MeshAndPath
@@ -77,7 +78,10 @@ class Groups(StrEnum):
     RETURN = 'Return'
 
 
-@app.command(usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]')
+@app.command(
+    usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]',
+    help_formatter=HELP_FORMATTER,
+)
 def _plot(
     var_item: Annotated[
         list[str],
