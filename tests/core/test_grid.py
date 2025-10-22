@@ -39,15 +39,15 @@ def test_init_from_polydata(sphere):
     unstruct_grid = pv.UnstructuredGrid(sphere)
     assert unstruct_grid.n_points == sphere.n_points
     assert unstruct_grid.n_cells == sphere.n_cells
-    assert len(unstruct_grid.celltypes) == sphere.n_cells
     assert np.all(unstruct_grid.celltypes == 5)
+    assert len(unstruct_grid.celltypes) == sphere.n_cells
 
 
 def test_init_from_structured(struct_grid):
     unstruct_grid = pv.UnstructuredGrid(struct_grid)
     assert unstruct_grid.points.shape[0] == struct_grid.x.size
-    assert len(unstruct_grid.celltypes) == struct_grid.n_cells
     assert np.all(unstruct_grid.celltypes == 12)
+    assert len(unstruct_grid.celltypes) == struct_grid.n_cells
 
 
 def test_init_from_unstructured(hexbeam):
