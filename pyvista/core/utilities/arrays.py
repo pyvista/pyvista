@@ -32,26 +32,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
-# Mapping from types in `vtkType.h` to the corresponding array class
-VTK_ARRAY_TYPES = {
-    _vtk.VTK_BIT: _vtk.vtkBitArray,
-    _vtk.VTK_CHAR: _vtk.vtkCharArray,
-    _vtk.VTK_SIGNED_CHAR: _vtk.vtkSignedCharArray,
-    _vtk.VTK_UNSIGNED_CHAR: _vtk.vtkUnsignedCharArray,
-    _vtk.VTK_SHORT: _vtk.vtkShortArray,
-    _vtk.VTK_UNSIGNED_SHORT: _vtk.vtkUnsignedShortArray,
-    _vtk.VTK_INT: _vtk.vtkIntArray,
-    _vtk.VTK_UNSIGNED_INT: _vtk.vtkUnsignedIntArray,
-    _vtk.VTK_LONG: _vtk.vtkLongArray,
-    _vtk.VTK_UNSIGNED_LONG: _vtk.vtkUnsignedLongArray,
-    _vtk.VTK_FLOAT: _vtk.vtkFloatArray,
-    _vtk.VTK_DOUBLE: _vtk.vtkDoubleArray,
-    _vtk.VTK_ID_TYPE: _vtk.vtkIdTypeArray,
-    _vtk.VTK_STRING: _vtk.vtkStringArray,
-    _vtk.VTK_LONG_LONG: _vtk.vtkLongLongArray,
-    _vtk.VTK_UNSIGNED_LONG_LONG: _vtk.vtkUnsignedLongLongArray,
-}
-
 
 class FieldAssociation(enum.Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
@@ -221,17 +201,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
         msg = f'Invalid type {type(array)}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    try:
-        new_array = type(array)()
-    except TypeError:
-        # Array appears abstract and is likely implicit
-        # Init array from the array type instead
-        array_type = array.GetArrayType()
-        vtk_array_class = VTK_ARRAY_TYPES.get(array_type)
-        if vtk_array_class is None:  # pragma: no cover
-            msg = f'Array could not be copied, unsupported array type code: {array_type}'
-            raise TypeError(msg)
-        new_array = vtk_array_class()  # type: ignore[assignment]
+    new_array = _vtk.vtkDataArray.CreateArray(array.GetDataType())
 
     if deep:
         new_array.DeepCopy(array)
