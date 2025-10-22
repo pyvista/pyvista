@@ -1061,7 +1061,10 @@ def test_copy_implicit_vtk_array(plane):
     new_vtk_object = plane['test'].VTKObject
     if pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
-        assert type(new_vtk_object) is vtk.vtkFloatArray
+        expected_type = (
+            vtk.vtkUnsignedIntArray if pv.vtk_version_info < (9, 5, 99) else vtk.vtkFloatArray
+        )
+        assert type(new_vtk_object) is expected_type
     else:
         assert type(new_vtk_object) is vtk.vtkIdTypeArray
 
