@@ -338,10 +338,21 @@ def test_geodesic_distance(sphere):
     assert isinstance(distance_use_scalar_weights, float)
 
 
-def test_ray_trace(sphere):
-    points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
+@pytest.mark.parametrize('mutate', [True, False])
+def test_ray_trace(sphere, mutate):
+    origin = [0, 0, 0]
+    end_point = [1, 1, 1]
+    points, ind = sphere.ray_trace(origin, end_point)
     assert np.any(points)
     assert np.any(ind)
+
+    if mutate:
+        # Mutate in-place to test that the cached obb tree still works with ray-tracing
+        sphere.points += (0.1, 0, 0)
+
+        points2, ind2 = sphere.ray_trace(origin, end_point)
+        assert not np.array_equal(points, points2)
+        assert not np.array_equal(ind, ind2)
 
 
 def test_ray_trace_origin():

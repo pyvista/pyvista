@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
+from functools import cached_property
 from functools import wraps
 import numbers
 from pathlib import Path
@@ -1659,7 +1660,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @property
+    @cached_property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
