@@ -162,16 +162,13 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-_vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N816
-
-
 @_deprecate_positional_args(allowed=['array'])
-def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001, FBT002
+def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkAbstractArray:  # noqa: FBT001, FBT002
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
     ----------
-    array : :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
+    array : :vtk:`vtkAbstractArray`
         VTK array.
 
     deep : bool, optional
@@ -180,7 +177,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
 
     Returns
     -------
-    :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
+    :vtk:`vtkAbstractArray`
         Copy of the original VTK array.
 
     Examples
@@ -197,11 +194,11 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
     1.0
 
     """
-    if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
+    if not isinstance(array, _vtk.vtkAbstractArray):
         msg = f'Invalid type {type(array)}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    new_array = _vtk.vtkDataArray.CreateArray(array.GetDataType())
+    new_array = _vtk.vtkAbstractArray.CreateArray(array.GetDataType())
 
     if deep:
         new_array.DeepCopy(array)
