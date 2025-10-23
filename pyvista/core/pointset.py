@@ -1727,7 +1727,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
-        self.obbTree = None
+        self.obbTree = None  # type: ignore[attribute]
 
 
 @abstract_class
