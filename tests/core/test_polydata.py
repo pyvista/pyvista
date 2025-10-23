@@ -348,7 +348,7 @@ def test_ray_trace(sphere, mutate):
 
     if mutate:
         # Mutate in-place to test that the cached obb tree still works with ray-tracing
-        sphere.points += (0.1, 0, 0)
+        sphere.points += (0.2, 0, 0)
 
         points2, ind2 = sphere.ray_trace(origin, end_point)
         assert not np.array_equal(points, points2)
