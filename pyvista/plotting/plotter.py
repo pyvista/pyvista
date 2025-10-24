@@ -468,6 +468,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
                 import pyvista as pv
 
+                pl = pv.Plotter()
+                pl.theme = theme
+                # change above lines to
                 pl = pv.Plotter(theme=theme)
 
             However, actor appearance settings such as ``edge_color`` for example are correctly
