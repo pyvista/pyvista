@@ -1669,6 +1669,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
+
+        .. warning::
+
+            This property is expensive to compute and is therefore cached. If the mesh's
+            geometry is modified, the obb tree will no longer be valid.
+
         """
         obb_tree = _vtk.vtkOBBTree()
         obb_tree.SetDataSet(self)
