@@ -23,6 +23,7 @@ from . import _vtk
 from .colors import Color
 from .colors import get_cmap_safe
 from .lookup_table import LookupTable
+from .themes import _get_theme
 from .tools import normalize
 from .utilities.algorithms import set_algorithm_input
 
@@ -34,13 +35,12 @@ class _BaseMapper(
     """Base Mapper with methods common to other mappers."""
 
     def __init__(self, theme=None, **kwargs) -> None:
+        # copy global theme to ensure local property theme is fixed
+        # after creation.
         self._theme = pyvista.themes.Theme()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pyvista.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        theme = pyvista.global_theme if theme is None else _get_theme(theme)
+        self._theme.load_theme(theme)
+
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(

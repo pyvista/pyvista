@@ -32,12 +32,13 @@ pyvista.
 
 from __future__ import annotations
 
-from enum import Enum
+import inspect
 from itertools import chain
 import json
 import os
 import pathlib
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 from typing import Any
 import warnings
@@ -51,6 +52,12 @@ from .colors import get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
 
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
+
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -61,14 +68,40 @@ if TYPE_CHECKING:
     from ._typing import ColormapOptions
 
 
+def _get_theme(theme: str | Theme):
+    """Helper function to check and get a theme.
+
+    - if string, lookup in registry
+    - if `Theme` instance, return as is
+
+    Otherwise, raise appropriate error.
+    """  # noqa: D401
+    if isinstance(theme, str):
+        _theme = (reg := _registry_themes).get(theme)
+        if _theme is None:
+            msg = f'Theme "{theme}" not found. The available themes are:\n{list(reg.keys())}'
+            raise ValueError(msg)
+
+        return _theme
+
+    if isinstance(theme, Theme):
+        return theme
+
+    msg = (  # type: ignore[unreachable]
+        'Expected ``pyvista.plotting.themes.Theme`` or `str` for ``theme``, '
+        f'not {type(theme).__name__}.'
+    )
+    raise TypeError(msg)
+
+
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
-    if 'PYVISTA_PLOT_THEME' in os.environ:
+    if (k := 'PYVISTA_PLOT_THEME') in os.environ:
         try:
-            theme = os.environ['PYVISTA_PLOT_THEME']
+            theme = os.environ[k]
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ', '.join(_registry_themes.keys())
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
@@ -103,13 +136,13 @@ def load_theme(filename):
     return Theme.from_dict(theme_dict)
 
 
-def set_plot_theme(theme):
+def set_plot_theme(theme: str | Theme):
     """Set the plotting parameters to a predefined theme using a string.
 
     Parameters
     ----------
-    theme : str
-        The theme name.  Available predefined theme names include:
+    theme : str | Theme
+        The theme name of value. Available predefined theme names include (non-exhaustive):
 
         - ``'dark'``,
         - ``'default'``,
@@ -119,6 +152,9 @@ def set_plot_theme(theme):
         - ``'paraview'``,
         - ``'testing'`` and
         - ``'vtk'``.
+
+        .. versionadded:: 0.47
+            Run :func:`pyvista.list_registered_themes` to get all available themes.
 
     Examples
     --------
@@ -139,24 +175,15 @@ def set_plot_theme(theme):
 
     >>> pv.set_plot_theme('paraview')
 
+    From ``v0.47.0``, list all available themes:
+
+    >>> pv.list_registered_themes()
+    ['vtk', 'dark', 'paraview', 'default', 'document', 'document_pro', 'document_build', 'testing']
+
     """
     import pyvista  # noqa: PLC0415
 
-    if isinstance(theme, str):
-        theme = theme.lower()
-        try:
-            new_theme_type = _NATIVE_THEMES[theme].value
-        except KeyError:
-            msg = f"Theme {theme} not found in PyVista's native themes."
-            raise ValueError(msg)
-        pyvista.global_theme.load_theme(new_theme_type())
-    elif isinstance(theme, Theme):
-        pyvista.global_theme.load_theme(theme)
-    else:
-        msg = (
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
-        )
-        raise TypeError(msg)
+    pyvista.global_theme.load_theme(_get_theme(theme=theme))
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
@@ -3313,6 +3340,75 @@ class Theme(_ThemeConfig):
         self._logo_file = path
 
 
+class _ThemesRegistry(dict[str, type[Theme] | Theme]):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __getitem__(self, key: str):
+        item = super().__getitem__(key)
+        if inspect.isclass(item) and issubclass(item, Theme):
+            return item()
+
+        theme = Theme()
+        theme.load_theme(item)
+        return theme
+
+    @override
+    def get(self, key: str, /):
+        try:
+            return self[key]
+        except KeyError:
+            return None
+
+
+_registry_themes = _ThemesRegistry(vtk=Theme)
+
+
+def register_theme(  # noqa: D103
+    theme: str,
+    obj: type[Theme] | Theme | None = None,
+    *,
+    override: bool = False,
+):
+    def decorator_register(obj: type[Theme] | Theme):
+        if theme in _registry_themes and not override:
+            msg = f'Theme with name "{theme}" is already registered. Use `override` to replace the existing value.'  # noqa: E501
+            raise ValueError(msg)
+
+        if inspect.isclass(obj):
+            if not issubclass(obj, Theme):
+                msg = 'The decorated class must be a subclass of "Theme".'
+                raise TypeError(msg)
+
+            _registry_themes[theme] = obj
+            return obj
+
+        if not isinstance(obj, Theme):
+            msg = f'The input must be an instance of "Theme", not "{type(obj)}"'
+            raise TypeError(msg)
+
+        _registry_themes[theme] = obj
+        return obj
+
+    if obj is None:
+        return decorator_register
+
+    return decorator_register(obj)
+
+
+def unregister_theme(theme: str):  # noqa: D103
+    del _registry_themes[theme]
+
+
+def unregister_all_themes():  # noqa: D103
+    _registry_themes.clear()
+
+
+def list_registered_themes():  # noqa: D103
+    return list(_registry_themes.keys())
+
+
+@register_theme('dark')
 class DarkTheme(Theme):
     """Dark mode theme.
 
@@ -3348,6 +3444,7 @@ class DarkTheme(Theme):
         self.axes.z_color = 'blue'
 
 
+@register_theme('paraview')
 class ParaViewTheme(Theme):
     """A paraview-like theme.
 
@@ -3383,6 +3480,8 @@ class ParaViewTheme(Theme):
         self.axes.z_color = 'green'
 
 
+@register_theme('document')
+@register_theme('default')
 class DocumentTheme(Theme):
     """A document theme well suited for papers and presentations.
 
@@ -3429,6 +3528,7 @@ class DocumentTheme(Theme):
         self.axes.z_color = 'blue'
 
 
+@register_theme('document_pro')
 class DocumentProTheme(DocumentTheme):
     """A more professional document theme.
 
@@ -3454,6 +3554,7 @@ class DocumentProTheme(DocumentTheme):
         self.depth_peeling.enabled = True
 
 
+@register_theme('document_build')
 class _DocumentBuildTheme(DocumentTheme):
     """Theme used for building the documentation."""
 
@@ -3469,6 +3570,7 @@ class _DocumentBuildTheme(DocumentTheme):
         self.resample_environment_texture = True
 
 
+@register_theme('testing')
 class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
 
@@ -3494,14 +3596,14 @@ class _TestingTheme(Theme):
         self.resample_environment_texture = True
 
 
-class _NATIVE_THEMES(Enum):  # noqa: N801
-    """Global built-in themes available to PyVista."""
+# class _NATIVE_THEMES(Enum):
+#     """Global built-in themes available to PyVista."""
 
-    paraview = ParaViewTheme
-    document = DocumentTheme
-    document_pro = DocumentProTheme
-    document_build = _DocumentBuildTheme
-    dark = DarkTheme
-    default = document
-    testing = _TestingTheme
-    vtk = Theme
+#     paraview = ParaViewTheme
+#     document = DocumentTheme
+#     document_pro = DocumentProTheme
+#     document_build = _DocumentBuildTheme
+#     dark = DarkTheme
+#     default = document
+#     testing = _TestingTheme
+#     vtk = Theme

@@ -82,6 +82,7 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .themes import _get_theme
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -262,8 +263,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         * ``'three lights'``: illumination using 3 lights.
         * ``'none'``: no light sources at instantiation.
 
-    theme : pyvista.plotting.themes.Theme, optional
+    theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme.
+
+        .. versionchanged:: 0.47.0
+            A theme can be set via a string from a set of registered
+            values.
+            Run :func:`pyvista.list_registered_themes` to get all available themes
+            and :func:`pyvista.register_theme` to register your custom theme.
 
     image_scale : int, optional
         Scale factor when saving screenshots. Image sizes will be
@@ -301,7 +308,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         lighting: LightingOptions | None = 'light kit',
-        theme: Theme | None = None,
+        theme: Theme | str | None = None,
         image_scale: int | None = None,
         **kwargs,
     ) -> None:
@@ -317,19 +324,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
 
+        # copy global theme to ensure local plot theme is fixed
+        # after creation.
         self._theme = Theme()
-        if theme is None:
-            # copy global theme to ensure local plot theme is fixed
-            # after creation.
-            self._theme.load_theme(pyvista.global_theme)
-        else:
-            if not isinstance(theme, Theme):
-                msg = (  # type: ignore[unreachable]
-                    'Expected ``pyvista.plotting.themes.Theme`` for '
-                    f'``theme``, not {type(theme).__name__}.'
-                )
-                raise TypeError(msg)
-            self._theme.load_theme(theme)
+        theme = pyvista.global_theme if theme is None else _get_theme(theme)
+        self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
 
@@ -459,6 +458,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
+        .. versionchanged:: 0.47.0
+            A theme can be set via a string from a set of registered
+            values. See example the below.
+
         Returns
         -------
         pyvista.Theme
@@ -475,19 +478,18 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
+
+        >>> pl = pv.Plotter()
+        >>> pl.theme = 'dark'
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> pl.show()
+
         """
         return self._theme
 
     @theme.setter
-    def theme(self, theme: Theme) -> None:
-        if not isinstance(theme, pyvista.plotting.themes.Theme):
-            msg = (  # type: ignore[unreachable]
-                'Expected a pyvista theme like '
-                '``pyvista.plotting.themes.Theme``, '
-                f'not {type(theme).__name__}.'
-            )
-            raise TypeError(msg)
-        self._theme.load_theme(theme)
+    def theme(self, theme: Theme | str) -> None:
+        self._theme.load_theme(_get_theme(theme))
 
     @_deprecate_positional_args(allowed=['filename'])
     def import_gltf(self, filename: str | Path, set_camera: bool = True) -> None:  # noqa: FBT001, FBT002
