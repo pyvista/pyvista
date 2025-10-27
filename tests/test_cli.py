@@ -43,6 +43,7 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
     monkeypatch.setattr(app, 'help_format', 'plaintext')
+    monkeypatch.setattr(app, 'error_console', console)
 
 
 @pytest.mark.parametrize('args', [[], ''])
