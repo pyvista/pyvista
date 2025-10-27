@@ -517,10 +517,10 @@ def test_plotter_theme_attribute_setter():
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pl.theme = my_theme
 
-    if pyvista.version_info >= (0, 48):
+    if pyvista.version_info >= (0, 49):
         pytest.fail('Turn the warning to error')
 
-    if pyvista.version_info >= (0, 49):
+    if pyvista.version_info >= (0, 50):
         pytest.fail('Remove the `theme` setter')
 
     assert pl.theme.color == my_theme.color

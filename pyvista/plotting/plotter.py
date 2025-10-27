@@ -497,7 +497,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme: Theme) -> None:
-        # Deprecated on 0.47.0, estimated removal on v0.48.0
+        # Deprecated on 0.47.0, convert to error in v0.49, estimated removal on v0.50
         msg = (
             'Assigning a theme for a plotter instance is deprecated '
             'and will removed in a future version of PyVista. '
