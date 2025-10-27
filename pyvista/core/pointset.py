@@ -2393,7 +2393,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     def _get_cell_types_array(self):
         array = (
-            self.GetCellTypes()
+            self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
             if pyvista.vtk_version_info > (9, 5, 99)
             else self.GetCellTypesArray()
         )
