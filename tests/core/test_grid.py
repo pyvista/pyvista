@@ -1887,12 +1887,12 @@ def empty_poly_cast_to_ugrid():
 
     # Likely VTK bug, these should not be None but they are
     assert cast_ugrid.GetCells() is None
-    assert cast_ugrid.GetCellTypesArray() is None
+    assert cast_ugrid.GetCellTypes() is None
 
     # Make sure a proper ugrid does not have these as None
     ugrid = pv.UnstructuredGrid()
     assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
-    assert isinstance(ugrid.GetCellTypesArray(), vtk.vtkUnsignedCharArray)
+    assert isinstance(ugrid.GetCellTypes(), vtk.vtkUnsignedCharArray)
 
     return cast_ugrid
 
