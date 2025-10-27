@@ -47,7 +47,7 @@ def description(entry: HelpEntry):  # noqa: ANN201, D103
 
 HELP_FORMATTER = DefaultFormatter(
     table_spec=TableSpec(show_header=True),
-    column_specs=[
+    column_specs=(
         ColumnSpec(
             renderer=names,
             header='Option',
@@ -65,7 +65,7 @@ HELP_FORMATTER = DefaultFormatter(
             header='Description',
             header_style='bold purple',
         ),
-    ],
+    ),
 )
 
 
