@@ -502,8 +502,8 @@ def test_plotter_set_theme():
     assert pv.global_theme.color != pl.theme.color
 
 
-def test_plotter_set_theme_to_instance():
-    """Test that the plotter theme is set to the new theme for an instance"""
+def test_plotter_theme_attribute_setter():
+    """Test when a theme is set as a plotter attribute"""
     my_theme = pv.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
 
