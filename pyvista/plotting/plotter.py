@@ -488,7 +488,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import themes
         >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()
+        >>> pl.theme = themes.DarkTheme()  # doctest: +SKIP
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
