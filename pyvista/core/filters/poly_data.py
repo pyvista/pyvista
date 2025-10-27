@@ -2465,6 +2465,12 @@ class PolyDataFilters(DataSetFilters):
         This requires a mesh and a line segment defined by an origin
         and end_point.
 
+        .. warning::
+
+            This filter uses the mesh's :attr:`~pyvista.PolyData.obbTree` property internally to
+            compute the intersection. Since the obb tree is cached, the intersection may not be
+            valid if the mesh's geometry is modified in between filter calls.
+
         Parameters
         ----------
         origin : sequence[float]
