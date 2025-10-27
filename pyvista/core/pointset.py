@@ -2384,15 +2384,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return _vtk.vtk_to_numpy(self._get_cell_types_array())
 
     def _get_cell_types_array(self):
-        import vtk  # noqa: PLC0415
-
-        # # Try 1 (GetCellTypesArray deprecated to GetCellTypes)
-        # self.GetCellTypes(types := vtk.vtkCellTypes())
-        # array = types.GetCellTypesArray()
-
-        # Try 2 (GetCellTypes deprecated to GetDistinctCellTypes)
-        self.GetDistinctCellTypes(types := vtk.vtkCellTypes())
-        array = types.GetCellTypesArray()
+        array = self.GetCellTypes()
 
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
