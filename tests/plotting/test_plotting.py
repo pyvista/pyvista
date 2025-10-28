@@ -4806,6 +4806,10 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info > (9, 5, 99) and orient_faces is False:
+        # This bug was fixed in VTK 9.6
+        pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
     contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
