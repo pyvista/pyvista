@@ -32,16 +32,16 @@ if TYPE_CHECKING:
     from pyvista import DataObject
 
 
-def default(entry: HelpEntry):  # noqa: ANN201, D103
+def default(entry: HelpEntry):  # noqa: ANN202
     return d if (d := entry.default) is not None else '-'
 
 
-def names(entry: HelpEntry):  # noqa: ANN201, D103
+def names(entry: HelpEntry):  # noqa: ANN202
     names = Text(' '.join(entry.names), style='cyan')
     return (Text('* ', style='red') + names) if entry.required else names
 
 
-def description(entry: HelpEntry):  # noqa: ANN201, D103
+def description(entry: HelpEntry):  # noqa: ANN202
     return entry.description
 
 

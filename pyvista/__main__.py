@@ -6,7 +6,7 @@ import warnings
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-from .cli import app
+from ._cli import app
 
 
 def main(argv: list[str] | str | None = None) -> None:

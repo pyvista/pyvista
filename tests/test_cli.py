@@ -111,7 +111,7 @@ def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
 
 @pytest.fixture
 def mock_report(mocker: MockerFixture):
-    return mocker.patch.object(pv.cli.report, 'Report')
+    return mocker.patch.object(pv._cli.report, 'Report')
 
 
 class CasesReport:
@@ -361,7 +361,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     plot_params = set(plot_sig.parameters.keys())
 
     # Test the parameters names
-    from pyvista.cli.plot import _plot
+    from pyvista._cli.plot import _plot
 
     cli_sig = inspect.signature(_plot)
     cli_params = set(cli_sig.parameters.keys())
