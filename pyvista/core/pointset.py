@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
+from functools import cached_property
 from functools import wraps
 import numbers
 from pathlib import Path
@@ -1674,7 +1675,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @property
+    @cached_property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
@@ -1683,6 +1684,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
+
+        .. warning::
+
+            This property is expensive to compute and is therefore cached. If the mesh's
+            geometry is modified, the obb tree will no longer be valid.
+
         """
         obb_tree = _vtk.vtkOBBTree()
         obb_tree.SetDataSet(self)
@@ -1741,6 +1748,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
+        self.obbTree = None  # type: ignore[assignment]
 
 
 @abstract_class
