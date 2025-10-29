@@ -43,6 +43,11 @@ pytestmark = [
         r'ignore:It is recommended to use web\.AppKey instances for '
         r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
     ),
+    pytest.mark.filterwarnings(
+        r'ignore:Call to deprecated method GetData\. '
+        r'\(Use ExportLegacyFormat, or GetOffsetsArray/GetConnectivityArray instead\.\)'
+        ':DeprecationWarning:trame_vtk'
+    ),
 ]
 
 

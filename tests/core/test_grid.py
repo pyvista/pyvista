@@ -40,12 +40,14 @@ def test_init_from_polydata(sphere):
     assert unstruct_grid.n_points == sphere.n_points
     assert unstruct_grid.n_cells == sphere.n_cells
     assert np.all(unstruct_grid.celltypes == 5)
+    assert len(unstruct_grid.celltypes) == sphere.n_cells
 
 
 def test_init_from_structured(struct_grid):
     unstruct_grid = pv.UnstructuredGrid(struct_grid)
     assert unstruct_grid.points.shape[0] == struct_grid.x.size
     assert np.all(unstruct_grid.celltypes == 12)
+    assert len(unstruct_grid.celltypes) == struct_grid.n_cells
 
 
 def test_init_from_unstructured(hexbeam):
@@ -108,7 +110,11 @@ def test_init_bad_input():
     points = rnd_generator.random((4, 3))
     celltypes = [pv.CellType.TETRA]
     cells = np.array([5, 0, 1, 2, 3])
-    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
+
+    match = re.escape(
+        'Cell array size is invalid. Size (5) does not match expected size (6). This is likely due to invalid connectivity array.'  # noqa: E501
+    )
+    with pytest.raises(CellSizeError, match=match):
         pv.UnstructuredGrid(cells, celltypes, points)
 
     with pytest.raises(TypeError, match='requires the following arrays'):
@@ -1877,16 +1883,21 @@ def test_rect_grid_dimensions_raises():
 
 @pytest.fixture
 def empty_poly_cast_to_ugrid():
+    def get_cell_types(mesh):
+        return (
+            mesh.GetCellTypes() if pv.vtk_version_info > (9, 5, 99) else mesh.GetCellTypesArray()
+        )
+
     cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
 
     # Likely VTK bug, these should not be None but they are
     assert cast_ugrid.GetCells() is None
-    assert cast_ugrid.GetCellTypesArray() is None
+    assert get_cell_types(cast_ugrid) is None
 
     # Make sure a proper ugrid does not have these as None
     ugrid = pv.UnstructuredGrid()
     assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
-    assert isinstance(ugrid.GetCellTypesArray(), vtk.vtkUnsignedCharArray)
+    assert isinstance(get_cell_types(ugrid), vtk.vtkUnsignedCharArray)
 
     return cast_ugrid
 
