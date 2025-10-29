@@ -284,7 +284,6 @@ def test_convert_help(capsys: pytest.CaptureFixture):
   """
     )
     assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
-    # assert expected == capsys.readouterr().out
 
 
 @pytest.fixture
