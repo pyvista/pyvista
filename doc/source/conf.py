@@ -79,6 +79,11 @@ warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
 )
+warnings.filterwarnings(
+    'always',
+    category=PyVistaDeprecationWarning,
+    message='Assigning a theme for a plotter instance is deprecated',
+)
 
 # -- General configuration ------------------------------------------------
 numfig = False
