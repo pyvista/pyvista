@@ -13,6 +13,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import colors
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
@@ -492,16 +493,38 @@ def test_theme_eq():
 
 
 def test_plotter_set_theme():
-    # test that the plotter theme is set to the new theme
+    """Test that the plotter theme is set to the new theme"""
+
     my_theme = pv.plotting.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pv.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pv.global_theme.color != pl.theme.color
 
+
+def test_plotter_theme_attribute_setter():
+    """Test when a theme is set as a plotter attribute"""
+    my_theme = pv.themes.Theme()
+    my_theme.color = [1.0, 0.0, 0.0]
+
     pl = pv.Plotter()
-    assert pl.theme == pv.global_theme
-    pl.theme = my_theme
+    match = (
+        'Assigning a theme for a plotter instance is deprecated '
+        'and will removed in a future version of PyVista. '
+        'Set the theme when initializing the plotter instance instead.'
+    )
+
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pl.theme = my_theme
+
+    if pyvista.version_info >= (0, 49):
+        pytest.fail('Turn the warning to error')
+
+    if pyvista.version_info >= (0, 50):
+        pytest.fail('Remove the `theme` setter')
+
+    assert pl.theme.color == my_theme.color
+
     assert pl.theme != pv.global_theme
     assert pl.theme == my_theme
 

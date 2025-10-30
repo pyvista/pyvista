@@ -166,7 +166,6 @@ cpos = pv.Sphere().plot(theme=my_theme)
 # Alternatively, set the theme of an instance of ``Plotter``.
 
 pl = pv.Plotter(theme=my_theme)
-# pl.theme = my_theme  # alternatively use the setter
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 
