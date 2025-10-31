@@ -1879,11 +1879,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @property
     def camera_position(self) -> CameraPosition:  # numpydoc ignore=RT01
-        """Return camera position of the active render window.
+        """Set or return the camera position of the active render window.
 
         Examples
         --------
-        Return the camera's position.
+        Return the camera's position as a :class:`~pyvista.CameraPosition` object.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1892,12 +1892,25 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
         >>> cpos = pl.camera_position
 
-        Show the camera position.
+        Show the camera position. This implicitly calls ``repr(cpos)``.
 
         >>> cpos
         CameraPosition(position=(0.02430, 0.0336, 0.9446),
                        focal_point=(0.02430, 0.0336, -0.02225),
                        viewup=(0.0, 1.0, 0.0))
+
+        Create a new :class:`~pyvista.CameraPosition` object by copy/pasting the repr and
+        prepending the pyvista module, i.e. ``pv.``.
+
+        >>> new_cpos = pv.CameraPosition(
+        ...     position=(0.02430, 0.0336, 0.9446),
+        ...     focal_point=(0.02430, 0.0336, -0.02225),
+        ...     viewup=(0.0, 1.0, 0.0),
+        ... )
+
+        Set the :attr:`camera_position` with this new object.
+
+        >>> pl.camera_position = new_cpos
 
         Use ``print`` or ``str`` to obtain a list representation instead.
 
