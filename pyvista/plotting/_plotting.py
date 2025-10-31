@@ -159,9 +159,13 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn('Opacity scalars contain values over 1')
+                warnings.warn(
+                    'Opacity scalars contain values over 1', stacklevel=2
+                )  # pragma: no cover
             if np.any(opacity < 0):
-                warnings.warn('Opacity scalars contain values less than 0')
+                warnings.warn(
+                    'Opacity scalars contain values less than 0', stacklevel=2
+                )  # pragma: no cover
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
@@ -207,6 +211,7 @@ def _common_arg_parser(
     texture,
     rgb,
     style,
+    remove_existing_actor=None,
     **kwargs,
 ):
     """Parse arguments in common between add_volume, composite, and mesh."""
@@ -249,9 +254,11 @@ def _common_arg_parser(
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
-        remove_existing_actor = False
-    else:
-        # check if this actor already exists
+        # Default to False when no name is provided
+        if remove_existing_actor is None:  # pragma: no cover
+            remove_existing_actor = False
+    # Default to True when a name is provided (for backwards compatibility)
+    elif remove_existing_actor is None:
         remove_existing_actor = True
 
     nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)

@@ -6,12 +6,11 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_texture():
-    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
+    with pytest.raises(TypeError, match=r'Cannot create a pyvista.Texture from'):
         texture = pv.Texture(range(10))
 
     texture = pv.Texture(examples.mapfile)
@@ -91,7 +90,7 @@ def test_texture_rotate_ccw(texture):
 def test_texture_from_images(image):
     texture = pv.Texture([image] * 6)
     assert texture.cube_map
-    with pytest.raises(TypeError, match='pyvista.ImageData'):
+    with pytest.raises(TypeError, match=r'pyvista.ImageData'):
         pv.Texture(['foo'] * 6)
 
 
@@ -151,15 +150,9 @@ def test_repeat(texture):
 
 
 def test_wrap(texture):
-    if pv.vtk_version_info < (9, 1):
-        with pytest.raises(VTKVersionError):
-            assert isinstance(texture.wrap, texture.WrapType)
-        with pytest.raises(VTKVersionError):
-            texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-    else:
-        assert isinstance(texture.wrap, texture.WrapType)
-        texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-        assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
+    assert isinstance(texture.wrap, texture.WrapType)
+    texture.wrap = texture.WrapType.CLAMP_TO_EDGE
+    assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
 
 
 def test_grayscale(texture):

@@ -27,7 +27,7 @@ jobs:
       issues: write # required for peter-evans/create-issue-from-file
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -40,7 +40,7 @@ jobs:
 
       - name: "Run Lychee"
         id: lychee
-        uses: lycheeverse/lychee-action@82202e5e9c2f4ef1a55a3d02563e1cb6041e5332
+        uses: lycheeverse/lychee-action@885c65f3dc543b57c898c8099f4e08c8afd178a2
         with:
           args: >
             --cache
@@ -56,7 +56,7 @@ jobs:
 
       - name: "Report Failure"
         if: steps.lychee.outputs.exit_code != 0
-        uses: peter-evans/create-issue-from-file@e8ef132d6df98ed982188e460ebb3b5d4ef3a9cd
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710
         with:
           title: "chore: linkcheck failure"
           content-filepath: ./lychee/out.md

@@ -106,7 +106,7 @@ conn = mesh.connectivity('all')
 
 # Format scalar bar text for integer values.
 scalar_bar_args = dict(
-    fmt='%.f',
+    fmt='{0:.1f}',
 )
 
 cpos = pv.CameraPosition(

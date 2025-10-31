@@ -23,6 +23,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
+from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
@@ -118,11 +119,12 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(
+    def save(  # noqa: PLR0917
         self: Self,
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Save this vtk object to file.
 
@@ -157,6 +159,15 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             .. note::
                This feature is only available when saving PLY files.
 
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
+
+            .. versionadded:: 0.47
+
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
@@ -177,7 +188,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                         f'has field data which will not be saved.\n'
                         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
                         'Use `move_nested_field_data_to_root` to store the field data '
-                        'with the root MultiBlock before saving.'
+                        'with the root MultiBlock before saving.',
+                        stacklevel=2,
                     )
 
         def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
@@ -221,12 +233,13 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                     'The direction matrix for ImageData will not be saved using the '
                     'legacy `.vtk` format.\n'
                     'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                    'Use the `.vti` extension instead (XML format).'
+                    'Use the `.vti` extension instead (XML format).',
+                    stacklevel=2,
                 )
 
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
-            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
@@ -468,6 +481,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
             elif isinstance(self, pyvista.UnstructuredGrid):
                 equal_attrs.append('celltypes')
+                equal_attrs.append('polyhedron_faces')
+                equal_attrs.append('polyhedron_face_locations')
 
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista

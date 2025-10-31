@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 import inspect
 from itertools import starmap
@@ -38,6 +39,12 @@ class DatasetLoaderTestCase:
     dataset_name: str
     dataset_function: tuple[str, FunctionType]
     dataset_loader: tuple[str, _DatasetLoader]
+
+
+@pytest.fixture(autouse=True)
+def ignore_local_vtk_data_cache(monkeypatch):
+    """Ignore local cache and force SOURCE to always be _DEFAULT_VTK_DATA_SOURCE for tests."""
+    monkeypatch.setattr(downloads, 'SOURCE', downloads._DEFAULT_VTK_DATA_SOURCE)
 
 
 def _generate_dataset_loader_test_cases_from_module(
@@ -125,11 +132,10 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
 
 
 @pytest.fixture
-def examples_local_repository_tmp_dir(tmp_path):
+def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Create a local repository with a bunch of datasets available for download."""
     # setup
-    repository_path = os.path.join(tmp_path, 'repo')
-    os.mkdir(repository_path)
+    (repository_path := tmp_path / 'repo').mkdir()
 
     downloadable_basenames = [
         'airplane.ply',
@@ -146,37 +152,28 @@ def examples_local_repository_tmp_dir(tmp_path):
     # copy datasets from the pyvista repo to the local repository
 
     [
-        shutil.copyfile(os.path.join(examples.dir_path, base), os.path.join(repository_path, base))
+        shutil.copyfile(Path(examples.dir_path) / base, repository_path / base)
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(
-        os.path.join(tmp_path, 'archive.zip'),
-        os.path.join(repository_path, 'archive.zip'),
-    )
+    shutil.make_archive(tmp_path / 'archive', 'zip', repository_path)
+    shutil.move(tmp_path / 'archive.zip', repository_path / 'archive.zip')
     downloadable_basenames.append('archive.zip')
 
-    # initialize downloads fetcher
+    # initialize downloads fetcher from the existing one
+    FETCHER = copy.deepcopy(downloads.FETCHER)
     for base in downloadable_basenames:
-        downloads.FETCHER.registry[base] = None
-    downloads.FETCHER.base_url = str(repository_path) + '/'
-    downloads._FILE_CACHE = True
+        FETCHER.registry[base] = None
+    FETCHER.base_url = str(repository_path) + '/'
+    (cache_path := tmp_path / 'cache').mkdir()
+    FETCHER.path = cache_path
 
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_paths = [os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames]
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    monkeypatch.setattr(downloads, 'FETCHER', FETCHER)
+    monkeypatch.setattr(downloads, '_FILE_CACHE', True)
+    monkeypatch.setattr(downloads, 'USER_DATA_PATH', cache_path)
 
-    yield repository_path
-
-    # teardown
-    downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
-    downloads._FILE_CACHE = False
-    [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
-
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    return repository_path
 
 
 @pytest.mark.usefixtures('examples_local_repository_tmp_dir')

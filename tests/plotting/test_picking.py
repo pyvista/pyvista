@@ -299,7 +299,6 @@ def test_point_picking(left_clicking):
     assert picked
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0, reason='Hardware picker unavailable for VTK<9.2')
 @pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
@@ -486,7 +485,7 @@ def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
     pl = pv.Plotter()
     width, height = pl.window_size
-    actor, mapper = pl.add_composite(multiblock_poly)
+    _actor, mapper = pl.add_composite(multiblock_poly)
 
     picked_blocks = []
 

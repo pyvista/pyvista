@@ -51,8 +51,7 @@ data:
    demos.plot_datasets('StructuredGrid')
 
 
-The :class:`pyvista.PointSet` (as of ``vtk==9.1.0``) is a concrete class for
-storing a set of points.
+The :class:`pyvista.PointSet` is a concrete class for storing a set of points.
 
 .. jupyter-execute::
    :hide-code:

@@ -29,7 +29,7 @@ except ModuleNotFoundError:
 
 def test_read_raises():
     with pytest.raises(
-        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+        ValueError, match=r'Only one of `file_format` and `force_ext` may be specified.'
     ):
         pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
 
@@ -315,6 +315,15 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
+def test_ensightreader_non_time_series_data():
+    filename = examples.download_file('simple_tetra/example.case')
+    examples.download_file('simple_tetra/example.geo')
+
+    reader = pv.get_reader(filename)
+    assert reader.number_time_points == 0
+    assert reader.time_values == []
+
+
 def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
@@ -598,7 +607,6 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -720,14 +728,8 @@ def test_openfoam_cell_to_point_default():
 
 
 def test_openfoam_patch_arrays():
-    # vtk version 9.1.0 changed the way patch names are handled.
-    vtk_version = pv.vtk_version_info
-    if vtk_version >= (9, 1, 0):
-        patch_array_key = 'boundary'
-        reader_patch_prefix = 'patch/'
-    else:
-        patch_array_key = 'Patches'
-        reader_patch_prefix = ''
+    patch_array_key = 'boundary'
+    reader_patch_prefix = 'patch/'
 
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
@@ -782,11 +784,10 @@ def test_openfoam_case_type():
     assert reader.case_type == 'decomposed'
     reader.case_type = 'reconstructed'
     assert reader.case_type == 'reconstructed'
-    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+    with pytest.raises(ValueError, match=r"Unknown case type 'wrong_value'."):
         reader.case_type = 'wrong_value'
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
@@ -960,7 +961,6 @@ def test_avsucd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_hdf_reader():
     filename = examples.download_can_crushed_hdf(load=False)
     reader = pv.get_reader(filename)
@@ -972,12 +972,6 @@ def test_hdf_reader():
     assert mesh.n_points == 6724
     assert 'VEL' in mesh.point_data
     assert mesh.n_cells == 4800
-
-
-def test_hdf_reader_raises(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0))
-    with pytest.raises(pv.VTKVersionError):
-        pv.HDFReader('foo')
 
 
 def test_xdmf_reader():
@@ -1031,9 +1025,6 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
-)
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
     partitions = pv.PartitionedDataSet(
@@ -1073,9 +1064,6 @@ def test_gambitreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
     reader = pv.get_reader(filename)
@@ -1108,9 +1096,6 @@ def test_gesignareader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
     reader = pv.get_reader(filename)

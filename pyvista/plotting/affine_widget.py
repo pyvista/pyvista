@@ -8,7 +8,6 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
@@ -191,11 +190,6 @@ class AffineWidget3D(_NoNewAttrMixin):
         interact_callback=None,
     ):
         """Initialize the widget."""
-        # needs VTK v9.2.0 due to the hardware picker
-        if pyvista.vtk_version_info < (9, 2):
-            msg = 'AfflineWidget3D requires VTK v9.2.0 or newer.'
-            raise VTKVersionError(msg)
-
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
         self._pl = plotter

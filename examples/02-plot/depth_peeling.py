@@ -73,21 +73,22 @@ p.show()
 
 
 # %%
-# And here is another example wheen rendering many translucent contour
+# And here is another example when rendering many translucent contour
 # surfaces.
 
-mesh = examples.download_brain().contour(5)
+mesh = examples.download_brain().resample(0.5, anti_aliasing=True)
+contours = mesh.contour(5)
 cmap = 'viridis_r'
 
 p = pv.Plotter(shape=(1, 2))
 
-p.add_mesh(mesh, opacity=0.5, cmap=cmap)
+p.add_mesh(contours, opacity=0.5, cmap=cmap)
 p.enable_depth_peeling(10)
 p.add_text('Depth Peeling')
 
 p.subplot(0, 1)
 p.add_text('Standard')
-p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
+p.add_mesh(contours.copy(), opacity=0.5, cmap=cmap)
 
 p.link_views()
 p.camera_position = pv.CameraPosition(

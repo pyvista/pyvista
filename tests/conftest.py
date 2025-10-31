@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import faulthandler
 import functools
 from importlib import metadata
 from inspect import BoundArguments
@@ -8,8 +9,6 @@ from inspect import Signature
 import os
 import platform
 import re
-from typing import Optional
-from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
@@ -27,6 +26,8 @@ NUMPY_VERSION_INFO = VersionInfo(
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
 )
+
+faulthandler.enable()
 
 
 def flaky_test(
@@ -101,6 +102,11 @@ def set_mpl():
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Default is to allow new 'private' attributes for downstream packages,
+    # but for PyVista itself we enforce no new attributes
+    pyvista.allow_new_attributes(False)
+    assert pyvista.allow_new_attributes() is False
+
     yield
 
     pyvista.vtk_snake_case('error')
@@ -108,6 +114,9 @@ def reset_global_state():
 
     pyvista.vtk_verbosity('info')
     assert pyvista.vtk_verbosity() == 'info'
+
+    pyvista.allow_new_attributes(False)
+    assert pyvista.allow_new_attributes() is False
 
     pyvista.PICKLE_FORMAT = 'vtk'
 
@@ -279,17 +288,6 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
-def pytest_configure(config: pytest.Config):
-    """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
-    warnings = config.getini('filterwarnings')
-
-    if pyvista.vtk_version_info < (9, 1):
-        warnings.append(
-            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin '
-            r'.{1}bool.*:DeprecationWarning'
-        )
-
-
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
@@ -355,39 +353,48 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
-
+    needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
-    for item_mark in item.iter_markers('needs_vtk_version'):
+    for item_mark in item.iter_markers(needs_vtk_version):
         sig = Signature(
             [
                 Parameter(
                     'args',
                     kind=Parameter.VAR_POSITIONAL,
-                    annotation=Union[int, tuple[int]],
+                    annotation=int | tuple[int],
                 ),
                 Parameter(
                     'at_least',
                     kind=Parameter.KEYWORD_ONLY,
-                    annotation=Optional[tuple[int]],
+                    annotation=tuple[int] | None,
                     default=None,
                 ),
                 Parameter(
                     'less_than',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Optional[tuple[int]],
+                    annotation=tuple[int] | None,
                 ),
                 Parameter(
                     'reason',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Optional[str],
+                    annotation=str | None,
                 ),
             ]
         )
         _min, _max, bounds = _get_min_max_vtk_version(item_mark=item_mark, sig=sig)
         _min = (_min,) if isinstance(_min, int) else _min
         _max = (_max,) if isinstance(_max, int) else _max
+
+        if (_min is not None and _min <= pyvista._MIN_SUPPORTED_VTK_VERSION) or (
+            _max is not None and _max <= pyvista._MIN_SUPPORTED_VTK_VERSION
+        ):
+            msg = (
+                f'The {needs_vtk_version!r} marker is no longer necessary\n'
+                f'and can be removed from test {item}.'
+            )
+            raise pyvista.VTKVersionError(msg)
 
         curr_version = pyvista.vtk_version_info
 
@@ -460,13 +467,13 @@ def pytest_runtest_setup(item: pytest.Item):
                     p := 'processor',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Union[str, None],
+                    annotation=str | None,
                 ),
                 Parameter(
                     m := 'machine',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Union[str, None],
+                    annotation=str | None,
                 ),
             ]
         )

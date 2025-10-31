@@ -14,10 +14,7 @@ from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
-pytestmark = [
-    pytest.mark.needs_vtk_version(9, 2),  # skip all tests if VTK<9.2.0
-    pytest.mark.skip_check_gc,  # A large number of tests here fail gc
-]
+pytestmark = pytest.mark.skip_check_gc  # A large number of tests here fail gc
 
 
 def vtk_array_to_tuple(arr):
@@ -1011,7 +1008,7 @@ def test_chart_mpl(pl):
     loc = (0.25, 0.25)
 
     # Test constructor
-    f, ax = plt.subplots()
+    f, _ax = plt.subplots()
     chart = pv.ChartMPL(f, size=size, loc=loc)
     assert chart.size == size
     assert chart.loc == loc

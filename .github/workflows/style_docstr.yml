@@ -8,21 +8,21 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PYTEST_ADDOPTS: "--color=yes"
-
+  TOX_COLORED: "yes"
+  PARALLEL: "-n2"
 permissions:
   id-token: none
 
 jobs:
   docstringcheck:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04-self-hosted-gpu
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
           cache: "pip"
@@ -34,36 +34,25 @@ jobs:
           restore-keys: |
             Examples-Data-
 
-      - name: Install pyvista and doctest requirements
-        run: |
-          pip install --upgrade pip
-          pip install -e . --group test
-
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
-      - name: Software Report
-        run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
-          which python
-          pip list
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Test Package Docstrings
-        run: make doctest-modules
-
-      - name: Test Package Docstrings with Local Namespace
-        run: make doctest-modules-local-namespace
+        run: tox run -f doctest
 
   vale:
     name: Vale
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04 # does not support self-hosted (yet)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
 

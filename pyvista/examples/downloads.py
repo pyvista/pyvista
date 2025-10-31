@@ -22,13 +22,11 @@ Examples
 from __future__ import annotations
 
 import functools
-import importlib
 import importlib.util
 import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
-import pickle
 import shutil
 import sys
 from typing import cast
@@ -42,14 +40,11 @@ from pooch.utils import get_logger
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _DownloadableFile
-from pyvista.examples._dataset_loader import _load_and_merge
 from pyvista.examples._dataset_loader import _load_as_cubemap
 from pyvista.examples._dataset_loader import _load_as_multiblock
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
@@ -62,49 +57,77 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 CACHE_VERSION = 3
 
+_USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
+_VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-# If available, a local vtk-data instance will be used for examples
-if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
-    _path = os.environ['PYVISTA_VTK_DATA']
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
-    if Path(_path).name != 'Data':
-        # append 'Data' if user does not provide it
-        _path = str(Path(_path) / 'Data')
 
-    # pooch assumes this is a URL so we have to take care of this
-    if not _path.endswith('/'):
-        _path = _path + '/'
-    SOURCE = _path
-    _FILE_CACHE = True
+def _warn_invalid_dir_not_used(path, env_var):
+    msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
+    warnings.warn(msg, stacklevel=2)
 
-else:
-    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
-    _FILE_CACHE = False
 
-# allow user to override the local path
-default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
-if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
-    if not (path := Path(os.environ['PYVISTA_USERDATA_PATH'])).is_dir():
-        warnings.warn(f'Ignoring invalid PYVISTA_USERDATA_PATH:\n{path}')
-        USER_DATA_PATH = default_user_data_path
-    else:
-        USER_DATA_PATH = str(Path(os.environ['PYVISTA_USERDATA_PATH']))
-else:
-    # use default pooch path
-    USER_DATA_PATH = default_user_data_path
+def _get_vtk_data_source() -> tuple[str, bool]:
+    # If available, a local vtk-data instance will be used for examples
+    # Set default output
+    source = _DEFAULT_VTK_DATA_SOURCE
+    file_cache = False
+    if _VTK_DATA_VARNAME in os.environ:
+        path = Path(os.environ[_VTK_DATA_VARNAME])
+        if not path.is_dir():
+            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+        else:
+            if path.name != 'Data':
+                # append 'Data' if user does not provide it
+                path = path / 'Data'
 
-    # provide helpful message if pooch path is inaccessible
-    if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
-        try:
-            Path(USER_DATA_PATH).mkdir(exist_ok=True, parents=True)
-            if not os.access(USER_DATA_PATH, os.W_OK):
+            # pooch assumes this is a URL so we have to take care of this
+            path_str = path.as_posix()
+            if not path_str.endswith('/'):
+                path_str += '/'
+
+            source = path_str
+            file_cache = True
+    return source, file_cache
+
+
+def _get_user_data_path() -> str:
+    # Allow user to override the local path
+    # Set default output
+    output_path = _DEFAULT_USER_DATA_PATH
+    if _USERDATA_PATH_VARNAME in os.environ:
+        path = Path(os.environ[_USERDATA_PATH_VARNAME])
+        if not path.is_dir():
+            _warn_invalid_dir_not_used(path, _USERDATA_PATH_VARNAME)
+        else:
+            # Use user-specified path
+            output_path = str(path)
+    return output_path
+
+
+def _warn_if_path_not_accessible(path: str | Path, msg: str):
+    # Provide helpful message if pooch path is inaccessible
+    try:
+        if not Path(path).is_dir():
+            Path(path).mkdir(exist_ok=True, parents=True)
+            if not os.access(path, os.W_OK):  # pragma: no cover
                 raise OSError
-        except (PermissionError, OSError):
-            # Warn, don't raise just in case there's an environment issue.
-            warnings.warn(
-                f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                ' examples cache with the PYVISTA_USERDATA_PATH environment variable.',
-            )
+    except (PermissionError, OSError):
+        # Warn, don't raise just in case there's an environment issue.
+        msg = f'Unable to access path: {path}\n{msg}'
+        warnings.warn(msg, stacklevel=2)
+
+
+SOURCE, _FILE_CACHE = _get_vtk_data_source()
+USER_DATA_PATH = _get_user_data_path()
+
+_user_data_path_warn_msg = (
+    f'Manually specify the PyVista examples cache with the '
+    f'{_USERDATA_PATH_VARNAME} environment variable.'
+)
+_warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
@@ -449,9 +472,12 @@ def download_puppy(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_puppy()
-    >>> dataset.plot(cpos='xy', rgba=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_puppy()
+        >>> dataset.plot(cpos='xy', rgba=True)
 
     .. seealso::
 
@@ -990,9 +1016,12 @@ def download_topo_global(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_topo_global()
-    >>> dataset.plot(cmap='gist_earth')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_topo_global()
+        >>> dataset.plot(cmap='gist_earth')
 
     .. seealso::
 
@@ -1194,9 +1223,12 @@ def download_lidar(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_lidar()
-    >>> dataset.plot(cmap='gist_earth')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_lidar()
+        >>> dataset.plot(cmap='gist_earth')
 
     .. seealso::
 
@@ -3906,9 +3938,12 @@ def download_crater_topo(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_crater_topo()
-    >>> dataset.plot(cmap='gist_earth', cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_crater_topo()
+        >>> dataset.plot(cmap='gist_earth', cpos='xy')
 
     .. seealso::
 
@@ -5445,67 +5480,6 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_osmnx_graph(load=True):  # noqa: FBT002
-    """Load a simple street map from Open Street Map.
-
-    Generated from:
-
-    .. code-block:: python
-
-        >>> import osmnx as ox  # doctest:+SKIP
-        >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
-        >>> graph = ox.graph_from_address(
-        ...     address, dist=500, network_type='drive'
-        ... )  # doctest:+SKIP
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    networkx.classes.multidigraph.MultiDiGraph
-        An osmnx graph of the streets of Holzgerlingen, Germany.
-
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-    """
-    # Deprecated on v0.44.0, estimated removal on v0.47.0
-    warnings.warn(
-        '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
-        PyVistaDeprecationWarning,
-    )
-    if pyvista._version.version_info >= (0, 47):
-        msg = 'Remove this deprecated function'
-        raise RuntimeError(msg)
-    if not importlib.util.find_spec('osmnx'):
-        msg = 'Install `osmnx` to use this example'
-        raise ImportError(msg)
-    return _download_dataset(_dataset_osmnx_graph, load=load)
-
-
-def _osmnx_graph_read_func(filename):
-    return pickle.load(Path(filename).open('rb'))
-
-
-_dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
-    'osmnx_graph.p',
-    read_func=_osmnx_graph_read_func,
-)
-
-
-@_deprecate_positional_args
 def download_cavity(load=True):  # noqa: FBT002
     """Download cavity OpenFOAM example.
 
@@ -5847,79 +5821,6 @@ _dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_can(partial=False, load=True):  # noqa: FBT002
-    """Download the can dataset mesh.
-
-    File obtained from `Kitware <https://www.kitware.com/>`_. Used
-    for testing hdf files.
-
-    Parameters
-    ----------
-    partial : bool, default: False
-        Load part of the dataset.
-
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.PolyData | str | list[str]
-        The example ParaView can DataSet or file path(s).
-
-    Examples
-    --------
-    Plot the can dataset.
-
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_can()  # doctest:+SKIP
-    >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Can Dataset <can_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
-
-    """
-    if pyvista.vtk_version_info > (9, 1, 0):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
-
-    if partial:
-        return _download_dataset(__can_partial, load=load)
-    else:
-        return _download_dataset(_dataset_can, load=load)
-
-
-def _dataset_can_files_func():
-    if pyvista.vtk_version_info > (9, 1, 0):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
-    can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
-    can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
-    can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
-    return can_0, can_1, can_2
-
-
-_dataset_can = _MultiFileDownloadableDatasetLoader(
-    files_func=_dataset_can_files_func,
-    load_func=_load_and_merge,
-)
-__can_partial = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
-
-
-@_deprecate_positional_args
 def download_can_crushed_hdf(load=True):  # noqa: FBT002
     """Download the crushed can dataset.
 
@@ -5956,8 +5857,6 @@ def download_can_crushed_hdf(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_hdf, load=load)
@@ -6001,8 +5900,6 @@ def download_can_crushed_vtu(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
@@ -6147,9 +6044,8 @@ def download_cgns_multi(load=True):  # noqa: FBT002
 
 def _cgns_multi_read_func(filename):
     reader = pyvista.get_reader(filename)
-    # disable reading the boundary patch. As of VTK 9.1.0 this generates
-    # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
-    # yet."
+    # Disable reading the boundary patch. This generates messages like
+    # "Skipping BC_t node: BC_t type 'BCFarfield' not supported yet."
     reader.load_boundary_patch = False
     return reader.read()
 
@@ -6244,19 +6140,22 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.download_parched_canal_4k()
-    >>> texture.dimensions
-    (4096, 2048)
+    .. pyvista-plot::
+        :force_static:
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
-    underlying image before plotting.
+        >>> from pyvista import examples
+        >>> texture = examples.download_parched_canal_4k()
+        >>> texture.dimensions
+        (4096, 2048)
 
-    >>> _ = texture.to_image().resample(0.25, inplace=True)
-    >>> texture.dimensions
-    (1024, 512)
+        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        underlying image before plotting.
 
-    >>> texture.plot(cpos='xy')
+        >>> _ = texture.to_image().resample(0.25, inplace=True)
+        >>> texture.dimensions
+        (1024, 512)
+
+        >>> texture.plot(cpos='xy')
 
     .. seealso::
 
@@ -7349,9 +7248,22 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.download_dikhololo_night()
-    >>> texture.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> texture = examples.download_dikhololo_night()
+        >>> texture.dimensions
+        (4096, 2048)
+
+        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        underlying image before plotting.
+
+        >>> _ = texture.to_image().resample(0.25, inplace=True)
+        >>> texture.dimensions
+        (1024, 512)
+
+        >>> texture.plot(cpos='xy')
 
     .. seealso::
 

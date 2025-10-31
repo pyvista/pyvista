@@ -69,7 +69,7 @@ class Transform(
         By default, the transform is initialized as the identity matrix.
 
     point : VectorLike[float], optional
-        Point to use when composing some transformations such as scale, rotation, etc.
+        Point to use when composing transformations.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
@@ -272,7 +272,7 @@ class Transform(
                     # Init from sequence of transformations
                     [self.compose(t) for t in trans]
             else:
-                self.matrix = trans
+                self.compose(trans)
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
@@ -1293,6 +1293,7 @@ class Transform(
         self: Transform,
         transform: TransformLike,
         *,
+        point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a transformation matrix.
@@ -1307,6 +1308,17 @@ class Transform(
         ----------
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
+
+        point : VectorLike[float], optional
+            Point to transform about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are composed and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the transformation
+                - :meth:`translate` away from ``point`` after the transformation
+
+            .. versionadded:: 0.47
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when composing the matrix. By default, the
@@ -1335,7 +1347,7 @@ class Transform(
                [ 0.   ,  0.   ,  1.   ,  1.5  ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
-        Define a second transformation and use ``+`` to compose it.
+        Define a second transformation and use ``*`` to compose it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
         >>> transform = transform * array
@@ -1345,7 +1357,34 @@ class Transform(
                [-0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
+        Compose the transform about a point. Check the :attr:`matrix_list` to see that a
+        translation is added before and after the transform.
+
+        >>> transform = pv.Transform().compose(transform, point=(1, 2, 3))
+        >>> transform.matrix_list  # doctest: +NORMALIZE_WHITESPACE
+        [array([[ 1.,  0.,  0., -1.],
+                [ 0.,  1.,  0., -2.],
+                [ 0.,  0.,  1., -3.],
+                [ 0.,  0.,  0.,  1.]]),
+         array([[ 0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   , -1.   , -1.5  ],
+                [-0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   ,  0.   ,  2.   ]]),
+         array([[1., 0., 0., 1.],
+                [0., 1., 0., 2.],
+                [0., 0., 1., 3.],
+                [0., 0., 0., 1.]])]
+
+
         """
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
+
+    def _compose(
+        self: Transform,
+        transform: TransformLike,
+        *,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
         # Make sure we have a vtkTransform
         if isinstance(transform, _vtk.vtkTransform):
             vtk_transform = transform
@@ -1396,8 +1435,10 @@ class Transform(
 
     @matrix.setter
     def matrix(self: Transform, trans: TransformLike) -> None:
-        self.identity()
-        self.compose(trans)
+        array = _validation.validate_transform4x4(
+            trans, must_be_finite=self.check_finite, name='matrix'
+        )
+        self.SetMatrix(vtkmatrix_from_array(array))
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
@@ -2276,12 +2317,12 @@ class Transform(
             point=point, multiply_mode=multiply_mode
         )
         if translate_before:
-            self.compose(translate_before, multiply_mode=multiply_mode)
+            self._compose(translate_before, multiply_mode=multiply_mode)
 
-        self.compose(transform, multiply_mode=multiply_mode)
+        self._compose(transform, multiply_mode=multiply_mode)
 
         if translate_after:
-            self.compose(translate_after, multiply_mode=multiply_mode)
+            self._compose(translate_after, multiply_mode=multiply_mode)
 
         return self
 

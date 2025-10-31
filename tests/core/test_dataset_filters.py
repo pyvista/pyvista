@@ -26,12 +26,13 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+    from pyvista.core.pointset import PolyData
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -98,7 +99,7 @@ def test_threshold_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
-    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+    with pytest.raises(ValueError, match=r'No arrays present to threshold.'):
         pv.Sphere().threshold(1.0)
 
 
@@ -108,7 +109,9 @@ def test_contour_raises(mocker: MockerFixture):
     m = mocker.patch.object(data_set, 'set_default_active_scalars')
     m().name = 'foo'
 
-    with pytest.raises(ValueError, match='Input dataset for the contour filter must have scalar.'):
+    with pytest.raises(
+        ValueError, match=r'Input dataset for the contour filter must have scalar.'
+    ):
         pv.PolyData().contour()
 
 
@@ -117,7 +120,7 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
-    with pytest.raises(ValueError, match='No vectors present to warp by vector.'):
+    with pytest.raises(ValueError, match=r'No vectors present to warp by vector.'):
         pv.Sphere().warp_by_vector()
 
 
@@ -220,6 +223,21 @@ def test_clip_surface():
     # Test crinkle
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
+
+
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_surface_output_type(datasets, crinkle):
+    for dataset in datasets:
+        clp = dataset.clip_surface(dataset.extract_geometry(), crinkle=crinkle)
+        assert clp is not None
+        if isinstance(dataset, pv.PointSet):
+            assert isinstance(clp, pv.PointSet)
+        elif isinstance(dataset, pv.PolyData):
+            assert isinstance(clp, pv.PolyData)
+        elif isinstance(dataset, pv.MultiBlock):
+            assert isinstance(clp, pv.MultiBlock)
+        else:
+            assert isinstance(clp, pv.UnstructuredGrid)
 
 
 def test_clip_closed_surface():
@@ -499,15 +517,14 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-@pytest.mark.parametrize('dataset', [examples.download_bunny()])
-def test_gaussian_splatting(dataset):
-    output = dataset.gaussian_splatting(progress_bar=True)
+def test_gaussian_splatting(sphere: PolyData):
+    output = sphere.gaussian_splatting(progress_bar=True)
     assert output is not None
     assert isinstance(output, pv.ImageData)
     assert output.dimensions == (50, 50, 50)
 
     dimensions = (10, 11, 12)
-    output = dataset.gaussian_splatting(dimensions=dimensions)
+    output = sphere.gaussian_splatting(dimensions=dimensions)
     assert output.dimensions == dimensions
 
 
@@ -899,7 +916,7 @@ def connected_datasets():
 
 
 @pytest.fixture
-def foot_bones():
+def foot_bones() -> pv.PolyData:
     return examples.download_foot_bones()
 
 
@@ -949,7 +966,6 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
 )
 @pytest.mark.parametrize('label_regions', [True, False])
 @pytest.mark.parametrize('scalar_range', [True, False])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_inplace_and_output_type(
     datasets,
     dataset_index,
@@ -1000,7 +1016,6 @@ def test_connectivity_inplace_and_output_type(
     'extraction_mode',
     ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     # the connectivity filter is known to output incorrectly sized scalars
     # test all modes and datasets for correct scalar size
@@ -1038,11 +1053,10 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
-    dataset = connected_datasets_single_disconnected_cell[0]['point']
+    dataset: pv.DataSet = connected_datasets_single_disconnected_cell[0]['point']
 
     with pytest.raises(TypeError, match='Scalar range must be'):
         dataset.connectivity(scalar_range=dataset)
@@ -1074,6 +1088,12 @@ def test_connectivity_raises(
     with pytest.raises(ValueError, match='positive integer values'):
         dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
 
+    match = re.escape(
+        "Invalid `region_assignment_mode` 'bar' . Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
+    )
+    with pytest.raises(ValueError, match=match):
+        dataset.connectivity(extraction_mode='all', region_assignment_mode='bar')
+
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
@@ -1081,7 +1101,6 @@ def test_connectivity_raises(
     ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
 @pytest.mark.parametrize('association', ['cell', 'point'])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_scalar_range(
     connected_datasets_single_disconnected_cell,
     dataset_index,
@@ -1117,49 +1136,55 @@ def test_connectivity_scalar_range(
     assert len(conn_with_full_range.array_names) == 3
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
-def test_connectivity_all(foot_bones):
+@pytest.mark.parametrize('region_assignment_mode', ['ascending', 'descending', 'unspecified'])
+def test_connectivity_all(foot_bones: pv.PolyData, region_assignment_mode: str):
     conn = foot_bones.connectivity('all')
     assert conn.n_cells == foot_bones.n_cells
 
     # test correct labels
-    conn = foot_bones.connectivity('all', label_regions=True)
+    conn = foot_bones.connectivity(
+        'all',
+        label_regions=True,
+        region_assignment_mode=region_assignment_mode,
+    )
     region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
     assert np.array_equal(region_ids, list(range(26)))
-    assert np.array_equal(
-        counts,
-        [
-            598,
-            586,
-            392,
-            360,
-            228,
-            212,
-            154,
-            146,
-            146,
-            146,
-            134,
-            134,
-            134,
-            126,
-            124,
-            74,
-            66,
-            60,
-            60,
-            60,
-            48,
-            46,
-            46,
-            46,
-            46,
-            32,
-        ],
-    )
+
+    n_cells = [
+        598,
+        586,
+        392,
+        360,
+        228,
+        212,
+        154,
+        146,
+        146,
+        146,
+        134,
+        134,
+        134,
+        126,
+        124,
+        74,
+        66,
+        60,
+        60,
+        60,
+        48,
+        46,
+        46,
+        46,
+        46,
+        32,
+    ]
+
+    if region_assignment_mode != 'unspecified':
+        assert counts.tolist() == (
+            n_cells[::-1] if region_assignment_mode == 'ascending' else n_cells
+        )
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_largest(foot_bones):
     conn = foot_bones.connectivity('largest')
     assert conn.n_cells == 598
@@ -1171,33 +1196,65 @@ def test_connectivity_largest(foot_bones):
     assert counts == [598]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
-def test_connectivity_specified(foot_bones):
+@pytest.mark.parametrize('region_assignment_mode', ['ascending', 'descending'])
+def test_connectivity_specified(foot_bones: pv.PolyData, region_assignment_mode: str):
     # test all regions
     all_regions = list(range(26))
-    conn = foot_bones.connectivity('specified', region_ids=all_regions)
+    conn = foot_bones.connectivity(
+        'specified',
+        region_ids=all_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == foot_bones.n_cells
 
     # test irrelevant region IDs
     test_regions = [*all_regions, 77, 99]
-    conn = foot_bones.connectivity('specified', test_regions)
+    conn = foot_bones.connectivity(
+        'specified',
+        test_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == foot_bones.n_cells
 
     # test some regions
-    some_regions = [1, 2, 4, 5]
-    expected_n_cells = 586 + 392 + 228 + 212
-    conn = foot_bones.connectivity('specified', some_regions)
+    some_regions = [1, 2, 4, 5] if region_assignment_mode == 'descending' else [1, 5, 6, 10]
+    expected_n_cells = (
+        (586 + 392 + 228 + 212) if region_assignment_mode == 'descending' else (46 + 48 + 60 + 74)
+    )
+    conn = foot_bones.connectivity(
+        'specified',
+        some_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == expected_n_cells
 
     # test correct labels
-    conn = foot_bones.connectivity('specified', some_regions, label_regions=True)
-    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    conn = foot_bones.connectivity(
+        'specified',
+        some_regions,
+        label_regions=True,
+        region_assignment_mode=region_assignment_mode,
+    )
+    region_ids = np.unique(conn.cell_data['RegionId'])
     assert np.array_equal(region_ids, [0, 1, 2, 3])
-    assert np.array_equal(counts, [586, 392, 228, 212])
+
+    n_cells = [
+        conn.threshold([i] * 2, scalars='RegionId', preference='cell').n_cells for i in region_ids
+    ]
+    assert n_cells == (
+        [586, 392, 228, 212] if region_assignment_mode == 'descending' else [46, 48, 60, 74]
+    )
+
+
+def test_connectivity_specified_warning(foot_bones: pv.PolyData):
+    match = re.escape(
+        'Using the `unspecified` region assignment mode with the `specified` extraction mode can be unintuitive. Ignore this warning if this was intentional'  # noqa: E501
+    )
+    with pytest.warns(UserWarning, match=match):
+        foot_bones.connectivity('specified', region_assignment_mode='unspecified', region_ids=[0])
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_specified_returns_empty(connected_datasets, dataset_index):
     dataset = connected_datasets[dataset_index]
     unused_region_id = 1
@@ -1206,7 +1263,6 @@ def test_connectivity_specified_returns_empty(connected_datasets, dataset_index)
     assert conn.n_points == 0
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_point_seed(foot_bones):
     conn = foot_bones.connectivity('point_seed', point_ids=1598)
     assert conn.n_cells == 598
@@ -1221,7 +1277,6 @@ def test_connectivity_point_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_cell_seed(foot_bones):
     conn = foot_bones.connectivity('cell_seed', cell_ids=3122)
     assert conn.n_cells == 598
@@ -1237,7 +1292,6 @@ def test_connectivity_cell_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_closest_point(foot_bones):
     conn = foot_bones.connectivity('closest', closest_point=(-3.5, -0.5, -0.5))
     assert conn.n_cells == 598
@@ -1988,8 +2042,16 @@ def test_extract_points_include_cells_false(
 
 def test_extract_points_default(extracted_with_adjacent_true):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
+
+    assert 'vtkOriginalPointIds' not in input_surf.point_data
+    assert 'vtkOriginalCellIds' not in input_surf.cell_data
+
     # test adjacent_cells=True and include_cells=True by default
     sub_surf_adj = input_surf.extract_points(input_point_ids)
+
+    # should be no side effects
+    assert 'vtkOriginalPointIds' not in input_surf.point_data
+    assert 'vtkOriginalCellIds' not in input_surf.cell_data
 
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
@@ -2207,7 +2269,7 @@ def test_split_values_extract_values_component(
     expected_volume,
 ):
     # Add second component to fixture for test as needed
-    small_box, big_box, labeled_data = add_component_to_labeled_data(
+    _small_box, _big_box, labeled_data = add_component_to_labeled_data(
         labeled_data,
         component_offset,
     )
@@ -2366,7 +2428,6 @@ component_mode_test_cases = [
     ('values', 'component_mode', 'expected', 'expected_invert'),
     component_mode_test_cases,
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_extract_values_component_mode(
     point_cloud_colors,
     values,
@@ -2404,7 +2465,6 @@ def test_extract_values_component_mode(
         (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
     ],
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_extract_values_component_values_split_unique(
     point_cloud_colors_duplicates,
     dataset_filter,
@@ -2911,9 +2971,11 @@ def test_image_dilate_erode_output_type():
     point_data[4, 4, 4] = 1
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_dilate_erode = volume.image_dilate_erode()
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_dilate_erode = volume.image_dilate_erode()
     assert isinstance(volume_dilate_erode, pv.ImageData)
-    volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
     assert isinstance(volume_dilate_erode, pv.ImageData)
 
 
@@ -2926,7 +2988,8 @@ def test_image_dilate_erode_dilation():
     point_data_dilated[4, 3:6, 3:6] = 1
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_dilated = volume.image_dilate_erode()  # default is binary dilation
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_dilated = volume.image_dilate_erode()  # default is binary dilation
     assert np.array_equal(
         volume_dilated.point_data['point_data'],
         point_data_dilated.flatten(order='F'),
@@ -2939,7 +3002,8 @@ def test_image_dilate_erode_erosion():
     point_data_eroded = np.zeros((10, 10, 10))
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
     assert np.array_equal(
         volume_eroded.point_data['point_data'],
         point_data_eroded.flatten(order='F'),
@@ -2952,8 +3016,9 @@ def test_image_dilate_erode_cell_data_specified():
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
-    with pytest.raises(ValueError):  # noqa: PT011
-        volume.image_dilate_erode(scalars='cell_data')
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            volume.image_dilate_erode(scalars='cell_data')
 
 
 def test_image_dilate_erode_cell_data_active():
@@ -2963,8 +3028,9 @@ def test_image_dilate_erode_cell_data_active():
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     volume.set_active_scalars('cell_data')
-    with pytest.raises(ValueError):  # noqa: PT011
-        volume.image_dilate_erode()
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            volume.image_dilate_erode()
 
 
 def test_image_threshold_output_type(uniform):
@@ -3112,7 +3178,7 @@ def test_concatenate_structured(structured_grids_split_coincident):
 
 
 def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
 
     # test invalid dimensions
     with pytest.raises(ValueError):  # noqa: PT011
@@ -3123,13 +3189,13 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
 
 
 def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=3)
 
 
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=1)
@@ -3142,7 +3208,7 @@ def test_concatenate_structured_disconnected(structured_grids_split_disconnected
 
 
 def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     point_data = voi_1.point_data.pop('point_data')
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=1)
@@ -3236,18 +3302,14 @@ def test_extrude_rotate():
     assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
-    if not pv.vtk_version_info >= (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
-    else:
-        poly = line.extrude_rotate(
-            rotation_axis=rotation_axis,
-            resolution=resolution,
-            progress_bar=True,
-            capping=True,
-        )
-        assert poly.n_cells == line.n_points - 1
-        assert poly.n_points == (resolution + 1) * line.n_points
+    poly = line.extrude_rotate(
+        rotation_axis=rotation_axis,
+        resolution=resolution,
+        progress_bar=True,
+        capping=True,
+    )
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1) * line.n_points
 
     with pytest.raises(ValueError):  # noqa: PT011
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
@@ -3687,6 +3749,9 @@ def test_subdivide_tetra(tetbeam):
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
+    assert 'vtkOriginalPointIds' not in hexbeam.point_data
+    assert 'vtkOriginalCellIds' not in hexbeam.cell_data
+
     hex_cells = combined.extract_cells_by_type(
         [
             pv.CellType.HEXAHEDRON,
@@ -3694,6 +3759,10 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
         ]
     )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
+
+    # should be no side effects
+    assert 'vtkOriginalPointIds' not in hexbeam.point_data
+    assert 'vtkOriginalCellIds' not in hexbeam.cell_data
 
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
     assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
@@ -4051,21 +4120,13 @@ def test_voxelize_binary_mask_dimensions(sphere):
 def test_voxelize_binary_mask_spacing(ant):
     # Test default
     mask_no_input = ant.voxelize_binary_mask()
-    if pv.vtk_version_info < (9, 2):
-        expected_mask = ant.voxelize_binary_mask(spacing=ant.length / 100)
-    else:
-        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+    expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
     assert mask_no_input.spacing == expected_mask.spacing
 
     # Test cell length
-    if pv.vtk_version_info < (9, 2):
-        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-        with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
-    else:
-        mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
-        mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
-        assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
+    mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+    assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
 
     # Test mesh length
     mask_fraction_200 = ant.voxelize_binary_mask(spacing=ant.length / 200)
@@ -4086,18 +4147,13 @@ def test_voxelize_binary_mask_spacing(ant):
 # https://github.com/pyvista/pyvista/pull/6728
 @flaky_test(times=5)
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
-    if pv.vtk_version_info < (9, 2):
-        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-        with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
-    else:
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
-        assert mask_samples_1.spacing != mask_samples_2.spacing
+    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
+    assert mask_samples_1.spacing != mask_samples_2.spacing
 
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        assert mask_samples_1.spacing == mask_samples_2.spacing
+    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    assert mask_samples_1.spacing == mask_samples_2.spacing
 
 
 @pytest.mark.parametrize(
@@ -4249,11 +4305,10 @@ def test_voxelize_rectilinear(ant):
     assert np.array_equal(values, [foreground, background])
 
     # Test other keywords
-    if pv.vtk_version_info >= (9, 2):
-        vox = ant.voxelize(cell_length_percentile=0.5)
-        assert vox.n_cells
-        vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
-        assert vox.n_cells
+    vox = ant.voxelize(cell_length_percentile=0.5)
+    assert vox.n_cells
+    vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+    assert vox.n_cells
     assert vox.n_cells
     vox = ant.voxelize_rectilinear(progress_bar=True)
     assert vox.n_cells
@@ -4283,11 +4338,10 @@ def test_voxelize(ant):
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test other keywords
-    if pv.vtk_version_info >= (9, 2):
-        vox = ant.voxelize(cell_length_percentile=0.5)
-        assert vox.n_cells
-        vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
-        assert vox.n_cells
+    vox = ant.voxelize(cell_length_percentile=0.5)
+    assert vox.n_cells
+    vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+    assert vox.n_cells
     vox = ant.voxelize(progress_bar=True)
     assert vox.n_cells
     vox = ant.voxelize(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)

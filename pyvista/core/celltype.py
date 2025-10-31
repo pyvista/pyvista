@@ -13,6 +13,8 @@ from . import _vtk_core as _vtk
 
 _CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
 
+PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
+
 _DROPDOWN_TEMPLATE = """
 .. dropdown:: More info
     :icon: info
@@ -46,7 +48,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
@@ -621,6 +623,42 @@ _CELL_TYPE_INFO = dict(
         The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     ),
+    TRIQUADRATIC_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
+        cell_class=_vtk.vtkTriQuadraticPyramid,
+        example='TriQuadraticPyramid',
+        short_doc="""
+        Represents a second order 3D iso-parametric 19-node pyramid.
+
+        The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
+        and 1 volumetric centroid node.
+        """,
+        long_doc="""
+        The ordering of the nineteen points defining the cell is point
+        ids ``(0-4, 5-12, 13-17, 18)``, where:
+
+        - ids ``(0-4)`` are the five corner vertices of the pyramid.
+        - ids ``(5-12)`` are the 8 mid-edge nodes.
+        - ids ``(13-17)`` are the 5 mid-face nodes.
+        - id ``(19)`` is the volumetric centroid node.
+
+        The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
+        ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
+        respectively.
+
+        The mid-face nodes lie on the faces defined by (first corner nodes ids,
+        then mid-edge node ids):
+
+        - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
+        - triangle face 1: ``(0,1,4; 5,10,9)``
+        - triangle face 2: ``(1,2,4; 6,11,10)``
+        - triangle face 3: ``(2,3,4; 7,12,11)``
+        - triangle face 5: ``(3,0,4; 8,9,12)``
+
+        The last point lies in the center of the cell ``(0,1,2,3,4)``.
+        The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
+        """,
+    ),
     QUADRATIC_LINEAR_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
@@ -839,43 +877,6 @@ _CELL_TYPE_INFO = dict(
     BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
     BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
 )
-if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
-    _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID'] = _CellTypeTuple(
-        value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
-        cell_class=_vtk.vtkTriQuadraticPyramid,
-        example='TriQuadraticPyramid',
-        short_doc="""
-        Represents a second order 3D iso-parametric 19-node pyramid.
-
-        The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
-        and 1 volumetric centroid node.
-        """,
-        long_doc="""
-        The ordering of the nineteen points defining the cell is point
-        ids ``(0-4, 5-12, 13-17, 18)``, where:
-
-        - ids ``(0-4)`` are the five corner vertices of the pyramid.
-        - ids ``(5-12)`` are the 8 mid-edge nodes.
-        - ids ``(13-17)`` are the 5 mid-face nodes.
-        - id ``(19)`` is the volumetric centroid node.
-
-        The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
-        ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
-        respectively.
-
-        The mid-face nodes lie on the faces defined by (first corner nodes ids,
-        then mid-edge node ids):
-
-        - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
-        - triangle face 1: ``(0,1,4; 5,10,9)``
-        - triangle face 2: ``(1,2,4; 6,11,10)``
-        - triangle face 3: ``(2,3,4; 7,12,11)``
-        - triangle face 5: ``(3,0,4; 8,9,12)``
-
-        The last point lies in the center of the cell ``(0,1,2,3,4)``.
-        The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
-        """,
-    )
 
 
 class CellType(IntEnum):
@@ -1064,7 +1065,7 @@ class CellType(IntEnum):
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
-                    _example, _example, badges, _short_doc, _long_doc
+                    _example, _example, PLACEHOLDER, badges, _short_doc, _long_doc
                 )
             )
 
@@ -1097,8 +1098,7 @@ class CellType(IntEnum):
     QUADRATIC_PYRAMID = _CELL_TYPE_INFO['QUADRATIC_PYRAMID']
     BIQUADRATIC_QUAD = _CELL_TYPE_INFO['BIQUADRATIC_QUAD']
     TRIQUADRATIC_HEXAHEDRON = _CELL_TYPE_INFO['TRIQUADRATIC_HEXAHEDRON']
-    if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
-        TRIQUADRATIC_PYRAMID = _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID']
+    TRIQUADRATIC_PYRAMID = _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID']
     QUADRATIC_LINEAR_QUAD = _CELL_TYPE_INFO['QUADRATIC_LINEAR_QUAD']
     QUADRATIC_LINEAR_WEDGE = _CELL_TYPE_INFO['QUADRATIC_LINEAR_WEDGE']
     BIQUADRATIC_QUADRATIC_WEDGE = _CELL_TYPE_INFO['BIQUADRATIC_QUADRATIC_WEDGE']

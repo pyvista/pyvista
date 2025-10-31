@@ -56,11 +56,11 @@ class Timer(_NoNewAttrMixin):
         # https://github.com/pyvista/pyvista/pull/5618
         iren = obj
 
-        while self.step < self.max_steps:
+        if self.step < self.max_steps:
             self.callback(self.step)
             iren.GetRenderWindow().Render()
             self.step += 1
-        if self.id:
+        elif self.id:
             iren.DestroyTimer(self.id)
 
 
@@ -576,6 +576,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             warnings.warn(
                 'Interaction with charts is not possible when using multiple subplots.'
                 'Upgrade to VTK 9.3 or newer to enable this feature.',
+                stacklevel=2,
             )
             scene = None
         self._context_style.SetScene(scene)
@@ -1530,6 +1531,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         warnings.warn(
             '`add_pick_obeserver` is deprecated, use `add_pick_observer`',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         self.add_pick_observer(observer)
 
@@ -1568,13 +1570,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
     def terminate_app(self):
         """Terminate the app."""
         if self.initialized:
-            # #################################################################
-            # 9.0.2+ compatibility:
-            # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
-            if hasattr(self.interactor, 'GetDone'):
-                self.interactor.SetDone(True)
-            # #################################################################
-
+            self.interactor.SetDone(True)  # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18242
             self.interactor.TerminateApp()
 
     def close(self):

@@ -5,15 +5,14 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
+from functools import cached_property
 from functools import wraps
 import numbers
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Union
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -32,8 +31,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import PyVistaDeprecationWarning
-from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -42,6 +39,7 @@ from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
+from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
@@ -56,20 +54,20 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
-    _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter,
-        _vtk.vtkXMLPolyDataWriter,
-        _vtk.vtkSTLWriter,
-        _vtk.vtkPolyDataWriter,
-        _vtk.vtkHoudiniPolyDataWriter,
-        _vtk.vtkOBJWriter,
-        _vtk.vtkIVWriter,
-        _vtk.vtkHDFWriter,
-    ]
+    _PolyDataWriterAlias = (
+        _vtk.vtkPLYWriter
+        | _vtk.vtkXMLPolyDataWriter
+        | _vtk.vtkSTLWriter
+        | _vtk.vtkPolyDataWriter
+        | _vtk.vtkHoudiniPolyDataWriter
+        | _vtk.vtkOBJWriter
+        | _vtk.vtkIVWriter
+        | _vtk.vtkHDFWriter
+    )
 
-    _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
-    ]
+    _UnstructuredGridWriterAlias = (
+        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
+    )
 
 
 DEFAULT_INPLACE_WARNING = (
@@ -299,11 +297,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
-    Notes
-    -----
-    This class requires ``vtk>=9.1.0``. This is an abstract class in
-    ``vtk<9.1.0`` and cannot be instantiated.
-
     Examples
     --------
     Create a simple point cloud of 10 points from a numpy array.
@@ -320,21 +313,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     >>> pset.plot(point_size=10)
 
     """
-
-    def __new__(cls, *args, **kwargs):
-        """Construct a new PointSet object.
-
-        Wrapping this is necessary for us to show an informative error
-        message when the VTK version is too old, causing PointSet to be
-        an abstract class. Since we inherit the ``__new__()`` method of
-        :vtk:`vtkPointSet`, we would otherwise see a generic error about
-        the class being abstract.
-
-        """
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.1.0'
-            raise VTKVersionError(msg)
-        return super().__new__(cls, *args, **kwargs)
 
     @_deprecate_positional_args(allowed=['var_inp'])
     def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
@@ -700,7 +678,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     >>> mesh = pv.PolyData(examples.antfile)
 
-    Construct a set of random line segments using a ``pv.CellArray`.
+    Construct a set of random line segments using a ``pv.CellArray``.
     Because every line in this example has the same size, in this case
     two points, we can use ``pv.CellArray.from_regular_cells`` to
     construct the ``lines`` cell array. This is the most efficient
@@ -711,7 +689,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(points, lines=pv.CellArray.from_regular_cells(lines))
-    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines, dtype=float)
     >>> mesh.plot(scalars='line_idx')
 
     Construct a set of random triangle strips using a ``pv.CellArray``.
@@ -729,7 +707,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
     ... )
-    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips, dtype=float)
     >>> mesh.plot(show_edges=True, scalars='strip_idx')
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
@@ -867,10 +845,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             ('n_lines', n_lines),
         ):
             if v is not None:
-                warnings.warn(
-                    f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'PolyData constructor parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
@@ -939,7 +915,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ... )
 
         """
-        return _vtk.vtk_to_numpy(self.GetVerts().GetData())
+        self.GetVerts().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr)
 
     @verts.setter
     def verts(self, verts: CellArrayLike) -> None:
@@ -966,7 +943,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
 
         """
-        return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
+        self.GetLines().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr).ravel()
 
     @lines.setter
     def lines(self, lines: CellArrayLike) -> None:
@@ -1038,7 +1016,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([3, 0, 1, 2, 3, 3, 2, 1])
 
         """
-        array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        self.GetPolys().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        array = _vtk.vtk_to_numpy(arr)
         # Flag this array as read only to ensure users do not attempt to write to it.
         array.flags['WRITEABLE'] = False
         return array
@@ -1234,7 +1213,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
 
         """
-        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+        self.GetStrips().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr)
 
     @strips.setter
     def strips(self, strips: CellArrayLike) -> None:
@@ -1439,13 +1419,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.GetNumberOfPolys()
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(  # noqa: PLR0917
+    def save(  # type: ignore[override]  # noqa: PLR0917
         self,
-        filename,
+        filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
-        texture=None,
+        texture: NumpyArray[np.uint8] | str | None = None,
         recompute_normals: bool = True,  # noqa: FBT001, FBT002
-    ):
+        compression: _CompressionOptions = 'zlib',
+    ) -> None:
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -1484,6 +1465,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             are computed in place to ensure the mesh is properly saved.
             Set this to ``False`` to save instead the already existing normal
             array in the PolyData.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
+
+            .. versionadded:: 0.47
 
         Notes
         -----
@@ -1546,14 +1536,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     msg = f'Invalid datatype {texture.dtype} of texture array'
                     raise ValueError(msg)
             else:
-                msg = (
+                msg = (  # type: ignore[unreachable]
                     f'Invalid type {type(texture)} for texture.  '
                     'Should be either a string representing a point or '
                     'cell array, or a numpy array.'
                 )
                 raise TypeError(msg)
 
-        super().save(filename, binary=binary, texture=texture)
+        super().save(filename, binary=binary, texture=texture, compression=compression)
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01
@@ -1674,7 +1664,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @property
+    @cached_property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
@@ -1683,6 +1673,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
+
+        .. warning::
+
+            This property is expensive to compute and is therefore cached. If the mesh's
+            geometry is modified, the obb tree will no longer be valid.
+
         """
         obb_tree = _vtk.vtkOBBTree()
         obb_tree.SetDataSet(self)
@@ -1741,6 +1737,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
+        self.obbTree = None  # type: ignore[assignment]
 
 
 @abstract_class
@@ -2076,7 +2073,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         # Flag this array as read only to ensure users do not attempt to write to it.
-        array = _vtk.vtk_to_numpy(self._get_cells().GetData())
+        self._get_cells().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        array = _vtk.vtk_to_numpy(arr)
         array.flags['WRITEABLE'] = False
         return array
 
@@ -2144,7 +2142,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces = self.GetPolyhedronFaces()  # vtkCellArray
             if faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
-            return convert_array(faces.GetData())
+
+            faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+            return convert_array(arr)
 
     @property
     def face_locations(self) -> NumpyArray[int]:
@@ -2196,7 +2196,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             face_count = 0
 
             for i, n_faces in zip(
-                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON),
+                face_counts,
             ):
                 locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
                 face_count += n_faces
@@ -2207,7 +2208,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
             if faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
-            return convert_array(faces.GetData())
+
+            faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+            return convert_array(arr)
 
     @property
     def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
@@ -2389,7 +2392,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return _vtk.vtk_to_numpy(self._get_cell_types_array())
 
     def _get_cell_types_array(self):
-        array = self.GetCellTypesArray()
+        array = (
+            self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
+            if pyvista.vtk_version_info > (9, 5, 99)
+            else self.GetCellTypesArray()
+        )
+
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
         return array
@@ -3266,11 +3274,12 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return grid
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(
+    def save(  # noqa: PLR0917
         self,
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
     ) -> None:
         """Save this VTK object to file.
 
@@ -3284,6 +3293,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         texture : np.ndarray, str, None
             Ignored argument. Kept to maintain compatibility with supertype.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
+
+            .. versionadded:: 0.47
 
         Notes
         -----
@@ -3310,7 +3328,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             msg = 'Cannot save texture of a pointset.'
             raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
-        grid.save(filename, binary=binary)
+        grid.save(filename, binary=binary, compression=compression)
 
     @_deprecate_positional_args(allowed=['ind'])
     def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002

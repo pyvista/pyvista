@@ -100,7 +100,7 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi[4] = vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pv.UnstructuredGrid)
 
-    with pytest.raises(ValueError, match='Cannot nest a composite dataset in itself.'):
+    with pytest.raises(ValueError, match=r'Cannot nest a composite dataset in itself.'):
         multi.append(multi)
 
     with pytest.raises(TypeError, match='dataset should not be or contain an array'):
@@ -929,8 +929,8 @@ def test_set_active_scalars_mixed(multiblock_poly):
 
 def test_as_polydata_blocks(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
-    if pv.vtk_version_info >= (9, 1, 0):
-        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    # TODO: Include PointSet directly with `multiblock_all_with_nested_and_none` fixture
+    multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
     assert not multi.is_all_polydata
     # Get a polydata block for copy test
     poly_index = 3
@@ -939,8 +939,7 @@ def test_as_polydata_blocks(multiblock_all_with_nested_and_none):
 
     dataset_a = multi.as_polydata_blocks()
     assert dataset_a[poly_index] is poly
-    if pv.vtk_version_info >= (9, 1, 0):
-        assert dataset_a[-1].n_points == 1
+    assert dataset_a[-1].n_points == 1
     assert not multi.is_all_polydata
     assert dataset_a.is_all_polydata
 
@@ -960,8 +959,8 @@ def test_as_polydata_blocks(multiblock_all_with_nested_and_none):
 
 def test_as_unstructured_grid_blocks(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
-    if pv.vtk_version_info >= (9, 1, 0):
-        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    # TODO: Include PointSet directly with `multiblock_all_with_nested_and_none` fixture
+    multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
     # Get a UnstructuredGrid block for copy test
     grid_index = 2
     grid = multi[grid_index]
@@ -1196,7 +1195,7 @@ def test_recursive_iterator_raises():
     with pytest.raises(ValueError, match=match):
         multi.recursive_iterator('blocks', prepend_names=True)
 
-    with pytest.raises(ValueError, match='String separator cannot be empty.'):
+    with pytest.raises(ValueError, match=r'String separator cannot be empty.'):
         multi.recursive_iterator(separator='')
 
 

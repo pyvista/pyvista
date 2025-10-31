@@ -63,7 +63,7 @@ def test_contour_banded_points(sphere):
     ids=['ugrid', 'image', 'structured'],
 )
 def test_boolean_raises(other_mesh):
-    with pytest.raises(TypeError, match='Input mesh must be PolyData.'):
+    with pytest.raises(TypeError, match=r'Input mesh must be PolyData.'):
         pv.Sphere()._boolean('union', other_mesh=other_mesh, tolerance=0.0, progress_bar=False)
 
 
@@ -74,7 +74,7 @@ def test_clean_raises(mocker: MockerFixture):
     m.return_value = pv.PolyData()
 
     sp = pv.Sphere()
-    with pytest.raises(ValueError, match='Clean tolerance is too high. Empty mesh returned.'):
+    with pytest.raises(ValueError, match=r'Clean tolerance is too high. Empty mesh returned.'):
         sp.clean()
 
 
@@ -82,7 +82,7 @@ def test_flip_normals_raises():
     plane = pv.Plane()
     with (
         pytest.raises(
-            NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'
+            NotAllTrianglesError, match=r'Can only flip normals on an all triangle mesh.'
         ),
         pytest.warns(
             PyVistaDeprecationWarning,
@@ -100,14 +100,14 @@ def test_contour_banded_raises(mocker: MockerFixture):
 
     sp = pv.Sphere()
 
-    with pytest.raises(ValueError, match='No arrays present to contour.'):
+    with pytest.raises(ValueError, match=r'No arrays present to contour.'):
         sp.contour_banded(1)
 
     m.return_value = 'foo'
     m = mocker.patch.object(poly_data, 'get_array_association')
     m.return_value = 'foo'
 
-    with pytest.raises(ValueError, match='Only point data can be contoured.'):
+    with pytest.raises(ValueError, match=r'Only point data can be contoured.'):
         sp.contour_banded(1)
 
 
@@ -160,9 +160,6 @@ def test_triangulate_contours():
         assert cell.type == pv.CellType.TRIANGLE
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader'
-)
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()
