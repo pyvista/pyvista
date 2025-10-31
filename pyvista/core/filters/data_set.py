@@ -8102,7 +8102,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Create an equal density voxel volume and plot the result.
 
         >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
-        >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+        >>> cpos = pv.CameraPosition(
+        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 0, 0)
+        ... )
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
         Slice the voxel volume to view the ``mask`` scalars.

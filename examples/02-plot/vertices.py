@@ -15,7 +15,11 @@ from pyvista import examples
 
 mesh = examples.download_bunny_coarse()
 
-cpos = [(0.036, 0.367, 0.884), (0.024, 0.033, -0.022), (-0.303, 0.895, -0.325)]
+cpos = pv.CameraPosition(
+    position=(0.036, 0.367, 0.884),
+    focal_point=(0.024, 0.033, -0.022),
+    viewup=(-0.303, 0.895, -0.325),
+)
 
 # %%
 # We can easily display all vertices of a mesh with a ``points`` style

@@ -38,7 +38,9 @@ cropped_ct = ct.crop(mask=skull, padding=10)
 # Use :meth:`~pyvista.ImageDataFilters.points_to_cells` to plot the cropped image
 # as :attr:`~pyvista.CellType.VOXEL` cells.
 
-cpos = [(687.5, 763.6, 471.3), (231.8, 296.3, 677.0), (0.107, 0.311, 0.944)]
+cpos = pv.CameraPosition(
+    position=(687.5, 763.6, 471.3), focal_point=(231.8, 296.3, 677.0), viewup=(0.107, 0.311, 0.944)
+)
 
 cropped_ct_voxels = cropped_ct.points_to_cells()
 cropped_ct_voxels.plot(volume=True, cpos=cpos)
