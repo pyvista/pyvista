@@ -420,11 +420,13 @@ def test_contour_labels_cell_data(channels):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     start = time.perf_counter()
-    channels.contour_labels('external', orient_faces=False)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        channels.contour_labels('external', orient_faces=False)
     time_slow = time.perf_counter() - start
 
     start = time.perf_counter()
-    contours = channels.contour_labels('strict_external', orient_faces=False)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        contours = channels.contour_labels('strict_external', orient_faces=False)
     time_fast = time.perf_counter() - start
     assert time_fast < time_slow / 1.5
 

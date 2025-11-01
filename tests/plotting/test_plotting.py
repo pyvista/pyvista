@@ -4814,7 +4814,8 @@ def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
     if pyvista.vtk_version_info > (9, 5, 99) and orient_faces is False:
         # This bug was fixed in VTK 9.6
         pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
-    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4864,11 +4865,12 @@ def test_contour_labels_boundary_style(
         plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
 
     def _generate_mesh(style):
-        mesh = labeled_image.contour_labels(
-            boundary_style=style,
-            **test_kwargs,
-            **fixed_kwargs,
-        )
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            mesh = labeled_image.contour_labels(
+                boundary_style=style,
+                **test_kwargs,
+                **fixed_kwargs,
+            )
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -4933,13 +4935,14 @@ def test_contour_labels_smoothing_constraint(
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
-    mesh = labeled_image.contour_labels(
-        'all',
-        smoothing_distance=smoothing_distance,
-        smoothing_scale=smoothing_scale,
-        pad_background=False,
-        orient_faces=False,
-    )
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh = labeled_image.contour_labels(
+            'all',
+            smoothing_distance=smoothing_distance,
+            smoothing_scale=smoothing_scale,
+            pad_background=False,
+            orient_faces=False,
+        )
 
     # Translate so origin is in bottom left corner
     mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
@@ -4973,8 +4976,10 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         output_mesh_type='quads',
         orient_faces=False,
     )
-    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
-    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
 
     plot = pv.Plotter()
     plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
