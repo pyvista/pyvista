@@ -73,9 +73,9 @@ connectivity between points such as this gridded mesh:
     from pyvista import examples
 
     mesh = examples.load_hexbeam()
-    cpos = [(6.20, 3.00, 7.50),
-            (0.16, 0.13, 2.65),
-            (-0.28, 0.94, -0.21)]
+    cpos = pv.CameraPosition(position=(6.20, 3.00, 7.50),
+                             focal_point=(0.16, 0.13, 2.65),
+                             viewup=(-0.28, 0.94, -0.21))
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
@@ -95,9 +95,11 @@ Or this triangulated surface:
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_points(mesh.points, color='red',
                   point_size=2)
-    pl.camera_position = [(0.02, 0.30, 0.73),
-                          (0.02, 0.03, -0.022),
-                          (-0.03, 0.94, -0.34)]
+    pl.camera_position = pv.CameraPosition(
+        position=(0.02, 0.30, 0.73),
+        focal_point=(0.02, 0.03, -0.022),
+        viewup=(-0.03, 0.94, -0.34)
+    )
     pl.show()
 
 
@@ -123,9 +125,11 @@ between eight points in that mesh:
     pl.add_mesh(single_cell, color='pink', edge_color='blue',
                 line_width=5, show_edges=True)
 
-    pl.camera_position = [(6.20, 3.00, 7.50),
-                          (0.16, 0.13, 2.65),
-                          (-0.28, 0.94, -0.21)]
+    pl.camera_position = pv.CameraPosition(
+        position=(6.20, 3.00, 7.50),
+        focal_point=(0.16, 0.13, 2.65),
+        viewup=(-0.28, 0.94, -0.21)
+    )
     pl.show()
 
 
