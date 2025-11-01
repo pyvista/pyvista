@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Automatically update PR
-        uses: adRise/update-pr-branch@1982757e254dab9d5bbb8478b35a2b20411270d9
+        uses: adRise/update-pr-branch@a51c014567e5be98445551cce9b8f5ad42dd8acf
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           base: "main"
