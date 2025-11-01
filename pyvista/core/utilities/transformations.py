@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeAlias
 from typing import overload
 
 import numpy as np
@@ -15,6 +16,14 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+
+    _FiveArrays: TypeAlias = tuple[
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+    ]
 
 
 @_deprecate_positional_args(allowed=['axis', 'angle'])
@@ -355,13 +364,7 @@ def apply_transformation_to_points(
         return points_2
 
 
-def decomposition(
-    transformation: TransformLike,
-    *,
-    homogeneous: bool = False,
-) -> tuple[
-    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
-]:
+def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -> _FiveArrays:
     """Decompose a transformation into its components.
 
     The transformation matrix ``M`` is decomposed into five components:
@@ -518,9 +521,7 @@ def _decomposition_as_homogeneous(  # noqa: PLR0917
     N: NumpyArray[float],  # noqa: N803
     S: NumpyArray[float],  # noqa: N803
     K: NumpyArray[float],  # noqa: N803
-) -> tuple[
-    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
-]:
+) -> _FiveArrays:
     """Return TRNSK decomposition as homogeneous matrices."""
     dtype_out = T.dtype  # Assume all inputs have the same dtype
     I3 = np.eye(3, dtype=dtype_out)

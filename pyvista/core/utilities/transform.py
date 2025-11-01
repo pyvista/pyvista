@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -34,6 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.core.utilities.transformations import _FiveArrays
 
 
 class Transform(
@@ -275,7 +277,7 @@ class Transform(
             else:
                 self.compose(trans)
 
-        self._decomposition_cache = None
+        self._decomposition_cache: _FiveArrays | None = None
         self._decomposition_mtime = -1
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
@@ -2054,17 +2056,7 @@ class Transform(
         """
         return self.apply(actor, mode, inverse=inverse, copy=copy)
 
-    def decompose(
-        self: Transform,
-        *,
-        homogeneous: bool = False,
-    ) -> tuple[
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-    ]:
+    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveArrays:
         """Decompose the current transformation into its components.
 
         Decompose the :attr:`matrix` ``M`` into
@@ -2271,9 +2263,10 @@ class Transform(
             self._decomposition_cache = decomposition(self.matrix, homogeneous=False)
             self._decomposition_mtime = current_mtime
 
+        cache = cast('_FiveArrays', self._decomposition_cache)
         if homogeneous:
-            return _decomposition_as_homogeneous(*self._decomposition_cache)
-        return self._decomposition_cache
+            return _decomposition_as_homogeneous(*cache)
+        return cache
 
     def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
