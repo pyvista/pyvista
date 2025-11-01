@@ -16,6 +16,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transformations import _decomposition_as_homogeneous
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
@@ -273,6 +274,9 @@ class Transform(
                     [self.compose(t) for t in trans]
             else:
                 self.compose(trans)
+
+        self._decomposition_cache = None
+        self._decomposition_mtime = -1
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
@@ -2262,10 +2266,14 @@ class Transform(
         array([-0.99944491, -2.0022213 , -3.        ])
 
         """
-        return decomposition(
-            self.matrix,
-            homogeneous=homogeneous,
-        )
+        if (current_mtime := self.GetMTime()) != self._decomposition_mtime:
+            # Recompute and cache
+            self._decomposition_cache = decomposition(self.matrix, homogeneous=False)
+            self._decomposition_mtime = current_mtime
+
+        if homogeneous:
+            return _decomposition_as_homogeneous(*self._decomposition_cache)
+        return self._decomposition_cache
 
     def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
@@ -2414,7 +2422,7 @@ class Transform(
         self._check_finite = bool(value)
 
     @property
-    def position(self) -> tuple[float, float, float]:
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the translation component of the current :attr:`matrix`.
 
         .. versionadded:: 0.47
@@ -2427,7 +2435,9 @@ class Transform(
         return self.GetPosition()
 
     @property
-    def rotation_axis_angle(self) -> tuple[tuple[float, float, float], float]:
+    def rotation_axis_angle(
+        self,
+    ) -> tuple[tuple[float, float, float], float]:  # numpydoc ignore=RT01
         """Return the rotation component of the current :attr:`matrix` as a vector and angle.
 
         .. versionadded:: 0.47
@@ -2443,7 +2453,7 @@ class Transform(
         return wxyz[1:4], wxyz[0]
 
     @property
-    def rotation_matrix(self) -> NumpyArray[float]:
+    def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the rotation component of the current :attr:`matrix` as a 3x3 matrix.
 
         .. versionadded:: 0.47
@@ -2457,7 +2467,7 @@ class Transform(
         return R
 
     @property
-    def reflection(self) -> Literal[1, -1]:
+    def reflection(self) -> Literal[1, -1]:  # numpydoc ignore=RT01
         """Return the reflection component of the current :attr:`matrix` as an integer.
 
         ``1`` is returned if there is no reflection, and ``-1`` is returned if there
@@ -2472,7 +2482,7 @@ class Transform(
         return N.astype(int).tolist()
 
     @property
-    def scale_factors(self) -> tuple[float, float, float]:
+    def scale_factors(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the scaling component of the current :attr:`matrix`.
 
         .. versionadded:: 0.47
@@ -2487,7 +2497,7 @@ class Transform(
         return tuple(S.tolist())
 
     @property
-    def shear_matrix(self) -> NumpyArray[float]:
+    def shear_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the shear component of the current :attr:`matrix` as a 3x3 matrix.
 
         .. versionadded:: 0.47
@@ -2501,7 +2511,7 @@ class Transform(
         return K
 
     @property
-    def has_translation(self) -> bool:
+    def has_translation(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current :attr:`matrix` has a translation component.
 
         .. versionadded:: 0.47
@@ -2514,7 +2524,7 @@ class Transform(
         return not np.allclose(self.position, np.zeros((3,)))
 
     @property
-    def has_rotation(self) -> bool:
+    def has_rotation(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current :attr:`matrix` has a rotation component.
 
         .. versionadded:: 0.47
@@ -2527,7 +2537,7 @@ class Transform(
         return not np.allclose(self.rotation_matrix, np.eye(3))
 
     @property
-    def has_reflection(self) -> bool:
+    def has_reflection(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current :attr:`matrix` has a reflection component.
 
         .. versionadded:: 0.47
@@ -2540,7 +2550,7 @@ class Transform(
         return self.reflection == -1
 
     @property
-    def has_scale(self) -> bool:
+    def has_scale(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current :attr:`matrix` has a scale component.
 
         .. versionadded:: 0.47
@@ -2553,7 +2563,7 @@ class Transform(
         return not np.allclose(self.scale_factors, np.ones((3,)))
 
     @property
-    def has_shear(self) -> bool:
+    def has_shear(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current :attr:`matrix` has a shear component.
 
         .. versionadded:: 0.47

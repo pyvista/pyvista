@@ -489,7 +489,6 @@ def decomposition(
 
     dtype_out = matrix4x4.dtype
     I3 = np.eye(3, dtype=dtype_out)
-    I4 = np.eye(4, dtype=dtype_out)
     matrix3x3 = matrix4x4[:3, :3]
 
     T = matrix4x4[:3, 3]
@@ -509,23 +508,40 @@ def decomposition(
         N = np.array(1, dtype=dtype_out)
 
     if homogeneous:
-        T4 = I4.copy()
-        T4[:3, 3] = T
-
-        R4 = I4.copy()
-        R4[:3, :3] = R
-
-        N4 = I4.copy()
-        N4[:3, :3] = I3 * N
-
-        S4 = I4.copy()
-        S4[:3, :3] = I3 * S
-
-        K4 = I4.copy()
-        K4[:3, :3] = K
-
-        return T4, R4, N4, S4, K4
+        return _decomposition_as_homogeneous(T, R, N, S, K)
     return T, R, N, S, K
+
+
+def _decomposition_as_homogeneous(  # noqa: PLR0917
+    T: NumpyArray[float],  # noqa: N803
+    R: NumpyArray[float],  # noqa: N803
+    N: NumpyArray[float],  # noqa: N803
+    S: NumpyArray[float],  # noqa: N803
+    K: NumpyArray[float],  # noqa: N803
+) -> tuple[
+    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
+]:
+    """Return TRNSK decomposition as homogeneous matrices."""
+    dtype_out = T.dtype  # Assume all inputs have the same dtype
+    I3 = np.eye(3, dtype=dtype_out)
+    I4 = np.eye(4, dtype=dtype_out)
+
+    T4 = I4.copy()
+    T4[:3, 3] = T
+
+    R4 = I4.copy()
+    R4[:3, :3] = R
+
+    N4 = I4.copy()
+    N4[:3, :3] = I3 * N
+
+    S4 = I4.copy()
+    S4[:3, :3] = I3 * S
+
+    K4 = I4.copy()
+    K4[:3, :3] = K
+
+    return T4, R4, N4, S4, K4
 
 
 def _polar_decomposition(a: NumpyArray[float]) -> tuple[NumpyArray[float], NumpyArray[float]]:
