@@ -54,10 +54,10 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.1.0',
-  'matplotlib<3.10.7',
+  'cyclopts<4.3.0',
+  'matplotlib<3.10.8',
   'numpy<2.4.0',
-  'pillow<11.4.0',
+  'pillow<12.1.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
   'typing-extensions<4.16.0',
@@ -76,7 +76,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.140.3',
+  'hypothesis<6.142.6',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
@@ -125,7 +125,7 @@ docs = [
   'imageio==2.37.0',
   'joblib==1.5.2',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.4.9',
+  'jupyterlab==4.4.10',
   'lxml==6.0.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
@@ -152,7 +152,7 @@ docs = [
   'sympy==1.14.0',
   'trame-vuetify==3.1.0',
   'trame==3.12.0',
-  'trimesh==4.8.3',
+  'trimesh==4.9.0',
   'vtk-xref==0.1.1',
   { include-group = "docs-trame-vtk" },
   { include-group = 'pinned' },
