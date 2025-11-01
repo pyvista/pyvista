@@ -39,7 +39,9 @@ plotter.add_light(UFO)
 # enable shadows to better demonstrate lighting
 plotter.enable_shadows()
 
-plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
+plotter.camera_position = pv.CameraPosition(
+    position=(28, 30, 22), focal_point=(0.77, 0, -0.44), viewup=(0, 0, 1)
+)
 plotter.show()
 
 
