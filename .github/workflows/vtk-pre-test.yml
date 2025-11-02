@@ -43,7 +43,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
         with:
           packages: xvfb
           version: 3.0
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: debug_images
