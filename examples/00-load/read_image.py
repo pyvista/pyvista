@@ -8,6 +8,13 @@ Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 from pyvista import examples

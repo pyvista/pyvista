@@ -11,6 +11,13 @@ subdivision algorithms to subdivide a mesh's cells: `butterfly`, `loop`,
 or `linear`.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

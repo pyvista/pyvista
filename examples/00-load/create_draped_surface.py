@@ -33,6 +33,15 @@ profile in 2D with the coordinates associated to the top of each column in your
 2D array.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
