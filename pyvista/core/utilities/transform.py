@@ -2623,7 +2623,7 @@ class Transform(
         >>> shear[0, 1] = 0.1
         >>> trans = pv.Transform(shear)
 
-        Get the shear matrix. In this case, shear differs from the input because asymetric shear
+        Get the shear matrix. In this case, shear differs from the input because asymmetric shear
         can be decomposed into scale factors and a rotation.
 
         >>> trans.shear_matrix
