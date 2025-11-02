@@ -915,7 +915,7 @@ class Transform(
         pyvista.DataObjectFilters.translate
             Translate a mesh.
 
-        position, has_translation
+        translation, has_translation
             Get info about the transform's translation component.
 
         Examples
@@ -2115,7 +2115,7 @@ class Transform(
         compose
             Compose a transformation.
 
-        position, has_translation
+        translation, has_translation
             Get info about this transform's translation component.
 
         rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
@@ -2415,7 +2415,7 @@ class Transform(
         self._check_finite = bool(value)
 
     @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def translation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the translation component of the current :attr:`matrix`.
 
         .. versionadded:: 0.47
@@ -2426,16 +2426,16 @@ class Transform(
 
         Examples
         --------
-        Compose a translation and get the position.
+        Compose a translation and get the translation component.
 
         >>> import pyvista as pv
         >>> trans = pv.Transform() + (1, 2, 3)
-        >>> trans.position
+        >>> trans.translation
         (1.0, 2.0, 3.0)
 
-        Compose a second translation and get the position again.
+        Compose a second translation and get the component again.
         >>> trans += (4, 5, 6)
-        >>> trans.position
+        >>> trans.translation
         (5.0, 7.0, 9.0)
 
         """
@@ -2653,10 +2653,10 @@ class Transform(
 
         See Also
         --------
-        position, translate, decompose
+        translation, translate, decompose
 
         """
-        return not np.allclose(self.position, np.zeros((3,)))
+        return not np.allclose(self.translation, np.zeros((3,)))
 
     @property
     def has_rotation(self) -> bool:  # numpydoc ignore=RT01

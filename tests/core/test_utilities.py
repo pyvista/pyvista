@@ -1556,7 +1556,7 @@ def test_transform_translate(transform, translate_args):
     expected[:3, 3] = VECTOR
     assert np.array_equal(actual, expected)
     assert transform.has_translation
-    assert np.array_equal(transform.position, VECTOR)
+    assert np.array_equal(transform.translation, VECTOR)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
