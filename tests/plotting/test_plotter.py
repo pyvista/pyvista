@@ -57,6 +57,9 @@ def test_screenshot_fail_suppressed_rendering():
         plotter.show(screenshot='tmp.png')
 
 
+@pytest.mark.filterwarnings(
+    'ignore:Assigning a theme for a plotter instance is deprecated:pyvista.PyVistaDeprecationWarning'  # noqa: E501
+)
 def test_plotter_theme_raises():
     with pytest.raises(
         TypeError,

@@ -459,6 +459,23 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
+        .. deprecated:: 0.47
+            Assigning the ``theme`` attribute to a plotter object does not affect global appearance
+            settings such as ``background``, which are set at instantiation.
+            To this respect, you need to set the theme such that:
+
+            .. code-block:: python
+
+                import pyvista as pv
+
+                pl = pv.Plotter()
+                pl.theme = theme
+                # change above lines to
+                pl = pv.Plotter(theme=theme)
+
+            However, actor appearance settings such as ``edge_color`` for example are correctly
+            taken into account.
+
         Returns
         -------
         pyvista.Theme
@@ -471,7 +488,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import themes
         >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()
+        >>> pl.theme = themes.DarkTheme()  # doctest: +SKIP
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
@@ -480,6 +497,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme: Theme) -> None:
+        # Deprecated on 0.47.0, convert to error in v0.49, estimated removal on v0.50
+        msg = (
+            'Assigning a theme for a plotter instance is deprecated '
+            'and will removed in a future version of PyVista. '
+            'Set the theme when initializing the plotter instance instead.'
+        )
+        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
                 'Expected a pyvista theme like '
@@ -487,6 +512,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 f'not {type(theme).__name__}.'
             )
             raise TypeError(msg)
+
         self._theme.load_theme(theme)
 
     @_deprecate_positional_args(allowed=['filename'])
@@ -6219,7 +6245,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise ValueError(msg)
         writer.CompressOff()
         writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
-        writer.SetInput(self.render_window)
+        writer.SetRenderWindow(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
         writer.SetWrite3DPropsAsRasterImage(raster)

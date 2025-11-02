@@ -306,11 +306,11 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(plane, show_edges=True, opacity=0.25)
     >>> _ = pl.add_mesh(mesh, color='gray')
-    >>> pl.camera_position = [
-    ...     (-117, 76, 235),
-    ...     (1.69, -1.38, 0),
-    ...     (0.189, 0.957, -0.22),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-117, 76, 235),
+    ...     focal_point=(1.69, -1.38, 0),
+    ...     viewup=(0.189, 0.957, -0.22),
+    ... )
     >>> pl.show()
 
     Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
@@ -325,11 +325,11 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(first_half, color='red')
     >>> _ = pl.add_mesh(second_half, color='blue')
-    >>> pl.camera_position = [
-    ...     (-143, 43, 40),
-    ...     (-8.7, -11, -14),
-    ...     (0.25, 0.92, -0.29),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-143, 43, 40),
+    ...     focal_point=(-8.7, -11, -14),
+    ...     viewup=(0.25, 0.92, -0.29),
+    ... )
     >>> pl.show()
 
     Note that it is pointing in the positive z-direction.

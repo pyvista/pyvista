@@ -40,7 +40,9 @@ one_streamline = fluid_mesh.streamlines(
 )
 
 clim = [0, 20]
-camera_position = [(7, 0, 20.0), (7, 0.0, 0.0), (0.0, 1.0, 0.0)]
+camera_position = pv.CameraPosition(
+    position=(7, 0, 20.0), focal_point=(7, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+)
 
 p = pv.Plotter()
 for i in range(1, len(mesh)):

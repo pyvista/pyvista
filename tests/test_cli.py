@@ -41,6 +41,9 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
         legacy_windows=False,
     )
     monkeypatch.setattr(app, 'console', console)
+    monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
+    monkeypatch.setattr(app, 'error_console', console)
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -54,7 +57,8 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
         │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot a PyVista, numpy, or vtk object.                   │
+        │ plot       Plot one or more mesh files in an interactive window    │
+        │            that can be customized with various options.            │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
@@ -72,7 +76,8 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
     │ convert    Convert a mesh file to another format.                  │
-    │ plot       Plot a PyVista, numpy, or vtk object.                   │
+    │ plot       Plot one or more mesh files in an interactive window    │
+    │            that can be customized with various options.            │
     │ report     Generate a PyVista software environment report.         │
     │ --help -h  Display this message and exit.                          │
     │ --version  Display application version.                            │
@@ -106,7 +111,7 @@ def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
 
 @pytest.fixture
 def mock_report(mocker: MockerFixture):
-    return mocker.patch.object(pv.__main__, 'Report')
+    return mocker.patch.object(pv._cli.report, 'Report')
 
 
 class CasesReport:
@@ -269,14 +274,16 @@ def test_convert_help(capsys: pytest.CaptureFixture):
             Convert a mesh file to another format.
 
             Sample usage:
-              $ pyvista convert foo.abc bar.xyz
-              Saved: bar.xyz
+            ```bash
+            pyvista convert foo.abc bar.xyz
+            Saved: bar.xyz
 
-              $ pyvista convert foo.abc .xyz
-              Saved: foo.xyz
-       """
+            pyvista convert foo.abc .xyz
+            Saved: foo.xyz
+            ```
+  """
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:11])
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
 
 
 @pytest.fixture
@@ -307,7 +314,7 @@ def mock_add_volume(mock_plotter: MagicMock):
 @fixture
 def missing_plot_arguments():
     """Argument names in the `pv.plot` signature which are intentionally removed from the
-    `pv.__main__._plot` function
+    `pv.cli.plot._plot` function
     """
 
     return {
@@ -353,7 +360,9 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     plot_params = set(plot_sig.parameters.keys())
 
     # Test the parameters names
-    cli_sig = inspect.signature(pv.__main__._plot)
+    from pyvista._cli.plot import _plot
+
+    cli_sig = inspect.signature(_plot)
     cli_params = set(cli_sig.parameters.keys())
 
     diff = plot_params - cli_params - missing_plot_arguments
@@ -379,7 +388,7 @@ def test_plot_cli_synced(missing_plot_arguments: set[str]):
     from pyvista.plotting.themes import Theme  # noqa: F401
 
     plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
-    cli_annotations = inspect.get_annotations(pv.__main__._plot, eval_str=True)
+    cli_annotations = inspect.get_annotations(_plot, eval_str=True)
 
     cli_annotations = {
         k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
@@ -756,7 +765,7 @@ def test_report_help(capsys: pytest.CaptureFixture):
 
     expected = textwrap.dedent(
         """\
-            Usage: pyvista report [ARGS] [OPTIONS]
+            Usage: pyvista report [ARGS]
 
             Generate a PyVista software environment report.
        """
@@ -772,10 +781,11 @@ def test_plot_help(capsys: pytest.CaptureFixture):
         """\
         Usage: pyvista plot file (file2) [OPTIONS]
 
-        Plot a PyVista, numpy, or vtk object.
-        """
+        Plot one or more mesh files in an interactive window that can be 
+        customized with various options.
+        """  # noqa: W291
     )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:5])
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -793,7 +803,8 @@ def test_help(capsys: pytest.CaptureFixture):
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
         │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot a PyVista, numpy, or vtk object.                   │
+        │ plot       Plot one or more mesh files in an interactive window    │
+        │            that can be customized with various options.            │
         │ report     Generate a PyVista software environment report.         │
         │ --help -h  Display this message and exit.                          │
         │ --version  Display application version.                            │
@@ -843,7 +854,6 @@ def test_print(
     """Test that the output of the functions are sent to stdout."""
     mock = mock_plot if func == 'plot' else mock_report
     mock.return_value = ret
-
     tokens = func if func == 'report' else f'{func} --files={Path(pv.examples.antfile).as_posix()}'
     main(tokens)
 

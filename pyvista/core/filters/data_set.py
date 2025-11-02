@@ -1904,6 +1904,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
         label_regions: bool = True,  # noqa: FBT001, FBT002
+        region_assignment_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
         region_ids: VectorLike[int] | None = None,
         point_ids: VectorLike[int] | None = None,
         cell_ids: VectorLike[int] | None = None,
@@ -1988,6 +1989,22 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Each region is assigned a unique ID. IDs are zero-indexed and are
             assigned by region cell count in descending order (i.e. the largest
             region has ID ``0``).
+
+        region_assignment_mode : str, default: "descending"
+            Strategy used to assign connected region IDs if ``label_regions`` is True.
+            Can be either:
+
+            - ``"ascending"``: IDs are sorted by increasing order of cell count
+            - ``"descending"``: IDs are sorted by decreasing order of cell counts
+            - ``"unspecified"``: no particular order
+
+            .. versionadded:: 0.47
+
+            .. admonition:: ParaView compatibility
+                :class: note dropdown
+
+                The default value ``"descending"`` differs from ParaView's, which
+                is set to ``"unspecified"`` (verified for 5.11 and 6.0 versions).
 
         region_ids : sequence[int], optional
             Region ids to extract. Only used if ``extraction_mode`` is
@@ -2187,7 +2204,23 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.ColorRegionsOn()  # This will create 'RegionId' scalars
 
         # Sort region ids
-        alg.SetRegionIdAssignmentMode(alg.CELL_COUNT_DESCENDING)
+        modes = {
+            'ascending': alg.CELL_COUNT_ASCENDING,
+            'descending': alg.CELL_COUNT_DESCENDING,
+            'unspecified': alg.UNSPECIFIED,
+        }
+        if region_assignment_mode not in modes:
+            msg = f"Invalid `region_assignment_mode` '{region_assignment_mode}' . Must be in {list(modes.keys())}"  # noqa: E501
+            raise ValueError(msg)
+
+        if region_assignment_mode == 'unspecified' and extraction_mode == 'specified':
+            warnings.warn(
+                'Using the `unspecified` region assignment mode with the `specified` extraction mode can be unintuitive. Ignore this warning if this was intentional.',  # noqa: E501
+                UserWarning,
+                stacklevel=2,
+            )
+
+        alg.SetRegionIdAssignmentMode(modes[region_assignment_mode])
 
         if scalar_range is not None:
             alg.ScalarConnectivityOn()
@@ -2297,7 +2330,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             # Fix bad output recursively using 'all' mode which has known good output
             output.point_data.remove('RegionId')
             output.cell_data.remove('RegionId')
-            output = output.connectivity('all', label_regions=True, inplace=inplace)
+            output = output.connectivity(
+                'all',
+                label_regions=True,
+                inplace=inplace,
+                region_assignment_mode=region_assignment_mode,
+            )
 
         # Remove temp point array
         with contextlib.suppress(KeyError):
@@ -8199,7 +8237,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Create an equal density voxel volume and plot the result.
 
         >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
-        >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+        >>> cpos = pv.CameraPosition(
+        ...     position=(15, 3, 15), focal_point=(0, 0, 0), viewup=(0, 0, 0)
+        ... )
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
         Slice the voxel volume to view the ``mask`` scalars.

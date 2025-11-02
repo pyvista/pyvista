@@ -1901,7 +1901,9 @@ def test_link_views_camera_set():
     p.subplot(0, 1)
     p.add_mesh(wavelet, color='red')
     p.link_views()
-    p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+    p.camera_position = pv.CameraPosition(
+        position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+    )
     p.show()
 
 
@@ -3940,7 +3942,9 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
     fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
     p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
-    p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+    p.camera_position = pv.CameraPosition(
+        position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
+    )
     p.show()
 
 
@@ -4399,11 +4403,11 @@ def test_show_bounds_no_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4421,11 +4425,11 @@ def test_show_bounds_n_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4806,7 +4810,12 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info > (9, 5, 99) and orient_faces is False:
+        # This bug was fixed in VTK 9.6
+        pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4856,11 +4865,12 @@ def test_contour_labels_boundary_style(
         plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
 
     def _generate_mesh(style):
-        mesh = labeled_image.contour_labels(
-            boundary_style=style,
-            **test_kwargs,
-            **fixed_kwargs,
-        )
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            mesh = labeled_image.contour_labels(
+                boundary_style=style,
+                **test_kwargs,
+                **fixed_kwargs,
+            )
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -4900,7 +4910,9 @@ def test_contour_labels_boundary_style(
     plot_boundary_labels(internal_mesh)
     plot.add_text(INTERNAL, position='lower_left')
 
-    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.camera_position = pv.CameraPosition(
+        position=(5, 4, 3.5), focal_point=(1, 1, 1), viewup=(0.0, 0.0, 1.0)
+    )
     plot.show(return_cpos=True)
 
 
@@ -4923,13 +4935,14 @@ def test_contour_labels_smoothing_constraint(
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
-    mesh = labeled_image.contour_labels(
-        'all',
-        smoothing_distance=smoothing_distance,
-        smoothing_scale=smoothing_scale,
-        pad_background=False,
-        orient_faces=False,
-    )
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh = labeled_image.contour_labels(
+            'all',
+            smoothing_distance=smoothing_distance,
+            smoothing_scale=smoothing_scale,
+            pad_background=False,
+            orient_faces=False,
+        )
 
     # Translate so origin is in bottom left corner
     mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
@@ -4963,8 +4976,10 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         output_mesh_type='quads',
         orient_faces=False,
     )
-    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
-    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
 
     plot = pv.Plotter()
     plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
