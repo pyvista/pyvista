@@ -2424,6 +2424,20 @@ class Transform(
         --------
         has_translation, translate, decompose
 
+        Examples
+        --------
+        Compose a translation and get the position.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform() + (1, 2, 3)
+        >>> trans.position
+        (1.0, 2.0, 3.0)
+
+        Compose a second translation and get the position again.
+        >>> trans += (4, 5, 6)
+        >>> trans.position
+        (5.0, 7.0, 9.0)
+
         """
         return self.GetPosition()
 
@@ -2439,6 +2453,30 @@ class Transform(
         --------
         has_rotation, rotation_matrix, rotate_vector, as_rotation, decompose
 
+        Examples
+        --------
+        Compose a rotation from a vector and angle.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform().rotate_vector((1, 2, 3), 30)
+
+        Get the rotation axis and angle.
+
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.2672, 0.5345, 0.8017)
+        >>> angle
+        30.0
+
+        Compose a second rotation around the same axis and get the axis and angle again.
+
+        >>> _ = trans.rotate_vector((1, 2, 3), 40)
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.2672, 0.5345, 0.8017)
+        >>> angle
+        70.0
+
         """
         # Decompose first to ensure we have a proper rotation
         _, R, _, _, _ = self.decompose()
@@ -2449,11 +2487,35 @@ class Transform(
     def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the rotation component of the current :attr:`matrix` as a 3x3 matrix.
 
+        The rotation is orthonormal and right-handed with positive determinant.
+
         .. versionadded:: 0.47
 
         See Also
         --------
         has_rotation, rotation_axis_angle, rotate, as_rotation, decompose
+
+        Examples
+        --------
+        Compose a rotation about the z-axis.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform().rotate_z(90)
+
+        Get the rotation matrix.
+
+        >>> trans.rotation_matrix
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        Compose a second rotation and get the rotation matrix again.
+
+        >>> _ = trans.rotate_y(-90)
+        >>> trans.rotation_matrix
+        array([[ 0.,  0., -1.],
+               [ 1.,  0.,  0.],
+               [ 0., -1.,  0.]])
 
         """
         _, R, _, _, _ = self.decompose()
@@ -2470,6 +2532,27 @@ class Transform(
         --------
         has_reflection, reflect, decompose
 
+        Examples
+        --------
+        Create a transform and get its reflection.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform()
+        >>> trans.reflection
+        1
+
+        Compose a reflection about the x-axis and get the reflection again.
+
+        >>> _ = trans.flip_x()
+        >>> trans.reflection
+        -1
+
+        Compose a second reflection and get the reflection again.
+
+        >>> _ = trans.flip_y()
+        >>> trans.reflection
+        1
+
         """
         _, _, N, _, _ = self.decompose()
         return N.astype(int).tolist()
@@ -2478,11 +2561,28 @@ class Transform(
     def scale_factors(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the scaling component of the current :attr:`matrix`.
 
+        The scaling factors are always positive.
+
         .. versionadded:: 0.47
 
         See Also
         --------
         has_scale, scale, decompose
+
+        Examples
+        --------
+        Compose a scale matrix and get the scale factors.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform() * (1, 2, 3)
+        >>> trans.scale_factors
+        (1.0, 2.0, 3.0)
+
+        Compose a second scale matrix and get the factors again.
+
+        >>> trans *= (4, 5, 6)
+        >>> trans.scale_factors
+        (4.0, 10.0, 18.0)
 
         """
         # Use PyVista's decompose instead of vtk's GetScale() method
@@ -2498,6 +2598,47 @@ class Transform(
         See Also
         --------
         has_shear, compose, decompose
+
+        Examples
+        --------
+        Compose a symmetric shear matrix.
+
+        >>> import pyvista as pv
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1
+        >>> shear[1, 0] = 0.1
+        >>> trans = pv.Transform(shear)
+
+        Get the shear matrix. The shear matrix is the same as the input in this particular example,
+        but in general this is not the case.
+
+        >>> trans.shear_matrix
+        array([[1. , 0.1, 0. ],
+               [0.1, 1. , 0. ],
+               [0. , 0. , 1. ]])
+
+        Compose an asymmetric shear matrix instead.
+
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1
+        >>> trans = pv.Transform(shear)
+
+        Get the shear matrix. In this case, shear differs from the input because asymetric shear
+        can be decomposed into scale factors and a rotation.
+
+        >>> trans.shear_matrix
+        array([[1.        , 0.05      , 0.        ],
+               [0.04975124, 1.        , 0.        ],
+               [0.        , 0.        , 1.        ]])
+
+        >>> trans.scale_factors
+        (0.9987523388778445, 1.0037461005722337, 1.0)
+
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.0, 0.0, -1.0)
+        >>> angle
+        2.8624
 
         """
         _, _, _, _, K = self.decompose()
