@@ -59,7 +59,7 @@ pinned = [ # Pinned versions of core dependencies
   'numpy<2.4.0',
   'pillow<12.1.0',
   'pooch<1.9.0',
-  'scooby<0.11.0',
+  'scooby<0.12.0',
   'typing-extensions<4.16.0',
 ]
 
