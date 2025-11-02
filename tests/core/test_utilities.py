@@ -1534,11 +1534,14 @@ ANGLE = 30
 
 @pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
 def test_transform_scale(transform, scale_args):
+    assert not transform.has_scale
     transform.scale(*scale_args)
     actual = transform.matrix
     expected = np.diag((SCALE, SCALE, SCALE, 1))
     assert np.array_equal(actual, expected)
     assert transform.n_transformations == 1
+    assert transform.has_scale
+    assert np.array_equal(transform.scale_factors, (SCALE, SCALE, SCALE))
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
@@ -1546,11 +1549,14 @@ def test_transform_scale(transform, scale_args):
 
 @pytest.mark.parametrize('translate_args', [np.array(VECTOR), np.array([VECTOR])])
 def test_transform_translate(transform, translate_args):
+    assert not transform.has_translation
     transform.translate(*translate_args)
     actual = transform.matrix
     expected = np.eye(4)
     expected[:3, 3] = VECTOR
     assert np.array_equal(actual, expected)
+    assert transform.has_translation
+    assert np.array_equal(transform.position, VECTOR)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
@@ -1558,10 +1564,14 @@ def test_transform_translate(transform, translate_args):
 
 @pytest.mark.parametrize('reflect_args', [VECTOR, [VECTOR]])
 def test_transform_reflect(transform, reflect_args):
+    assert transform.reflection == 1
+    assert not transform.has_reflection
     transform.reflect(*reflect_args)
     actual = transform.matrix
     expected = transformations.reflection(VECTOR)
     assert np.array_equal(actual, expected)
+    assert transform.has_reflection
+    assert transform.reflection == -1
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1582,11 +1592,14 @@ def test_transform_flip_xyz(transform, method, vector):
 
 
 def test_transform_rotate(transform):
+    assert not transform.has_rotation
     transform.rotate(ROTATION)
     actual = transform.matrix
     expected = np.eye(4)
     expected[:3, :3] = ROTATION
     assert np.array_equal(actual, expected)
+    assert transform.has_rotation
+    assert np.array_equal(transform.rotation_matrix, ROTATION)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
@@ -1642,6 +1655,9 @@ def test_transform_rotate_x(transform):
     actual = transform.matrix
     expected = transformations.axis_angle_rotation((1, 0, 0), ANGLE)
     assert np.array_equal(actual, expected)
+    axis, angle = transform.rotation_axis_angle
+    assert np.allclose(axis, (1, 0, 0))
+    assert np.allclose(angle, ANGLE)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1652,6 +1668,9 @@ def test_transform_rotate_y(transform):
     actual = transform.matrix
     expected = transformations.axis_angle_rotation((0, 1, 0), ANGLE)
     assert np.array_equal(actual, expected)
+    axis, angle = transform.rotation_axis_angle
+    assert np.allclose(axis, (0, 1, 0))
+    assert np.allclose(angle, ANGLE)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -1662,6 +1681,9 @@ def test_transform_rotate_z(transform):
     actual = transform.matrix
     expected = transformations.axis_angle_rotation((0, 0, 1), ANGLE)
     assert np.array_equal(actual, expected)
+    axis, angle = transform.rotation_axis_angle
+    assert np.allclose(axis, (0, 0, 1))
+    assert np.allclose(angle, ANGLE)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.allclose(identity, np.eye(4))
@@ -2232,6 +2254,13 @@ SHEAR[0, 2] = values[1]
 SHEAR[2, 0] = values[1]
 SHEAR[1, 2] = values[2]
 SHEAR[2, 1] = values[2]
+
+
+def test_transform_shear_matrix(transform):
+    assert not transform.has_shear
+    transform.compose(SHEAR)
+    assert transform.has_shear
+    assert np.allclose(transform.shear_matrix, SHEAR)
 
 
 @pytest.mark.parametrize('do_shear', [True, False])
