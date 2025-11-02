@@ -2603,6 +2603,7 @@ class Transform(
         --------
         Compose a symmetric shear matrix.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> shear = np.eye(4)
         >>> shear[0, 1] = 0.1
