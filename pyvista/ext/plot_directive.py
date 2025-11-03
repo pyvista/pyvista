@@ -479,7 +479,10 @@ def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
             pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
-        raise PlotError(traceback.format_exc()) from err
+        # Annotate traceback with source file and line
+        tb = traceback.format_exc()
+        msg = f'Error in {code_path}:\n{tb}'
+        raise PlotError(msg) from err
 
     return ns
 
