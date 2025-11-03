@@ -40,12 +40,14 @@ def test_init_from_polydata(sphere):
     assert unstruct_grid.n_points == sphere.n_points
     assert unstruct_grid.n_cells == sphere.n_cells
     assert np.all(unstruct_grid.celltypes == 5)
+    assert len(unstruct_grid.celltypes) == sphere.n_cells
 
 
 def test_init_from_structured(struct_grid):
     unstruct_grid = pv.UnstructuredGrid(struct_grid)
     assert unstruct_grid.points.shape[0] == struct_grid.x.size
     assert np.all(unstruct_grid.celltypes == 12)
+    assert len(unstruct_grid.celltypes) == struct_grid.n_cells
 
 
 def test_init_from_unstructured(hexbeam):
@@ -101,20 +103,24 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match='Cannot work with input type'):
         pv.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError, match='points must have real numbers.'):
+    with pytest.raises(TypeError, match=r'points must have real numbers.'):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
     points = rnd_generator.random((4, 3))
     celltypes = [pv.CellType.TETRA]
     cells = np.array([5, 0, 1, 2, 3])
-    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
+
+    match = re.escape(
+        'Cell array size is invalid. Size (5) does not match expected size (6). This is likely due to invalid connectivity array.'  # noqa: E501
+    )
+    with pytest.raises(CellSizeError, match=match):
         pv.UnstructuredGrid(cells, celltypes, points)
 
     with pytest.raises(TypeError, match='requires the following arrays'):
         pv.UnstructuredGrid(*range(5))
 
-    with pytest.raises(TypeError, match='All input types must be sequences.'):
+    with pytest.raises(TypeError, match=r'All input types must be sequences.'):
         pv.UnstructuredGrid(*range(3))
 
 
@@ -389,7 +395,9 @@ def test_triangulate_inplace(hexbeam):
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if extension == '.vtkhdf' and not binary:
-        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+        with pytest.raises(
+            ValueError, match=r'.vtkhdf files can only be written in binary format'
+        ):
             hexbeam.save(filename, binary=binary)
         return
 
@@ -1556,7 +1564,7 @@ def test_explicit_structured_grid_save():
 
 
 def test_explicit_structured_grid_save_raises():
-    with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
+    with pytest.raises(ValueError, match=r'Cannot save texture of a pointset.'):
         examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
 
 
@@ -1790,7 +1798,7 @@ def test_structured_grid_cast_to_explicit_structured_grid_raises():
     grid = pv.StructuredGrid(x, y, z)
     with pytest.raises(
         TypeError,
-        match='Only 3D structured grid can be casted to an explicit structured grid.',
+        match=r'Only 3D structured grid can be casted to an explicit structured grid.',
     ):
         grid.cast_to_explicit_structured_grid()
 
@@ -1875,16 +1883,21 @@ def test_rect_grid_dimensions_raises():
 
 @pytest.fixture
 def empty_poly_cast_to_ugrid():
+    def get_cell_types(mesh):
+        return (
+            mesh.GetCellTypes() if pv.vtk_version_info > (9, 5, 99) else mesh.GetCellTypesArray()
+        )
+
     cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
 
     # Likely VTK bug, these should not be None but they are
     assert cast_ugrid.GetCells() is None
-    assert cast_ugrid.GetCellTypesArray() is None
+    assert get_cell_types(cast_ugrid) is None
 
     # Make sure a proper ugrid does not have these as None
     ugrid = pv.UnstructuredGrid()
     assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
-    assert isinstance(ugrid.GetCellTypesArray(), vtk.vtkUnsignedCharArray)
+    assert isinstance(get_cell_types(ugrid), vtk.vtkUnsignedCharArray)
 
     return cast_ugrid
 
@@ -1983,7 +1996,7 @@ def test_imagedata_slice_index_range(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with index range equal to dimensions
@@ -2013,7 +2026,7 @@ def test_imagedata_slice_index_range_upper_bounds(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with upper range larger than dimensions
@@ -2035,7 +2048,7 @@ def test_imagedata_slice_index_negative_range(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
     meshes = appended_images_with_offset if add_offset else appended_images
-    slice0, slice1, appended = meshes
+    _slice0, _slice1, appended = meshes
     x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with negative stop index

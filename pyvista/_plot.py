@@ -11,51 +11,74 @@ decouple the ``core`` and ``plotting`` APIs.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
+if TYPE_CHECKING:
+    from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting._typing import CameraPositionOptions
+    from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting.themes import Theme
+
 
 @_deprecate_positional_args(allowed=['var_item'])
-def plot(  # noqa: PLR0917
-    var_item,
-    off_screen=None,
-    full_screen=None,
-    screenshot=None,
-    interactive=True,  # noqa: FBT002
-    cpos=None,
-    window_size=None,
-    show_bounds=False,  # noqa: FBT002
-    show_axes=None,
-    notebook=None,
-    background=None,
-    text='',
-    return_img=False,  # noqa: FBT002
-    eye_dome_lighting=False,  # noqa: FBT002
-    volume=False,  # noqa: FBT002
-    parallel_projection=False,  # noqa: FBT002
-    jupyter_backend=None,
-    return_viewer=False,  # noqa: FBT002
-    return_cpos=False,  # noqa: FBT002
-    jupyter_kwargs=None,
-    theme=None,
-    anti_aliasing=None,
-    zoom=None,
-    border=False,  # noqa: FBT002
-    border_color='k',
-    border_width=2.0,
-    ssao=False,  # noqa: FBT002
+def plot(  # noqa: ANN202, PLR0917
+    var_item: list[PlottableType] | PlottableType,
+    off_screen: bool | None = None,  # noqa: FBT001
+    full_screen: bool | None = None,  # noqa: FBT001
+    screenshot: str | bool | None = None,  # noqa: FBT001
+    interactive: bool = True,  # noqa: FBT001, FBT002
+    cpos: CameraPositionOptions | None = None,
+    window_size: list[int] | None = None,
+    show_bounds: bool = False,  # noqa: FBT001, FBT002
+    show_axes: bool | None = None,  # noqa: FBT001
+    notebook: bool | None = None,  # noqa: FBT001
+    background: ColorLike | None = None,
+    text: str = '',
+    return_img: bool = False,  # noqa: FBT001, FBT002
+    eye_dome_lighting: bool = False,  # noqa: FBT001, FBT002
+    volume: bool = False,  # noqa: FBT001, FBT002
+    parallel_projection: bool = False,  # noqa: FBT001, FBT002
+    jupyter_backend: JupyterBackendOptions | None = None,
+    return_viewer: bool = False,  # noqa: FBT001, FBT002
+    return_cpos: bool = False,  # noqa: FBT001, FBT002
+    jupyter_kwargs: dict | None = None,  # type: ignore[type-arg]
+    theme: Theme | None = None,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
+    zoom: str | float | None = None,
+    border: bool = False,  # noqa: FBT001, FBT002
+    border_color: ColorLike = 'k',
+    border_width: float = 2.0,
+    ssao: bool = False,  # noqa: FBT001, FBT002
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
+
+    .. versionadded:: 0.47
+
+        ``plot`` can be invoked with the shell command:
+
+        .. code-block:: shell
+
+            pyvista plot <files> --screenshot output.png --off-screen
+
+        Run ``pyvista plot --help`` for more details on available parameters.
+
+        .. note::
+            Providing multiple files renders them inside the same window.
 
     Parameters
     ----------
     var_item : pyvista.DataSet
         See :func:`Plotter.add_mesh <pyvista.Plotter.add_mesh>` for all
         supported types.
+
 
     off_screen : bool, optional
         Plots off screen when ``True``.  Helpful for saving
@@ -66,7 +89,7 @@ def plot(  # noqa: PLR0917
         Opens window in full screen.  When enabled, ignores
         ``window_size``.
 
-    screenshot : str or bool, optional
+    screenshot : str | bool, optional
         Saves screenshot to file when enabled.  See:
         :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
         Default ``False``.
@@ -77,10 +100,13 @@ def plot(  # noqa: PLR0917
     interactive : bool, default: :attr:`pyvista.plotting.themes.Theme.interactive`
         Allows user to pan and move figure.
 
-    cpos : list, optional
+    cpos : CameraPositionOptions, optional
         List of camera position, focal point, and view up.
+        See the :attr:`pyvista.Plotter.camera_position` for concrete examples
+        on how to use this parameter and :ref:`cameras_api` for a detailed
+        documentation on :class:`pyvista.Camera`.
 
-    window_size : sequence, default: :attr:`pyvista.plotting.themes.Theme.window_size`
+    window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
 
     show_bounds : bool, default: False
@@ -112,16 +138,12 @@ def plot(  # noqa: PLR0917
     parallel_projection : bool, default: False
         Enable parallel projection.
 
-    jupyter_backend : str, default: :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
-        Jupyter notebook plotting backend to use.  One of the
-        following:
+    jupyter_backend : JupyterBackendOptions, optional
+        Jupyter notebook plotting backend to use.
+        See available documentation at :func:`pyvista.set_jupyter_backend`
+        to see all valid values for this parameter along with a detailed documentation.
 
-        * ``'none'`` : Do not display in the notebook.
-        * ``'static'`` : Display a static figure.
-        * ``'trame'`` : Display using ``trame``.
-
-        This can also be set globally with
-        :func:`pyvista.set_jupyter_backend`.
+        Defaults to :attr:`pyvista.plotting.themes.Theme.jupyter_backend`
 
     return_viewer : bool, default: False
         Return the jupyterlab viewer, scene, or display object
@@ -139,12 +161,17 @@ def plot(  # noqa: PLR0917
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+    anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
-        disables anti_aliasing. If a string, should be either ``"fxaa"`` or
-        ``"ssaa"``.
+        disables anti_aliasing. If a string, should be one of the following:
 
-    zoom : float, str, optional
+        * ``"ssaa"`` - Super-Sample Anti-Aliasing
+        * ``"msaa"`` - Multi-Sample Anti-Aliasing
+        * ``"fxaa"`` - Fast Approximate Anti-Aliasing
+
+        Defaults to :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
+
+    zoom : float | str, optional
         Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
         is a zoom-in, a value less than 1 is a zoom-out.  Must be greater
         than 0.
@@ -155,10 +182,10 @@ def plot(  # noqa: PLR0917
     border_color : ColorLike, default: "k"
         Either a string, rgb list, or hex color string.  For example:
 
-            * ``color='white'``
-            * ``color='w'``
-            * ``color=[1.0, 1.0, 1.0]``
-            * ``color='#FFFFFF'``
+        * ``color='white'``
+        * ``color='w'``
+        * ``color=[1.0, 1.0, 1.0]``
+        * ``color='#FFFFFF'``
 
     border_width : float, default: 2.0
         Width of the border in pixels when enabled.
@@ -258,28 +285,29 @@ def plot(  # noqa: PLR0917
             msg = f'Background must be color-like or a file path. Got {background} instead.'
             raise TypeError(msg)
 
-    if isinstance(var_item, list):
-        if len(var_item) == 2:  # might be arrows
-            isarr_0 = isinstance(var_item[0], np.ndarray)
-            isarr_1 = isinstance(var_item[1], np.ndarray)
-            if isarr_0 and isarr_1:
-                pl.add_arrows(var_item[0], var_item[1])
+    # Handle var_item input
+    def _handle_list(var_item: list[PlottableType]) -> None:
+        if len(var_item) == 2 and all(
+            isinstance(item, np.ndarray) for item in var_item
+        ):  # might be arrows
+            pl.add_arrows(var_item[0], var_item[1])
+            return
+
+        for item in var_item:
+            if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
+                pl.add_volume(item, **kwargs)
             else:
-                for item in var_item:
-                    if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                        pl.add_volume(item, **kwargs)
-                    else:
-                        pl.add_mesh(item, **kwargs)
-        else:
-            for item in var_item:
-                if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                    pl.add_volume(item, **kwargs)
-                else:
-                    pl.add_mesh(item, **kwargs)
+                pl.add_mesh(item, **kwargs)
+
+    if isinstance(var_item, list):
+        _handle_list(var_item=var_item)
+
     elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
         pl.add_volume(var_item, **kwargs)
+
     elif isinstance(var_item, pyvista.MultiBlock):
         pl.add_composite(var_item, **kwargs)
+
     else:
         pl.add_mesh(var_item, **kwargs)
 

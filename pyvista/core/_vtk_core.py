@@ -73,25 +73,10 @@ from vtkmodules.vtkCommonComputationalGeometry import (
 )
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricTorus as vtkParametricTorus
 from vtkmodules.vtkCommonCore import VTK_ARIAL as VTK_ARIAL
-from vtkmodules.vtkCommonCore import VTK_BIT as VTK_BIT
-from vtkmodules.vtkCommonCore import VTK_CHAR as VTK_CHAR
 from vtkmodules.vtkCommonCore import VTK_COURIER as VTK_COURIER
-from vtkmodules.vtkCommonCore import VTK_DOUBLE as VTK_DOUBLE
-from vtkmodules.vtkCommonCore import VTK_FLOAT as VTK_FLOAT
 from vtkmodules.vtkCommonCore import VTK_FONT_FILE as VTK_FONT_FILE
-from vtkmodules.vtkCommonCore import VTK_ID_TYPE as VTK_ID_TYPE
-from vtkmodules.vtkCommonCore import VTK_INT as VTK_INT
-from vtkmodules.vtkCommonCore import VTK_LONG as VTK_LONG
-from vtkmodules.vtkCommonCore import VTK_LONG_LONG as VTK_LONG_LONG
-from vtkmodules.vtkCommonCore import VTK_SHORT as VTK_SHORT
-from vtkmodules.vtkCommonCore import VTK_SIGNED_CHAR as VTK_SIGNED_CHAR
-from vtkmodules.vtkCommonCore import VTK_STRING as VTK_STRING
 from vtkmodules.vtkCommonCore import VTK_TIMES as VTK_TIMES
 from vtkmodules.vtkCommonCore import VTK_UNSIGNED_CHAR as VTK_UNSIGNED_CHAR
-from vtkmodules.vtkCommonCore import VTK_UNSIGNED_INT as VTK_UNSIGNED_INT
-from vtkmodules.vtkCommonCore import VTK_UNSIGNED_LONG as VTK_UNSIGNED_LONG
-from vtkmodules.vtkCommonCore import VTK_UNSIGNED_LONG_LONG as VTK_UNSIGNED_LONG_LONG
-from vtkmodules.vtkCommonCore import VTK_UNSIGNED_SHORT as VTK_UNSIGNED_SHORT
 from vtkmodules.vtkCommonCore import buffer_shared as buffer_shared  # type: ignore[attr-defined]
 from vtkmodules.vtkCommonCore import mutable as mutable
 from vtkmodules.vtkCommonCore import reference as reference
@@ -106,15 +91,11 @@ from vtkmodules.vtkCommonCore import vtkFloatArray as vtkFloatArray
 from vtkmodules.vtkCommonCore import vtkIdList as vtkIdList
 from vtkmodules.vtkCommonCore import vtkIdTypeArray as vtkIdTypeArray
 from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
-from vtkmodules.vtkCommonCore import vtkIntArray as vtkIntArray
 from vtkmodules.vtkCommonCore import vtkLogger as vtkLogger
-from vtkmodules.vtkCommonCore import vtkLongArray as vtkLongArray
-from vtkmodules.vtkCommonCore import vtkLongLongArray as vtkLongLongArray
 from vtkmodules.vtkCommonCore import vtkLookupTable as vtkLookupTable
 from vtkmodules.vtkCommonCore import vtkMath as vtkMath
 from vtkmodules.vtkCommonCore import vtkOutputWindow as vtkOutputWindow
 from vtkmodules.vtkCommonCore import vtkPoints as vtkPoints
-from vtkmodules.vtkCommonCore import vtkShortArray as vtkShortArray
 from vtkmodules.vtkCommonCore import vtkSignedCharArray as vtkSignedCharArray
 from vtkmodules.vtkCommonCore import vtkStringArray as vtkStringArray
 from vtkmodules.vtkCommonCore import vtkStringOutputWindow as vtkStringOutputWindow
@@ -122,10 +103,6 @@ from vtkmodules.vtkCommonCore import vtkTypeInt32Array as vtkTypeInt32Array
 from vtkmodules.vtkCommonCore import vtkTypeInt64Array as vtkTypeInt64Array
 from vtkmodules.vtkCommonCore import vtkTypeUInt32Array as vtkTypeUInt32Array
 from vtkmodules.vtkCommonCore import vtkUnsignedCharArray as vtkUnsignedCharArray
-from vtkmodules.vtkCommonCore import vtkUnsignedIntArray as vtkUnsignedIntArray
-from vtkmodules.vtkCommonCore import vtkUnsignedLongArray as vtkUnsignedLongArray
-from vtkmodules.vtkCommonCore import vtkUnsignedLongLongArray as vtkUnsignedLongLongArray
-from vtkmodules.vtkCommonCore import vtkUnsignedShortArray as vtkUnsignedShortArray
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkCommonCore import vtkWeakReference as vtkWeakReference
 from vtkmodules.vtkCommonDataModel import VTK_BEZIER_CURVE as VTK_BEZIER_CURVE
@@ -329,6 +306,7 @@ from vtkmodules.vtkFiltersCore import vtkExtractEdges as vtkExtractEdges
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges as vtkFeatureEdges
 from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D as vtkFlyingEdges3D
 from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
+from vtkmodules.vtkFiltersCore import vtkImageAppend as vtkImageAppend
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
@@ -453,6 +431,8 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
 from vtkmodules.vtkImagingCore import vtkAbstractImageInterpolator as vtkAbstractImageInterpolator
 from vtkmodules.vtkImagingCore import vtkExtractVOI as vtkExtractVOI
+from vtkmodules.vtkImagingCore import vtkImageBSplineCoefficients as vtkImageBSplineCoefficients
+from vtkmodules.vtkImagingCore import vtkImageBSplineInterpolator as vtkImageBSplineInterpolator
 from vtkmodules.vtkImagingCore import vtkImageConstantPad as vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
@@ -533,6 +513,12 @@ from vtkmodules.vtkIOXML import vtkXMLWriter as vtkXMLWriter
 
 with contextlib.suppress(ImportError):
     # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
+    from vtkmodules.vtkImagingMorphological import (
+        vtkImageContinuousDilate3D as vtkImageContinuousDilate3D,
+    )
+    from vtkmodules.vtkImagingMorphological import (
+        vtkImageContinuousErode3D as vtkImageContinuousErode3D,
+    )
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D as vtkImageDilateErode3D
 
 try:
@@ -615,7 +601,7 @@ def _get_vtk_version():
             f'Unable to detect VTK version. '
             f'Defaulting to {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)}'
         )
-        warnings.warn(msg)
+        warnings.warn(msg, stacklevel=2)
         major, minor, micro = _MIN_SUPPORTED_VTK_VERSION
     return VersionInfo(major, minor, micro)
 
@@ -701,7 +687,7 @@ class DisableVtkSnakeCase:
                     if state == 'error':
                         raise pv.PyVistaAttributeError(msg)
                     else:
-                        warnings.warn(msg, RuntimeWarning)
+                        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)

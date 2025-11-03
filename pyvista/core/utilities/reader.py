@@ -799,8 +799,11 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     'cowHead.vtp'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
+    >>> cpos = pv.CameraPosition(
+    ...     position=(12, 3.5, -4.5), focal_point=(4.5, 1.6, 0), viewup=(0, 1, 0.3)
+    ... )
     >>> mesh.plot(
-    ...     cpos=((12, 3.5, -4.5), (4.5, 1.6, 0), (0, 1, 0.3)),
+    ...     cpos=cpos,
     ...     clim=[0, 100],
     ...     show_scalar_bar=False,
     ... )
@@ -2353,9 +2356,9 @@ class JPEGReader(BaseReader):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.planets.download_mars_surface(load=False)
+    >>> filename = examples.download_bird(load=False)
     >>> Path(filename).name
-    'mars.jpg'
+    'Pileated.jpg'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -2497,15 +2500,18 @@ class TIFFReader(BaseReader):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_crater_imagery(load=False)
-    >>> Path(filename).name
-    'BJ34_GeoTifv1-04_crater_clip.tif'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_crater_imagery(load=False)
+        >>> Path(filename).name
+        'BJ34_GeoTifv1-04_crater_clip.tif'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot()
 
     """
 

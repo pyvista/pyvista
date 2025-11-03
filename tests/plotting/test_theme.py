@@ -13,6 +13,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import colors
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
@@ -27,20 +28,20 @@ def default_theme():
 
 @pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
 def test_theme_trame_raises(default_theme: pv.themes.Theme, trame):
-    with pytest.raises(TypeError, match='Configuration type must be `_TrameConfig`.'):
+    with pytest.raises(TypeError, match=r'Configuration type must be `_TrameConfig`.'):
         default_theme.trame = trame
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(image_scale=st.integers().filter(lambda x: x < 1))
 def test_theme_image_scale_raises(default_theme: pv.themes.Theme, image_scale):
-    with pytest.raises(ValueError, match='Scale factor must be a positive integer.'):
+    with pytest.raises(ValueError, match=r'Scale factor must be a positive integer.'):
         default_theme.image_scale = image_scale
 
 
 @pytest.mark.parametrize('lighting_params', [1, None, object(), True, pv.Sphere()])
 def test_theme_lightning_params_raises(default_theme: pv.themes.Theme, lighting_params):
-    with pytest.raises(TypeError, match='Configuration type must be `_LightingConfig`.'):
+    with pytest.raises(TypeError, match=r'Configuration type must be `_LightingConfig`.'):
         default_theme.lighting_params = lighting_params
 
 
@@ -456,7 +457,7 @@ def test_repr(default_theme):
     # of the key in the repr or the key length is increased
     for line in rep.splitlines():
         if ':' in line:
-            pref, *rest = line.split(':', 1)
+            pref, *_rest = line.split(':', 1)
             assert pref.endswith(' '), f'Key str too long or need to raise key length:\n{pref!r}'
 
 
@@ -492,16 +493,38 @@ def test_theme_eq():
 
 
 def test_plotter_set_theme():
-    # test that the plotter theme is set to the new theme
+    """Test that the plotter theme is set to the new theme"""
+
     my_theme = pv.plotting.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pv.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pv.global_theme.color != pl.theme.color
 
+
+def test_plotter_theme_attribute_setter():
+    """Test when a theme is set as a plotter attribute"""
+    my_theme = pv.themes.Theme()
+    my_theme.color = [1.0, 0.0, 0.0]
+
     pl = pv.Plotter()
-    assert pl.theme == pv.global_theme
-    pl.theme = my_theme
+    match = (
+        'Assigning a theme for a plotter instance is deprecated '
+        'and will removed in a future version of PyVista. '
+        'Set the theme when initializing the plotter instance instead.'
+    )
+
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pl.theme = my_theme
+
+    if pyvista.version_info >= (0, 49):
+        pytest.fail('Turn the warning to error')
+
+    if pyvista.version_info >= (0, 50):
+        pytest.fail('Remove the `theme` setter')
+
+    assert pl.theme.color == my_theme.color
+
     assert pl.theme != pv.global_theme
     assert pl.theme == my_theme
 

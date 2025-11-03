@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]
+_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 
 if TYPE_CHECKING:
@@ -333,6 +333,7 @@ def read(  # noqa: PLR0911, PLR0917
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'
                 f'\t"{observer.get_message()}"',
+                stacklevel=2,
             )
         return mesh
 
@@ -354,6 +355,7 @@ def _apply_attrs_to_reader(
     warnings.warn(
         'attrs use is deprecated.  Use a Reader class for more flexible control',
         PyVistaDeprecationWarning,
+        stacklevel=2,
     )
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
@@ -761,13 +763,15 @@ def read_grdecl(
                 if not cond1:
                     warnings.warn(
                         'Unable to convert relative coordinates with different '
-                        'grid and map units. Skipping conversion.'
+                        'grid and map units. Skipping conversion.',
+                        stacklevel=2,
                     )
 
             except KeyError:
                 warnings.warn(
                     "Unable to convert relative coordinates without keyword 'MAPUNITS'. "
-                    'Skipping conversion.'
+                    'Skipping conversion.',
+                    stacklevel=2,
                 )
                 cond1 = False
 
@@ -777,7 +781,8 @@ def read_grdecl(
             except KeyError:
                 warnings.warn(
                     "Unable to convert relative coordinates without keyword 'MAPAXES'. "
-                    'Skipping conversion.'
+                    'Skipping conversion.',
+                    stacklevel=2,
                 )
                 origin = None
 

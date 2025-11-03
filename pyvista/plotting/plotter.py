@@ -124,6 +124,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import FontFamilyOptions
     from pyvista.plotting._typing import LightingOptions
     from pyvista.plotting._typing import OpacityOptions
+    from pyvista.plotting._typing import PlottableType
     from pyvista.plotting._typing import ScalarBarArgs
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
@@ -203,6 +204,7 @@ def _warn_xserver() -> None:  # pragma: no cover
             'PyVista will likely segfault when rendering.\n\n'
             'Alternatively, an offscreen version using OSMesa libraries '
             'and ``vtk-osmesa`` is available.\n',
+            stacklevel=2,
         )
 
 
@@ -457,6 +459,23 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def theme(self) -> Theme:  # numpydoc ignore=RT01
         """Return or set the theme used for this plotter.
 
+        .. deprecated:: 0.47
+            Assigning the ``theme`` attribute to a plotter object does not affect global appearance
+            settings such as ``background``, which are set at instantiation.
+            To this respect, you need to set the theme such that:
+
+            .. code-block:: python
+
+                import pyvista as pv
+
+                pl = pv.Plotter()
+                pl.theme = theme
+                # change above lines to
+                pl = pv.Plotter(theme=theme)
+
+            However, actor appearance settings such as ``edge_color`` for example are correctly
+            taken into account.
+
         Returns
         -------
         pyvista.Theme
@@ -469,7 +488,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import themes
         >>> pl = pv.Plotter()
-        >>> pl.theme = themes.DarkTheme()
+        >>> pl.theme = themes.DarkTheme()  # doctest: +SKIP
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show()
 
@@ -478,6 +497,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     @theme.setter
     def theme(self, theme: Theme) -> None:
+        # Deprecated on 0.47.0, convert to error in v0.49, estimated removal on v0.50
+        msg = (
+            'Assigning a theme for a plotter instance is deprecated '
+            'and will removed in a future version of PyVista. '
+            'Set the theme when initializing the plotter instance instead.'
+        )
+        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
                 'Expected a pyvista theme like '
@@ -485,6 +512,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 f'not {type(theme).__name__}.'
             )
             raise TypeError(msg)
+
         self._theme.load_theme(theme)
 
     @_deprecate_positional_args(allowed=['filename'])
@@ -849,6 +877,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                     'Plotter contains non-PolyData datasets. These have been '
                                     'overwritten with PolyData surfaces and are internally '
                                     'copies of the original datasets.',
+                                    stacklevel=2,
                                 )
 
                                 try:
@@ -859,6 +888,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                         'During gLTF export, failed to convert some '
                                         'datasets to PolyData. Exported scene will not have '
                                         'all datasets.',
+                                        stacklevel=2,
                                     )
 
                             if 'Normals' in dataset.point_data:
@@ -1972,7 +2002,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             return
         # If render window is not current
         if self.render_window is None:
-            warnings.warn('Attempting to set window_size on an unavailable render widow.')
+            warnings.warn(
+                'Attempting to set window_size on an unavailable render widow.', stacklevel=2
+            )
             yield self
             return
         size_before = self.window_size
@@ -2928,7 +2960,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             culling,
             name,
             nan_color,
-            texture,
+            _texture,
             rgb,
             interpolation,
             remove_existing_actor,
@@ -3085,7 +3117,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh(  # noqa: PLR0917
         self,
-        mesh: MatrixLike[float] | VectorLike[float] | DataSet | MultiBlock | _vtk.vtkAlgorithm,
+        mesh: MatrixLike[float] | PlottableType | _vtk.vtkAlgorithm,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
         scalars: str | NumpyArray[float] | None = None,
@@ -3153,7 +3185,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : DataSet | MultiBlock | :vtk:`vtkAlgorithm`
+        mesh : DataSet | MultiBlock | :vtk:`vtkAlgorithm` | str | Path
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points. Plotting also supports VTK algorithm
@@ -3161,6 +3193,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             When passing an algorithm, the rendering pipeline will be
             connected to the passed algorithm to dynamically update
             the scene (see :ref:`plotting_algorithms_example` for examples).
+
+            .. versionadded:: 0.47
+
+                Support adding a mesh directly from file.
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
@@ -3614,8 +3650,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 '`show_edges=True` not supported when `render_lines_as_tubes=True`. '
                 'Ignoring `show_edges`.',
                 UserWarning,
+                stacklevel=2,
             )
             show_edges = False
+
+        if isinstance(mesh, (str, Path)):
+            mesh = pyvista.read(mesh)  # type: ignore[assignment]
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -4527,7 +4567,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 raise ValueError(msg)
             if opacity != 'linear':
                 opacity = 'linear'
-                warnings.warn('Ignoring custom opacity due to RGBA scalars.')
+                warnings.warn('Ignoring custom opacity due to RGBA scalars.', stacklevel=2)
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -4971,6 +5011,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             'This method is deprecated and will be removed in a future version of '
             'PyVista. Directly modify the scalars of a mesh in-place instead.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
 
         if mesh is None:
@@ -6204,7 +6245,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise ValueError(msg)
         writer.CompressOff()
         writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
-        writer.SetInput(self.render_window)
+        writer.SetRenderWindow(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
         writer.SetWrite3DPropsAsRasterImage(raster)
@@ -6286,6 +6327,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                             'This plotter is closed and cannot be scaled. '
                             'Using the last saved image. '
                             'Try using the `image_scale` property directly.',
+                            stacklevel=2,
                         )
                     return self._save_image(self.last_image, filename, return_img)
                 # Plotter hasn't been rendered or was improperly closed
@@ -7151,6 +7193,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     interact with the plotter interactively.
                     """,
                 ).strip(),
+                stacklevel=2,
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
@@ -7180,6 +7223,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if jupyter_backend and not self.notebook:
             warnings.warn(
                 'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.',
+                stacklevel=2,
             )
 
         jupyter_disp = None
@@ -7246,12 +7290,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     '`auto_close` ignored: by clicking the exit button, '
                     'you have destroyed the render window and we have to '
                     'close it out.',
+                    stacklevel=2,
                 )
             self.close()
             if screenshot:
                 warnings.warn(
                     'A screenshot is unable to be taken as the render window is not current or '
                     'rendering is suppressed.',
+                    stacklevel=2,
                 )
         if _is_current:
             if pyvista.ON_SCREENSHOT:

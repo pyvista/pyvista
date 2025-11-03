@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
+from functools import cached_property
 from functools import wraps
 import numbers
 from pathlib import Path
@@ -914,7 +915,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ... )
 
         """
-        return _vtk.vtk_to_numpy(self.GetVerts().GetData())
+        self.GetVerts().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr)
 
     @verts.setter
     def verts(self, verts: CellArrayLike) -> None:
@@ -941,7 +943,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
 
         """
-        return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
+        self.GetLines().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr).ravel()
 
     @lines.setter
     def lines(self, lines: CellArrayLike) -> None:
@@ -1013,7 +1016,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([3, 0, 1, 2, 3, 3, 2, 1])
 
         """
-        array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
+        self.GetPolys().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        array = _vtk.vtk_to_numpy(arr)
         # Flag this array as read only to ensure users do not attempt to write to it.
         array.flags['WRITEABLE'] = False
         return array
@@ -1209,7 +1213,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
 
         """
-        return _vtk.vtk_to_numpy(self.GetStrips().GetData())
+        self.GetStrips().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        return _vtk.vtk_to_numpy(arr)
 
     @strips.setter
     def strips(self, strips: CellArrayLike) -> None:
@@ -1659,7 +1664,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.cell_normals
 
-    @property
+    @cached_property
     def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
@@ -1668,6 +1673,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
+
+        .. warning::
+
+            This property is expensive to compute and is therefore cached. If the mesh's
+            geometry is modified, the obb tree will no longer be valid.
+
         """
         obb_tree = _vtk.vtkOBBTree()
         obb_tree.SetDataSet(self)
@@ -1726,6 +1737,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
+        self.obbTree = None  # type: ignore[assignment]
 
 
 @abstract_class
@@ -2061,7 +2073,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         # Flag this array as read only to ensure users do not attempt to write to it.
-        array = _vtk.vtk_to_numpy(self._get_cells().GetData())
+        self._get_cells().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+        array = _vtk.vtk_to_numpy(arr)
         array.flags['WRITEABLE'] = False
         return array
 
@@ -2129,7 +2142,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces = self.GetPolyhedronFaces()  # vtkCellArray
             if faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
-            return convert_array(faces.GetData())
+
+            faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+            return convert_array(arr)
 
     @property
     def face_locations(self) -> NumpyArray[int]:
@@ -2193,7 +2208,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
             if faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
-            return convert_array(faces.GetData())
+
+            faces.ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
+            return convert_array(arr)
 
     @property
     def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
@@ -2375,7 +2392,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return _vtk.vtk_to_numpy(self._get_cell_types_array())
 
     def _get_cell_types_array(self):
-        array = self.GetCellTypesArray()
+        array = (
+            self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
+            if pyvista.vtk_version_info > (9, 5, 99)
+            else self.GetCellTypesArray()
+        )
+
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
         return array

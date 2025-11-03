@@ -79,6 +79,11 @@ warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
 )
+warnings.filterwarnings(
+    'always',
+    category=PyVistaDeprecationWarning,
+    message='Assigning a theme for a plotter instance is deprecated',
+)
 
 # -- General configuration ------------------------------------------------
 numfig = False
@@ -122,6 +127,8 @@ extensions = [
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
+    'CameraPositionOptions': 'pyvista.CameraPositionOptions',
+    'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
@@ -189,6 +196,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
+    (r'py:.*', '.*Options'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -247,7 +255,9 @@ nitpick_ignore_regex = [
     (r'py:.*', 'FontFamilyOptions'),
     (r'py:.*', 'HorizontalOptions'),
     (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', 'JupyterBackendOptions'),
+    (r'py:.*', '.*JupyterBackendOptions'),
+    (r'py:.*', '_InterpolationOptions'),
+    (r'py:.*', 'PlottableType'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -257,6 +267,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
     (r'py:.*', '.*PathStrSeq'),
+    (r'py:.*', 'ModuleType'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

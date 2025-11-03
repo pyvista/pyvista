@@ -6,7 +6,6 @@ import os
 import sys
 from typing import TYPE_CHECKING
 from typing import Literal
-import warnings
 
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
@@ -27,6 +26,7 @@ from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers as _wrappers
+from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report
@@ -45,9 +45,6 @@ if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
 
     msg = f'VTK version must be {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)} or greater.'
     raise VTKVersionError(msg)
-
-# catch annoying numpy/vtk future warning:
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
 OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
@@ -82,6 +79,9 @@ DEFAULT_SCALARS_NAME = 'Data'
 MAX_N_COLOR_BARS = 10
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
+
+# Allow setting new private -- but not public -- attributes by default
+_ALLOW_NEW_ATTRIBUTES_MODE: Literal['private', True, False] = 'private'
 
 
 # Import all modules for type checkers and linters

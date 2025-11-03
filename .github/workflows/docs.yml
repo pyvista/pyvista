@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: "pip"
@@ -38,9 +38,9 @@ jobs:
       - name: Set environment for self-hosted
         if: runner.environment == 'self-hosted'
         run: |
-          echo "PARALLEL=-j8" >> $GITHUB_ENV
+          echo "PARALLEL=-j4" >> $GITHUB_ENV
 
-      - uses: awalsh128/cache-apt-pkgs-action@2c09a5e66da6c8016428a2172bd76e5e4f14bb17
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
         if: runner.environment != 'self-hosted'
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
@@ -52,7 +52,7 @@ jobs:
       - name: Build Documentation
         run: tox run -e docs-build
 
-      - name: Dump Sphinx Warnings and Errors
+      - name: Dump Sphinx Build Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
@@ -60,23 +60,13 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Test Documentation
-        if: ${{ !cancelled() }}
-        run: tox r -e docs-test
-
-      - name: Upload Images for Failed Tests
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images-failed
-          path: _doc_debug_images_failed
-
-      - name: Upload Test Debug Images
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images
-          path: _doc_debug_images
+      - name: Dump Sphinx Execution Error Logs
+        if: always()
+        run: |
+          shopt -s nullglob
+          for f in /tmp/sphinx-err-*.log; do
+            cat "$f"
+          done
 
       - uses: actions/checkout@v5
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
@@ -95,7 +85,7 @@ jobs:
 
       - name: Upload HTML documentation
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: docs-build
           path:
@@ -109,14 +99,14 @@ jobs:
 
       - name: Upload non-interactive HTML documentation
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: docs-build-light
           path: |
             doc/_build/html/
             !doc/_build/html/**/*.vtksz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: examples
           path: doc/source/examples/
@@ -126,10 +116,53 @@ jobs:
           mkdir _notebooks
           find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pyvista-notebooks
           path: _notebooks
+
+  test:
+    name: Test Documentation
+    runs-on: ubuntu-22.04
+    needs: doc
+    if: ${{ !cancelled() }}
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: docs-build
+          path: doc/_build/html
+
+      - name: Test Documentation
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test
+
+      - name: Upload Images for Failed Tests
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: doc-failed-test-images
+          path: _doc_failed_test_images
+
+      - name: Upload Generated Images
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: doc-generated-test-images
+          path: _doc_generated_test_images
 
   preview:
     name: Preview Development Documentation
@@ -137,7 +170,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: docs-build
           path: .
@@ -163,7 +196,7 @@ jobs:
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: docs-build
           path: .
@@ -192,13 +225,13 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install Dependencies
         run: |
           pip install cookiecutter
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: pyvista-notebooks
           path: .

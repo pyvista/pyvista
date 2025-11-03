@@ -17,6 +17,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
+  'cyclopts>=4.0.0',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',
   'pillow',
@@ -43,9 +44,9 @@ io = ['imageio', 'meshio>=5.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
-  'nest_asyncio',
+  'nest-asyncio',
   'trame-client>=2.12.7',
-  'trame-server>=2.11.7',
+  'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
   'trame-vtk>=2.5.8',
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
@@ -53,11 +54,12 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.10.7',
+  'cyclopts<4.3.0',
+  'matplotlib<3.10.8',
   'numpy<2.4.0',
-  'pillow<11.4.0',
+  'pillow<12.1.0',
   'pooch<1.9.0',
-  'scooby<0.11.0',
+  'scooby<0.12.0',
   'typing-extensions<4.16.0',
 ]
 
@@ -74,30 +76,30 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.138.14',
+  'hypothesis<6.142.6',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'meshio<5.4.0',
-  'nest_asyncio<1.6.1',
+  'nest-asyncio<1.6.1',
   'numpydoc<1.10.0',
   'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
-  'pytest-cov<6.3.0',
+  'pytest-cases<3.10.0',
+  'pytest-cov<7.1.0',
+  'pytest-mock<3.16.0',
   'pytest-mypy-plugins<3.3.0',
-  'pytest-pyvista==0.2.0',
+  'pytest-pyvista==0.3.1',
   'pytest-xdist<3.9.0',
   'pytest<8.5.0',
-  'pytest_cases<3.10.0',
-  'pytest_mock<3.15.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
+  'sphinx-design<0.7.0',
   'sphinx-gallery<0.20.0',
   'sphinx<8.3.0',
-  'sphinx_design<0.7.0',
   'sympy<1.15.0',
   'tqdm<4.68.0',
   'trame-vtk>=2.5.8,<2.9.1',
@@ -106,6 +108,10 @@ test = [
   'trimesh<4.7.0',
   'typing-extensions<4.16.0',
   { include-group = 'pinned' },
+]
+
+docs-trame-vtk = [
+  'trame-vtk==2.8.15', # Do not upgrade, see https://github.com/pyvista/pyvista/issues/7721. Unpin when https://github.com/Kitware/trame-vtk/issues/94 is closed
 ]
 
 docs = [
@@ -118,16 +124,15 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'joblib==1.5.2',
-  'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.4.6',
-  'lxml==6.0.1',
+  'jupyter-sphinx==0.5.3',
+  'jupyterlab==4.4.10',
+  'lxml==6.0.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==1.17.1',
+  'mypy==1.18.2',
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
-  'pytest-pyvista==0.2.0',
   'pytest-sphinx==0.6.3',
   'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
@@ -136,7 +141,7 @@ docs = [
   'sphinx-design==0.6.1',
   'sphinx-gallery==0.19.0',
   'sphinx-notfound-page==1.1.0',
-  'sphinx-sitemap==2.8.0',
+  'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.3.2',
   'sphinx-toolbox==4.0.0',
@@ -145,11 +150,18 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-vtk==2.9.1',
-  'trame-vuetify==3.0.2',
+  'trame-vuetify==3.1.0',
   'trame==3.12.0',
-  'trimesh==4.8.0',
+  'trimesh==4.9.0',
   'vtk-xref==0.1.1',
+  { include-group = "docs-trame-vtk" },
+  { include-group = 'pinned' },
+]
+
+docs-test = [
+  'pytest-pyvista[vtksz]==0.3.1',
+  'pytest-xdist<3.9.0',
+  { include-group = "docs-trame-vtk" },
   { include-group = 'pinned' },
 ]
 
@@ -160,6 +172,9 @@ dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 Documentation = 'https://docs.pyvista.org/'
 Homepage = 'https://github.com/pyvista/pyvista'
 'Source Code' = 'https://github.com/pyvista/pyvista'
+
+[project.scripts]
+pyvista = "pyvista.__main__:main"
 
 [tool.setuptools.dynamic]
 version = { attr = 'pyvista._version.__version__' }
@@ -216,6 +231,8 @@ report.omit = [
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
+run.parallel = true
+run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
@@ -236,12 +253,9 @@ filterwarnings = [
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
+  'always:(?s).*This test has multiple cached images.*:UserWarning',
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
-
-failed_image_dir = '_failed_test_images'
-generated_image_dir = '_generated_test_images'
-image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
@@ -256,6 +270,20 @@ markers = [
 minversion = "7"
 testpaths = 'tests'
 xfail_strict = true
+
+# pytest-pyvista options
+doc_failed_image_dir = '_doc_failed_test_images'
+doc_generated_image_dir = '_doc_generated_test_images'
+doc_image_cache_dir = 'tests/doc/doc_image_cache'
+doc_image_format = 'jpg'
+doc_images_dir = 'doc/_build/html/_images'
+failed_image_dir = '_failed_test_images'
+generated_image_dir = '_generated_test_images'
+image_cache_dir = 'tests/plotting/image_cache'
+image_format = 'png'
+include_vtksz = true
+max_image_size = 400 # pixels
+max_vtksz_file_size = 25 # MB
 
 [tool.mypy]
 check_untyped_defs = true
@@ -388,7 +416,6 @@ ignore = [
   'ANN002', # Missing annotations for `*args`
   'ANN003', # Missing annotations for `*kwargs`
   'ANN401', # Disallow `Any`
-  'B028', # https://github.com/pyvista/pyvista/pull/6030
   'B904', # https://github.com/pyvista/pyvista/pull/6022
   'B905', # zip() without explicit strict parameter - will be addressed in separate PR
   'COM812', # May cause conflicts when used with the formatter
@@ -455,7 +482,6 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests/*' = ['D']
 'pyvista/__init__.py' = ['ANN']
-'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']

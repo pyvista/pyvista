@@ -279,6 +279,7 @@ class PolyDataFilters(DataSetFilters):
                 warnings.warn(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
+                    stacklevel=2,
                 )
         return bool_inter
 
@@ -1798,6 +1799,7 @@ class PolyDataFilters(DataSetFilters):
                 'Since 0.45, use of `attribute_error=True` is deprecated.'
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             enable_all_attribute_error = True
             if normals is None:
@@ -1830,7 +1832,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
         if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
             if boundary_constraints:
-                warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
+                warnings.warn('`boundary_constraints` requires vtk >= 9.3.', stacklevel=2)
         else:
             alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
             alg.SetBoundaryWeightFactor(boundary_weight)
@@ -2463,6 +2465,12 @@ class PolyDataFilters(DataSetFilters):
         This requires a mesh and a line segment defined by an origin
         and end_point.
 
+        .. warning::
+
+            This filter uses the mesh's :attr:`~pyvista.PolyData.obbTree` property internally to
+            compute the intersection. Since the obb tree is cached, the intersection may not be
+            valid if the mesh's geometry is modified in between filter calls.
+
         Parameters
         ----------
         origin : sequence[float]
@@ -2926,7 +2934,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
                 except (ValueError, TypeError, KeyError):  # pragma: no cover
-                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
+                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh', stacklevel=2)
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -2958,6 +2966,7 @@ class PolyDataFilters(DataSetFilters):
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
             'Note that `inplace` is now `False` by default for the new filter.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             msg = 'Can only flip normals on an all triangle mesh.'
@@ -3557,6 +3566,7 @@ class PolyDataFilters(DataSetFilters):
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
+                stacklevel=2,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -3708,6 +3718,7 @@ class PolyDataFilters(DataSetFilters):
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
+                stacklevel=2,
             )
 
         if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:

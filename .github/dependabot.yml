@@ -8,7 +8,7 @@ updates:
     open-pull-requests-limit: 100
     ignore:
       - dependency-name: "pydata-sphinx-theme" # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
-        versions: ["> 15.4"]
+        versions: [">0.15.4"]
     groups:
       trame:
         patterns:

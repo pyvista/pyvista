@@ -737,6 +737,7 @@ class Renderer(
                     warnings.warn(
                         'VTK compiled with OSMesa/EGL does not properly support '
                         'FXAA anti-aliasing and SSAA will be used instead.',
+                        stacklevel=2,
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -1362,6 +1363,7 @@ class Renderer(
             warnings.warn(
                 '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             if box_args is None:
                 box_args = {}
@@ -1968,18 +1970,21 @@ class Renderer(
             warnings.warn(
                 '`xlabel` is deprecated. Use `xtitle` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
             warnings.warn(
                 '`ylabel` is deprecated. Use `ytitle` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
             warnings.warn(
                 '`zlabel` is deprecated. Use `ztitle` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         assert_empty_kwargs(**kwargs)
 
@@ -3449,11 +3454,11 @@ class Renderer(
         ...         color=color,
         ...     )
         >>> pl.camera.zoom(1.8)
-        >>> pl.camera_position = [
-        ...     (4.74, 0.959, 0.525),
-        ...     (0.363, 0.3116, 0.132),
-        ...     (-0.088, -0.0075, 0.996),
-        ... ]
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(4.74, 0.959, 0.525),
+        ...     focal_point=(0.363, 0.3116, 0.132),
+        ...     viewup=(-0.088, -0.0075, 0.996),
+        ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
 
@@ -4173,6 +4178,7 @@ class Renderer(
                     if args:
                         warnings.warn(
                             f'Some of the arguments given to legend are not used.\n{args}',
+                            stacklevel=2,
                         )
                 elif isinstance(args, str):
                     # Only passing label

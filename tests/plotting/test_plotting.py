@@ -369,10 +369,6 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
 
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -413,10 +409,6 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
 
 def test_plot_helper_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
 
     uniform.plot(
         volume=True,
@@ -644,23 +636,13 @@ def test_plotter_shape_invalid():
         pv.Plotter(shape={1, 2})
 
 
-def test_plot_bounds_axes_with_no_data(verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_plot_bounds_axes_with_no_data():
     plotter = pv.Plotter()
     plotter.show_bounds()
     plotter.show()
 
 
-def test_plot_show_grid(sphere, verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_plot_show_grid(sphere):
     plotter = pv.Plotter()
 
     with pytest.raises(ValueError, match='Value of location'):
@@ -814,12 +796,7 @@ def test_plot_show_bounds(sphere):
     plotter.show()
 
 
-def test_plot_label_fmt(sphere, verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_plot_label_fmt(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
@@ -831,11 +808,7 @@ def test_plot_label_fmt(sphere, verify_image_cache):
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 @pytest.mark.usefixtures('verify_image_cache')
-def test_plot_show_bounds_params(grid, location, verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially with VTK 9.6
-        verify_image_cache.skip = True
+def test_plot_show_bounds_params(grid, location):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
@@ -1740,12 +1713,7 @@ def test_camera(sphere):
     plotter.show()
 
 
-def test_multi_renderers(verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_multi_renderers():
     plotter = pv.Plotter(shape=(2, 2))
 
     plotter.subplot(0, 0)
@@ -1933,7 +1901,9 @@ def test_link_views_camera_set():
     p.subplot(0, 1)
     p.add_mesh(wavelet, color='red')
     p.link_views()
-    p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+    p.camera_position = pv.CameraPosition(
+        position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+    )
     p.show()
 
 
@@ -2776,7 +2746,7 @@ def test_collision_plot(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     sphere0 = pv.Sphere()
     sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
-    col, n_contacts = sphere0.collision(sphere1, generate_scalars=True)
+    col, _n_contacts = sphere0.collision(sphere1, generate_scalars=True)
 
     plotter = pv.Plotter()
     plotter.add_mesh(col)
@@ -3224,7 +3194,7 @@ def test_ssao_pass(verify_image_cache):
     pl.enable_ssao()
     pl.show()
 
-    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+    with pytest.raises(RuntimeError, match=r'The renderer has been closed.'):
         pl.disable_ssao()
 
 
@@ -3303,7 +3273,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         scalars='data_a',
         nan_color='green',
@@ -3325,7 +3295,7 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         scalars='cell_data',
     )
@@ -3338,7 +3308,7 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
 def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         color='red',
         lighting=False,
@@ -3448,7 +3418,7 @@ def test_export_obj(tmpdir, sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
 
-    with pytest.raises(ValueError, match='end with ".obj"'):
+    with pytest.raises(ValueError, match=r'end with ".obj"'):
         pl.export_obj('badfilename')
 
     pl.export_obj(filename)
@@ -3458,7 +3428,7 @@ def test_export_obj(tmpdir, sphere):
 
     # Check that when we close the plotter, the adequate error is raised
     pl.close()
-    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+    with pytest.raises(RuntimeError, match=r'This plotter must still have a render window open.'):
         pl.export_obj(filename)
 
 
@@ -3580,7 +3550,7 @@ def test_tight_multiple_objects():
 def test_backface_params():
     mesh = pv.ParametricCatalanMinimal()
 
-    with pytest.raises(TypeError, match='pyvista.Property or a dict'):
+    with pytest.raises(TypeError, match=r'pyvista.Property or a dict'):
         mesh.plot(backface_params='invalid')
 
     params = dict(color='blue', smooth_shading=True)
@@ -3962,14 +3932,19 @@ def test_remove_vertices_actor(sphere):
 
 
 @pytest.mark.skip_windows
-def test_add_point_scalar_labels_fmt():
+def test_add_point_scalar_labels_fmt(verify_image_cache):
+    # parallel on GitHub hosted sometimes has high image error
+    verify_image_cache.macos_skip_image_cache = True
+
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
     fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
     p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
-    p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+    p.camera_position = pv.CameraPosition(
+        position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
+    )
     p.show()
 
 
@@ -4428,11 +4403,11 @@ def test_show_bounds_no_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4450,11 +4425,11 @@ def test_show_bounds_n_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4835,7 +4810,12 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info > (9, 5, 99) and orient_faces is False:
+        # This bug was fixed in VTK 9.6
+        pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4885,11 +4865,12 @@ def test_contour_labels_boundary_style(
         plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
 
     def _generate_mesh(style):
-        mesh = labeled_image.contour_labels(
-            boundary_style=style,
-            **test_kwargs,
-            **fixed_kwargs,
-        )
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            mesh = labeled_image.contour_labels(
+                boundary_style=style,
+                **test_kwargs,
+                **fixed_kwargs,
+            )
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -4929,7 +4910,9 @@ def test_contour_labels_boundary_style(
     plot_boundary_labels(internal_mesh)
     plot.add_text(INTERNAL, position='lower_left')
 
-    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.camera_position = pv.CameraPosition(
+        position=(5, 4, 3.5), focal_point=(1, 1, 1), viewup=(0.0, 0.0, 1.0)
+    )
     plot.show(return_cpos=True)
 
 
@@ -4948,23 +4931,18 @@ def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
     smoothing_scale,
-    verify_image_cache,
 ):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
-    mesh = labeled_image.contour_labels(
-        'all',
-        smoothing_distance=smoothing_distance,
-        smoothing_scale=smoothing_scale,
-        pad_background=False,
-        orient_faces=False,
-    )
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh = labeled_image.contour_labels(
+            'all',
+            smoothing_distance=smoothing_distance,
+            smoothing_scale=smoothing_scale,
+            pad_background=False,
+            orient_faces=False,
+        )
 
     # Translate so origin is in bottom left corner
     mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
@@ -4998,8 +4976,10 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         output_mesh_type='quads',
         orient_faces=False,
     )
-    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
-    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
 
     plot = pv.Plotter()
     plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)

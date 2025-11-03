@@ -43,6 +43,11 @@ pytestmark = [
         r'ignore:It is recommended to use web\.AppKey instances for '
         r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
     ),
+    pytest.mark.filterwarnings(
+        r'ignore:Call to deprecated method GetData\. '
+        r'\(Use ExportLegacyFormat, or GetOffsetsArray/GetConnectivityArray instead\.\)'
+        ':DeprecationWarning:trame_vtk'
+    ),
 ]
 
 
@@ -434,8 +439,8 @@ def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
     from pyvista.trame import jupyter
 
     monkeypatch.setattr(jupyter, 'HTML', object)
-    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+    with pytest.raises(ImportError, match=r'Please install `ipywidgets`.'):
         jupyter.Widget(viewer=None, src=None)
 
-    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+    with pytest.raises(ImportError, match=r'Please install `ipywidgets`.'):
         jupyter.EmbeddableWidget(plotter=None, width=None, height=None)

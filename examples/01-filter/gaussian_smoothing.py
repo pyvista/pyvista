@@ -25,7 +25,11 @@ from pyvista import examples
 data = examples.download_gourds()
 
 # Define a good point of view
-cp = [(319.5, 239.5, 1053.7372980874645), (319.5, 239.5, 0.0), (0.0, 1.0, 0.0)]
+cp = pv.CameraPosition(
+    position=(319.5, 239.5, 1053.7372980874645),
+    focal_point=(319.5, 239.5, 0.0),
+    viewup=(0.0, 1.0, 0.0),
+)
 
 # %%
 # Let's apply the Gaussian smoothing with different values of standard
@@ -85,7 +89,11 @@ p.add_text('Gaussian smoothing', font_size=24)
 # p.add_mesh(smoothed_data.contour(n), **dargs)
 p.add_volume(smoothed_data, **dargs)
 p.link_views()
-p.camera_position = [(-162.0, 704.8, 65.02), (90.0, 108.0, 90.0), (0.0068, 0.0447, 0.999)]
+p.camera_position = pv.CameraPosition(
+    position=(-162.0, 704.8, 65.02),
+    focal_point=(90.0, 108.0, 90.0),
+    viewup=(0.0068, 0.0447, 0.999),
+)
 p.show()
 # %%
 # .. tags:: filter
