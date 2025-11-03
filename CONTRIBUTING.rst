@@ -66,7 +66,7 @@ to provide live interaction windows.  Follow directions
 `Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
 to use the live interaction.
 
-Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+Alternatively, an offscreen version using OSMesa libraries with VTK 9.5+ is available.
 
 Questions
 ---------
