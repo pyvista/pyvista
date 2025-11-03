@@ -783,7 +783,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         total_lines.extend('\n')
 
         # If there were errors, return the Node objects to Sphinx now.
-        if errors:
+        if errors:  # pragma: no cover
             return errors
 
     if total_lines:
