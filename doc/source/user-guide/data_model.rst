@@ -459,6 +459,7 @@ it using the ``[]`` operator.
 
 .. jupyter-execute::
 
+   >>> import numpy as np
    >>> simple_range = np.arange(ugrid.n_cells, dtype=float)
    >>> ugrid.cell_data['my-data'] = simple_range
    >>> ugrid.cell_data['my-data']
