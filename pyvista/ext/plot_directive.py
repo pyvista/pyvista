@@ -732,7 +732,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 line=lineno,
             )
             results = [(code, [])]
-            errors.append([sm])
+            errors.append(sm)
 
     # Properly indent the caption
     caption = (
@@ -778,6 +778,10 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
 
         total_lines.extend(result.split('\n'))
         total_lines.extend('\n')
+
+        # If there were errors, return the Node objects to Sphinx now.
+        if errors:
+            return errors
 
     if total_lines:
         state_machine.insert_input(total_lines, source=source_file_name)
