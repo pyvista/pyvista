@@ -38,7 +38,7 @@ jobs:
       - name: Set environment for self-hosted
         if: runner.environment == 'self-hosted'
         run: |
-          echo "PARALLEL=-j4" >> $GITHUB_ENV
+          echo "PARALLEL=-j8" >> $GITHUB_ENV
 
       - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
         if: runner.environment != 'self-hosted'
