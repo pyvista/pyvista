@@ -2434,6 +2434,7 @@ class Transform(
         (1.0, 2.0, 3.0)
 
         Compose a second translation and get the component again.
+
         >>> trans += (4, 5, 6)
         >>> trans.translation
         (5.0, 7.0, 9.0)
