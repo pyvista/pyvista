@@ -5480,9 +5480,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> actor = plotter.add_mesh(pv.Sphere())
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.show(store_image_depth=True)
-        >>> zval = plotter.get_image_depth()
+        >>> zval = pl.get_image_depth()
 
         """
         # allow no render window
