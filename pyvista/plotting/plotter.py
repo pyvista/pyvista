@@ -7049,14 +7049,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         """Display the plotting window.
 
         .. versionchanged:: 0.47
-            The last image depth is no longer autoatically stored. You must
-            enable ``store_image_depth=True`` within :meth:`Plotter.show` to
+            The last image depth is no longer automatically stored. You must
+            enable ``store_image_depth=True`` within :meth:`show` to
             obtain the image depth after the :class:`pyvista.Plotter` has been
             closed.
 
         .. versionadded:: 0.47
            Added the ``store_image_depth`` parameter to allow storing image depth
-           for use with :meth:`Plotter.get_image_depth`.
+           for use with :meth:`get_image_depth`.
 
         Parameters
         ----------
@@ -7142,7 +7142,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         store_image_depth : bool, default: False
             Store image depth before closing. Necessary when calling
-            :meth:`Plotter.get_image_depth` after rendering.
+            :meth:`get_image_depth` after rendering.
 
         **kwargs : dict, optional
             Developer keyword arguments.
