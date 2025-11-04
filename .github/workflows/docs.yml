@@ -83,6 +83,10 @@ jobs:
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
           rm -rf doc/_build/mini18n-html
 
+      - name: Dump Sphinx Build Warnings and Errors
+        if: always()
+        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+
       - name: Upload HTML documentation
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
