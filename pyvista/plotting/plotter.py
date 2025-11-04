@@ -5448,6 +5448,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     ) -> pyvista.pyvista_ndarray:
         """Return a depth image representing current render window.
 
+        .. versionchanged:: 0.47
+            The last image depth is no longer autoatically stored. You must
+            enable ``store_image_depth=True`` within :meth:`Plotter.show` to
+            obtain the image depth after the :class:`pyvista.Plotter` has been
+            closed.
+
         Parameters
         ----------
         fill_value : float, default: numpy.nan
@@ -5465,10 +5471,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Notes
         -----
-        You must enable ``store_image_depth=True`` within :meth:`Plotter.show`
-        to obtain the image depth after the :class:`pyvista.Plotter` has been
-        closed.
-
         Values in ``image_depth`` are negative to adhere to a right-handed
         coordinate system.
 
@@ -7045,6 +7047,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         | None
     ):
         """Display the plotting window.
+
+        .. versionchanged:: 0.47
+            The last image depth is no longer autoatically stored. You must
+            enable ``store_image_depth=True`` within :meth:`Plotter.show` to
+            obtain the image depth after the :class:`pyvista.Plotter` has been
+            closed.
+
+        .. versionadded:: 0.47
+           Added the ``store_image_depth`` parameter to allow storing image depth
+           for use with :meth:`Plotter.get_image_depth`.
 
         Parameters
         ----------
