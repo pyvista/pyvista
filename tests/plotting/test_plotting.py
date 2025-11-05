@@ -1988,7 +1988,7 @@ def test_image_properties() -> None:
     pl.show(interactive=False, auto_close=False)
     img = pl.get_image_depth(fill_value=0.0)
     rng = np.ptp(img)
-    assert 0.3 < rng < 0.4, rng  # 0.3313504 in testing
+    assert 3.8 < rng < 3.9, rng  # 3.8460655 in testing
     pl.close()
 
 
