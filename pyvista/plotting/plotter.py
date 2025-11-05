@@ -6170,7 +6170,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Parameters
         ----------
         filename : str
-            Path to fsave the graphic file to.
+            Path to save the graphic file to.
 
         title : str, default: "PyVista Export"
             Title to use within the file properties.
