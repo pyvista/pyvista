@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -7927,9 +7928,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
     def fast_splat(
         self: DataSet,
-        bounds=None,
-        kernel_dimensions=(10, 10, 10),
-        splat_dimensions=(100, 100, 100),
+        bounds: BoundsTuple | None = None,
+        kernel_dimensions: tuple[int, int, int] = (10, 10, 10),
+        splat_dimensions: tuple[int, int, int] = (100, 100, 100),
         *,
         progress_bar: bool = False,
     ) -> ImageData:
@@ -7938,18 +7939,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Creates a 3D image by placing ("splatting") the kernel, at the location
         of every point in a dataset. The result is similar to painting each
         point into space, where the brightness or intensity around each point
-        spreads out according to the kernel shape.
+        spreads out according to the kernel shape and density.
 
         This filter is a wrapper around :vtk:`vtkFastSplatter`.
 
         Parameters
         ----------
-        bounds : pyvista.Bounds, optional
+        bounds : pyvista.BoundsTuple, optional
             Bounds of the output. By default used the same bounds as the input
             :class:`pyvista.Dataset`.
-        kernel_dimensions : int, default: (50, 50, 50)
+        kernel_dimensions : tuple[int, int, int], default: (50, 50, 50)
             Dimensions of the kernel in ``(i, j, k)``.
-        splat_dimensions : int, default: (100, 100, 100)
+        splat_dimensions : tuple[int, int, int], default: (100, 100, 100)
             Density of the output image in  ``(i, j, k)``.
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -7989,17 +7990,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         y = np.linspace(-1, 1, kernel_dimensions[1])
         z = np.linspace(-1, 1, kernel_dimensions[2])
         xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
-
         kernel = (1 - np.abs(xv)) * (1 - np.abs(yv)) * (1 - np.abs(zv))
         kernel = np.clip(kernel, 0, 1)
 
-        splat_image = pyvista.ImageData(dimensions=kernel_dimensions)
-        splat_image.point_data['values'] = kernel.ravel(order='F')
+        kernel_image = pyvista.ImageData(dimensions=kernel_dimensions)
+        kernel_image.point_data['values'] = kernel.ravel(order='F')
 
-        # prepare algorithm
         alg = _vtk.vtkFastSplatter()
-        alg.SetInputData(0, self)  # dataset input
-        alg.SetInputData(1, splat_image)  # kernel input
+        alg.SetInputData(0, self)
+        alg.SetInputData(1, kernel_image)
         if bounds:
             alg.SetModelBounds(bounds)
         alg.SetOutputDimensions(splat_dimensions)
