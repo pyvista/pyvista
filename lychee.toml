@@ -14,6 +14,5 @@ exclude = [
 exclude_all_private = true # exclude 'localhost', '127.0.0.1', etc.
 exclude_path = ['pyvista/core/utilities/docs.py']
 extensions = ['md', 'py', 'rst', 'txt']
-fail = false
 user_agent = 'curl/7.83.1'
 verbose = 'info'
