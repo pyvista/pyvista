@@ -216,6 +216,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*FieldLiteral'),
     (r'py:.*', '.*RowLiteral'),
     (r'py:.*', '.*_SerializedDictArray'),
+    (r'py:.*', '.*_FiveArrays'),
     #
     # PyVista AxesAssembly-related types
     (r'py:.*', '.*GeometryTypes'),
@@ -268,6 +269,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'collections.*'),
     (r'py:.*', '.*PathStrSeq'),
     (r'py:.*', 'ModuleType'),
+    (r'py:.*', 'typing.Union'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

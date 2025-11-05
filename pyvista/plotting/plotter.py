@@ -5475,11 +5475,17 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     ) -> pyvista.pyvista_ndarray:
         """Return a depth image representing current render window.
 
+        .. versionchanged:: 0.47
+            The last image depth is no longer autoatically stored. You must
+            enable ``store_image_depth=True`` within :meth:`Plotter.show` to
+            obtain the image depth after the :class:`pyvista.Plotter` has been
+            closed.
+
         Parameters
         ----------
         fill_value : float, default: numpy.nan
-            Fill value for points in image that do not include objects
-            in scene.  To not use a fill value, pass ``None``.
+            Fill value for points in image that do not include objects in
+            scene. To not use a fill value, pass ``None``.
 
         reset_camera_clipping_range : bool, default: True
             Reset the camera clipping range to include data in view.
@@ -5492,8 +5498,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Notes
         -----
-        Values in image_depth are negative to adhere to a
-        right-handed coordinate system.
+        Values in ``image_depth`` are negative to adhere to a right-handed
+        coordinate system.
 
         See Also
         --------
@@ -5502,10 +5508,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(pv.Sphere())
-        >>> plotter.show()
-        >>> zval = plotter.get_image_depth()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> pl.show(store_image_depth=True)
+        >>> zval = pl.get_image_depth()
 
         """
         # allow no render window
@@ -5516,6 +5522,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             return zval
 
         self._check_rendered()
+        if self.render_window is None and self.last_image_depth is None:
+            msg = (
+                'The `Plotter` was closed without storing image depth. Call `show` with '
+                '`store_image_depth=True` when using `get_image_depth`.'
+            )
+            raise RuntimeError(msg)
         self._check_has_ren_win()
 
         # Ensure points in view are within clipping range of renderer?
@@ -6199,7 +6211,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @_deprecate_positional_args(allowed=['filename'])
     def save_graphic(  # noqa: PLR0917
         self,
-        filename: str,
+        filename: str | Path,
         title: str = 'PyVista Export',
         raster: bool = True,  # noqa: FBT001, FBT002
         painter: bool = True,  # noqa: FBT001, FBT002
@@ -6218,8 +6230,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
-            Path to fsave the graphic file to.
+        filename : str | Path
+            Path to save the graphic file to.
 
         title : str, default: "PyVista Export"
             Title to use within the file properties.
@@ -7046,6 +7058,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
         before_close_callback: Callable[[Plotter], None] | None = None,
+        store_image_depth: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> (
         CameraPosition
@@ -7061,6 +7074,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         | None
     ):
         """Display the plotting window.
+
+        .. versionchanged:: 0.47
+            The last image depth is no longer automatically stored. You must
+            enable ``store_image_depth=True`` within :meth:`show` to
+            obtain the image depth after the :class:`pyvista.Plotter` has been
+            closed.
+
+        .. versionadded:: 0.47
+           Added the ``store_image_depth`` parameter to allow storing image depth
+           for use with :meth:`get_image_depth`.
 
         Parameters
         ----------
@@ -7143,6 +7166,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
                 def fun(plotter):
                     plotter.screenshot('file.png')
+
+        store_image_depth : bool, default: False
+            Store image depth before closing. Necessary when calling
+            :meth:`get_image_depth` after rendering.
 
         **kwargs : dict, optional
             Developer keyword arguments.
@@ -7332,7 +7359,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 self.last_image = self.screenshot(filename, return_img=True)
             else:
                 self.last_image = self.screenshot(screenshot, return_img=True)
-            self.last_image_depth = self.get_image_depth()
+            if store_image_depth:
+                self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user pressed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python

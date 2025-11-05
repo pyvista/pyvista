@@ -31,6 +31,8 @@ wiki/
 **/beam_wireframe.gif
 doc/build_errors.txt
 doc/sphinx_warnings.txt
+examples/02-plot/wave.gif
+doc/source/sg_execution_times.rst
 
 # testing coverage and cache
 .pytest_cache/

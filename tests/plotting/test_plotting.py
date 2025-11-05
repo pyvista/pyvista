@@ -1956,40 +1956,52 @@ def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
     assert actor2 in actors
 
 
-def test_image_properties():
+def test_image_properties() -> None:
     mesh = examples.load_uniform()
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.show(auto_close=False)  # DO NOT close plotter
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.show(auto_close=False)  # DO NOT close plotter
     # Get RGB image
-    _ = p.image
+    _ = pl.image
     # Get the depth image
-    _ = p.get_image_depth()
-    p.close()
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.show()  # close plotter
+    _ = pl.get_image_depth()
+    pl.close()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.show(store_image_depth=True)  # close plotter
     # Get RGB image
-    _ = p.image
+    _ = pl.image
     # verify property matches method while testing both available
-    assert np.allclose(p.image_depth, p.get_image_depth(), equal_nan=True)
-    p.close()
+    assert np.allclose(pl.image_depth, pl.get_image_depth(), equal_nan=True)
+    pl.close()
 
     # gh-920
     rr = np.array([[-0.5, -0.5, 0], [-0.5, 0.5, 1], [0.5, 0.5, 0], [0.5, -0.5, 1]])
     tris = np.array([[3, 0, 2, 1], [3, 2, 0, 3]])
     mesh = pv.PolyData(rr, tris)
-    p = pv.Plotter()
-    p.add_mesh(mesh, color=True)
-    p.renderer.camera_position = (0.0, 0.0, 1.0)
-    p.renderer.ResetCamera()
-    p.enable_parallel_projection()
-    assert p.renderer.camera_set
-    p.show(interactive=False, auto_close=False)
-    img = p.get_image_depth(fill_value=0.0)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, color=True)
+    pl.renderer.camera_position = (0.0, 0.0, 1.0)
+    pl.renderer.ResetCamera()
+    pl.enable_parallel_projection()
+    assert pl.renderer.camera_set
+    pl.show(interactive=False, auto_close=False)
+    img = pl.get_image_depth(fill_value=0.0)
     rng = np.ptp(img)
     assert 0.3 < rng < 0.4, rng  # 0.3313504 in testing
-    p.close()
+    pl.close()
+
+
+def test_image_depth_raise(sphere: pv.PolyData, verify_image_cache) -> None:
+    """Ensure a RuntimeError is raised when not storing image_depth."""
+    verify_image_cache.skip = True
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, color='w')
+    pl.show()
+
+    with pytest.raises(RuntimeError, match='store_image_depth=True'):
+        pl.get_image_depth()
 
 
 def test_volume_rendering_from_helper(uniform, verify_image_cache):

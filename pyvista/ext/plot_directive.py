@@ -479,7 +479,10 @@ def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
             pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
-        raise PlotError(traceback.format_exc()) from err
+        # Annotate traceback with source file and line
+        tb = traceback.format_exc()
+        msg = f'Error in {code_path}:\n{tb}'
+        raise PlotError(msg) from err
 
     return ns
 
@@ -732,7 +735,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 line=lineno,
             )
             results = [(code, [])]
-            errors.append([sm])
+            errors.append(sm)
 
     # Properly indent the caption
     caption = (
@@ -778,6 +781,10 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
 
         total_lines.extend(result.split('\n'))
         total_lines.extend('\n')
+
+        # If there were errors, return the Node objects to Sphinx now.
+        if errors:  # pragma: no cover
+            return errors
 
     if total_lines:
         state_machine.insert_input(total_lines, source=source_file_name)
