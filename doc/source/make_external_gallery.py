@@ -41,11 +41,6 @@ articles = dict(
         link='http://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html',
         image='discretize.png',
     ),
-    open_foam=Example(
-        title='OpenFOAM Rendering',
-        link='https://pswpswpsw.github.io/posts/2018/09/blog-post-modify-vtk-openfoam/',
-        image='open-foam.png',
-    ),
     aero_sandbox=Example(
         title='AeroSandbox',
         link='https://peterdsharpe.github.io/AeroSandbox/',
@@ -158,7 +153,7 @@ articles = dict(
     ),
     pyfbs=Example(
         title='pyFBS: Frequency Based Substructuring in Python',
-        link='https://pyfbs.readthedocs.io/en/latest/examples/examples.html',
+        link='https://pyfbs.readthedocs.io/en/master/examples/examples.html',
         image='pyfbs.webp',
     ),
     topogenesis=Example(
