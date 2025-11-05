@@ -331,9 +331,6 @@ intersphinx_mapping = {
 }
 intersphinx_timeout = 10
 
-linkcheck_retries = 3
-linkcheck_timeout = 500
-
 # Select if we want to generate production or dev documentation
 #
 # Generate class table auto-summary when enabled. This generates one page per
@@ -386,13 +383,6 @@ language = 'en'
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
 html_extra_path = ['_extra']
-
-# Pages are not detected correct by ``make linkcheck``
-linkcheck_ignore = [
-    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
-    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
-    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
-]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
