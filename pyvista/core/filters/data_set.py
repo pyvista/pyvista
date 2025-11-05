@@ -7926,7 +7926,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         return output_volume
 
-    def fast_splat(
+    def fast_splat(  # type: ignore[misc]
         self: DataSet,
         bounds: BoundsTuple | None = None,
         kernel_dimensions: tuple[int, int, int] = (10, 10, 10),
@@ -7946,8 +7946,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Parameters
         ----------
         bounds : pyvista.BoundsTuple, optional
-            Bounds of the output. By default used the same bounds as the input
-            :class:`pyvista.Dataset`.
+            Bounds of the output. By default used the same bounds as the input.
         kernel_dimensions : tuple[int, int, int], default: (50, 50, 50)
             Dimensions of the kernel in ``(i, j, k)``.
         splat_dimensions : tuple[int, int, int], default: (100, 100, 100)
@@ -7964,25 +7963,28 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         --------
         Fast splat the Stanford bunny.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_bunny()
-        >>> splatted = mesh.fast_splat()
-        >>> cpos = [
-        ...     (0.1034, 0.2228, 0.3012),
-        ...     (-0.03056, 0.1053, 0.01183),
-        ...     (-0.1873, 0.9374, -0.2936),
-        ... ]
-        >>> splatted.plot(
-        ...     opacity='sigmoid_7', show_scalar_bar=False, cpos=cpos, volume=True
-        ... )
+        .. pyvista-plot::
+            :force_static:
 
-        Note how increasing the density of the kernel "spreads" out the output splat image
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> mesh = examples.download_bunny()
+            >>> splatted = mesh.fast_splat()
+            >>> cpos = [
+            ...     (0.1034, 0.2228, 0.3012),
+            ...     (-0.03056, 0.1053, 0.01183),
+            ...     (-0.1873, 0.9374, -0.2936),
+            ... ]
+            >>> splatted.plot(
+            ...     opacity='sigmoid_7', show_scalar_bar=False, cpos=cpos, volume=True
+            ... )
 
-        >>> splatted = mesh.fast_splat(kernel_dimensions=(30, 30, 30))
-        >>> splatted.plot(
-        ...     opacity='sigmoid_20', show_scalar_bar=False, cpos=cpos, volume=True
-        ... )
+            Note how increasing the density of the kernel "spreads" out the output splat image
+
+            >>> splatted = mesh.fast_splat(kernel_dimensions=(30, 30, 30))
+            >>> splatted.plot(
+            ...     opacity='sigmoid_20', show_scalar_bar=False, cpos=cpos, volume=True
+            ... )
 
         """
         # build kernel image
