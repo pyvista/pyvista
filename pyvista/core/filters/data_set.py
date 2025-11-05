@@ -7936,7 +7936,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ) -> ImageData:
         """Splat points into a uniform 3D grid using a predefined kernel.
 
-        Creates a 3D image by placing ("splatting") the kernel, at the location
+        Creates a 3D image by placing ("splatting") the kernel at the location
         of every point in a dataset. The result is similar to painting each
         point into space, where the brightness or intensity around each point
         spreads out according to the kernel shape and density.
@@ -7946,11 +7946,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Parameters
         ----------
         bounds : pyvista.BoundsTuple, optional
-            Bounds of the output. By default used the same bounds as the input.
+            Bounds of the output. By default uses the same bounds as the input.
         kernel_dimensions : tuple[int, int, int], default: (50, 50, 50)
             Dimensions of the kernel in ``(i, j, k)``.
         splat_dimensions : tuple[int, int, int], default: (100, 100, 100)
-            Density of the output image in  ``(i, j, k)``.
+            Density of the output image in ``(i, j, k)``.
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -7979,7 +7979,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ...     opacity='sigmoid_7', show_scalar_bar=False, cpos=cpos, volume=True
             ... )
 
-            Note how increasing the density of the kernel "spreads" out the output splat image
+            Note how increasing the density of the kernel "spreads" out the
+            output splat image:
 
             >>> splatted = mesh.fast_splat(kernel_dimensions=(30, 30, 30))
             >>> splatted.plot(
