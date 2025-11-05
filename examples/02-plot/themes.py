@@ -46,7 +46,8 @@ plot_example()
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
 # * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
-# * ``'document'``: this is built for use in document style plotting and making publication quality figures.
+# * ``'document'``: this is built for use in document style plotting and making publication
+#   quality figures.
 
 # %%
 # Demo the ``'ParaView'`` theme.
@@ -165,7 +166,6 @@ cpos = pv.Sphere().plot(theme=my_theme)
 # Alternatively, set the theme of an instance of ``Plotter``.
 
 pl = pv.Plotter(theme=my_theme)
-# pl.theme = my_theme  # alternatively use the setter
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 

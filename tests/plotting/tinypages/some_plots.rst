@@ -204,3 +204,66 @@ but the source will always be included with a conditional caption:
    x = np.linspace(0, 2*np.pi)
    plt.plot(x, np.sin(x))
    plt.show()
+
+**Plot 20** Make a plotter but do not show it. An image should not be generated.
+
+.. pyvista-plot::
+
+   >>> import pyvista as pv
+
+   >>> pl = pv.Plotter()
+
+**Plot 21** The directive also works with plotting methods like ``plot_cell``.
+
+.. pyvista-plot::
+
+    from pyvista.examples.cells import Wedge, plot_cell
+
+    plot_cell(Wedge())
+
+**Plot 22** This example tests that the 'plot' term in 'tecplot' doesn't break the directive.
+
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+
+   >>> mesh = examples.download_tecplot_ascii()
+   >>> mesh.plot()
+
+**Plot 23** Create a gif.
+
+.. note::
+   We use ``uuid`` here to avoid multiple threads writing to the same GIF
+   similtaniously when using ``pytest-xdist`` and building ``tinypages``.
+
+.. pyvista-plot::
+
+    import uuid
+    import pyvista as pv
+    from pyvista import examples
+    filename = examples.download_single_sphere_animation(load=False)
+    reader = pv.PVDReader(filename)
+    plotter = pv.Plotter()
+    plotter.open_gif(f'single_sphere_{str(uuid.uuid4())[:8]}.gif')
+    for time_value in reader.time_values:
+        reader.set_active_time_value(time_value)
+        mesh = reader.read()
+        plotter.add_mesh(mesh, smooth_shading=True)
+        plotter.write_frame()
+        plotter.clear()
+    plotter.close()
+
+**Plot 24** Any function with ``plot_<...>`` syntax will generate a plot.
+
+.. pyvista-plot::
+
+    >>> from pyvista import demos
+    >>> demos.plot_ants_plane()
+
+**Plot 25** Methods with ``plot=True`` keywords will also generate a plot.
+
+.. pyvista-plot::
+
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
+    >>> sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)

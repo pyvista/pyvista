@@ -18,6 +18,7 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -25,13 +26,13 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-    import vtk
+
+    from pyvista.core.pointset import PolyData
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -44,7 +45,10 @@ def n_numbers(draw, n):
     numbers = []
     for _ in range(n):
         number = draw(
-            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
+            one_of(
+                floats(),
+                integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min),
+            )
         )
         numbers.append(number)
     return numbers
@@ -63,9 +67,8 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
 
 
 class GetOutput:
-    """Helper class to patch ``pv.core.filters._get_output`` which captures the raw VTK algorithm objects at the time
-    ``_get_output`` is invoked.
-    """
+    # Helper class to patch ``pv.core.filters._get_output`` which captures the raw
+    # VTK algorithm objects at the time ``_get_output`` is invoked.
 
     def __init__(self):
         self._mock = Mock()
@@ -96,7 +99,7 @@ def test_threshold_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
-    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+    with pytest.raises(ValueError, match=r'No arrays present to threshold.'):
         pv.Sphere().threshold(1.0)
 
 
@@ -106,7 +109,9 @@ def test_contour_raises(mocker: MockerFixture):
     m = mocker.patch.object(data_set, 'set_default_active_scalars')
     m().name = 'foo'
 
-    with pytest.raises(ValueError, match='Input dataset for the contour filter must have scalar.'):
+    with pytest.raises(
+        ValueError, match=r'Input dataset for the contour filter must have scalar.'
+    ):
         pv.PolyData().contour()
 
 
@@ -115,11 +120,13 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
-    with pytest.raises(ValueError, match='No vectors present to warp by vector.'):
+    with pytest.raises(ValueError, match=r'No vectors present to warp by vector.'):
         pv.Sphere().warp_by_vector()
 
 
-@given(strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point']))
+@given(
+    strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point'])
+)
 def test_interpolate_raises(strategy):
     with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
         pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
@@ -152,7 +159,9 @@ def test_clip_scalar_filter(datasets, both, invert):
             expect_les = (invert, not invert)
         else:
             clps = (
-                dataset.clip_scalar(scalars='to_clip', value=clip_value, both=False, invert=invert),
+                dataset.clip_scalar(
+                    scalars='to_clip', value=clip_value, both=False, invert=invert
+                ),
             )
             assert len(clps) == 1
             expect_les = (invert,)
@@ -214,6 +223,21 @@ def test_clip_surface():
     # Test crinkle
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
+
+
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_surface_output_type(datasets, crinkle):
+    for dataset in datasets:
+        clp = dataset.clip_surface(dataset.extract_geometry(), crinkle=crinkle)
+        assert clp is not None
+        if isinstance(dataset, pv.PointSet):
+            assert isinstance(clp, pv.PointSet)
+        elif isinstance(dataset, pv.PolyData):
+            assert isinstance(clp, pv.PolyData)
+        elif isinstance(dataset, pv.MultiBlock):
+            assert isinstance(clp, pv.MultiBlock)
+        else:
+            assert isinstance(clp, pv.UnstructuredGrid)
 
 
 def test_clip_closed_surface():
@@ -493,6 +517,17 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_gaussian_splatting(sphere: PolyData):
+    output = sphere.gaussian_splatting(progress_bar=True)
+    assert output is not None
+    assert isinstance(output, pv.ImageData)
+    assert output.dimensions == (50, 50, 50)
+
+    dimensions = (10, 11, 12)
+    output = sphere.gaussian_splatting(dimensions=dimensions)
+    assert output.dimensions == dimensions
+
+
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         geom = dataset.extract_geometry(progress_bar=True)
@@ -509,7 +544,7 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
-def test_delaunay_2d_unstructured(datasets):
+def test_delaunay_2d_unstructured():
     mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_points
@@ -617,7 +652,9 @@ def test_glyph(datasets, sphere):
     assert sphere.glyph(scale=False, progress_bar=True)
     assert sphere.glyph(scale='arr', progress_bar=True)
     assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, progress_bar=True)
-    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True)
+    assert sphere.glyph(
+        scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True
+    )
     assert sphere.glyph(
         scale='arr',
         orient='Normals',
@@ -647,13 +684,17 @@ def test_glyph(datasets, sphere):
     )
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
 
-    with pytest.warns(Warning):  # tries to orient but no orientation vector available
-        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # tries to orient but no orientation vector available
+    with pytest.warns(UserWarning, match=r'No vector-like data to use for orient'):
+        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
-    with pytest.warns(Warning):  # tries to orient but multiple orientation vectors are possible
-        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # tries to orient but multiple orientation vectors are possible
+    with pytest.warns(
+        UserWarning, match=r'It is unclear which one to use. orient will be set to False'
+    ):
+        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     with pytest.raises(TypeError):
         # wrong type for the glyph
@@ -668,8 +709,14 @@ def test_glyph(datasets, sphere):
 
 def test_glyph_warns_ambiguous_data(sphere):
     sphere.compute_normals(inplace=True)
-    with pytest.warns(Warning):
+    with pytest.warns(UserWarning, match='It is unclear which one to use') as warning_info:
         sphere.glyph(scale=True)
+    # Check that at least one of the expected warnings is raised
+    warning_messages = [str(w.message) for w in warning_info]
+    assert any(
+        'It is unclear which one to use. scale will be set to False' in msg
+        for msg in warning_messages
+    )
 
 
 def test_glyph_cell_point_data(sphere):
@@ -810,7 +857,8 @@ def test_glyph_settings(sphere):
         alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_both'
         assert alg.input_active_vectors_info.name == 'vectors_both'
-        ## Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
+        # Test the length of the field and not the FieldAssociation
+        # because the vtkGlyph3D filter takes POINT data
         assert len(alg.input_data_object.active_scalars) == sphere.n_cells
         assert len(alg.input_data_object.active_scalars) == sphere.n_cells
 
@@ -868,7 +916,7 @@ def connected_datasets():
 
 
 @pytest.fixture
-def foot_bones():
+def foot_bones() -> pv.PolyData:
     return examples.download_foot_bones()
 
 
@@ -918,7 +966,6 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
 )
 @pytest.mark.parametrize('label_regions', [True, False])
 @pytest.mark.parametrize('scalar_range', [True, False])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_inplace_and_output_type(
     datasets,
     dataset_index,
@@ -969,7 +1016,6 @@ def test_connectivity_inplace_and_output_type(
     'extraction_mode',
     ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     # the connectivity filter is known to output incorrectly sized scalars
     # test all modes and datasets for correct scalar size
@@ -1007,11 +1053,10 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
-    dataset = connected_datasets_single_disconnected_cell[0]['point']
+    dataset: pv.DataSet = connected_datasets_single_disconnected_cell[0]['point']
 
     with pytest.raises(TypeError, match='Scalar range must be'):
         dataset.connectivity(scalar_range=dataset)
@@ -1043,6 +1088,12 @@ def test_connectivity_raises(
     with pytest.raises(ValueError, match='positive integer values'):
         dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
 
+    match = re.escape(
+        "Invalid `region_assignment_mode` 'bar' . Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
+    )
+    with pytest.raises(ValueError, match=match):
+        dataset.connectivity(extraction_mode='all', region_assignment_mode='bar')
+
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
@@ -1050,7 +1101,6 @@ def test_connectivity_raises(
     ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
 @pytest.mark.parametrize('association', ['cell', 'point'])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_scalar_range(
     connected_datasets_single_disconnected_cell,
     dataset_index,
@@ -1086,49 +1136,55 @@ def test_connectivity_scalar_range(
     assert len(conn_with_full_range.array_names) == 3
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
-def test_connectivity_all(foot_bones):
+@pytest.mark.parametrize('region_assignment_mode', ['ascending', 'descending', 'unspecified'])
+def test_connectivity_all(foot_bones: pv.PolyData, region_assignment_mode: str):
     conn = foot_bones.connectivity('all')
     assert conn.n_cells == foot_bones.n_cells
 
     # test correct labels
-    conn = foot_bones.connectivity('all', label_regions=True)
+    conn = foot_bones.connectivity(
+        'all',
+        label_regions=True,
+        region_assignment_mode=region_assignment_mode,
+    )
     region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
     assert np.array_equal(region_ids, list(range(26)))
-    assert np.array_equal(
-        counts,
-        [
-            598,
-            586,
-            392,
-            360,
-            228,
-            212,
-            154,
-            146,
-            146,
-            146,
-            134,
-            134,
-            134,
-            126,
-            124,
-            74,
-            66,
-            60,
-            60,
-            60,
-            48,
-            46,
-            46,
-            46,
-            46,
-            32,
-        ],
-    )
+
+    n_cells = [
+        598,
+        586,
+        392,
+        360,
+        228,
+        212,
+        154,
+        146,
+        146,
+        146,
+        134,
+        134,
+        134,
+        126,
+        124,
+        74,
+        66,
+        60,
+        60,
+        60,
+        48,
+        46,
+        46,
+        46,
+        46,
+        32,
+    ]
+
+    if region_assignment_mode != 'unspecified':
+        assert counts.tolist() == (
+            n_cells[::-1] if region_assignment_mode == 'ascending' else n_cells
+        )
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_largest(foot_bones):
     conn = foot_bones.connectivity('largest')
     assert conn.n_cells == 598
@@ -1140,33 +1196,65 @@ def test_connectivity_largest(foot_bones):
     assert counts == [598]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
-def test_connectivity_specified(foot_bones):
+@pytest.mark.parametrize('region_assignment_mode', ['ascending', 'descending'])
+def test_connectivity_specified(foot_bones: pv.PolyData, region_assignment_mode: str):
     # test all regions
     all_regions = list(range(26))
-    conn = foot_bones.connectivity('specified', region_ids=all_regions)
+    conn = foot_bones.connectivity(
+        'specified',
+        region_ids=all_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == foot_bones.n_cells
 
     # test irrelevant region IDs
     test_regions = [*all_regions, 77, 99]
-    conn = foot_bones.connectivity('specified', test_regions)
+    conn = foot_bones.connectivity(
+        'specified',
+        test_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == foot_bones.n_cells
 
     # test some regions
-    some_regions = [1, 2, 4, 5]
-    expected_n_cells = 586 + 392 + 228 + 212
-    conn = foot_bones.connectivity('specified', some_regions)
+    some_regions = [1, 2, 4, 5] if region_assignment_mode == 'descending' else [1, 5, 6, 10]
+    expected_n_cells = (
+        (586 + 392 + 228 + 212) if region_assignment_mode == 'descending' else (46 + 48 + 60 + 74)
+    )
+    conn = foot_bones.connectivity(
+        'specified',
+        some_regions,
+        region_assignment_mode=region_assignment_mode,
+    )
     assert conn.n_cells == expected_n_cells
 
     # test correct labels
-    conn = foot_bones.connectivity('specified', some_regions, label_regions=True)
-    region_ids, counts = np.unique(conn.cell_data['RegionId'], return_counts=True)
+    conn = foot_bones.connectivity(
+        'specified',
+        some_regions,
+        label_regions=True,
+        region_assignment_mode=region_assignment_mode,
+    )
+    region_ids = np.unique(conn.cell_data['RegionId'])
     assert np.array_equal(region_ids, [0, 1, 2, 3])
-    assert np.array_equal(counts, [586, 392, 228, 212])
+
+    n_cells = [
+        conn.threshold([i] * 2, scalars='RegionId', preference='cell').n_cells for i in region_ids
+    ]
+    assert n_cells == (
+        [586, 392, 228, 212] if region_assignment_mode == 'descending' else [46, 48, 60, 74]
+    )
+
+
+def test_connectivity_specified_warning(foot_bones: pv.PolyData):
+    match = re.escape(
+        'Using the `unspecified` region assignment mode with the `specified` extraction mode can be unintuitive. Ignore this warning if this was intentional'  # noqa: E501
+    )
+    with pytest.warns(UserWarning, match=match):
+        foot_bones.connectivity('specified', region_assignment_mode='unspecified', region_ids=[0])
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_specified_returns_empty(connected_datasets, dataset_index):
     dataset = connected_datasets[dataset_index]
     unused_region_id = 1
@@ -1175,7 +1263,6 @@ def test_connectivity_specified_returns_empty(connected_datasets, dataset_index)
     assert conn.n_points == 0
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_point_seed(foot_bones):
     conn = foot_bones.connectivity('point_seed', point_ids=1598)
     assert conn.n_cells == 598
@@ -1190,7 +1277,6 @@ def test_connectivity_point_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_cell_seed(foot_bones):
     conn = foot_bones.connectivity('cell_seed', cell_ids=3122)
     assert conn.n_cells == 598
@@ -1206,7 +1292,6 @@ def test_connectivity_cell_seed(foot_bones):
     assert np.array_equal(counts, [598, 360])
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_closest_point(foot_bones):
     conn = foot_bones.connectivity('closest', closest_point=(-3.5, -0.5, -0.5))
     assert conn.n_cells == 598
@@ -1417,7 +1502,7 @@ def test_streamlines_max_length():
             max_time=1,
             max_step_length=0.1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
     with pytest.warns(
@@ -1431,7 +1516,7 @@ def test_streamlines_max_length():
             max_time=5,
             max_length=1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
 
@@ -1466,7 +1551,9 @@ def test_streamlines_from_source(uniform_vec):
 
 
 def test_streamlines_from_source_structured_grids():
-    x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
     mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pv.StructuredGrid(x2, y2, z2)
@@ -1478,7 +1565,7 @@ def test_streamlines_from_source_structured_grids():
     assert all([stream.n_points, stream.n_cells])
 
 
-def mesh_2D_velocity():
+def mesh_2d_velocity():
     mesh = pv.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
     velocity[:, 0] = 1
@@ -1487,45 +1574,45 @@ def mesh_2D_velocity():
     return mesh
 
 
-def test_streamlines_evenly_spaced_2D():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_sep_dist_ratio():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_start_position():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_start_position():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_vectors():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_vectors():
+    mesh = mesh_2d_velocity()
     mesh.set_active_vectors(None)
     streams = mesh.streamlines_evenly_spaced_2D(vectors='velocity', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_integrator_type():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_integrator_type():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_interpolator_type():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_interpolator_type():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_errors():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_errors():
+    mesh = mesh_2d_velocity()
 
     with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(integrator_type=45)
@@ -1541,7 +1628,7 @@ def test_streamlines_evenly_spaced_2D_errors():
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
-    mesh = mesh_2D_velocity()
+    mesh = mesh_2d_velocity()
     mesh.translate((0, 0, 1), inplace=True)  # move to z=1, xy plane
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
@@ -1551,10 +1638,10 @@ def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
 
-    line = pv.Line([0, 0, 0], [0, 0, 10], 9)
+    line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
     line[name] = np.linspace(0, 10, 10)
 
-    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2, progress_bar=True)
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], resolution=2, progress_bar=True)
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
@@ -1607,7 +1694,7 @@ def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
 
-    line = pv.Line([0, 0, 0], [0, 0, 10], 9)
+    line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
     line[name] = np.linspace(0, 10, 10)
 
     sampled_multiple_lines = line.sample_over_multiple_lines(
@@ -1635,7 +1722,9 @@ def test_sample_over_circular_arc():
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
-    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2, progress_bar=True)
+    sampled_arc = uniform.sample_over_circular_arc(
+        pointa=pointa, pointb=pointb, center=center, resolution=2, progress_bar=True
+    )
 
     expected_result = zmin + (zmax - zmin) * np.sin([np.pi / 2.0, np.pi / 4.0, 0.0])
     assert np.allclose(sampled_arc[name], expected_result)
@@ -1644,9 +1733,9 @@ def test_sample_over_circular_arc():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc(
-        [3, 1, 1],
-        [-3, -1, -1],
-        [0, 0, 0],
+        pointa=[3, 1, 1],
+        pointb=[-3, -1, -1],
+        center=[0, 0, 0],
         progress_bar=True,
     )
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
@@ -1673,7 +1762,7 @@ def test_sample_over_circular_arc_normal():
     resolution = np.random.default_rng().integers(10000)
     center = [xmin, ymin, zmin]
     sampled_arc_normal = uniform.sample_over_circular_arc_normal(
-        center,
+        center=center,
         resolution=resolution,
         normal=normal,
         polar=polar,
@@ -1689,7 +1778,7 @@ def test_sample_over_circular_arc_normal():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc_normal(
-        [0, 0, 0],
+        center=[0, 0, 0],
         polar=[3, 1, 1],
         angle=180,
         progress_bar=True,
@@ -1710,9 +1799,9 @@ def test_plot_over_circular_arc(tmpdir):
     b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
     center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
-        a,
-        b,
-        center,
+        pointa=a,
+        pointb=b,
+        center=center,
         resolution=1000,
         show=False,
         fname=filename,
@@ -1723,9 +1812,9 @@ def test_plot_over_circular_arc(tmpdir):
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc(
-        a,
-        b,
-        center,
+        pointa=a,
+        pointb=b,
+        center=center,
         resolution=None,
         scalars='foo',
         title='My Stuff',
@@ -1737,9 +1826,9 @@ def test_plot_over_circular_arc(tmpdir):
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_circular_arc(
-            a,
-            b,
-            center,
+            pointa=a,
+            pointb=b,
+            center=center,
             resolution=None,
             scalars='invalid_array_name',
             title='My Stuff',
@@ -1759,7 +1848,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     angle = 90
     center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
-        center,
+        center=center,
         polar=polar,
         angle=angle,
         show=False,
@@ -1771,7 +1860,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc_normal(
-        center,
+        center=center,
         polar=polar,
         angle=angle,
         resolution=None,
@@ -1785,7 +1874,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_circular_arc_normal(
-            center,
+            center=center,
             polar=polar,
             angle=angle,
             resolution=None,
@@ -1849,7 +1938,7 @@ def grid4x4():
 
 
 @pytest.fixture
-def extracted_with_adjacent_False(grid4x4):
+def extracted_with_adjacent_false(grid4x4):
     """Return expected output for adjacent_cells=False and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0]
@@ -1864,7 +1953,7 @@ def extracted_with_adjacent_False(grid4x4):
 
 
 @pytest.fixture
-def extracted_with_adjacent_True(grid4x4):
+def extracted_with_adjacent_true(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0, 1, 3, 4]
@@ -1879,7 +1968,7 @@ def extracted_with_adjacent_True(grid4x4):
 
 
 @pytest.fixture
-def extracted_with_include_cells_False(grid4x4):
+def extracted_with_include_cells_false(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=False"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0, 0, 0, 0]
@@ -1897,8 +1986,8 @@ def extracted_with_include_cells_False(grid4x4):
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+def test_extract_points_adjacent_cells_true(dataset_filter, extracted_with_adjacent_true):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
 
     # extract sub-surface with adjacent cells
     sub_surf_adj = dataset_filter(
@@ -1918,8 +2007,8 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
+def test_extract_points_adjacent_cells_false(dataset_filter, extracted_with_adjacent_false):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_false
     # extract sub-surface without adjacent cells
     sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
 
@@ -1933,12 +2022,11 @@ def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adja
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_include_cells_False(
+def test_extract_points_include_cells_false(
     dataset_filter,
-    grid4x4,
-    extracted_with_include_cells_False,
+    extracted_with_include_cells_false,
 ):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_false
     # extract sub-surface without cells
     sub_surf_nocells = dataset_filter(
         input_surf,
@@ -1952,10 +2040,18 @@ def test_extract_points_include_cells_False(
     assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
 
 
-def test_extract_points_default(extracted_with_adjacent_True):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+def test_extract_points_default(extracted_with_adjacent_true):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
+
+    assert 'vtkOriginalPointIds' not in input_surf.point_data
+    assert 'vtkOriginalCellIds' not in input_surf.cell_data
+
     # test adjacent_cells=True and include_cells=True by default
     sub_surf_adj = input_surf.extract_points(input_point_ids)
+
+    # should be no side effects
+    assert 'vtkOriginalPointIds' not in input_surf.point_data
+    assert 'vtkOriginalCellIds' not in input_surf.cell_data
 
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
@@ -1966,12 +2062,12 @@ def test_extract_points_default(extracted_with_adjacent_True):
 def test_extract_values_preference(
     preference,
     adjacent_fixture,
-    extracted_with_adjacent_True,
-    extracted_with_adjacent_False,
+    extracted_with_adjacent_true,
+    extracted_with_adjacent_false,
 ):
     # test points are extracted with point data (with adjacent = False by default)
     # test cells are extracted with cell data
-    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    fixture = extracted_with_adjacent_true if adjacent_fixture else extracted_with_adjacent_false
     input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
 
     func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
@@ -2040,10 +2136,17 @@ BIG_VOLUME = 2**3
 
 @pytest.fixture
 def labeled_data():
+    def append(mesh1, mesh2):
+        filter_ = vtk.vtkAppendFilter()
+        filter_.AddInputData(mesh1)
+        filter_.AddInputData(mesh2)
+        filter_.Update()
+        return pv.wrap(filter_.GetOutput())
+
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = (small_box + big_box).extract_geometry().connectivity()
+    labeled = append(big_box, small_box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2166,7 +2269,7 @@ def test_split_values_extract_values_component(
     expected_volume,
 ):
     # Add second component to fixture for test as needed
-    small_box, big_box, labeled_data = add_component_to_labeled_data(
+    _small_box, _big_box, labeled_data = add_component_to_labeled_data(
         labeled_data,
         component_offset,
     )
@@ -2178,9 +2281,8 @@ def test_split_values_extract_values_component(
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
     assert expected_n_blocks == len(expected_volume)
-    assert all(
-        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
-    )
+    for block, volume in zip(multiblock, expected_volume):
+        assert np.isclose(block.volume, volume)
 
 
 def test_extract_values_split_ranges_values(labeled_data):
@@ -2200,7 +2302,10 @@ def test_extract_values_split_ranges_values(labeled_data):
 # Include swapped [name, value] or [value, name] inputs
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
-values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
+values_dict_ranges_dict = (
+    dict(values=dict(val=0), ranges={(0, 0): 'rng'}),
+    ['val', 'rng'],
+)
 values_component_dict = (
     dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
     [
@@ -2323,7 +2428,6 @@ component_mode_test_cases = [
     ('values', 'component_mode', 'expected', 'expected_invert'),
     component_mode_test_cases,
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_extract_values_component_mode(
     point_cloud_colors,
     values,
@@ -2361,7 +2465,6 @@ def test_extract_values_component_mode(
         (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
     ],
 )
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_extract_values_component_values_split_unique(
     point_cloud_colors_duplicates,
     dataset_filter,
@@ -2451,7 +2554,10 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(TypeError, match=match):
         grid4x4.extract_values({0: 1})
 
-    match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    match = (
+        "Invalid component index '1' specified for scalars with 1 component(s). "
+        'Value must be one of: (0,).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(component_mode=1)
 
@@ -2471,7 +2577,10 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(ValueError, match=match):
         grid4x4.extract_values(values=[[[0]]], component_mode='multi')
 
-    match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    match = (
+        "Invalid component index '2' specified for scalars with 1 component(s). "
+        'Value must be one of: (0,).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(component_mode=2)
 
@@ -2732,13 +2841,50 @@ def test_compute_derivatives(random_hills):
         derv = mesh.compute_derivative()
 
 
-def test_extract_subset():
-    volume = examples.load_uniform()
-    voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=True)
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset(uniform, rebase_coordinates):
+    offset = (1, 2, 3)
+    dict_ = {'foo': 'bar'}
+    origin = (1.1, 2.2, 3.3)
+    uniform.user_dict = dict_
+    uniform.offset = offset
+    uniform.origin = origin
+
+    new_offset = (2, 4, 6)
+    new_dims = 4, 3, 2
+    extent = pv.ImageData(dimensions=new_dims, offset=new_offset).extent
+    voi = uniform.extract_subset(extent, progress_bar=True, rebase_coordinates=rebase_coordinates)
     assert isinstance(voi, pv.ImageData)
-    # Test that we fix the confusing issue from extents in
-    #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-    assert voi.origin == voi.bounds[::2]
+    assert voi is not uniform
+    assert voi.spacing == uniform.spacing
+    assert voi.dimensions == new_dims
+    assert voi.array_names == uniform.array_names
+    assert voi.user_dict == dict_
+
+    if rebase_coordinates:
+        # Test that we fix the confusing issue from extents in
+        #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+        assert voi.origin != origin
+        assert voi.origin == voi.bounds[::2]
+        assert voi.offset != new_offset
+        assert voi.offset == (0, 0, 0)
+    else:
+        assert voi.origin == origin
+        assert voi.offset == new_offset
+
+    # Test same output as using slice_index
+    cropped = uniform.slice_index(
+        [extent[0], extent[1] + 1],
+        [extent[2], extent[3] + 1],
+        [extent[4], extent[5] + 1],
+        index_mode='extent',
+        rebase_coordinates=rebase_coordinates,
+    )
+    assert cropped == voi
+
+    # Test same output as using crop
+    cropped = uniform.crop(extent=extent, rebase_coordinates=rebase_coordinates)
+    assert cropped == voi
 
 
 def test_gaussian_smooth_output_type():
@@ -2800,7 +2946,9 @@ def test_median_smooth_constant_data():
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.median_smooth()
-    assert np.array_equal(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
+    assert np.array_equal(
+        volume.point_data['point_data'], volume_smoothed.point_data['point_data']
+    )
 
 
 def test_median_smooth_outlier():
@@ -2823,9 +2971,11 @@ def test_image_dilate_erode_output_type():
     point_data[4, 4, 4] = 1
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_dilate_erode = volume.image_dilate_erode()
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_dilate_erode = volume.image_dilate_erode()
     assert isinstance(volume_dilate_erode, pv.ImageData)
-    volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_dilate_erode = volume.image_dilate_erode(scalars='point_data')
     assert isinstance(volume_dilate_erode, pv.ImageData)
 
 
@@ -2838,7 +2988,8 @@ def test_image_dilate_erode_dilation():
     point_data_dilated[4, 3:6, 3:6] = 1
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_dilated = volume.image_dilate_erode()  # default is binary dilation
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_dilated = volume.image_dilate_erode()  # default is binary dilation
     assert np.array_equal(
         volume_dilated.point_data['point_data'],
         point_data_dilated.flatten(order='F'),
@@ -2851,7 +3002,8 @@ def test_image_dilate_erode_erosion():
     point_data_eroded = np.zeros((10, 10, 10))
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
-    volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
     assert np.array_equal(
         volume_eroded.point_data['point_data'],
         point_data_eroded.flatten(order='F'),
@@ -2864,8 +3016,9 @@ def test_image_dilate_erode_cell_data_specified():
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
-    with pytest.raises(ValueError):  # noqa: PT011
-        volume.image_dilate_erode(scalars='cell_data')
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            volume.image_dilate_erode(scalars='cell_data')
 
 
 def test_image_dilate_erode_cell_data_active():
@@ -2875,8 +3028,9 @@ def test_image_dilate_erode_cell_data_active():
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     volume.set_active_scalars('cell_data')
-    with pytest.raises(ValueError):  # noqa: PT011
-        volume.image_dilate_erode()
+    with pytest.warns(PyVistaDeprecationWarning, match='image_dilate_erode is deprecated'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            volume.image_dilate_erode()
 
 
 def test_image_threshold_output_type(uniform):
@@ -3014,10 +3168,7 @@ def structured_grids_split_disconnected():
     return voi_1, voi_2
 
 
-def test_concatenate_structured(
-    structured_grids_split_coincident,
-    structured_grids_split_disconnected,
-):
+def test_concatenate_structured(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     joined = voi_1.concatenate(voi_2, axis=1)
     assert structured.points == pytest.approx(joined.points)
@@ -3027,7 +3178,7 @@ def test_concatenate_structured(
 
 
 def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
 
     # test invalid dimensions
     with pytest.raises(ValueError):  # noqa: PT011
@@ -3038,13 +3189,13 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
 
 
 def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=3)
 
 
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=1)
@@ -3057,7 +3208,7 @@ def test_concatenate_structured_disconnected(structured_grids_split_disconnected
 
 
 def test_concatenate_structured_different_arrays(structured_grids_split_coincident):
-    voi_1, voi_2, structured = structured_grids_split_coincident
+    voi_1, voi_2, _structured = structured_grids_split_coincident
     point_data = voi_1.point_data.pop('point_data')
     with pytest.raises(RuntimeError):
         voi_1.concatenate(voi_2, axis=1)
@@ -3151,18 +3302,14 @@ def test_extrude_rotate():
     assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
-    if not pv.vtk_version_info >= (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
-    else:
-        poly = line.extrude_rotate(
-            rotation_axis=rotation_axis,
-            resolution=resolution,
-            progress_bar=True,
-            capping=True,
-        )
-        assert poly.n_cells == line.n_points - 1
-        assert poly.n_points == (resolution + 1) * line.n_points
+    poly = line.extrude_rotate(
+        rotation_axis=rotation_axis,
+        resolution=resolution,
+        progress_bar=True,
+        capping=True,
+    )
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1) * line.n_points
 
     with pytest.raises(ValueError):  # noqa: PT011
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
@@ -3271,7 +3418,14 @@ def test_extrude_trim_inplace():
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
     orig_n_faces = sphere.n_faces_strict
-    sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
+    sub = sphere.subdivide_adaptive(
+        max_edge_len=0.01,
+        max_tri_area=0.001,
+        max_n_tris=100000,
+        max_n_passes=2,
+        inplace=inplace,
+        progress_bar=True,
+    )
     assert sub.n_faces_strict > orig_n_faces
     if inplace:
         assert sphere.n_faces_strict == sub.n_faces_strict
@@ -3498,7 +3652,9 @@ def test_align_xyz_two_axis_directions(planar_mesh):
     axis_0_direction = [-1, 0, 0]
     axis_1_direction = [0, -1, 0]
     _, matrix = planar_mesh.align_xyz(
-        axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
+        axis_0_direction=axis_0_direction,
+        axis_1_direction=axis_1_direction,
+        return_matrix=True,
     )
     axes = matrix[:3, :3]
     assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
@@ -3506,7 +3662,9 @@ def test_align_xyz_two_axis_directions(planar_mesh):
     axis_1_direction = [0, -1, 0]
     axis_2_direction = [0, 0, -1]
     _, matrix = planar_mesh.align_xyz(
-        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+        axis_1_direction=axis_1_direction,
+        axis_2_direction=axis_2_direction,
+        return_matrix=True,
     )
     axes = matrix[:3, :3]
     assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
@@ -3523,7 +3681,10 @@ def test_align_xyz_three_axis_directions(planar_mesh):
     axes = matrix[:3, :3]
     assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
 
-    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    match = (
+        'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a '
+        'left-handed transformation.'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = planar_mesh.align_xyz(
             axis_0_direction='x',
@@ -3588,8 +3749,20 @@ def test_subdivide_tetra(tetbeam):
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
-    hex_cells = combined.extract_cells_by_type([pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID])
+    assert 'vtkOriginalPointIds' not in hexbeam.point_data
+    assert 'vtkOriginalCellIds' not in hexbeam.cell_data
+
+    hex_cells = combined.extract_cells_by_type(
+        [
+            pv.CellType.HEXAHEDRON,
+            pv.CellType.BEZIER_PYRAMID,
+        ]
+    )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
+
+    # should be no side effects
+    assert 'vtkOriginalPointIds' not in hexbeam.point_data
+    assert 'vtkOriginalCellIds' not in hexbeam.cell_data
 
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
     assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
@@ -3613,12 +3786,8 @@ def test_merge_points():
     celltypes = [pv.CellType.LINE]
     points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
     pdata = pv.UnstructuredGrid(cells, celltypes, points)
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=1.0).n_points == 1
-    )
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
-    )
+    assert pdata.merge(pdata, merge_points=True, tolerance=1.0).n_points == 1
+    assert pdata.merge(pdata, merge_points=True, tolerance=0.1).n_points == 2
 
 
 @pytest.mark.parametrize('inplace', [True, False])
@@ -3715,7 +3884,8 @@ def test_color_labels(uniform, coloring_mode):
     if coloring_mode == 'index':
         # Test invalid input
         match = (
-            "Index coloring mode cannot be used with scalars 'Spatial Point Data'. Scalars must be positive integers \n"
+            "Index coloring mode cannot be used with scalars 'Spatial Point Data'. "
+            'Scalars must be positive integers \n'
             'and the max value (729.0) must be less than the number of colors (256).'
         )
         with pytest.raises(ValueError, match=re.escape(match)):
@@ -3744,7 +3914,14 @@ def test_color_labels(uniform, coloring_mode):
 
 
 VIRIDIS_RGB = [pv.Color(c).int_rgb for c in pv.get_cmap_safe('viridis').colors]
-COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
+COLORS_DICT = {
+    0: 'red',
+    1: (0, 0, 0),
+    2: 'blue',
+    3: (1.0, 1.0, 1.0),
+    4: 'orange',
+    5: 'green',
+}
 COLORS_DICT_RGB = [pv.Color(c).int_rgb for c in COLORS_DICT.values()]
 RED_RGB = pv.Color('red').int_rgb
 
@@ -3791,7 +3968,7 @@ def test_color_labels_color_type_partial_dict(labeled_image, color_type):
 
 
 @pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba'])
-def test_color_labels_color_type_cmap(labeled_image, color_type):
+def test_color_labels_color_type_cmap(color_type):
     labels = pv.ImageData(dimensions=(256, 1, 1))
     labels['256'] = range(256)
     colored = labels.color_labels('viridis', color_type=color_type)
@@ -3807,9 +3984,10 @@ LABEL_DATA = [-1, -2, 1]
 
 
 @pytest.mark.parametrize(
-    ('negative_indexing', 'cmap_index'), [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))]
+    ('negative_indexing', 'cmap_index'),
+    [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))],
 )
-def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+def test_color_labels_negative_index(negative_indexing, cmap_index):
     labels = pv.ImageData(dimensions=(3, 1, 1))
     labels['data'] = LABEL_DATA
     colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
@@ -3854,9 +4032,12 @@ def test_color_labels_invalid_input(uniform):
         uniform.color_labels({}, coloring_mode='index')
 
     match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         uniform.color_labels('bwr')
 
+    match = 'color must be an instance of'
+    with pytest.raises(TypeError, match=match):
+        uniform.color_labels([[1]])
     match = (
         'Invalid colors. Colors must be one of:\n'
         '  - sequence of color-like values,\n'
@@ -3864,17 +4045,40 @@ def test_color_labels_invalid_input(uniform):
         '  - named colormap string.'
     )
     with pytest.raises(ValueError, match=match):
-        uniform.color_labels([[1]])
-    with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
 
     match = "Negative indexing is not supported with 'cycle' mode enabled."
     with pytest.raises(ValueError, match=match):
         uniform.color_labels(coloring_mode='cycle', negative_indexing=True)
 
-    match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
+    match = (
+        'Multi-component scalars are not supported for coloring. '
+        'Scalar array Normals must be one-dimensional.'
+    )
     with pytest.raises(ValueError, match=match):
         pv.Sphere().color_labels(scalars='Normals')
+
+
+@pytest.mark.parametrize('color_type', ['float_rgb', 'int_rgba'])
+def test_color_labels_return_dict(labeled_image, color_type):
+    expected_keys = np.unique(labeled_image.active_scalars)
+
+    input_colors = pv.plotting.colors.matplotlib_default_colors
+    input_keys = list(range(len(input_colors)))
+    assert set(expected_keys) < set(input_keys)
+
+    mapping_in = dict(zip(input_keys, input_colors))
+    colored_mesh, mapping_out = labeled_image.color_labels(
+        mapping_in, return_dict=True, color_type=color_type
+    )
+    assert isinstance(colored_mesh, type(labeled_image))
+    assert isinstance(mapping_out, dict)
+    assert set(mapping_out.keys()) < set(mapping_in.keys())
+
+    for key in expected_keys:
+        expected_color = getattr(pv.Color(mapping_in[key]), color_type)
+        actual_color = mapping_out[key]
+        assert actual_color == expected_color
 
 
 @pytest.fixture
@@ -3901,7 +4105,7 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
+def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
@@ -3916,21 +4120,13 @@ def test_voxelize_binary_mask_dimensions(sphere):
 def test_voxelize_binary_mask_spacing(ant):
     # Test default
     mask_no_input = ant.voxelize_binary_mask()
-    if pv.vtk_version_info < (9, 2):
-        expected_mask = ant.voxelize_binary_mask(spacing=ant.length / 100)
-    else:
-        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+    expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
     assert mask_no_input.spacing == expected_mask.spacing
 
     # Test cell length
-    if pv.vtk_version_info < (9, 2):
-        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-        with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
-    else:
-        mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
-        mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
-        assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
+    mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+    assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
 
     # Test mesh length
     mask_fraction_200 = ant.voxelize_binary_mask(spacing=ant.length / 200)
@@ -3939,29 +4135,35 @@ def test_voxelize_binary_mask_spacing(ant):
     # Check spacing matches mesh length. Use atol since spacing is approximate.
     assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
 
+    match = 'Spacing and cell length options cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_percentile=0.1)
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=ant.n_cells)
+
 
 # This test is flaky because of random sampling that cannot be controlled.
 # Sometimes the sampling produces the same output.
 # https://github.com/pyvista/pyvista/pull/6728
 @flaky_test(times=5)
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
-    if pv.vtk_version_info < (9, 2):
-        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-        with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
-    else:
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
-        assert mask_samples_1.spacing != mask_samples_2.spacing
+    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
+    assert mask_samples_1.spacing != mask_samples_2.spacing
 
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        assert mask_samples_1.spacing == mask_samples_2.spacing
+    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    assert mask_samples_1.spacing == mask_samples_2.spacing
 
 
 @pytest.mark.parametrize(
     'rounding_func',
-    [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
+    [
+        np.round,
+        np.ceil,
+        np.floor,
+        lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])],
+    ],
 )
 def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
@@ -4062,6 +4264,89 @@ def test_voxelize_binary_mask_raises(sphere):
         'cell_length_sample_size',
     ]:
         kwargs = {parameter: 0}  # Give parameter any value for test
-        match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+        match = (
+            'Cannot specify a reference volume with other geometry parameters. '
+            '`reference_volume` must define the geometry exclusively.'
+        )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_rectilinear(ant):
+    vox = ant.voxelize_rectilinear()
+    assert isinstance(vox, pv.RectilinearGrid)
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = ant.voxelize_rectilinear(dimensions=dims)
+    assert np.array_equal(vox.dimensions, dims)
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    single_cell_dims = np.array((2, 2, 2))
+    vox = ant.voxelize_rectilinear(spacing=size)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test reference volume - specify both dimensions and spacing
+    reference_volume = pv.ImageData(dimensions=single_cell_dims - 1, spacing=size)
+    vox = ant.voxelize_rectilinear(reference_volume=reference_volume)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test scalar values
+    foreground = 2
+    background = 3
+    vox = ant.voxelize_rectilinear(foreground_value=foreground, background_value=background)
+    assert 'mask' in vox.cell_data
+    assert vox.array_names == ['mask']
+    values = np.unique(vox['mask'])
+    assert np.array_equal(values, [foreground, background])
+
+    # Test other keywords
+    vox = ant.voxelize(cell_length_percentile=0.5)
+    assert vox.n_cells
+    vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+    assert vox.n_cells
+    assert vox.n_cells
+    vox = ant.voxelize_rectilinear(progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize_rectilinear(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize_rectilinear(spacing={0.5, 0.3})
+
+
+def test_voxelize(ant):
+    vox = ant.voxelize()
+    assert isinstance(vox, pv.UnstructuredGrid)
+    assert vox.array_names == []
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = pv.Cube().voxelize(dimensions=dims)
+    assert np.array_equal(vox.n_points, np.prod(dims))
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    vox = ant.voxelize(spacing=size)
+    assert np.allclose(vox.n_cells, 1)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test other keywords
+    vox = ant.voxelize(cell_length_percentile=0.5)
+    assert vox.n_cells
+    vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+    assert vox.n_cells
+    vox = ant.voxelize(progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize(spacing={0.5, 0.3})

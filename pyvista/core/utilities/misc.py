@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABCMeta
 from collections.abc import Sequence
 import enum
 from functools import cache
@@ -18,13 +19,23 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from typing import Any
-    from typing import ClassVar
 
-    from .._typing_core import ArrayLike
-    from .._typing_core import NumpyArray
-    from .._typing_core import VectorLike
+    from pyvista._typing_core import ArrayLike
+    from pyvista._typing_core import NumpyArray
+    from pyvista._typing_core import VectorLike
+
+    _T = TypeVar('_T')
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # noqa: D101
+        def __str__(self) -> str:
+            return self.value
 
 
 def assert_empty_kwargs(**kwargs) -> bool:
@@ -78,7 +89,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        msg = f'{name} must be a length three iterable of floats.'  # type: ignore[unreachable]
+        msg = f'{name} must be a length three iterable of floats.'
         raise TypeError(msg)
     if len(point) != 3:
         if name == '':
@@ -100,7 +111,7 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
     """
 
-    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202
+    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202, ARG001, N807
         if cls is cls_:
             msg = f'{cls.__name__} is an abstract class and may not be instantiated.'
             raise TypeError(msg)
@@ -175,8 +186,8 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            msg = f'{cls.__name__} has no value matching {value}'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            msg = f'Invalid type {type(value)} for class {cls.__name__}.'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
 
 @cache
@@ -212,13 +223,13 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
     """
     try:
         func(*args)
-    except Exception:
+    except Exception:  # noqa: BLE001  # pragma: no cover
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warnings.warn(formatted_exception)
+        warnings.warn(formatted_exception, stacklevel=2)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -244,7 +255,7 @@ def threaded(fn):  # noqa: ANN001, ANN201
     return wrapper
 
 
-class conditional_decorator:
+class conditional_decorator:  # noqa: N801
     """Conditional decorator for methods.
 
     Parameters
@@ -273,39 +284,131 @@ class conditional_decorator:
 def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
-        msg = f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        msg = (
+            f'The value {float(value)} for `{parm_name}` is outside the '
+            f'acceptable range {tuple(rng)}.'
+        )
         raise ValueError(msg)
 
 
-def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
-    """Override __setattr__ to not permit new attributes."""
-    if not hasattr(cls, '_new_attr_exceptions'):
-        cls._new_attr_exceptions = []
+class _AutoFreezeMeta(type):
+    """Metaclass to automatically freeze a class when called."""
 
-    def __setattr__(self, name, value):  # noqa: ANN001, ANN202
-        """Do not allow setting attributes."""
-        if (
-            hasattr(self, name)
-            or name in cls._new_attr_exceptions
-            or name in self._new_attr_exceptions
-        ):
-            object.__setattr__(self, name, value)
-        else:
-            msg = (
-                f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
-            raise AttributeError(msg)
-
-    cls.__setattr__ = __setattr__
-    return cls
+    def __call__(cls: type[_T], *args, **kwargs) -> _T:
+        obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
+        obj._no_new_attributes(cls)
+        return obj
 
 
-def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
+class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
+    """Metaclass to combine automatic attribute freezing with ABC support."""
+
+
+class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
+    """Mixin to prevent adding new attributes.
+
+    This class is mainly used to prevent users from setting the wrong attributes on an
+    object. It freezes the attributes when called and prevents setting new ones via
+    "normal" methods like ``obj.foo = 42``.
+    """
+
+    def _no_new_attributes(self, this_class: type) -> None:
+        """Prevent setting additional attributes."""
+        object.__setattr__(self, '__frozen', True)
+        object.__setattr__(self, '__frozen_by_class', this_class)
+
+    def _check_new_attribute(self, key: str) -> None:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is not None:
+            # Get mode for setting new attributes
+            try:
+                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
+            except ImportError:
+                # Circular import, set to False to disallow new attributes during initial import
+                _ALLOW_NEW_ATTRIBUTES_MODE = False
+
+            # Check if setting a new attribute is allowed
+            if not (
+                _ALLOW_NEW_ATTRIBUTES_MODE is True
+                or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
+            ):
+                # Check if this class froze itself. Any frozen state already set by parent classes,
+                # e.g. by calling super().__init__(), will be ignored. This allows subclasses to
+                # set attributes during init without being affected by a parent class init.
+                frozen = self.__dict__.get('__frozen', False)
+                frozen_by = self.__dict__.get('__frozen_by_class', None)
+                if (
+                    frozen
+                    and frozen_by is type(self)
+                    and not (key in type(self).__dict__ or hasattr(self, key))
+                ):
+                    from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+                    msg = (
+                        f'Attribute {key!r} does not exist and cannot be added to class '
+                        f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
+                        f'or `pyvista.allow_new_attributes` to set new attributes.\n'
+                        f'Setting new private variables (with `_` prefix) is allowed by default.'
+                    )
+                    raise PyVistaAttributeError(msg)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """Prevent adding new attributes to classes using "normal" methods."""
+        self._check_new_attribute(key)
+        object.__setattr__(self, key, value)
+
+
+def set_new_attribute(obj: object, name: str, value: Any) -> None:
+    """Set a new attribute for this object.
+
+    Python allows arbitrarily setting new attributes on objects at any time,
+    but PyVista's classes do not allow this. If an attribute is not part of
+    PyVista's API, an ``AttributeError`` is normally raised when attempting
+    to set it.
+
+    Use :func:`set_new_attribute` to override this and set a new attribute anyway.
+
+    See Also
+    --------
+    pyvista.allow_new_attributes
+        Context manager for controlling if setting new attributes is allowed.
+
+    Examples
+    --------
+    Set a new custom attribute on a mesh.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.PolyData()
+    >>> pv.set_new_attribute(mesh, 'foo', 42)
+    >>> mesh.foo
+    42
+
+    This is equivalent to using :data:`allow_new_attributes` with ``True``.
+
+    >>> with pv.allow_new_attributes(True):
+    ...     mesh.foo = 42
+
+    .. versionadded:: 0.46
+
+    """
+    if hasattr(obj, name):
+        from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+        msg = (
+            f'Attribute {name!r} already exists. '
+            '`set_new_attribute` can only be used for setting NEW attributes.'
+        )
+        raise PyVistaAttributeError(msg)
+    object.__setattr__(obj, name, value)
+
+
+def _reciprocal(
+    x: ArrayLike[float], tol: float = 1e-8, value_if_division_by_zero: float = 0.0
+) -> NumpyArray[float]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
     The reciprocal of elements with an absolute value less than a
-    specified tolerance is computed as zero.
+    specified tolerance has the value specified by ``default_if_div_by_zero``.
 
     Parameters
     ----------
@@ -313,6 +416,9 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
         Input array.
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
+    value_if_division_by_zero : float
+        Default value given to values less than ``tol``, i.e. the value given if division
+        by zero is detected.
 
     Returns
     -------
@@ -324,11 +430,11 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
     x = x if np.issubdtype(x.dtype, np.floating) else x.astype(float)
     zero = np.abs(x) < tol
     x[~zero] = np.reciprocal(x[~zero])
-    x[zero] = 0
+    x[zero] = value_if_division_by_zero
     return x
 
 
-class _classproperty(property):
+class _classproperty(property):  # noqa: N801
     """Read-only class property decorator.
 
     Use this decaorator as an alternative to chaining `@classmethod`
@@ -358,9 +464,6 @@ class _NameMixin:
 
     """
 
-    # In case subclasses use @no_new_attr mixin
-    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
-
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
@@ -378,4 +481,35 @@ class _NameMixin:
         if not value:
             msg = 'Name must be truthy.'
             raise ValueError(msg)
-        self._name = str(value)
+        object.__setattr__(self, '_name', str(value))
+
+
+class _BoundsSizeMixin:
+    @property
+    def bounds_size(self) -> tuple[float, float, float]:
+        """Return the size of each axis of the object's bounding box.
+
+        .. versionadded:: 0.46
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Size of each x-y-z axis.
+
+        Examples
+        --------
+        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        by default.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.bounds_size
+        (1.0, 1.0, 1.0)
+
+        """
+        bounds = self.bounds  # type: ignore[attr-defined]
+        return (
+            bounds.x_max - bounds.x_min,
+            bounds.y_max - bounds.y_min,
+            bounds.z_max - bounds.z_min,
+        )

@@ -12,7 +12,7 @@ generate streamlines and :func:`add_volume() <pyvista.Plotter.add_volume>` to pl
 the strength of the magnetic field.
 
 This dataset was created from the `Coil Field Lines
-<https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html>`_
+<https://magpylib.readthedocs.io/en/stable/_pages/user_guide/examples/examples_app_coils.html>`_
 example from the awesome `magpylib <https://github.com/magpylib/magpylib>`_
 library.
 
@@ -43,7 +43,9 @@ grid.point_data
 # Create several hoops to represent the coil. This matches the geometry in the
 # original example.
 
-coils = [pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False) for z in np.linspace(-8, 8, 16)]
+coils = [
+    pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False) for z in np.linspace(-8, 8, 16)
+]
 coil_block = pv.MultiBlock(coils)
 coil_block.plot(render_lines_as_tubes=True, line_width=10)
 
@@ -86,8 +88,18 @@ scalars = np.linalg.norm(grid['B'], axis=1)
 
 # Customize the opacity to make it easier to visualize the strength of the
 # field nearby the coil
-opacity = 1 - np.geomspace(1.0, 0.05, 10)
-
+opacity = [
+    0.00,
+    0.05,
+    0.1,
+    0.3,
+    0.3,
+    0.5,
+    0.95,
+    0.95,
+    1.0,
+    1.0,
+]
 
 # sphinx_gallery_start_ignore
 # volume rendering does not work in interactive plots currently

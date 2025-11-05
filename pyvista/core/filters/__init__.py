@@ -33,10 +33,10 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
-    from .. import _vtk_core as _vtk
+    from pyvista.core import _vtk_core as _vtk
 
 
-def _update_alg(alg, progress_bar: bool = False, message='') -> None:
+def _update_alg(alg, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
     if progress_bar:
         with ProgressMonitor(alg, message=message):
@@ -47,6 +47,7 @@ def _update_alg(alg, progress_bar: bool = False, message='') -> None:
 
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
+    *,
     iport=0,
     iconnection=0,
     oport=0,
@@ -71,7 +72,8 @@ def _get_output(
 from .composite import CompositeFilters
 from .data_object import DataObjectFilters
 
-# Re-export submodules to maintain the same import paths before filters.py was split into submodules
+# Re-export submodules to maintain the same import paths
+# before filters.py was split into submodules
 from .data_set import DataSetFilters
 from .image_data import ImageDataFilters
 from .poly_data import PolyDataFilters

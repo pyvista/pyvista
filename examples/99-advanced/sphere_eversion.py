@@ -55,7 +55,7 @@ def sphere_to_cylinder(theta, phi):
     return h, phi
 
 
-def cylinder_to_wormhole(h, phi, t, p, q):
+def cylinder_to_wormhole(h, phi, t, p, q):  # noqa: PLR0917
     """
     Map from a cylinder to an open wormhole using Eq. (4).
 
@@ -72,7 +72,7 @@ def cylinder_to_wormhole(h, phi, t, p, q):
     return x, y, z
 
 
-def close_wormhole(x0, y0, z0, eta, xi, alpha):
+def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
     """
     Close the wormhole using Eqs. (7)-(8).
 
@@ -107,7 +107,7 @@ def close_wormhole(x0, y0, z0, eta, xi, alpha):
     return x2, y2, z2
 
 
-def unfold_sphere(theta, phi, t, q, eta, lamda):
+def unfold_sphere(theta, phi, t, q, eta, lamda):  # noqa: PLR0917
     """
     Unfold the sphere using Eqs. (12), (15), (10).
 
@@ -136,7 +136,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa: E131
+            * np.sin(theta) / np.cos(theta)**(2 * n)
     )
     # fmt: on
 

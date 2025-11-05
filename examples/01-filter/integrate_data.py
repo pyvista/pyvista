@@ -39,7 +39,9 @@ plotter.add_mesh(
     lighting=False,
 )
 plotter.add_axes()
-plotter.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
+plotter.camera_position = pyvista.CameraPosition(
+    position=(10, 9.5, -43), focal_point=(87.0, 73.5, 123.0), viewup=(-0.5, -0.7, 0.5)
+)
 plotter.show()
 
 # %%
@@ -56,7 +58,9 @@ integrated_data['normal_velocity']
 # %%
 # An additional ``Area`` or ``Volume`` array is added.
 print(f'Original arrays: {inlet_surface.array_names}')
-new_arrays = [name for name in integrated_data.array_names if name not in inlet_surface.array_names]
+new_arrays = [
+    name for name in integrated_data.array_names if name not in inlet_surface.array_names
+]
 print(f'New arrays      : {new_arrays}')
 
 # %%

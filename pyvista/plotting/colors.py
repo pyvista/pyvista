@@ -8,6 +8,8 @@ Used code from matplotlib.colors.  Thanks for your work.
 from __future__ import annotations
 
 from colorsys import rgb_to_hls
+import contextlib
+import importlib
 import inspect
 from typing import Literal
 from typing import get_args
@@ -32,7 +34,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import has_module
+from pyvista import _validation
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
@@ -349,7 +353,10 @@ COLOR_SCHEMES = {
     'warm': {'id': _vtk.vtkColorSeries.WARM, 'descr': 'dark red → yellow'},
     'cool': {'id': _vtk.vtkColorSeries.COOL, 'descr': 'green → blue → purple'},
     'blues': {'id': _vtk.vtkColorSeries.BLUES, 'descr': 'Different shades of blue'},
-    'wild_flower': {'id': _vtk.vtkColorSeries.WILD_FLOWER, 'descr': 'blue → purple → pink'},
+    'wild_flower': {
+        'id': _vtk.vtkColorSeries.WILD_FLOWER,
+        'descr': 'blue → purple → pink',
+    },
     'citrus': {'id': _vtk.vtkColorSeries.CITRUS, 'descr': 'green → yellow → orange'},
     'div_purple_orange11': {
         'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
@@ -545,7 +552,8 @@ COLOR_SCHEMES = {
     },
     'qual_accent': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
-        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray',
+        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, '
+        'brown, gray',
     },
     'qual_dark2': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
@@ -553,7 +561,8 @@ COLOR_SCHEMES = {
     },
     'qual_set3': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
-        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow',
+        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, '
+        'pink, gray, purple, light green, yellow',
     },
     'qual_set2': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
@@ -573,7 +582,8 @@ COLOR_SCHEMES = {
     },
     'qual_paired': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
-        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow',
+        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, '
+        'light purple, purple, light yellow',
     },
     'custom': {'id': _vtk.vtkColorSeries.CUSTOM, 'descr': None},
 }
@@ -1117,6 +1127,103 @@ _CMOCEAN_CMAPS_LITERAL = Literal[
 ]
 _CMOCEAN_CMAPS = get_args(_CMOCEAN_CMAPS_LITERAL)
 
+_CMCRAMERI_CMAPS_LITERAL = Literal[
+    'acton',
+    'actonS',
+    'acton_r',
+    'bam',
+    'bamO',
+    'bamO_r',
+    'bam_r',
+    'bamako',
+    'bamakoS',
+    'bamako_r',
+    'batlow',
+    'batlowK',
+    'batlowKS',
+    'batlowK_r',
+    'batlowS',
+    'batlowW',
+    'batlowWS',
+    'batlowW_r',
+    'batlow_r',
+    'bilbao',
+    'bilbaoS',
+    'bilbao_r',
+    'broc',
+    'brocO',
+    'brocO_r',
+    'broc_r',
+    'buda',
+    'budaS',
+    'buda_r',
+    'bukavu',
+    'bukavu_r',
+    'cork',
+    'corkO',
+    'corkO_r',
+    'cork_r',
+    'davos',
+    'davosS',
+    'davos_r',
+    'devon',
+    'devonS',
+    'devon_r',
+    'fes',
+    'fes_r',
+    'glasgow',
+    'glasgowS',
+    'glasgow_r',
+    'grayC',
+    'grayCS',
+    'grayC_r',
+    'hawaii',
+    'hawaiiS',
+    'hawaii_r',
+    'imola',
+    'imolaS',
+    'imola_r',
+    'lajolla',
+    'lajollaS',
+    'lajolla_r',
+    'lapaz',
+    'lapazS',
+    'lapaz_r',
+    'lipari',
+    'lipariS',
+    'lipari_r',
+    'lisbon',
+    'lisbon_r',
+    'navia',
+    'naviaS',
+    'navia_r',
+    'nuuk',
+    'nuukS',
+    'nuuk_r',
+    'oleron',
+    'oleron_r',
+    'oslo',
+    'osloS',
+    'oslo_r',
+    'roma',
+    'romaO',
+    'romaO_r',
+    'roma_r',
+    'tofino',
+    'tofino_r',
+    'tokyo',
+    'tokyoS',
+    'tokyo_r',
+    'turku',
+    'turkuS',
+    'turku_r',
+    'vik',
+    'vikO',
+    'vikO_r',
+    'vik_r',
+]
+_CMCRAMERI_CMAPS = get_args(_CMCRAMERI_CMAPS_LITERAL)
+
 _MATPLOTLIB_CMAPS_LITERAL = Literal[
     'Accent',
     'Accent_r',
@@ -1303,7 +1410,7 @@ _MATPLOTLIB_CMAPS_LITERAL = Literal[
 _MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
-class Color:
+class Color(_NoNewAttrMixin):
     """Helper class to convert between different color representations used in the pyvista library.
 
     Many pyvista methods accept :data:`ColorLike` parameters. This helper class
@@ -1383,7 +1490,8 @@ class Color:
         {'alpha', 'a', 'opacity'},  # 3
     )
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['color', 'opacity'])
+    def __init__(  # noqa: PLR0917
         self,
         color: ColorLike | None = None,
         opacity: float | str | None = None,
@@ -1399,6 +1507,9 @@ class Color:
         if color is None:
             color = pyvista.global_theme.color if default_color is None else default_color
 
+        _validation.check_instance(
+            color, (Color, str, dict, list, tuple, np.ndarray, _vtk.vtkColor3ub), name='color'
+        )
         try:
             if isinstance(color, Color):
                 # Create copy of color instance
@@ -1415,10 +1526,10 @@ class Color:
             elif isinstance(color, _vtk.vtkColor3ub):
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
-            else:
-                msg = f'Unsupported color type: {type(color)}'
-                raise ValueError(msg)
-            self._name = color_names.get(self.hex_rgb, None)
+            else:  # pragma: no cover
+                msg = f'Unexpected color type: {type(color)}'
+                raise TypeError(msg)
+            self._name = color_names.get(self.hex_rgb)
         except ValueError as e:
             msg = (
                 '\n'
@@ -1463,9 +1574,7 @@ class Color:
 
         """
         h = h.lstrip('#')
-        if h.startswith('0x'):
-            h = h[2:]
-        return h
+        return h.removeprefix('0x')
 
     @staticmethod
     def convert_color_channel(
@@ -1546,7 +1655,9 @@ class Color:
         arg = h
         h = self.strip_hex_prefix(h)
         try:
-            self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
+            self._from_rgba(
+                [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]
+            )
         except ValueError:
             msg = f'Invalid hex string: {arg}'
             raise ValueError(msg) from None
@@ -1647,7 +1758,12 @@ class Color:
         (1.0, 0.0, 0.0, 0.2)
 
         """
-        return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
+        return (
+            self._red / 255.0,
+            self._green / 255.0,
+            self._blue / 255.0,
+            self._opacity / 255.0,
+        )
 
     @property
     def float_rgb(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1888,17 +2004,16 @@ class Color:
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
-def get_cmap_safe(
-    cmap: ColormapOptions | list[str],
-):
-    """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
+    """Fetch a colormap by name from matplotlib, colorcet, cmocean, or cmcrameri.
 
     See :ref:`named_colormaps` for supported colormaps.
 
     Parameters
     ----------
-    cmap : str or list of str
-        Name of the colormap to fetch. If the input is a list of strings,
+    cmap : str | list[str] | matplotlib.colors.Colormap
+        Name of the colormap to fetch. If the input is a list of strings, the
+        strings must be color names (from :ref:`named_colors`), and
         it will create a ``ListedColormap`` with the input list.
 
     Returns
@@ -1914,62 +2029,72 @@ def get_cmap_safe(
         If the input is a list of items that are not strings.
 
     """
+    _validation.check_instance(cmap, (str, list, colors.Colormap), name='cmap')
+
+    def get_3rd_party_cmap(cmap_):
+        cmap_sources = {
+            'colorcet.cm': _COLORCET_CMAPS,
+            'cmocean.cm.cmap_d': _CMOCEAN_CMAPS,
+            'cmcrameri.cm.cmaps': _CMCRAMERI_CMAPS,
+        }
+
+        def get_nested_attr(obj, attr_path):
+            for attr in attr_path:
+                obj = getattr(obj, attr)
+            return obj
+
+        # Try importing and returning cmap from each package
+        for cmap_import, known_cmaps in cmap_sources.items():
+            parts = cmap_import.split('.')
+            top_module = parts[0]
+
+            with contextlib.suppress(ImportError):
+                mod = importlib.import_module(top_module)
+                cmap_dict = get_nested_attr(mod, parts[1:])
+                with contextlib.suppress(KeyError):
+                    return cmap_dict[cmap_]
+
+            if cmap_ in known_cmaps:  # pragma: no cover
+                msg = (
+                    f'Package `{top_module}` is required to use colormap {cmap_!r}.\n'
+                    'Install PyVista with `pyvista[colormaps]` to install it by default.'
+                )
+                raise ModuleNotFoundError(msg)
+        return None
+
+    if isinstance(cmap, colors.Colormap):
+        return cmap
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
 
-        msg_template = (
-            'Package `{}` is required to use colormap {!r}.\n'
-            'Install PyVista with `pyvista[colormaps]` to install it by default.'
-        )
-        # Try colorcet first
-        if has_module(module := 'colorcet'):  # pragma: no branch
-            import colorcet
-
-            try:
-                return colorcet.cm[cmap]
-            except KeyError:
-                pass
-        elif cmap in _COLORCET_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        # Try cmocean second
-        if has_module(module := 'cmocean'):  # pragma: no branch
-            import cmocean
-
-            try:
-                return cmocean.cm.cmap_d[cmap]
-            except KeyError:
-                pass
-        elif cmap in _CMOCEAN_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        if not isinstance(cmap, colors.Colormap):
+        cmap_3rd_party = get_3rd_party_cmap(cmap)
+        if cmap_3rd_party:
+            return cmap_3rd_party
+        elif not isinstance(cmap, colors.Colormap):
             if inspect.ismodule(colormaps):  # pragma: no cover
                 # Backwards compatibility with matplotlib<3.5.0
                 if not hasattr(colormaps, cmap):
                     msg = f'Invalid colormap "{cmap}"'
                     raise ValueError(msg)
-                cmap = getattr(colormaps, cmap)
+                cmap_obj = getattr(colormaps, cmap)
             else:
                 try:
-                    cmap = colormaps[cmap]  # type: ignore[assignment]
+                    cmap_obj = colormaps[cmap]
                 except KeyError:
                     msg = f"Invalid colormap '{cmap}'"
                     raise ValueError(msg) from None
 
-    elif isinstance(cmap, list):
+    else:  # input is a list
         for item in cmap:
             if not isinstance(item, str):
                 msg = 'When inputting a list as a cmap, each item should be a string.'  # type: ignore[unreachable]
                 raise TypeError(msg)
 
-        cmap = ListedColormap(cmap)  # type: ignore[assignment]
+        cmap_obj = ListedColormap(cmap)
 
-    return cmap
+    return cmap_obj
 
 
 def get_default_cycler():
@@ -2016,11 +2141,11 @@ def color_scheme_to_cycler(scheme):
 
     Parameters
     ----------
-    scheme : str, int, or _vtk.vtkColorSeries
+    scheme : str | int | :vtk:`vtkColorSeries`
         Color scheme to be converted. If a string, it should correspond to a
         valid color scheme name (e.g., 'viridis'). If an integer, it should
         correspond to a valid color scheme ID. If an instance of
-        `_vtk.vtkColorSeries`, it should be a valid color series.
+        :vtk:`vtkColorSeries`, it should be a valid color series.
 
     Returns
     -------
@@ -2041,7 +2166,7 @@ def color_scheme_to_cycler(scheme):
             series.SetColorScheme(scheme)
         else:
             msg = f'Color scheme not understood: {scheme}'
-            raise ValueError(msg)
+            raise TypeError(msg)
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
@@ -2060,7 +2185,8 @@ def get_cycler(color_cycler):
         - One of the following string values:
             - ``'default'``: Use the default color cycler (matches matplotlib's default)
             - ``'matplotlib'``: Dynamically get matplotlib's current theme's color cycler.
-            - ``'all'``: Cycle through all available colors in ``pyvista.plotting.colors.hexcolors``
+            - ``'all'``: Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
         - A named color scheme from ``pyvista.plotting.colors.COLOR_SCHEMES``
 
     Returns
@@ -2077,23 +2203,24 @@ def get_cycler(color_cycler):
 
     """
     if color_cycler is None:
-        return None
+        cycler_ = None
     elif isinstance(color_cycler, str):
         if color_cycler == 'default':
-            return get_default_cycler()
+            cycler_ = get_default_cycler()
         elif color_cycler == 'matplotlib':
-            return get_matplotlib_theme_cycler()
+            cycler_ = get_matplotlib_theme_cycler()
         elif color_cycler == 'all':
-            return get_hexcolors_cycler()
+            cycler_ = get_hexcolors_cycler()
         elif color_cycler in COLOR_SCHEMES:
-            return color_scheme_to_cycler(color_cycler)
+            cycler_ = color_scheme_to_cycler(color_cycler)
         else:
             msg = f'color cycler of name `{color_cycler}` not found.'
             raise ValueError(msg)
     elif isinstance(color_cycler, (tuple, list)):
-        return cycler('color', color_cycler)
+        cycler_ = cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
-        return color_cycler
+        cycler_ = color_cycler
     else:
         msg = f'color cycler of type {type(color_cycler)} not supported.'
         raise TypeError(msg)
+    return cycler_

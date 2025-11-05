@@ -6,12 +6,11 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_texture():
-    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
+    with pytest.raises(TypeError, match=r'Cannot create a pyvista.Texture from'):
         texture = pv.Texture(range(10))
 
     texture = pv.Texture(examples.mapfile)
@@ -41,6 +40,24 @@ def test_texture_grayscale_init():
     texture = pv.Texture(np.zeros((10, 10, 1), dtype=np.uint8))
     assert texture.dimensions == (10, 10)
     assert texture.n_components == 1
+
+
+@pytest.mark.parametrize('n_components', [1, 3, 4])
+def test_texture_color_mode(n_components):
+    im = pv.ImageData(dimensions=(2, 3, 4))
+    im['data'] = np.zeros((im.n_points, n_components))
+    texture = pv.Texture(im)
+    assert texture.n_components == n_components
+    assert texture.color_mode == 'direct'
+
+    texture.color_mode = 'direct'
+    assert texture.color_mode == 'direct'
+    texture.color_mode = 'map'
+    assert texture.color_mode == 'map'
+
+    # Test that VTK's default mode gets converted properly
+    texture.SetColorMode(0)
+    assert texture.color_mode == 'direct'
 
 
 def test_from_array():
@@ -73,7 +90,7 @@ def test_texture_rotate_ccw(texture):
 def test_texture_from_images(image):
     texture = pv.Texture([image] * 6)
     assert texture.cube_map
-    with pytest.raises(TypeError, match='pyvista.ImageData'):
+    with pytest.raises(TypeError, match=r'pyvista.ImageData'):
         pv.Texture(['foo'] * 6)
 
 
@@ -133,25 +150,22 @@ def test_repeat(texture):
 
 
 def test_wrap(texture):
-    if pv.vtk_version_info < (9, 1):
-        with pytest.raises(VTKVersionError):
-            assert isinstance(texture.wrap, texture.WrapType)
-        with pytest.raises(VTKVersionError):
-            texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-    else:
-        assert isinstance(texture.wrap, texture.WrapType)
-        texture.wrap = texture.WrapType.CLAMP_TO_EDGE
-        assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
+    assert isinstance(texture.wrap, texture.WrapType)
+    texture.wrap = texture.WrapType.CLAMP_TO_EDGE
+    assert texture.wrap == texture.WrapType.CLAMP_TO_EDGE
 
 
 def test_grayscale(texture):
+    assert texture.color_mode == 'direct'
     grayscale = texture.to_grayscale()
     assert grayscale.n_components == 1
     assert grayscale.dimensions == texture.dimensions
+    assert grayscale.color_mode == 'direct'
 
     gray_again = grayscale.to_grayscale()
     assert gray_again == grayscale
     assert gray_again is not grayscale  # equal and copy
+    assert grayscale.color_mode == 'direct'
 
 
 def test_numpy_to_texture():

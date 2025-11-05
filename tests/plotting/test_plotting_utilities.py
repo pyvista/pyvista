@@ -12,12 +12,13 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
+from pyvista.report import _get_render_window_class
 
 HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
 @pytest.mark.skip_plotting
-def test_gpuinfo():
+def test_gpuinfo(monkeypatch):
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
     _repr_html = gpuinfo._repr_html_()
@@ -27,15 +28,23 @@ def test_gpuinfo():
     assert len(_repr_html) > 1
 
     # test corrupted internal infos
-    gpuinfo._gpu_info = 'foo'
+    monkeypatch.setattr(
+        'pyvista.report._get_cached_render_window_info.info',
+        'foo',
+        raising=False,
+    )
     for func_name in ['renderer', 'version', 'vendor']:
         with pytest.raises(RuntimeError, match=func_name):
             getattr(gpuinfo, func_name)()
 
+    match = 'Unable to parse rendering information for the vtkRenderWindow class name.'
+    with pytest.raises(RuntimeError, match=match):
+        _get_render_window_class()
+
 
 @pytest.mark.skip_plotting
 def test_ray_trace_plot():
-    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
         [0, 0, 0],
         [1, 1, 1],
@@ -48,13 +57,15 @@ def test_ray_trace_plot():
 
 
 @pytest.mark.skip_plotting
-def test_plot_curvature(skip_check_gc):
-    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+@pytest.mark.skip_check_gc
+def test_plot_curvature():
+    sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
 @pytest.mark.skip_plotting
-def test_plot_curvature_pointset(skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_plot_curvature_pointset():
     grid = examples.load_structured()
     grid.plot_curvature(off_screen=True)
 
@@ -69,7 +80,7 @@ def test_plot_boundaries():
 @pytest.mark.parametrize('flip', [True, False])
 @pytest.mark.parametrize('faces', [True, False])
 def test_plot_normals(flip, faces):
-    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
 
 

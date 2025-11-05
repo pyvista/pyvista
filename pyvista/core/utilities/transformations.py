@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeAlias
 from typing import overload
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 
 if TYPE_CHECKING:
@@ -15,9 +17,21 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
+    _FiveArrays: TypeAlias = tuple[
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+    ]
 
-def axis_angle_rotation(
-    axis: VectorLike[float], angle: float, point: VectorLike[float] | None = None, deg: bool = True
+
+@_deprecate_positional_args(allowed=['axis', 'angle'])
+def axis_angle_rotation(  # noqa: PLR0917
+    axis: VectorLike[float],
+    angle: float,
+    point: VectorLike[float] | None = None,
+    deg: bool = True,  # noqa: FBT001, FBT002
 ) -> NumpyArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
@@ -258,20 +272,27 @@ def reflection(
 
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True] = True
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[True] = True,  # noqa: FBT002
 ) -> None: ...
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[False] = False,  # noqa: FBT002
 ) -> NumpyArray[float]: ...
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: bool = ...,  # noqa: FBT001
 ) -> NumpyArray[float] | None: ...
+@_deprecate_positional_args(allowed=['transformation', 'points'])
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
     points: NumpyArray[float],
-    inplace: Literal[True, False] = False,
+    inplace: Literal[True, False] = False,  # noqa: FBT002
 ) -> NumpyArray[float] | None:
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
@@ -328,7 +349,7 @@ def apply_transformation_to_points(
         points_2[:, :-1] = points
         points_2[:, -1] = 1
     else:
-        points_2 = points
+        points_2 = points  # type: ignore[assignment]
 
     # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
     # that the matrices to be multiplied lie in the last two dimensions.
@@ -343,13 +364,7 @@ def apply_transformation_to_points(
         return points_2
 
 
-def decomposition(
-    transformation: TransformLike,
-    *,
-    homogeneous: bool = False,
-) -> tuple[
-    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
-]:
+def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -> _FiveArrays:
     """Decompose a transformation into its components.
 
     The transformation matrix ``M`` is decomposed into five components:
@@ -477,7 +492,6 @@ def decomposition(
 
     dtype_out = matrix4x4.dtype
     I3 = np.eye(3, dtype=dtype_out)
-    I4 = np.eye(4, dtype=dtype_out)
     matrix3x3 = matrix4x4[:3, :3]
 
     T = matrix4x4[:3, 3]
@@ -497,23 +511,38 @@ def decomposition(
         N = np.array(1, dtype=dtype_out)
 
     if homogeneous:
-        T4 = I4.copy()
-        T4[:3, 3] = T
-
-        R4 = I4.copy()
-        R4[:3, :3] = R
-
-        N4 = I4.copy()
-        N4[:3, :3] = I3 * N
-
-        S4 = I4.copy()
-        S4[:3, :3] = I3 * S
-
-        K4 = I4.copy()
-        K4[:3, :3] = K
-
-        return T4, R4, N4, S4, K4
+        return _decomposition_as_homogeneous(T, R, N, S, K)
     return T, R, N, S, K
+
+
+def _decomposition_as_homogeneous(  # noqa: PLR0917
+    T: NumpyArray[float],  # noqa: N803
+    R: NumpyArray[float],  # noqa: N803
+    N: NumpyArray[float],  # noqa: N803
+    S: NumpyArray[float],  # noqa: N803
+    K: NumpyArray[float],  # noqa: N803
+) -> _FiveArrays:
+    """Return TRNSK decomposition as homogeneous matrices."""
+    dtype_out = T.dtype  # Assume all inputs have the same dtype
+    I3 = np.eye(3, dtype=dtype_out)
+    I4 = np.eye(4, dtype=dtype_out)
+
+    T4 = I4.copy()
+    T4[:3, 3] = T
+
+    R4 = I4.copy()
+    R4[:3, :3] = R
+
+    N4 = I4.copy()
+    N4[:3, :3] = I3 * N
+
+    S4 = I4.copy()
+    S4[:3, :3] = I3 * S
+
+    K4 = I4.copy()
+    K4[:3, :3] = K
+
+    return T4, R4, N4, S4, K4
 
 
 def _polar_decomposition(a: NumpyArray[float]) -> tuple[NumpyArray[float], NumpyArray[float]]:

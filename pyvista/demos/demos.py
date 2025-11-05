@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import examples
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
@@ -216,7 +217,8 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
+@_deprecate_positional_args
+def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -246,11 +248,11 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
 
     """
     # camera position
-    cpos = [
-        (6.879481857604187, -32.143727535933195, 23.05622921691103),
-        (-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
-        (-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
-    ]
+    cpos = pyvista.CameraPosition(
+        position=(6.879481857604187, -32.143727535933195, 23.05622921691103),
+        focal_point=(-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
+        viewup=(-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
+    )
 
     # Make data
     X = np.arange(-10, 10, 0.25)
@@ -337,8 +339,8 @@ def plot_ants_plane(notebook=None):
        Create plotting object.
 
        >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+       >>> _ = plotter.add_mesh(ant, color='r')
+       >>> _ = plotter.add_mesh(ant_copy, color='b')
 
        Add airplane mesh and make the color equal to the Y position.
 
@@ -378,8 +380,8 @@ def plot_ants_plane(notebook=None):
 
     # Create plotting object
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
@@ -413,11 +415,11 @@ def plot_beam(notebook=None):
     grid.points[:, 1] += d
 
     # Camera position
-    cpos = [
-        (11.915126303095157, 6.11392754955802, 3.6124956735471914),
-        (0.0, 0.375, 2.0),
-        (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
-    ]
+    cpos = pyvista.CameraPosition(
+        position=(11.915126303095157, 6.11392754955802, 3.6124956735471914),
+        focal_point=(0.0, 0.375, 2.0),
+        viewup=(-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
+    )
 
     cmap = 'bwr'
 
@@ -472,7 +474,8 @@ def plot_datasets(dataset_type=None):
     ]
     if dataset_type is not None and dataset_type not in allowable_types:
         msg = (
-            f'Invalid dataset_type {dataset_type}.  Must be one of the following: {allowable_types}'
+            f'Invalid dataset_type {dataset_type}.  '
+            f'Must be one of the following: {allowable_types}'
         )
         raise ValueError(msg)
 
@@ -505,20 +508,20 @@ def plot_datasets(dataset_type=None):
     points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pyvista.Line()
-    line.points += np.array((2, 0, 0))  # type: ignore[misc]
+    line.points += np.array((2, 0, 0))
     line.clear_data()
 
     tri = pyvista.Triangle()
-    tri.points += np.array([0, 1, 0])  # type: ignore[misc]
+    tri.points += np.array([0, 1, 0])
     circ = pyvista.Circle()
-    circ.points += np.array([1.5, 1.5, 0])  # type: ignore[misc]
+    circ.points += np.array([1.5, 1.5, 0])
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
     pyr = pyvista.Pyramid()
-    pyr.points *= 0.7  # type: ignore[misc]
+    pyr.points *= 0.7
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 

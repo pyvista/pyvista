@@ -1,7 +1,7 @@
 Lights
 ======
 The :class:`pyvista.Light` class adds additional functionality and a pythonic API
-to the ``vtk.vtkLight`` class. :class:`pyvista.Plotter` objects come with a default
+to the :vtk:`vtkLight` class. :class:`pyvista.Plotter` objects come with a default
 set of lights that work well in most cases, but in many situations a more hands-on
 access to lighting is necessary.
 

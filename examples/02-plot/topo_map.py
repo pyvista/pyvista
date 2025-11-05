@@ -23,9 +23,11 @@ from pyvista import examples
 # Start by loading the elevation data and a topographic map.
 
 # Load the elevation data as a surface
-elevation = examples.download_crater_topo().warp_by_scalar()
+topo = examples.download_crater_topo().resample(0.5, anti_aliasing=True)
+elevation = topo.warp_by_scalar()
 # Load the topographic map from a GeoTiff
 topo_map = examples.download_crater_imagery()
+topo_map.to_image().resample(0.5, anti_aliasing=True, inplace=True)
 topo_map = topo_map.flip_y()  # flip to align to our dataset
 
 elevation
@@ -70,11 +72,11 @@ p = pv.Plotter()
 p.add_mesh(local, texture=topo_map)
 p.add_mesh(surrounding, color='white')
 p.enable_eye_dome_lighting()
-p.camera_position = [
-    (1831100.0, 5642142.0, 8168.0),
-    (1820841.0, 5648745.0, 1104.0),
-    (-0.435, 0.248, 0.865),
-]
+p.camera_position = pv.CameraPosition(
+    position=(1831100.0, 5642142.0, 8168.0),
+    focal_point=(1820841.0, 5648745.0, 1104.0),
+    viewup=(-0.435, 0.248, 0.865),
+)
 p.show()
 # %%
 # .. tags:: plot

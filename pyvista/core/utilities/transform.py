@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -14,7 +15,9 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transformations import _decomposition_as_homogeneous
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
@@ -32,9 +35,15 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.core.utilities.transformations import _FiveArrays
 
 
-class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTransform):
+class Transform(
+    _NoNewAttrMixin,
+    _vtk.DisableVtkSnakeCase,
+    _vtk.vtkPyVistaOverride,
+    _vtk.vtkTransform,
+):
     """Describes linear transformations via a 4x4 matrix.
 
     A :class:`Transform` can be used to describe the full range of linear (also known
@@ -63,7 +72,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         By default, the transform is initialized as the identity matrix.
 
     point : VectorLike[float], optional
-        Point to use when composing some transformations such as scale, rotation, etc.
+        Point to use when composing transformations.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
@@ -255,7 +264,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
     ) -> None:
         super().__init__()
         self.multiply_mode = multiply_mode
-        self.point = point  # type: ignore[assignment]
+        self.point = point
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
@@ -266,7 +275,10 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                     # Init from sequence of transformations
                     [self.compose(t) for t in trans]
             else:
-                self.matrix = trans  # type: ignore[assignment]
+                self.compose(trans)
+
+        self._decomposition_cache: _FiveArrays | None = None
+        self._decomposition_mtime = -1
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
@@ -274,13 +286,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
             raise ValueError(msg)
@@ -291,13 +305,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand type(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand value(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
             raise ValueError(msg)
@@ -316,14 +332,17 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                 transform = copied.compose(other, multiply_mode='post')
             except TypeError:
                 msg = (
-                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
                 raise TypeError(msg)
             except ValueError:
                 msg = (
-                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector '
+                    f'or have 3x3 or 4x4 shape.'
                 )
                 raise ValueError(msg)
         return transform
@@ -334,13 +353,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand type(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand value(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise ValueError(msg)
@@ -528,6 +549,12 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         pyvista.DataObjectFilters.scale
             Scale a mesh.
 
+        pyvista.DataObjectFilters.resize
+            Resize a mesh.
+
+        scale_factors, has_scale
+            Get info about the transform's scale component.
+
         Examples
         --------
         Compose a scale matrix.
@@ -621,8 +648,14 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
+        flip_x, flip_y, flip_z
+            Convenience methods for reflecting about the x-, y-, or z-axis.
+
         pyvista.DataObjectFilters.reflect
             Reflect a mesh.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -687,8 +720,14 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
+        reflect, flip_y, flip_z
+            Similar reflection methods.
+
         pyvista.DataObjectFilters.flip_x
             Flip a mesh about the x-axis.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -747,8 +786,14 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
+        reflect, flip_x, flip_z
+            Similar reflection methods.
+
         pyvista.DataObjectFilters.flip_y
             Flip a mesh about the y-axis.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -807,8 +852,14 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
+        reflect, flip_x, flip_y
+            Similar reflection methods.
+
         pyvista.DataObjectFilters.flip_z
             Flip a mesh about the z-axis.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -863,6 +914,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         --------
         pyvista.DataObjectFilters.translate
             Translate a mesh.
+
+        translation, has_translation
+            Get info about the transform's translation component.
 
         Examples
         --------
@@ -931,7 +985,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_y, rotate_z, rotate_vector
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate
             Rotate a mesh.
@@ -1030,7 +1086,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
-        as_rotation
+        rotate_y, rotate_z, rotate_vector, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
@@ -1099,7 +1157,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_z, rotate_vector, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
@@ -1168,7 +1228,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_y, rotate_vector, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
@@ -1241,7 +1303,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_y, rotate_z, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
@@ -1275,6 +1339,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         self: Transform,
         transform: TransformLike,
         *,
+        point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a transformation matrix.
@@ -1289,6 +1354,17 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         ----------
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
+
+        point : VectorLike[float], optional
+            Point to transform about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are composed and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the transformation
+                - :meth:`translate` away from ``point`` after the transformation
+
+            .. versionadded:: 0.47
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when composing the matrix. By default, the
@@ -1317,7 +1393,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                [ 0.   ,  0.   ,  1.   ,  1.5  ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
-        Define a second transformation and use ``+`` to compose it.
+        Define a second transformation and use ``*`` to compose it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
         >>> transform = transform * array
@@ -1327,7 +1403,34 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                [-0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
+        Compose the transform about a point. Check the :attr:`matrix_list` to see that a
+        translation is added before and after the transform.
+
+        >>> transform = pv.Transform().compose(transform, point=(1, 2, 3))
+        >>> transform.matrix_list  # doctest: +NORMALIZE_WHITESPACE
+        [array([[ 1.,  0.,  0., -1.],
+                [ 0.,  1.,  0., -2.],
+                [ 0.,  0.,  1., -3.],
+                [ 0.,  0.,  0.,  1.]]),
+         array([[ 0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   , -1.   , -1.5  ],
+                [-0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   ,  0.   ,  2.   ]]),
+         array([[1., 0., 0., 1.],
+                [0., 1., 0., 2.],
+                [0., 0., 1., 3.],
+                [0., 0., 0., 1.]])]
+
+
         """
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
+
+    def _compose(
+        self: Transform,
+        transform: TransformLike,
+        *,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
         # Make sure we have a vtkTransform
         if isinstance(transform, _vtk.vtkTransform):
             vtk_transform = transform
@@ -1378,8 +1481,10 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
     @matrix.setter
     def matrix(self: Transform, trans: TransformLike) -> None:
-        self.identity()
-        self.compose(trans)
+        array = _validation.validate_transform4x4(
+            trans, must_be_finite=self.check_finite, name='matrix'
+        )
+        self.SetMatrix(vtkmatrix_from_array(array))
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
@@ -1517,7 +1622,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
             Points with integer values are cast to a float type before the
             transformation is applied. A similar casting is also performed when
-            transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
+            transforming datasets. See also the notes at
+            :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
         Parameters
@@ -1545,7 +1651,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                 - ``'active_vectors'`` transforms active normals and active vectors
                   arrays only.
                 - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
-                  with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+                  with three components. This mode is equivalent to setting
+                  ``transform_all_input_vectors=True``
                   with :meth:`pyvista.DataObjectFilters.transform`.
 
                 By default, only ``'active_vectors'`` are transformed.
@@ -1652,7 +1759,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
                 msg = (
-                    f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
+                    f"Transformation mode '{mode_}' is not supported for {kind}. "
+                    'Mode must be one of'
                     f'\n{allowed_modes}'
                 )
                 raise ValueError(msg)
@@ -1734,10 +1842,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
-        if out is not None:
-            return out
-        else:
-            return array
+        return out if out is not None else array
 
     def apply_to_points(
         self,
@@ -1858,7 +1963,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             - ``'active_vectors'`` transforms active normals and active vectors arrays
               only.
             - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
-              three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+              three components. This mode is equivalent to setting
+              ``transform_all_input_vectors=True``
               with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
@@ -1950,17 +2056,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         """
         return self.apply(actor, mode, inverse=inverse, copy=copy)
 
-    def decompose(
-        self: Transform,
-        *,
-        homogeneous: bool = False,
-    ) -> tuple[
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-    ]:
+    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveArrays:
         """Decompose the current transformation into its components.
 
         Decompose the :attr:`matrix` ``M`` into
@@ -2018,9 +2114,21 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         --------
         compose
             Compose a transformation.
-        as_rotation
-            Get this transform's rotation component.
 
+        translation, has_translation
+            Get info about this transform's translation component.
+
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
+            Get info about this transform's rotation component.
+
+        reflection, has_reflection
+            Get info about this transform's reflection component.
+
+        scale_factors, has_scale
+            Get info about this transform's scale component.
+
+        shear_matrix, has_shear
+            Get info about this transform's shear component.
 
         Examples
         --------
@@ -2150,10 +2258,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         array([-0.99944491, -2.0022213 , -3.        ])
 
         """
-        return decomposition(
-            self.matrix,
-            homogeneous=homogeneous,
-        )
+        if (current_mtime := self.GetMTime()) != self._decomposition_mtime:
+            # Recompute and cache
+            self._decomposition_cache = decomposition(self.matrix, homogeneous=False)
+            self._decomposition_mtime = current_mtime
+
+        cache = cast('_FiveArrays', self._decomposition_cache)
+        if homogeneous:
+            return _decomposition_as_homogeneous(*cache)
+        return cache
 
     def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
@@ -2257,12 +2370,12 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             point=point, multiply_mode=multiply_mode
         )
         if translate_before:
-            self.compose(translate_before, multiply_mode=multiply_mode)
+            self._compose(translate_before, multiply_mode=multiply_mode)
 
-        self.compose(transform, multiply_mode=multiply_mode)
+        self._compose(transform, multiply_mode=multiply_mode)
 
         if translate_after:
-            self.compose(translate_after, multiply_mode=multiply_mode)
+            self._compose(translate_after, multiply_mode=multiply_mode)
 
         return self
 
@@ -2276,7 +2389,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
             translate_away = Transform().translate(-point_array)
             translate_toward = Transform().translate(point_array)
-            if multiply_mode == 'post' or self._multiply_mode == 'post':
+            if multiply_mode == 'post' or (
+                multiply_mode is None and self._multiply_mode == 'post'
+            ):
                 return translate_away, translate_toward
             else:
                 return translate_toward, translate_away
@@ -2299,6 +2414,303 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
     def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
 
+    @property
+    def translation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the translation component of the current :attr:`matrix`.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_translation, translate, decompose
+
+        Examples
+        --------
+        Compose a translation and get the translation component.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform() + (1, 2, 3)
+        >>> trans.translation
+        (1.0, 2.0, 3.0)
+
+        Compose a second translation and get the component again.
+
+        >>> trans += (4, 5, 6)
+        >>> trans.translation
+        (5.0, 7.0, 9.0)
+
+        """
+        return self.GetPosition()
+
+    @property
+    def rotation_axis_angle(
+        self,
+    ) -> tuple[tuple[float, float, float], float]:  # numpydoc ignore=RT01
+        """Return the rotation component of the current :attr:`matrix` as a vector and angle.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_rotation, rotation_matrix, rotate_vector, as_rotation, decompose
+
+        Examples
+        --------
+        Compose a rotation from a vector and angle.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform().rotate_vector((1, 2, 3), 30)
+
+        Get the rotation axis and angle.
+
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.2672, 0.5345, 0.8017)
+        >>> angle
+        30.0
+
+        Compose a second rotation around the same axis and get the axis and angle again.
+
+        >>> _ = trans.rotate_vector((1, 2, 3), 40)
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.2672, 0.5345, 0.8017)
+        >>> angle
+        70.0
+
+        """
+        # Decompose first to ensure we have a proper rotation
+        _, R, _, _, _ = self.decompose()
+        wxyz = Transform(R).GetOrientationWXYZ()
+        return wxyz[1:4], wxyz[0]
+
+    @property
+    def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return the rotation component of the current :attr:`matrix` as a 3x3 matrix.
+
+        The rotation is orthonormal and right-handed with positive determinant.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_rotation, rotation_axis_angle, rotate, as_rotation, decompose
+
+        Examples
+        --------
+        Compose a rotation about the z-axis.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform().rotate_z(90)
+
+        Get the rotation matrix.
+
+        >>> trans.rotation_matrix
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        Compose a second rotation and get the rotation matrix again.
+
+        >>> _ = trans.rotate_y(-90)
+        >>> trans.rotation_matrix
+        array([[ 0.,  0., -1.],
+               [ 1.,  0.,  0.],
+               [ 0., -1.,  0.]])
+
+        """
+        _, R, _, _, _ = self.decompose()
+        return R
+
+    @property
+    def reflection(self) -> Literal[1, -1]:  # numpydoc ignore=RT01
+        """Return the reflection component of the current :attr:`matrix` as an integer.
+
+        ``1`` is returned if there is no reflection, and ``-1`` is returned if there
+        is a reflection.
+
+        See Also
+        --------
+        has_reflection, reflect, decompose
+
+        Examples
+        --------
+        Create a transform and get its reflection.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform()
+        >>> trans.reflection
+        1
+
+        Compose a reflection about the x-axis and get the reflection again.
+
+        >>> _ = trans.flip_x()
+        >>> trans.reflection
+        -1
+
+        Compose a second reflection and get the reflection again.
+
+        >>> _ = trans.flip_y()
+        >>> trans.reflection
+        1
+
+        """
+        _, _, N, _, _ = self.decompose()
+        return N.astype(int).tolist()
+
+    @property
+    def scale_factors(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the scaling component of the current :attr:`matrix`.
+
+        The scaling factors are always positive.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_scale, scale, decompose
+
+        Examples
+        --------
+        Compose a scale matrix and get the scale factors.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform() * (1, 2, 3)
+        >>> trans.scale_factors
+        (1.0, 2.0, 3.0)
+
+        Compose a second scale matrix and get the factors again.
+
+        >>> trans *= (4, 5, 6)
+        >>> trans.scale_factors
+        (4.0, 10.0, 18.0)
+
+        """
+        # Use PyVista's decompose instead of vtk's GetScale() method
+        _, _, _, S, _ = self.decompose()
+        return tuple(S.tolist())
+
+    @property
+    def shear_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return the shear component of the current :attr:`matrix` as a 3x3 matrix.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_shear, compose, decompose
+
+        Examples
+        --------
+        Compose a symmetric shear matrix.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1
+        >>> shear[1, 0] = 0.1
+        >>> trans = pv.Transform(shear)
+
+        Get the shear matrix. The shear matrix is the same as the input in this particular example,
+        but in general this is not the case.
+
+        >>> trans.shear_matrix
+        array([[1. , 0.1, 0. ],
+               [0.1, 1. , 0. ],
+               [0. , 0. , 1. ]])
+
+        Compose an asymmetric shear matrix instead.
+
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1
+        >>> trans = pv.Transform(shear)
+
+        Get the shear matrix. In this case, shear differs from the input because asymmetric shear
+        can be decomposed into scale factors and a rotation.
+
+        >>> trans.shear_matrix
+        array([[1.        , 0.05      , 0.        ],
+               [0.04975124, 1.        , 0.        ],
+               [0.        , 0.        , 1.        ]])
+
+        >>> trans.scale_factors
+        (0.9987523388778445, 1.0037461005722337, 1.0)
+
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.0, 0.0, -1.0)
+        >>> angle
+        2.8624
+
+        """
+        _, _, _, _, K = self.decompose()
+        return K
+
+    @property
+    def has_translation(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current :attr:`matrix` has a translation component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        translation, translate, decompose
+
+        """
+        return not np.allclose(self.translation, np.zeros((3,)))
+
+    @property
+    def has_rotation(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current :attr:`matrix` has a rotation component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        rotation_matrix, rotate, decompose
+
+        """
+        return not np.allclose(self.rotation_matrix, np.eye(3))
+
+    @property
+    def has_reflection(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current :attr:`matrix` has a reflection component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        reflection, reflect, decompose
+
+        """
+        return self.reflection == -1
+
+    @property
+    def has_scale(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current :attr:`matrix` has a scale component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        scale_factors, scale, decompose
+
+        """
+        return not np.allclose(self.scale_factors, np.ones((3,)))
+
+    @property
+    def has_shear(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current :attr:`matrix` has a shear component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        shear_matrix, compose, decompose
+
+        """
+        return not np.allclose(self.shear_matrix, np.eye(3))
+
     def as_rotation(
         self,
         representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']
@@ -2306,7 +2718,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         *args,
         **kwargs,
     ) -> Rotation | NumpyArray[float]:
-        """Return the rotation component as a SciPy :class:`~scipy.spatial.transform.Rotation` or any of its representations.
+        """Return the rotation component as a SciPy ``Rotation`` or any of its representations.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component
         and then returned with the specified representation.
@@ -2320,15 +2732,21 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         representation : str, optional
             Representation of the rotation.
 
-            - ``'quat'``: Represent as a quaternion using :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
-            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
-            - ``'rotvec'``: Represent as a rotation vector using :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
-            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
-            - ``'euler'``: Represent as Euler angles using :meth:`~scipy.spatial.transform.Rotation.as_euler`.
-            - ``'davenport'``: Represent as Davenport angles using :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
+            - ``'quat'``: Represent as a quaternion using
+              :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using
+              :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
 
-            If no representation is given, then an instance of :class:`scipy.spatial.transform.Rotation`
-            is returned by default.
+            If no representation is given, then an instance of
+            :class:`scipy.spatial.transform.Rotation` is returned by default.
 
         *args
             Arguments passed to the ``Rotation`` method for the specified
@@ -2345,8 +2763,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         See Also
         --------
-        decompose
-            Alternative method for obtaining the rotation component (and others).
+        rotation_matrix, rotation_axis_angle, decompose
+            Get this transform's rotation component `without` using SciPy.
         rotate, rotate_x, rotate_y, rotate_z, rotate_vector
             Compose a rotation matrix.
 
@@ -2363,7 +2781,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         >>> rot = transform.as_rotation()
         >>> rot
-        <scipy.spatial.transform._rotation.Rotation ...>
+        Rotation.from_matrix(array([[ 0., -1.,  0.],
+                                    [ 1.,  0.,  0.],
+                                    [ 0.,  0.,  1.]]))
 
         Represent the rotation as a quaternion.
 
@@ -2400,7 +2820,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         """
         try:
-            from scipy.spatial.transform import Rotation
+            from scipy.spatial.transform import Rotation  # noqa: PLC0415
         except ImportError:
             msg = "The 'scipy' package must be installed to use `as_rotation`"
             raise ImportError(msg)
@@ -2419,21 +2839,22 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         _, R, _, _, _ = self.decompose()
 
         if representation == 'matrix':
-            return R
-
-        rotation = Rotation.from_matrix(R)
-        if representation is None:
-            return rotation
-        elif representation == 'quat':
-            return rotation.as_quat(*args, **kwargs)
-        elif representation == 'rotvec':
-            return rotation.as_rotvec(*args, **kwargs)
-        elif representation == 'mrp':
-            return rotation.as_mrp(*args, **kwargs)
-        elif representation == 'euler':
-            return rotation.as_euler(*args, **kwargs)
-        elif representation == 'davenport':
-            return rotation.as_davenport(*args, **kwargs)
-        else:  # pragma: no cover
-            msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
-            raise RuntimeError(msg)
+            out = R
+        else:
+            rotation = Rotation.from_matrix(R)
+            if representation is None:
+                out = rotation
+            elif representation == 'quat':
+                out = rotation.as_quat(*args, **kwargs)
+            elif representation == 'rotvec':
+                out = rotation.as_rotvec(*args, **kwargs)
+            elif representation == 'mrp':
+                out = rotation.as_mrp(*args, **kwargs)
+            elif representation == 'euler':
+                out = rotation.as_euler(*args, **kwargs)
+            elif representation == 'davenport':
+                out = rotation.as_davenport(*args, **kwargs)
+            else:  # pragma: no cover
+                msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
+                raise RuntimeError(msg)
+        return out

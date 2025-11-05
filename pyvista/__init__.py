@@ -6,8 +6,6 @@ import os
 import sys
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import cast
-import warnings
 
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
@@ -22,27 +20,31 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._vtk_core import _MIN_SUPPORTED_VTK_VERSION
+from pyvista.core._vtk_core import VersionInfo
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers as _wrappers
+from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report
+from pyvista.report import check_math_text_support as check_math_text_support
+from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotlib_vtk_compatibility
 from pyvista.report import get_gpu_info as get_gpu_info
 
-# get the int type from vtk
-ID_TYPE = cast('int', _get_vtk_id_type())
+if TYPE_CHECKING:
+    import numpy as np
 
-# determine if using at least vtk 9.0.0
-if vtk_version_info.major < 9:  # pragma: no cover
+# get the int type from vtk
+ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
+
+if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    msg = 'VTK version must be 9.0.0 or greater.'
+    msg = f'VTK version must be {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)} or greater.'
     raise VTKVersionError(msg)
-
-# catch annoying numpy/vtk future warning:
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
 OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
@@ -78,6 +80,9 @@ MAX_N_COLOR_BARS = 10
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
+# Allow setting new private -- but not public -- attributes by default
+_ALLOW_NEW_ATTRIBUTES_MODE: Literal['private', True, False] = 'private'
+
 
 # Import all modules for type checkers and linters
 if TYPE_CHECKING:
@@ -102,8 +107,8 @@ def __getattr__(name):
         If the attribute is not found.
 
     """
-    import importlib
-    import inspect
+    import importlib  # noqa: PLC0415
+    import inspect  # noqa: PLC0415
 
     allow = {
         'demos',
@@ -117,7 +122,7 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting  # noqa: F401
+        import pyvista.plotting  # noqa: F401, PLC0415
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)

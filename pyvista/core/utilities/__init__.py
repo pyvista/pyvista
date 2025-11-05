@@ -125,6 +125,7 @@ from .misc import assert_empty_kwargs as assert_empty_kwargs
 from .misc import check_valid_vector as check_valid_vector
 from .misc import conditional_decorator as conditional_decorator
 from .misc import has_module as has_module
+from .misc import set_new_attribute as set_new_attribute
 from .misc import threaded as threaded
 from .misc import try_callback as try_callback
 from .observers import Observer as Observer
@@ -229,6 +230,7 @@ from .reader import XMLRectilinearGridReader as XMLRectilinearGridReader
 from .reader import XMLStructuredGridReader as XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader as XMLUnstructuredGridReader
 from .reader import get_reader as get_reader
+from .state_manager import allow_new_attributes as allow_new_attributes
 from .state_manager import vtk_snake_case as vtk_snake_case
 from .state_manager import vtk_verbosity as vtk_verbosity
 from .transform import Transform as Transform

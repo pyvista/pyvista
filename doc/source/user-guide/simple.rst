@@ -75,7 +75,12 @@ First, check out some common meta-properties:
 
     What are the mesh bounds?
     >>> mesh.bounds
-    BoundsTuple(x_min=139.061, x_max=1654.93, y_min=32.09, y_max=1319.95, z_min-17.74, z_max=282.13)
+    BoundsTuple(x_min =  139.06100463867188,
+                x_max = 1654.9300537109375,
+                y_min =   32.09429931640625,
+                y_max = 1319.949951171875,
+                z_min =  -17.741199493408203,
+                z_max =  282.1300048828125)
 
     Where is the center of this mesh?
 
@@ -215,6 +220,29 @@ your use case:
   information see the `pyvistaqt`_ library)
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
+
+Command Line
+------------
+
+Starting from version ``0.47``, meshes can be plotted from one (or more)
+files using a command line tool such that:
+
+.. code-block:: shell
+
+    pyvista plot <files> [OPTIONS]
+    python -m pyvista plot <files> [OPTIONS]
+
+.. note::
+    Providing multiple files renders them inside the same window.
+
+Most options available in :func:`pyvista.plot` are exposed by the command line.
+Run the ``--help`` command to see all options:
+
+
+.. code-block:: shell
+
+    pyvista plot --help
+    python -m pyvista plot --help
 
 
 

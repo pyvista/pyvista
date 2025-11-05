@@ -1,0 +1,13 @@
+accept = [
+  200, # Link is OK
+  403, # Skip domains known to return 403 Forbidden to bots
+  429, # Network error: Too Many Requests
+]
+exclude = [
+  'file:///home/*',
+  'http://861c873f6352:8888/*',
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
+]
+exclude_all_private = true # exclude 'localhost', '127.0.0.1', etc.
+exclude_path = ['pyvista/core/utilities/docs.py']
+user_agent = 'curl/7.83.1'

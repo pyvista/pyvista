@@ -10,7 +10,10 @@ import weakref
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -49,12 +52,12 @@ def _poked_context_callback(plotter, *args, **kwargs):
         try_callback(*args, **kwargs)
 
 
-class RectangleSelection:
+class RectangleSelection(_NoNewAttrMixin):
     """Internal data structure for rectangle based selections.
 
     Parameters
     ----------
-    frustum : _vtk.vtkPlanes
+    frustum : :vtk:`vtkPlanes`
         Frustum that defines the selection.
     viewport : tuple[float, float, float, float]
         The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
@@ -88,7 +91,7 @@ class RectangleSelection:
         return self._viewport
 
 
-class PointPickingElementHandler:
+class PointPickingElementHandler(_NoNewAttrMixin):
     """Internal picking handler for element-based picking.
 
     This handler is only valid for single point picking operations.
@@ -202,7 +205,9 @@ class PointPickingElementHandler:
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_edges > 1:
             ei = (
-                cell.cast_to_unstructured_grid().extract_all_edges().find_closest_cell(picked_point)
+                cell.cast_to_unstructured_grid()
+                .extract_all_edges()
+                .find_closest_cell(picked_point)
             )
             edge = cell.edges[ei].cast_to_unstructured_grid()
             edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
@@ -255,6 +260,7 @@ class PointPickingElementHandler:
             try_callback(self.callback, picked)
 
 
+@abstract_class
 class PickingInterface:  # numpydoc ignore=PR01
     """An internal class to hold core picking related features."""
 
@@ -309,7 +315,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         if self.click_position is None:  # type: ignore[attr-defined]
             self.store_click_position()  # type: ignore[attr-defined]
         renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def pick_mouse_position(self):
@@ -324,10 +330,10 @@ class PickingInterface:  # numpydoc ignore=PR01
         if self.mouse_position is None:  # type: ignore[attr-defined]
             self.store_mouse_position()  # type: ignore[attr-defined]
         renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
-    def _init_click_picking_callback(self, left_clicking=False):
+    def _init_click_picking_callback(self, *, left_clicking=False):
         if left_clicking:
             self._picking_left_clicking_observer = self.iren.add_observer(  # type: ignore[attr-defined]
                 'LeftButtonPressEvent',
@@ -339,7 +345,7 @@ class PickingInterface:  # numpydoc ignore=PR01
                 partial(try_callback, _launch_pick_event),
             )
 
-    def disable_picking(self):
+    def disable_picking(self) -> None:
         """Disable any active picking and remove observers.
 
         Examples
@@ -369,23 +375,27 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            msg = (
+                'Picking is already enabled, please disable previous picking '
+                'with `disable_picking()`.'
+            )
             raise PyVistaPickingError(msg)
 
-    def enable_point_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_point_picking(  # noqa: PLR0917
         self,
         callback=None,
         tolerance=0.025,
-        left_clicking=False,
+        left_clicking=False,  # noqa: FBT002
         picker=PickerType.POINT,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
-        show_point=True,
-        use_picker=False,
-        pickable_window=False,
-        clear_on_no_selection=True,
+        show_point=True,  # noqa: FBT002
+        use_picker=False,  # noqa: FBT002
+        pickable_window=False,  # noqa: FBT002
+        clear_on_no_selection=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -420,12 +430,12 @@ class PickingInterface:  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         show_message : bool | str, default: True
             Show the message about how to use the point picking
@@ -475,6 +485,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             warnings.warn(
                 '`use_mesh` is deprecated. See `use_picker` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -541,13 +552,14 @@ class PickingInterface:  # numpydoc ignore=PR01
                 name='_point_picking_message',
             )
 
-    def enable_rectangle_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_rectangle_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         style='wireframe',
         color='pink',
         **kwargs,
@@ -580,7 +592,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -615,7 +627,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_helper(picker, *args):
+        def _end_pick_helper(picker, *_):
             renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
             x0 = int(renderer.GetPickX1())
             x1 = int(renderer.GetPickX2())
@@ -659,6 +671,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             self.iren._style_class.StartSelect()  # type: ignore[attr-defined]
 
 
+@abstract_class
 class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     """Internal class to contain picking utilities."""
 
@@ -748,7 +761,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         return self._picked_block_index
 
     @wraps(PickingInterface.disable_picking)
-    def disable_picking(self):
+    def disable_picking(self) -> None:  # type: ignore[override]
         """Disable picking."""
         super().disable_picking()
         # remove any picking text
@@ -757,20 +770,21 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 renderer.remove_actor(self._picking_text, render=False)
         self._picking_text = None
 
-    def enable_surface_point_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_surface_point_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
-        show_point=True,
+        show_point=True,  # noqa: FBT002
         point_size=10,
         tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
+        pickable_window=False,  # noqa: FBT002
+        left_clicking=False,  # noqa: FBT002
         picker=PickerType.CELL,
-        use_picker=False,
-        clear_on_no_selection=True,
+        use_picker=False,  # noqa: FBT002
+        clear_on_no_selection=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking of a point on the surface of a mesh.
@@ -819,12 +833,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
@@ -857,7 +871,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         # only allow certain pickers to be used for surface picking
         #  the picker class needs to have `GetDataSet()`
         picker = PickerType.from_any(picker)
-        valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
+        valid_pickers = [
+            PickerType.POINT,
+            PickerType.CELL,
+            PickerType.HARDWARE,
+            PickerType.VOLUME,
+        ]
         if picker not in valid_pickers:
             msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
             raise ValueError(msg)
@@ -907,17 +926,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    def enable_mesh_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_mesh_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show=True,
-        show_message=True,
+        show=True,  # noqa: FBT002
+        show_message=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
         font_size=18,
-        left_clicking=False,
-        use_actor=False,
+        left_clicking=False,  # noqa: FBT002
+        use_actor=False,  # noqa: FBT002
         picker=PickerType.CELL,
         **kwargs,
     ):
@@ -968,12 +988,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
 
         **kwargs : dict, optional
@@ -982,7 +1002,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        vtk.vtkPropPicker
+        :vtk:`vtkPropPicker`
             Property picker.
 
         Examples
@@ -1005,7 +1025,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):
+        def end_pick_call_back(*args):  # noqa: ARG001
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
@@ -1032,8 +1052,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             reset_camera=_kwargs.pop('reset_camera', False),
                             **_kwargs,
                         )
-                except Exception as e:  # pragma: no cover
-                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[call-overload]
+                except Exception as e:  # noqa: BLE001  # pragma: no cover
+                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e), stacklevel=2)  # type: ignore[call-overload]
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)  # type: ignore[union-attr]
@@ -1058,17 +1078,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             pickable_window=False,
         )
 
-    def enable_rectangle_through_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_rectangle_through_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show=True,
+        show=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         **kwargs,
     ):
         """Enable rectangle based cell picking through the scene.
@@ -1100,7 +1121,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1176,17 +1197,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    def enable_rectangle_visible_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_rectangle_visible_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show=True,
+        show=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         **kwargs,
     ):
         """Enable rectangle based cell picking on visible surfaces.
@@ -1218,7 +1240,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1286,7 +1308,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            'Display representations other than `surface` will result in incorrect results.',
+                            'Display representations other than `surface` will result '
+                            'in incorrect results.',
+                            stacklevel=2,
                         )
                     smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
@@ -1318,18 +1342,19 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    def enable_cell_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_cell_picking(  # noqa: PLR0917
         self,
         callback=None,
-        through=True,
-        show=True,
-        show_message=True,
+        through=True,  # noqa: FBT002
+        show=True,  # noqa: FBT002
+        show_message=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking of cells with a rectangle selection tool.
@@ -1387,7 +1412,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1427,16 +1452,17 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    def enable_element_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_element_picking(  # noqa: PLR0917
         self,
         callback=None,
         mode='cell',
-        show=True,
-        show_message=True,
+        show=True,  # noqa: FBT002
+        show_message=True,  # noqa: FBT002
         font_size=18,
         tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
+        pickable_window=False,  # noqa: FBT002
+        left_clicking=False,  # noqa: FBT002
         picker=PickerType.CELL,
         **kwargs,
     ):
@@ -1484,12 +1510,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -1590,18 +1616,21 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         """
         # use a weak reference to enable garbage collection
-        renderer_ = weakref.ref(self.renderer)  # type: ignore[attr-defined]
         self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01
+        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
+            loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]
+            index = self_().renderers.loc_to_index(loc)  # type: ignore[union-attr]
+            renderer = self_().renderers[index]  # type: ignore[union-attr]
+
             selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetRenderer(renderer_())  # type: ignore[arg-type]
-            selector.SetArea(x, y, x, y)  # single pixel
+            selector.SetRenderer(renderer)
+            selector.SetArea(x, y, x, y)
             selection = selector.Select()
 
             for ii in range(selection.GetNumberOfNodes()):
@@ -1625,6 +1654,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         self.track_click_position(callback=get_picked_block, viewport=True, side=side)  # type: ignore[attr-defined]
 
 
+@abstract_class
 class PickingHelper(PickingMethods):
     """Internal container class to contain picking helper methods."""
 
@@ -1634,8 +1664,10 @@ class PickingHelper(PickingMethods):
         self.picked_path = None
         self.picked_geodesic = None
         self.picked_horizon = None
+        self._last_picked_idx: int | None = None
 
-    def fly_to_mouse_position(self, focus=False):
+    @_deprecate_positional_args
+    def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
         """Focus on last stored mouse position."""
         if self.mouse_position is None:  # type: ignore[attr-defined]
             self.store_mouse_position()  # type: ignore[attr-defined]
@@ -1660,7 +1692,7 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        def _the_callback(*args):
+        def _the_callback(*_):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)  # type: ignore[attr-defined]
             if callable(callback):
@@ -1668,15 +1700,16 @@ class PickingHelper(PickingMethods):
 
         self.track_click_position(callback=_the_callback, side='right')  # type: ignore[attr-defined]
 
-    def enable_path_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_path_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
-        show_path=True,
+        show_path=True,  # noqa: FBT002
         tolerance=0.025,
         **kwargs,
     ):
@@ -1776,17 +1809,18 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    def enable_geodesic_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_geodesic_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
         tolerance=0.025,
-        show_path=True,
-        keep_order=True,
+        show_path=True,  # noqa: FBT002
+        keep_order=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking at geodesic paths.
@@ -1853,7 +1887,6 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:
@@ -1918,19 +1951,20 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    def enable_horizon_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_horizon_picking(  # noqa: PLR0917
         self,
         callback=None,
         normal=(0.0, 0.0, 1.0),
         width=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
-        show_path=True,
+        show_path=True,  # noqa: FBT002
         opacity=0.75,
-        show_horizon=True,
+        show_horizon=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable horizon picking.

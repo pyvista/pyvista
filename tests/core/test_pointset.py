@@ -12,11 +12,6 @@ from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
 
-# skip all tests if concrete pointset unavailable
-pytestmark = pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class'
-)
-
 
 def test_pointset_basic():
     # create empty pointset
@@ -100,7 +95,7 @@ def test_cast_to_polydata(pointset, deep):
     key = 'key'
     pointset.point_data[key] = data
 
-    pdata = pointset.cast_to_polydata(deep)
+    pdata = pointset.cast_to_polydata(deep=deep)
     assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
@@ -423,7 +418,8 @@ def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
     assert actual.dtype == int
     assert np.array_equal(actual, expected)
 
-    if pv.vtk_version_info >= (9, 4):
-        with pytest.warns(DeprecationWarning):
+    if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info <= (9, 5, 0):
+        # Deprecated in 9.4, removed in 9.6
+        with pytest.warns(DeprecationWarning, match=r'Call to deprecated method'):
             # Test deprecation warning is emitted by VTK
             getattr(mesh, attr.split('polyhedron_')[1])

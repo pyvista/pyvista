@@ -5,13 +5,15 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
@@ -21,18 +23,22 @@ from .tools import FONTS
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import ClassVar
 
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
 
+HorizontalOptions = Literal['left', 'center', 'right']
+VerticalOptions = Literal['bottom', 'center', 'top']
 
-@no_new_attr
-class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
+
+class CornerAnnotation(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation
+):
     """Text annotation in four corners.
 
-    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+    This is an annotation object that manages four text actors / mappers to provide
+    annotation in the four corners of a viewport.
 
     Parameters
     ----------
@@ -63,7 +69,10 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
+    @_deprecate_positional_args(allowed=['position', 'text'])
+    def __init__(  # noqa: PLR0917
+        self, position, text, prop=None, linear_font_scale_factor=None, name=None
+    ):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -160,8 +169,7 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
         self.SetLinearFontScaleFactor(factor)
 
 
-@no_new_attr
-class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
+class Text(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -192,7 +200,10 @@ class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None, name=None):
+    @_deprecate_positional_args(allowed=['text'])
+    def __init__(  # noqa: PLR0917
+        self, text=None, position=None, prop=None, name=None
+    ):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -217,7 +228,7 @@ class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         """
         return self.GetInput()
 
-    @input.setter
+    @input.setter  # noqa: A003
     def input(self, text: str):
         self.SetInput(text)
 
@@ -265,8 +276,9 @@ class Label(_Prop3DMixin, Text):
     In addition, this class supports an additional :attr:`relative_position` attribute.
     In general, it is recommended to simply use :attr:`~pyvista.Prop3D.position` when positioning a
     :class:`Label` by itself. However, if the position of the label depends on the
-    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and :attr:`relative_position`
-    may be used together. In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
+    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and
+    :attr:`relative_position` may be used together.
+    In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
     should be kept in-sync. See the examples below.
 
     Parameters
@@ -374,13 +386,6 @@ class Label(_Prop3DMixin, Text):
 
     """
 
-    _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
-        'size',
-        'relative_position',
-        '_relative_position',
-        '_prop3d',
-    )
-
     def __init__(
         self,
         text: str | None = None,
@@ -389,16 +394,16 @@ class Label(_Prop3DMixin, Text):
         *,
         size: int = 50,
         prop: pyvista.Property | None = None,
-        name: str | None = None,
+        name: str = 'Label',
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
         _Prop3DMixin.__init__(self)
-        self.relative_position = relative_position  # type: ignore[assignment]
-        self.position = position  # type: ignore[assignment]
+        self.relative_position = relative_position
+        self.position = position
         self.size = size
 
     @property
@@ -453,8 +458,7 @@ class Label(_Prop3DMixin, Text):
         return BoundsTuple(x, x, y, y, z, z)
 
 
-@no_new_attr
-class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
+class TextProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters
@@ -525,7 +529,8 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['theme'])
+    def __init__(  # noqa: PLR0917
         self,
         theme=None,
         color=None,
@@ -533,11 +538,11 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
         orientation=None,
         font_size=None,
         font_file=None,
-        shadow: bool = False,
+        shadow: bool = False,  # noqa: FBT001, FBT002
         justification_horizontal=None,
         justification_vertical=None,
-        italic: bool = False,
-        bold: bool = False,
+        italic: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = False,  # noqa: FBT001, FBT002
         background_color=None,
         background_opacity=None,
     ):

@@ -9,7 +9,7 @@ Positional lights in PyVista have customizable beam shapes, see the
 the sense that they are unidirectional lights with a finite position,
 so they can be visualized using a cone.
 
-This is exactly the purpose of a ``vtk.vtkLightActor``, the
+This is exactly the purpose of a :vtk:`vtkLightActor`, the
 functionality of which can be enabled for spotlights:
 """
 
@@ -39,7 +39,9 @@ plotter.add_light(UFO)
 # enable shadows to better demonstrate lighting
 plotter.enable_shadows()
 
-plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
+plotter.camera_position = pv.CameraPosition(
+    position=(28, 30, 22), focal_point=(0.77, 0, -0.44), viewup=(0, 0, 1)
+)
 plotter.show()
 
 

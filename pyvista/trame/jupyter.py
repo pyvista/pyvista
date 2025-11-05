@@ -5,6 +5,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from typing import TYPE_CHECKING
+from typing import Concatenate
+from typing import Literal
 import warnings
 
 from trame.widgets import html as html_widgets
@@ -24,6 +27,15 @@ from pyvista.trame.ui import get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR
 from pyvista.trame.views import get_server
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from IPython.display import IFrame
+
+    from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.trame.ui.vuetify2 import Viewer
+
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
 You must start the trame server before attempting to `show()`
@@ -37,7 +49,8 @@ You can use the following snippet to launch the server:
 """
 JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
-Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
+Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the
+`'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
     pyvista.set_jupyter_backend('trame')
@@ -64,7 +77,7 @@ class TrameJupyterServerDownError(RuntimeError):
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
-        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE)
+        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE, stacklevel=2)  # pragma: no cover
         # and Error
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
@@ -124,7 +137,10 @@ class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
         border = 'border: 1px solid rgb(221,221,221);'
-        value = f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; height: {height}; {border}"></iframe>'
+        value = (
+            f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; '
+            f'height: {height}; {border}"></iframe>'
+        )
         super().__init__(value, **kwargs)
         self._src = src
 
@@ -152,7 +168,9 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
 
     wslink_backend : str, optional
         The wslink backend that the server should use
-        ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
+        ``aiohttp`` by default, ``jupyter`` if the
+        `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_
+        is used.
 
     **kwargs : dict, optional
         Any additional keyword arguments to pass to ``pyvista.trame.views.get_server``.
@@ -222,9 +240,8 @@ def build_url(
         if server_proxy_prefix is None:
             server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
-        src = (
-            f'{server_proxy_prefix if server_proxy_prefix else ""}{_server.port}/index.html{params}'
-        )
+        prefix = server_proxy_prefix if server_proxy_prefix else ''
+        src = f'{prefix}{_server.port}/index.html{params}'
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'
     logger.debug(src)
@@ -262,19 +279,20 @@ def initialize(
 
 
 def show_trame(
-    plotter,
-    mode=None,
-    name=None,
-    server_proxy_enabled=None,
-    server_proxy_prefix=None,
-    jupyter_extension_enabled=None,
-    collapse_menu=False,
-    add_menu=True,
-    add_menu_items=None,
-    default_server_rendering=True,
-    handler=None,
+    plotter: Plotter,
+    mode: JupyterBackendOptions | None = None,
+    name: str | None = None,
+    server_proxy_enabled: bool | None = None,
+    server_proxy_prefix: str | None = None,
+    jupyter_extension_enabled: bool | None = None,
+    collapse_menu: bool = False,
+    add_menu: bool = True,
+    add_menu_items: Callable[[Literal['trame', 'server', 'client'], bool, bool], None]
+    | None = None,
+    default_server_rendering: bool = True,
+    handler: Callable[Concatenate[Viewer, str, ...], IFrame] | None = None,
     **kwargs,
-):
+) -> EmbeddableWidget | IFrame | Widget:
     """Run and display the trame application in jupyter's event loop.
 
     Parameters
@@ -364,9 +382,9 @@ def show_trame(
     if plotter._window_size_unset:
         dw, dh = '99%', '600px'
     else:
-        dw, dh = plotter.window_size
-        dw = f'{dw}px'
-        dh = f'{dh}px'
+        width, height = plotter.window_size
+        dw = f'{width}px'
+        dh = f'{height}px'
     kwargs.setdefault('width', dw)
     kwargs.setdefault('height', dh)
 
@@ -403,7 +421,7 @@ def show_trame(
     )
 
     if jupyter_extension_enabled:  # pragma: no cover
-        from trame_client.ui.core import iframe_url_builder_jupyter_extension
+        from trame_client.ui.core import iframe_url_builder_jupyter_extension  # noqa: PLC0415
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
         src = iframe_attrs['src']
@@ -448,13 +466,14 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     """
     try:
-        import nest_asyncio
+        import nest_asyncio  # noqa: PLC0415
     except ImportError:
-        msg = """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
-
-    from pyvista.trame.jupyter import launch_server
-    await launch_server().ready
-"""
+        msg = (
+            'Please install `nest_asyncio` to automagically launch the trame server '
+            'without await. Or, to avoid `nest_asynctio` run:\n\n'
+            'from pyvista.trame.jupyter import launch_server\n'
+            'await launch_server().ready'
+        )
         raise ImportError(msg)
 
     async def launch_it():

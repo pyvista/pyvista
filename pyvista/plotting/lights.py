@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtk.vtkLight."""
+"""Module containing pyvista implementation of :vtk:`vtkLight`."""
 
 from __future__ import annotations
 
@@ -18,14 +18,17 @@ except ImportError:  # pragma: no cover
 
 from typing import TYPE_CHECKING
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
 
 if TYPE_CHECKING:
-    from ..core._typing_core import TransformLike
+    from pyvista.core._typing_core import TransformLike
+
     from ._typing import ColorLike
 
 
@@ -41,7 +44,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(DisableVtkSnakeCase, vtkLight):
+class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
     """Light class.
 
     Parameters
@@ -143,7 +146,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         position=None,
         focal_point=None,
@@ -152,7 +156,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         intensity=None,
         positional=None,
         cone_angle=None,
-        show_actor=False,
+        show_actor=False,  # noqa: FBT002
         exponent=None,
         shadow_attenuation=None,
         attenuation_values=None,
@@ -259,6 +263,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
                     if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
                         return False
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __del__(self):
         """Clean up when the light is being destroyed."""
@@ -417,7 +423,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The world space position is the :py:attr:`position` property
         transformed by the light's transform matrix if it exists. The
         value of this read-only property corresponds to the
-        ``vtk.vtkLight.GetTransformedPosition()`` method.
+        :vtk:`vtkLight.GetTransformedPosition` method.
 
         Examples
         --------
@@ -471,7 +477,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The world space focal point is the :py:attr:`focal_point`
         property transformed by the light's transform matrix if it
         exists. The value of this read-only property corresponds to
-        the ``vtk.vtkLight.GetTransformedFocalPoint()`` method.
+        the :vtk:`vtkLight.GetTransformedFocalPoint` method.
 
         Examples
         --------
@@ -526,7 +532,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
     def on(self):  # numpydoc ignore=RT01
         """Return or set whether the light is on.
 
-        This corresponds to the Switch state of the ``vtk.vtkLight`` class.
+        This corresponds to the Switch state of the :vtk:`vtkLight` class.
 
         Examples
         --------
@@ -634,7 +640,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -683,7 +689,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
@@ -761,7 +767,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         """Return (if any) or set the transformation matrix of the light.
 
         The transformation matrix is ``None`` by default, and it is
-        stored as a ``vtk.vtkMatrix4x4`` object when set. If set, the
+        stored as a :vtk:`vtkMatrix4x4` object when set. If set, the
         light's parameters (position and focal point) are transformed
         by the matrix before being rendered. See also the
         :py:attr:`world_position` and :py:attr:`world_focal_point`
@@ -957,7 +963,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         focal point is set to the origin. The position is defined in
         terms of an elevation and an azimuthal angle, both in degrees.
 
-        Note that the equivalent ``vtk.vtkLight.SetDirectionAngle()`` method
+        Note that the equivalent :vtk:`vtkLight.SetDirectionAngle` method
         uses a surprising coordinate system where the (x', y', z') axes of
         the method correspond to the (z, x, y) axes of the renderer.
         This method reimplements the functionality in a way that ``elev``
@@ -992,7 +998,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         phi = np.radians(azim)
         self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
-    def copy(self, deep=True):
+    @_deprecate_positional_args
+    def copy(self, deep=True):  # noqa: FBT002
         """Return a shallow or a deep copy of the light.
 
         The only mutable attribute of :class:`pyvista.Light` is the
@@ -1123,12 +1130,12 @@ class Light(DisableVtkSnakeCase, vtkLight):
 
     @classmethod
     def from_vtk(cls, vtk_light):
-        """Create a light from a ``vtk.vtkLight``, resulting in a copy.
+        """Create a light from a :vtk:`vtkLight`, resulting in a copy.
 
         Parameters
         ----------
-        vtk_light : vtk.vtkLight
-            The ``vtk.vtkLight`` to be copied.
+        vtk_light : :vtk:`vtkLight`
+            The :vtk:`vtkLight` to be copied.
 
         Returns
         -------
@@ -1218,7 +1225,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
 
         Parameters
         ----------
-        renderer : vtk.vtkRenderer
+        renderer : :vtk:`vtkRenderer`
             Renderer.
 
         """

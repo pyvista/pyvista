@@ -37,11 +37,11 @@ ellipsoid.plot(color='lightblue')
 # ++++++++++++++++++++++++++++
 
 # cool plotting direction
-cpos = [
-    (21.9930, 21.1810, -30.3780),
-    (-1.1640, -1.3098, -0.1061),
-    (0.8498, -0.2515, 0.4631),
-]
+cpos = pv.CameraPosition(
+    position=(21.9930, 21.1810, -30.3780),
+    focal_point=(-1.1640, -1.3098, -0.1061),
+    viewup=(0.8498, -0.2515, 0.4631),
+)
 
 
 # half ellipsoid
@@ -193,7 +193,7 @@ pointb = [0, 1, 0]
 center = [0, 0, 0]
 resolution = 100
 
-arc = pv.CircularArc(pointa, pointb, center, resolution)
+arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
 
 pl = pv.Plotter()
 pl.add_mesh(arc, color='k', line_width=4)
@@ -211,7 +211,7 @@ pointb = [1, 0, 0]
 center = [0, 0, 0]
 resolution = 100
 
-arc = pv.CircularArc(pointa, pointb, center, resolution)
+arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
 poly = arc.extrude([0, 0, 1])
 poly.plot(color='lightblue', cpos='iso', show_edges=True)
 # %%
