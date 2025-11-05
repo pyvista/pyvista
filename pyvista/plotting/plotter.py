@@ -6184,7 +6184,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @_deprecate_positional_args(allowed=['filename'])
     def save_graphic(  # noqa: PLR0917
         self,
-        filename: str,
+        filename: str | Path,
         title: str = 'PyVista Export',
         raster: bool = True,  # noqa: FBT001, FBT002
         painter: bool = True,  # noqa: FBT001, FBT002
@@ -6203,8 +6203,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
-            Path to fsave the graphic file to.
+        filename : str | Path
+            Path to save the graphic file to.
 
         title : str, default: "PyVista Export"
             Title to use within the file properties.
