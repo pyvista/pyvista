@@ -7927,22 +7927,32 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
     def fast_splatting(
         self: DataSet,
+        bounds=None,
+        kernel_dimensions=50,
+        dimensions=100,
         *,
         progress_bar: bool = False,
-    ) -> pyvista.PolyData:
+    ) -> ImageData:
         """Splat optimized for splatting single kernels.
 
         This filter is a wrapper around :vtk:`vtkFastSplatter`.
 
         Parameters
         ----------
+        bounds : pyvista.Bounds, optional
+            Bounds of the output. By default used the same bounds as the input
+            :class:`pyvista.Dataset`.
+        kernel_dimensions : int, default: 50
+            Density of the kernel.
+        dimensions : int, default: 100
+            Density of the output.
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
         -------
         pyvista.ImageData
-            The splat meshes.
+            The splatted image data.
 
         Examples
         --------
@@ -7954,9 +7964,29 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> splat_meshes.plot()
 
         """
+        # build kernel image
+        x = np.linspace(-1, 1, kernel_dimensions)
+        y = np.linspace(-1, 1, kernel_dimensions)
+        z = np.linspace(-1, 1, kernel_dimensions)
+        xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
+
+        kernel = (1 - np.abs(xv)) * (1 - np.abs(yv)) * (1 - np.abs(zv))
+        kernel = np.clip(kernel, 0, 1)
+
+        splat_image = pyvista.ImageData(
+            dimensions=(kernel_dimensions, kernel_dimensions, kernel_dimensions)
+        )
+        splat_image.point_data['values'] = kernel.ravel(order='F')
+
+        # prepare algorithm
         alg = _vtk.vtkFastSplatter()
-        alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Splatting mesh')
+        alg.SetInputData(0, self)  # dataset input
+        alg.SetInputData(1, splat_image)  # kernel input
+        if bounds:
+            alg.SetModelBounds(bounds)
+        alg.SetOutputDimensions(dimensions, dimensions, dimensions)
+
+        _update_alg(alg, progress_bar=progress_bar, message='Splatting mesh')
         return _get_output(alg)
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
