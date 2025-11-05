@@ -7967,7 +7967,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny()
-        >>> splatted = mesh.fast_splat()  # bounds=(-2, 2, -2, 2, -2, 2))
+        >>> splatted = mesh.fast_splat()
         >>> cpos = [
         ...     (0.1034, 0.2228, 0.3012),
         ...     (-0.03056, 0.1053, 0.01183),
