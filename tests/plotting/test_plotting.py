@@ -1992,6 +1992,26 @@ def test_image_properties() -> None:
     pl.close()
 
 
+@pytest.mark.parametrize('enable_parallel_projection', [True, False])
+def test_image_depth_parallel_projection(enable_parallel_projection):
+    # Create depth image
+    pl = pv.Plotter()
+    pl.add_mesh(pv.ParametricRandomHills(), color=True, name='name')
+    if enable_parallel_projection:
+        pl.enable_parallel_projection()
+    pl.show(store_image_depth=True, auto_close=False)
+    zval = pl.get_image_depth()
+
+    # Plot depth image
+    image = pv.ImageData(dimensions=(*zval.shape, 1))
+    image['Distance To Camera'] = np.flipud(zval).T.ravel(order='F')
+    pl.remove_actor('name')
+    pl.add_mesh(image)
+    pl.view_xy()
+    pl.camera.tight()
+    pl.show()
+
+
 def test_image_depth_raise(sphere: pv.PolyData, verify_image_cache) -> None:
     """Ensure a RuntimeError is raised when not storing image_depth."""
     verify_image_cache.skip = True
