@@ -1988,8 +1988,29 @@ def test_image_properties() -> None:
     pl.show(interactive=False, auto_close=False)
     img = pl.get_image_depth(fill_value=0.0)
     rng = np.ptp(img)
-    assert 0.3 < rng < 0.4, rng  # 0.3313504 in testing
+    assert 3.8 < rng < 3.9, rng  # 3.8460655 in testing
     pl.close()
+
+
+@pytest.mark.skip_check_gc
+@pytest.mark.parametrize('enable_parallel_projection', [True, False])
+def test_image_depth_parallel_projection(enable_parallel_projection):
+    # Create depth image
+    pl = pv.Plotter()
+    pl.add_mesh(pv.ParametricRandomHills(), color=True)
+    if enable_parallel_projection:
+        pl.enable_parallel_projection()
+    pl.show(store_image_depth=True, auto_close=False)
+    zval = pl.get_image_depth()
+    pl.clear_actors()
+
+    # Plot depth image
+    image = pv.ImageData(dimensions=(*zval.shape, 1))
+    image['Distance To Camera'] = np.flipud(zval).T.ravel(order='F')
+    pl.add_mesh(image)
+    pl.view_xy()
+    pl.camera.tight()
+    pl.show()
 
 
 def test_image_depth_raise(sphere: pv.PolyData, verify_image_cache) -> None:
