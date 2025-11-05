@@ -8,6 +8,13 @@ Extrude a :class:`pyvista.PolyData` with a :func:`pyvista.Plane` using
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

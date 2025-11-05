@@ -10,6 +10,13 @@ and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv
