@@ -4350,3 +4350,16 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
+
+
+def test_fast_splat(sphere: PolyData) -> None:
+    """Test the fast splat dataset filter."""
+    splat_dimensions = (10, 10, 5)
+    bounds = (-200.0, 200.0, -300, 200.0, 200.0, 400.0)
+    img = sphere.fast_splat(
+        bounds=bounds, kernel_dimensions=(5, 5, 5), splat_dimensions=splat_dimensions
+    )
+    assert isinstance(img, pv.ImageData)
+    assert img.dimensions == splat_dimensions
+    assert 'ImageScalars' in img.point_data
+    assert img.bounds == bounds
