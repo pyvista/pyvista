@@ -1992,20 +1992,21 @@ def test_image_properties() -> None:
     pl.close()
 
 
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('enable_parallel_projection', [True, False])
 def test_image_depth_parallel_projection(enable_parallel_projection):
     # Create depth image
     pl = pv.Plotter()
-    pl.add_mesh(pv.ParametricRandomHills(), color=True, name='name')
+    pl.add_mesh(pv.ParametricRandomHills(), color=True)
     if enable_parallel_projection:
         pl.enable_parallel_projection()
     pl.show(store_image_depth=True, auto_close=False)
     zval = pl.get_image_depth()
+    pl.clear_actors()
 
     # Plot depth image
     image = pv.ImageData(dimensions=(*zval.shape, 1))
     image['Distance To Camera'] = np.flipud(zval).T.ravel(order='F')
-    pl.remove_actor('name')
     pl.add_mesh(image)
     pl.view_xy()
     pl.camera.tight()
