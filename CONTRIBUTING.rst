@@ -1533,6 +1533,7 @@ created the following will occur:
        cd doc
        make clean  # deletes the sphinx-gallery cache
        tox run -e doctest-modules
+       tox run -e docs-build
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
