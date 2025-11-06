@@ -397,7 +397,7 @@ class Prop3D(
         *,
         inplace: bool = False,
     ):
-        """Apply a transformation to this object's :attr:`user_matrix`.
+        """Apply a transformation to this object's :attr:`~Prop3D.user_matrix`.
 
         .. note::
 
