@@ -1488,7 +1488,7 @@ class Transform(
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
-        """Return the inverse of the current transformation :attr:`matrix`.
+        """Return the inverse of the current transformation :attr:`~Transform.matrix`.
 
         Notes
         -----
@@ -1616,7 +1616,7 @@ class Transform(
         inverse: bool = False,
         copy: bool = True,
     ):
-        """Apply the current transformation :attr:`matrix` to points, vectors, a dataset, or actor.
+        """Apply the current transformation :attr:`~Transform.matrix` to points, vectors, a dataset, or actor.
 
         .. note::
 
@@ -1852,7 +1852,7 @@ class Transform(
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
-        """Apply the current transformation :attr:`matrix` to a point or points.
+        """Apply the current transformation :attr:`~Transform.matrix` to a point or points.
 
         This is equivalent to ``apply(points, 'points')``. See :meth:`apply` for
         details and examples.
@@ -1899,7 +1899,7 @@ class Transform(
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
-        """Apply the current transformation :attr:`matrix` to a vector or vectors.
+        """Apply the current transformation :attr:`~Transform.matrix` to a vector or vectors.
 
         This is equivalent to ``apply(vectors, 'vectors')``. See :meth:`apply` for
         details and examples.
@@ -1947,7 +1947,7 @@ class Transform(
         copy: bool = True,
         inverse: bool = False,
     ) -> _DataSetOrMultiBlockType:
-        """Apply the current transformation :attr:`matrix` to a dataset.
+        """Apply the current transformation :attr:`~Transform.matrix` to a dataset.
 
         This is equivalent to ``apply(dataset, mode)``. See :meth:`apply` for details
         and examples.
@@ -2005,7 +2005,7 @@ class Transform(
         copy: bool = True,
         inverse: bool = False,
     ) -> Prop3D:
-        """Apply the current transformation :attr:`matrix` to an actor.
+        """Apply the current transformation :attr:`~Transform.matrix` to an actor.
 
         This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and
         examples.
@@ -2399,7 +2399,7 @@ class Transform(
 
     @property
     def check_finite(self: Transform) -> bool:  # numpydoc ignore: RT01
-        """Check that the :attr:`matrix` and :attr:`inverse_matrix` have finite values.
+        """Check that the :attr:`~Transform.matrix` and :attr:`~Transform.inverse_matrix` have finite values.
 
         If ``True``, all transformations are checked to ensure they only contain
         finite values (i.e. no ``NaN`` or ``Inf`` values) and a ``ValueError`` is raised
@@ -2416,7 +2416,7 @@ class Transform(
 
     @property
     def translation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return the translation component of the current :attr:`matrix`.
+        """Return the translation component of the current transformation :attr:`~Transform.matrix`.
 
         .. versionadded:: 0.47
 
@@ -2446,7 +2446,7 @@ class Transform(
     def rotation_axis_angle(
         self,
     ) -> tuple[tuple[float, float, float], float]:  # numpydoc ignore=RT01
-        """Return the rotation component of the current :attr:`matrix` as a vector and angle.
+        """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a vector and angle.
 
         .. versionadded:: 0.47
 
@@ -2486,7 +2486,7 @@ class Transform(
 
     @property
     def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return the rotation component of the current :attr:`matrix` as a 3x3 matrix.
+        """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         The rotation is orthonormal and right-handed with positive determinant.
 
@@ -2524,7 +2524,7 @@ class Transform(
 
     @property
     def reflection(self) -> Literal[1, -1]:  # numpydoc ignore=RT01
-        """Return the reflection component of the current :attr:`matrix` as an integer.
+        """Return the reflection component of the current transformation :attr:`~Transform.matrix` as an integer.
 
         ``1`` is returned if there is no reflection, and ``-1`` is returned if there
         is a reflection.
@@ -2560,7 +2560,7 @@ class Transform(
 
     @property
     def scale_factors(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return the scaling component of the current :attr:`matrix`.
+        """Return the scaling component of the current transformation :attr:`~Transform.matrix`.
 
         The scaling factors are always positive.
 
@@ -2592,7 +2592,7 @@ class Transform(
 
     @property
     def shear_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return the shear component of the current :attr:`matrix` as a 3x3 matrix.
+        """Return the shear component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         .. versionadded:: 0.47
 
@@ -2648,7 +2648,7 @@ class Transform(
 
     @property
     def has_translation(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the current :attr:`matrix` has a translation component.
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a translation component.
 
         .. versionadded:: 0.47
 
@@ -2661,7 +2661,7 @@ class Transform(
 
     @property
     def has_rotation(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the current :attr:`matrix` has a rotation component.
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a rotation component.
 
         .. versionadded:: 0.47
 
@@ -2674,7 +2674,7 @@ class Transform(
 
     @property
     def has_reflection(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the current :attr:`matrix` has a reflection component.
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a reflection component.
 
         .. versionadded:: 0.47
 
@@ -2687,7 +2687,7 @@ class Transform(
 
     @property
     def has_scale(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the current :attr:`matrix` has a scale component.
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a scale component.
 
         .. versionadded:: 0.47
 
@@ -2700,7 +2700,7 @@ class Transform(
 
     @property
     def has_shear(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the current :attr:`matrix` has a shear component.
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a shear component.
 
         .. versionadded:: 0.47
 
