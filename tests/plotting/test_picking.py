@@ -248,7 +248,7 @@ def test_cell_picking_interactive():
     pl.iren._mouse_left_button_release(width, height)
 
     assert n_cells[0]
-    assert pl.picked_cell
+    assert pl.picked_cells
     assert 'original_cell_ids' in pl.picked_cells.cell_data
     assert 'orig_extract_id' in pl.picked_cells.cell_data
 
@@ -277,6 +277,12 @@ def test_cell_picking_warning():
     assert pl.picked_cells
     assert 'original_cell_ids' in pl.picked_cells.cell_data
     assert 'orig_extract_id' in pl.picked_cells.cell_data
+
+
+def test_picked_cell_warning():
+    pl = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match='Use the `picked_cells` attribute instead'):
+        _ = pl.picked_cell
 
 
 @pytest.mark.filterwarnings(

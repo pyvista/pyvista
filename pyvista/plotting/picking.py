@@ -680,7 +680,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         super().__init__(*args, **kwargs)
         self._picked_actor = None
         self._picked_mesh = None
-        self._picked_cell = None
+        self._picked_cell: None | pyvista.MultiBlock | pyvista.UnstructuredGrid = None
         self._picking_text = None
         self._picked_block_index = None
 
@@ -717,31 +717,69 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         return self._picked_mesh
 
     @property
-    def picked_cell(self):  # numpydoc ignore=RT01
-        """Return the picked cell.
+    def picked_cell(self) -> None | pyvista.UnstructuredGrid | pyvista.MultiBlock:
+        """Return the cell-picked object.
 
-        This returns the picked cell after selecting a cell.
+        This returns the object containing cells that were interactively picked with
+        :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
+        :func:`enable_rectangle_through_picking <pyvista.Plotter.enable_rectangle_through_picking>`
+        or
+        :func:`enable_rectangle_visible_picking <pyvista.Plotter.enable_rectangle_visible_picking>`.
+
+        Its value depends on the picking result:
+
+        - if no cells have been picked, returns None
+        - if cells belonging to single actor have been picked, returns a :class:`UnstructuredGrid`
+        - if cells belonging to multiple actors have been picked, returns a :class:`MultiBlock`
+        containing ``pyvista.UnstructuredGrid``s which length equals the number of picked actors.
+
+        Note that a cell data ``original_cell_ids`` is added to help identifying
+        cell ids picked from the original dataset.
+
+        .. deprecated:: 0.47
+            Use the :attr:`picked_cells <pyvista.Plotter.picked_cells>` attribute instead.
 
         Returns
         -------
-        pyvista.Cell or None
-            Picked cell if available.
+        None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Picked object if available.
 
-        """
+        """  # noqa: E501
+        # deprecated in 0.47, error in 0.48, remove in 0.49
+        warnings.warn(
+            category=PyVistaDeprecationWarning,
+            message='Use the `picked_cells` attribute instead.',
+            stacklevel=2,
+        )
         return self._picked_cell
 
     @property
-    def picked_cells(self):  # numpydoc ignore=RT01
-        """Return the picked cells.
+    def picked_cells(self) -> None | pyvista.UnstructuredGrid | pyvista.MultiBlock:
+        """Return the cell-picked object.
 
-        This returns the picked cells after selecting cells.
+        This returns the object containing cells that were interactively picked with
+        :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
+        :func:`enable_rectangle_through_picking <pyvista.Plotter.enable_rectangle_through_picking>`
+        or
+        :func:`enable_rectangle_visible_picking <pyvista.Plotter.enable_rectangle_visible_picking>`.
+
+        Its value depends on the picking result:
+
+        - if no cells have been picked, returns None
+        - if cells belonging to single actor have been picked, returns a :class:`UnstructuredGrid`
+        - if cells belonging to multiple actors have been picked, returns a :class:`MultiBlock`
+        containing ``pyvista.UnstructuredGrid``s which length equals the number of picked actors.
+
+        Note that a cell data ``original_cell_ids`` is added to help identifying
+        cell ids picked from the original dataset.
+
 
         Returns
         -------
-        pyvista.Cell or None
-            Picked cell if available.
+        None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Picked object if available.
 
-        """
+        """  # noqa: E501
         return self._picked_cell
 
     @property
