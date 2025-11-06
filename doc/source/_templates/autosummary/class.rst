@@ -8,7 +8,7 @@
 {% if methods %}
 
 {{ _('Methods') }}
-{{ '=' * _('Methods')|length }}
+{{ '-' * _('Methods')|length }}
 
 .. autosummary::
    :toctree:
@@ -26,7 +26,7 @@
 {% if attributes %}
 
 {{ _('Attributes') }}
-{{ '=' * _('Attributes')|length }}
+{{ '-' * _('Attributes')|length }}
 
 .. autosummary::
    :toctree:
