@@ -1598,7 +1598,7 @@ class Transform(
         inverse: bool = ...,
         copy: bool = ...,
     ) -> Prop3D: ...
-    def apply(  # numpydoc ignore=SS06
+    def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
         /,
@@ -2399,7 +2399,7 @@ class Transform(
         return None, None
 
     @property
-    def check_finite(self: Transform) -> bool:  # numpydoc ignore: RT01,SS06
+    def check_finite(self: Transform) -> bool:  # numpydoc ignore: RT01
         """Check that the :attr:`~Transform.matrix` and :attr:`~Transform.inverse_matrix` have
          finite values.
 
@@ -2417,7 +2417,7 @@ class Transform(
         self._check_finite = bool(value)
 
     @property
-    def translation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01,SS06
+    def translation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the translation component of the current transformation
         :attr:`~Transform.matrix`.
 
@@ -2448,7 +2448,7 @@ class Transform(
     @property
     def rotation_axis_angle(
         self,
-    ) -> tuple[tuple[float, float, float], float]:  # numpydoc ignore=RT01,SS06
+    ) -> tuple[tuple[float, float, float], float]:  # numpydoc ignore=RT01
         """Return the rotation component of the current transformation :attr:`~Transform.matrix`
         as a vector and angle.
 
@@ -2489,7 +2489,7 @@ class Transform(
         return wxyz[1:4], wxyz[0]
 
     @property
-    def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01,SS06
+    def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the rotation component of the current transformation :attr:`~Transform.matrix`
         as a 3x3 matrix.
 
@@ -2528,7 +2528,7 @@ class Transform(
         return R
 
     @property
-    def reflection(self) -> Literal[1, -1]:  # numpydoc ignore=RT01,SS06
+    def reflection(self) -> Literal[1, -1]:  # numpydoc ignore=RT01
         """Return the reflection component of the current transformation :attr:`~Transform.matrix`
         as an integer.
 
@@ -2597,7 +2597,7 @@ class Transform(
         return tuple(S.tolist())
 
     @property
-    def shear_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01,SS06
+    def shear_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the shear component of the current transformation :attr:`~Transform.matrix` as a
         3x3 matrix.
 
@@ -2654,7 +2654,7 @@ class Transform(
         return K
 
     @property
-    def has_translation(self) -> bool:  # numpydoc ignore=RT01,SS06
+    def has_translation(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a
         translation component.
 
@@ -2668,7 +2668,7 @@ class Transform(
         return not np.allclose(self.translation, np.zeros((3,)))
 
     @property
-    def has_rotation(self) -> bool:  # numpydoc ignore=RT01,SS06
+    def has_rotation(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a rotation
         component.
 
@@ -2682,7 +2682,7 @@ class Transform(
         return not np.allclose(self.rotation_matrix, np.eye(3))
 
     @property
-    def has_reflection(self) -> bool:  # numpydoc ignore=RT01,SS06
+    def has_reflection(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a
         reflection component.
 
@@ -2696,7 +2696,7 @@ class Transform(
         return self.reflection == -1
 
     @property
-    def has_scale(self) -> bool:  # numpydoc ignore=RT01,SS06
+    def has_scale(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a scale
         component.
 
@@ -2710,7 +2710,7 @@ class Transform(
         return not np.allclose(self.scale_factors, np.ones((3,)))
 
     @property
-    def has_shear(self) -> bool:  # numpydoc ignore=RT01,SS06
+    def has_shear(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a shear
         component.
 
