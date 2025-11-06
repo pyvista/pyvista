@@ -569,7 +569,7 @@ if 'dev' in pyvista.__version__:
     <div style="padding: 0.5em; text-align: center; background-color: #ffcc00; color: black;">
         This is documentation for an <strong>unstable development version</strong>.
         <a id="stable-link"
-           style="margin-left: 1em; padding: 0.3em 0.6em; background-color: black; color: white; 
+           style="margin-left: 1em; padding: 0.3em 0.6em; background-color: black; color: white;
                   text-decoration: none; border-radius: 4px;"
            href="#">
            Switch to stable version
@@ -582,7 +582,7 @@ if 'dev' in pyvista.__version__:
     </script>
     """
 
-    html_theme_options["announcement"] = announcement_html
+    html_theme_options['announcement'] = announcement_html
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
 # already loads it
