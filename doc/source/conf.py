@@ -565,7 +565,8 @@ html_theme_options = {
 }
 
 if 'dev' in pyvista.__version__:
-    announcement_html = """
+    stable_base = "https://docs.pyvista.org"
+    announcement_html = f"""
     <div style="padding: 0.5em; text-align: center; background-color: #ffcc00; color: black;">
         This is documentation for an <strong>unstable development version</strong>.
         <a id="stable-link"
@@ -577,8 +578,9 @@ if 'dev' in pyvista.__version__:
     </div>
     <script>
         const link = document.getElementById('stable-link');
-        // Replace "dev" with "docs" in the current URL path
-        link.href = window.location.href.replace('/dev/', '/docs/');
+        const stableBase = "{stable_base}";
+        const path = window.location.pathname + window.location.hash + window.location.search;
+        link.href = stableBase + path;
     </script>
     """
 
