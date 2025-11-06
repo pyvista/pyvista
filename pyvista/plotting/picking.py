@@ -1171,7 +1171,17 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     and actor.GetPickable()
                 ):
                     input_mesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
-                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
+                    old_name, new_name = 'orig_extract_id', 'original_cell_ids'
+                    warnings.warn(
+                        category=PyVistaDeprecationWarning,
+                        message=(
+                            f'The `{old_name}` cell data has been deprecated and will be renamed'
+                            f' to `{new_name} in a future version of PyVista.'
+                        ),
+                        stacklevel=2,
+                    )
+                    input_mesh.cell_data[old_name] = (ids := np.arange(input_mesh.n_cells))
+                    input_mesh.cell_data[new_name] = ids
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
