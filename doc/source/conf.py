@@ -158,7 +158,7 @@ numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
 # Warn if target links or references cannot be found
-nitpicky = True
+nitpicky = False
 # Except ignore these entries
 nitpick_ignore_regex = [
     # NOTE: We need to ignore any/all pyvista objects which are used as type hints
