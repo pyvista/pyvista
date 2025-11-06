@@ -1199,7 +1199,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, self_().picked_cells)  # type: ignore[union-attr]
 
-        def through_pick_callback(selection):
+        def through_pick_callback(selection: RectangleSelection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
@@ -1226,7 +1226,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
                     extract.Update()
-                    picked.append(pyvista.wrap(extract.GetOutput()))
+
+                    if (wrapped := pyvista.wrap(extract.GetOutput())).n_cells > 0:
+                        picked.append(wrapped)
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None  # type: ignore[union-attr]

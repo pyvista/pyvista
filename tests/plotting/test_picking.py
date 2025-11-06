@@ -54,6 +54,47 @@ def test_single_cell_picking():
     assert plotter.picked_cells.n_cells == 1
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
+def test_picked_cells_attribute():
+    """Test the `picked_cells` attribute when selecting through multiple cells."""
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), pickable=True)
+    pl.add_mesh(pv.Sphere().translate((1, 0, 0)), pickable=True)
+    pl.add_mesh(pv.Sphere().translate((2, 0, 0)), pickable=True)
+    pl.enable_cell_picking(through=True)
+    pl.view_xy()
+    pl.show(auto_close=False)  # must start renderer first
+
+    width, height = pl.window_size
+
+    pl.iren._simulate_keypress('r')
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(width // 2, height)
+
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
+    assert len(pl.picked_cells) == 2
+
+    pl.iren._mouse_left_button_press(width // 2, 0)
+    pl.iren._mouse_left_button_release(width, height)
+
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
+    assert len(pl.picked_cells) == 2
+
+    pl.iren._mouse_left_button_press(width // 3, 0)
+    pl.iren._mouse_left_button_release(2 * width // 3, height)
+
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
+    assert len(pl.picked_cells) == 3
+
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(width // 6, height)
+
+    assert isinstance(pl.picked_cells, pv.UnstructuredGrid)
+
+
 @pytest.mark.parametrize(
     'through',
     [
