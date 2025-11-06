@@ -1754,7 +1754,7 @@ class Transform(
                [0., 0., 2., 0.],
                [0., 0., 0., 1.]])
 
-        """
+        """  # noqa: E501
 
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
@@ -2407,7 +2407,7 @@ class Transform(
         defined and/or are numerically unstable.
 
         This flag is enabled by default.
-        """
+        """  # noqa: E501
         return self._check_finite
 
     @check_finite.setter
@@ -2439,7 +2439,7 @@ class Transform(
         >>> trans.translation
         (5.0, 7.0, 9.0)
 
-        """
+        """  # noqa: E501
         return self.GetPosition()
 
     @property
@@ -2478,7 +2478,7 @@ class Transform(
         >>> angle
         70.0
 
-        """
+        """  # noqa: E501
         # Decompose first to ensure we have a proper rotation
         _, R, _, _, _ = self.decompose()
         wxyz = Transform(R).GetOrientationWXYZ()
@@ -2518,7 +2518,7 @@ class Transform(
                [ 1.,  0.,  0.],
                [ 0., -1.,  0.]])
 
-        """
+        """  # noqa: E501
         _, R, _, _, _ = self.decompose()
         return R
 
@@ -2554,7 +2554,7 @@ class Transform(
         >>> trans.reflection
         1
 
-        """
+        """  # noqa: E501
         _, _, N, _, _ = self.decompose()
         return N.astype(int).tolist()
 
@@ -2642,7 +2642,7 @@ class Transform(
         >>> angle
         2.8624
 
-        """
+        """  # noqa: E501
         _, _, _, _, K = self.decompose()
         return K
 
@@ -2656,7 +2656,7 @@ class Transform(
         --------
         translation, translate, decompose
 
-        """
+        """  # noqa: E501
         return not np.allclose(self.translation, np.zeros((3,)))
 
     @property
@@ -2669,7 +2669,7 @@ class Transform(
         --------
         rotation_matrix, rotate, decompose
 
-        """
+        """  # noqa: E501
         return not np.allclose(self.rotation_matrix, np.eye(3))
 
     @property
@@ -2682,7 +2682,7 @@ class Transform(
         --------
         reflection, reflect, decompose
 
-        """
+        """  # noqa: E501
         return self.reflection == -1
 
     @property
@@ -2695,7 +2695,7 @@ class Transform(
         --------
         scale_factors, scale, decompose
 
-        """
+        """  # noqa: E501
         return not np.allclose(self.scale_factors, np.ones((3,)))
 
     @property
@@ -2708,7 +2708,7 @@ class Transform(
         --------
         shear_matrix, compose, decompose
 
-        """
+        """  # noqa: E501
         return not np.allclose(self.shear_matrix, np.eye(3))
 
     def as_rotation(
