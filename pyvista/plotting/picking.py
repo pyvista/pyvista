@@ -729,7 +729,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         Its value depends on the picking result:
 
         - if no cells have been picked, returns None
-        - if cells belonging to single actor have been picked, returns a :class:`UnstructuredGrid`
+        - if cells belonging to a single actor have been picked, returns a :class:`UnstructuredGrid`
         - if cells belonging to multiple actors have been picked, returns a :class:`MultiBlock`
         containing ``pyvista.UnstructuredGrid``s which length equals the number of picked actors.
 
@@ -766,7 +766,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         Its value depends on the picking result:
 
         - if no cells have been picked, returns None
-        - if cells belonging to single actor have been picked, returns a :class:`UnstructuredGrid`
+        - if cells belonging to a single actor have been picked, returns a :class:`UnstructuredGrid`
         - if cells belonging to multiple actors have been picked, returns a :class:`MultiBlock`
         containing ``pyvista.UnstructuredGrid``s which length equals the number of picked actors.
 
@@ -1413,16 +1413,17 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Press ``"r"`` to enable rectangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
-        ``self.picked_cells``.
+        :attr:`picked_cells <pyvista.Plotter.picked_cells>` as:
+
+        - a :class:`MultiBlock` dataset for each mesh's selection
+        when multiple meshes are being picked
+        - a :class:`UnstructuredGrid` dataset if a single mesh
+        is being picked.
 
         All meshes in the scene are available for picking by default.
         If you would like to only pick a single mesh in the scene,
         use the ``pickable=False`` argument when adding the other
         meshes to the scene.
-
-        When multiple meshes are being picked, the picked cells
-        in ``self.picked_cells`` will be a :class:`MultiBlock`
-        dataset for each mesh's selection.
 
         Uses last input mesh for input by default.
 
@@ -1435,8 +1436,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made.
-            The picked_cells are input as the first parameter to this
-            callable.
+            The :attr:`picked_cells <pyvista.Plotter.picked_cells>` is given
+            as the first parameter to this callable.
 
         through : bool, default: True
             When ``True`` the picker will select all cells
