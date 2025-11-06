@@ -1172,6 +1172,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 ):
                     input_mesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     old_name, new_name = 'orig_extract_id', 'original_cell_ids'
+
+                    #  deprecated in 0.47, rename in v0.49
                     warnings.warn(
                         category=PyVistaDeprecationWarning,
                         message=(
