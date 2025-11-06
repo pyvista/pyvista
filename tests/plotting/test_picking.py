@@ -8,6 +8,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.errors import PyVistaPickingError
 
 if TYPE_CHECKING:
@@ -53,7 +54,18 @@ def test_single_cell_picking():
     assert plotter.picked_cells.n_cells == 1
 
 
-@pytest.mark.parametrize('through', [False, True])
+@pytest.mark.parametrize(
+    'through',
+    [
+        False,
+        pytest.param(
+            True,
+            marks=pytest.mark.filterwarnings(
+                'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'  # noqa: E501
+            ),
+        ),
+    ],
+)
 def test_multi_cell_picking(through):
     cube = pv.Cube()
 
@@ -90,6 +102,10 @@ def test_multi_cell_picking(through):
     assert isinstance(plotter.picked_cells, pv.MultiBlock)
     # Selection should return 2 submeshes
     assert len(plotter.picked_cells) == 2
+
+    assert all('original_cell_ids' in b.cell_data for b in plotter.picked_cells)
+    if through:
+        assert all('orig_extract_id' in b.cell_data for b in plotter.picked_cells)
 
     merged = plotter.picked_cells.combine()
     n_sphere_cells = pv.wrap(src.GetOutput()).n_cells
@@ -210,6 +226,9 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()  # ensure it can safely be called twice
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
 def test_cell_picking_interactive():
     n_cells = []
 
@@ -230,8 +249,39 @@ def test_cell_picking_interactive():
 
     assert n_cells[0]
     assert pl.picked_cell
+    assert 'original_cell_ids' in pl.picked_cells.cell_data
+    assert 'orig_extract_id' in pl.picked_cells.cell_data
 
 
+def test_cell_picking_warning():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.enable_cell_picking(through=True)
+    pl.show(auto_close=False, interactive=False)
+
+    width, height = pl.window_size
+
+    # simulate "r" keypress
+    pl.iren._simulate_keypress('r')
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+
+    pattern = re.escape(
+        'The `orig_extract_id` cell data has been deprecated and will be renamed to `original_cell_ids in a future version of PyVista.'  # noqa: E501
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=pattern):
+        pl.iren._mouse_left_button_release(width, height)
+
+    if pv.version_info >= (0, 49):
+        pytest.fail('Rename `orig_extract_id` cell data to `original_cell_ids.')
+
+    assert pl.picked_cells
+    assert 'original_cell_ids' in pl.picked_cells.cell_data
+    assert 'orig_extract_id' in pl.picked_cells.cell_data
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
 def test_cell_picking_interactive_subplot():
     n_cells = []
 
@@ -555,6 +605,9 @@ def test_element_picking(mode):
         assert tracker.last_picked.n_points == 1
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
 def test_switch_picking_type():
     pl = pv.Plotter()
     width, height = pl.window_size
