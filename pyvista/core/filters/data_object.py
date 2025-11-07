@@ -3097,7 +3097,7 @@ class _Crinkler:
             )
 
             for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                self_iter, a_iter, b_iter, active_scalars_info_, strict=True
+                self_iter, a_iter, b_iter, active_scalars_info_, strict=False
             ):
                 crinkled = extract_cells_from_block(block_self, block_a, block_b, scalars_info)
                 # Replace blocks with crinkled ones
