@@ -568,7 +568,8 @@ if 'dev' in pyvista.__version__:
     stable_base = 'https://docs.pyvista.org'
     announcement_html = f"""
     <div class="pv-announcement">
-        This is documentation for an <strong>unstable development version</strong>.
+        This is documentation for an <strong>unstable development version</strong>
+        <span style="white-space: nowrap;">.</span> 
         <a id="stable-link" class="pv-announcement-button">
             Switch to stable version
         </a>
