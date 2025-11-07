@@ -1,7 +1,7 @@
 /* Override the theme's announcement bar wrapper */
 .bd-header-announcement {
   background-color: var(--pst-color-danger) !important;
-  color: #000 !important;
+  color: var(--pst-color-text-danger) !important;
 }
 
 /* Inner announcement content */
@@ -14,15 +14,15 @@
   text-align: center;
   padding: 0.5em;
   background-color: var(--pst-color-danger);
-  color: #000;
+  color: var(--pst-color-text-danger);
 }
 
 /* Button inside the banner */
 .pv-announcement-button {
   margin-left: 0;
   padding: 0.3em 0.6em;
-  background-color: var(--pst-color-light);
-  color: #000 !important;
+  background-color: var(--pst-color-info); /* Updated to info background */
+  color: var(--pst-color-text-info) !important; /* Updated to info text */
   text-decoration: none;
   border-radius: 4px;
   white-space: nowrap;
@@ -30,7 +30,7 @@
 
 /* Ensure the button text stays black on hover */
 .pv-announcement-button:hover {
-  color: #000 !important;
+  color: var(--pst-color-text-info) !important; /* Updated to info text */
 }
 
 /* Responsive adjustments for small screens */
