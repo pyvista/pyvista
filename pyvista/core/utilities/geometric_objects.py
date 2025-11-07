@@ -1319,8 +1319,14 @@ def Box(
         Specify the bounding box of the cube.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    level : int, default: 0
+    level : int | VectorLike[int], default: 0
         Level of subdivision of the faces.
+
+        .. note::
+            The algorithm is not optimized when a 3 length vector is given.
+
+        .. versionadded:: 0.47
+            Enable speciying different values for x, y and z directions.
 
     quads : bool, default: True
         Flag to tell the source to generate either a quad or two
@@ -1340,11 +1346,11 @@ def Box(
     >>> mesh.plot(show_edges=True)
 
     """
-    level = _validation.validate_array3(level, broadcast=True, dtype_out=int)
-    if np.all(level == level[0]):
-        return BoxSource(level=level[0], quads=quads, bounds=bounds).output
+    level_vector = _validation.validate_array3(level, broadcast=True, dtype_out=int)
+    if np.all(level_vector == level_vector[0]):
+        return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
-    mesh = pyvista.ImageData(dimensions=level + 2)
+    mesh = pyvista.ImageData(dimensions=level_vector + 2)
     mesh = mesh.extract_geometry().resize(bounds=bounds)
     if not quads:
         mesh = mesh.triangulate()
