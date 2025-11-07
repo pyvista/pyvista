@@ -6,6 +6,11 @@
 
 /* Inner announcement content */
 .pv-announcement {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5em;
   text-align: center;
   padding: 0.5em;
   background-color: var(--pst-color-danger);
@@ -14,15 +19,28 @@
 
 /* Button inside the banner */
 .pv-announcement-button {
-  margin-left: 1em;
+  margin-left: 0;
   padding: 0.3em 0.6em;
-  background-color: var(--pst-color-text-light);
+  background-color: var(--pst-color-light);
   color: #000 !important;
   text-decoration: none;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 /* Ensure the button text stays black on hover */
 .pv-announcement-button:hover {
   color: #000 !important;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 480px) {
+  .pv-announcement {
+    flex-direction: column;
+  }
+
+  .pv-announcement-button {
+    margin-top: 0.4em;
+    width: auto;
+  }
 }
