@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
@@ -1307,7 +1308,7 @@ def Cube(  # noqa: PLR0917
 @_deprecate_positional_args(allowed=['bounds'])
 def Box(
     bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
-    level: int = 0,
+    level: int | VectorLike[int] = 0,
     quads: bool = True,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
@@ -1339,7 +1340,15 @@ def Box(
     >>> mesh.plot(show_edges=True)
 
     """
-    return BoxSource(level=level, quads=quads, bounds=bounds).output
+    level = _validation.validate_array3(level, broadcast=True, dtype_out=int)
+    if np.all(level == level[0]):
+        return BoxSource(level=level[0], quads=quads, bounds=bounds).output
+
+    mesh = pyvista.ImageData(dimensions=level + 2)
+    mesh = mesh.extract_geometry().resize(bounds=bounds)
+    if not quads:
+        mesh = mesh.triangulate()
+    return mesh
 
 
 @_deprecate_positional_args
