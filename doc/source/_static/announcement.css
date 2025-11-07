@@ -21,8 +21,8 @@
 .pv-announcement-button {
   margin-left: 0;
   padding: 0.3em 0.6em;
-  background-color: var(--pst-color-info); /* Updated to info background */
-  color: var(--pst-color-text-info) !important; /* Updated to info text */
+  background-color: var(--pst-color-info);
+  color: var(--pst-color-text-info) !important;
   text-decoration: none;
   border-radius: 4px;
   white-space: nowrap;
@@ -30,7 +30,7 @@
 
 /* Ensure the button text stays black on hover */
 .pv-announcement-button:hover {
-  color: var(--pst-color-text-info) !important; /* Updated to info text */
+  color: var(--pst-color-text-info) !important;
 }
 
 /* Responsive adjustments for small screens */
