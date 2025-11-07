@@ -22,18 +22,17 @@ if TYPE_CHECKING:
 
 
 def Spline(
-    points: VectorLike[float] | MatrixLike[float] | None, 
-    n_points: int | None = None, 
-    closed: bool = False, 
+    points: VectorLike[float] | MatrixLike[float] | None,
+    n_points: int | None = None,
+    closed: bool = False,
     parameterize_by_length: bool | None = None,
-    left_constraint_type: int | None = None, 
+    left_constraint_type: int | None = None,
     left_derivative_value: float | None = None,
-    right_constraint_type: int | None = None, 
-    right_derivative_value: float | None = None, 
-    **kwargs
-    ) -> PolyData:
-    """
-    Create a spline from points.
+    right_constraint_type: int | None = None,
+    right_derivative_value: float | None = None,
+    **kwargs,
+) -> PolyData:
+    """Create a spline from points.
 
     Parameters
     ----------
@@ -44,7 +43,7 @@ def Spline(
     n_points : int, optional
         Number of points to interpolate along the points array. Defaults to
         ``points.shape[0]``.
-    
+
     closed : bool, default: False
         Close the spline if True (both ends are joined). Is not closed by default.
         .. versionadded:: 0.46.5
@@ -53,7 +52,7 @@ def Spline(
         Parametrize by length rather than point index.
         .. versionadded:: 0.46.5
 
-    left_constraint_type : int, optional 
+    left_constraint_type : int, optional
         Derivative constraint type at the left side, has to be 0, 1, 2, or 3. As per vtk documentation :
         "
         0: the first derivative at left(right) most point is determined from the line defined from the first(last) two points.
@@ -63,7 +62,7 @@ def Spline(
         ".
         .. versionadded:: 0.46.5
 
-        
+
     left_derivative_value : float, optional
         Value of derivative on left side.
         .. versionadded:: 0.46.5
@@ -107,6 +106,7 @@ def Spline(
     ...     line_width=10,
     ...     show_scalar_bar=False,
     ... )
+
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
@@ -118,18 +118,22 @@ def Spline(
     if parameterize_by_length is not None:
         if parameterize_by_length:
             spline_function.ParameterizeByLengthOn()
-        else: 
+        else:
             spline_function.ParameterizeByLengthOff()
     if left_constraint_type is not None:
-        left_constraint_type_ = _validation.validate_number(left_constraint_type, must_be_in_range=[0, 3], must_be_integer=True)
+        left_constraint_type_ = _validation.validate_number(
+            left_constraint_type, must_be_in_range=[0, 3], must_be_integer=True
+        )
         spline_function.SetLeftConstraint(left_constraint_type_)
     if right_constraint_type is not None:
-        right_constraint_type_ = _validation.validate_number(right_constraint_type, must_be_in_range=[0, 3], must_be_integer=True)
+        right_constraint_type_ = _validation.validate_number(
+            right_constraint_type, must_be_in_range=[0, 3], must_be_integer=True
+        )
         spline_function.SetRightConstraint(right_constraint_type_)
-    if left_derivative_value is not None: 
+    if left_derivative_value is not None:
         spline_function.SetLeftValue(left_derivative_value)
-    if right_derivative_value is not None: 
-        spline_function.SetRightValue(right_derivative_value)         
+    if right_derivative_value is not None:
+        spline_function.SetRightValue(right_derivative_value)
     # get interpolation density
     u_res = n_points
     if u_res is None:
