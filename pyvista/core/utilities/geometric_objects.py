@@ -1345,6 +1345,11 @@ def Box(
     >>> mesh = pv.Box(level=2)
     >>> mesh.plot(show_edges=True)
 
+    Set the level separately for each axis.
+
+    >>> mesh = pv.Box(level=[1, 2, 3])
+    >>> mesh.plot(show_edges=True)
+
     """
     level_vector = _validation.validate_array3(level, broadcast=True, dtype_out=int)
     if np.all(level_vector == level_vector[0]):
