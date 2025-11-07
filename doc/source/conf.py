@@ -567,21 +567,10 @@ html_theme_options = {
 if 'dev' in pyvista.__version__:
     stable_base = 'https://docs.pyvista.org'
     announcement_html = f"""
-    <div class="announcement"
-         style="text-align: center;
-                padding: 0.5em;
-                background-color: var(--pst-color-warning);
-                color: var(--pst-color-text-muted);">
+    <div class="pv-announcement">
         This is documentation for an <strong>unstable development version</strong>.
-        <a id="stable-link"
-           style="margin-left: 1em;
-                  padding: 0.3em 0.6em;
-                  background-color: var(--pst-color-danger);
-                  color: var(--pst-color-text-muted);
-                  text-decoration: none;
-                  border-radius: 4px;"
-           href="#">
-           Switch to stable version
+        <a id="stable-link" class="pv-announcement-button">
+            Switch to stable version
         </a>
     </div>
     <script>
@@ -606,6 +595,7 @@ html_static_path = ['_static']
 html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
+    'announcement.css',  # override banner color
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
