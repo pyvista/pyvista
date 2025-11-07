@@ -1326,7 +1326,7 @@ def Box(
             The algorithm is not optimized when a 3 length vector is given.
 
         .. versionadded:: 0.47
-            Enable speciying different values for x, y and z directions.
+            Enable specifying different values for x, y and z directions.
 
     quads : bool, default: True
         Flag to tell the source to generate either a quad or two
