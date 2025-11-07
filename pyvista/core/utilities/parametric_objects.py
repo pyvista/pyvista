@@ -47,11 +47,12 @@ def Spline(
     
     closed : bool, default: False
         Close the spline if True (both ends are joined). Is not closed by default.
-        .. versionadded:: 0.33.0
+        .. versionadded:: 0.46.5
 
     parameterize_by_length : bool, optional
         Parametrize by length rather than point index.
-    
+        .. versionadded:: 0.46.5
+
     left_constraint_type : int, optional 
         Derivative constraint type at the left side, has to be 0, 1, 2, or 3. As per vtk documentation :
         "
@@ -60,18 +61,24 @@ def Spline(
         2: the second derivative at left(right) most point is set to Left(Right)Value.
         3: the second derivative at left(right)most points is Left(Right)Value times second derivative at first interior point.
         ".
+        .. versionadded:: 0.46.5
+
         
     left_derivative_value : float, optional
         Value of derivative on left side.
-        
+        .. versionadded:: 0.46.5
+
     right_constraint_type : int, optional
         Derivative constraint type at the right side, has to be 0, 1, 2, or 3. See left_constraint_type description.
+        .. versionadded:: 0.46.5
 
     right_derivative_value : float, optional
         Value of derivative on left side.
-        
+        .. versionadded:: 0.46.5
+
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
+        .. versionadded:: 0.46.5
 
     Returns
     -------
