@@ -1,23 +1,23 @@
 /* Override the theme's announcement bar wrapper */
 .bd-header-announcement {
-    background-color: var(--pst-color-warning) !important;
-    color: #000 !important;
+  background-color: var(--pst-color-warning) !important;
+  color: #000 !important;
 }
 
 /* Inner announcement content */
 .pv-announcement {
-    text-align: center;
-    padding: 0.5em;
-    background-color: var(--pst-color-warning);
-    color: #000;
+  text-align: center;
+  padding: 0.5em;
+  background-color: var(--pst-color-warning);
+  color: #000;
 }
 
 /* Button inside the banner */
 .pv-announcement-button {
-    margin-left: 1em;
-    padding: 0.3em 0.6em;
-    background-color: var(--pst-color-danger);
-    color: #000;
-    text-decoration: none;
-    border-radius: 4px;
+  margin-left: 1em;
+  padding: 0.3em 0.6em;
+  background-color: var(--pst-color-danger);
+  color: #000;
+  text-decoration: none;
+  border-radius: 4px;
 }
