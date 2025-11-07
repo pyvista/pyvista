@@ -30,10 +30,10 @@ def Spline(
     left_derivative_value: float | None = None,
     right_constraint_type: int | None = None, 
     right_derivative_value: float | None = None, 
-    split_splines_to_cardinal_splines: bool | None = None,
     **kwargs
     ) -> PolyData:
-    """Create a spline from points.
+    """
+    Create a spline from points.
 
     Parameters
     ----------
@@ -46,32 +46,32 @@ def Spline(
         ``points.shape[0]``.
     
     closed : bool, default: False
-        close the spline if True (both ends are joined). Is not closed by default
-    
+        Close the spline if True (both ends are joined). Is not closed by default.
+        .. versionadded:: 0.33.0
+
     parameterize_by_length : bool, optional
-        parametrize by length rather than point index.
+        Parametrize by length rather than point index.
     
     left_constraint_type : int, optional 
-        derivative constraint type at the left side, has to be 0, 1, 2, or 3. As per vtk documentation :
+        Derivative constraint type at the left side, has to be 0, 1, 2, or 3. As per vtk documentation :
         "
         0: the first derivative at left(right) most point is determined from the line defined from the first(last) two points.
         1: the first derivative at left(right) most point is set to Left(Right)Value.
         2: the second derivative at left(right) most point is set to Left(Right)Value.
         3: the second derivative at left(right)most points is Left(Right)Value times second derivative at first interior point.
-        "
+        ".
         
     left_derivative_value : float, optional
-        value of derivative on left side
+        Value of derivative on left side.
         
     right_constraint_type : int, optional
-        derivative constraint type at the right side, has to be 0, 1, 2, or 3. See left_constraint_type description. 
-        
+        Derivative constraint type at the right side, has to be 0, 1, 2, or 3. See left_constraint_type description.
+
     right_derivative_value : float, optional
-        value of derivative on left side
+        Value of derivative on left side.
         
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
-
 
     Returns
     -------
@@ -100,7 +100,6 @@ def Spline(
     ...     line_width=10,
     ...     show_scalar_bar=False,
     ... )
-
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
@@ -130,12 +129,6 @@ def Spline(
         u_res = points_.shape[0]
     u_res -= 1
     spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
-    if split_splines_to_cardinal_splines is not None:
-        if split_splines_to_cardinal_splines:
-            _xspline = spline_function.GetXSpline()
-            _yspline = spline_function.GetYSpline()
-            _zspline = spline_function.GetZSpline()
-            return _xspline, _yspline, _zspline
     return spline.compute_arc_length()
 
 
