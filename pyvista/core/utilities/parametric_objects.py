@@ -24,9 +24,8 @@ if TYPE_CHECKING:
 def Spline(
     points: VectorLike[float] | MatrixLike[float] | None, 
     n_points: int | None = None, 
-    closed: bool | None = None, 
+    closed: bool = False, 
     parameterize_by_length: bool | None = None,
-    get_derivatives : bool | None = None, 
     left_constraint_type: int | None = None, 
     left_derivative_value: float | None = None,
     right_constraint_type: int | None = None, 
@@ -46,13 +45,33 @@ def Spline(
         Number of points to interpolate along the points array. Defaults to
         ``points.shape[0]``.
     
-    closed : bool, optional
-        close the spline (both ends are joined).
+    closed : bool, default: False
+        close the spline if True (both ends are joined). Is not closed by default
     
     parameterize_by_length : bool, optional
-        parametrize by length rather than point index
+        parametrize by length rather than point index.
     
-    get_derivatives 
+    left_constraint_type : int, optional 
+        derivative constraint type at the left side, has to be 0, 1, 2, or 3. As per vtk documentation :
+        "
+        0: the first derivative at left(right) most point is determined from the line defined from the first(last) two points.
+        1: the first derivative at left(right) most point is set to Left(Right)Value.
+        2: the second derivative at left(right) most point is set to Left(Right)Value.
+        3: the second derivative at left(right)most points is Left(Right)Value times second derivative at first interior point.
+        "
+        
+    left_derivative_value : float, optional
+        value of derivative on left side
+        
+    right_constraint_type : int, optional
+        derivative constraint type at the right side, has to be 0, 1, 2, or 3. See left_constraint_type description. 
+        
+    right_derivative_value : float, optional
+        value of derivative on left side
+        
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
 
     Returns
     -------
@@ -86,22 +105,15 @@ def Spline(
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
-
-    if closed is not None: 
-        if closed:
-            spline_function.ClosedOn()
-        else:
-            spline_function.ClosedOff()
+    if closed:
+        spline_function.ClosedOn()
+    else:
+        spline_function.ClosedOff()
     if parameterize_by_length is not None:
         if parameterize_by_length:
             spline_function.ParameterizeByLengthOn()
         else: 
             spline_function.ParameterizeByLengthOff()
-    if get_derivatives is not None:
-        if get_derivatives:
-            spline_function.DerivativesAvailableOn()
-        else:
-            spline_function.DerivativesAvailableOff()
     if left_constraint_type is not None:
         left_constraint_type_ = _validation.validate_number(left_constraint_type, must_be_in_range=[0, 3], must_be_integer=True)
         spline_function.SetLeftConstraint(left_constraint_type_)
@@ -117,8 +129,6 @@ def Spline(
     if u_res is None:
         u_res = points_.shape[0]
     u_res -= 1
-
-            
     spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
     if split_splines_to_cardinal_splines is not None:
         if split_splines_to_cardinal_splines:
