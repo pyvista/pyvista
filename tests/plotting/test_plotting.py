@@ -5265,3 +5265,18 @@ def test_clip_box_crinkle(as_multiblock):
     pl.add_mesh(clipped_left, show_edges=True)
     pl.view_xy()
     pl.show()
+
+
+def test_box():
+    box = pv.Box(level=0)
+    box['cell_data'] = np.arange(box.n_cells)
+
+    box_multi = pv.Box(level=[0, 1, 2]).translate((-3, 3, 0))
+    box_multi['cell_data'] = np.arange(box_multi.n_cells)
+
+    pl = pv.Plotter()
+    pl.add_mesh(box_multi, show_edges=True, cmap='turbo')
+    pl.add_mesh(box, show_edges=True, cmap='turbo')
+    pl.add_point_labels(box_multi.points, np.arange(box_multi.n_points))
+    pl.add_point_labels(box.points, np.arange(box.n_points))
+    pl.show()
