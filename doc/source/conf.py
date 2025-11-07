@@ -567,13 +567,19 @@ html_theme_options = {
 if 'dev' in pyvista.__version__:
     stable_base = 'https://docs.pyvista.org'
     announcement_html = f"""
-    <div class="announcement" style="text-align: center; padding: 0.5em; background-color: var(--sbt-color-announcement); color: var(--sbt-color-announcement);">
+    <div class="announcement"
+         style="text-align: center;
+                padding: 0.5em;
+                background-color: var(--pst-color-warning);
+                color: var(--pst-color-text-muted);">
         This is documentation for an <strong>unstable development version</strong>.
         <a id="stable-link"
-           style="margin-left: 1em; padding: 0.3em 0.6em;
-                  background-color: var(--pst-color-primary);
-                  color: var(--sbt-color-announcement);
-                  text-decoration: none; border-radius: 4px;"
+           style="margin-left: 1em;
+                  padding: 0.3em 0.6em;
+                  background-color: var(--pst-color-danger);
+                  color: var(--pst-color-text-muted);
+                  text-decoration: none;
+                  border-radius: 4px;"
            href="#">
            Switch to stable version
         </a>
@@ -584,9 +590,10 @@ if 'dev' in pyvista.__version__:
         const path = window.location.pathname + window.location.hash + window.location.search;
         link.href = stableBase + path;
     </script>
-    """  # noqa: E501
+    """
 
     html_theme_options['announcement'] = announcement_html
+
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
 # already loads it
