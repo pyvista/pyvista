@@ -1351,7 +1351,7 @@ def Box(
     >>> mesh.plot(show_edges=True)
 
     """
-    level_vector = _validation.validate_array3(level, broadcast=True, dtype_out=int)
+    level_vector = _validation.validate_array3(level, broadcast=True, dtype_out=int, name='level')
     if np.all(level_vector == level_vector[0]):
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 

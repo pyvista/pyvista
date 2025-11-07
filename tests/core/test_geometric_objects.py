@@ -529,6 +529,16 @@ def test_box_multi_level_equal():
     assert box1 == box2
 
 
+@pytest.mark.parametrize('level', [[3, 4, 5], (3, 3, 3)])
+@pytest.mark.parametrize(
+    ('quads', 'celltype'), [(True, pv.CellType.QUAD), (False, pv.CellType.TRIANGLE)]
+)
+def test_box_multi_level_cell_type(level, quads, celltype):
+    box = pv.Box(level=level, quads=quads)
+    celltypes = set(box.cast_to_unstructured_grid().celltypes)
+    assert celltypes == {celltype}
+
+
 def test_polygon():
     geom = pv.Polygon()
     assert np.any(geom.points)
