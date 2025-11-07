@@ -656,7 +656,7 @@ def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
     iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
     qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
     iter_out = qual.recursive_iterator()
-    for block_in, block_out in zip(iter_in, iter_out):
+    for block_in, block_out in zip(iter_in, iter_out, strict=True):
         assert type(block_in) is type(block_out)
 
 

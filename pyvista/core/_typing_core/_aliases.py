@@ -95,7 +95,7 @@ class BoundsTuple(NamedTuple):
         field_size = max(len(f) for f in fields)
         name = self.__class__.__name__
         whitespace = (len(name) + 1) * ' '
-        for i, items in enumerate(zip(fields, split_strings)):
+        for i, items in enumerate(zip(fields, split_strings, strict=True)):
             field, parts = items
             if has_dot[i]:
                 left, right = parts

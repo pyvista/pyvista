@@ -703,7 +703,7 @@ def _load_as_multiblock(
             for path in paths
         ]
 
-    for file, name in zip(files, names):
+    for file, name in zip(files, names, strict=True):
         if not isinstance(file, _DatasetLoader):
             continue  # type: ignore[unreachable]
         loaded = file.load()

@@ -2455,7 +2455,7 @@ class DatasetPropsGenerator:
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
-        url_dict = {url: name for name, url in zip(names, urls)}
+        url_dict = {url: name for name, url in zip(names, urls, strict=True)}
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         return '\n'.join(rst_links)

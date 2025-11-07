@@ -225,7 +225,7 @@ class DataObjectFilters:
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [self.point_data, self.cell_data]
-        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
+        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
             for vector_name in vector_names:
                 if vector_name is None:
                     continue
@@ -3017,6 +3017,7 @@ def _cast_output_to_match_input_type(
         for (ids, _, block_out), block_in in zip(
             mesh_out.recursive_iterator('all', skip_none=True),
             mesh_in.recursive_iterator(skip_none=True),
+            strict=True,
         ):
             mesh_out.replace(ids, cast_output(block_out, block_in))
         return mesh_out
@@ -3096,7 +3097,7 @@ class _Crinkler:
             )
 
             for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                self_iter, a_iter, b_iter, active_scalars_info_
+                self_iter, a_iter, b_iter, active_scalars_info_, strict=True
             ):
                 crinkled = extract_cells_from_block(block_self, block_a, block_b, scalars_info)
                 # Replace blocks with crinkled ones

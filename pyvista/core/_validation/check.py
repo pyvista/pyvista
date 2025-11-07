@@ -388,7 +388,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = '
     >>> _validation.check_nonnegative([1, 2, 3])
 
     """
-    check_greater_than(array, 0, strict=False, name=name)
+    check_greater_than(array, 0, strict=True, name=name)
 
 
 def _validate_real_value(scalar: float, name: str = 'Value') -> NumpyArray[float]:
@@ -1228,6 +1228,6 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
         shape = (shape,)
     else:
         check_iterable_items(shape, int, name='Shape')
-    check_greater_than(shape, -1, name='Shape', strict=False)
+    check_greater_than(shape, -1, name='Shape', strict=True)
     msg = 'This line should not be reachable.'  # pragma: no cover
     raise RuntimeError(msg)  # pragma: no cover
