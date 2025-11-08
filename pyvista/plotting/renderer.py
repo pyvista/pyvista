@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -149,16 +149,16 @@ def make_legend_face(face) -> PolyData:
         return norm_poly
 
     if face is None or face == 'none':
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
+        legendface = pv.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
     elif face in ['-', 'line']:
-        legendface = pyvista.Rectangle().scale((1, 0.2, 1))
+        legendface = pv.Rectangle().scale((1, 0.2, 1))
     elif face in ['^', 'triangle']:
-        legendface = pyvista.Triangle()
+        legendface = pv.Triangle()
     elif face in ['o', 'circle']:
-        legendface = pyvista.Circle()
+        legendface = pv.Circle()
     elif face in ['r', 'rectangle']:
-        legendface = pyvista.Rectangle()
-    elif isinstance(face, pyvista.PolyData):
+        legendface = pv.Rectangle()
+    elif isinstance(face, pv.PolyData):
         legendface = face
     else:
         msg = (
@@ -177,7 +177,7 @@ def make_legend_face(face) -> PolyData:
     # Add points to each corner of the normalized geom to define the full extent of the geometry.
     # This is needed for asymmetric shapes (like a line) because otherwise the legend actor
     # will do its own scaling and skew the shape
-    rect = normalize(pyvista.Rectangle())
+    rect = normalize(pv.Rectangle())
     legendface.points = np.append(legendface.points, rect.points, axis=0)
     return legendface
 
@@ -640,7 +640,7 @@ class Renderer(
             Length of the diagonal of the bounding box.
 
         """
-        return pyvista.Box(self.bounds).length
+        return pv.Box(self.bounds).length
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -733,7 +733,7 @@ class Renderer(
         if aa_type == 'fxaa':
             if uses_egl():  # pragma: no cover
                 # only display the warning when not building documentation
-                if not pyvista.BUILDING_GALLERY:
+                if not pv.BUILDING_GALLERY:
                     warnings.warn(
                         'VTK compiled with OSMesa/EGL does not properly support '
                         'FXAA anti-aliasing and SSAA will be used instead.',
@@ -787,7 +787,7 @@ class Renderer(
 
         lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
 
-        poly = pyvista.PolyData()
+        poly = pv.PolyData()
         poly.points = points
         poly.lines = lines
 
@@ -1207,12 +1207,12 @@ class Renderer(
         >>> pl.show()
 
         """
-        if isinstance(actor, pyvista.DataSet):
+        if isinstance(actor, pv.DataSet):
             mapper = _vtk.vtkDataSetMapper()
             mesh = actor.copy()
             mesh.clear_data()
             mapper.SetInputData(mesh)
-            actor = pyvista.Actor(mapper=mapper)
+            actor = pv.Actor(mapper=mapper)
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
@@ -1475,8 +1475,8 @@ class Renderer(
 
         """
         marker = create_north_arrow()
-        mapper = pyvista.DataSetMapper(marker)
-        actor = pyvista.Actor(mapper)
+        mapper = pv.DataSetMapper(marker)
+        actor = pv.Actor(mapper)
         actor.prop.show_edges = True
         if edge_color is not None:
             actor.prop.edge_color = edge_color
@@ -1963,7 +1963,7 @@ class Renderer(
             fmt = self._theme.font.fmt
         if fmt is None:
             # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-            fmt = '%.1f' if pyvista.vtk_version_info < (9, 5, 99) else '{0:.1f}'  # fallback
+            fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
@@ -2000,7 +2000,7 @@ class Renderer(
             bounds = np.asanyarray(bounds, dtype=float)
 
         # create actor
-        cube_axes_actor = pyvista.CubeAxesActor(
+        cube_axes_actor = pv.CubeAxesActor(
             self.camera,
             minor_ticks=minor_ticks,
             tick_location=ticks,
@@ -2144,7 +2144,7 @@ class Renderer(
         scaled_font_size = 50
 
         font_size_factor = (
-            scaled_font_size / default_font_size if pyvista.vtk_version_info > (9, 5, 99) else 1.0
+            scaled_font_size / default_font_size if pv.vtk_version_info > (9, 5, 99) else 1.0
         )
         for prop in props:
             prop.SetColor(color.float_rgb)
@@ -2496,7 +2496,7 @@ class Renderer(
         else:
             msg = f'Face ({face}) not implemented'
             raise NotImplementedError(msg)
-        floor = pyvista.Plane(
+        floor = pv.Plane(
             center=center,
             direction=normal,
             i_size=i_size,
@@ -2605,10 +2605,10 @@ class Renderer(
 
         """
         # convert from a vtk type if applicable
-        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pyvista.Light):
-            light = pyvista.Light.from_vtk(light)
+        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pv.Light):
+            light = pv.Light.from_vtk(light)
 
-        if not isinstance(light, pyvista.Light):
+        if not isinstance(light, pv.Light):
             msg = f'Expected Light instance, got {type(light).__name__} instead.'
             raise TypeError(msg)
         self._lights.append(light)
@@ -3796,14 +3796,14 @@ class Renderer(
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pyvista.global_theme.resample_environment_texture
+            resample = pv.global_theme.resample_environment_texture
 
         if resample:
             resample = 1 / 16 if resample is True else resample
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
-            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy = pv.Texture()  # type: ignore[abstract]
             texture_copy.cube_map = texture.cube_map
             texture_copy.mipmap = texture.mipmap
             texture_copy.interpolate = texture.interpolate
@@ -3812,7 +3812,7 @@ class Renderer(
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
                 texture_copy.SetInputDataObject(
-                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
+                    i, pv.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
                 )
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
@@ -4561,7 +4561,7 @@ class Renderer(
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
         if xy_label_mode:
-            if pyvista.vtk_version_info >= (9, 4):
+            if pv.vtk_version_info >= (9, 4):
                 legend_scale.SetLabelModeToCoordinates()
             else:
                 legend_scale.SetLabelModeToXYCoordinates()

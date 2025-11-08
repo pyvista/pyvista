@@ -158,10 +158,10 @@ The PyVista library is heavily dependent on VTK and provides an easy
 way of getting the version of VTK in your environment.
 
 >>> # Output the version of VTK.
->>> import pyvista
->>> pyvista.vtk_version_info
+>>> import pyvista as pv
+>>> pv.vtk_version_info
 VTKVersionInfo(major=9, minor=1, micro=0)
 
 >>> # Get the major version of VTK
->>> pyvista.vtk_version_info.major
+>>> pv.vtk_version_info.major
 9

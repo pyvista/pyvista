@@ -800,7 +800,7 @@ def test_plot_label_fmt(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    fmt = '%.3f' if pv.vtk_version_info < (9, 5, 99) else '{:.3f}'
     plotter.show_bounds(xtitle='My X', fmt=fmt)
     plotter.show()
 
@@ -3973,7 +3973,7 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    fmt = '%.3f' if pv.vtk_version_info < (9, 5, 99) else '{:.3f}'
     p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
     p.camera_position = pv.CameraPosition(
         position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
@@ -4844,7 +4844,7 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info > (9, 5, 99) and orient_faces is False:
+    if pv.vtk_version_info > (9, 5, 99) and orient_faces is False:
         # This bug was fixed in VTK 9.6
         pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
     with pytest.warns(pv.PyVistaDeprecationWarning):

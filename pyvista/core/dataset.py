@@ -16,7 +16,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
@@ -189,7 +189,7 @@ class DataSet(DataSetFilters, DataObject):
 
     """
 
-    plot = pyvista._plot.plot
+    plot = pv._plot.plot
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -591,7 +591,7 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def arrows(
         self: Self,
-    ) -> pyvista.PolyData | None:
+    ) -> pv.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points or cells of the mesh and
@@ -1354,7 +1354,7 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         name: str,
         preference: CellLiteral | PointLiteral | FieldLiteral = 'cell',
-    ) -> pyvista.pyvista_ndarray:
+    ) -> pv.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1570,10 +1570,10 @@ class DataSet(DataSetFilters, DataObject):
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
         attrs.append(('N Points', self.GetNumberOfPoints(), '{}'))
-        if isinstance(self, pyvista.PolyData):
+        if isinstance(self, pv.PolyData):
             attrs.append(('N Strips', self.n_strips, '{}'))
         bds = self.bounds
-        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        fmt = f'{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}'
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
@@ -1613,10 +1613,10 @@ class DataSet(DataSetFilters, DataObject):
                 if isinstance(arr, str):
                     # Convert string scalar into a numpy array. Otherwise, get_data_range
                     # will treat the string as an array name, not an array value.
-                    arr = pyvista.pyvista_ndarray(arr)  # type: ignore[arg-type]
+                    arr = pv.pyvista_ndarray(arr)  # type: ignore[arg-type]
                 dl, dh = self.get_data_range(arr)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
+                dl = pv.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pv.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1
@@ -1681,7 +1681,7 @@ class DataSet(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def cast_to_unstructured_grid(self: Self) -> pyvista.UnstructuredGrid:
+    def cast_to_unstructured_grid(self: Self) -> pv.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
@@ -1709,7 +1709,7 @@ class DataSet(DataSetFilters, DataObject):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pv.PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1742,7 +1742,7 @@ class DataSet(DataSetFilters, DataObject):
         <class 'pyvista.core.pointset.PointSet'>
 
         """
-        pset = pyvista.PointSet()
+        pset = pv.PointSet()
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
@@ -1750,7 +1750,7 @@ class DataSet(DataSetFilters, DataObject):
         return pset
 
     @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001, FBT002
+    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pv.PolyData:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1799,7 +1799,7 @@ class DataSet(DataSetFilters, DataObject):
             Spatial Cell Data       float64    (1000,)
 
         """
-        pset = pyvista.PolyData(self.points.copy())
+        pset = pv.PolyData(self.points.copy())
         if pass_cell_data:
             cell_data = self.copy()
             cell_data.clear_point_data()
@@ -2252,7 +2252,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self: Self, index: int) -> pyvista.Cell:
+    def get_cell(self: Self, index: int) -> pv.Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2314,13 +2314,13 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()
+        cell = pv.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
 
     @property
-    def cell(self: Self) -> Iterator[pyvista.Cell]:
+    def cell(self: Self) -> Iterator[pv.Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -2824,7 +2824,7 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-        if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+        if (9, 4, 0) <= pv.vtk_version_info < (9, 5, 0):
             # Need to reverse the order
             return out[::-1]
         return out
