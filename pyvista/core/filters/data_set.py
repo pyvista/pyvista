@@ -7464,7 +7464,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 keys = np.unique(array)
                 values = itertools.cycle(color_rgb_sequence)
 
-            items = zip(keys, values, strict=True)
+            items = zip(keys, values, strict=False)
 
         colors_out = np.full(
             (len(array), num_components), default_channel_value, dtype=color_dtype
