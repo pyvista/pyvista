@@ -244,14 +244,14 @@ but the source will always be included with a conditional caption:
     filename = examples.download_single_sphere_animation(load=False)
     reader = pv.PVDReader(filename)
     pl = pv.Plotter()
-    plotter.open_gif(f'single_sphere_{str(uuid.uuid4())[:8]}.gif')
+    pl.open_gif(f'single_sphere_{str(uuid.uuid4())[:8]}.gif')
     for time_value in reader.time_values:
         reader.set_active_time_value(time_value)
         mesh = reader.read()
-        plotter.add_mesh(mesh, smooth_shading=True)
-        plotter.write_frame()
-        plotter.clear()
-    plotter.close()
+        pl.add_mesh(mesh, smooth_shading=True)
+        pl.write_frame()
+        pl.clear()
+    pl.close()
 
 **Plot 24** Any function with ``plot_<...>`` syntax will generate a plot.
 
