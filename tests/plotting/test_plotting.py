@@ -89,16 +89,14 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
-skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')  # noqa: N816
-skip_lesser_9_0_X = pytest.mark.needs_vtk_version(  # noqa: N816
-    9, 1, reason='Functions not implemented before 9.0.X'
-)
 skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 3, reason='Functions not implemented before 9.3.X'
 )
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
+)
+skip_lesser_9_4_X_depth_peeling = pytest.mark.needs_vtk_version(  # noqa: N816
+    9, 4, reason='Depth peeling unstable on CI before 9.4.X'
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
@@ -256,7 +254,6 @@ def test_import_3ds():
     pl.show()
 
 
-@skip_9_0_X
 def test_import_obj():
     download_obj_file = examples.download_room_surface_mesh(load=False)
     pl = pv.Plotter()
@@ -269,7 +266,6 @@ def test_import_obj():
     pl.show()
 
 
-@skip_9_0_X
 def test_import_obj_with_texture():
     filename = examples.download_doorman(load=False)
     pl = pv.Plotter()
@@ -310,7 +306,6 @@ def test_pbr(sphere, verify_image_cache):
 
 
 @pytest.mark.parametrize('resample', [True, 0.5])
-@pytest.mark.needs_vtk_version(9, 2)
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
@@ -374,10 +369,6 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
 
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -418,10 +409,6 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
 
 def test_plot_helper_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
 
     uniform.plot(
         volume=True,
@@ -649,23 +636,13 @@ def test_plotter_shape_invalid():
         pv.Plotter(shape={1, 2})
 
 
-def test_plot_bounds_axes_with_no_data(verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_plot_bounds_axes_with_no_data():
     plotter = pv.Plotter()
     plotter.show_bounds()
     plotter.show()
 
 
-def test_plot_show_grid(sphere, verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_plot_show_grid(sphere):
     plotter = pv.Plotter()
 
     with pytest.raises(ValueError, match='Value of location'):
@@ -819,26 +796,19 @@ def test_plot_show_bounds(sphere):
     plotter.show()
 
 
-def test_plot_label_fmt(sphere, verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_plot_label_fmt(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    plotter.show_bounds(xtitle='My X', fmt=fmt)
     plotter.show()
 
 
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 @pytest.mark.usefixtures('verify_image_cache')
-def test_plot_show_bounds_params(grid, location, verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially with VTK 9.6
-        verify_image_cache.skip = True
+def test_plot_show_bounds_params(grid, location):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
@@ -1218,9 +1188,7 @@ def test_enable_picking_gc():
 def test_left_button_down():
     plotter = pv.Plotter()
 
-    attr = (
-        'GetOffScreenFramebuffer' if pyvista.vtk_version_info < (9, 1) else 'GetRenderFramebuffer'
-    )
+    attr = 'GetRenderFramebuffer'
     if hasattr(renwin := plotter.render_window, attr):
         if not getattr(renwin, attr)().GetFBOIndex():
             # This only fails for VTK<9.2.3
@@ -1302,14 +1270,15 @@ def test_axes():
 
 
 def test_box_axes(verify_image_cache):
-    verify_image_cache.high_variance_test = True
+    """Test deprecated function and make sure we remove it by v0.48."""
+    verify_image_cache.skip = True
 
     plotter = pv.Plotter()
 
     def _test_add_axes_box():
         plotter.add_axes(box=True)
         if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
+            msg = 'Calling this should raise an error'
             raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
@@ -1320,8 +1289,7 @@ def test_box_axes(verify_image_cache):
         match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
     ):
         _test_add_axes_box()
-    plotter.add_mesh(pv.Sphere())
-    plotter.show()
+    plotter.close()
 
 
 def test_box_axes_color_box():
@@ -1745,12 +1713,7 @@ def test_camera(sphere):
     plotter.show()
 
 
-def test_multi_renderers(verify_image_cache):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
+def test_multi_renderers():
     plotter = pv.Plotter(shape=(2, 2))
 
     plotter.subplot(0, 0)
@@ -1938,7 +1901,9 @@ def test_link_views_camera_set():
     p.subplot(0, 1)
     p.add_mesh(wavelet, color='red')
     p.link_views()
-    p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+    p.camera_position = pv.CameraPosition(
+        position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+    )
     p.show()
 
 
@@ -1980,40 +1945,84 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
-def test_image_properties():
+def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
+    """Test remove_existing_actor parameter for add_mesh method."""
+    verify_image_cache.skip = True
+    plotter = pv.Plotter()
+    actor1 = plotter.add_mesh(uniform.copy(), name='test_mesh1')
+    actor2 = plotter.add_mesh(uniform.copy(), name='test_mesh2', remove_existing_actor=False)
+    actors = list(plotter.renderer.actors.values())
+    assert actor1 in actors
+    assert actor2 in actors
+
+
+def test_image_properties() -> None:
     mesh = examples.load_uniform()
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.show(auto_close=False)  # DO NOT close plotter
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.show(auto_close=False)  # DO NOT close plotter
     # Get RGB image
-    _ = p.image
+    _ = pl.image
     # Get the depth image
-    _ = p.get_image_depth()
-    p.close()
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.show()  # close plotter
+    _ = pl.get_image_depth()
+    pl.close()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.show(store_image_depth=True)  # close plotter
     # Get RGB image
-    _ = p.image
+    _ = pl.image
     # verify property matches method while testing both available
-    assert np.allclose(p.image_depth, p.get_image_depth(), equal_nan=True)
-    p.close()
+    assert np.allclose(pl.image_depth, pl.get_image_depth(), equal_nan=True)
+    pl.close()
 
     # gh-920
     rr = np.array([[-0.5, -0.5, 0], [-0.5, 0.5, 1], [0.5, 0.5, 0], [0.5, -0.5, 1]])
     tris = np.array([[3, 0, 2, 1], [3, 2, 0, 3]])
     mesh = pv.PolyData(rr, tris)
-    p = pv.Plotter()
-    p.add_mesh(mesh, color=True)
-    p.renderer.camera_position = (0.0, 0.0, 1.0)
-    p.renderer.ResetCamera()
-    p.enable_parallel_projection()
-    assert p.renderer.camera_set
-    p.show(interactive=False, auto_close=False)
-    img = p.get_image_depth(fill_value=0.0)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, color=True)
+    pl.renderer.camera_position = (0.0, 0.0, 1.0)
+    pl.renderer.ResetCamera()
+    pl.enable_parallel_projection()
+    assert pl.renderer.camera_set
+    pl.show(interactive=False, auto_close=False)
+    img = pl.get_image_depth(fill_value=0.0)
     rng = np.ptp(img)
-    assert 0.3 < rng < 0.4, rng  # 0.3313504 in testing
-    p.close()
+    assert 3.8 < rng < 3.9, rng  # 3.8460655 in testing
+    pl.close()
+
+
+@pytest.mark.skip_check_gc
+@pytest.mark.parametrize('enable_parallel_projection', [True, False])
+def test_image_depth_parallel_projection(enable_parallel_projection):
+    # Create depth image
+    pl = pv.Plotter()
+    pl.add_mesh(pv.ParametricRandomHills(), color=True)
+    if enable_parallel_projection:
+        pl.enable_parallel_projection()
+    pl.show(store_image_depth=True, auto_close=False)
+    zval = pl.get_image_depth()
+    pl.clear_actors()
+
+    # Plot depth image
+    image = pv.ImageData(dimensions=(*zval.shape, 1))
+    image['Distance To Camera'] = np.flipud(zval).T.ravel(order='F')
+    pl.add_mesh(image)
+    pl.view_xy()
+    pl.camera.tight()
+    pl.show()
+
+
+def test_image_depth_raise(sphere: pv.PolyData, verify_image_cache) -> None:
+    """Ensure a RuntimeError is raised when not storing image_depth."""
+    verify_image_cache.skip = True
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, color='w')
+    pl.show()
+
+    with pytest.raises(RuntimeError, match='store_image_depth=True'):
+        pl.get_image_depth()
 
 
 def test_volume_rendering_from_helper(uniform, verify_image_cache):
@@ -2029,7 +2038,6 @@ def test_volume_rendering_from_plotter(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@skip_9_0_X
 def test_volume_rendering_rectilinear(uniform):
     grid = uniform.cast_to_rectilinear_grid()
 
@@ -2105,6 +2113,7 @@ def test_plot_compare_four():
     )
 
 
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
     p = pv.Plotter()
@@ -2137,10 +2146,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 
 @pytest.mark.skip_windows
-def test_opacity_by_array_direct(plane, verify_image_cache):
-    # VTK regression 9.0.1 --> 9.1.0
-    verify_image_cache.high_variance_test = True
-
+def test_opacity_by_array_direct(plane):
     # test with opacity parm as an array, both cell and point sized
     plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pv.Plotter()
@@ -2773,7 +2779,7 @@ def test_collision_plot(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     sphere0 = pv.Sphere()
     sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
-    col, n_contacts = sphere0.collision(sphere1, generate_scalars=True)
+    col, _n_contacts = sphere0.collision(sphere1, generate_scalars=True)
 
     plotter = pv.Plotter()
     plotter.add_mesh(col)
@@ -2782,7 +2788,6 @@ def test_collision_plot(verify_image_cache):
 
 
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -2849,7 +2854,6 @@ def test_chart_plot():
     pl.show()
 
 
-@skip_9_1_0
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3010,7 +3014,6 @@ def test_rectlinear_edge_case(verify_image_cache):
     rec_grid.plot(show_edges=True, cpos='xy')
 
 
-@skip_9_1_0
 def test_pointset_plot(pointset):
     pointset.plot()
 
@@ -3019,14 +3022,12 @@ def test_pointset_plot(pointset):
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_as_points(pointset):
     pl = pv.Plotter()
     pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_vtk():
     pointset = vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
@@ -3037,7 +3038,6 @@ def test_pointset_plot_vtk():
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_as_points_vtk():
     pointset = vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
@@ -3111,24 +3111,15 @@ def test_plot_complex_value(plane, verify_image_cache):
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
 
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        ComplexWarning = np.exceptions.ComplexWarning
-    except AttributeError:
-        ComplexWarning = np.ComplexWarning
-
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_notebook(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -3137,6 +3128,7 @@ def test_screenshot_notebook(tmpdir):
     pl.theme.jupyter_backend = 'static'
     pl.add_mesh(pv.Cone())
     pl.show(screenshot=filename)
+    pl.close()
 
     assert Path(filename).is_file()
 
@@ -3158,13 +3150,6 @@ def test_add_text():
     not check_math_text_support(),
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
     'MathText requires matplotlib<3.6',
-)
-@pytest.mark.filterwarnings(
-    r'ignore:Passing individual properties to FontProperties'
-    r'\(\):matplotlib.MatplotlibDeprecationWarning',
-    r'ignore:.*MathtextBackendBitmap.*:matplotlib.MatplotlibDeprecationWarning'
-    if pv.vtk_version_info <= (9, 1)
-    else '',
 )
 @pytest.mark.usefixtures('recwarn')
 def test_add_text_latex():
@@ -3210,7 +3195,6 @@ def test_plot_categories_true(sphere):
 
 
 @pytest.mark.skip_windows
-@skip_9_0_X
 def test_depth_of_field():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3218,7 +3202,6 @@ def test_depth_of_field():
     pl.show()
 
 
-@skip_9_0_X
 def test_blurring():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3244,12 +3227,13 @@ def test_ssao_pass(verify_image_cache):
     pl.enable_ssao()
     pl.show()
 
-    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+    with pytest.raises(RuntimeError, match=r'The renderer has been closed.'):
         pl.disable_ssao()
 
 
 @skip_mesa
-def test_ssao_pass_from_helper():
+def test_ssao_pass_from_helper(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True  # high variance (~1000) on MacOS 15
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
@@ -3319,10 +3303,10 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 
 @pytest.mark.skip_windows('Test fails on Windows because of opacity')
 @skip_lesser_9_4_X
-def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
+def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         scalars='data_a',
         nan_color='green',
@@ -3336,9 +3320,6 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
 
     pl.camera_position = 'xy'
 
-    # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
-    # also opaque. Don't verify the image of that version.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     pl.show()
 
 
@@ -3347,7 +3328,7 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         scalars='cell_data',
     )
@@ -3360,18 +3341,14 @@ def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
 def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl = pv.Plotter()
 
-    actor, mapper = pl.add_composite(
+    _actor, mapper = pl.add_composite(
         multiblock_poly,
         color='red',
         lighting=False,
     )
 
-    # Note: set the camera position before making the blocks invisible to be
-    # consistent between 9.0.3 and 9.1+
-    #
-    # 9.0.3 still considers invisible blocks when determining camera bounds, so
-    # there will be some empty space where the invisible block is for 9.0.3,
-    # while 9.1.0 ignores invisible blocks when computing camera bounds.
+    # Note: set the camera position before making the blocks invisible
+    # VTK ignores invisible blocks when computing camera bounds.
     pl.camera_position = 'xy'
     mapper.block_attr[2].color = 'blue'
     mapper.block_attr[3].visible = False
@@ -3434,16 +3411,8 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        ComplexWarning = np.exceptions.ComplexWarning
-    except AttributeError:
-        ComplexWarning = np.ComplexWarning
-
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
     pl.show()
 
@@ -3482,7 +3451,7 @@ def test_export_obj(tmpdir, sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, smooth_shading=True)
 
-    with pytest.raises(ValueError, match='end with ".obj"'):
+    with pytest.raises(ValueError, match=r'end with ".obj"'):
         pl.export_obj('badfilename')
 
     pl.export_obj(filename)
@@ -3492,7 +3461,7 @@ def test_export_obj(tmpdir, sphere):
 
     # Check that when we close the plotter, the adequate error is raised
     pl.close()
-    with pytest.raises(RuntimeError, match='This plotter must still have a render window open.'):
+    with pytest.raises(RuntimeError, match=r'This plotter must still have a render window open.'):
         pl.export_obj(filename)
 
 
@@ -3529,13 +3498,10 @@ def test_bool_scalars(sphere):
 
 
 @pytest.mark.skip_windows('Test fails on Windows because of pbr')
-@skip_9_1_0  # pbr required
+# pbr required
 def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
     prop = pv.Property(interpolation='pbr', metallic=1.0)
-
-    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pv.vtk_version_info < (9, 2)
     prop.plot()
 
 
@@ -3617,7 +3583,7 @@ def test_tight_multiple_objects():
 def test_backface_params():
     mesh = pv.ParametricCatalanMinimal()
 
-    with pytest.raises(TypeError, match='pyvista.Property or a dict'):
+    with pytest.raises(TypeError, match=r'pyvista.Property or a dict'):
         mesh.plot(backface_params='invalid')
 
     params = dict(color='blue', smooth_shading=True)
@@ -3645,7 +3611,6 @@ def test_remove_bounds_axes(sphere):
     pl.show()
 
 
-@skip_9_1_0
 def test_charts_sin():
     x = np.linspace(0, 2 * np.pi, 20)
     y = np.sin(x)
@@ -3655,7 +3620,7 @@ def test_charts_sin():
     chart.show()
 
 
-def test_lookup_table(verify_image_cache):
+def test_lookup_table():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3663,26 +3628,20 @@ def test_lookup_table(verify_image_cache):
     lut.nan_color = 'r'
     lut.nan_opacity = 0.5
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
-def test_lookup_table_nan_hidden(verify_image_cache):
+def test_lookup_table_nan_hidden():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
     lut.above_range_color = 'grey'
     lut.nan_opacity = 0
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
-def test_lookup_table_above_below_opacity(verify_image_cache):
+def test_lookup_table_above_below_opacity():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'blue'
@@ -3692,13 +3651,11 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.nan_color = 'r'
     lut.nan_opacity = 0.5
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
 @skip_windows_mesa
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
@@ -3719,6 +3676,7 @@ def test_plot_nan_color(uniform):
     pl.show()
 
 
+@skip_lesser_9_4_X_depth_peeling
 def test_plot_above_below_color(uniform):
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
@@ -4007,12 +3965,19 @@ def test_remove_vertices_actor(sphere):
 
 
 @pytest.mark.skip_windows
-def test_add_point_scalar_labels_fmt():
+def test_add_point_scalar_labels_fmt(verify_image_cache):
+    # parallel on GitHub hosted sometimes has high image error
+    verify_image_cache.macos_skip_image_cache = True
+
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
-    p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt='%.3f')
-    p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    fmt = '%.3f' if pyvista.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
+    p.camera_position = pv.CameraPosition(
+        position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
+    )
     p.show()
 
 
@@ -4082,7 +4047,6 @@ def test_algorithm_add_points():
     pl.show()
 
 
-@skip_9_1_0
 def test_algorithm_add_point_labels():
     algo = pv.ConeSource()
     elev = vtk.vtkElevationFilter()
@@ -4095,7 +4059,6 @@ def test_algorithm_add_point_labels():
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_to_polydata_algorithm(pointset):
     alg = vtk.vtkElevationFilter()
     alg.SetInputDataObject(pointset)
@@ -4249,7 +4212,6 @@ def test_plot_texture_flip_y(texture):
     texture.flip_y().plot()
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 @pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
@@ -4474,11 +4436,11 @@ def test_show_bounds_no_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4496,11 +4458,11 @@ def test_show_bounds_n_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4881,7 +4843,12 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info > (9, 5, 99) and orient_faces is False:
+        # This bug was fixed in VTK 9.6
+        pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4931,11 +4898,12 @@ def test_contour_labels_boundary_style(
         plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
 
     def _generate_mesh(style):
-        mesh = labeled_image.contour_labels(
-            boundary_style=style,
-            **test_kwargs,
-            **fixed_kwargs,
-        )
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            mesh = labeled_image.contour_labels(
+                boundary_style=style,
+                **test_kwargs,
+                **fixed_kwargs,
+            )
         # Shrink mesh to help reveal cells hidden behind other cells
         return mesh.shrink(0.7)
 
@@ -4975,7 +4943,9 @@ def test_contour_labels_boundary_style(
     plot_boundary_labels(internal_mesh)
     plot.add_text(INTERNAL, position='lower_left')
 
-    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.camera_position = pv.CameraPosition(
+        position=(5, 4, 3.5), focal_point=(1, 1, 1), viewup=(0.0, 0.0, 1.0)
+    )
     plot.show(return_cpos=True)
 
 
@@ -4994,23 +4964,18 @@ def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
     smoothing_scale,
-    verify_image_cache,
 ):
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pyvista.vtk_version_info < (9, 5, 99):
-        # Axis labels changed substantially in VTK 9.6
-        verify_image_cache.skip = True
-
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
-    mesh = labeled_image.contour_labels(
-        'all',
-        smoothing_distance=smoothing_distance,
-        smoothing_scale=smoothing_scale,
-        pad_background=False,
-        orient_faces=False,
-    )
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh = labeled_image.contour_labels(
+            'all',
+            smoothing_distance=smoothing_distance,
+            smoothing_scale=smoothing_scale,
+            pad_background=False,
+            orient_faces=False,
+        )
 
     # Translate so origin is in bottom left corner
     mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
@@ -5044,8 +5009,10 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         output_mesh_type='quads',
         orient_faces=False,
     )
-    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
-    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
 
     plot = pv.Plotter()
     plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
@@ -5081,7 +5048,6 @@ def test_orthogonal_planes_source_push(distance):
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
 @pytest.mark.skip_windows
-@skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
     [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
@@ -5092,7 +5058,6 @@ def test_orthogonal_planes_source_resolution(resolution):
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
 
 
-@skip_9_1_0
 @pytest.mark.skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
@@ -5125,7 +5090,7 @@ def test_planes_assembly():
     plot.show()
 
 
-@skip_9_1_0  # Difference in clipping generates error of approx 500
+# Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
     ('label_kwarg', 'camera_position'),
@@ -5245,8 +5210,6 @@ def test_plot_wireframe_style():
     sphere.plot(style='wireframe')
 
 
-# Skip tests less 9.1 due to slightly above threshold error
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 @pytest.mark.parametrize('return_clipped', ['return_clipped', None])
 def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
@@ -5264,5 +5227,41 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
 
     pl = pv.Plotter()
     pl.add_mesh(clipped, show_edges=True)
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
+def test_clip_box_crinkle(as_multiblock):
+    as_multiblock = bool(as_multiblock)
+
+    mesh = examples.download_bunny_coarse()
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+    bounds = mesh.bounds
+    x_size, _, _ = mesh.bounds_size
+    bounds_right = (
+        bounds.x_min,
+        bounds.x_min + x_size / 2,
+        bounds.y_min,
+        bounds.y_max,
+        bounds.z_min,
+        bounds.z_max,
+    )
+    bounds_left = (
+        bounds.x_min + x_size / 2,
+        bounds.x_max,
+        bounds.y_min,
+        bounds.y_max,
+        bounds.z_min,
+        bounds.z_max,
+    )
+    clipped_right = mesh.clip_box(bounds_right, crinkle=True)
+    clipped_left = mesh.clip_box(bounds_left, crinkle=True)
+    clipped_right.translate((0.1, 0, 0), inplace=True)
+
+    pl = pv.Plotter()
+    pl.add_mesh(clipped_right, show_edges=True)
+    pl.add_mesh(clipped_left, show_edges=True)
     pl.view_xy()
     pl.show()

@@ -737,6 +737,7 @@ class Renderer(
                     warnings.warn(
                         'VTK compiled with OSMesa/EGL does not properly support '
                         'FXAA anti-aliasing and SSAA will be used instead.',
+                        stacklevel=2,
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -848,11 +849,6 @@ class Renderer(
         >>> pl.show()
 
         """
-        if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
-
-            msg = 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.'
-            raise VTKVersionError(msg)
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
@@ -1367,6 +1363,7 @@ class Renderer(
             warnings.warn(
                 '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             if box_args is None:
                 box_args = {}
@@ -1965,25 +1962,29 @@ class Renderer(
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.1f'  # fallback
+            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+            fmt = '%.1f' if pyvista.vtk_version_info < (9, 5, 99) else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
             warnings.warn(
                 '`xlabel` is deprecated. Use `xtitle` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
             warnings.warn(
                 '`ylabel` is deprecated. Use `ytitle` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
             warnings.warn(
                 '`zlabel` is deprecated. Use `ztitle` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         assert_empty_kwargs(**kwargs)
 
@@ -3453,11 +3454,11 @@ class Renderer(
         ...         color=color,
         ...     )
         >>> pl.camera.zoom(1.8)
-        >>> pl.camera_position = [
-        ...     (4.74, 0.959, 0.525),
-        ...     (0.363, 0.3116, 0.132),
-        ...     (-0.088, -0.0075, 0.996),
-        ... ]
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(4.74, 0.959, 0.525),
+        ...     focal_point=(0.363, 0.3116, 0.132),
+        ...     viewup=(-0.088, -0.0075, 0.996),
+        ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
 
@@ -3790,9 +3791,7 @@ class Renderer(
         # cube_map textures cannot use spherical harmonics
         if texture.cube_map:
             self.AutomaticLightCreationOff()
-            # disable spherical harmonics was added in 9.1.0
-            if hasattr(self, 'UseSphericalHarmonicsOff'):
-                self.UseSphericalHarmonicsOff()
+            self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
 
@@ -3806,8 +3805,9 @@ class Renderer(
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
             texture_copy = pyvista.Texture()  # type: ignore[abstract]
             texture_copy.cube_map = texture.cube_map
-            texture_copy.SetMipmap(texture.GetMipmap())
-            texture_copy.SetInterpolate(texture.GetInterpolate())
+            texture_copy.mipmap = texture.mipmap
+            texture_copy.interpolate = texture.interpolate
+            texture_copy.color_mode = texture.color_mode
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
@@ -4178,6 +4178,7 @@ class Renderer(
                     if args:
                         warnings.warn(
                             f'Some of the arguments given to legend are not used.\n{args}',
+                            stacklevel=2,
                         )
                 elif isinstance(args, str):
                     # Only passing label

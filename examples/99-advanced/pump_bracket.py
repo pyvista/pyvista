@@ -52,11 +52,11 @@ dataset
 # Plot the 4th mode of the dataset. This is the first torsional mode for the
 # bracket.
 
-cpos = [
-    (0.744, -0.502, -0.830),
-    (0.0520, -0.160, 0.0743),
-    (-0.180, -0.958, 0.224),
-]
+cpos = pv.CameraPosition(
+    position=(0.744, -0.502, -0.830),
+    focal_point=(0.0520, -0.160, 0.0743),
+    viewup=(-0.180, -0.958, 0.224),
+)
 
 dataset.plot(
     scalars='disp_3',

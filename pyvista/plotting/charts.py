@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -477,16 +476,10 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
         self._tick_labels = _vtk.vtkStringArray()
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            # SetPen and SetGridPen methods are not available for older VTK versions,
-            # so fallback to using wrapper objects.
-            self._pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
-            self._grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
-        else:
-            self._pen = Pen(color=(0, 0, 0))
-            self._grid_pen = Pen(color=(0.95, 0.95, 0.95))
-            self.SetPen(self._pen)
-            self.SetGridPen(self._grid_pen)
+        self._pen = Pen(color=(0, 0, 0))
+        self._grid_pen = Pen(color=(0.95, 0.95, 0.95))
+        self.SetPen(self._pen)
+        self.SetGridPen(self._grid_pen)
         self.label = label
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
@@ -607,7 +600,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.GetRange(r)
         return r
 
-    @range.setter
+    @range.setter  # noqa: A003
     def range(self, val) -> None:
         if val is None:
             self.behavior = 'auto'
@@ -1127,13 +1120,6 @@ class _ChartBackground(_vtk.DisableVtkSnakeCase, _CustomContextItem):
             )
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
-            if vtk_version_info < (9, 2, 0):  # pragma: no cover
-                # Following 'patch' is necessary for earlier VTK versions. Otherwise Pie plots
-                # will use the same opacity as the chart's background when their legend is hidden.
-                # As the default background is transparent, this will cause Pie charts to
-                # completely disappear.
-                painter.GetBrush().SetOpacity(255)
-                painter.GetBrush().SetTexture(None)
         return True
 
 
@@ -4176,12 +4162,11 @@ class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartB
         loc=None,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
-        if vtk_version_info >= (9, 2, 0):
-            self.SetAutoSize(False)  # We manually set the appropriate size
-            if size is None:
-                size = (1, 1)
-            if loc is None:
-                loc = (0, 0)
+        self.SetAutoSize(False)  # We manually set the appropriate size
+        if size is None:
+            size = (1, 1)
+        if loc is None:
+            loc = (0, 0)
         super().__init__(size, loc)
         self._plot = BoxPlot(self, data, colors=colors, labels=labels)
         self.SetPlot(self._plot)
@@ -4189,27 +4174,15 @@ class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartB
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs) -> None:
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            # In older VTK versions, ChartBox fills the entire scene, so
-            # no resizing is needed (nor possible).
-            pass
-        else:
-            super()._render_event(*args, **kwargs)
+        super()._render_event(*args, **kwargs)
 
     @property
     def _geometry(self):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            return (0, 0, *self._renderer.GetSize())
-        else:
-            return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
+        return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, value):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            msg = f'Cannot set the geometry of {type(self).__class__}'
-            raise AttributeError(msg)
-        else:
-            _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
+        _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
     def plot(self):  # numpydoc ignore=RT01
@@ -4265,21 +4238,11 @@ class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartB
            >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            return (1, 1)
-        else:
-            return _Chart.size.fget(self)  # type: ignore[attr-defined]
+        return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
     def size(self, val):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            msg = (
-                'Cannot set ChartBox geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.'
-            )
-            raise ValueError(msg)
-        else:
-            _Chart.size.fset(self, val)  # type: ignore[attr-defined]
+        _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
     def loc(self):  # numpydoc ignore=RT01
@@ -4308,21 +4271,11 @@ class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartB
            >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            return (0, 0)
-        else:
-            return _Chart.loc.fget(self)  # type: ignore[attr-defined]
+        return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
     def loc(self, val):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            msg = (
-                'Cannot set ChartBox geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.'
-            )
-            raise ValueError(msg)
-        else:
-            _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
+        _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
 class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
@@ -4506,45 +4459,26 @@ class ChartPie(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartP
         loc=None,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
-        if vtk_version_info >= (9, 2, 0):
-            self.SetAutoSize(False)  # We manually set the appropriate size
-            if size is None:
-                size = (1, 1)
-            if loc is None:
-                loc = (0, 0)
+        self.SetAutoSize(False)  # We manually set the appropriate size
+        if size is None:
+            size = (1, 1)
+        if loc is None:
+            loc = (0, 0)
         super().__init__(size, loc)
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            # SetPlot method is not available for older VTK versions,
-            # so fallback to using a wrapper object.
-            self.AddPlot(0)
-            self._plot = PiePlot(self, data, colors=colors, labels=labels, _wrap=self.GetPlot(0))  # type: ignore[call-arg]
-        else:
-            self._plot = PiePlot(self, data, colors=colors, labels=labels)
-            self.SetPlot(self._plot)
+        self._plot = PiePlot(self, data, colors=colors, labels=labels)
+        self.SetPlot(self._plot)
         self.legend_visible = True
 
     def _render_event(self, *args, **kwargs) -> None:
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            # In older VTK versions, ChartPie fills the entire scene, so
-            # no resizing is needed (nor possible).
-            pass
-        else:
-            super()._render_event(*args, **kwargs)
+        super()._render_event(*args, **kwargs)
 
     @property
     def _geometry(self):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            return (0, 0, *self._renderer.GetSize())
-        else:
-            return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
+        return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, value):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            msg = f'Cannot set the geometry of {type(self).__class__}'
-            raise AttributeError(msg)
-        else:
-            _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
+        _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
     def plot(self):  # numpydoc ignore=RT01
@@ -4596,21 +4530,11 @@ class ChartPie(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartP
            >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            return (1, 1)
-        else:
-            return _Chart.size.fget(self)  # type: ignore[attr-defined]
+        return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
     def size(self, val):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            msg = (
-                'Cannot set ChartPie geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.'
-            )
-            raise ValueError(msg)
-        else:
-            _Chart.size.fset(self, val)  # type: ignore[attr-defined]
+        _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
     def loc(self):  # numpydoc ignore=RT01
@@ -4639,21 +4563,11 @@ class ChartPie(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartP
            >>> chart.show()
 
         """
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            return (0, 0)
-        else:
-            return _Chart.loc.fget(self)  # type: ignore[attr-defined]
+        return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
     def loc(self, val):
-        if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            msg = (
-                'Cannot set ChartPie geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.'
-            )
-            raise ValueError(msg)
-        else:
-            _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
+        _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
 class ChartMPL(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):

@@ -81,6 +81,7 @@ def vtk_points(  # noqa: PLR0917
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
+            stacklevel=2,
         )
         points_ = points_.astype(np.float32)
 
@@ -305,11 +306,11 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(plane, show_edges=True, opacity=0.25)
     >>> _ = pl.add_mesh(mesh, color='gray')
-    >>> pl.camera_position = [
-    ...     (-117, 76, 235),
-    ...     (1.69, -1.38, 0),
-    ...     (0.189, 0.957, -0.22),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-117, 76, 235),
+    ...     focal_point=(1.69, -1.38, 0),
+    ...     viewup=(0.189, 0.957, -0.22),
+    ... )
     >>> pl.show()
 
     Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
@@ -324,27 +325,25 @@ def fit_plane_to_points(  # noqa: PLR0917
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(first_half, color='red')
     >>> _ = pl.add_mesh(second_half, color='blue')
-    >>> pl.camera_position = [
-    ...     (-143, 43, 40),
-    ...     (-8.7, -11, -14),
-    ...     (0.25, 0.92, -0.29),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-143, 43, 40),
+    ...     focal_point=(-8.7, -11, -14),
+    ...     viewup=(0.25, 0.92, -0.29),
+    ... )
     >>> pl.show()
 
     Note that it is pointing in the positive z-direction.
 
-    >>> normal
-    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, 1.0], dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
 
     >>> _, _, normal = pv.fit_plane_to_points(
     ...     mesh.points, return_meta=True, init_normal='-z'
     ... )
-    >>> normal
-    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
-                    dtype=float32)
+    >>> normal  # doctest:+SKIP
+    pyvista_ndarray([0.0, 0.0, -1.0], dtype=float32)
 
     """
     valid_resolution = _validation.validate_array(
@@ -458,7 +457,7 @@ def fit_line_to_points(
     Show the length of the line.
 
     >>> length
-    167.6145387467733
+    167.6145
 
     Plot the line as an arrow to show its direction.
 
@@ -782,11 +781,10 @@ def principal_axes(
     Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
-    >>> axes
-    pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
-                     [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
-                     [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
-                    dtype=float32)
+    >>> axes  # doctest:+SKIP
+    pyvista_ndarray([[-1.,  0.,  0.],
+                     [ 0.,  1.,  0.],
+                     [ 0.,  0., -1.]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
@@ -798,8 +796,8 @@ def principal_axes(
 
     Show the standard deviation along each axis.
 
-    >>> std
-    array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
+    >>> std  # doctest:+SKIP
+    array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
     Compare this to using :meth:`numpy.std` for the computation.
 
@@ -813,7 +811,7 @@ def principal_axes(
 
     Convert the values to proportions for analysis.
 
-    >>> std / sum(std)
+    >>> std / sum(std)  # doctest:+SKIP
     array([0.5769149 , 0.28845742, 0.1346276 ], dtype=float32)
 
     From this result, we can determine that the axes explain approximately

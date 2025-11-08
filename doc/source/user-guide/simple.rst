@@ -221,6 +221,29 @@ your use case:
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
 
+Command Line
+------------
+
+Starting from version ``0.47``, meshes can be plotted from one (or more)
+files using a command line tool such that:
+
+.. code-block:: shell
+
+    pyvista plot <files> [OPTIONS]
+    python -m pyvista plot <files> [OPTIONS]
+
+.. note::
+    Providing multiple files renders them inside the same window.
+
+Most options available in :func:`pyvista.plot` are exposed by the command line.
+Run the ``--help`` command to see all options:
+
+
+.. code-block:: shell
+
+    pyvista plot --help
+    python -m pyvista plot --help
+
 
 
 Exporting

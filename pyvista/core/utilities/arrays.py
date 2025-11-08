@@ -10,8 +10,6 @@ import json
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
-from typing import TypeVar
-from typing import Union
 from typing import cast
 from typing import overload
 
@@ -32,26 +30,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
-
-# Mapping from types in `vtkType.h` to the corresponding array class
-VTK_ARRAY_TYPES = {
-    _vtk.VTK_BIT: _vtk.vtkBitArray,
-    _vtk.VTK_CHAR: _vtk.vtkCharArray,
-    _vtk.VTK_SIGNED_CHAR: _vtk.vtkSignedCharArray,
-    _vtk.VTK_UNSIGNED_CHAR: _vtk.vtkUnsignedCharArray,
-    _vtk.VTK_SHORT: _vtk.vtkShortArray,
-    _vtk.VTK_UNSIGNED_SHORT: _vtk.vtkUnsignedShortArray,
-    _vtk.VTK_INT: _vtk.vtkIntArray,
-    _vtk.VTK_UNSIGNED_INT: _vtk.vtkUnsignedIntArray,
-    _vtk.VTK_LONG: _vtk.vtkLongArray,
-    _vtk.VTK_UNSIGNED_LONG: _vtk.vtkUnsignedLongArray,
-    _vtk.VTK_FLOAT: _vtk.vtkFloatArray,
-    _vtk.VTK_DOUBLE: _vtk.vtkDoubleArray,
-    _vtk.VTK_ID_TYPE: _vtk.vtkIdTypeArray,
-    _vtk.VTK_STRING: _vtk.vtkStringArray,
-    _vtk.VTK_LONG_LONG: _vtk.vtkLongLongArray,
-    _vtk.VTK_UNSIGNED_LONG_LONG: _vtk.vtkUnsignedLongLongArray,
-}
 
 
 class FieldAssociation(enum.Enum):
@@ -183,16 +161,13 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-_vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N816
-
-
 @_deprecate_positional_args(allowed=['array'])
-def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001, FBT002
+def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkAbstractArray:  # noqa: FBT001, FBT002
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
     ----------
-    array : :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
+    array : :vtk:`vtkAbstractArray`
         VTK array.
 
     deep : bool, optional
@@ -201,7 +176,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
 
     Returns
     -------
-    :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
+    :vtk:`vtkAbstractArray`
         Copy of the original VTK array.
 
     Examples
@@ -218,21 +193,11 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
     1.0
 
     """
-    if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
+    if not isinstance(array, _vtk.vtkAbstractArray):
         msg = f'Invalid type {type(array)}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    try:
-        new_array = type(array)()
-    except TypeError:
-        # Array appears abstract and is likely implicit
-        # Init array from the array type instead
-        array_type = array.GetArrayType()
-        vtk_array_class = VTK_ARRAY_TYPES.get(array_type)
-        if vtk_array_class is None:  # pragma: no cover
-            msg = f'Array could not be copied, unsupported array type code: {array_type}'
-            raise TypeError(msg)
-        new_array = vtk_array_class()  # type: ignore[assignment]
+    new_array = _vtk.vtkAbstractArray.CreateArray(array.GetDataType())
 
     if deep:
         new_array.DeepCopy(array)
@@ -975,16 +940,16 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
-_JSONValueType = Union[
-    dict[str, '_JSONValueType'],
-    list['_JSONValueType'],
-    tuple['_JSONValueType'],
-    str,
-    int,
-    float,
-    bool,
-    None,
-]
+_JSONValueType = (
+    dict[str, '_JSONValueType']
+    | list['_JSONValueType']
+    | tuple['_JSONValueType']
+    | str
+    | int
+    | float
+    | bool
+    | None
+)
 
 
 class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]

@@ -348,7 +348,7 @@ def test_validate_arrayN_unsigned():  # noqa: N802
     arr = validate_arrayN_unsigned(0.0, dtype_out='uint8')
     assert arr.dtype.type is np.uint8
 
-    with pytest.raises(ValueError, match='Shape must be -1.'):
+    with pytest.raises(ValueError, match=r'Shape must be -1.'):
         validate_arrayN_unsigned(0.0, reshape=False)
 
     match = '_input values must all be greater than or equal to 0.'
@@ -624,12 +624,12 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
 
 def test_check_type():
     check_type(0, int, name='abc')
-    check_type(0, Union[int])
+    check_type(0, int)
     with pytest.raises(TypeError):
         check_type('str', int)
     with pytest.raises(TypeError):
         check_type(0, int, name=1)
-    check_type(0, Union[int, float])
+    check_type(0, int | float)
 
 
 @pytest.mark.skipif(
@@ -637,7 +637,7 @@ def test_check_type():
     reason='Union type input requires python3.10 or higher',
 )
 def test_check_type_union():
-    check_type(0, Union[int, float])
+    check_type(0, int | float)
 
 
 def test_check_string():
@@ -657,7 +657,7 @@ def test_check_string():
         pass
 
     check_string(StrSubclass(), allow_subclass=True)
-    with pytest.raises(TypeError, match="Object must have type <class 'str'>."):
+    with pytest.raises(TypeError, match=r"Object must have type <class 'str'>."):
         check_string(StrSubclass(), allow_subclass=False)
 
 
@@ -746,7 +746,7 @@ def test_check_length():
     check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
     check_length((1,), exact_length=[1, 2.0])
 
-    with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
+    with pytest.raises(ValueError, match=r"'exact_length' must have integer-like values."):
         check_length((1,), exact_length=(1, 2.4), name='_input')
 
     match = '_input must have a length equal to any of: 1. Got length 2 instead.'
@@ -806,21 +806,13 @@ def test_check_sorted(shape, axis, ascending, strict):
     num_elements = np.prod(shape)
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        AxisError = np.exceptions.AxisError
-    except AttributeError:
-        AxisError = np.AxisError
-
     try:
         # Create ascending array with duplicate values
         arr_ascending = np.repeat(arr_strict_ascending, 2, axis=axis)
         # Create descending arrays
         arr_descending = np.flip(arr_ascending, axis=axis)
         arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
-    except AxisError:
+    except np.exceptions.AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError,
@@ -839,21 +831,23 @@ def test_check_sorted(shape, axis, ascending, strict):
     if strict and ascending:
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_ascending, arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match='must be sorted in strict ascending order. Got:'):
+            with pytest.raises(
+                ValueError, match=r'must be sorted in strict ascending order. Got:'
+            ):
                 _check_sorted_params(a)
 
     elif not strict and ascending:
         _check_sorted_params(arr_ascending)
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match='must be sorted in ascending order. Got:'):
+            with pytest.raises(ValueError, match=r'must be sorted in ascending order. Got:'):
                 _check_sorted_params(a)
 
     elif strict and not ascending:
         _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending, arr_descending]:
             with pytest.raises(
-                ValueError, match='must be sorted in strict descending order. Got:'
+                ValueError, match=r'must be sorted in strict descending order. Got:'
             ):
                 _check_sorted_params(a)
 
@@ -924,13 +918,13 @@ def test_validate_axes(name):
     # test bad input
     with pytest.raises(ValueError, match=f'{name} cannot be parallel.'):
         validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]], name=name)
-    with pytest.raises(ValueError, match='Axes cannot be parallel.'):
+    with pytest.raises(ValueError, match=r'Axes cannot be parallel.'):
         validate_axes([[0, 1, 0], [1, 0, 0], [0, 1, 0]])
     with pytest.raises(ValueError, match=f'{name} cannot be zeros.'):
         validate_axes([[1, 0, 0], [0, 1, 0], [0, 0, 0]], name=name)
-    with pytest.raises(ValueError, match='Axes cannot be zeros.'):
+    with pytest.raises(ValueError, match=r'Axes cannot be zeros.'):
         validate_axes([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
-    with pytest.raises(ValueError, match='Axes cannot be zeros.'):
+    with pytest.raises(ValueError, match=r'Axes cannot be zeros.'):
         validate_axes([[0, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     # test normalize

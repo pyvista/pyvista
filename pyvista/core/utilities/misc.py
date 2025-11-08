@@ -28,6 +28,15 @@ if TYPE_CHECKING:
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # noqa: D101
+        def __str__(self) -> str:
+            return self.value
+
 
 def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
@@ -220,7 +229,7 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warnings.warn(formatted_exception)
+        warnings.warn(formatted_exception, stacklevel=2)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -308,25 +317,44 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
         object.__setattr__(self, '__frozen', True)
         object.__setattr__(self, '__frozen_by_class', this_class)
 
+    def _check_new_attribute(self, key: str) -> None:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is not None:
+            # Get mode for setting new attributes
+            try:
+                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
+            except ImportError:
+                # Circular import, set to False to disallow new attributes during initial import
+                _ALLOW_NEW_ATTRIBUTES_MODE = False
+
+            # Check if setting a new attribute is allowed
+            if not (
+                _ALLOW_NEW_ATTRIBUTES_MODE is True
+                or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
+            ):
+                # Check if this class froze itself. Any frozen state already set by parent classes,
+                # e.g. by calling super().__init__(), will be ignored. This allows subclasses to
+                # set attributes during init without being affected by a parent class init.
+                frozen = self.__dict__.get('__frozen', False)
+                frozen_by = self.__dict__.get('__frozen_by_class', None)
+                if (
+                    frozen
+                    and frozen_by is type(self)
+                    and not (key in type(self).__dict__ or hasattr(self, key))
+                ):
+                    from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+                    msg = (
+                        f'Attribute {key!r} does not exist and cannot be added to class '
+                        f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
+                        f'or `pyvista.allow_new_attributes` to set new attributes.\n'
+                        f'Setting new private variables (with `_` prefix) is allowed by default.'
+                    )
+                    raise PyVistaAttributeError(msg)
+
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
-        # Check if this class froze itself. Any frozen state already set by parent classes, e.g.
-        # by calling super().__init__(), will be ignored. This allows subclasses to set attributes
-        # during init without being affect by a parent class init.
-        frozen = self.__dict__.get('__frozen', False)
-        frozen_by = self.__dict__.get('__frozen_by_class', None)
-        if (
-            frozen
-            and frozen_by is type(self)
-            and not (key in type(self).__dict__ or hasattr(self, key))
-        ):
-            from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
-            msg = (
-                f'Attribute {key!r} does not exist and cannot be added to class '
-                f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new attributes.'
-            )
-            raise PyVistaAttributeError(msg)
+        self._check_new_attribute(key)
         object.__setattr__(self, key, value)
 
 
@@ -340,6 +368,11 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
 
+    See Also
+    --------
+    pyvista.allow_new_attributes
+        Context manager for controlling if setting new attributes is allowed.
+
     Examples
     --------
     Set a new custom attribute on a mesh.
@@ -349,6 +382,11 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     >>> pv.set_new_attribute(mesh, 'foo', 42)
     >>> mesh.foo
     42
+
+    This is equivalent to using :data:`allow_new_attributes` with ``True``.
+
+    >>> with pv.allow_new_attributes(True):
+    ...     mesh.foo = 42
 
     .. versionadded:: 0.46
 

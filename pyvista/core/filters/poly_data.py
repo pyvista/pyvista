@@ -17,7 +17,6 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -280,6 +279,7 @@ class PolyDataFilters(DataSetFilters):
                 warnings.warn(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
+                    stacklevel=2,
                 )
         return bool_inter
 
@@ -1799,6 +1799,7 @@ class PolyDataFilters(DataSetFilters):
                 'Since 0.45, use of `attribute_error=True` is deprecated.'
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             enable_all_attribute_error = True
             if normals is None:
@@ -1831,7 +1832,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
         if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
             if boundary_constraints:
-                warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
+                warnings.warn('`boundary_constraints` requires vtk >= 9.3.', stacklevel=2)
         else:
             alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
             alg.SetBoundaryWeightFactor(boundary_weight)
@@ -2464,6 +2465,12 @@ class PolyDataFilters(DataSetFilters):
         This requires a mesh and a line segment defined by an origin
         and end_point.
 
+        .. warning::
+
+            This filter uses the mesh's :attr:`~pyvista.PolyData.obbTree` property internally to
+            compute the intersection. Since the obb tree is cached, the intersection may not be
+            valid if the mesh's geometry is modified in between filter calls.
+
         Parameters
         ----------
         origin : sequence[float]
@@ -2927,7 +2934,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
                 except (ValueError, TypeError, KeyError):  # pragma: no cover
-                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
+                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh', stacklevel=2)
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -2959,6 +2966,7 @@ class PolyDataFilters(DataSetFilters):
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
             'Note that `inplace` is now `False` by default for the new filter.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             msg = 'Can only flip normals on an all triangle mesh.'
@@ -3434,7 +3442,7 @@ class PolyDataFilters(DataSetFilters):
         >>> points = np.column_stack((x, y, z))
         >>> pdata = pv.PolyData(points)
         >>> pdata.lines = np.hstack((n, range(n)))
-        >>> pdata['distance'] = range(n)
+        >>> pdata['distance'] = np.arange(n, dtype=float)
         >>> ribbon = pdata.ribbon(width=0.2)
         >>> ribbon.plot(show_scalar_bar=False)
 
@@ -3558,6 +3566,7 @@ class PolyDataFilters(DataSetFilters):
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
+                stacklevel=2,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -3648,7 +3657,6 @@ class PolyDataFilters(DataSetFilters):
 
         rotation_axis : numpy.ndarray or sequence, optional
             The direction vector of the axis around which the rotation is done.
-            It requires vtk>=9.1.0.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3710,6 +3718,7 @@ class PolyDataFilters(DataSetFilters):
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
+                stacklevel=2,
             )
 
         if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:
@@ -3726,14 +3735,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        if pyvista.vtk_version_info >= (9, 1, 0):
-            alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
-        elif rotation_axis != (0, 0, 1):
-            msg = (
-                'The installed version of VTK does not support '
-                'setting the direction vector of the axis around which the rotation is done.'
-            )
-            raise VTKVersionError(msg)
+        alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
         output = wrap(alg.GetOutput())

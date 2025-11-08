@@ -299,7 +299,6 @@ def test_point_picking(left_clicking):
     assert picked
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0, reason='Hardware picker unavailable for VTK<9.2')
 @pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
@@ -319,7 +318,9 @@ def test_point_picking_window(pickable_window):
     sphere.translate([-1, -1, 0], inplace=True)
     pl.add_mesh(sphere, pickable=True)
 
-    pl.camera_position = [(0.0, 0.0, 8.5), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl.camera_position = pv.CameraPosition(
+        position=(0.0, 0.0, 8.5), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+    )
 
     tracker = Tracker()
     pl.enable_point_picking(
@@ -484,7 +485,7 @@ def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
     pl = pv.Plotter()
     width, height = pl.window_size
-    actor, mapper = pl.add_composite(multiblock_poly)
+    _actor, mapper = pl.add_composite(multiblock_poly)
 
     picked_blocks = []
 
@@ -637,11 +638,11 @@ def test_block_picking_across_four_subplots():
     pl.enable_block_picking(callback, side='left')
 
     # Using camera_position to ensure consistent view for testing
-    camera_position = [
-        (3.0, 3.0, 3.0),
-        (0.0, 0.0, 0.0),
-        (0.0, 0.0, 1.0),
-    ]
+    camera_position = pv.CameraPosition(
+        position=(3.0, 3.0, 3.0),
+        focal_point=(0.0, 0.0, 0.0),
+        viewup=(0.0, 0.0, 1.0),
+    )
 
     pl.show(
         auto_close=False,

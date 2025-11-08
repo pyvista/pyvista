@@ -22,13 +22,11 @@ Examples
 from __future__ import annotations
 
 import functools
-import importlib
 import importlib.util
 import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
-import pickle
 import shutil
 import sys
 from typing import cast
@@ -42,14 +40,11 @@ from pooch.utils import get_logger
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _DownloadableFile
-from pyvista.examples._dataset_loader import _load_and_merge
 from pyvista.examples._dataset_loader import _load_as_cubemap
 from pyvista.examples._dataset_loader import _load_as_multiblock
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
@@ -62,49 +57,77 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 CACHE_VERSION = 3
 
+_USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
+_VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-# If available, a local vtk-data instance will be used for examples
-if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
-    _path = os.environ['PYVISTA_VTK_DATA']
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
-    if Path(_path).name != 'Data':
-        # append 'Data' if user does not provide it
-        _path = str(Path(_path) / 'Data')
 
-    # pooch assumes this is a URL so we have to take care of this
-    if not _path.endswith('/'):
-        _path = _path + '/'
-    SOURCE = _path
-    _FILE_CACHE = True
+def _warn_invalid_dir_not_used(path, env_var):
+    msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
+    warnings.warn(msg, stacklevel=2)
 
-else:
-    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
-    _FILE_CACHE = False
 
-# allow user to override the local path
-default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
-if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
-    if not (path := Path(os.environ['PYVISTA_USERDATA_PATH'])).is_dir():
-        warnings.warn(f'Ignoring invalid PYVISTA_USERDATA_PATH:\n{path}')
-        USER_DATA_PATH = default_user_data_path
-    else:
-        USER_DATA_PATH = str(Path(os.environ['PYVISTA_USERDATA_PATH']))
-else:
-    # use default pooch path
-    USER_DATA_PATH = default_user_data_path
+def _get_vtk_data_source() -> tuple[str, bool]:
+    # If available, a local vtk-data instance will be used for examples
+    # Set default output
+    source = _DEFAULT_VTK_DATA_SOURCE
+    file_cache = False
+    if _VTK_DATA_VARNAME in os.environ:
+        path = Path(os.environ[_VTK_DATA_VARNAME])
+        if not path.is_dir():
+            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+        else:
+            if path.name != 'Data':
+                # append 'Data' if user does not provide it
+                path = path / 'Data'
 
-    # provide helpful message if pooch path is inaccessible
-    if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
-        try:
-            Path(USER_DATA_PATH).mkdir(exist_ok=True, parents=True)
-            if not os.access(USER_DATA_PATH, os.W_OK):
+            # pooch assumes this is a URL so we have to take care of this
+            path_str = path.as_posix()
+            if not path_str.endswith('/'):
+                path_str += '/'
+
+            source = path_str
+            file_cache = True
+    return source, file_cache
+
+
+def _get_user_data_path() -> str:
+    # Allow user to override the local path
+    # Set default output
+    output_path = _DEFAULT_USER_DATA_PATH
+    if _USERDATA_PATH_VARNAME in os.environ:
+        path = Path(os.environ[_USERDATA_PATH_VARNAME])
+        if not path.is_dir():
+            _warn_invalid_dir_not_used(path, _USERDATA_PATH_VARNAME)
+        else:
+            # Use user-specified path
+            output_path = str(path)
+    return output_path
+
+
+def _warn_if_path_not_accessible(path: str | Path, msg: str):
+    # Provide helpful message if pooch path is inaccessible
+    try:
+        if not Path(path).is_dir():
+            Path(path).mkdir(exist_ok=True, parents=True)
+            if not os.access(path, os.W_OK):  # pragma: no cover
                 raise OSError
-        except (PermissionError, OSError):
-            # Warn, don't raise just in case there's an environment issue.
-            warnings.warn(
-                f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                ' examples cache with the PYVISTA_USERDATA_PATH environment variable.',
-            )
+    except (PermissionError, OSError):
+        # Warn, don't raise just in case there's an environment issue.
+        msg = f'Unable to access path: {path}\n{msg}'
+        warnings.warn(msg, stacklevel=2)
+
+
+SOURCE, _FILE_CACHE = _get_vtk_data_source()
+USER_DATA_PATH = _get_user_data_path()
+
+_user_data_path_warn_msg = (
+    f'Manually specify the PyVista examples cache with the '
+    f'{_USERDATA_PATH_VARNAME} environment variable.'
+)
+_warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
@@ -449,9 +472,12 @@ def download_puppy(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_puppy()
-    >>> dataset.plot(cpos='xy', rgba=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_puppy()
+        >>> dataset.plot(cpos='xy', rgba=True)
 
     .. seealso::
 
@@ -806,11 +832,11 @@ def download_head(load=True):  # noqa: FBT002
     >>> dataset = examples.download_head()
     >>> pl = pv.Plotter()
     >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
-    >>> pl.camera_position = [
-    ...     (-228.0, -418.0, -158.0),
-    ...     (94.0, 122.0, 82.0),
-    ...     (-0.2, -0.3, 0.9),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-228.0, -418.0, -158.0),
+    ...     focal_point=(94.0, 122.0, 82.0),
+    ...     viewup=(-0.2, -0.3, 0.9),
+    ... )
     >>> pl.show()
 
     .. seealso::
@@ -908,11 +934,11 @@ def download_bolt_nut(load=True):  # noqa: FBT002
     ...     opacity='sigmoid_5',
     ...     show_scalar_bar=False,
     ... )
-    >>> pl.camera_position = [
-    ...     (194.6, -141.8, 182.0),
-    ...     (34.5, 61.0, 32.5),
-    ...     (-0.229, 0.45, 0.86),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(194.6, -141.8, 182.0),
+    ...     focal_point=(34.5, 61.0, 32.5),
+    ...     viewup=(-0.229, 0.45, 0.86),
+    ... )
     >>> pl.show()
 
     .. seealso::
@@ -990,9 +1016,12 @@ def download_topo_global(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_topo_global()
-    >>> dataset.plot(cmap='gist_earth')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_topo_global()
+        >>> dataset.plot(cmap='gist_earth')
 
     .. seealso::
 
@@ -1146,12 +1175,13 @@ def download_knee_full(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
+    >>> import pyvista as pv
     >>> dataset = examples.download_knee_full()
-    >>> cpos = [
-    ...     (-381.74, -46.02, 216.54),
-    ...     (74.8305, 89.2905, 100.0),
-    ...     (0.23, 0.072, 0.97),
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-381.74, -46.02, 216.54),
+    ...     focal_point=(74.8305, 89.2905, 100.0),
+    ...     viewup=(0.23, 0.072, 0.97),
+    ... )
     >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
 
     .. seealso::
@@ -1193,9 +1223,12 @@ def download_lidar(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_lidar()
-    >>> dataset.plot(cmap='gist_earth')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_lidar()
+        >>> dataset.plot(cmap='gist_earth')
 
     .. seealso::
 
@@ -2224,11 +2257,12 @@ def download_frog(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [8.4287e02, -5.7418e02, -4.4085e02],
-    ...     [2.4950e02, 2.3450e02, 1.0125e02],
-    ...     [-3.2000e-01, 3.5000e-01, -8.8000e-01],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(8.4287e02, -5.7418e02, -4.4085e02),
+    ...     focal_point=(2.4950e02, 2.3450e02, 1.0125e02),
+    ...     viewup=(-3.2000e-01, 3.5000e-01, -8.8000e-01),
+    ... )
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
 
@@ -3181,11 +3215,12 @@ def download_carotid(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [220.96, -24.38, -69.96],
-    ...     [135.86, 106.55, 17.72],
-    ...     [-0.25, 0.42, -0.87],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(220.96, -24.38, -69.96),
+    ...     focal_point=(135.86, 106.55, 17.72),
+    ...     viewup=(-0.25, 0.42, -0.87),
+    ... )
     >>> dataset = examples.download_carotid()
     >>> dataset.plot(volume=True, cpos=cpos)
 
@@ -3237,11 +3272,12 @@ def download_blow(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [71.96, 86.1, 28.45],
-    ...     [3.5, 12.0, 1.0],
-    ...     [-0.18, -0.19, 0.96],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(71.96, 86.1, 28.45),
+    ...     focal_point=(3.5, 12.0, 1.0),
+    ...     viewup=(-0.18, -0.19, 0.96),
+    ... )
     >>> dataset = examples.download_blow()
     >>> dataset.plot(
     ...     scalars='displacement1',
@@ -3281,11 +3317,12 @@ def download_shark(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [-2.3195e02, -3.3930e01, 1.2981e02],
-    ...     [-8.7100e00, 1.9000e-01, -1.1740e01],
-    ...     [-1.4000e-01, 9.9000e-01, 2.0000e-02],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-2.3195e02, -3.3930e01, 1.2981e02),
+    ...     focal_point=(-8.7100e00, 1.9000e-01, -1.1740e01),
+    ...     viewup=(-1.4000e-01, 9.9000e-01, 2.0000e-02),
+    ... )
     >>> dataset = examples.download_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
 
@@ -3327,7 +3364,12 @@ def download_great_white_shark(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [(9.0, 1.0, 21.0), (-1.0, 2.0, -2.0), (0.0, 1.0, 0.0)]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(9.0, 1.0, 21.0),
+    ...     focal_point=(-1.0, 2.0, -2.0),
+    ...     viewup=(0.0, 1.0, 0.0),
+    ... )
     >>> dataset = examples.download_great_white_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
 
@@ -3371,11 +3413,12 @@ def download_grey_nurse_shark(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [-200, -100, -16.0],
-    ...     [-20.0, 20.0, -2.00],
-    ...     [0.00, 0.00, 1.00],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-200, -100, -16.0),
+    ...     focal_point=(-20.0, 20.0, -2.00),
+    ...     viewup=(0.00, 0.00, 1.00),
+    ... )
     >>> dataset = examples.download_grey_nurse_shark()
     >>> dataset.plot(cpos=cpos, smooth_shading=True)
 
@@ -3459,11 +3502,12 @@ def download_armadillo(load=True):  # noqa: FBT002
     Plot the armadillo dataset. Use a custom camera position.
 
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     (161.5, 82.1, -330.2),
-    ...     (-4.3, 24.5, -1.6),
-    ...     (-0.1, 1, 0.12),
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(161.5, 82.1, -330.2),
+    ...     focal_point=(-4.3, 24.5, -1.6),
+    ...     viewup=(-0.1, 1, 0.12),
+    ... )
     >>> dataset = examples.download_armadillo()
     >>> dataset.plot(cpos=cpos)
 
@@ -3894,9 +3938,12 @@ def download_crater_topo(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_crater_topo()
-    >>> dataset.plot(cmap='gist_earth', cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_crater_topo()
+        >>> dataset.plot(cmap='gist_earth', cpos='xy')
 
     .. seealso::
 
@@ -3933,11 +3980,12 @@ def download_crater_imagery(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [66.0, 73.0, -382.6],
-    ...     [66.0, 73.0, 0.0],
-    ...     [-0.0, -1.0, 0.0],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(66.0, 73.0, -382.6),
+    ...     focal_point=(66.0, 73.0, 0.0),
+    ...     viewup=(-0.0, -1.0, 0.0),
+    ... )
     >>> texture = examples.download_crater_imagery()
     >>> texture.plot(cpos=cpos)
 
@@ -4017,6 +4065,7 @@ def download_damavand_volcano(load=True):  # noqa: FBT002
     Load the dataset.
 
     >>> from pyvista import examples
+    >>> import pyvista as pv
     >>> dataset = examples.download_damavand_volcano()
 
     Use :meth:`~pyvista.ImageDataFilters.resample` to downsample it before plotting.
@@ -4027,11 +4076,11 @@ def download_damavand_volcano(load=True):  # noqa: FBT002
 
     Plot it.
 
-    >>> cpos = [
-    ...     [4.66316700e04, 4.32796241e06, -3.82467050e05],
-    ...     [5.52532740e05, 3.98017300e06, -2.47450000e04],
-    ...     [4.10000000e-01, -2.90000000e-01, -8.60000000e-01],
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(4.66316700e04, 4.32796241e06, -3.82467050e05),
+    ...     focal_point=(5.52532740e05, 3.98017300e06, -2.47450000e04),
+    ...     viewup=(4.10000000e-01, -2.90000000e-01, -8.60000000e-01),
+    ... )
     >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
     .. seealso::
@@ -4712,12 +4761,13 @@ def download_woman(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
+    >>> import pyvista as pv
     >>> dataset = examples.download_woman()
-    >>> cpos = [
-    ...     (-2600.0, 1970.6, 1836.9),
-    ...     (48.5, -20.3, 843.9),
-    ...     (0.23, -0.168, 0.958),
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-2600.0, 1970.6, 1836.9),
+    ...     focal_point=(48.5, -20.3, 843.9),
+    ...     viewup=(0.23, -0.168, 0.958),
+    ... )
     >>> dataset.plot(cpos=cpos)
 
     .. seealso::
@@ -4824,11 +4874,12 @@ def download_urn(load=True):  # noqa: FBT002
     Examples
     --------
     >>> from pyvista import examples
-    >>> cpos = [
-    ...     [-7.123e02, 5.715e02, 8.601e02],
-    ...     [4.700e00, 2.705e02, -1.010e01],
-    ...     [2.000e-01, 1.000e00, -2.000e-01],
-    ... ]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-7.123e02, 5.715e02, 8.601e02),
+    ...     focal_point=(4.700e00, 2.705e02, -1.010e01),
+    ...     viewup=(2.000e-01, 1.000e00, -2.000e-01),
+    ... )
     >>> dataset = examples.download_urn()
     >>> dataset.plot(cpos=cpos)
 
@@ -4966,11 +5017,11 @@ def download_action_figure(load=True, *, high_resolution=False):  # noqa: FBT002
     ...     metallic=0.3,
     ...     roughness=0.5,
     ... )
-    >>> pl.camera_position = [
-    ...     (32.3, 116.3, 220.6),
-    ...     (-0.05, 3.8, 33.8),
-    ...     (-0.017, 0.86, -0.51),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(32.3, 116.3, 220.6),
+    ...     focal_point=(-0.05, 3.8, 33.8),
+    ...     viewup=(-0.017, 0.86, -0.51),
+    ... )
     >>> pl.show()
 
     .. seealso::
@@ -5101,11 +5152,11 @@ def download_louis_louvre(load=True):  # noqa: FBT002
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_mesh(dataset, smooth_shading=True)
     >>> pl.add_light(pv.Light(position=(10, -10, 10)))
-    >>> pl.camera_position = [
-    ...     [-6.71, -14.55, 15.17],
-    ...     [1.44, 2.54, 9.84],
-    ...     [0.16, 0.22, 0.96],
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(-6.71, -14.55, 15.17),
+    ...     focal_point=(1.44, 2.54, 9.84),
+    ...     viewup=(0.16, 0.22, 0.96),
+    ... )
     >>> pl.show()
 
     .. seealso::
@@ -5191,7 +5242,12 @@ def download_naca(load=True):  # noqa: FBT002
     ``"jet"`` color map.
 
     >>> from pyvista import examples
-    >>> cpos = [[-0.22, 0.0, 2.52], [0.43, 0.0, 0.0], [0.0, 1.0, 0.0]]
+    >>> import pyvista as pv
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-0.22, 0.0, 2.52),
+    ...     focal_point=(0.43, 0.0, 0.0),
+    ...     viewup=(0.0, 1.0, 0.0),
+    ... )
     >>> dataset = examples.download_naca()
     >>> dataset.plot(cpos=cpos, cmap='jet')
 
@@ -5424,67 +5480,6 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_osmnx_graph(load=True):  # noqa: FBT002
-    """Load a simple street map from Open Street Map.
-
-    Generated from:
-
-    .. code-block:: python
-
-        >>> import osmnx as ox  # doctest:+SKIP
-        >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
-        >>> graph = ox.graph_from_address(
-        ...     address, dist=500, network_type='drive'
-        ... )  # doctest:+SKIP
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    networkx.classes.multidigraph.MultiDiGraph
-        An osmnx graph of the streets of Holzgerlingen, Germany.
-
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-    """
-    # Deprecated on v0.44.0, estimated removal on v0.47.0
-    warnings.warn(
-        '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
-        PyVistaDeprecationWarning,
-    )
-    if pyvista._version.version_info >= (0, 47):
-        msg = 'Remove this deprecated function'
-        raise RuntimeError(msg)
-    if not importlib.util.find_spec('osmnx'):
-        msg = 'Install `osmnx` to use this example'
-        raise ImportError(msg)
-    return _download_dataset(_dataset_osmnx_graph, load=load)
-
-
-def _osmnx_graph_read_func(filename):
-    return pickle.load(Path(filename).open('rb'))
-
-
-_dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
-    'osmnx_graph.p',
-    read_func=_osmnx_graph_read_func,
-)
-
-
-@_deprecate_positional_args
 def download_cavity(load=True):  # noqa: FBT002
     """Download cavity OpenFOAM example.
 
@@ -5696,11 +5691,11 @@ def download_pump_bracket(load=True):  # noqa: FBT002
 
     Plot the displacement of the 4th mode shape as scalars.
 
-    >>> cpos = [
-    ...     (0.744, -0.502, -0.830),
-    ...     (0.0520, -0.160, 0.0743),
-    ...     (-0.180, -0.958, 0.224),
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(0.744, -0.502, -0.830),
+    ...     focal_point=(0.0520, -0.160, 0.0743),
+    ...     viewup=(-0.180, -0.958, 0.224),
+    ... )
     >>> dataset.plot(
     ...     scalars='disp_3',
     ...     cpos=cpos,
@@ -5826,79 +5821,6 @@ _dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_can(partial=False, load=True):  # noqa: FBT002
-    """Download the can dataset mesh.
-
-    File obtained from `Kitware <https://www.kitware.com/>`_. Used
-    for testing hdf files.
-
-    Parameters
-    ----------
-    partial : bool, default: False
-        Load part of the dataset.
-
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.PolyData | str | list[str]
-        The example ParaView can DataSet or file path(s).
-
-    Examples
-    --------
-    Plot the can dataset.
-
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_can()  # doctest:+SKIP
-    >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Can Dataset <can_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
-
-    """
-    if pyvista.vtk_version_info > (9, 1, 0):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
-
-    if partial:
-        return _download_dataset(__can_partial, load=load)
-    else:
-        return _download_dataset(_dataset_can, load=load)
-
-
-def _dataset_can_files_func():
-    if pyvista.vtk_version_info > (9, 1, 0):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
-    can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
-    can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
-    can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
-    return can_0, can_1, can_2
-
-
-_dataset_can = _MultiFileDownloadableDatasetLoader(
-    files_func=_dataset_can_files_func,
-    load_func=_load_and_merge,
-)
-__can_partial = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
-
-
-@_deprecate_positional_args
 def download_can_crushed_hdf(load=True):  # noqa: FBT002
     """Download the crushed can dataset.
 
@@ -5935,8 +5857,6 @@ def download_can_crushed_hdf(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_hdf, load=load)
@@ -5980,8 +5900,6 @@ def download_can_crushed_vtu(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
@@ -6126,9 +6044,8 @@ def download_cgns_multi(load=True):  # noqa: FBT002
 
 def _cgns_multi_read_func(filename):
     reader = pyvista.get_reader(filename)
-    # disable reading the boundary patch. As of VTK 9.1.0 this generates
-    # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
-    # yet."
+    # Disable reading the boundary patch. This generates messages like
+    # "Skipping BC_t node: BC_t type 'BCFarfield' not supported yet."
     reader.load_boundary_patch = False
     return reader.read()
 
@@ -6223,24 +6140,30 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.download_parched_canal_4k()
-    >>> texture.dimensions
-    (4096, 2048)
+    .. pyvista-plot::
+        :force_static:
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
-    underlying image before plotting.
+        >>> from pyvista import examples
+        >>> texture = examples.download_parched_canal_4k()
+        >>> texture.dimensions
+        (4096, 2048)
 
-    >>> _ = texture.to_image().resample(0.25, inplace=True)
-    >>> texture.dimensions
-    (1024, 512)
+        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        underlying image before plotting.
 
-    >>> texture.plot(cpos='xy')
+        >>> _ = texture.to_image().resample(0.25, inplace=True)
+        >>> texture.dimensions
+        (1024, 512)
+
+        >>> texture.plot(cpos='xy')
 
     .. seealso::
 
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
+            Another HDR texture.
 
     """
     return _download_dataset(_dataset_parched_canal_4k, load=load)
@@ -6958,12 +6881,13 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # noqa: FBT002
     Download and plot the dataset.
 
     >>> from pyvista import examples
+    >>> import pyvista as pv
     >>> mesh = examples.download_ivan_angel()
-    >>> cpos = [
-    ...     (-476.14, -393.73, 282.14),
-    ...     (-15.00, 11.25, 44.08),
-    ...     (0.26, 0.24, 0.93),
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-476.14, -393.73, 282.14),
+    ...     focal_point=(-15.00, 11.25, 44.08),
+    ...     viewup=(0.26, 0.24, 0.93),
+    ... )
     >>> mesh.plot(cpos=cpos)
 
     Return the statistics of the dataset.
@@ -7115,12 +7039,13 @@ def download_owl(load=True, *, high_resolution=False):  # noqa: FBT002
     Download and plot the dataset.
 
     >>> from pyvista import examples
+    >>> import pyvista as pv
     >>> mesh = examples.download_owl()
-    >>> cpos = [
-    ...     (-315.18, -402.21, 230.71),
-    ...     (6.06, -1.74, 101.48),
-    ...     (0.108, 0.226, 0.968),
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-315.18, -402.21, 230.71),
+    ...     focal_point=(6.06, -1.74, 101.48),
+    ...     viewup=(0.108, 0.226, 0.968),
+    ... )
     >>> mesh.plot(cpos=cpos)
 
     Return the statistics of the dataset.
@@ -7323,19 +7248,33 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_damaged_helmet()
-    >>> texture = examples.download_dikhololo_night()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(texture)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> texture = examples.download_dikhololo_night()
+        >>> texture.dimensions
+        (4096, 2048)
+
+        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        underlying image before plotting.
+
+        >>> _ = texture.to_image().resample(0.25, inplace=True)
+        >>> texture.dimensions
+        (1024, 512)
+
+        >>> texture.plot(cpos='xy')
 
     .. seealso::
 
         :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
+            Another HDR texture.
+
+        :ref:`load_gltf_example`
+            See additional examples using this dataset.
 
     """
     return _download_dataset(_dataset_dikhololo_night, load=load)
@@ -7443,6 +7382,7 @@ def download_aero_bracket(load=True):  # noqa: FBT002
     Download the aero bracket.
 
     >>> from pyvista import examples
+    >>> import pyvista as pv
     >>> dataset = examples.download_aero_bracket()
     >>> dataset
     UnstructuredGrid (...)
@@ -7469,11 +7409,11 @@ def download_aero_bracket(load=True):  # noqa: FBT002
 
     Plot the von Mises stress.
 
-    >>> cpos = [
-    ...     (-0.0503, 0.132, -0.179),
-    ...     (0.0505, 0.0185, -0.00201),
-    ...     (0.275, 0.872, 0.405),
-    ... ]
+    >>> cpos = pv.CameraPosition(
+    ...     position=(-0.0503, 0.132, -0.179),
+    ...     focal_point=(0.0505, 0.0185, -0.00201),
+    ...     viewup=(0.275, 0.872, 0.405),
+    ... )
     >>> dataset.plot(
     ...     smooth_shading=True,
     ...     split_sharp_edges=True,

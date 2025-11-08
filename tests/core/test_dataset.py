@@ -15,7 +15,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -162,7 +161,7 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
         assert data['new_array'].shape == (0,)
     else:
         # Expect error for all other cases
-        with pytest.raises(ValueError, match='Invalid array shape.'):
+        with pytest.raises(ValueError, match=r'Invalid array shape.'):
             data['new_array'] = empty_array
 
 
@@ -506,7 +505,7 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
     m.ndim = 1
 
     sphere = pv.Sphere(radius=math.pi)
-    with pytest.raises(ValueError, match='Active vectors are not vectors.'):
+    with pytest.raises(ValueError, match=r'Active vectors are not vectors.'):
         sphere.arrows  # noqa: B018
 
 
@@ -974,10 +973,10 @@ def test_find_cells_along_line():
 
 def test_find_cells_along_line_raises():
     mesh = pv.Cube()
-    with pytest.raises(TypeError, match='Point A must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point A must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0], [0, 0, 1])
 
-    with pytest.raises(TypeError, match='Point B must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point B must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0, -1], [0, 0])
 
 
@@ -986,23 +985,18 @@ def test_find_cells_intersecting_line():
     linea = [0, 0, 0.0]
     lineb = [0.0, 0, 1.0]
 
-    if pv.vtk_version_info >= (9, 2, 0):
-        indices = mesh.find_cells_intersecting_line(linea, lineb)
-        assert len(indices) == 1
+    indices = mesh.find_cells_intersecting_line(linea, lineb)
+    assert len(indices) == 1
 
-        # test tolerance
-        indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
-        assert len(indices) == 2
+    # test tolerance
+    indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
+    assert len(indices) == 2
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
-
-    else:
-        with pytest.raises(VTKVersionError):
-            indices = mesh.find_cells_intersecting_line(linea, lineb)
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
 
 
 def test_find_cells_within_bounds():
@@ -1035,7 +1029,7 @@ def test_find_cells_within_bounds_raises():
     mesh = pv.Cube()
     with pytest.raises(
         TypeError,
-        match='Bounds must be a length six tuple of floats.',
+        match=r'Bounds must be a length six tuple of floats.',
     ):
         mesh.find_cells_within_bounds([0, 0])
 
@@ -1094,6 +1088,16 @@ def test_get_data_range(hexbeam):
     rng = hexbeam.get_data_range('sample_cell_scalars', preference='cell')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
+
+
+def test_get_data_range_bool():
+    mesh = pv.ImageData(dimensions=(2, 1, 1))
+    mesh['data'] = [True, False]
+    assert mesh['data'].dtype == bool
+    rng = mesh.get_data_range()
+    assert rng[0].dtype == bool
+    assert rng[1].dtype == bool
+    assert rng == (np.bool_(False), np.bool_(True))
 
 
 def test_actual_memory_size(hexbeam):
@@ -1184,7 +1188,6 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
@@ -1202,7 +1205,6 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
@@ -1240,10 +1242,6 @@ def test_cast_to_poly_points_implicit(uniform):
 
 
 def test_partition(hexbeam):
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            hexbeam.partition(2)
-        return
     # split as composite
     n_part = 2
     out = hexbeam.partition(n_part)

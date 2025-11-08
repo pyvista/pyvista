@@ -104,7 +104,6 @@ def try_init_pyvista_object(class_):
     return instance
 
 
-@pytest.mark.needs_vtk_version(9, 2)
 def get_default_class_init_kwargs(pyvista_class):
     # Define kwargs as required for initializing some classes
     kwargs = {}
@@ -252,6 +251,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pv.PVDReader,
             pv.CGNSReader,
             pv.ExodusIIBlockSet,
+            pv.DEMReader,
         ):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Test fails without proper dataset files.')

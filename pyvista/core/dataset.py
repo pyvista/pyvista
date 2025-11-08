@@ -25,7 +25,6 @@ from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
-from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
@@ -123,6 +122,7 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         warnings.warn(
             'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
@@ -953,7 +953,7 @@ class DataSet(DataSetFilters, DataObject):
         # If array has no tuples return a NaN range
         if arr is None:
             return (np.nan, np.nan)
-        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not (arr.dtype == bool or np.issubdtype(arr.dtype, np.number)):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
@@ -2192,10 +2192,6 @@ class DataSet(DataSetFilters, DataObject):
         array([  86, 1653])
 
         """
-        if pyvista.vtk_version_info < (9, 2, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.2.0'
-            raise VTKVersionError(msg)
-
         if np.array(pointa).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)

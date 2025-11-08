@@ -203,21 +203,26 @@ def test_invalid_file():
 
 
 @pytest.mark.parametrize(
-    ('arr', 'value'),
+    ('arr', 'value', 'expected'),
     [
-        ('faces', [3, 1, 2, 3, 3, 0, 1]),
-        ('strips', np.array([5, 4, 3, 2, 0])),
-        ('lines', [4, 0, 1, 2, 2, 3, 4]),
-        ('verts', [1, 0, 1]),
-        ('faces', [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
-        ('faces', [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
+        ('faces', [3, 1, 2, 3, 3, 0, 1], 8),
+        ('strips', np.array([5, 4, 3, 2, 0]), 6),
+        ('lines', [4, 0, 1, 2, 2, 3, 4], 9),
+        ('verts', [1, 0, 1], 4),
+        ('faces', [[3, 0, 1], [3, 2, 1], [4, 0, 1]], 10),
+        ('faces', [[2, 0, 1], [2, 2, 1], [1, 0, 1]], 10),
     ],
 )
-def test_invalid_connectivity_arrays(arr, value):
+def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expected: int):
     generator = np.random.default_rng(seed=None)
     points = generator.random((10, 3))
     mesh = pv.PolyData(points)
-    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
+
+    # np.ravel()
+    match = re.escape(
+        f'Cell array size is invalid. Size ({len(np.ravel(value))}) does not match expected size ({expected}).'  # noqa: E501
+    )
+    with pytest.raises(CellSizeError, match=match):
         setattr(mesh, arr, value)
 
     with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
@@ -347,7 +352,7 @@ def test_ray_trace(sphere):
 def test_ray_trace_origin():
     # https://github.com/pyvista/pyvista/issues/5372
     plane = pv.Plane(i_resolution=1, j_resolution=1)
-    pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
+    _pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
     assert len(cells) == 1
     assert cells[0] == 0
 
@@ -697,7 +702,9 @@ def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
 
     if extension == '.vtkhdf' and not binary:
-        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+        with pytest.raises(
+            ValueError, match=r'.vtkhdf files can only be written in binary format'
+        ):
             sphere.save(filename, binary=binary)
         return
 
@@ -1322,7 +1329,7 @@ def test_n_faces():
         # Should raise an AttributeError
         with pytest.raises(
             AttributeError,
-            match='The non-strict behavior of `pv.PolyData.n_faces` has been removed',
+            match=r'The non-strict behavior of `pv.PolyData.n_faces` has been removed',
         ):
             _ = mesh.n_faces
     else:
@@ -1453,14 +1460,11 @@ def test_irregular_faces_mutable():
 def test_n_faces_etc_deprecated(cells: str):
     n_cells = 'n_' + cells
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match=f'`PolyData` constructor parameter `{n_cells}` is deprecated and no longer used',
+    with pytest.raises(
+        TypeError,
+        match=f'PolyData constructor parameter `{n_cells}` is deprecated and no longer used',
     ):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
-        raise RuntimeError(msg)
     if pv._version.version_info[:2] > (0, 48):
         msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
         raise RuntimeError(msg)
