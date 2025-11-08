@@ -16,13 +16,13 @@ combinations of all possible cell types:
    :hide-code:
 
    # jupyterlab boiler plate setup
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 .. jupyter-execute::
    :hide-code:
@@ -57,10 +57,10 @@ The :class:`pyvista.PointSet` is a concrete class for storing a set of points.
    :hide-code:
 
    import numpy as np
-   import pyvista
+   import pyvista as pv
    rng = np.random.default_rng(0)
    points = rng.random((10, 3))
-   pset = pyvista.PointSet(points)
+   pset = pv.PointSet(points)
    pset.plot(color='red')
 
 
@@ -90,8 +90,8 @@ A :class:`pyvista.PolyData` object can be initialized with:
 
 .. jupyter-execute::
 
-    import pyvista
-    mesh = pyvista.PolyData()
+    import pyvista as pv
+    mesh = pv.PolyData()
 
 This creates an mesh, which you can then add
 
@@ -117,11 +117,11 @@ these can be loaded with:
 
 .. jupyter-execute::
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     # Load mesh
-    mesh = pyvista.PolyData(examples.planefile)
+    mesh = pv.PolyData(examples.planefile)
     mesh
 
 This mesh can then be written to a .vtk file using:
@@ -136,7 +136,7 @@ These meshes are identical.
 
     import numpy as np
 
-    mesh_from_vtk = pyvista.PolyData('plane.vtk')
+    mesh_from_vtk = pv.PolyData('plane.vtk')
     print(np.allclose(mesh_from_vtk.points, mesh.points))
 
 
@@ -153,15 +153,15 @@ and plots the meshes with various colors.
 
 .. jupyter-execute::
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     # load and shrink airplane
-    airplane = pyvista.PolyData(examples.planefile)
+    airplane = pv.PolyData(examples.planefile)
     airplane.points /= 10 # shrink by 10x
 
     # rotate and translate ant so it is on the plane
-    ant = pyvista.PolyData(examples.antfile)
+    ant = pv.PolyData(examples.antfile)
     ant.rotate_x(90, inplace=True)
     ant.translate([90, 60, 15], inplace=True)
 
@@ -170,19 +170,19 @@ and plots the meshes with various colors.
     ant_copy.translate([30, 0, -10], inplace=True)
 
     # Create plotter object
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(ant, color='r')
-    plotter.add_mesh(ant_copy, color='b')
+    pl = pv.Plotter()
+    pl.add_mesh(ant, color='r')
+    pl.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position. Add a
     # scalar bar associated with this mesh
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars,
+    pl.add_mesh(airplane, scalars=plane_scalars,
                      scalar_bar_args={'title': 'Airplane Y\nLocation'})
 
     # Add annotation text
-    plotter.add_text('Ants and Plane Example')
-    plotter.show()
+    pl.add_text('Ants and Plane Example')
+    pl.show()
 
 Unstructured Grid Creation
 --------------------------
@@ -212,7 +212,7 @@ initializing.
 .. jupyter-execute::
 
    >>> import numpy as np
-   >>> import pyvista
+   >>> import pyvista as pv
    >>> from pyvista import CellType
    >>> cells = np.array(
    ...     [8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -247,7 +247,7 @@ initializing.
    ...     dtype=np.float32,
    ... )
    >>> points = np.vstack((cell1, cell2))
-   >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+   >>> grid = pv.UnstructuredGrid(cells, cell_type, points)
    >>> grid
 
 We can plot this with colors with:

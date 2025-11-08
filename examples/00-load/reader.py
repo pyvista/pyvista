@@ -21,7 +21,7 @@ from tempfile import NamedTemporaryFile
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 # %%
@@ -34,7 +34,7 @@ temp_file.name
 # %%
 # :class:`pyvista.Sphere` already includes ``Normals`` point data.  Additionally
 # ``height`` point data and ``id`` cell data is added.
-mesh = pyvista.Sphere()
+mesh = pv.Sphere()
 mesh['height'] = mesh.points[:, 1]
 mesh['id'] = np.arange(mesh.n_cells)
 mesh.save(temp_file.name)
@@ -43,14 +43,14 @@ mesh.save(temp_file.name)
 # :func:`pyvista.read` function reads all the data in the file. This provides
 # a quick and easy one-liner to read data from files.
 
-new_mesh = pyvista.read(temp_file.name)
+new_mesh = pv.read(temp_file.name)
 print(f'All arrays: {mesh.array_names}')
 
 # %%
 # Using :func:`pyvista.get_reader` enables more fine-grained control of reading data
 # files. Reading in a ``.vtp``` file uses the :class:`pyvista.XMLPolyDataReader`.
 
-reader = pyvista.get_reader(temp_file.name)
+reader = pv.get_reader(temp_file.name)
 reader
 # Alternative method: reader = pyvista.XMLPolyDataReader(temp_file.name)
 
@@ -91,7 +91,7 @@ print(f'New read arrays: {reader_mesh_2.array_names}')
 # which uses the :class:`pyvista.EnSightReader` class.
 
 filename = examples.download_naca(load=False)
-reader = pyvista.get_reader(filename)
+reader = pv.get_reader(filename)
 time_values = reader.time_values
 print(reader)
 print(f'Available time points: {time_values}')
@@ -116,7 +116,7 @@ for block_0, block_1 in zip(mesh_0, mesh_1):
 # The value of `DENS` is plotted on the left column for both time points, and
 # the difference on the right.
 
-plotter = pyvista.Plotter(shape='2|1')
+plotter = pv.Plotter(shape='2|1')
 
 plotter.subplot(0)
 plotter.add_mesh(mesh_0, scalars='DENS', show_scalar_bar=False)
@@ -132,7 +132,7 @@ plotter.add_mesh(mesh_1.copy(), scalars='DENS_DIFF', show_scalar_bar=False)
 plotter.add_text('DENS Difference')
 
 plotter.link_views()
-plotter.camera_position = pyvista.CameraPosition(
+plotter.camera_position = pv.CameraPosition(
     position=(0.5, 0, 8), focal_point=(0.5, 0, 0), viewup=(0, 1, 0)
 )
 
@@ -145,7 +145,7 @@ plotter.show()
 # :class:`pyvista.MultiBlock` mesh.
 
 filename = examples.download_wavy(load=False)
-reader = pyvista.get_reader(filename)
+reader = pv.get_reader(filename)
 print(reader)
 
 # %%
@@ -153,7 +153,7 @@ print(reader)
 # Put iteration value in top left
 #
 
-plotter = pyvista.Plotter(notebook=False, off_screen=True)
+plotter = pv.Plotter(notebook=False, off_screen=True)
 # Open a gif
 plotter.open_gif('wave_pvd.gif')
 

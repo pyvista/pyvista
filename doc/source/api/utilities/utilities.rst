@@ -148,8 +148,8 @@ The PyVista library provides a way of getting the version installed in your
 environment.
 
 >>> # Output the version of PyVista.
->>> import pyvista
->>> pyvista.version_info
+>>> import pv
+>>> pv.version_info
 (0, 44, 0)
 
 VTK Version Information

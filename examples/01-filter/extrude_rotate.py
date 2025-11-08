@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 
 # create a line and rotate it about the Z-axis
 resolution = 10
-line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
+line = pv.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
 poly = line.extrude_rotate(resolution=resolution)
 poly
 
@@ -36,12 +36,12 @@ poly
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-plotter = pyvista.Plotter(shape=(2, 1))
+plotter = pv.Plotter(shape=(2, 1))
 plotter.subplot(0, 0)
 plotter.add_text('Line', font_size=24)
 plotter.add_mesh(line, color='lightblue', show_edges=True)
 plotter.add_mesh(
-    pyvista.PolyData(line.points),
+    pv.PolyData(line.points),
     color='red',
     point_size=10,
     render_points_as_spheres=True,
@@ -50,7 +50,7 @@ plotter.subplot(1, 0)
 plotter.add_text('Extrude Rotated Line', font_size=24)
 plotter.add_mesh(poly, color='lightblue', show_edges=True)
 plotter.add_mesh(
-    pyvista.PolyData(poly.points),
+    pv.PolyData(poly.points),
     color='red',
     point_size=10,
     render_points_as_spheres=True,
@@ -63,7 +63,7 @@ plotter.show(cpos='xy')
 # ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).
-plotter = pyvista.Plotter()
+plotter = pv.Plotter()
 
 vertices = np.array(
     [
@@ -78,7 +78,7 @@ vertices = np.array(
     ],
 )
 faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
-profile = pyvista.PolyData(vertices, faces)
+profile = pv.PolyData(vertices, faces)
 
 # Extrude the profile to make a spring.
 spring = profile.extrude_rotate(resolution=360, translation=6.0, dradius=1.0, angle=2160.0)

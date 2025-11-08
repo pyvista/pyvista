@@ -51,7 +51,7 @@ PyVista is:
 
 .. code-block:: python
 
-   >>> import pyvista
+   >>> import pyvista as pv
    >>> import numpy as np
 
    Use the meshgrid function to create 2D "grids" of the x and y values.
@@ -63,7 +63,7 @@ PyVista is:
 
    Create the grid. Note how the values must use Fortran ordering.
 
-   >>> grid = pyvista.ImageData(dimensions=(300, 300, 1))
+   >>> grid = pv.ImageData(dimensions=(300, 300, 1))
    >>> grid.point_data["values"] = values.flatten(order="F")
 
 Here, PyVista has done several things for us:
@@ -195,8 +195,8 @@ Since the end goal is to construct a :class:`pyvista.DataSet
 
 .. jupyter-execute::
 
-   >>> import pyvista
-   >>> poly_data = pyvista.PolyData(np_points)
+   >>> import pyvista as pv
+   >>> poly_data = pv.PolyData(np_points)
 
 Whereas in VTK you would have to do:
 
@@ -226,7 +226,7 @@ access it (or change it) from the :attr:`faces
 .. jupyter-execute::
 
    >>> faces = np.array([3, 0, 1, 2])
-   >>> poly_data = pyvista.PolyData(np_points, faces)
+   >>> poly_data = pv.PolyData(np_points, faces)
    >>> poly_data.faces
 
 .. _vtk_vs_pyvista_object_repr:
@@ -280,23 +280,23 @@ example:
    :include-source: false
 
    # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.anti_aliasing = 'fxaa'
+   import pyvista as pv
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.anti_aliasing = 'fxaa'
 
 
 .. pyvista-plot::
    :context:
 
-   import pyvista
+   import pyvista as pv
 
    # create a default sphere and a shifted sphere
-   mesh_a = pyvista.Sphere()
-   mesh_b = pyvista.Sphere(center=(-0.4, 0, 0))
+   mesh_a = pv.Sphere()
+   mesh_b = pv.Sphere(center=(-0.4, 0, 0))
    out, n_coll = mesh_a.collision(mesh_b, generate_scalars=True, contact_mode=2)
 
-   pl = pyvista.Plotter()
+   pl = pv.Plotter()
    pl.add_mesh(out)
    pl.add_mesh(mesh_b, style='wireframe', color='k')
    pl.camera_position = 'xy'
@@ -317,7 +317,7 @@ the output with PyVista. For example:
 .. pyvista-plot::
 
    import vtk
-   import pyvista
+   import pyvista as pv
 
    # Create a circle using vtk
    polygonSource = vtk.vtkRegularPolygonSource()
@@ -328,7 +328,7 @@ the output with PyVista. For example:
    polygonSource.Update()
 
    # wrap and plot using pyvista
-   mesh = pyvista.wrap(polygonSource.GetOutput())
+   mesh = pv.wrap(polygonSource.GetOutput())
    mesh.plot(line_width=3, cpos='xy', color='k')
 
 In this manner, you can get the "best of both worlds" should you need

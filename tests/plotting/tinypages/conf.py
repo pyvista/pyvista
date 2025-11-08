@@ -7,7 +7,7 @@ import re
 import sys
 import warnings
 
-import pyvista
+import pyvista as pv
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -42,7 +42,7 @@ extensions = [
 ]
 
 # -- Plot directive specific configuration --------------------------------
-plot_setup = plot_cleanup = 'import pyvista'
+plot_setup = plot_cleanup = 'import pyvista as pv'
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -51,7 +51,7 @@ html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
 
 # -- pyvista configuration ------------------------------------------------
-pyvista.BUILDING_GALLERY = True
+pv.BUILDING_GALLERY = True
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString

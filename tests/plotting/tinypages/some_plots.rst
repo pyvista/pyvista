@@ -6,8 +6,8 @@ Some Plots
 
 .. pyvista-plot::
 
-    import pyvista
-    pyvista.Sphere().plot()
+    import pyvista as pv
+    pv.Sphere().plot()
 
 
 **Plot 2** Uses doctest syntax:
@@ -15,8 +15,8 @@ Some Plots
 .. pyvista-plot::
     :format: doctest
 
-    >>> import pyvista
-    >>> pyvista.Cube().plot()
+    >>> import pyvista as pv
+    >>> pv.Cube().plot()
 
 
 **Plot 3** Shows that a new block with context does not see the variable defined
@@ -34,8 +34,8 @@ in the no-context block:
     :context:
 
     a = 10
-    import pyvista
-    pyvista.Plane().plot()
+    import pyvista as pv
+    pv.Plane().plot()
 
 
 **Plot 5** Shows that a block with context sees the new variable. It also uses
@@ -82,8 +82,8 @@ Plot _ Uses a specific function in a file with plot commands:
    :force_static:
    :caption: Plot 8 uses the caption option.
 
-   import pyvista
-   pyvista.Disc().plot()
+   import pyvista as pv
+   pv.Disc().plot()
 
 
 Plot __ Uses an external file with the plot commands and a caption
@@ -101,18 +101,18 @@ scenario:
    :force_static:
    :caption: This caption applies to both plots.
 
-   import pyvista
-   pyvista.Text3D('hello').plot()
+   import pyvista as pv
+   pv.Text3D('hello').plot()
 
-   pyvista.Text3D('world').plot()
+   pv.Text3D('world').plot()
 
 
 **Plot 10** Uses the skip directive and should not generate a plot:
 
 .. pyvista-plot::
 
-   import pyvista
-   pyvista.Sphere().plot()  # doctest:+SKIP
+   import pyvista as pv
+   pv.Sphere().plot()  # doctest:+SKIP
 
 
 **Plot 11** Uses ``:include-source: False``:
@@ -136,10 +136,10 @@ lines, even in two sections:
 
 .. pyvista-plot::
 
-    >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+    >>> import pyvista as pv
+    >>> pv.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red', cpos='xy')
+    >>> pv.Sphere().plot(color='red', cpos='xy')
 
 
 **Plot 14** Forces two static images instead of interactive scenes:
@@ -147,10 +147,10 @@ lines, even in two sections:
 .. pyvista-plot::
    :force_static:
 
-   >>> import pyvista
-   >>> pyvista.Sphere().plot(color='blue', cpos='xy')
+   >>> import pyvista as pv
+   >>> pv.Sphere().plot(color='blue', cpos='xy')
 
-   >>> pyvista.Sphere().plot(color='red', cpos='xy')
+   >>> pv.Sphere().plot(color='red', cpos='xy')
 
 
 **Plot 15** Uses caption with tabbed UI:
@@ -158,8 +158,8 @@ lines, even in two sections:
 .. pyvista-plot::
    :caption: Plot 15 uses the caption option with tabbed UI.
 
-   import pyvista
-   pyvista.Disc().plot()
+   import pyvista as pv
+   pv.Disc().plot()
 
 
 **Plot 16** Should never be skipped, using the ``:skip: no`` option:
@@ -168,8 +168,8 @@ lines, even in two sections:
    :skip: no
    :caption: Plot 16 will never be skipped
 
-   import pyvista
-   pyvista.Cube().plot()
+   import pyvista as pv
+   pv.Cube().plot()
 
 
 This plot will always be skipped, using the ``:skip: yes`` option,
@@ -189,8 +189,8 @@ but the source will always be included with a conditional caption:
    :optional:
    :caption: This plot may be skipped with no caption
 
-   import pyvista
-   pyvista.Cube().plot()
+   import pyvista as pv
+   pv.Cube().plot()
 
 **Plot 19** Shows a ``matplotlib`` plot to to show that both plot directives
  can coexist.

@@ -7,14 +7,14 @@ Why PyVista?
    :hide-code:
 
    # jupyterlab boilerplate setup
-   import pyvista
+   import pyvista as pv
 
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   pv.set_jupyter_backend('static')
+   pv.global_theme.background = 'white'
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 
 
@@ -52,8 +52,8 @@ requires a few lines of code.
 +====================================================+=====================================+
 | .. code-block:: python                             | .. code-block:: python              |
 |                                                    |                                     |
-|    import vtk                                      |    import pyvista                   |
-|    reader = vtk.vtkSTLReader()                     |    mesh = pyvista.read('bunny.stl') |
+|    import vtk                                      |    import pyvista as pv             |
+|    reader = vtk.vtkSTLReader()                     |    mesh = pv.read('bunny.stl')      |
 |    reader.SetFileName("bunny.stl")                 |    mesh.plot()                      |
 |    mapper = vtk.vtkDataSetMapper()                 |                                     |
 |    output_port = reader.GetOutputPort()            | .. pyvista-plot::                   |
@@ -102,8 +102,8 @@ triangular surface mesh. That way, subdivision can be performed with:
 .. pyvista-plot::
     :context:
 
-    import pyvista
-    mesh = pyvista.Plane().triangulate()
+    import pyvista as pv
+    mesh = pv.Plane().triangulate()
     submesh = mesh.subdivide(2, 'linear')
     submesh.plot(show_edges=True)
 
@@ -140,7 +140,7 @@ field of arrows using :func:`numpy.meshgrid`:
 .. pyvista-plot::
     :context:
 
-    import pyvista
+    import pyvista as pv
     import numpy as np
 
     # Make a grid
@@ -158,7 +158,7 @@ field of arrows using :func:`numpy.meshgrid`:
     direction = np.sin(points)**3
 
     # plot using the plotting class
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_arrows(points, direction, 0.5)
     pl.show()
 
