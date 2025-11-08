@@ -448,7 +448,7 @@ def numeric_array_test_cases():
         ),
         Case(dict(must_be_sorted=True), [0, 1], [1, 0], ValueError, 'must be sorted'),
         Case(
-            dict(must_be_sorted=dict(ascending=True, strict=True, axis=-1)),
+            dict(must_be_sorted=dict(ascending=True, strict=False, axis=-1)),
             [0, 1],
             [1, 0],
             ValueError,
@@ -663,24 +663,24 @@ def test_check_string():
 
 def test_check_less_than():
     check_less_than([0], 1)
-    check_less_than(np.eye(3), 1, strict=True)
+    check_less_than(np.eye(3), 1, strict=False)
     match = 'Array values must all be less than 0.'
     with pytest.raises(ValueError, match=match):
         check_less_than(0, 0, strict=True)
     match = '_input values must all be less than or equal to 0.'
     with pytest.raises(ValueError, match=match):
-        check_less_than(1, 0, strict=True, name='_input')
+        check_less_than(1, 0, strict=False, name='_input')
 
 
 def test_check_greater_than():
     check_greater_than([1], 0)
-    check_greater_than(np.eye(3), 0, strict=True)
+    check_greater_than(np.eye(3), 0, strict=False)
     match = 'Array values must all be greater than 0.'
     with pytest.raises(ValueError, match=match):
         check_greater_than(0, 0, strict=True)
     match = '_input values must all be greater than or equal to 0.'
     with pytest.raises(ValueError, match=match):
-        check_greater_than(-1, 0, strict=True, name='_input')
+        check_greater_than(-1, 0, strict=False, name='_input')
 
 
 def test_check_real():
@@ -715,7 +715,7 @@ def test_check_integer():
         check_integer([2, 3.0], strict=True, name='_input')
     match = '_input must have integer-like values.'
     with pytest.raises(ValueError, match=match):
-        check_integer([2, 3.4], strict=True, name='_input')
+        check_integer([2, 3.4], strict=False, name='_input')
 
 
 def test_check_sequence():

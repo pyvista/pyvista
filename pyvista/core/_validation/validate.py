@@ -188,7 +188,7 @@ def validate_array(
         performed with default parameters:
 
         * ``ascending=True``: the array must be sorted in ascending order
-        * ``strict=True``: sequential elements with the same value are allowed
+        * ``strict=False``: sequential elements with the same value are allowed
         * ``axis=-1``: the sorting is checked along the array's last axis
 
         To check for descending order, enforce strict ordering, or to check
@@ -336,7 +336,7 @@ def validate_array(
     if must_be_finite:
         check_finite(arr_out, name=name)
     if must_be_integer:
-        check_integer(arr_out, strict=True, name=name)
+        check_integer(arr_out, strict=False, name=name)
     if must_be_in_range is not None:
         check_range(
             arr_out,
