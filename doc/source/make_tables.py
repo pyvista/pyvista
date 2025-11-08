@@ -179,7 +179,7 @@ class ReadersTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: PyVista Readers
-        |   :widths: 60 40
+        |   :widths: 50 50
         |   :header-rows: 1
         |
         |   * - Reader
