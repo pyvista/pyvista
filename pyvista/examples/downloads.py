@@ -5391,16 +5391,16 @@ def download_single_sphere_animation(load=True):  # noqa: FBT002
     Generate the animation.
 
     >>> pl = pv.Plotter()
-    >>> plotter.open_gif(gif_filename)
+    >>> pl.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
-    ...     _ = plotter.add_mesh(mesh, smooth_shading=True)
-    ...     _ = plotter.add_text(f'Time: {time_value:.0f}', color='black')
-    ...     plotter.write_frame()
-    ...     plotter.clear()
-    ...     plotter.enable_lightkit()
-    >>> plotter.close()
+    ...     _ = pl.add_mesh(mesh, smooth_shading=True)
+    ...     _ = pl.add_text(f'Time: {time_value:.0f}', color='black')
+    ...     pl.write_frame()
+    ...     pl.clear()
+    ...     pl.enable_lightkit()
+    >>> pl.close()
 
     .. seealso::
 
@@ -5451,16 +5451,16 @@ def download_dual_sphere_animation(load=True):  # noqa: FBT002
     Generate the animation.
 
     >>> pl = pv.Plotter()
-    >>> plotter.open_gif(gif_filename)
+    >>> pl.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
-    ...     _ = plotter.add_mesh(mesh, smooth_shading=True)
-    ...     _ = plotter.add_text(f'Time: {time_value:.0f}', color='black')
-    ...     plotter.write_frame()
-    ...     plotter.clear()
-    ...     plotter.enable_lightkit()
-    >>> plotter.close()
+    ...     _ = pl.add_mesh(mesh, smooth_shading=True)
+    ...     _ = pl.add_text(f'Time: {time_value:.0f}', color='black')
+    ...     pl.write_frame()
+    ...     pl.clear()
+    ...     pl.enable_lightkit()
+    >>> pl.close()
 
     .. seealso::
 
@@ -7601,12 +7601,10 @@ def download_victorian_goblet_face_illusion(load=True):  # noqa: FBT002
     >>> import pyvista as pv
     >>> mesh = examples.download_victorian_goblet_face_illusion()
     >>> pl = pv.Plotter(lighting='none')
-    >>> _ = plotter.add_mesh(
-    ...     mesh, edge_color='gray', color='white', show_edges=True
-    ... )
-    >>> _ = plotter.add_floor('-x', color='black')
-    >>> plotter.enable_parallel_projection()
-    >>> plotter.show(cpos='yz')
+    >>> _ = pl.add_mesh(mesh, edge_color='gray', color='white', show_edges=True)
+    >>> _ = pl.add_floor('-x', color='black')
+    >>> pl.enable_parallel_projection()
+    >>> pl.show(cpos='yz')
 
     .. seealso::
 

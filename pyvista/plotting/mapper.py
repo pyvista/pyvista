@@ -791,10 +791,10 @@ class _DataSetMapper(_BaseMapper):
         >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
 
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(surface, smooth_shading=True, split_sharp_edges=True)
-        >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
+        >>> _ = pl.add_mesh(surface, smooth_shading=True, split_sharp_edges=True)
+        >>> actor = pl.add_mesh(edges, color='k', line_width=3)
         >>> actor.mapper.resolve = 'polygon_offset'
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         vtk_to_pv = {

@@ -1908,21 +1908,21 @@ class Renderer(
 
         >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh)
-        >>> actor = plotter.show_bounds(
+        >>> actor = pl.add_mesh(mesh)
+        >>> actor = pl.show_bounds(
         ...     grid='front',
         ...     location='outer',
         ...     all_edges=True,
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         Control how many labels are displayed.
 
         >>> mesh = examples.load_random_hills()
 
         >>> pl = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
-        >>> actor = plotter.show_bounds(
+        >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = pl.show_bounds(
         ...     grid='back',
         ...     location='outer',
         ...     ticks='both',
@@ -1933,13 +1933,13 @@ class Renderer(
         ...     ytitle='Northing',
         ...     ztitle='Elevation',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         Hide labels, but still show axis titles.
 
         >>> pl = pv.Plotter()
-        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
-        >>> actor = plotter.show_bounds(
+        >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
+        >>> actor = pl.show_bounds(
         ...     grid='back',
         ...     location='outer',
         ...     ticks='both',
@@ -1950,7 +1950,7 @@ class Renderer(
         ...     ytitle='Northing',
         ...     ztitle='Elevation',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         self.remove_bounds_axes()
@@ -4104,32 +4104,30 @@ class Renderer(
         >>> sphere = pv.Sphere(center=(0, 0, 1))
         >>> cube = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, color='grey', smooth_shading=True, label='Sphere'
-        ... )
-        >>> _ = plotter.add_mesh(cube, color='r', label='Cube')
-        >>> _ = plotter.add_legend(bcolor='w', face=None)
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(sphere, color='grey', smooth_shading=True, label='Sphere')
+        >>> _ = pl.add_mesh(cube, color='r', label='Cube')
+        >>> _ = pl.add_legend(bcolor='w', face=None)
+        >>> pl.show()
 
         Alternatively provide labels in the plotter as a list.
 
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
-        >>> _ = plotter.add_mesh(cube, color='r')
+        >>> _ = pl.add_mesh(sphere, color='grey', smooth_shading=True)
+        >>> _ = pl.add_mesh(cube, color='r')
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> _ = plotter.add_legend(legend_entries)
-        >>> plotter.show()
+        >>> _ = pl.add_legend(legend_entries)
+        >>> pl.show()
 
         Or use a dictionary to define them.
 
         >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
-        >>> _ = plotter.add_mesh(cube, color='red')
-        >>> _ = plotter.add_legend(labels, face='rectangle')
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(sphere, color='grey', smooth_shading=True)
+        >>> _ = pl.add_mesh(cube, color='red')
+        >>> _ = pl.add_legend(labels, face='rectangle')
+        >>> pl.show()
 
         """
         if self.legend is not None:
@@ -4361,11 +4359,11 @@ class Renderer(
         >>> import pyvista as pv
         >>> cone = pv.Cone(height=2.0, radius=0.5)
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(cone)
+        >>> _ = pl.add_mesh(cone)
 
         Measure x direction of cone and place ruler slightly below.
 
-        >>> _ = plotter.add_ruler(
+        >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min, cone.bounds.y_min - 0.1, 0.0],
         ...     pointb=[cone.bounds.x_max, cone.bounds.y_min - 0.1, 0.0],
         ...     title='X Distance',
@@ -4375,15 +4373,15 @@ class Renderer(
         The title and labels are placed to the right of the ruler when
         traveling from ``pointa`` to ``pointb``.
 
-        >>> _ = plotter.add_ruler(
+        >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
         ...     pointb=[cone.bounds.x_min - 0.1, cone.bounds.y_min, 0.0],
         ...     flip_range=True,
         ...     title='Y Distance',
         ... )
-        >>> plotter.enable_parallel_projection()
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        >>> pl.enable_parallel_projection()
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         label_color = Color(label_color, default_color=self._theme.font.color)

@@ -512,14 +512,14 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting='none')
-        >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
+        >>> _ = pl.add_mesh(pv.Cube(), color='cyan')
         >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
         >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
-        ...     plotter.add_light(light)
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.show()
 
         """
         return self.GetIntensity()
@@ -640,7 +640,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
+        ...     _ = pl.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -648,9 +648,9 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         ...     light.exponent = exponent
         ...     light.positional = True
         ...     light.cone_angle = 80
-        ...     plotter.add_light(light)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         return self.GetExponent()
@@ -689,14 +689,14 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
+        ...     _ = pl.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
-        ...     plotter.add_light(light)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         return self.GetConeAngle()
@@ -737,9 +737,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting='none')
         >>> for offset in 1, 2.5, 4:
-        ...     _ = plotter.add_mesh(
-        ...         pv.Cube(center=(offset, offset, 0)), color='white'
-        ...     )
+        ...     _ = pl.add_mesh(pv.Cube(center=(offset, offset, 0)), color='white')
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
@@ -751,9 +749,9 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         ...     light.cone_angle = 90
         ...     light.positional = True
         ...     light.attenuation_values = attenuation_constants
-        ...     plotter.add_light(light)
-        >>> plotter.view_vector((-1, -1, 1))
-        >>> plotter.show()
+        ...     pl.add_light(light)
+        >>> pl.view_vector((-1, -1, 1))
+        >>> pl.show()
 
         """
         return self.GetAttenuationValues()
@@ -850,7 +848,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> lights = plotter.renderer.lights[:2]
+        >>> lights = pl.renderer.lights[:2]
         >>> [light.light_type for light in lights]
         [<LightType.HEADLIGHT: 1>, <LightType.CAMERA_LIGHT: 2>]
 
@@ -858,7 +856,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> lights = plotter.renderer.lights[:2]
+        >>> lights = pl.renderer.lights[:2]
         >>> lights[0].light_type = pv.Light.SCENE_LIGHT
         >>> [light.light_type for light in lights]
         [<LightType.SCENE_LIGHT: 3>, <LightType.CAMERA_LIGHT: 2>]
@@ -884,7 +882,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> lights = pl.renderer.lights
         >>> [light.is_headlight for light in lights]
         [True, False, False, False, False]
 
@@ -902,7 +900,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> lights = pl.renderer.lights
         >>> [light.is_camera_light for light in lights]
         [False, True, True, True, True]
 
@@ -920,7 +918,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> lights = plotter.renderer.lights
+        >>> lights = pl.renderer.lights
         >>> [light.is_scene_light for light in lights]
         [False, False, False, False, False]
 
@@ -1182,8 +1180,8 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(), color='white')
-        >>> for light in plotter.renderer.lights:
+        >>> _ = pl.add_mesh(pv.Cube(), color='white')
+        >>> for light in pl.renderer.lights:
         ...     light.intensity /= 5
         >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
         >>> spotlight.positional = True
@@ -1191,8 +1189,8 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         >>> spotlight.intensity = 10
         >>> spotlight.exponent = 40
         >>> spotlight.show_actor()
-        >>> plotter.add_light(spotlight)
-        >>> plotter.show()
+        >>> pl.add_light(spotlight)
+        >>> pl.show()
 
         """
         if not self.positional or self.cone_angle >= 90:

@@ -349,8 +349,8 @@ class ScalarBars(_NoNewAttrMixin):
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ = plotter.add_scalar_bar(
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
         ...     'Data',
         ...     interactive=True,
         ...     vertical=False,
@@ -359,7 +359,7 @@ class ScalarBars(_NoNewAttrMixin):
         ...     outline=True,
         ...     fmt='%10.5f',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         if mapper is None:

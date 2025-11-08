@@ -1049,14 +1049,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere)
-        >>> plotter.scalar_bars
+        >>> _ = pl.add_mesh(sphere)
+        >>> pl.scalar_bars
         Scalar Bar Title     Interactive
         "Data"               False
 
         Select a scalar bar actor based on the title of the bar.
 
-        >>> plotter.scalar_bars['Data']
+        >>> pl.scalar_bars['Data']
         <vtkmodules.vtkRenderingAnnotation.vtkScalarBarActor(...) at ...>
 
         """
@@ -1092,10 +1092,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter(shape=(2, 2))
-        >>> plotter.shape
+        >>> pl.shape
         (2, 2)
 
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         return self.renderers.shape
@@ -3549,8 +3549,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
+        >>> pl.show()
 
         Plot using RGB on a single cell.  Note that since the number of
         points and the number of cells are identical, we have to pass
@@ -3575,15 +3575,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ...     [255, 0, 0],
         ... ]
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     mesh,
         ...     scalars='colors',
         ...     lighting=False,
         ...     rgb=True,
         ...     preference='cell',
         ... )
-        >>> plotter.camera_position = 'xy'
-        >>> plotter.show()
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
 
         Note how this varies from ``preference=='point'``.  This is
         because each point is now being individually colored, versus
@@ -3591,15 +3591,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         colored.
 
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     mesh,
         ...     scalars='colors',
         ...     lighting=False,
         ...     rgb=True,
         ...     preference='point',
         ... )
-        >>> plotter.camera_position = 'xy'
-        >>> plotter.show()
+        >>> pl.camera_position = 'xy'
+        >>> pl.show()
 
         Plot a plane with a constant color and vary its opacity by point.
 
@@ -4725,10 +4725,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> bunny = examples.download_bunny()
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(bunny, color='lightblue')
-        >>> _ = plotter.add_silhouette(bunny, color='red', line_width=8.0)
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(bunny, color='lightblue')
+        >>> _ = pl.add_silhouette(bunny, color='red', line_width=8.0)
+        >>> pl.view_xy()
+        >>> pl.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
@@ -4820,9 +4820,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> actor = plotter.add_mesh(pv.Sphere())
-        >>> plotter.clear()
-        >>> plotter.renderer.actors
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> pl.clear()
+        >>> pl.renderer.actors
         {}
 
         """
@@ -4990,7 +4990,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 # Modify the points in place
                 mesh['my scalars'] = values
                 # Explicitly call render if needed
-                plotter.render()
+                pl.render()
 
         Parameters
         ----------
@@ -5422,9 +5422,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> plotter.open_movie(filename)  # doctest:+SKIP
-        >>> plotter.add_mesh(pv.Sphere())  # doctest:+SKIP
-        >>> plotter.write_frame()  # doctest:+SKIP
+        >>> pl.open_movie(filename)  # doctest:+SKIP
+        >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
+        >>> pl.write_frame()  # doctest:+SKIP
 
         See :ref:`movie_example` for a full example using this method.
 
@@ -6110,8 +6110,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> cent = rng.random((10, 3))
         >>> direction = rng.random((10, 3))
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_arrows(cent, direction, mag=2)
-        >>> plotter.show()
+        >>> _ = pl.add_arrows(cent, direction, mag=2)
+        >>> pl.show()
 
         """
         if cent.shape != direction.shape:  # pragma: no cover
@@ -6314,8 +6314,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> pl = pv.Plotter(off_screen=True)
-        >>> actor = plotter.add_mesh(sphere)
-        >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
+        >>> actor = pl.add_mesh(sphere)
+        >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
 
         """
         with self.window_size_context(window_size):
@@ -6405,9 +6405,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Sphere())
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> viewup = [0, 0, 1]
-        >>> orbit = plotter.generate_orbital_path(
+        >>> orbit = pl.generate_orbital_path(
         ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
         ... )
 
@@ -6492,13 +6492,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> texture = examples.load_globe_texture()
         >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> pl = pv.Plotter(window_size=[300, 300])
-        >>> _ = plotter.add_mesh(mesh, texture=texture, smooth_shading=True)
-        >>> plotter.open_gif(filename)
+        >>> _ = pl.add_mesh(mesh, texture=texture, smooth_shading=True)
+        >>> pl.open_gif(filename)
         >>> viewup = [0, 0, 1]
-        >>> orbit = plotter.generate_orbital_path(
+        >>> orbit = pl.generate_orbital_path(
         ...     factor=2.0, n_points=24, shift=0.0, viewup=viewup
         ... )
-        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
+        >>> pl.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
         See :ref:`orbit_example` for a full example using this method.
 
@@ -6648,9 +6648,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> pl = pv.Plotter()
-        >>> actor = plotter.add_mesh(pv.Sphere())
-        >>> plotter.add_background_image(examples.mapfile)
-        >>> plotter.show()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> pl.add_background_image(examples.mapfile)
+        >>> pl.show()
 
         """
         if self.renderers.has_active_background_renderer:
@@ -6720,10 +6720,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting='none')
-        >>> _ = plotter.add_mesh(pv.Cube())
+        >>> _ = pl.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
-        >>> plotter.add_light(light)
-        >>> plotter.show()
+        >>> pl.add_light(light)
+        >>> pl.show()
 
         """
         renderers = [self.renderer] if only_active else self.renderers
@@ -6748,11 +6748,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> plotter.remove_all_lights()
-        >>> plotter.renderer.lights
+        >>> pl.remove_all_lights()
+        >>> pl.renderer.lights
         []
-        >>> _ = plotter.add_mesh(pv.Sphere(), show_edges=True)
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(pv.Sphere(), show_edges=True)
+        >>> pl.show()
 
         Note how this differs from a plot with default lighting
 
@@ -6780,18 +6780,18 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter(shape=(2, 2))
-        >>> plotter.subplot(0, 0)
-        >>> _ = plotter.add_mesh(pv.Box(), name='box')
-        >>> plotter.subplot(0, 1)
-        >>> _ = plotter.add_mesh(pv.Sphere(), name='sphere')
-        >>> plotter.subplot(1, 0)
-        >>> _ = plotter.add_mesh(pv.Box(), name='box')
-        >>> plotter.subplot(1, 1)
-        >>> _ = plotter.add_mesh(pv.Cone(), name='cone')
-        >>> plotter.where_is('box')
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(pv.Box(), name='box')
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Sphere(), name='sphere')
+        >>> pl.subplot(1, 0)
+        >>> _ = pl.add_mesh(pv.Box(), name='box')
+        >>> pl.subplot(1, 1)
+        >>> _ = pl.add_mesh(pv.Cone(), name='cone')
+        >>> pl.where_is('box')
         [(0, 0), (1, 0)]
 
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         return [
@@ -7468,9 +7468,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere)
-        >>> _ = plotter.add_cursor()
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(sphere)
+        >>> _ = pl.add_cursor()
+        >>> pl.show()
 
         """
         alg = _vtk.vtkCursor3D()
