@@ -359,12 +359,12 @@ A more complex plot can be created using:
 
     # plot this displaced beam
     pl = pv.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1],
+    pl.add_mesh(grid, scalars=d[:, 1],
                      scalar_bar_args={'title': 'Y Displacement'},
                      rng=[-d.max(), d.max()])
-    plotter.add_axes()
-    plotter.camera_position = cpos
-    plotter.show()
+    pl.add_axes()
+    pl.camera_position = cpos
+    pl.show()
 
 
 You can animate the motion of the beam by updating the positions and
@@ -392,24 +392,24 @@ scalars of the grid copied to the plotting object. Here is a full example:
                              viewup=(-0.425, 0.902, -0.0679))
 
     pl = pv.Plotter(window_size=(800, 600))
-    plotter.add_mesh(grid, scalars='Y Displacement',
+    pl.add_mesh(grid, scalars='Y Displacement',
                      show_edges=True, rng=[-d.max(), d.max()],
                      interpolate_before_map=True)
-    plotter.add_axes()
-    plotter.camera_position = cpos
+    pl.add_axes()
+    pl.camera_position = cpos
 
     # open movie file. A mp4 file can be written instead. Requires ``moviepy``
-    plotter.open_gif('beam.gif')  # or beam.mp4
+    pl.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
     for phase in np.linspace(0, 2*np.pi, 20):
         grid.points = pts + d * np.cos(phase)
         grid['Y Displacement'] = d[:, 1] * np.cos(phase)
-        plotter.write_frame()
+        pl.write_frame()
 
     # close the plotter when complete
-    plotter.close()
+    pl.close()
 
 
 You can also render the beam as a wire-frame object:
@@ -419,21 +419,21 @@ You can also render the beam as a wire-frame object:
 
    # Animate plot as a wire-frame
    pl = pv.Plotter(window_size=(800, 600))
-   plotter.add_mesh(grid, scalars='Y Displacement',
+   pl.add_mesh(grid, scalars='Y Displacement',
                     show_edges=True,
                     rng=[-d.max(), d.max()], interpolate_before_map=True,
                     style='wireframe')
-   plotter.add_axes()
-   plotter.camera_position = cpos
+   pl.add_axes()
+   pl.camera_position = cpos
 
-   plotter.open_gif('beam_wireframe.gif')
+   pl.open_gif('beam_wireframe.gif')
    for phase in np.linspace(0, 2*np.pi, 20):
        grid.points = pts + d * np.cos(phase)
        grid['Y Displacement'] = d[:, 1] * np.cos(phase)
-       plotter.write_frame()
+       pl.write_frame()
 
    # close the plotter when complete
-   plotter.close()
+   pl.close()
 
 
 Adding Labels to a Plot
@@ -463,20 +463,20 @@ item in the list to a string.
 
     # Create plotting class and add the unstructured grid
     pl = pv.Plotter()
-    plotter.add_mesh(grid, show_edges=True, color='lightblue')
+    pl.add_mesh(grid, show_edges=True, color='lightblue')
 
     # Add labels to points on the yz plane (where x == 0)
     points = grid.points
     mask = points[:, 0] == 0
-    plotter.add_point_labels(points[mask], points[mask].tolist())
+    pl.add_point_labels(points[mask], points[mask].tolist())
 
-    plotter.camera_position = pv.CameraPosition(
+    pl.camera_position = pv.CameraPosition(
         position=(-1.4643015810492384, 1.5603923627830638, 3.16318236536270),
         focal_point=(0.05268120500967251, 0.639442034364944, 1.204095304165153),
         viewup=(0.2364061044392675, 0.9369426029156169, -0.25739213784721)
     )
 
-    plotter.show()
+    pl.show()
 
 
 This example is similar and shows how labels can be combined with a
@@ -491,16 +491,16 @@ scalar bar to show the exact value of certain points.
     # Create plotting class and add the unstructured grid
     pl = pv.Plotter()
     # color mesh according to z value
-    plotter.add_mesh(grid, scalars=values,
+    pl.add_mesh(grid, scalars=values,
                      scalar_bar_args={'title': 'Z Position'},
                      show_edges=True)
 
     # Add labels to points on the yz plane (where x == 0)
     mask = grid.points[:, 0] == 0
-    plotter.add_point_labels(points[mask], values[mask].tolist(), font_size=24)
+    pl.add_point_labels(points[mask], values[mask].tolist(), font_size=24)
 
     # add some text to the plot
-    plotter.add_text('Example showing plot labels')
+    pl.add_text('Example showing plot labels')
 
-    plotter.view_vector((-6, -3, -4), (0.,-1., 0.))
-    plotter.show()
+    pl.view_vector((-6, -3, -4), (0.,-1., 0.))
+    pl.show()
