@@ -7029,7 +7029,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             # Pack/sort array
             packed_array = np.zeros_like(arr)
-            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=True):
+            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=False):
                 packed_array[arr == num_in] = num_out
 
             result = self if inplace else self.copy(deep=True)
