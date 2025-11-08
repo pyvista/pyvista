@@ -3419,9 +3419,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     separating_distance_ratio=0.2,
         ... )
         >>> pl = pv.Plotter()
-        >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars='vorticity_mag')
-        >>> plotter.view_xy()
-        >>> plotter.show()
+        >>> _ = pl.add_mesh(streams.tube(radius=0.02), scalars='vorticity_mag')
+        >>> pl.view_xy()
+        >>> pl.show()
 
         See :ref:`streamlines_2D_example` for more examples using this filter.
 
@@ -5825,17 +5825,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> mesh = examples.download_can_crushed_vtu()
         >>> cqual = mesh.compute_boundary_mesh_quality()
         >>> pl = pv.Plotter(shape=(2, 2))
-        >>> _ = plotter.add_mesh(mesh, show_edges=True)
-        >>> plotter.subplot(1, 0)
-        >>> _ = plotter.add_mesh(cqual, scalars='DistanceFromCellCenterToFaceCenter')
-        >>> plotter.subplot(0, 1)
-        >>> _ = plotter.add_mesh(cqual, scalars='DistanceFromCellCenterToFacePlane')
-        >>> plotter.subplot(1, 1)
-        >>> _ = plotter.add_mesh(
+        >>> _ = pl.add_mesh(mesh, show_edges=True)
+        >>> pl.subplot(1, 0)
+        >>> _ = pl.add_mesh(cqual, scalars='DistanceFromCellCenterToFaceCenter')
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(cqual, scalars='DistanceFromCellCenterToFacePlane')
+        >>> pl.subplot(1, 1)
+        >>> _ = pl.add_mesh(
         ...     cqual,
         ...     scalars='AngleFaceNormalAndCellCenterToFaceCenterVector',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover

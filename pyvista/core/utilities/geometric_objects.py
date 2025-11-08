@@ -1147,10 +1147,10 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     >>> import pyvista as pv
     >>> mesh = pv.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
     >>> pl = pv.Plotter()
-    >>> actor = plotter.add_mesh(mesh, color='k', line_width=10)
-    >>> plotter.camera.azimuth = 45
-    >>> plotter.camera.zoom(0.8)
-    >>> plotter.show()
+    >>> actor = pl.add_mesh(mesh, color='k', line_width=10)
+    >>> pl.camera.azimuth = 45
+    >>> pl.camera.zoom(0.8)
+    >>> pl.show()
 
     """
     if points is None:

@@ -2733,10 +2733,10 @@ class ImageDataFilters(DataSetFilters):
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
         ...     pl = pv.Plotter()
-        ...     plotter.add_mesh(colored_mesh, show_edges=True)
+        ...     pl.add_mesh(colored_mesh, show_edges=True)
         ...     if zoom:
-        ...         plotter.camera.zoom(zoom)
-        ...     return plotter
+        ...         pl.camera.zoom(zoom)
+        ...     return pl
         >>>
         >>> labels_plotter(image).show()
 
