@@ -39,7 +39,7 @@ class Follower(Actor, _vtk.vtkFollower):
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> plotter = pv.Plotter()
+    >>> pl = pv.Plotter()
 
     Create the "Hello" text that will follow the camera.
 

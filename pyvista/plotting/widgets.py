@@ -183,7 +183,7 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def simulate(widget):
         ...     bounds = widget.bounds
         ...     new_center = np.array(
@@ -2940,7 +2940,7 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
         >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
@@ -3065,7 +3065,7 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> _ = plotter.add_mesh(sphere, show_edges=True)
         >>> plotter.subplot(0, 1)
         >>> _ = plotter.add_mesh(sphere, show_edges=True)

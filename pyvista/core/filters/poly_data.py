@@ -2538,16 +2538,14 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells = np.array(intersection_cells)  # type: ignore[assignment]
 
         if plot:
-            plotter = pv.Plotter(off_screen=off_screen)
-            plotter.add_mesh(self, label='Test Mesh')
+            pl = pv.Plotter(off_screen=off_screen)
+            pl.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
-            plotter.add_lines(segment, color='b', label='Ray Segment')
-            plotter.add_mesh(
-                intersection_points, color='r', point_size=10, label='Intersection Points'
-            )
-            plotter.add_legend()
-            plotter.add_axes()
-            plotter.show()
+            pl.add_lines(segment, color='b', label='Ray Segment')
+            pl.add_mesh(intersection_points, color='r', point_size=10, label='Intersection Points')
+            pl.add_legend()
+            pl.add_axes()
+            pl.show()
 
         return intersection_points, intersection_cells
 
@@ -2737,20 +2735,20 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
-        plotter = pv.Plotter(
+        pl = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None),
             notebook=kwargs.pop('notebook', None),
         )
-        plotter.add_mesh(
+        pl.add_mesh(
             edges,
             color=edge_color,
             style='wireframe',
             label='Edges',
             line_width=line_width,
         )
-        plotter.add_mesh(self, label='Mesh', **kwargs)
-        plotter.add_legend()  # type: ignore[call-arg]
-        return plotter.show()
+        pl.add_mesh(self, label='Mesh', **kwargs)
+        pl.add_legend()  # type: ignore[call-arg]
+        return pl.show()
 
     @_deprecate_positional_args
     def plot_normals(  # type: ignore[misc]  # noqa: PLR0917
@@ -2813,12 +2811,12 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
-        plotter = pv.Plotter(
+        pl = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None),
             notebook=kwargs.pop('notebook', None),
         )
         if show_mesh:
-            plotter.add_mesh(self, **kwargs)
+            pl.add_mesh(self, **kwargs)
 
         color = pv.Color(color, default_color=pv.global_theme.edge_color)
 
@@ -2832,7 +2830,7 @@ class PolyDataFilters(DataSetFilters):
         if flip:
             normals *= -1  # type: ignore[misc]
 
-        plotter.add_arrows(
+        pl.add_arrows(
             centers,
             normals[::use_every],
             mag=mag,
@@ -2840,7 +2838,7 @@ class PolyDataFilters(DataSetFilters):
             show_scalar_bar=False,
         )
 
-        return plotter.show()
+        return pl.show()
 
     @_deprecate_positional_args(allowed=['remove', 'mode'])
     def remove_points(  # noqa: PLR0917

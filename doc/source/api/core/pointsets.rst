@@ -358,7 +358,7 @@ A more complex plot can be created using:
     :context:
 
     # plot this displaced beam
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1],
                      scalar_bar_args={'title': 'Y Displacement'},
                      rng=[-d.max(), d.max()])
@@ -391,7 +391,7 @@ scalars of the grid copied to the plotting object. Here is a full example:
                              focal_point=(0.0, 0.375, 2.0),
                              viewup=(-0.425, 0.902, -0.0679))
 
-    plotter = pv.Plotter(window_size=(800, 600))
+    pl = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars='Y Displacement',
                      show_edges=True, rng=[-d.max(), d.max()],
                      interpolate_before_map=True)
@@ -418,7 +418,7 @@ You can also render the beam as a wire-frame object:
    :context:
 
    # Animate plot as a wire-frame
-   plotter = pv.Plotter(window_size=(800, 600))
+   pl = pv.Plotter(window_size=(800, 600))
    plotter.add_mesh(grid, scalars='Y Displacement',
                     show_edges=True,
                     rng=[-d.max(), d.max()], interpolate_before_map=True,
@@ -462,7 +462,7 @@ item in the list to a string.
     grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
     # Create plotting class and add the unstructured grid
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     plotter.add_mesh(grid, show_edges=True, color='lightblue')
 
     # Add labels to points on the yz plane (where x == 0)
@@ -489,7 +489,7 @@ scalar bar to show the exact value of certain points.
     values = grid.points[:, 2]
 
     # Create plotting class and add the unstructured grid
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     # color mesh according to z value
     plotter.add_mesh(grid, scalars=values,
                      scalar_bar_args={'title': 'Z Position'},

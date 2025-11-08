@@ -338,7 +338,7 @@ def plot_ants_plane(notebook=None):
 
        Create plotting object.
 
-       >>> plotter = pv.Plotter()
+       >>> pl = pv.Plotter()
        >>> _ = plotter.add_mesh(ant, color='r')
        >>> _ = plotter.add_mesh(ant_copy, color='b')
 

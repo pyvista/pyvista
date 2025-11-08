@@ -1048,7 +1048,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere)
         >>> plotter.scalar_bars
         Scalar Bar Title     Interactive
@@ -1091,7 +1091,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Return the plotter shape.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> pl = pv.Plotter(shape=(2, 2))
         >>> plotter.shape
         (2, 2)
 
@@ -3548,7 +3548,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()
 
@@ -3574,7 +3574,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ...     [0, 0, 255],
         ...     [255, 0, 0],
         ... ]
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     mesh,
         ...     scalars='colors',
@@ -3590,7 +3590,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         in ``preference=='point'``, each cell face is individually
         colored.
 
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     mesh,
         ...     scalars='colors',
@@ -4724,7 +4724,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> bunny = examples.download_bunny()
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(bunny, color='lightblue')
         >>> _ = plotter.add_silhouette(bunny, color='red', line_width=8.0)
         >>> plotter.view_xy()
@@ -4819,7 +4819,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = plotter.add_mesh(pv.Sphere())
         >>> plotter.clear()
         >>> plotter.renderer.actors
@@ -5421,7 +5421,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> plotter.open_movie(filename)  # doctest:+SKIP
         >>> plotter.add_mesh(pv.Sphere())  # doctest:+SKIP
         >>> plotter.write_frame()  # doctest:+SKIP
@@ -6109,7 +6109,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> rng = np.random.default_rng(seed=0)
         >>> cent = rng.random((10, 3))
         >>> direction = rng.random((10, 3))
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()
 
@@ -6313,7 +6313,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> plotter = pv.Plotter(off_screen=True)
+        >>> pl = pv.Plotter(off_screen=True)
         >>> actor = plotter.add_mesh(sphere)
         >>> plotter.screenshot('screenshot.png')  # doctest:+SKIP
 
@@ -6404,7 +6404,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Generate an orbital path around a sphere.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Sphere())
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(
@@ -6491,7 +6491,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> mesh = examples.load_globe()
         >>> texture = examples.load_globe_texture()
         >>> filename = Path(mkdtemp()) / 'orbit.gif'
-        >>> plotter = pv.Plotter(window_size=[300, 300])
+        >>> pl = pv.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(mesh, texture=texture, smooth_shading=True)
         >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]
@@ -6647,7 +6647,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = plotter.add_mesh(pv.Sphere())
         >>> plotter.add_background_image(examples.mapfile)
         >>> plotter.show()
@@ -6719,7 +6719,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         cube and a single headlight to it.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube())
         >>> light = pv.Light(color='cyan', light_type='headlight')
         >>> plotter.add_light(light)
@@ -6747,7 +6747,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Note how the mesh rendered is completely flat
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> plotter.remove_all_lights()
         >>> plotter.renderer.lights
         []
@@ -6779,7 +6779,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> pl = pv.Plotter(shape=(2, 2))
         >>> plotter.subplot(0, 0)
         >>> _ = plotter.add_mesh(pv.Box(), name='box')
         >>> plotter.subplot(0, 1)
@@ -7467,7 +7467,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere)
         >>> _ = plotter.add_cursor()
         >>> plotter.show()

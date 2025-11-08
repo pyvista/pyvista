@@ -243,7 +243,7 @@ but the source will always be included with a conditional caption:
     from pyvista import examples
     filename = examples.download_single_sphere_animation(load=False)
     reader = pv.PVDReader(filename)
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     plotter.open_gif(f'single_sphere_{str(uuid.uuid4())[:8]}.gif')
     for time_value in reader.time_values:
         reader.set_active_time_value(time_value)

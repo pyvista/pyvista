@@ -591,7 +591,7 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> plotter.camera.view_angle
         30.0
         >>> plotter.camera.view_angle = 60.0
@@ -635,7 +635,7 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> frustum = plotter.camera.view_frustum(1.0)
         >>> frustum.n_points
         8

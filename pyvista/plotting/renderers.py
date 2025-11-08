@@ -619,7 +619,7 @@ class Renderers(_NoNewAttrMixin):
         Set the background color to black.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
         Color(name='black', hex='#000000ff', opacity=255)

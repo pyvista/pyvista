@@ -1907,7 +1907,7 @@ class Renderer(
         >>> from pyvista import examples
 
         >>> mesh = pv.Sphere()
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = plotter.add_mesh(mesh)
         >>> actor = plotter.show_bounds(
         ...     grid='front',
@@ -1920,7 +1920,7 @@ class Renderer(
 
         >>> mesh = examples.load_random_hills()
 
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = plotter.show_bounds(
         ...     grid='back',
@@ -1937,7 +1937,7 @@ class Renderer(
 
         Hide labels, but still show axis titles.
 
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = plotter.show_bounds(
         ...     grid='back',
@@ -4103,7 +4103,7 @@ class Renderer(
         >>> from pyvista import examples
         >>> sphere = pv.Sphere(center=(0, 0, 1))
         >>> cube = pv.Cube()
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(
         ...     sphere, color='grey', smooth_shading=True, label='Sphere'
         ... )
@@ -4113,7 +4113,7 @@ class Renderer(
 
         Alternatively provide labels in the plotter as a list.
 
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
         >>> _ = plotter.add_mesh(cube, color='r')
         >>> legend_entries = []
@@ -4125,7 +4125,7 @@ class Renderer(
         Or use a dictionary to define them.
 
         >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
         >>> _ = plotter.add_mesh(cube, color='red')
         >>> _ = plotter.add_legend(labels, face='rectangle')
@@ -4360,7 +4360,7 @@ class Renderer(
         --------
         >>> import pyvista as pv
         >>> cone = pv.Cone(height=2.0, radius=0.5)
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(cone)
 
         Measure x direction of cone and place ruler slightly below.

@@ -722,7 +722,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
     ... )
     >>> larger_sphere = pv.PolyData(inflated_points, faces=small_sphere.GetPolys())
-    >>> plotter = pv.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
     >>> _ = plotter.add_mesh(
     ...     larger_sphere, color='blue', opacity=0.3, show_edges=True
@@ -3633,7 +3633,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> cell = grid.extract_cells(31)
         >>> ind = grid.neighbors(31)
         >>> neighbors = grid.extract_cells(ind)
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_axes()
         >>> _ = plotter.add_mesh(cell, color='r', show_edges=True)
         >>> _ = plotter.add_mesh(neighbors, color='w', show_edges=True)

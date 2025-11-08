@@ -3418,7 +3418,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     separating_distance=3,
         ...     separating_distance_ratio=0.2,
         ... )
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars='vorticity_mag')
         >>> plotter.view_xy()
         >>> plotter.show()
@@ -5824,7 +5824,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> mesh = examples.download_can_crushed_vtu()
         >>> cqual = mesh.compute_boundary_mesh_quality()
-        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> pl = pv.Plotter(shape=(2, 2))
         >>> _ = plotter.add_mesh(mesh, show_edges=True)
         >>> plotter.subplot(1, 0)
         >>> _ = plotter.add_mesh(cqual, scalars='DistanceFromCellCenterToFaceCenter')

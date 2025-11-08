@@ -5390,7 +5390,7 @@ def download_single_sphere_animation(load=True):  # noqa: FBT002
 
     Generate the animation.
 
-    >>> plotter = pv.Plotter()
+    >>> pl = pv.Plotter()
     >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
@@ -5450,7 +5450,7 @@ def download_dual_sphere_animation(load=True):  # noqa: FBT002
 
     Generate the animation.
 
-    >>> plotter = pv.Plotter()
+    >>> pl = pv.Plotter()
     >>> plotter.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
@@ -7600,7 +7600,7 @@ def download_victorian_goblet_face_illusion(load=True):  # noqa: FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> mesh = examples.download_victorian_goblet_face_illusion()
-    >>> plotter = pv.Plotter(lighting='none')
+    >>> pl = pv.Plotter(lighting='none')
     >>> _ = plotter.add_mesh(
     ...     mesh, edge_color='gray', color='white', show_edges=True
     ... )

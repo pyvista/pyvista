@@ -36,34 +36,34 @@ poly
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-plotter = pv.Plotter(shape=(2, 1))
-plotter.subplot(0, 0)
-plotter.add_text('Line', font_size=24)
-plotter.add_mesh(line, color='lightblue', show_edges=True)
-plotter.add_mesh(
+pl = pv.Plotter(shape=(2, 1))
+pl.subplot(0, 0)
+pl.add_text('Line', font_size=24)
+pl.add_mesh(line, color='lightblue', show_edges=True)
+pl.add_mesh(
     pv.PolyData(line.points),
     color='red',
     point_size=10,
     render_points_as_spheres=True,
 )
-plotter.subplot(1, 0)
-plotter.add_text('Extrude Rotated Line', font_size=24)
-plotter.add_mesh(poly, color='lightblue', show_edges=True)
-plotter.add_mesh(
+pl.subplot(1, 0)
+pl.add_text('Extrude Rotated Line', font_size=24)
+pl.add_mesh(poly, color='lightblue', show_edges=True)
+pl.add_mesh(
     pv.PolyData(poly.points),
     color='red',
     point_size=10,
     render_points_as_spheres=True,
 )
 
-plotter.show(cpos='xy')
+pl.show(cpos='xy')
 
 # %%
 # Create a spring
 # ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).
-plotter = pv.Plotter()
+pl = pv.Plotter()
 
 vertices = np.array(
     [
@@ -82,9 +82,9 @@ profile = pv.PolyData(vertices, faces)
 
 # Extrude the profile to make a spring.
 spring = profile.extrude_rotate(resolution=360, translation=6.0, dradius=1.0, angle=2160.0)
-plotter.add_text('Spring', font_size=24)
-plotter.add_mesh(spring, color='lightblue', show_edges=True)
+pl.add_text('Spring', font_size=24)
+pl.add_mesh(spring, color='lightblue', show_edges=True)
 
-plotter.show(cpos='zx')
+pl.show(cpos='zx')
 # %%
 # .. tags:: filter

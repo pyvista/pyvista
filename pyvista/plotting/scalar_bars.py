@@ -348,7 +348,7 @@ class ScalarBars(_NoNewAttrMixin):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
         >>> _ = plotter.add_scalar_bar(
         ...     'Data',

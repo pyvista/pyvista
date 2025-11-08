@@ -511,7 +511,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         brightness.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
         >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
         >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
@@ -638,7 +638,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         beam.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
         ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(
@@ -687,7 +687,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         variation of the intensity of the beams.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
         ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
@@ -735,7 +735,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         box gets lit by both lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> pl = pv.Plotter(lighting='none')
         >>> for offset in 1, 2.5, 4:
         ...     _ = plotter.add_mesh(
         ...         pv.Cube(center=(offset, offset, 0)), color='white'
@@ -849,7 +849,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         light kit of plotters.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> lights = plotter.renderer.lights[:2]
         >>> [light.light_type for light in lights]
         [<LightType.HEADLIGHT: 1>, <LightType.CAMERA_LIGHT: 2>]
@@ -857,7 +857,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         Change the light type of the default light kit's headlight to a scene light.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> lights = plotter.renderer.lights[:2]
         >>> lights[0].light_type = pv.Light.SCENE_LIGHT
         >>> [light.light_type for light in lights]
@@ -883,7 +883,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         Verify that the first light of the default light kit is a headlight.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> lights = plotter.renderer.lights
         >>> [light.is_headlight for light in lights]
         [True, False, False, False, False]
@@ -901,7 +901,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         are camera lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> lights = plotter.renderer.lights
         >>> [light.is_camera_light for light in lights]
         [False, True, True, True, True]
@@ -919,7 +919,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         scene lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> lights = plotter.renderer.lights
         >>> [light.is_scene_light for light in lights]
         [False, False, False, False, False]
@@ -1181,7 +1181,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, vtkLight):
         visualize the light using an actor.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(), color='white')
         >>> for light in plotter.renderer.lights:
         ...     light.intensity /= 5

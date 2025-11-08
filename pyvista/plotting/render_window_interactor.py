@@ -506,7 +506,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         ...     def __repr__(self):
         ...         return 'A custom interactor style.'
 
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> plotter.iren.style = MyCustomInteractorStyle()
         >>> plotter.iren.style
         A custom interactor style.
@@ -617,7 +617,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Camera interactive style (which is also the default):
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -696,7 +696,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         dolly.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -838,7 +838,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         ParaView-like 2D style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -878,7 +878,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Actor interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -906,7 +906,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -937,7 +937,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Camera interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -969,7 +969,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Actor interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -993,7 +993,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Zoom interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -1067,7 +1067,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -1076,7 +1076,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         Use controls that are closer to the default style:
 
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -1154,7 +1154,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Pick interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
@@ -1187,7 +1187,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         2D interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()

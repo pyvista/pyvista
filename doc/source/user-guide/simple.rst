@@ -184,7 +184,7 @@ code after calling :func:`show() <pyvista.Plotter.show>`.
 
     mesh = examples.load_airplane()
 
-    plotter = pv.Plotter()    # instantiate the plotter
+    pl = pv.Plotter()    # instantiate the plotter
     plotter.add_mesh(mesh)    # add a mesh to the scene
     plotter.camera.zoom(2)    # Note how we can now access underlying attributes
     plotter.show()            # show the rendering window
@@ -204,7 +204,7 @@ without having to manually interact with the plotting window:
 
     # reuse the camera position from the previous plotter
     cpos = plotter.camera_position
-    plotter = pv.Plotter(off_screen=True)
+    pl = pv.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='lightblue')
     plotter.camera_position = cpos
     plotter.show(screenshot='airplane.png')
