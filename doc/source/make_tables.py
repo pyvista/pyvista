@@ -42,6 +42,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -61,6 +62,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
+READERS_DIR = 'api/readers'
 CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
@@ -168,6 +170,53 @@ class DocTable:
         """
         msg = 'Subclasses should specify a get_row method.'
         raise NotImplementedError(msg)
+
+
+class ReadersTable(DocTable):
+    """Class to generate table for readers."""
+
+    path = f'{READERS_DIR}/readers_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table:: PyVista Readers
+        |   :widths: 60 40
+        |   :header-rows: 1
+        |
+        |   * - Class
+        |     - Extension(s)
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        # Convert ext->reader mapping into reader->ext mapping
+        reader_extensions: dict[pv.BaseReader, set[str]] = {
+            reader: set() for reader in set(CLASS_READERS.values())
+        }
+        for ext, reader in CLASS_READERS.items():
+            reader_extensions[reader].add(ext)
+        # Sort by the class name of the reader
+        return sorted(
+            reader_extensions.items(),
+            key=lambda item: item[0].__name__,
+        )
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, _, row_data):
+        reader, extensions = row_data
+        reader_fmt = f'`:class:`~pyvista.{reader.__name__}`'
+        extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
+        return cls.row_template.format(reader_fmt, extensions_fmt)
 
 
 class CellQualityMeasuresTable(DocTable):
@@ -3315,6 +3364,10 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables() -> list[str]:  # noqa: D103
+    # Make reader tables
+    os.makedirs(READERS_DIR, exist_ok=True)
+    ReadersTable.generate()
+
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
     CellQualityMeasuresTable.generate()
