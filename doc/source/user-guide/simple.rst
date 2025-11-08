@@ -185,9 +185,9 @@ code after calling :func:`show() <pyvista.Plotter.show>`.
     mesh = examples.load_airplane()
 
     pl = pv.Plotter()    # instantiate the plotter
-    plotter.add_mesh(mesh)    # add a mesh to the scene
-    plotter.camera.zoom(2)    # Note how we can now access underlying attributes
-    plotter.show()            # show the rendering window
+    pl.add_mesh(mesh)    # add a mesh to the scene
+    pl.camera.zoom(2)    # Note how we can now access underlying attributes
+    pl.show()            # show the rendering window
 
 
 Optionally :func:`show() <pyvista.Plotter.show>` can return
@@ -203,11 +203,11 @@ without having to manually interact with the plotting window:
 .. code-block:: python
 
     # reuse the camera position from the previous plotter
-    cpos = plotter.camera_position
+    cpos = pl.camera_position
     pl = pv.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='lightblue')
-    plotter.camera_position = cpos
-    plotter.show(screenshot='airplane.png')
+    pl.add_mesh(mesh, color='lightblue')
+    pl.camera_position = cpos
+    pl.show(screenshot='airplane.png')
 
 
 Be sure to check out all the available plotters and their options for
