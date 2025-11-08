@@ -127,7 +127,7 @@ of a circle from pyvista can be accessed with:
    :context:
    :nofigs:
 
-   circle = pyvista.Circle()
+   circle = pv.Circle()
    circle.points[:10]
 
 And these points can be operated on as if it was a NumPy array,
