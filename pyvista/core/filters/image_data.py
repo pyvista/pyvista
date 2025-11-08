@@ -3646,7 +3646,7 @@ class ImageDataFilters(DataSetFilters):
         pad_all_scalars: bool = False,
         progress_bar: bool = False,
         pad_singleton_dims: bool | None = None,
-    ) -> pv.ImageData:
+    ) -> ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
         .. versionadded:: 0.44.0
@@ -3977,7 +3977,7 @@ class ImageDataFilters(DataSetFilters):
         constant_value: int | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> tuple[pv.ImageData, NDArray[int], NDArray[int]]:
+    ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
         Only points whose `scalar` value is within the `scalar_range` are considered for

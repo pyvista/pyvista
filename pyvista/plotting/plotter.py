@@ -106,6 +106,7 @@ if TYPE_CHECKING:
     from pyvista import LookupTable
     from pyvista import MultiBlock
     from pyvista import PolyData
+    from pyvista import Texture
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -2582,7 +2583,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @_deprecate_positional_args(allowed=['dataset'])
     def add_composite(  # noqa: PLR0917
         self,
-        dataset: pv.MultiBlock,
+        dataset: MultiBlock,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
         scalars: str | None = None,
@@ -3138,7 +3139,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         show_scalar_bar: bool | None = None,  # noqa: FBT001
         multi_colors: bool = False,  # noqa: FBT001, FBT002
         name: str | None = None,
-        texture: pv.Texture | NumpyArray[float] | None = None,
+        texture: Texture | NumpyArray[float] | None = None,
         render_points_as_spheres: bool | None = None,  # noqa: FBT001
         render_lines_as_tubes: bool | None = None,  # noqa: FBT001
         smooth_shading: bool | None = None,  # noqa: FBT001

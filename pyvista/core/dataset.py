@@ -49,6 +49,9 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from pyvista import Cell
+    from pyvista import PointSet
+
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -1354,7 +1357,7 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         name: str,
         preference: CellLiteral | PointLiteral | FieldLiteral = 'cell',
-    ) -> pv.pyvista_ndarray:
+    ) -> pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1709,7 +1712,7 @@ class DataSet(DataSetFilters, DataObject):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pv.PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -2252,7 +2255,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self: Self, index: int) -> pv.Cell:
+    def get_cell(self: Self, index: int) -> Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2320,7 +2323,7 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self: Self) -> Iterator[pv.Cell]:
+    def cell(self: Self) -> Iterator[Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
