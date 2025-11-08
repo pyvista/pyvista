@@ -182,8 +182,8 @@ class ReadersTable(DocTable):
         |   :widths: 60 40
         |   :header-rows: 1
         |
-        |   * - Class
-        |     - Extension(s)
+        |   * - Reader
+        |     - File Extension(s)
         """,
     )
     row_template = _aligned_dedent(
@@ -214,7 +214,7 @@ class ReadersTable(DocTable):
     @classmethod
     def get_row(cls, _, row_data):
         reader, extensions = row_data
-        reader_fmt = f'`:class:`~pyvista.{reader.__name__}`'
+        reader_fmt = f':class:`~pyvista.{reader.__name__}`'
         extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
         return cls.row_template.format(reader_fmt, extensions_fmt)
 
