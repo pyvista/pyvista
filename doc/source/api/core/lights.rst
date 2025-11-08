@@ -22,13 +22,13 @@ without lighting and add our light to it manually.
     import pyvista as pv
     from pyvista import examples
     pl = pv.Plotter(lighting='none')
-    plotter.background_color = 'white'
+    pl.background_color = 'white'
     mesh = examples.download_bunny()
     mesh.rotate_x(90, inplace=True)
     mesh.rotate_z(180, inplace=True)
-    plotter.add_mesh(mesh, specular=1.0, diffuse=0.7, smooth_shading=True)
-    plotter.add_light(light)
-    plotter.show()
+    pl.add_mesh(mesh, specular=1.0, diffuse=0.7, smooth_shading=True)
+    pl.add_light(light)
+    pl.show()
 
 For detailed examples please see :ref:`light_examples`.
 
