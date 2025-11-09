@@ -728,10 +728,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Its value depends on the picking result:
 
-            * if no cells have been picked, returns None
-            * if all picked cells belong to a single actor, returns a :class:`UnstructuredGrid`
-            * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
-                containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
+        * if no cells have been picked, returns None
+        * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
+        * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
+          containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
 
         Note that a cell data ``original_cell_ids`` is added to help identifying
         cell ids picked from the original dataset.
@@ -765,10 +765,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Its value depends on the picking result:
 
-            * if no cells have been picked, returns None
-            * if all picked cells belong to a single actor, returns a :class:`UnstructuredGrid`
-            * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
-                containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
+        * if no cells have been picked, returns None
+        * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
+        * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
+          containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
 
         Note that a cell data ``original_cell_ids`` is added to help identifying
         cell ids picked from the original dataset.
@@ -1415,10 +1415,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         ``"r"`` again to turn it off. Selection will be saved to
         :attr:`picked_cells <pyvista.Plotter.picked_cells>` as:
 
-        - a :class:`MultiBlock` dataset for each mesh's selection
-        when multiple meshes are being picked
-        - a :class:`UnstructuredGrid` dataset if a single mesh
-        is being picked.
+        * a :class:`MultiBlock` when multiple meshes have been picked,
+        * an :class:`UnstructuredGrid` if a single mesh have been picked.
 
         All meshes in the scene are available for picking by default.
         If you would like to only pick a single mesh in the scene,
