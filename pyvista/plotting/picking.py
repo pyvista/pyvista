@@ -718,7 +718,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
     @property
     def picked_cell(self) -> None | pyvista.UnstructuredGrid | pyvista.MultiBlock:
-        """Return the cell-picked object.
+        r"""Return the cell-picked object.
 
         This returns the object containing cells that were interactively picked with
         :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
@@ -728,10 +728,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Its value depends on the picking result:
 
-        - if no cells have been picked, returns None
-        - if cells belonging to a single actor have been picked, returns a :class:`UnstructuredGrid`
-        - if cells belonging to multiple actors have been picked, returns a :class:`MultiBlock`
-        containing ``pyvista.UnstructuredGrid``s which length equals the number of picked actors.
+            * if no cells have been picked, returns None
+            * if all picked cells belong to a single actor, returns a :class:`UnstructuredGrid`
+            * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
+                containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
 
         Note that a cell data ``original_cell_ids`` is added to help identifying
         cell ids picked from the original dataset.
@@ -755,7 +755,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
     @property
     def picked_cells(self) -> None | pyvista.UnstructuredGrid | pyvista.MultiBlock:
-        """Return the cell-picked object.
+        r"""Return the cell-picked object.
 
         This returns the object containing cells that were interactively picked with
         :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
@@ -765,10 +765,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Its value depends on the picking result:
 
-        - if no cells have been picked, returns None
-        - if cells belonging to a single actor have been picked, returns a :class:`UnstructuredGrid`
-        - if cells belonging to multiple actors have been picked, returns a :class:`MultiBlock`
-        containing ``pyvista.UnstructuredGrid``s which length equals the number of picked actors.
+            * if no cells have been picked, returns None
+            * if all picked cells belong to a single actor, returns a :class:`UnstructuredGrid`
+            * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
+                containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
 
         Note that a cell data ``original_cell_ids`` is added to help identifying
         cell ids picked from the original dataset.
