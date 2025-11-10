@@ -74,12 +74,12 @@ plot_example()
 # %%
 # Note that you can also use color gradients for the background of the plotting
 # window.
-plotter = pv.Plotter()
-plotter.add_mesh(mesh)
-plotter.show_grid()
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+pl.show_grid()
 # Here we set the gradient
-plotter.set_background('royalblue', top='aliceblue')
-cpos = plotter.show()
+pl.set_background('royalblue', top='aliceblue')
+cpos = pl.show()
 
 
 # %%

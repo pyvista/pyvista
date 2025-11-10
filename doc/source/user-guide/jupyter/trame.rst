@@ -26,7 +26,7 @@ within Jupyter:
     sphere.plot(jupyter_backend='trame')
 
     # long example
-    plotter = pv.Plotter(notebook=True)
+    pl = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
     plotter.show(jupyter_backend='trame')
 

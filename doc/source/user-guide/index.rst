@@ -23,13 +23,13 @@ This basic example demonstrates three key features of PyVista:
    :nofigs:
    :context:
 
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.anti_aliasing = 'fxaa'
+   import pyvista as pv
+   pv.set_jupyter_backend('static')
+   pv.global_theme.background = 'white'
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.smooth_shading = True
+   pv.global_theme.anti_aliasing = 'fxaa'
 
 
 Here, we download the `Stanford dragon mesh
