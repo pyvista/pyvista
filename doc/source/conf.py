@@ -564,7 +564,7 @@ html_theme_options = {
     ],
 }
 
-if 'dev' in pyvista.__version__:
+if 'dev' in pv.__version__:
     stable_base = 'https://docs.pyvista.org'
     announcement_html = f"""
     <div class="pv-announcement">
