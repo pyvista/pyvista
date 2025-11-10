@@ -285,7 +285,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         Returns
         -------
-        numpy.ndarray or None
+        output : numpy.ndarray | None
             Picked point if available.
 
         """
@@ -694,7 +694,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pyvista.Actor or None
+        output : pyvista.Actor | None
             Picked actor if available.
 
         """
@@ -710,7 +710,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pyvista.DataSet or None
+        output : pyvista.DataSet | None
             Picked mesh if available.
 
         """
@@ -741,7 +741,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
             Picked object if available.
 
         """  # noqa: E501
@@ -776,7 +776,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
             Picked object if available.
 
         """  # noqa: E501
@@ -791,7 +791,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        int or None
+        output : int | None
             Picked block if available. If ``-1``, then a non-composite dataset
             was selected.
 

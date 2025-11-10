@@ -127,7 +127,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Transformed dataset. Return type matches input.
 
         See Also
@@ -362,7 +362,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Reflected dataset. Return type matches input.
 
         See Also
@@ -420,7 +420,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -483,7 +483,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -547,7 +547,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -615,7 +615,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -679,7 +679,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -748,7 +748,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Translated dataset. Return type matches input.
 
         See Also
@@ -808,7 +808,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Scaled dataset. Return type matches input.
 
         See Also
@@ -899,7 +899,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Resized dataset. Return type matches input.
 
         Examples
@@ -1034,7 +1034,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Flipped dataset. Return type matches input.
 
         See Also
@@ -1096,7 +1096,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Flipped dataset. Return type matches input.
 
         See Also
@@ -1158,7 +1158,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Flipped dataset. Return type matches input.
 
         See Also
@@ -1224,7 +1224,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset flipped about its normal. Return type matches input.
 
         See Also
@@ -1359,7 +1359,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+        output : DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
             Clipped mesh when ``return_clipped=False`` or a tuple containing the
             unclipped and clipped meshes. Output mesh type matches input type for
             :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
@@ -2167,7 +2167,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
 
@@ -2255,7 +2255,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with `cell_data` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.  Return type matches input.
@@ -2367,7 +2367,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2437,7 +2437,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the cell data transformed into point data.
             Return type matches input.
 
@@ -2483,7 +2483,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2558,7 +2558,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2697,7 +2697,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset containing resampled data.
 
         See Also
@@ -2834,7 +2834,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the computed mesh quality. Return type matches input.
             Cell data array(s) with the computed quality measure(s) are included.
 

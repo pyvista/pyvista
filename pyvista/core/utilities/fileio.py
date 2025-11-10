@@ -597,7 +597,7 @@ def read_grdecl(
 
         Returns
         -------
-        list | str
+        output : list | str
             A list or a string.
 
         """

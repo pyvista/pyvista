@@ -488,7 +488,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkInteractorStyle` | :vtk:`vtkContextInteractorStyle` | None
+        output : :vtk:`vtkInteractorStyle` | :vtk:`vtkContextInteractorStyle` | None
             The current interactor style.
 
         Examples

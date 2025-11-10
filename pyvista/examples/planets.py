@@ -627,7 +627,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover  # noqa:
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -674,7 +674,7 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover  # noqa
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -721,7 +721,7 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover  # n
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -775,7 +775,7 @@ def download_venus_surface(
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -829,7 +829,7 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover  # noqa
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -876,7 +876,7 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover  # n
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -923,7 +923,7 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover  # no
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -976,7 +976,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover  # noqa
 
     Returns
     -------
-    pyvista.ImageData | pyvista.Texture | str
+    output : pyvista.ImageData | pyvista.Texture | str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples
@@ -1028,7 +1028,7 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover  # no
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1075,7 +1075,7 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover  # n
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1122,7 +1122,7 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover  # noq
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1169,7 +1169,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1225,7 +1225,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 

@@ -327,6 +327,7 @@ checks = [
   'PR08', # 'Parameter "{param_name}" description should start with a capital letter",
   'PR09', # 'Parameter "{param_name}" description should finish with "."',
   'PR10', # 'Parameter "{param_name}" requires a space before the colon separating the parameter name and type",
+  'RT02', # "The first line of the Returns section should contain only the type, unless multiple values are being returned",
   'SA01', # Not all docstrings need a see also
   'SA04', # See also section does not need descriptions
   'SS05', # Appears to be broken.
