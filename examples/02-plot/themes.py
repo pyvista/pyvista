@@ -22,10 +22,10 @@ mesh = examples.download_st_helens().warp_by_scalar()
 
 
 def plot_example():
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.add_bounding_box()
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_bounding_box()
+    pl.show()
 
 
 # %%

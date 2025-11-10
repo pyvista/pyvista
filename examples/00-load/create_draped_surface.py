@@ -101,9 +101,9 @@ cpos = pv.CameraPosition(
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
-p = pv.Plotter()
-p.add_mesh(grid, cmap='seismic', clim=[-1, 1])
-p.add_mesh(pv.PolyData(path), color='orange')
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(grid, cmap='seismic', clim=[-1, 1])
+pl.add_mesh(pv.PolyData(path), color='orange')
+pl.show(cpos=cpos)
 # %%
 # .. tags:: load

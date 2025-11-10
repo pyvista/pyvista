@@ -79,7 +79,7 @@ def draw_pixels(plotter, pixels, center, color):  # noqa: PLR0917
 # Now you can plot a pixel art of ALIEN MONSTERS.
 
 # Display MONSTERS
-p = pv.Plotter()
+pl = pv.Plotter()
 p = draw_pixels(p, alien, [-22.0, 22.0], 'green')
 p = draw_pixels(p, alien, [0.0, 22.0], 'green')
 p = draw_pixels(p, alien, [22.0, 22.0], 'green')
@@ -94,7 +94,7 @@ text = logo.text_3d('ALIEN MONSTERS', depth=10.0)
 text.points *= 4.0
 text.translate([-20.0, 24.0, 0.0], inplace=True)
 
-p.add_mesh(text, color='yellow')
-p.show(cpos='xy')
+pl.add_mesh(text, color='yellow')
+pl.show(cpos='xy')
 # %%
 # .. tags:: load

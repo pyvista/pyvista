@@ -26,16 +26,16 @@ import pyvista as pv
 
 mesh = pv.Sphere()
 
-p = pv.Plotter()
-actor = p.add_mesh(mesh)
+pl = pv.Plotter()
+actor = pl.add_mesh(mesh)
 
 
 def toggle_vis(flag):
     actor.SetVisibility(flag)
 
 
-p.add_checkbox_button_widget(toggle_vis, value=True)
-p.show()
+pl.add_checkbox_button_widget(toggle_vis, value=True)
+pl.show()
 
 # %%
 # Multiple Checkboxes
@@ -69,15 +69,15 @@ class SetVisibilityCallback:
 # Widget size
 size = 50
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
 Startpos = 12
 for i, lst in enumerate(colors):
     for j, color in enumerate(lst):
-        actor = p.add_mesh(pv.Sphere(center=(i, j, 0)), color=color)
+        actor = pl.add_mesh(pv.Sphere(center=(i, j, 0)), color=color)
         # Make a separate callback for each widget
         callback = SetVisibilityCallback(actor)
-        p.add_checkbox_button_widget(
+        pl.add_checkbox_button_widget(
             callback,
             value=True,
             position=(5.0, Startpos),
@@ -89,6 +89,6 @@ for i, lst in enumerate(colors):
         )
         Startpos = Startpos + size + (size // 10)
 
-p.show()
+pl.show()
 # %%
 # .. tags:: widgets

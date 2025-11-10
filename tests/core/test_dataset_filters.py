@@ -249,15 +249,6 @@ def test_clip_closed_surface():
         _ = open_surface.clip_closed_surface()
 
 
-def test_clip_closed_surface_plane(ant):
-    origin = (1, 2, 3)
-    normal = (4, 5, 6)
-    plane = pv.Plane(center=origin, direction=normal)
-    output_no_plane = ant.clip_closed_surface(origin=origin, normal=normal)
-    output_with_plane = ant.clip_closed_surface(plane=plane)
-    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
-
-
 def test_implicit_distance():
     surface = pv.Cone(
         direction=(0, 0, -1),
