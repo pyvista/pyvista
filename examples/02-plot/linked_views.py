@@ -35,7 +35,9 @@ pl.add_mesh(decimated, color=True, show_edges=True)
 
 pl.link_views()  # link all the views
 # Set a camera position to all linked views
-pl.camera_position = pv.CameraPosition(position=(15, 5, 0), focal_point=(0, 0, 0), viewup=(0, 1, 0))
+pl.camera_position = pv.CameraPosition(
+    position=(15, 5, 0), focal_point=(0, 0, 0), viewup=(0, 1, 0)
+)
 
 pl.open_gif('linked.gif')
 # Update camera and write a frame for each updated position

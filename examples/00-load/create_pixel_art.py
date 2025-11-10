@@ -80,15 +80,15 @@ def draw_pixels(plotter, pixels, center, color):  # noqa: PLR0917
 
 # Display MONSTERS
 pl = pv.Plotter()
-p = draw_pixels(p, alien, [-22.0, 22.0], 'green')
-p = draw_pixels(p, alien, [0.0, 22.0], 'green')
-p = draw_pixels(p, alien, [22.0, 22.0], 'green')
-p = draw_pixels(p, alien, [-22.0, 0.0], 'blue')
-p = draw_pixels(p, alien, [0.0, 0.0], 'blue')
-p = draw_pixels(p, alien, [22.0, 0.0], 'blue')
-p = draw_pixels(p, alien, [-22.0, -22.0], 'red')
-p = draw_pixels(p, alien, [0.0, -22.0], 'red')
-p = draw_pixels(p, alien, [22.0, -22.0], 'red')
+pl = draw_pixels(pl, alien, [-22.0, 22.0], 'green')
+pl = draw_pixels(pl, alien, [0.0, 22.0], 'green')
+pl = draw_pixels(pl, alien, [22.0, 22.0], 'green')
+pl = draw_pixels(pl, alien, [-22.0, 0.0], 'blue')
+pl = draw_pixels(pl, alien, [0.0, 0.0], 'blue')
+pl = draw_pixels(pl, alien, [22.0, 0.0], 'blue')
+pl = draw_pixels(pl, alien, [-22.0, -22.0], 'red')
+pl = draw_pixels(pl, alien, [0.0, -22.0], 'red')
+pl = draw_pixels(pl, alien, [22.0, -22.0], 'red')
 
 text = logo.text_3d('ALIEN MONSTERS', depth=10.0)
 text.points *= 4.0
