@@ -27,9 +27,9 @@ if TYPE_CHECKING:
 
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(AttributeError, match='not yet been set up'):
-        _ = plotter.image
+        _ = pl.image
 
 
 def test_has_render_window_fail():
@@ -51,10 +51,10 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
 
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_screenshot_fail_suppressed_rendering():
-    plotter = pv.Plotter()
-    plotter.suppress_rendering = True
+    pl = pv.Plotter()
+    pl.suppress_rendering = True
     with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
-        plotter.show(screenshot='tmp.png')
+        pl.show(screenshot='tmp.png')
 
 
 @pytest.mark.filterwarnings(
@@ -388,53 +388,53 @@ def test_plotter_line_point_smoothing():
 
 
 def test_enable_hidden_line_removal():
-    plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(all_renderers=False)
-    assert plotter.renderers[0].GetUseHiddenLineRemoval()
-    assert not plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl = pv.Plotter(shape=(1, 2))
+    pl.enable_hidden_line_removal(all_renderers=False)
+    assert pl.renderers[0].GetUseHiddenLineRemoval()
+    assert not pl.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.enable_hidden_line_removal(all_renderers=True)
-    assert plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl.enable_hidden_line_removal(all_renderers=True)
+    assert pl.renderers[1].GetUseHiddenLineRemoval()
 
 
 def test_disable_hidden_line_removal():
-    plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(all_renderers=True)
+    pl = pv.Plotter(shape=(1, 2))
+    pl.enable_hidden_line_removal(all_renderers=True)
 
-    plotter.disable_hidden_line_removal(all_renderers=False)
-    assert not plotter.renderers[0].GetUseHiddenLineRemoval()
-    assert plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl.disable_hidden_line_removal(all_renderers=False)
+    assert not pl.renderers[0].GetUseHiddenLineRemoval()
+    assert pl.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.disable_hidden_line_removal(all_renderers=True)
-    assert not plotter.renderers[1].GetUseHiddenLineRemoval()
+    pl.disable_hidden_line_removal(all_renderers=True)
+    assert not pl.renderers[1].GetUseHiddenLineRemoval()
 
 
 def test_pickable_actors():
-    plotter = pv.Plotter()
-    sphere = plotter.add_mesh(pv.Sphere(), pickable=True)
-    cube = plotter.add_mesh(pv.Cube(), pickable=False)
+    pl = pv.Plotter()
+    sphere = pl.add_mesh(pv.Sphere(), pickable=True)
+    cube = pl.add_mesh(pv.Cube(), pickable=False)
 
-    pickable = plotter.pickable_actors
+    pickable = pl.pickable_actors
     assert sphere in pickable
     assert cube not in pickable
 
-    plotter.pickable_actors = cube
-    pickable = plotter.pickable_actors
+    pl.pickable_actors = cube
+    pickable = pl.pickable_actors
     assert sphere not in pickable
     assert cube in pickable
 
-    plotter.pickable_actors = [sphere, cube]
-    pickable = plotter.pickable_actors
+    pl.pickable_actors = [sphere, cube]
+    pickable = pl.pickable_actors
     assert sphere in pickable
     assert cube in pickable
 
-    plotter.pickable_actors = None
-    pickable = plotter.pickable_actors
+    pl.pickable_actors = None
+    pickable = pl.pickable_actors
     assert sphere not in pickable
     assert cube not in pickable
 
     with pytest.raises(TypeError, match='Expected a vtkActor instance or '):
-        plotter.pickable_actors = [0, 10]
+        pl.pickable_actors = [0, 10]
 
 
 def test_plotter_image_scale():
@@ -587,8 +587,8 @@ def test_plotter_remains_shallow():
     assert np.array_equal(sphere['numbers'], sphere2['numbers'])
     assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
 
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere, scalars=None)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=None)
 
     sphere[
         'numbers'
@@ -773,7 +773,7 @@ def test_plotter_meshes(sphere, cube):
 
 def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     data = {
         'sphere1': pv.Sphere(center=(1, 0, 0)),
         'sphere2': pv.Sphere(center=(2, 0, 0)),
@@ -781,7 +781,7 @@ def test_multi_block_color_cycler():
         'sphere4': pv.Sphere(center=(4, 0, 0)),
     }
     spheres = pv.MultiBlock(data)
-    _actor, mapper = plotter.add_composite(spheres)
+    _actor, mapper = pl.add_composite(spheres)
 
     # pass custom cycler
     mapper.set_unique_colors(['red', 'green', 'blue'])
@@ -857,10 +857,10 @@ def test_only_screenshots_flag(sphere, tmpdir):
 
 
 def test_legend_font(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
-    legend = plotter.add_legend(
+    legend = pl.add_legend(
         labels=legend_labels,
         border=True,
         bcolor=None,
@@ -879,13 +879,13 @@ def test_edge_opacity(sphere):
 
 
 def test_add_ruler_scale():
-    plotter = pv.Plotter()
-    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
     min_, max_ = ruler.GetRange()
     assert min_ == 0.0
     assert max_ == 0.6
 
-    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
+    ruler = pl.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
     min_, max_ = ruler.GetRange()
     assert min_ == 0.6
     assert max_ == 0.0
@@ -907,10 +907,10 @@ def test_import_obj_with_filename_mtl():
     filename = Path(pv.examples.download_doorman(load=False))
 
     # test with and without setting filename_mtl
-    plotter = pv.Plotter()
-    plotter.import_obj(filename, filename_mtl=None)
-    assert plotter.actors
+    pl = pv.Plotter()
+    pl.import_obj(filename, filename_mtl=None)
+    assert pl.actors
 
-    plotter = pv.Plotter()
-    plotter.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
-    assert plotter.actors
+    pl = pv.Plotter()
+    pl.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
+    assert pl.actors

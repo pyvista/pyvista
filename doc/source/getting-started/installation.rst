@@ -78,7 +78,7 @@ To install PyVista using pixi, first ensure you have pixi installed (see `pixi i
 This will add PyVista to your ``pixi.toml`` file and install it in your project environment. To use PyVista in your pixi environment::
 
     pixi shell
-    python -c 'import pyvista; print(pyvista.__version__)'
+    python -c 'import pyvista as pv; print(pv.__version__)'
 
 Pixi automatically handles all dependencies and ensures compatibility across different platforms.
 
@@ -334,9 +334,9 @@ should be displayed in JupyterLab.
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
 
-    pl = pyvista.Plotter(shape=(1, 2))
+    pl = pv.Plotter(shape=(1, 2))
     actor = pl.add_mesh(pyvista.Cube())
     pl.subplot(0, 1)
     actor = pl.add_mesh(pyvista.Sphere())
@@ -352,15 +352,15 @@ In your ``conf.py``, add the following:
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
 
     # necessary when building the sphinx gallery
-    pyvista.BUILDING_GALLERY = True
-    pyvista.OFF_SCREEN = True
+    pv.BUILDING_GALLERY = True
+    pv.OFF_SCREEN = True
 
     # Optional - set parameters like theme or window size
-    pyvista.set_plot_theme('document')
-    pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+    pv.set_plot_theme('document')
+    pv.global_theme.window_size = np.array([1024, 768]) * 2
 
     extensions = [
         ...,
@@ -382,16 +382,16 @@ the string ``'pyvista'`` above and by registering the
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
     # necessary when building the sphinx gallery
-    pyvista.BUILDING_GALLERY = True
-    pyvista.OFF_SCREEN = True
+    pv.BUILDING_GALLERY = True
+    pv.OFF_SCREEN = True
 
     # Optional - set parameters like theme or window size
-    pyvista.set_plot_theme('document')
-    pyvista.global_theme.window_size = np.array([1024, 768]) * 2
+    pv.set_plot_theme('document')
+    pv.global_theme.window_size = np.array([1024, 768]) * 2
 
     extensions = [
         ...,
