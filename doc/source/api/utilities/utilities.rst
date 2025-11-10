@@ -148,7 +148,7 @@ The PyVista library provides a way of getting the version installed in your
 environment.
 
 >>> # Output the version of PyVista.
->>> import pv
+>>> import pyvista as pv
 >>> pv.version_info
 (0, 44, 0)
 

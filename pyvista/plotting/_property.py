@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _check_range
@@ -187,11 +187,11 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         edge_opacity=None,
     ):
         """Initialize this property."""
-        self._theme = pyvista.themes.Theme()
+        self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pyvista.global_theme)
+            self._theme.load_theme(pv.global_theme)
         else:
             self._theme.load_theme(theme)
 
@@ -1230,7 +1230,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
-        pl = pyvista.Plotter(**kwargs)
+        pl = pv.Plotter(**kwargs)
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 

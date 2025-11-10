@@ -8,7 +8,7 @@ from weakref import proxy
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -88,7 +88,7 @@ class Renderers(_NoNewAttrMixin):
                 rangem = range(m)  # type: ignore[assignment]
 
             if splitting_position is None:
-                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
+                splitting_position = pv.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
                 xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
