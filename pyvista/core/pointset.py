@@ -16,7 +16,7 @@ from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
@@ -258,7 +258,7 @@ class _PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)
             return self
-        return pyvista.DataObjectFilters.translate(
+        return pv.DataObjectFilters.translate(
             self,
             xyz,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -363,7 +363,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
                 pdata.point_data[key] = value
         return pdata
 
-    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
+    def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
         """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
 
         A deep copy of the points and point data is made.
@@ -722,12 +722,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
     ... )
     >>> larger_sphere = pv.PolyData(inflated_points, faces=small_sphere.GetPolys())
-    >>> plotter = pv.Plotter()
-    >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
-    >>> _ = plotter.add_mesh(
-    ...     larger_sphere, color='blue', opacity=0.3, show_edges=True
-    ... )
-    >>> plotter.show()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(small_sphere, color='red', show_edges=True)
+    >>> _ = pl.add_mesh(larger_sphere, color='blue', opacity=0.3, show_edges=True)
+    >>> pl.show()
 
     See :ref:`create_poly_example` for more examples.
 
@@ -865,9 +863,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @staticmethod
     def _make_vertex_cells(npoints: int) -> NumpyArray[int]:
-        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
+        cells = np.empty((npoints, 2), dtype=pv.ID_TYPE)
         cells[:, 0] = 1
-        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
+        cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
         return cells
 
     @property
@@ -1569,7 +1567,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
+    def point_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
         The active point normals are returned if they exist. Otherwise, they
@@ -1603,7 +1601,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return normals
 
     @property
-    def cell_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
+    def cell_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         The active cell normals are returned if they exist. Otherwise, they
@@ -1637,7 +1635,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return normals
 
     @property
-    def face_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
+    def face_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
@@ -2115,8 +2113,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of faces.
 
         """
-        if pyvista.vtk_version_info < (9, 4):
-            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+        if pv.vtk_version_info < (9, 4):
+            polyhedron_faces = pv.convert_array(self.GetFaces())
 
             if polyhedron_faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
@@ -2174,8 +2172,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of faces.
 
         """
-        if pyvista.vtk_version_info < (9, 4):
-            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+        if pv.vtk_version_info < (9, 4):
+            polyhedron_faces = pv.convert_array(self.GetFaces())
 
             if polyhedron_faces is None:
                 return np.array([], dtype=int)  # type: ignore[unreachable]
@@ -2196,7 +2194,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             face_count = 0
 
             for i, n_faces in zip(
-                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON),
+                np.flatnonzero(self.celltypes == pv.CellType.POLYHEDRON),
                 face_counts,
                 strict=True,
             ):
@@ -2337,7 +2335,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         cells = _vtk.vtkCellArray()
         cells.DeepCopy(self._get_cells())
-        if pyvista.vtk_version_info >= (9, 5):
+        if pv.vtk_version_info >= (9, 5):
             face_locations = self.GetPolyhedronFaceLocations()
             faces = self.GetPolyhedronFaces()
             lgrid.SetPolyhedralCells(vtk_cell_type, cells, face_locations, faces)
@@ -2395,7 +2393,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def _get_cell_types_array(self):
         array = (
             self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
-            if pyvista.vtk_version_info > (9, 5, 99)
+            if pv.vtk_version_info > (9, 5, 99)
             else self.GetCellTypesArray()
         )
 
@@ -3634,11 +3632,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> cell = grid.extract_cells(31)
         >>> ind = grid.neighbors(31)
         >>> neighbors = grid.extract_cells(ind)
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_axes()
-        >>> _ = plotter.add_mesh(cell, color='r', show_edges=True)
-        >>> _ = plotter.add_mesh(neighbors, color='w', show_edges=True)
-        >>> plotter.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_axes()
+        >>> _ = pl.add_mesh(cell, color='r', show_edges=True)
+        >>> _ = pl.add_mesh(neighbors, color='w', show_edges=True)
+        >>> pl.show()
 
         """
 

@@ -18,7 +18,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -92,11 +92,11 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
         raise ValueError(msg)
-    if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
+    if format_ == 'vtk' and pv.vtk_version_info < (9, 3):
         msg = "'vtk' pickle format requires VTK >= 9.3"
         raise ValueError(msg)
 
-    pyvista.PICKLE_FORMAT = format_
+    pv.PICKLE_FORMAT = format_
 
 
 def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
@@ -279,7 +279,7 @@ def read(  # noqa: PLR0911, PLR0917
         raise ValueError(msg)
 
     if isinstance(filename, Sequence) and not isinstance(filename, str):
-        multi = pyvista.MultiBlock()
+        multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
             multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
@@ -309,7 +309,7 @@ def read(  # noqa: PLR0911, PLR0917
         return read_pickle(filename)
 
     try:
-        reader = pyvista.get_reader(filename, force_ext)
+        reader = pv.get_reader(filename, force_ext)
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
@@ -409,12 +409,12 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         if image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pyvista.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -506,7 +506,7 @@ def read_exodus(  # noqa: PLR0917
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast('pyvista.DataSet', wrap(reader.GetOutput()))
+    return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -822,7 +822,7 @@ def read_grdecl(
             zcorners.ravel(order='F'),
         )
     )
-    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+    grid = pv.ExplicitStructuredGrid(dims, corners)
 
     # Add property data
     for key in property_keywords:
@@ -895,9 +895,9 @@ def read_pickle(filename: str | Path) -> DataObject:
         with open(filename_str, 'rb') as f:  # noqa: PTH123
             mesh = pickle.load(f)
 
-        if not isinstance(mesh, pyvista.DataObject):
+        if not isinstance(mesh, pv.DataObject):
             msg = (
-                f'Pickled object must be an instance of {pyvista.DataObject}. '
+                f'Pickled object must be an instance of {pv.DataObject}. '
                 f'Got {mesh.__class__} instead.'
             )
             raise TypeError(msg)
@@ -949,9 +949,9 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     filename_str = str(filename)
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
-    if not isinstance(mesh, pyvista.DataObject):
+    if not isinstance(mesh, pv.DataObject):
         msg = (  # type: ignore[unreachable]
-            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+            f'Only {pv.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
         raise TypeError(msg)
 
@@ -1009,7 +1009,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
     if len(mesh.cells) == 0:
         # Empty mesh
-        grid = pyvista.UnstructuredGrid()
+        grid = pv.UnstructuredGrid()
         if mesh.points.size > 0:
             grid.points = mesh.points
         return grid
@@ -1056,7 +1056,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
-    grid = pyvista.UnstructuredGrid(
+    grid = pv.UnstructuredGrid(
         np.concatenate(cells).astype(np.int64, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
@@ -1156,17 +1156,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
-        pyvista.CellType.POLYGON,
-        pyvista.CellType.POLYHEDRON,
+        pv.CellType.POLYGON,
+        pv.CellType.POLYHEDRON,
     }:
         vtk_celltype = vtk_celltypes[0]
         cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
-        if vtk_celltype == pyvista.CellType.PIXEL:
+        if vtk_celltype == pv.CellType.PIXEL:
             cells = cells[:, [0, 1, 3, 2]]
             celltype = 'quad'
 
-        elif vtk_celltype == pyvista.CellType.VOXEL:
+        elif vtk_celltype == pv.CellType.VOXEL:
             cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
@@ -1185,24 +1185,24 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         ):
             cell = connectivity[i1:i2]
 
-            if vtk_celltype == pyvista.CellType.POLYHEDRON:
+            if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
                 cell = polyhedral_cell_faces[i]
 
             # Handle the missing voxel key (11) in vtk_to_meshio_type
-            elif vtk_celltype == pyvista.CellType.VOXEL:
+            elif vtk_celltype == pv.CellType.VOXEL:
                 celltype = 'hexahedron'
                 cell = cell[[0, 1, 3, 2, 4, 5, 7, 6]]
 
             # Handle the missing "pixel" key in meshio._mesh.topological_dimension
-            elif vtk_celltype == pyvista.CellType.PIXEL:
+            elif vtk_celltype == pv.CellType.PIXEL:
                 celltype = 'quad'
                 cell = cell[[0, 1, 3, 2]]
 
             else:
                 celltype = (
                     f'polygon{len(cell)}'
-                    if vtk_celltype == pyvista.CellType.POLYGON
+                    if vtk_celltype == pv.CellType.POLYGON
                     else vtk_to_meshio_type[vtk_celltype]
                 )
 

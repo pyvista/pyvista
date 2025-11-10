@@ -23,7 +23,7 @@ import numpy as np
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 
@@ -132,7 +132,7 @@ class MultiBlock(
 
     """
 
-    plot = pyvista._plot.plot
+    plot = pv._plot.plot
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
     if _vtk.vtk_version_info >= (9, 4):
@@ -903,7 +903,7 @@ class MultiBlock(
             nested_field_data = nested_multi.field_data
             if prepend_names:
                 # Add the field data to a temp mesh so we can rename the arrays
-                temp_mesh = pyvista.ImageData()
+                temp_mesh = pv.ImageData()
                 temp_field_data = temp_mesh.field_data
                 for old_name in nested_field_data:
                     new_name = f'{block_name}{separator}{old_name}'
@@ -1226,7 +1226,7 @@ class MultiBlock(
         True
 
         """
-        return any(isinstance(block, pyvista.MultiBlock) for block in self)
+        return any(isinstance(block, pv.MultiBlock) for block in self)
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
@@ -1846,7 +1846,7 @@ class MultiBlock(
         # Navigate through the indices except the last one
         target: _TypeMultiBlockLeaf = self
         for ind in indices[:-1]:
-            if target is None or isinstance(target, pyvista.DataSet):
+            if target is None or isinstance(target, pv.DataSet):
                 msg = f'Invalid indices {indices}.'
                 raise IndexError(msg)
             target = target[ind]
@@ -2258,7 +2258,7 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+        if pv.vtk_version_info >= (9, 3):  # pragma: no cover
             self.CompositeShallowCopy(to_copy)
         else:
             self.ShallowCopy(to_copy)
@@ -2295,7 +2295,7 @@ class MultiBlock(
         def _set_name_for_none_blocks(
             this_object_: MultiBlock, new_object_: _vtk.vtkMultiBlockDataSet
         ) -> None:
-            new_object_ = pyvista.wrap(new_object_)
+            new_object_ = pv.wrap(new_object_)
             for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
@@ -2445,10 +2445,10 @@ class MultiBlock(
         # Define how to process each block
         def block_filter(block: DataSet | None) -> PolyData:
             if block is None:
-                return pyvista.PolyData()
-            elif isinstance(block, pyvista.PointSet):
+                return pv.PolyData()
+            elif isinstance(block, pv.PointSet):
                 return block.cast_to_polydata(deep=True)
-            elif isinstance(block, pyvista.PolyData):
+            elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
                 return block.extract_surface()
@@ -2488,8 +2488,8 @@ class MultiBlock(
         # Define how to process each block
         def block_filter(block: DataSet | None) -> DataSet:
             if block is None:
-                return pyvista.UnstructuredGrid()
-            elif isinstance(block, pyvista.UnstructuredGrid):
+                return pv.UnstructuredGrid()
+            elif isinstance(block, pv.UnstructuredGrid):
                 return block.copy(deep=False) if copy else block
             else:
                 return block.cast_to_unstructured_grid()
@@ -2516,7 +2516,7 @@ class MultiBlock(
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
-        return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
+        return all(isinstance(block, pv.PolyData) for block in self.recursive_iterator())
 
     @property
     def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01

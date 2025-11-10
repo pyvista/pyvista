@@ -21,7 +21,7 @@ from tempfile import NamedTemporaryFile
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 # %%
@@ -34,7 +34,7 @@ temp_file.name
 # %%
 # :class:`pyvista.Sphere` already includes ``Normals`` point data.  Additionally
 # ``height`` point data and ``id`` cell data is added.
-mesh = pyvista.Sphere()
+mesh = pv.Sphere()
 mesh['height'] = mesh.points[:, 1]
 mesh['id'] = np.arange(mesh.n_cells)
 mesh.save(temp_file.name)
@@ -43,14 +43,14 @@ mesh.save(temp_file.name)
 # :func:`pyvista.read` function reads all the data in the file. This provides
 # a quick and easy one-liner to read data from files.
 
-new_mesh = pyvista.read(temp_file.name)
+new_mesh = pv.read(temp_file.name)
 print(f'All arrays: {mesh.array_names}')
 
 # %%
 # Using :func:`pyvista.get_reader` enables more fine-grained control of reading data
 # files. Reading in a ``.vtp``` file uses the :class:`pyvista.XMLPolyDataReader`.
 
-reader = pyvista.get_reader(temp_file.name)
+reader = pv.get_reader(temp_file.name)
 reader
 # Alternative method: reader = pyvista.XMLPolyDataReader(temp_file.name)
 
@@ -91,7 +91,7 @@ print(f'New read arrays: {reader_mesh_2.array_names}')
 # which uses the :class:`pyvista.EnSightReader` class.
 
 filename = examples.download_naca(load=False)
-reader = pyvista.get_reader(filename)
+reader = pv.get_reader(filename)
 time_values = reader.time_values
 print(reader)
 print(f'Available time points: {time_values}')
@@ -116,27 +116,27 @@ for block_0, block_1 in zip(mesh_0, mesh_1, strict=True):
 # The value of `DENS` is plotted on the left column for both time points, and
 # the difference on the right.
 
-plotter = pyvista.Plotter(shape='2|1')
+pl = pv.Plotter(shape='2|1')
 
-plotter.subplot(0)
-plotter.add_mesh(mesh_0, scalars='DENS', show_scalar_bar=False)
-plotter.add_text(f'{time_values[0]}')
+pl.subplot(0)
+pl.add_mesh(mesh_0, scalars='DENS', show_scalar_bar=False)
+pl.add_text(f'{time_values[0]}')
 
-plotter.subplot(1)
-plotter.add_mesh(mesh_1, scalars='DENS', show_scalar_bar=False)
-plotter.add_text(f'{time_values[1]}')
+pl.subplot(1)
+pl.add_mesh(mesh_1, scalars='DENS', show_scalar_bar=False)
+pl.add_text(f'{time_values[1]}')
 
 # pyvista currently cannot plot the same mesh twice with different scalars
-plotter.subplot(2)
-plotter.add_mesh(mesh_1.copy(), scalars='DENS_DIFF', show_scalar_bar=False)
-plotter.add_text('DENS Difference')
+pl.subplot(2)
+pl.add_mesh(mesh_1.copy(), scalars='DENS_DIFF', show_scalar_bar=False)
+pl.add_text('DENS Difference')
 
-plotter.link_views()
-plotter.camera_position = pyvista.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(0.5, 0, 8), focal_point=(0.5, 0, 0), viewup=(0, 1, 0)
 )
 
-plotter.show()
+pl.show()
 
 # %%
 # Reading time points or iterations can also be utilized to make a movie.
@@ -145,7 +145,7 @@ plotter.show()
 # :class:`pyvista.MultiBlock` mesh.
 
 filename = examples.download_wavy(load=False)
-reader = pyvista.get_reader(filename)
+reader = pv.get_reader(filename)
 print(reader)
 
 # %%
@@ -153,18 +153,18 @@ print(reader)
 # Put iteration value in top left
 #
 
-plotter = pyvista.Plotter(notebook=False, off_screen=True)
+pl = pv.Plotter(notebook=False, off_screen=True)
 # Open a gif
-plotter.open_gif('wave_pvd.gif')
+pl.open_gif('wave_pvd.gif')
 
 for time_value in reader.time_values:
     reader.set_active_time_value(time_value)
     mesh = reader.read()[0]  # This dataset only has 1 block
-    plotter.add_mesh(mesh, scalars='z', show_scalar_bar=False, lighting=False)
-    plotter.add_text(f'Time: {time_value:.0f}', color='black')
-    plotter.write_frame()
-    plotter.clear()
+    pl.add_mesh(mesh, scalars='z', show_scalar_bar=False, lighting=False)
+    pl.add_text(f'Time: {time_value:.0f}', color='black')
+    pl.write_frame()
+    pl.clear()
 
-plotter.close()
+pl.close()
 # %%
 # .. tags:: load
