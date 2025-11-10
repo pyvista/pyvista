@@ -728,10 +728,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Its value depends on the picking result:
 
-        * if no cells have been picked, returns None
+        * if no cells have been picked, returns :py:data:`None`
         * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
         * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
-          containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
+          containing ``n`` ``pyvista.UnstructuredGrid``\s, with ``n`` being the number of picked actors.
 
         Note that a cell data ``original_cell_ids`` is added to help identifying
         cell ids picked from the original dataset.
@@ -765,10 +765,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Its value depends on the picking result:
 
-        * if no cells have been picked, returns None
+        * if no cells have been picked, returns :py:data:`None`
         * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
         * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
-          containing ``n`` ``pyvista.UnstructuredGrid``\s, with n being the number of picked actors.
+          containing ``n`` ``pyvista.UnstructuredGrid``\s, with ``n`` being the number of picked actors.
 
         Note that a cell data ``original_cell_ids`` is added to help identifying
         cell ids picked from the original dataset.
