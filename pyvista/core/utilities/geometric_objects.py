@@ -1355,7 +1355,7 @@ def Box(
     if np.all(level_vector == level_vector[0]):
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
-    mesh = pyvista.ImageData(dimensions=level_vector + 2)
+    mesh = pv.ImageData(dimensions=level_vector + 2)
     mesh = mesh.extract_geometry().resize(bounds=bounds)
     if not quads:
         mesh = mesh.triangulate()
