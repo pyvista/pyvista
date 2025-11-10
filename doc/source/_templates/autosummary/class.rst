@@ -3,7 +3,6 @@
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
-   :noindex:
 
 {% block methods %}
 {% if methods %}
