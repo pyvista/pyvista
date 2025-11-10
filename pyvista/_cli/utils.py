@@ -19,8 +19,7 @@ from rich import box
 from rich.panel import Panel
 from rich.text import Text
 
-import pyvista
-from pyvista.core.dataobject import DataObject
+import pyvista as pv
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -117,7 +116,7 @@ def _converter_files(
     not_readable: list[str] = []
     for file in values:
         try:
-            mesh = pyvista.read(file)
+            mesh = pv.read(file)
         except Exception:  # noqa: BLE001
             not_readable.append(file)
         else:

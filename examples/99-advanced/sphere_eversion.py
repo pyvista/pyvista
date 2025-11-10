@@ -169,16 +169,16 @@ opts = dict(
 )
 
 # use a small figure window to reduce the size of the GIF
-plotter = pv.Plotter(window_size=(300, 300))
-plotter.open_gif('sphere_eversion.gif')
+pl = pv.Plotter(window_size=(300, 300))
+pl.open_gif('sphere_eversion.gif')
 
 
 def save_frame(x, y, z):
     """Generate and store a frame of the eversion."""
-    plotter.clear()
-    plotter.enable_lightkit()
-    plotter.add_mesh(pv.StructuredGrid(x, y, z), **opts)
-    plotter.write_frame()
+    pl.clear()
+    pl.enable_lightkit()
+    pl.add_mesh(pv.StructuredGrid(x, y, z), **opts)
+    pl.write_frame()
 
 
 # initial parameters, will be updated
@@ -239,7 +239,7 @@ for lamda in np.linspace(1, 0, n_steps + 1)[1:]:
     x2, y2, z2 = unfold_sphere(theta, phi, t, q, eta, lamda)
     save_frame(x2, y2, z2)
 
-plotter.close()
+pl.close()
 
 
 # %%
@@ -260,6 +260,6 @@ alpha = alpha_final
 x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
 
-plotter = pv.Plotter(window_size=(512, 512))
-plotter.add_mesh(pv.StructuredGrid(x2, y2, z2), **opts)
-plotter.show()
+pl = pv.Plotter(window_size=(512, 512))
+pl.add_mesh(pv.StructuredGrid(x2, y2, z2), **opts)
+pl.show()
