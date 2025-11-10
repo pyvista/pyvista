@@ -8,8 +8,8 @@ Orbit around a scene.
 
 .. note::
    The quality of the movie will be better when using
-   ``p.open_movie('orbit.mp4')`` instead of
-   ``p.open_gif('orbit.gif')``
+   ``pl.open_movie('orbit.mp4')`` instead of
+   ``pl.open_gif('orbit.gif')``
 
 For orbiting to work you first have to show the scene and leave the plotter open
 with ``.show(auto_close=False)``.  You may also have to set
@@ -33,27 +33,27 @@ mesh = examples.download_st_helens().warp_by_scalar()
 # Orbit around the Mt. St Helens dataset using
 # :func:`~pyvista.Plotter.generate_orbital_path`.
 
-p = pv.Plotter()
-p.add_mesh(mesh, lighting=False)
-p.camera.zoom(1.5)
-p.show(auto_close=False)
-path = p.generate_orbital_path(n_points=36, shift=mesh.length)
-p.open_gif('orbit.gif')
-p.orbit_on_path(path, write_frames=True)
-p.close()
+pl = pv.Plotter()
+pl.add_mesh(mesh, lighting=False)
+pl.camera.zoom(1.5)
+pl.show(auto_close=False)
+path = pl.generate_orbital_path(n_points=36, shift=mesh.length)
+pl.open_gif('orbit.gif')
+pl.orbit_on_path(path, write_frames=True)
+pl.close()
 
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(mesh, lighting=False)
-p.show_grid()
-p.show(auto_close=False)
+pl = pv.Plotter()
+pl.add_mesh(mesh, lighting=False)
+pl.show_grid()
+pl.show(auto_close=False)
 viewup = [0.5, 0.5, 1]
-path = p.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=36)
-p.open_gif('orbit.gif')
-p.orbit_on_path(path, write_frames=True, viewup=[0, 0, 1], step=0.05)
-p.close()
+path = pl.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=36)
+pl.open_gif('orbit.gif')
+pl.orbit_on_path(path, write_frames=True, viewup=[0, 0, 1], step=0.05)
+pl.close()
 
 
 # %%
@@ -62,12 +62,12 @@ mesh = examples.download_dragon()
 viewup = [0, 1, 0]
 
 # %%
-p = pv.Plotter()
-p.add_mesh(mesh)
-p.show(auto_close=False)
-path = p.generate_orbital_path(factor=2.0, n_points=36, viewup=viewup, shift=0.2)
-p.open_gif('orbit.gif')
-p.orbit_on_path(path, write_frames=True, viewup=viewup, step=0.05)
-p.close()
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+pl.show(auto_close=False)
+path = pl.generate_orbital_path(factor=2.0, n_points=36, viewup=viewup, shift=0.2)
+pl.open_gif('orbit.gif')
+pl.orbit_on_path(path, write_frames=True, viewup=viewup, step=0.05)
+pl.close()
 # %%
 # .. tags:: plot

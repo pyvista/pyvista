@@ -56,11 +56,11 @@ h1 = h1.elevation()
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(h0, smooth_shading=True)
-p.add_mesh(h1, smooth_shading=True)
-p.show_grid()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(h0, smooth_shading=True)
+pl.add_mesh(h1, smooth_shading=True)
+pl.show_grid()
+pl.show()
 
 # %%
 # Ray Tracing Distance
@@ -89,10 +89,10 @@ h0n['distances'][mask] = np.nan
 np.nanmean(h0n['distances'])
 
 # %%
-p = pv.Plotter()
-p.add_mesh(h0n, scalars='distances', smooth_shading=True)
-p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(h0n, scalars='distances', smooth_shading=True)
+pl.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
+pl.show()
 
 
 # %%
@@ -112,10 +112,10 @@ h0['distances'] = d_kdtree
 np.mean(d_kdtree)
 
 # %%
-p = pv.Plotter()
-p.add_mesh(h0, scalars='distances', smooth_shading=True)
-p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(h0, scalars='distances', smooth_shading=True)
+pl.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
+pl.show()
 
 
 # %%
@@ -137,9 +137,9 @@ np.mean(d_exact)
 # As expected there is only a small difference between this method and the
 # KDTree method.
 
-p = pv.Plotter()
-p.add_mesh(h0, scalars='distances', smooth_shading=True)
-p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(h0, scalars='distances', smooth_shading=True)
+pl.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
+pl.show()
 # %%
 # .. tags:: filter
