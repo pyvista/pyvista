@@ -17,7 +17,7 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
@@ -102,7 +102,7 @@ class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self: BaseVTKReader) -> None:
-        self._data_object: pyvista.DataObject | None = None
+        self._data_object: pv.DataObject | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename) -> None:
@@ -1884,7 +1884,7 @@ class _PVDReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read data and store it."""
-        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
+        self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
@@ -1999,9 +1999,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     def __init__(self, path):
         # nek5000 reader requires vtk >= 9.3
-        if pyvista.vtk_version_info < (9, 3):
+        if pv.vtk_version_info < (9, 3):
             msg = 'Nek5000Reader is only available for vtk>=9.3'
-            raise pyvista.VTKVersionError(msg)
+            raise pv.VTKVersionError(msg)
 
         super().__init__(path)
 
@@ -2478,7 +2478,7 @@ class HDFReader(BaseReader):
     def read(self):  # type: ignore[override]
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
-            with pyvista.VtkErrorCatcher(raise_errors=True):
+            with pv.VtkErrorCatcher(raise_errors=True):
                 return super().read()
         except RuntimeError as err:  # pragma: no cover
             if "Can't find the `Type` attribute." in str(err):
@@ -2540,7 +2540,7 @@ class _GIFReader(BaseVTKReader):
         from PIL import ImageSequence  # noqa: PLC0415
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
+        self._data_object = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames  # type: ignore[attr-defined]
@@ -2977,7 +2977,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
 
-    def read_global(self) -> pyvista.Table:
+    def read_global(self) -> pv.Table:
         """Read enabled global data.
 
         Returns

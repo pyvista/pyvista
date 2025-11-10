@@ -72,13 +72,13 @@ might want to use PyVista:
    :include-source: false
    :force_static:
 
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.anti_aliasing = 'fxaa'
+   import pyvista as pv
+   pv.set_jupyter_backend('static')
+   pv.global_theme.background = 'white'
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.smooth_shading = True
+   pv.global_theme.anti_aliasing = 'fxaa'
 
 
 Maps and Geoscience
@@ -120,15 +120,15 @@ the points directly.
     :context:
 
     import numpy as np
-    import pyvista
+    import pyvista as pv
 
     rng = np.random.default_rng(seed=0)
     point_cloud = rng.random((100, 3))
-    pdata = pyvista.PolyData(point_cloud)
+    pdata = pv.PolyData(point_cloud)
     pdata['orig_sphere'] = np.arange(100)
 
     # create many spheres from the point cloud
-    sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
+    sphere = pv.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
     pc = pdata.glyph(scale=False, geom=sphere, orient=False)
     pc.plot(cmap='Reds')
 
@@ -141,7 +141,7 @@ Generate a spline from an array of NumPy points.
     :context:
 
     import numpy as np
-    import pyvista
+    import pyvista as pv
 
     # Make the xyz points
     theta = np.linspace(-10 * np.pi, 10 * np.pi, 100)
@@ -151,7 +151,7 @@ Generate a spline from an array of NumPy points.
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
 
-    spline = pyvista.Spline(points, 500).tube(radius=0.1)
+    spline = pv.Spline(points, 500).tube(radius=0.1)
     spline.plot(scalars='arc_length', show_scalar_bar=False)
 
 
@@ -162,17 +162,17 @@ Subtract a sphere from a cube mesh.
 .. pyvista-plot::
     :context:
 
-    import pyvista
+    import pyvista as pv
     import numpy as np
 
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
-        grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
+        grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
         surf = grid.extract_surface().triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations
-    sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
+    sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
     cube = make_cube()
 
     # Perform a boolean difference

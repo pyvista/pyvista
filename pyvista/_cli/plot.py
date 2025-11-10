@@ -15,7 +15,7 @@ from rich.console import NewLine
 from rich.panel import Panel
 from rich.text import Text
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 
 from .app import app
@@ -79,7 +79,7 @@ class Groups(StrEnum):
 
 
 @app.command(
-    usage=f'Usage: [bold]{pyvista.__name__} plot file (file2) [OPTIONS]',
+    usage=f'Usage: [bold]{pv.__name__} plot file (file2) [OPTIONS]',
     help_formatter=HELP_FORMATTER,
     help='Plot one or more mesh files in an interactive window that can be customized with various options.',  # noqa: E501
 )
@@ -131,7 +131,7 @@ def _plot(
 ) -> None:
     items: list[_MeshAndPath] = var_item  # type: ignore [assignment]
     try:
-        res = pyvista.plot(
+        res = pv.plot(
             var_item=[m.mesh for m in items],  # type: ignore [arg-type]
             off_screen=off_screen,
             full_screen=full_screen,
@@ -173,4 +173,4 @@ def _plot(
         return res
 
 
-_plot.__doc__ = pyvista.plot.__doc__  # Needed by cyclopts to get parameters help
+_plot.__doc__ = pv.plot.__doc__  # Needed by cyclopts to get parameters help
