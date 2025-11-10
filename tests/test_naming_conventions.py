@@ -20,6 +20,7 @@ COMMON_GREP_ARGS = [
     '--binary-files=without-match',
     '--exclude-dir=*site-packages*',
     '--exclude-dir=__pycache__',
+    '--exclude-dir=vtk-data',
 ]
 
 
