@@ -564,6 +564,26 @@ html_theme_options = {
     ],
 }
 
+if 'dev' in pyvista.__version__:
+    stable_base = 'https://docs.pyvista.org'
+    announcement_html = f"""
+    <div class="pv-announcement">
+        This is documentation for an <strong>unstable development version</strong>
+        <a id="stable-link" class="pv-announcement-button">
+            Switch to stable version
+        </a>
+    </div>
+    <script>
+        const link = document.getElementById('stable-link');
+        const stableBase = "{stable_base}";
+        const path = window.location.pathname + window.location.hash + window.location.search;
+        link.href = stableBase + path;
+    </script>
+    """
+
+    html_theme_options['announcement'] = announcement_html
+
+
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
 # already loads it
 panels_add_bootstrap_css = False
@@ -575,6 +595,7 @@ html_static_path = ['_static']
 html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
+    'announcement.css',  # override banner color
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
