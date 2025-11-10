@@ -183,7 +183,7 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> plotter = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def simulate(widget):
         ...     bounds = widget.bounds
         ...     new_center = np.array(
@@ -202,9 +202,9 @@ class WidgetHelper:
         ...         - 0.3
         ...     )
         ...     sphere = pv.Sphere(radius=new_radius, center=new_center)
-        ...     _ = plotter.add_mesh(sphere, name='Sphere')
-        >>> _ = plotter.add_box_widget(callback=simulate)
-        >>> plotter.show()
+        ...     _ = pl.add_mesh(sphere, name='Sphere')
+        >>> _ = pl.add_box_widget(callback=simulate)
+        >>> pl.show()
 
         """
         if bounds is None:
@@ -2940,10 +2940,10 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
-        >>> _ = plotter.add_camera_orientation_widget()
-        >>> plotter.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
+        >>> _ = pl.add_camera_orientation_widget()
+        >>> pl.show()
 
         """
         widget = _vtk.vtkCameraOrientationWidget()
@@ -3065,12 +3065,12 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> plotter = pv.Plotter(shape=(1, 2))
-        >>> _ = plotter.add_mesh(sphere, show_edges=True)
-        >>> plotter.subplot(0, 1)
-        >>> _ = plotter.add_mesh(sphere, show_edges=True)
-        >>> _ = plotter.add_camera3d_widget()
-        >>> plotter.show(cpos=plotter.camera_position)
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(sphere, show_edges=True)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(sphere, show_edges=True)
+        >>> _ = pl.add_camera3d_widget()
+        >>> pl.show(cpos=pl.camera_position)
 
         """
         try:

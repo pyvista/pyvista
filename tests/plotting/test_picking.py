@@ -29,29 +29,29 @@ def test_single_cell_picking():
         def __call__(self, *args, **kwargs):  # noqa: ARG002
             self.called = True
 
-    plotter = pv.Plotter(
+    pl = pv.Plotter(
         window_size=(width, height),
     )
 
     callback = PickCallback()
-    plotter.enable_cell_picking(
+    pl.enable_cell_picking(
         start=False,
         show=True,
         callback=callback,
         through=False,  # Single cell visible picking
     )
-    plotter.add_mesh(sphere)
-    plotter.show(auto_close=False)  # must start renderer first
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)  # must start renderer first
 
-    width, height = plotter.window_size
-    plotter.iren._mouse_move(width // 2, height // 2)
-    plotter.iren._simulate_keypress('p')
+    width, height = pl.window_size
+    pl.iren._mouse_move(width // 2, height // 2)
+    pl.iren._simulate_keypress('p')
 
-    plotter.close()
+    pl.close()
 
     assert callback.called
-    assert isinstance(plotter.picked_cells, pv.UnstructuredGrid)
-    assert plotter.picked_cells.n_cells == 1
+    assert isinstance(pl.picked_cells, pv.UnstructuredGrid)
+    assert pl.picked_cells.n_cells == 1
 
 
 @pytest.mark.filterwarnings(
@@ -119,36 +119,36 @@ def test_multi_cell_picking(through):
     actor.SetMapper(mapper)
     actor.SetPickable(True)
 
-    plotter = pv.Plotter(window_size=(1024, 768))
-    plotter.add_mesh(cube, pickable=True)
-    plotter.add_actor(actor)
-    plotter.enable_cell_picking(
+    pl = pv.Plotter(window_size=(1024, 768))
+    pl.add_mesh(cube, pickable=True)
+    pl.add_actor(actor)
+    pl.enable_cell_picking(
         color='blue',
         through=through,
         start=True,
         show=True,
         show_frustum=True,
     )
-    plotter.show(auto_close=False)  # must start renderer first
+    pl.show(auto_close=False)  # must start renderer first
 
     # simulate the pick (169, 113, 875, 684)
-    plotter.iren._mouse_left_button_press(169, 113)
-    plotter.iren._mouse_move(875, 684)
-    plotter.iren._mouse_left_button_release()
+    pl.iren._mouse_left_button_press(169, 113)
+    pl.iren._mouse_move(875, 684)
+    pl.iren._mouse_left_button_release()
 
-    assert plotter.get_pick_position() == (169, 113, 875, 684)
+    assert pl.get_pick_position() == (169, 113, 875, 684)
 
-    plotter.close()
+    pl.close()
 
-    assert isinstance(plotter.picked_cells, pv.MultiBlock)
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
     # Selection should return 2 submeshes
-    assert len(plotter.picked_cells) == 2
+    assert len(pl.picked_cells) == 2
 
-    assert all('original_cell_ids' in b.cell_data for b in plotter.picked_cells)
+    assert all('original_cell_ids' in b.cell_data for b in pl.picked_cells)
     if through:
-        assert all('orig_extract_id' in b.cell_data for b in plotter.picked_cells)
+        assert all('orig_extract_id' in b.cell_data for b in pl.picked_cells)
 
-    merged = plotter.picked_cells.combine()
+    merged = pl.picked_cells.combine()
     n_sphere_cells = pv.wrap(src.GetOutput()).n_cells
     if through:
         # all cells should have been selected
@@ -617,25 +617,25 @@ def test_element_picking(mode):
     tracker = Tracker()
 
     mesh = pv.Wavelet()
-    plotter = pv.Plotter(
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
-    plotter.add_mesh(mesh)
-    plotter.enable_element_picking(
+    pl.add_mesh(mesh)
+    pl.enable_element_picking(
         mode=mode,
         show_message=True,
         left_clicking=True,
         callback=tracker,
     )
     # must show to activate the interactive renderer (for left_clicking)
-    plotter.show(auto_close=False)
+    pl.show(auto_close=False)
 
     # simulate the pick
-    width, height = plotter.window_size
+    width, height = pl.window_size
 
-    plotter.iren._mouse_left_button_click(width // 2, height // 2)
+    pl.iren._mouse_left_button_click(width // 2, height // 2)
 
-    plotter.close()
+    pl.close()
 
     assert tracker.last_picked is not None
 

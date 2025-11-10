@@ -355,9 +355,9 @@ def show_trame(
                 return IFrame(src, '75%', '500px')
 
 
-            p = pyvista.Plotter(notebook=True)
-            _ = p.add_mesh(mesh)
-            iframe = p.show(
+            pl = pv.Plotter(notebook=True)
+            _ = pl.add_mesh(mesh)
+            iframe = pl.show(
                 jupyter_backend='trame',
                 jupyter_kwargs=dict(handler=handler),
                 return_viewer=True,

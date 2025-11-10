@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from pytest_cases import parametrize
 
-import pyvista
+import pyvista as pv
 from pyvista import CellType
 from pyvista.examples import cells
 
@@ -19,12 +19,12 @@ cell_example_functions = [
 @parametrize('cell_example', cell_example_functions)
 def test_area_and_volume(cell_example):
     mesh = cell_example()
-    assert isinstance(mesh, pyvista.UnstructuredGrid)
+    assert isinstance(mesh, pv.UnstructuredGrid)
     assert mesh.n_cells == 1
 
     if mesh.celltypes[0] in [
-        pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
-        pyvista.CellType.TRIQUADRATIC_HEXAHEDRON,
+        CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
+        CellType.TRIQUADRATIC_HEXAHEDRON,
     ]:
         pytest.xfail(
             'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'

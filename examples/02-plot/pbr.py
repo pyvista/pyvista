@@ -80,26 +80,26 @@ mesh = examples.download_louis_louvre()
 mesh.rotate_z(140, inplace=True)
 
 
-plotter = pv.Plotter(lighting=None)
-plotter.set_background('black')
-plotter.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
+pl = pv.Plotter(lighting=None)
+pl.set_background('black')
+pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
 
 
 # set up lighting
 light = pv.Light(position=(-2, 2, 0), focal_point=(0, 0, 0), color='white')
-plotter.add_light(light)
+pl.add_light(light)
 
 light = pv.Light(position=(2, 0, 0), focal_point=(0, 0, 0), color=(0.7, 0.0862, 0.0549))
-plotter.add_light(light)
+pl.add_light(light)
 
 light = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
-plotter.add_light(light)
+pl.add_light(light)
 
 
 # plot with a good camera position
-plotter.camera_position = pv.CameraPosition(
+pl.camera_position = pv.CameraPosition(
     position=(9.51, 13.92, 15.81), focal_point=(-2.836, -0.93, 10.2), viewup=(-0.22, -0.18, 0.959)
 )
-cpos = plotter.show()
+cpos = pl.show()
 # %%
 # .. tags:: plot

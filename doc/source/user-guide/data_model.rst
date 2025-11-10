@@ -62,14 +62,14 @@ consider a single cell within a |PolyData|:
    :include-source: false
    :force_static:
 
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
    points = [[.2, 0, 0], [1.3, 0, 0], [1, 1.2, 0], [0, 1, 0]]
    cells = [4, 0, 1, 2, 3]
-   mesh = pyvista.PolyData(points, cells)
+   mesh = pv.PolyData(points, cells)
 
-   pl = pyvista.Plotter()
+   pl = pv.Plotter()
    pl.add_mesh(mesh, show_edges=False)
    pl.add_mesh(mesh.extract_feature_edges(), line_width=5, color='k')
    pl.add_point_labels(mesh.points, [f'Point {i}' for i in range(4)], font_size=20, point_size=20)
@@ -173,8 +173,8 @@ representation of the data. For example:
 
 .. jupyter-execute::
 
-   >>> import pyvista
-   >>> wrapped = pyvista.wrap(vtk_array)
+   >>> import pyvista as pv
+   >>> wrapped = pv.wrap(vtk_array)
    >>> wrapped
 
 Note that when wrapping the underlying VTK array, we actually perform
@@ -220,9 +220,9 @@ containing just the three points:
 
 .. jupyter-execute::
 
-   >>> from_vtk = pyvista.PolyData(vtk_array)
-   >>> from_np = pyvista.PolyData(np_points)
-   >>> from_list = pyvista.PolyData(points)
+   >>> from_vtk = pv.PolyData(vtk_array)
+   >>> from_np = pv.PolyData(np_points)
+   >>> from_list = pv.PolyData(points)
 
 These point meshes all contain three points and are effectively
 identical. Let's show this by accessing the underlying points array
@@ -247,9 +247,9 @@ can see the entire process.
 .. pyvista-plot::
    :context:
 
-   >>> import pyvista
+   >>> import pyvista as pv
    >>> points = [[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]]
-   >>> mesh = pyvista.PolyData(points)
+   >>> mesh = pv.PolyData(points)
    >>> mesh.plot(show_bounds=True, cpos='xy', point_size=20)
 
 We'll get into PyVista's data classes and attributes later, but for
@@ -298,7 +298,7 @@ representation that this geometry contains three points and one cell
 
 .. jupyter-execute::
 
-   >>> mesh = pyvista.PolyData(points, cells)
+   >>> mesh = pv.PolyData(points, cells)
    >>> mesh
 
 Let's also plot this:
@@ -306,7 +306,7 @@ Let's also plot this:
 .. pyvista-plot::
    :context:
 
-   >>> mesh = pyvista.PolyData(points, [3, 0, 1, 2])
+   >>> mesh = pv.PolyData(points, [3, 0, 1, 2])
    >>> mesh.plot(cpos='xy', show_edges=True)
 
 While we're at it, let's annotate this plot to describe this mesh.
@@ -315,7 +315,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
    >>> label_coords = mesh.points + [0, 0, 0.01]
    >>> pl.add_point_labels(
@@ -397,7 +397,7 @@ a simple mesh containing four isometric cells by starting with a
 
 .. jupyter-execute::
 
-   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
+   >>> grid = pv.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
    >>> ugrid
 
@@ -407,14 +407,14 @@ Let's also plot this basic mesh:
    :context:
    :include-source: False
 
-   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
+   >>> grid = pv.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
 
 .. pyvista-plot::
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
@@ -493,7 +493,7 @@ assigned.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
    >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
@@ -569,7 +569,7 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]

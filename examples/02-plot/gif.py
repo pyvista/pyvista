@@ -44,8 +44,8 @@ grid.plot()
 # Generate a GIF using ``off_screen=True`` parameter.
 
 # Create a plotter object and set the scalars to the Z height
-plotter = pv.Plotter(notebook=False, off_screen=True)
-plotter.add_mesh(
+pl = pv.Plotter(notebook=False, off_screen=True)
+pl.add_mesh(
     grid,
     scalars='Height',
     lighting=False,
@@ -54,7 +54,7 @@ plotter.add_mesh(
 )
 
 # Open a gif
-plotter.open_gif('wave.gif')
+pl.open_gif('wave.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
@@ -64,9 +64,9 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     grid.points[:, -1] = z.ravel()
     grid['Height'] = z.ravel()
     # Write a frame. This triggers a render.
-    plotter.write_frame()
+    pl.write_frame()
 
 # Closes and finalizes movie
-plotter.close()
+pl.close()
 # %%
 # .. tags:: plot

@@ -16,30 +16,30 @@ import pyvista as pv
 
 # %%
 
-plotter = pv.Plotter()
-actor = plotter.add_mesh(pv.Sphere())
-plotter.remove_actor(actor)
-plotter.show()
+pl = pv.Plotter()
+actor = pl.add_mesh(pv.Sphere())
+pl.remove_actor(actor)
+pl.show()
 
 
 # %%
 # Clearing the entire plotting window:
 
-plotter = pv.Plotter()
-plotter.add_mesh(pv.Sphere())
-plotter.add_mesh(pv.Plane())
-plotter.clear()  # clears all actors
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(pv.Sphere())
+pl.add_mesh(pv.Plane())
+pl.clear()  # clears all actors
+pl.show()
 
 
 # %%
 # Or you can give any actor a ``name`` when adding it and if an actor is added
 # with that same name at a later time, it will replace the previous actor:
 
-plotter = pv.Plotter()
-plotter.add_mesh(pv.Sphere(), name='mymesh')
-plotter.add_mesh(pv.Plane(), name='mymesh')
+pl = pv.Plotter()
+pl.add_mesh(pv.Sphere(), name='mymesh')
+pl.add_mesh(pv.Plane(), name='mymesh')
 # Only the Plane is shown.
-plotter.show()
+pl.show()
 # %%
 # .. tags:: plot

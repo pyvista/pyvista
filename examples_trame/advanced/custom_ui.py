@@ -26,8 +26,8 @@ state.trame__title = 'PyVista UI Template'
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap='viridis')
+pl = pv.Plotter()
+actor = pl.add_mesh(mesh, cmap='viridis')
 
 
 @state.change('cmap')
@@ -40,7 +40,7 @@ def update_cmap(cmap='viridis', **kwargs):  # noqa: ARG001
 # GUI
 # -----------------------------------------------------------------------------
 
-viewer = get_viewer(plotter)
+viewer = get_viewer(pl)
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
