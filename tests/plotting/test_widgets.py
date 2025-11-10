@@ -821,12 +821,12 @@ def test_logo_widget():
 @pytest.mark.usefixtures('verify_image_cache')
 def test_camera3d_widget():
     sphere = pv.Sphere()
-    plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
-    plotter.add_mesh(sphere)
-    plotter.subplot(0, 1)
-    plotter.add_mesh(sphere)
-    plotter.add_camera3d_widget()
-    plotter.show(cpos=plotter.camera_position)
+    pl = pv.Plotter(window_size=[600, 300], shape=(1, 2))
+    pl.add_mesh(sphere)
+    pl.subplot(0, 1)
+    pl.add_mesh(sphere)
+    pl.add_camera3d_widget()
+    pl.show(cpos=pl.camera_position)
 
 
 @pytest.mark.parametrize('outline_opacity', [True, False, np.random.default_rng(0).random()])

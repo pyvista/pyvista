@@ -30,9 +30,9 @@ from __future__ import annotations
 
 import pyvista as pv
 
-plotter = pv.Plotter(lighting='none')
+pl = pv.Plotter(lighting='none')
 billboard = pv.Plane(direction=(1, 0, 0), i_size=6, j_size=6)
-plotter.add_mesh(billboard, color='white')
+pl.add_mesh(billboard, color='white')
 
 all_attenuation_values = [(1, 0, 0), (0, 2, 0), (0, 0, 2)]
 offsets = [-2, 0, 2]
@@ -42,10 +42,10 @@ for attenuation_values, offset in zip(all_attenuation_values, offsets):
     light.cone_angle = 20
     light.intensity = 15
     light.attenuation_values = attenuation_values
-    plotter.add_light(light)
+    pl.add_light(light)
 
-plotter.view_yz()
-plotter.show()
+pl.view_yz()
+pl.show()
 
 
 # %%
@@ -57,9 +57,9 @@ plotter.show()
 # the surface in a very small angle. Altering the scene such that the lights
 # are further away from the plane changes this:
 
-plotter = pv.Plotter(lighting='none')
+pl = pv.Plotter(lighting='none')
 billboard = pv.Plane(direction=(1, 0, 0), i_size=6, j_size=6)
-plotter.add_mesh(billboard, color='white')
+pl.add_mesh(billboard, color='white')
 
 all_attenuation_values = [(1, 0, 0), (0, 2, 0), (0, 0, 2)]
 offsets = [-2, 0, 2]
@@ -69,10 +69,10 @@ for attenuation_values, offset in zip(all_attenuation_values, offsets):
     light.cone_angle = 20
     light.intensity = 15
     light.attenuation_values = attenuation_values
-    plotter.add_light(light)
+    pl.add_light(light)
 
-plotter.view_yz()
-plotter.show()
+pl.view_yz()
+pl.show()
 
 # %%
 # Now the relationship of the three kinds of attenuation seems clearer.
@@ -81,7 +81,7 @@ plotter.show()
 # to the axis of each light (making use of the fact that shadowing between
 # objects is not handled by default):
 
-plotter = pv.Plotter(lighting='none')
+pl = pv.Plotter(lighting='none')
 
 # loop over three lights with three kinds of attenuation
 all_attenuation_values = [(2, 0, 0), (0, 2, 0), (0, 0, 2)]
@@ -90,7 +90,7 @@ for attenuation_values, light_x in zip(all_attenuation_values, light_offsets):
     # loop over three perpendicular planes for each light
     for plane_y in [2, 5, 10]:
         screen = pv.Plane(center=(light_x, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
-        plotter.add_mesh(screen, color='white')
+        pl.add_mesh(screen, color='white')
 
     light = pv.Light(position=(light_x, 0, 0), focal_point=(light_x, 1, 0), color='cyan')
     light.positional = True
@@ -98,9 +98,9 @@ for attenuation_values, light_x in zip(all_attenuation_values, light_offsets):
     light.intensity = 5
     light.attenuation_values = attenuation_values
     light.show_actor()
-    plotter.add_light(light)
+    pl.add_light(light)
 
-plotter.view_vector((1, -2, 2))
-plotter.show()
+pl.view_vector((1, -2, 2))
+pl.show()
 # %%
 # .. tags:: lights

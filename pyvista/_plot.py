@@ -16,7 +16,7 @@ from typing import Literal
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
@@ -248,7 +248,7 @@ def plot(  # noqa: ANN202, PLR0917
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
-    pl = pyvista.Plotter(
+    pl = pv.Plotter(
         window_size=window_size,
         off_screen=off_screen,
         notebook=notebook,
@@ -268,7 +268,7 @@ def plot(  # noqa: ANN202, PLR0917
 
     if anti_aliasing:
         if anti_aliasing is True:
-            pl.enable_anti_aliasing('msaa', multi_samples=pyvista.global_theme.multi_samples)
+            pl.enable_anti_aliasing('msaa', multi_samples=pv.global_theme.multi_samples)
         else:
             pl.enable_anti_aliasing(anti_aliasing)
     elif anti_aliasing is False:
@@ -305,7 +305,7 @@ def plot(  # noqa: ANN202, PLR0917
     elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
         pl.add_volume(var_item, **kwargs)
 
-    elif isinstance(var_item, pyvista.MultiBlock):
+    elif isinstance(var_item, pv.MultiBlock):
         pl.add_composite(var_item, **kwargs)
 
     else:
