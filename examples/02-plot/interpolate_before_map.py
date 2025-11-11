@@ -44,25 +44,25 @@ cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
-p = pv.Plotter(shape=(1, 2))
-p.add_mesh(
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(
     cyl,
     interpolate_before_map=False,
     scalar_bar_args={'title': 'Elevation - not interpolated'},
     **dargs,
 )
-p.subplot(0, 1)
-p.add_mesh(
+pl.subplot(0, 1)
+pl.add_mesh(
     cyl,
     interpolate_before_map=True,
     scalar_bar_args={'title': 'Elevation - interpolated'},
     **dargs,
 )
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
 )
-p.show()
+pl.show()
 
 # %%
 # Shown in the figure above, when not interpolating the scalars before mapping,
@@ -75,25 +75,25 @@ p.show()
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True, style='wireframe')
 
-p = pv.Plotter(shape=(1, 2))
-p.add_mesh(
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(
     cyl,
     interpolate_before_map=False,
     scalar_bar_args={'title': 'Elevation - not interpolated'},
     **dargs,
 )
-p.subplot(0, 1)
-p.add_mesh(
+pl.subplot(0, 1)
+pl.add_mesh(
     cyl,
     interpolate_before_map=True,
     scalar_bar_args={'title': 'Elevation - interpolated'},
     **dargs,
 )
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
 )
-p.show()
+pl.show()
 
 # %%
 # The cylinder mesh above is a great example dataset for this as it has a wide
@@ -109,25 +109,25 @@ wavelet = pv.Wavelet().clip('x')
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True)
 
-p = pv.Plotter(shape=(1, 2))
-p.add_mesh(
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(
     wavelet,
     interpolate_before_map=False,
     scalar_bar_args={'title': 'RTData - not interpolated'},
     **dargs,
 )
-p.subplot(0, 1)
-p.add_mesh(
+pl.subplot(0, 1)
+pl.add_mesh(
     wavelet,
     interpolate_before_map=True,
     scalar_bar_args={'title': 'RTData - interpolated'},
     **dargs,
 )
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
 )
-p.show()
+pl.show()
 
 # %%
 # This time is pretty difficult to notice the differences - they are there,
@@ -138,25 +138,25 @@ p.show()
 
 dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True, n_colors=8)
 
-p = pv.Plotter(shape=(1, 2))
-p.add_mesh(
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(
     wavelet,
     interpolate_before_map=False,
     scalar_bar_args={'title': 'RTData - not interpolated'},
     **dargs,
 )
-p.subplot(0, 1)
-p.add_mesh(
+pl.subplot(0, 1)
+pl.add_mesh(
     wavelet,
     interpolate_before_map=True,
     scalar_bar_args={'title': 'RTData - interpolated'},
     **dargs,
 )
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
 )
-p.show()
+pl.show()
 
 # %%
 # Left, ``interpolate_before_map`` OFF.  Right, ``interpolate_before_map`` ON.

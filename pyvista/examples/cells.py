@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
@@ -38,7 +38,7 @@ def plot_cell(grid, cpos=None, **kwargs):
     >>> examples.plot_cell(grid)
 
     """
-    pl = pyvista.Plotter()
+    pl = pv.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
     if edges.n_cells or next(grid.cell).type in [
@@ -1700,7 +1700,7 @@ def CubicLine() -> UnstructuredGrid:
 
 
 def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
-    cell = pyvista.Cell(vtk_cell)  # type: ignore[abstract]
+    cell = pv.Cell(vtk_cell)  # type: ignore[abstract]
 
     # Create points
     pcoords = cell.GetParametricCoords()

@@ -23,7 +23,7 @@ This example is inspired by `planet3D-MATLAB
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 # sphinx_gallery_start_ignore
@@ -39,7 +39,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 
 # Light of the Sun.
-light = pyvista.Light()
+light = pv.Light()
 light.set_direction_angle(30, -20)
 
 # Load planets
@@ -80,7 +80,7 @@ uranus.translate((-600000.0, 0.0, 0.0), inplace=True)
 neptune.translate((-700000.0, 0.0, 0.0), inplace=True)
 
 # Add planets to Plotter.
-pl = pyvista.Plotter(lighting='none')
+pl = pv.Plotter(lighting='none')
 cubemap = examples.download_cubemap_space_4k()
 _ = pl.add_actor(cubemap.to_skybox())
 pl.set_environment_texture(cubemap, is_srgb=True, resample=1 / 64)
@@ -104,7 +104,7 @@ pl.show()
 # Each planet here is in a different subplot. The planet's textures are from
 # `Solar Textures <https://www.solarsystemscope.com/textures/>`_.
 
-pl = pyvista.Plotter(shape=(3, 2))
+pl = pv.Plotter(shape=(3, 2))
 pl.subplot(0, 0)
 pl.add_text('Mercury')
 pl.add_mesh(examples.planets.download_mercury_surface(), rgb=True)
@@ -132,7 +132,7 @@ venus = examples.planets.load_venus()
 atmosphere_texture = examples.planets.download_venus_surface(atmosphere=True, texture=True)
 surface_texture = examples.planets.download_venus_surface(atmosphere=False, texture=True)
 
-pl = pyvista.Plotter(shape=(1, 2))
+pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
 pl.add_text('Venus Atmosphere')
 pl.add_mesh(venus, texture=atmosphere_texture, smooth_shading=True)

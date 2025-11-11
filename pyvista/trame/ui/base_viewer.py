@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from trame.app import get_server
 
-import pyvista
+import pyvista as pv
 
 if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
@@ -176,7 +176,7 @@ class BaseViewer:
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
             for actor in renderer.actors.values():
-                if isinstance(actor, pyvista.Actor):
+                if isinstance(actor, pv.Actor):
                     actor.prop.show_edges = value
         self.update()
 
@@ -257,7 +257,7 @@ class BaseViewer:
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
-        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
+        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pv.Actor)}
 
     def screenshot(self):
         """Take screenshot and add attachament.

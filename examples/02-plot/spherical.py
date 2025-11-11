@@ -88,10 +88,10 @@ grid_scalar = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 grid_scalar.cell_data['example'] = np.array(scalar).swapaxes(-2, -1).ravel('C')
 
 # Make a plot
-p = pv.Plotter()
-p.add_mesh(pv.Sphere(radius=RADIUS))
-p.add_mesh(grid_scalar, clim=[0.1, 2.0], opacity=0.5, cmap='plasma')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(pv.Sphere(radius=RADIUS))
+pl.add_mesh(grid_scalar, clim=[0.1, 2.0], opacity=0.5, cmap='plasma')
+pl.show()
 
 
 # %%
@@ -132,10 +132,10 @@ grid_winds = pv.grid_from_sph_coords(x, y_polar, wind_level)
 grid_winds.point_data['example'] = vectors
 
 # Show the result
-p = pv.Plotter()
-p.add_mesh(pv.Sphere(radius=RADIUS))
-p.add_mesh(grid_winds.glyph(orient='example', scale='example', tolerance=0.005))
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(pv.Sphere(radius=RADIUS))
+pl.add_mesh(grid_winds.glyph(orient='example', scale='example', tolerance=0.005))
+pl.show()
 
 
 # %%
@@ -166,9 +166,9 @@ grid_scalar_3d.cell_data['example'] = np.array(scalar_3d).swapaxes(-2, -1).ravel
 surfaces = grid_scalar_3d.cell_data_to_point_data().contour(isosurfaces=[1, 5, 10, 15])
 
 # Show the result
-p = pv.Plotter()
-p.add_mesh(pv.Sphere(radius=RADIUS))
-p.add_mesh(surfaces)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(pv.Sphere(radius=RADIUS))
+pl.add_mesh(surfaces)
+pl.show()
 # %%
 # .. tags:: plot

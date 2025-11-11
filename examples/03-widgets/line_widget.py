@@ -37,10 +37,10 @@ clim = [arr.min(), arr.max()]
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(furniture, name='furniture', color=True)
-p.add_mesh(mesh.outline(), color='black')
-p.add_axes()
+pl = pv.Plotter()
+pl.add_mesh(furniture, name='furniture', color=True)
+pl.add_mesh(mesh.outline(), color='black')
+pl.add_axes()
 
 
 def simulate(pointa, pointb):
@@ -51,7 +51,7 @@ def simulate(pointa, pointb):
         pointb=pointb,
         integration_direction='forward',
     )
-    p.add_mesh(
+    pl.add_mesh(
         streamlines,
         name='streamlines',
         line_width=5,
@@ -60,8 +60,8 @@ def simulate(pointa, pointb):
     )
 
 
-p.add_line_widget(callback=simulate, use_vertices=True)
-p.show()
+pl.add_line_widget(callback=simulate, use_vertices=True)
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this

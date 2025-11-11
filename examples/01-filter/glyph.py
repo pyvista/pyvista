@@ -66,10 +66,10 @@ sphere.arrows.plot()
 # %%
 # Plot the arrows and the sphere.
 
-p = pv.Plotter()
-p.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': 'Vector Magnitude'})
-p.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': 'Vector Magnitude'})
+pl.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
+pl.show()
 
 
 # %%
@@ -87,9 +87,9 @@ mesh = examples.load_random_hills()
 # create a subset of arrows using the glyph filter
 arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 
-p = pv.Plotter()
-p.add_mesh(arrows, color='black')
-p.add_mesh(mesh, scalars='Elevation', cmap='terrain', smooth_shading=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(arrows, color='black')
+pl.add_mesh(mesh, scalars='Elevation', cmap='terrain', smooth_shading=True)
+pl.show()
 # %%
 # .. tags:: filter

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
@@ -333,7 +333,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.plot()
 
         """
-        pl = pyvista.Plotter()
+        pl = pv.Plotter()
         pl.add_actor(self)
         pl.show(**kwargs)
 
@@ -406,7 +406,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> pyvista.Property | None:  # numpydoc ignore=RT01
+    def backface_prop(self) -> Property | None:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -451,5 +451,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
-    def backface_prop(self, value: pyvista.Property) -> None:
+    def backface_prop(self, value: Property) -> None:
         self.SetBackfaceProperty(value)

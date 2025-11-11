@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
@@ -193,7 +193,7 @@ class StructuredGridFilters(DataSetFilters):
             new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
-        joined = pyvista.StructuredGrid()
+        joined = pv.StructuredGrid()
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)

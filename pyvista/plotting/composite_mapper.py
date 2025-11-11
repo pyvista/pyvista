@@ -9,7 +9,7 @@ import weakref
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import cycler
+
+    from pyvista import MultiBlock
 
     from ._typing import ColorLike
 
@@ -564,7 +566,7 @@ class CompositePolyDataMapper(
         self._orig_scalars_name: str | None = None
 
     @property
-    def dataset(self) -> pyvista.MultiBlock:  # numpydoc ignore=RT01
+    def dataset(self) -> MultiBlock:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -584,7 +586,7 @@ class CompositePolyDataMapper(
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: pyvista.MultiBlock):
+    def dataset(self, obj: MultiBlock):
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
@@ -833,7 +835,7 @@ class CompositePolyDataMapper(
         if log_scale and clim[0] <= 0:
             clim = [sys.float_info.min, clim[1]]
 
-        if isinstance(cmap, pyvista.LookupTable):
+        if isinstance(cmap, pv.LookupTable):
             self.lookup_table = cmap
         else:
             if dtype == np.bool_:
@@ -860,7 +862,7 @@ class CompositePolyDataMapper(
                 scalar_bar_args.setdefault('below_label', 'below')
 
             if cmap is None:
-                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
+                cmap = pv.global_theme.cmap if self._theme is None else self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip=flip_scalars)

@@ -33,8 +33,8 @@ Perform many ray traces simultaneously with a PolyData Object
     intersections = pv.PolyData(points)
 
     # Render the result
-    p = pv.Plotter()
-    p.add_mesh(
+    pl = pv.Plotter()
+    pl.add_mesh(
         sphere,
         show_edges=True,
         opacity=0.5,
@@ -42,17 +42,17 @@ Perform many ray traces simultaneously with a PolyData Object
         lighting=False,
         label="Test Mesh",
     )
-    p.add_mesh(rays[0], color="blue", line_width=5, label="Ray Segments")
+    pl.add_mesh(rays[0], color="blue", line_width=5, label="Ray Segments")
     for ray in rays[1:]:
-        p.add_mesh(ray, color="blue", line_width=5)
-    p.add_mesh(
+        pl.add_mesh(ray, color="blue", line_width=5)
+    pl.add_mesh(
         intersections,
         color="maroon",
         point_size=25,
         label="Intersection Points",
     )
-    p.add_legend()
-    p.show()
+    pl.add_legend()
+    pl.show()
 
 
 .. image:: ../images/user-generated/ray_trace.png
@@ -153,16 +153,16 @@ plane.
     ]
 
     # Plot results
-    p = pv.Plotter()
-    p.add_mesh(x_axis, color="r")
-    p.add_point_labels(x_label, "label", show_points=False, font_size=24)
-    p.add_mesh(y_axis, color="r")
-    p.add_point_labels(y_label, "label", show_points=False, font_size=24)
-    p.add_mesh(z_axis, color="r")
-    p.add_point_labels(z_label, "label", show_points=False, font_size=24)
-    p.add_mesh(data)
-    p.add_mesh(planes)
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(x_axis, color="r")
+    pl.add_point_labels(x_label, "label", show_points=False, font_size=24)
+    pl.add_mesh(y_axis, color="r")
+    pl.add_point_labels(y_label, "label", show_points=False, font_size=24)
+    pl.add_mesh(z_axis, color="r")
+    pl.add_point_labels(z_label, "label", show_points=False, font_size=24)
+    pl.add_mesh(data)
+    pl.add_mesh(planes)
+    pl.show()
 
 
 .. image:: ../images/user-generated/project_to_plane.png

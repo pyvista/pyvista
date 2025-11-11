@@ -30,10 +30,10 @@ data_to_probe = examples.load_uniform()
 
 # %%
 # Plot the two datasets
-p = pv.Plotter()
-p.add_mesh(mesh, color=True)
-p.add_mesh(data_to_probe, opacity=0.5)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, color=True)
+pl.add_mesh(data_to_probe, opacity=0.5)
+pl.show()
 
 # %%
 # Run the algorithm and plot the result
@@ -61,12 +61,12 @@ cpos = pv.CameraPosition(
 )
 dargs = dict(clim=[0, 200], cmap='rainbow')
 
-p = pv.Plotter(shape=(1, 2))
-p.add_mesh(threshold(data_to_probe), **dargs)
-p.subplot(0, 1)
-p.add_mesh(threshold(result), **dargs)
-p.link_views()
-p.view_isometric()
-p.show(cpos=cpos)
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(threshold(data_to_probe), **dargs)
+pl.subplot(0, 1)
+pl.add_mesh(threshold(result), **dargs)
+pl.link_views()
+pl.view_isometric()
+pl.show(cpos=cpos)
 # %%
 # .. tags:: filter

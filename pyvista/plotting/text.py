@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
@@ -24,6 +24,7 @@ from .tools import FONTS
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from pyvista import Property
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -393,7 +394,7 @@ class Label(_Prop3DMixin, Text):
         relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
         *,
         size: int = 50,
-        prop: pyvista.Property | None = None,
+        prop: Property | None = None,
         name: str = 'Label',
     ):
         Text.__init__(self, text=text, prop=prop)
@@ -551,7 +552,7 @@ class TextProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTextProper
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pyvista.global_theme)
+            self._theme.load_theme(pv.global_theme)
         else:
             self._theme.load_theme(theme)
         self.color = color

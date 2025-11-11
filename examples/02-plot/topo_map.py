@@ -68,15 +68,15 @@ local.plot(texture=topo_map)
 surrounding = elevation.clip_box(bounds, invert=True)
 
 # Display with a shading technique
-p = pv.Plotter()
-p.add_mesh(local, texture=topo_map)
-p.add_mesh(surrounding, color='white')
-p.enable_eye_dome_lighting()
-p.camera_position = pv.CameraPosition(
+pl = pv.Plotter()
+pl.add_mesh(local, texture=topo_map)
+pl.add_mesh(surrounding, color='white')
+pl.enable_eye_dome_lighting()
+pl.camera_position = pv.CameraPosition(
     position=(1831100.0, 5642142.0, 8168.0),
     focal_point=(1820841.0, 5648745.0, 1104.0),
     viewup=(-0.435, 0.248, 0.865),
 )
-p.show()
+pl.show()
 # %%
 # .. tags:: plot

@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -50,7 +50,7 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self._focus = None  # Used by BackgroundRenderer
 
         if renderer:
-            if not isinstance(renderer, pyvista.Renderer):
+            if not isinstance(renderer, pv.Renderer):
                 msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 raise TypeError(msg)
             self._renderer = proxy(renderer)
@@ -653,7 +653,7 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         frustum_source.Update()
 
-        return pyvista.wrap(frustum_source.GetOutput())
+        return pv.wrap(frustum_source.GetOutput())
 
     @property
     def roll(self):  # numpydoc ignore=RT01

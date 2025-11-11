@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -17,13 +17,15 @@ from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
+    from pyvista import DataSet
+    from pyvista import PolyData
     from pyvista.core._typing_core import NumpyArray
 
 
 @_deprecate_positional_args
 def prepare_smooth_shading(  # noqa: PLR0917
-    mesh: pyvista.DataSet, scalars, texture, split_sharp_edges, feature_angle, preference
-) -> tuple[pyvista.PolyData, NumpyArray[float]]:
+    mesh: DataSet, scalars, texture, split_sharp_edges, feature_angle, preference
+) -> tuple[PolyData, NumpyArray[float]]:
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with Phong shading to have active normals.
@@ -62,7 +64,7 @@ def prepare_smooth_shading(  # noqa: PLR0917
         Always a surface as we need to compute point normals.
 
     """
-    is_polydata = isinstance(mesh, pyvista.PolyData)
+    is_polydata = isinstance(mesh, pv.PolyData)
     indices_array = None
 
     has_scalars = scalars is not None

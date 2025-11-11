@@ -13,12 +13,16 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+
+if TYPE_CHECKING:
+    from pyvista import PolyData
 
 # get location of this folder and the example files
 dir_path = str(Path(os.path.realpath(__file__)).parent)
@@ -59,7 +63,7 @@ def load_ant():
     return _dataset_ant.load()
 
 
-_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pv.PolyData)  # type: ignore[arg-type]
 
 
 def load_airplane():
@@ -85,7 +89,7 @@ def load_airplane():
     return _dataset_airplane.load()
 
 
-_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pv.PolyData)  # type: ignore[arg-type]
 
 
 def load_sphere():
@@ -111,7 +115,7 @@ def load_sphere():
     return _dataset_sphere.load()
 
 
-_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pv.PolyData)  # type: ignore[arg-type]
 
 
 def load_uniform():
@@ -137,7 +141,7 @@ def load_uniform():
     return _dataset_uniform.load()
 
 
-_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)  # type: ignore[arg-type]
+_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pv.ImageData)  # type: ignore[arg-type]
 
 
 def load_rectilinear():
@@ -165,7 +169,7 @@ def load_rectilinear():
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
     rectfile,
-    read_func=pyvista.RectilinearGrid,  # type: ignore[arg-type]
+    read_func=pv.RectilinearGrid,  # type: ignore[arg-type]
 )
 
 
@@ -194,7 +198,7 @@ def load_hexbeam():
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
     hexbeamfile,
-    read_func=pyvista.UnstructuredGrid,  # type: ignore[arg-type]
+    read_func=pv.UnstructuredGrid,  # type: ignore[arg-type]
 )
 
 
@@ -226,7 +230,7 @@ def _tetbeam_load_func():
     xrng = np.linspace(0, 1, 3)
     yrng = np.linspace(0, 1, 3)
     zrng = np.linspace(0, 5, 11)
-    grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
+    grid = pv.RectilinearGrid(xrng, yrng, zrng)
     return grid.to_tetrahedra()
 
 
@@ -262,7 +266,7 @@ def _structured_load_func():
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
-    return pyvista.StructuredGrid(x, y, z)
+    return pv.StructuredGrid(x, y, z)
 
 
 _dataset_structured = _DatasetLoader(_structured_load_func)
@@ -292,7 +296,7 @@ def load_globe():
     return _dataset_globe.load()
 
 
-_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
+_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pv.PolyData)  # type: ignore[arg-type]
 
 
 def load_globe_texture():
@@ -320,7 +324,7 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pyvista.read_texture,  # type: ignore[arg-type]
+    read_func=pv.read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -394,7 +398,7 @@ def _spline_load_func():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    return pyvista.Spline(points, 1000)
+    return pv.Spline(points, 1000)
 
 
 _dataset_spline = _DatasetLoader(_spline_load_func)
@@ -434,7 +438,7 @@ def load_random_hills():
 
 
 def _random_hills_load_func():
-    mesh = pyvista.ParametricRandomHills()
+    mesh = pv.ParametricRandomHills()
     return mesh.elevation()
 
 
@@ -473,8 +477,8 @@ def load_sphere_vectors():
     return _dataset_sphere_vectors.load()
 
 
-def _sphere_vectors_load_func() -> pyvista.PolyData:
-    sphere = pyvista.Sphere(radius=math.pi)
+def _sphere_vectors_load_func() -> PolyData:
+    sphere = pv.Sphere(radius=math.pi)
 
     # make cool swirly pattern
     vectors = np.vstack(
@@ -531,7 +535,7 @@ def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     yi = np.arange(0.0, (nj + 1) * sj, sj)
     zi = np.arange(0.0, (nk + 1) * sk, sk)
 
-    return pyvista.StructuredGrid(
+    return pv.StructuredGrid(
         *np.meshgrid(xi, yi, zi, indexing='ij')
     ).cast_to_explicit_structured_grid()
 
@@ -658,13 +662,13 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
 
     dim = 100
     sp = (org * 2) / (dim - 1)
-    grid = pyvista.ImageData(
+    grid = pv.ImageData(
         dimensions=(dim, dim, dim),
         spacing=(sp, sp, sp),
         origin=(-org, -org, -org),
     )
 
-    r, theta, phi = pyvista.cartesian_to_spherical(grid.x, grid.y, grid.z)
+    r, theta, phi = pv.cartesian_to_spherical(grid.x, grid.y, grid.z)
     wfc = psi(r, phi, theta).reshape(grid.dimensions)
 
     grid['real_wf'] = np.real(wfc.ravel())

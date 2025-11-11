@@ -46,12 +46,12 @@ def extract_node(node):
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(mesh, scalars='node_value')
+pl = pv.Plotter()
+pl.add_mesh(mesh, scalars='node_value')
 for node in np.unique(mesh['node_value']):
     loc = extract_node(node).center
-    p.add_point_labels(loc, [f'Node {node}'])
-p.show(cpos='xy')
+    pl.add_point_labels(loc, [f'Node {node}'])
+pl.show(cpos='xy')
 
 
 # %%

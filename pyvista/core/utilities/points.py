@@ -9,7 +9,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -86,7 +86,7 @@ def vtk_points(  # noqa: PLR0917
         points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points_, pyvista.pyvista_ndarray) and points_.VTKObject is not None:
+    if not deep and isinstance(points_, pv.pyvista_ndarray) and points_.VTKObject is not None:
         vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
@@ -148,7 +148,7 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
         np.arange(0, n_points - 1, step=2),
         np.arange(1, n_points + 1, step=2),
     ]
-    poly = pyvista.PolyData()
+    poly = pv.PolyData()
     poly.points = points
     poly.lines = lines
     return poly
@@ -185,7 +185,7 @@ def lines_from_points(
     >>> poly.plot(line_width=5)
 
     """
-    poly = pyvista.PolyData()
+    poly = pv.PolyData()
     poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
@@ -356,13 +356,13 @@ def fit_plane_to_points(  # noqa: PLR0917
     i_resolution, j_resolution = valid_resolution
 
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(
+    aligned, matrix = pv.PolyData(points).align_xyz(
         return_matrix=True, axis_2_direction=init_normal
     )
 
     # Fit plane to xyz-aligned mesh
     i_size, j_size, _ = aligned.bounds_size
-    plane = pyvista.Plane(
+    plane = pv.Plane(
         i_size=i_size,
         j_size=j_size,
         i_resolution=i_resolution,
@@ -370,7 +370,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     )
 
     # Transform plane back to input points positioning
-    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
     plane.transform(inverse_matrix, inplace=True)
 
     if return_meta:
@@ -500,17 +500,17 @@ def fit_line_to_points(
 
     """
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(
+    aligned, matrix = pv.PolyData(points).align_xyz(
         axis_0_direction=init_direction, return_matrix=True
     )
 
     # Fit line to xyz-aligned mesh
     point_a = (aligned.bounds.x_min, 0, 0)
     point_b = (aligned.bounds.x_max, 0, 0)
-    line_mesh = pyvista.LineSource(point_a, point_b, resolution=resolution).output
+    line_mesh = pv.LineSource(point_a, point_b, resolution=resolution).output
 
     # Transform line back to input points positioning
-    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
     line_mesh.transform(inverse_matrix, inplace=True)
 
     if return_meta:
@@ -586,7 +586,7 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
-    return pyvista.PolyData(points, cells)
+    return pv.PolyData(points, cells)
 
 
 def vector_poly_data(
@@ -654,8 +654,8 @@ def vector_poly_data(
     vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    vcells = pyvista.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1)),
+    vcells = pv.core.cell.CellArray.from_regular_cells(
+        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),
     )
 
     # Create vtkPolyData object
@@ -678,7 +678,7 @@ def vector_poly_data(
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
 
-    return pyvista.PolyData(pdata)
+    return pv.PolyData(pdata)
 
 
 @overload

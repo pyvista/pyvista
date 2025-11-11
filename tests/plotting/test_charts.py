@@ -52,9 +52,9 @@ class PlotterChanged:
 
 @pytest.fixture
 def pl():
-    p = pv.Plotter(window_size=(600, 600))
-    p.background_color = 'w'
-    return p
+    pl = pv.Plotter(window_size=(600, 600))
+    pl.background_color = 'w'
+    return pl
 
 
 @pytest.fixture

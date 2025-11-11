@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pyvista
+import pyvista as pv
 
 
 def cubemap(path='', prefix='', ext='.jpg'):
@@ -118,7 +118,7 @@ def _cubemap_from_paths(image_paths):
             )
             raise FileNotFoundError(msg)
 
-    texture = pyvista.Texture()  # type: ignore[abstract]
+    texture = pv.Texture()  # type: ignore[abstract]
     texture.mipmap = True
     texture.interpolate = True
     texture.color_mode = 'direct'
@@ -127,6 +127,6 @@ def _cubemap_from_paths(image_paths):
     # add each image to the cubemap
     for i, fn in enumerate(image_paths):
         # Read and flip along y-axis
-        texture.SetInputDataObject(i, pyvista.read(fn)._flip_uniform(1))
+        texture.SetInputDataObject(i, pv.read(fn)._flip_uniform(1))
 
     return texture

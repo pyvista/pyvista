@@ -21,7 +21,7 @@ except ImportError:
     HTML = object
 
 
-import pyvista
+import pyvista as pv
 from pyvista.trame.ui import UI_TITLE
 from pyvista.trame.ui import get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR
@@ -183,16 +183,16 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
 
     """
     if server is None:
-        server = pyvista.global_theme.trame.jupyter_server_name
+        server = pv.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
         server = get_server(server, **kwargs)
     if port is None:
-        port = pyvista.global_theme.trame.jupyter_server_port
+        port = pv.global_theme.trame.jupyter_server_port
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
     if (
-        wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled
+        wslink_backend is None and pv.global_theme.trame.jupyter_extension_enabled
     ):  # pragma: no cover
         wslink_backend = 'jupyter'
 
@@ -235,10 +235,10 @@ def build_url(
     """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
-        server_proxy_enabled = pyvista.global_theme.trame.server_proxy_enabled
+        server_proxy_enabled = pv.global_theme.trame.server_proxy_enabled
     if server_proxy_enabled:
         if server_proxy_prefix is None:
-            server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
+            server_proxy_prefix = pv.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
         prefix = server_proxy_prefix if server_proxy_prefix else ''
         src = f'{prefix}{_server.port}/index.html{params}'
@@ -392,10 +392,10 @@ def show_trame(
         return EmbeddableWidget(plotter, **kwargs)
 
     if jupyter_extension_enabled is None:
-        jupyter_extension_enabled = pyvista.global_theme.trame.jupyter_extension_enabled
+        jupyter_extension_enabled = pv.global_theme.trame.jupyter_extension_enabled
 
     if name is None:
-        server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
+        server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
     if name is None and not server.running:

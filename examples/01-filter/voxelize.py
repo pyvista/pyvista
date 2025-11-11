@@ -38,10 +38,10 @@ surface.plot(cpos=cpos, opacity=0.75)
 # Create a voxel model of the bounding surface
 voxels = surface.voxelize()
 
-p = pv.Plotter()
-p.add_mesh(voxels, color=True, show_edges=True, opacity=0.5)
-p.add_mesh(surface, color='lightblue', opacity=0.5)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(voxels, color=True, show_edges=True, opacity=0.5)
+pl.add_mesh(surface, color='lightblue', opacity=0.5)
+pl.show(cpos=cpos)
 
 
 # %%
@@ -64,9 +64,9 @@ voxels
 # %%
 contours = voxels.contour(6, scalars='implicit_distance')
 
-p = pv.Plotter()
-p.add_mesh(voxels, opacity=0.25, scalars='implicit_distance')
-p.add_mesh(contours, opacity=0.5, scalars='implicit_distance')
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(voxels, opacity=0.25, scalars='implicit_distance')
+pl.add_mesh(contours, opacity=0.5, scalars='implicit_distance')
+pl.show(cpos=cpos)
 # %%
 # .. tags:: filter

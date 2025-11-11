@@ -9,7 +9,7 @@ from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
@@ -42,7 +42,7 @@ def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
     ec.SetInputData(img)
     ec.Update()
     vtk_image: _vtk.vtkImageData = ec.GetOutput()
-    return pyvista.wrap(vtk_image)
+    return pv.wrap(vtk_image)
 
 
 def wrap_image_array(arr):
@@ -79,7 +79,7 @@ def wrap_image_array(arr):
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
-    wrap_img = pyvista.wrap(img)
+    wrap_img = pv.wrap(img)
     wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
@@ -232,7 +232,7 @@ def compare_images(  # noqa: PLR0917
     from pyvista import read  # noqa: PLC0415
     from pyvista import wrap  # noqa: PLC0415
 
-    def to_img(img: ImageCompareType) -> pyvista.ImageData:
+    def to_img(img: ImageCompareType) -> ImageData:
         if isinstance(img, ImageData):
             return img
         elif isinstance(img, _vtk.vtkImageData):  # pragma: no cover

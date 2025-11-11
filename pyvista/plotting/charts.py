@@ -15,7 +15,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -367,7 +367,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self._texture = None
             self.SetTexture(None)
         else:
-            self._texture = pyvista.Texture(val)  # type: ignore[abstract]
+            self._texture = pv.Texture(val)  # type: ignore[abstract]
             self.SetTexture(self._texture.to_image())
 
     @property
@@ -1652,11 +1652,11 @@ class _Chart(DocSubs):
         if dev_kwargs is None:
             dev_kwargs = {}
         if off_screen is None:
-            off_screen = pyvista.OFF_SCREEN
-        pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
+            off_screen = pv.OFF_SCREEN
+        pl = pv.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
         pl.add_chart(self)
-        if interactive and (not off_screen or pyvista.BUILDING_GALLERY):  # pragma: no cover
+        if interactive and (not off_screen or pv.BUILDING_GALLERY):  # pragma: no cover
             pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
@@ -2185,7 +2185,7 @@ class LinePlot2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotL
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
-        self._table = pyvista.Table({'x': np.empty(0, np.float32), 'y': np.empty(0, np.float32)})
+        self._table = pv.Table({'x': np.empty(0, np.float32), 'y': np.empty(0, np.float32)})
         self.SetInputData(self._table, 'x', 'y')
         self.update(x, y)
         self.color = color
@@ -2359,7 +2359,7 @@ class ScatterPlot2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPl
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
-        self._table = pyvista.Table({'x': np.empty(0, np.float32), 'y': np.empty(0, np.float32)})
+        self._table = pv.Table({'x': np.empty(0, np.float32), 'y': np.empty(0, np.float32)})
         self.SetInputData(self._table, 'x', 'y')
         self.update(x, y)
         self.color = color
@@ -2582,7 +2582,7 @@ class AreaPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotAre
     def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:  # noqa: PLR0917
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
-        self._table = pyvista.Table(
+        self._table = pv.Table(
             {
                 'x': np.empty(0, np.float32),
                 'y1': np.empty(0, np.float32),
@@ -2800,7 +2800,7 @@ class BarPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vt
         if not isinstance(y[0], (Sequence, np.ndarray)):
             y = (y,)
         y_data = {f'y{i}': np.empty(0, np.float32) for i in range(len(y))}
-        self._table = pyvista.Table({'x': np.empty(0, np.float32), **y_data})
+        self._table = pv.Table({'x': np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, 'x', 'y0')
         for i in range(1, len(y)):
             self.SetInputArray(i + 1, f'y{i}')
@@ -3011,7 +3011,7 @@ class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.
         if not isinstance(ys[0], (Sequence, np.ndarray)):
             ys = (ys,)
         y_data = {f'y{i}': np.empty(0, np.float32) for i in range(len(ys))}
-        self._table = pyvista.Table({'x': np.empty(0, np.float32), **y_data})
+        self._table = pv.Table({'x': np.empty(0, np.float32), **y_data})
         self.SetInputData(self._table, 'x', 'y0')
         for i in range(1, len(ys)):
             self.SetInputArray(i + 1, f'y{i}')
@@ -4010,7 +4010,7 @@ class BoxPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vt
     ) -> None:
         """Initialize a new box plot instance."""
         super().__init__(chart)
-        self._table = pyvista.Table(
+        self._table = pv.Table(
             {f'data_{i}': np.asarray(d) for i, d in enumerate(data)},
         )
         self._quartiles = _vtk.vtkComputeQuartiles()
@@ -4061,7 +4061,7 @@ class BoxPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vt
            >>> chart.show()
 
         """
-        stats_table = pyvista.Table(self._quartiles.GetOutput())
+        stats_table = pv.Table(self._quartiles.GetOutput())
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
     def update(self, data) -> None:
@@ -4336,7 +4336,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
     ) -> None:
         """Initialize a new pie plot instance."""
         super().__init__(chart)
-        self._table = pyvista.Table(data)
+        self._table = pv.Table(data)
         self.SetInputData(self._table)
         self.SetInputArray(0, self._table.keys()[0])
         self.update(data)
@@ -4667,7 +4667,7 @@ class ChartMPL(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageI
         # once as a pyvista plot (fetched by the 'pyvista' scraper) and once as a
         # matplotlib figure (fetched by the 'matplotlib' scraper).
         # See #1999 and #2031.
-        if pyvista.BUILDING_GALLERY:  # pragma: no cover
+        if pv.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
 
     @property
@@ -4744,7 +4744,7 @@ class ChartMPL(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageI
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
-            img_data = pyvista.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
+            img_data = pv.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
             self.SetImage(img_data)
 
     def _render_event(self, *_, plotter_render: bool = False, **__) -> None:

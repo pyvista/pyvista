@@ -10,7 +10,7 @@ from typing import overload
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -1784,15 +1784,15 @@ class Transform(
             (
                 np.ndarray,
                 Sequence,
-                pyvista.DataSet,
-                pyvista.MultiBlock,
-                pyvista.Prop3D,
+                pv.DataSet,
+                pv.MultiBlock,
+                pv.Prop3D,
             ),
         )
 
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+        if isinstance(obj, (pv.DataSet, pv.MultiBlock)):
             allowed = ['active_vectors', 'all_vectors', None]
             _check_mode('datasets', mode, allowed)
             if mode in ['active_vectors', None]:
@@ -1807,7 +1807,7 @@ class Transform(
         matrix = self.inverse_matrix if inverse else self.matrix
 
         # Transform actor
-        if isinstance(obj, pyvista.Prop3D):
+        if isinstance(obj, pv.Prop3D):
             allowed = ['replace', 'pre-multiply', 'post-multiply', None]
             _check_mode('actors', mode, allowed)
             if mode in ['post-multiply', None]:

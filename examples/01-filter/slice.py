@@ -56,10 +56,10 @@ slices.plot(cmap=cmap)
 # Single slice - origin defaults to the center of the mesh
 single_slice = mesh.slice(normal=[1, 1, 0])
 
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='k')
-p.add_mesh(single_slice, cmap=cmap)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='k')
+pl.add_mesh(single_slice, cmap=cmap)
+pl.show()
 # %%
 # Adding slicing planes uniformly across an axial direction can also be
 # automated with the :func:`pyvista.DataObjectFilters.slice_along_axis` filter:
@@ -105,10 +105,10 @@ slc
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(slc, cmap=cmap)
-p.add_mesh(model.outline())
-p.show(cpos=[1, -1, 1])
+pl = pv.Plotter()
+pl.add_mesh(slc, cmap=cmap)
+pl.add_mesh(model.outline())
+pl.show(cpos=[1, -1, 1])
 
 
 # %%
@@ -139,11 +139,11 @@ for point in line.points:
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='k')
-p.add_mesh(slices, opacity=0.75)
-p.add_mesh(line, color='red', line_width=5)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='k')
+pl.add_mesh(slices, opacity=0.75)
+pl.add_mesh(line, color='red', line_width=5)
+pl.show()
 
 
 # %%
@@ -173,10 +173,10 @@ slices
 
 # %%
 # And now display it.
-p = pv.Plotter()
-p.add_mesh(slices, cmap=cmap)
-p.add_mesh(model.outline())
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(slices, cmap=cmap)
+pl.add_mesh(model.outline())
+pl.show()
 
 # %%
 # Slice ImageData With Indexing

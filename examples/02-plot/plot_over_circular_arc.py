@@ -42,13 +42,13 @@ arc = pv.CircularArcFromNormal(
     center=center, resolution=100, normal=normal, polar=polar, angle=angle
 )
 
-p = pv.Plotter()
-p.add_mesh(mesh, style='wireframe', color='w')
-p.add_mesh(arc, color='b')
+pl = pv.Plotter()
+pl.add_mesh(mesh, style='wireframe', color='w')
+pl.add_mesh(arc, color='b')
 a = arc.points[0]
 b = arc.points[-1]
-p.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
-p.show()
+pl.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
+pl.show()
 
 # %%
 # Run the filter and produce a line plot.

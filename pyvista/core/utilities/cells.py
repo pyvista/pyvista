@@ -11,7 +11,7 @@ from typing import overload
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
@@ -106,11 +106,11 @@ def numpy_to_idarr(
         raise TypeError(msg)
 
     if ind.dtype == np.bool_:
-        ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
-    elif ind.dtype != pyvista.ID_TYPE:
-        ind = ind.astype(pyvista.ID_TYPE)
+        ind = ind.nonzero()[0].astype(pv.ID_TYPE)
+    elif ind.dtype != pv.ID_TYPE:
+        ind = ind.astype(pv.ID_TYPE)
     elif not ind.flags['C_CONTIGUOUS']:
-        ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
+        ind = np.ascontiguousarray(ind, dtype=pv.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock
     vtk_idarr = _vtk.numpy_to_vtkIdTypeArray(ind.ravel(), deep=deep)
@@ -264,7 +264,7 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
     """
     return_dict: dict[np.uint8, NumpyArray[int]] = {}
 
-    if not isinstance(vtkobj, pyvista.UnstructuredGrid):
+    if not isinstance(vtkobj, pv.UnstructuredGrid):
         msg = 'Expected a pyvista object'  # type: ignore[unreachable]
         raise TypeError(msg)
 

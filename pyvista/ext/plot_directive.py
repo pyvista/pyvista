@@ -161,7 +161,7 @@ import jinja2  # Sphinx dependency.
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
-import pyvista
+import pyvista as pv
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -170,8 +170,8 @@ if TYPE_CHECKING:
     from sphinx.config import Config
 
 
-pyvista.BUILDING_GALLERY = True
-pyvista.OFF_SCREEN = True
+pv.BUILDING_GALLERY = True
+pv.OFF_SCREEN = True
 
 # -----------------------------------------------------------------------------
 # Registration hook
@@ -301,7 +301,7 @@ def setup(app: Sphinx):
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
-        'version': pyvista.__version__,
+        'version': pv.__version__,
     }
 
 
@@ -475,8 +475,8 @@ def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
         return ns
 
     try:
-        if pyvista.PLOT_DIRECTIVE_THEME is not None:
-            pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
+        if pv.PLOT_DIRECTIVE_THEME is not None:
+            pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
         exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         # Annotate traceback with source file and line
@@ -542,7 +542,7 @@ def render_figures(
                 or '.open_gif' in code_piece
                 or 'plot=True' in code_piece
             ):
-                figures = pyvista.plotting.plotter._ALL_PLOTTERS
+                figures = pv.plotting.plotter._ALL_PLOTTERS
 
                 for j, (_, plotter) in enumerate(figures.items()):
                     if plotter._gif_filename is not None:
@@ -566,7 +566,7 @@ def render_figures(
                                 f.write(plotter.last_vtksz)
                     images.append(image_file)
 
-            pyvista.close_all()  # close and clear all plotters
+            pv.close_all()  # close and clear all plotters
 
             results.append((code_piece, images))
     finally:

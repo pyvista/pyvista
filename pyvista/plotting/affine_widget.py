@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
+
+if TYPE_CHECKING:
+    from pyvista import Actor
 
 DARK_YELLOW = (0.9647058823529412, 0.7450980392156863, 0)
 GLOBAL_AXES = np.eye(3)
@@ -57,7 +61,7 @@ def _check_callable(func, name='callback'):
 
 def _make_quarter_arc():
     """Make a quarter circle centered at the origin."""
-    circ = pyvista.Circle(resolution=100)
+    circ = pv.Circle(resolution=100)
     circ.faces = np.empty(0, dtype=int)
     circ.lines = np.hstack(([26], np.arange(0, 26)))
     return circ
@@ -194,7 +198,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         self._axes_inv = np.eye(4)
         self._pl = plotter
         self._main_actor = actor
-        self._selected_actor: pyvista.Actor | None = None
+        self._selected_actor: Actor | None = None
         self._init_position = None
         self._mouse_move_observer: int | None = None
         self._left_press_observer: int | None = None
@@ -211,9 +215,9 @@ class AffineWidget3D(_NoNewAttrMixin):
         self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (
-                pyvista.global_theme.axes.x_color,
-                pyvista.global_theme.axes.y_color,
-                pyvista.global_theme.axes.z_color,
+                pv.global_theme.axes.x_color,
+                pv.global_theme.axes.y_color,
+                pv.global_theme.axes.z_color,
             )
         self._axes_colors = axes_colors
         self._circ = _make_quarter_arc()
@@ -240,7 +244,7 @@ class AffineWidget3D(_NoNewAttrMixin):
     def _init_actors(self, scale, always_visible):
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
-            arrow = pyvista.Arrow(
+            arrow = pv.Arrow(
                 start=(0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
@@ -328,12 +332,12 @@ class AffineWidget3D(_NoNewAttrMixin):
 
         # convert camera coordinates to world coordinates
         camera = ren.GetActiveCamera()
-        projection_matrix = pyvista.array_from_vtkmatrix(
+        projection_matrix = pv.array_from_vtkmatrix(
             camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1),
         )
         inverse_projection_matrix = np.linalg.inv(projection_matrix)
         camera_coords = np.dot(inverse_projection_matrix, [ndc_x, ndc_y, ndc_z, 1])
-        modelview_matrix = pyvista.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
+        modelview_matrix = pv.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
         inverse_modelview_matrix = np.linalg.inv(modelview_matrix)
         world_coords = np.dot(inverse_modelview_matrix, camera_coords)
 
@@ -382,7 +386,7 @@ class AffineWidget3D(_NoNewAttrMixin):
                 )
                 trans.Translate(-self._origin)  # type: ignore[call-overload]
                 trans.Update()
-                rot_matrix = pyvista.array_from_vtkmatrix(trans.GetMatrix())
+                rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
 
             if self._user_interact_callback:
