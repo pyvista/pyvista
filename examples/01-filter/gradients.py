@@ -63,14 +63,14 @@ mesh_g
 
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
-p = pv.Plotter(shape=keys.shape)
+pl = pv.Plotter(shape=keys.shape)
 for (i, j), name in np.ndenumerate(keys):
-    p.subplot(i, j)
-    p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    p.add_mesh(mesh_g.outline(), color='k')
-p.link_views()
-p.view_isometric()
-p.show()
+    pl.subplot(i, j)
+    pl.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
+    pl.add_mesh(mesh_g.outline(), color='k')
+pl.link_views()
+pl.view_isometric()
+pl.show()
 
 
 # %%
@@ -87,14 +87,14 @@ mesh_g.point_data.update(gradients)
 
 keys = np.array(list(gradients.keys())).reshape(1, 3)
 
-p = pv.Plotter(shape=keys.shape)
+pl = pv.Plotter(shape=keys.shape)
 
 for (i, j), name in np.ndenumerate(keys):
-    p.subplot(i, j)
-    p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    p.add_mesh(mesh_g.outline(), color='k')
-p.link_views()
-p.view_isometric()
-p.show()
+    pl.subplot(i, j)
+    pl.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
+    pl.add_mesh(mesh_g.outline(), color='k')
+pl.link_views()
+pl.view_isometric()
+pl.show()
 # %%
 # .. tags:: filter

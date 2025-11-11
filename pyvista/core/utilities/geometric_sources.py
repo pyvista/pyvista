@@ -18,7 +18,7 @@ from typing import get_args
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
@@ -875,7 +876,7 @@ class MultipleLinesSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLin
         if not (len(points) >= 2):
             msg = '>=2 points need to define multiple lines.'
             raise ValueError(msg)
-        self.SetPoints(pyvista.vtk_points(points))
+        self.SetPoints(pv.vtk_points(points))
 
     @property
     def output(self: MultipleLinesSource) -> PolyData:
@@ -946,7 +947,7 @@ class Text3DSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, vtkVectorText):
         """Initialize source."""
         super().__init__()
 
-        self._output = pyvista.PolyData()
+        self._output = pv.PolyData()
 
         # Set params
         self.string = '' if string is None else string
@@ -3205,16 +3206,16 @@ class AxesGeometrySource(_NoNewAttrMixin):
         super().__init__()
         # Init datasets
         names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
-        polys = [pyvista.PolyData() for _ in range(len(names))]
-        self._output = pyvista.MultiBlock(dict(zip(names, polys, strict=True)))
+        polys = [pv.PolyData() for _ in range(len(names))]
+        self._output = pv.MultiBlock(dict(zip(names, polys, strict=True)))
 
         # Store shaft/tip references in separate vars for convenience
         self._shaft_datasets = (polys[0], polys[1], polys[2])
         self._tip_datasets = (polys[3], polys[4], polys[5])
 
         # Also store datasets for internal use
-        self._shaft_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
-        self._tip_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+        self._shaft_datasets_normalized = [pv.PolyData() for _ in range(3)]
+        self._tip_datasets_normalized = [pv.PolyData() for _ in range(3)]
 
         # Set geometry-dependent params
         self.shaft_type = shaft_type
@@ -3600,7 +3601,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self._reset_shaft_and_tip_geometry()
 
     @property
-    def output(self: AxesGeometrySource) -> pyvista.MultiBlock:
+    def output(self: AxesGeometrySource) -> MultiBlock:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
@@ -3626,19 +3627,19 @@ class AxesGeometrySource(_NoNewAttrMixin):
         """Create part geometry with its length axis pointing in the +z direction."""
         resolution = 50
         if geometry == 'cylinder':
-            out = pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+            out = pv.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
-            out = pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+            out = pv.Sphere(phi_resolution=resolution, theta_resolution=resolution)
         elif geometry == 'hemisphere':
-            out = pyvista.SolidSphere(end_phi=90).extract_geometry()
+            out = pv.SolidSphere(end_phi=90).extract_geometry()
         elif geometry == 'cone':
-            out = pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+            out = pv.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            out = pyvista.Pyramid().extract_geometry()
+            out = pv.Pyramid().extract_geometry()
         elif geometry == 'cube':
-            out = pyvista.Cube()
+            out = pv.Cube()
         elif geometry == 'octahedron':
-            mesh = pyvista.Octahedron()
+            mesh = pv.Octahedron()
             mesh.cell_data.remove('FaceIndex')
             out = mesh
         else:
@@ -3660,13 +3661,13 @@ class AxesGeometrySource(_NoNewAttrMixin):
             part = AxesGeometrySource._make_default_part(
                 geometry,
             )
-        elif isinstance(geometry, pyvista.DataSet):
+        elif isinstance(geometry, pv.DataSet):
             name = 'custom'
             part = geometry.copy()
         else:
             msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'  # type: ignore[unreachable]
             raise TypeError(msg)
-        part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
+        part_poly = part if isinstance(part, pv.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
         return name, part_poly
 
@@ -3770,8 +3771,8 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         names: Sequence[str] = ('yz', 'zx', 'xy'),
     ) -> None:
         # Init sources and the output dataset
-        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
-        self.sources = tuple(pyvista.PlaneSource() for _ in range(3))
+        self._output = pv.MultiBlock([pv.PolyData() for _ in range(3)])
+        self.sources = tuple(pv.PlaneSource() for _ in range(3))
 
         # Init properties
         self.bounds = bounds
@@ -3918,7 +3919,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
             plane.copy_from(source.output)
 
     @property
-    def output(self: OrthogonalPlanesSource) -> pyvista.MultiBlock:
+    def output(self: OrthogonalPlanesSource) -> MultiBlock:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
@@ -4110,7 +4111,7 @@ class CubeFacesSource(CubeSource):
             point_dtype=point_dtype,
         )
         # Init output
-        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(6)])
+        self._output = pv.MultiBlock([pv.PolyData() for _ in range(6)])
 
         # Set properties
         self.frame_width = frame_width
@@ -4406,7 +4407,7 @@ class CubeFacesSource(CubeSource):
                 face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property
-    def output(self: CubeFacesSource) -> pyvista.MultiBlock:  # type: ignore[override]
+    def output(self: CubeFacesSource) -> MultiBlock:  # type: ignore[override]
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each

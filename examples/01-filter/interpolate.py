@@ -27,10 +27,10 @@ from pyvista import examples
 surface = examples.download_saddle_surface()
 points = examples.download_sparse_points()
 
-p = pv.Plotter()
-p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
-p.add_mesh(surface)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+pl.add_mesh(surface)
+pl.show()
 
 # %%
 # Run the interpolation
@@ -38,10 +38,10 @@ p.show()
 interpolated = surface.interpolate(points, radius=12.0)
 
 
-p = pv.Plotter()
-p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
-p.add_mesh(interpolated, scalars='val')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+pl.add_mesh(interpolated, scalars='val')
+pl.show()
 
 
 # %%
@@ -73,10 +73,10 @@ cpos = pv.CameraPosition(
     viewup=(-0.29629216102673206, -0.23840196609932093, 0.9248651025279784),
 )
 
-p = pv.Plotter()
-p.add_mesh(grid.outline(), color='k')
-p.add_mesh(probes, render_points_as_spheres=True, **dargs)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(grid.outline(), color='k')
+pl.add_mesh(probes, render_points_as_spheres=True, **dargs)
+pl.show(cpos=cpos)
 
 
 # %%
@@ -93,13 +93,13 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 
 vol_opac = [0, 0, 0.2, 0.2, 0.5, 0.5]
 
-p = pv.Plotter(shape=(1, 2), window_size=[1024 * 3, 768 * 2])
-p.add_volume(interp, opacity=vol_opac, **dargs)
-p.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
-p.subplot(0, 1)
-p.add_mesh(interp.contour(5), opacity=0.5, **dargs)
-p.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
-p.link_views()
-p.show(cpos=cpos)
+pl = pv.Plotter(shape=(1, 2), window_size=[1024 * 3, 768 * 2])
+pl.add_volume(interp, opacity=vol_opac, **dargs)
+pl.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
+pl.subplot(0, 1)
+pl.add_mesh(interp.contour(5), opacity=0.5, **dargs)
+pl.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
+pl.link_views()
+pl.show(cpos=cpos)
 # %%
 # .. tags:: filter

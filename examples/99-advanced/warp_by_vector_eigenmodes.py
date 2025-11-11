@@ -185,7 +185,7 @@ E, G, quadruplets = assemble_mass_and_stiffness(
 w, vr = eigh(a=G, b=E)
 omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
-# expected values from (Bernard 2014, p.14),
+# expected values from (Bernard 2014, pl.14),
 # error depends on polynomial order ``N``
 expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])  # noqa: N816
 computed_freqs_kHz, mode_indices = get_first_N_above_thresh(  # noqa: N816

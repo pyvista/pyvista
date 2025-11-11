@@ -173,10 +173,10 @@ ax.set_xticklabels(labels)
 ax.set_title('$B(\\alpha, \\beta)$')
 
 # Next, embed the figure into a pyvista plotting window
-p = pv.Plotter()
+pl = pv.Plotter()
 chart = pv.ChartMPL(f)
 chart.background_color = 'w'
-p.add_chart(chart)
-p.show()
+pl.add_chart(chart)
+pl.show()
 # %%
 # .. tags:: plot
