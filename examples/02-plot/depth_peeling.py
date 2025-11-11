@@ -30,21 +30,21 @@ for i, c in enumerate(centers):
 # %%
 dargs = dict(opacity=0.5, color='red', smooth_shading=True)
 
-p = pv.Plotter(shape=(1, 2))
+pl = pv.Plotter(shape=(1, 2))
 
-p.add_mesh(spheres, **dargs)
-p.enable_depth_peeling(10)
-p.add_text('Depth Peeling')
+pl.add_mesh(spheres, **dargs)
+pl.enable_depth_peeling(10)
+pl.add_text('Depth Peeling')
 
-p.subplot(0, 1)
-p.add_text('Standard')
-p.add_mesh(spheres.copy(), **dargs)
+pl.subplot(0, 1)
+pl.add_text('Standard')
+pl.add_mesh(spheres.copy(), **dargs)
 
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(11.7, 4.7, -4.33), focal_point=(0.0, 0.0, 0.0), viewup=(0.3, 0.07, 0.9)
 )
-p.show()
+pl.show()
 
 # %%
 # The following room surfaces example mesh, provided courtesy of
@@ -54,22 +54,22 @@ p.show()
 
 room = examples.download_room_surface_mesh()
 
-p = pv.Plotter(shape=(1, 2))
+pl = pv.Plotter(shape=(1, 2))
 
-p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
-p.add_mesh(room, opacity=0.5, color='lightblue')
-p.add_text('Depth Peeling')
+pl.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
+pl.add_mesh(room, opacity=0.5, color='lightblue')
+pl.add_text('Depth Peeling')
 
-p.subplot(0, 1)
-p.add_text('Standard')
-p.add_mesh(room.copy(), opacity=0.5, color='lightblue')
+pl.subplot(0, 1)
+pl.add_text('Standard')
+pl.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(43.6, 49.5, 19.8), focal_point=(0.0, 2.25, 0.0), viewup=(-0.57, 0.70, -0.42)
 )
 
-p.show()
+pl.show()
 
 
 # %%
@@ -80,20 +80,20 @@ mesh = examples.download_brain().resample(0.5, anti_aliasing=True)
 contours = mesh.contour(5)
 cmap = 'viridis_r'
 
-p = pv.Plotter(shape=(1, 2))
+pl = pv.Plotter(shape=(1, 2))
 
-p.add_mesh(contours, opacity=0.5, cmap=cmap)
-p.enable_depth_peeling(10)
-p.add_text('Depth Peeling')
+pl.add_mesh(contours, opacity=0.5, cmap=cmap)
+pl.enable_depth_peeling(10)
+pl.add_text('Depth Peeling')
 
-p.subplot(0, 1)
-p.add_text('Standard')
-p.add_mesh(contours.copy(), opacity=0.5, cmap=cmap)
+pl.subplot(0, 1)
+pl.add_text('Standard')
+pl.add_mesh(contours.copy(), opacity=0.5, cmap=cmap)
 
-p.link_views()
-p.camera_position = pv.CameraPosition(
+pl.link_views()
+pl.camera_position = pv.CameraPosition(
     position=(418.3, 659.0, 53.8), focal_point=(90.2, 111.5, 90.0), viewup=(0.03, 0.05, 1.0)
 )
-p.show()
+pl.show()
 # %%
 # .. tags:: plot

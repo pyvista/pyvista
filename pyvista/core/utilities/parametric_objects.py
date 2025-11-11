@@ -145,6 +145,7 @@ def Spline(
         spline_function.SetLeftValue(left_derivative_value)
     if right_derivative_value is not None:
         spline_function.SetRightValue(right_derivative_value)
+
     # get interpolation density
     u_res = n_points
     if u_res is None:
@@ -221,7 +222,7 @@ def KochanekSpline(  # noqa: PLR0917
 
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
