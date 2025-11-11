@@ -764,3 +764,4 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_js_file('redirect_fragments.js')
