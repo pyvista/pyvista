@@ -11,8 +11,8 @@ The default theme parameters in PyVista can be accessed and displayed with:
 
 .. code-block:: python
 
-   >>> import pyvista
-   >>> pyvista.global_theme
+   >>> import pyvista as pv
+   >>> pv.global_theme
 
 Default plotting parameters can be accessed individually by their
 attribute names:
@@ -27,7 +27,6 @@ parameters:
 .. pyvista-plot::
    :context:
 
-   >>> import pyvista
    >>> from pyvista import examples
    >>> dragon = examples.download_dragon()
    >>> dragon.plot(cpos='xy')
@@ -37,9 +36,9 @@ These parameters can then be modified globally with:
 .. pyvista-plot::
    :context:
 
-   >>> pyvista.global_theme.color = 'red'
-   >>> pyvista.global_theme.background = 'white'
-   >>> pyvista.global_theme.axes.show = False
+   >>> pv.global_theme.color = 'red'
+   >>> pv.global_theme.background = 'white'
+   >>> pv.global_theme.axes.show = False
 
 Now, the mesh will be plotted with the new global parameters:
 
@@ -67,13 +66,13 @@ apply it globally with:
 
     # Create a theme based off the DocumentTheme
 
-    my_theme = pyvista.plotting.themes.DocumentTheme()
+    my_theme = pv.plotting.themes.DocumentTheme()
     my_theme.cmap = 'jet'
     my_theme.show_edges = True
 
     # Apply it globally
 
-    pyvista.global_theme.load_theme(my_theme)
+    pv.global_theme.load_theme(my_theme)
 
 Alternatively, you can save the theme to disk to be used later with:
 
@@ -85,7 +84,7 @@ And then subsequently loaded in a new session of pyvista with:
 
 .. code-block:: python
 
-    pyvista.global_theme.load_theme('my_theme.json')
+    pv.global_theme.load_theme('my_theme.json')
 
 
 Theme API

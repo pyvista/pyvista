@@ -8,7 +8,7 @@ from weakref import proxy
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -88,7 +88,7 @@ class Renderers(_NoNewAttrMixin):
                 rangem = range(m)  # type: ignore[assignment]
 
             if splitting_position is None:
-                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
+                splitting_position = pv.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
                 xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
@@ -619,11 +619,11 @@ class Renderers(_NoNewAttrMixin):
         Set the background color to black.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> plotter.set_background('black')
-        >>> plotter.background_color
+        >>> pl = pv.Plotter()
+        >>> pl.set_background('black')
+        >>> pl.background_color
         Color(name='black', hex='#000000ff', opacity=255)
-        >>> plotter.close()
+        >>> pl.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.

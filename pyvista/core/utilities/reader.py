@@ -17,7 +17,7 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
@@ -44,133 +44,7 @@ def get_reader(filename, force_ext=None):
 
     Supported file types and Readers:
 
-    +----------------+---------------------------------------------+
-    | File Extension | Class                                       |
-    +================+=============================================+
-    | ``.bmp``       | :class:`pyvista.BMPReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.cas``       | :class:`pyvista.FluentReader`               |
-    +----------------+---------------------------------------------+
-    | ``.case``      | :class:`pyvista.EnSightReader`              |
-    +----------------+---------------------------------------------+
-    | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.cube``      | :class:`pyvista.GaussianCubeReader`         |
-    +----------------+---------------------------------------------+
-    | ``.dat``       | :class:`pyvista.TecplotReader`              |
-    +----------------+---------------------------------------------+
-    | ``.dcm``       | :class:`pyvista.DICOMReader`                |
-    +----------------+---------------------------------------------+
-    | ``.dem``       | :class:`pyvista.DEMReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.e``         | :class:`pyvista.ExodusIIReader`             |
-    +----------------+---------------------------------------------+
-    | ``.exo``       | :class:`pyvista.ExodusIIReader`             |
-    +----------------+---------------------------------------------+
-    | ``.exii``      | :class:`pyvista.ExodusIIReader`             |
-    +----------------+---------------------------------------------+
-    | ``.ex2``       | :class:`pyvista.ExodusIIReader`             |
-    +----------------+---------------------------------------------+
-    | ``.facet``     | :class:`pyvista.FacetReader`                |
-    +----------------+---------------------------------------------+
-    | ``.foam``      | :class:`pyvista.POpenFOAMReader`            |
-    +----------------+---------------------------------------------+
-    | ``.g``         | :class:`pyvista.BYUReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.gif``       | :class:`pyvista.GIFReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.glb``       | :class:`pyvista.GLTFReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.gltf``      | :class:`pyvista.GLTFReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.hdf``       | :class:`pyvista.HDFReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.img``       | :class:`pyvista.DICOMReader`                |
-    +----------------+---------------------------------------------+
-    | ``.inp``       | :class:`pyvista.AVSucdReader`               |
-    +----------------+---------------------------------------------+
-    | ``.jpg``       | :class:`pyvista.JPEGReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.jpeg``      | :class:`pyvista.JPEGReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.hdr``       | :class:`pyvista.HDRReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.mha``       | :class:`pyvista.MetaImageReader`            |
-    +----------------+---------------------------------------------+
-    | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
-    +----------------+---------------------------------------------+
-    | ``.nek5000``   | :class:`pyvista.Nek5000Reader`              |
-    +----------------+---------------------------------------------+
-    | ``.nii``       | :class:`pyvista.NIFTIReader`                |
-    +----------------+---------------------------------------------+
-    | ``.nii.gz``    | :class:`pyvista.NIFTIReader`                |
-    +----------------+---------------------------------------------+
-    | ``.nhdr``      | :class:`pyvista.NRRDReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.nrrd``      | :class:`pyvista.NRRDReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.obj``       | :class:`pyvista.OBJReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.p3d``       | :class:`pyvista.Plot3DMetaReader`           |
-    +----------------+---------------------------------------------+
-    | ``.ply``       | :class:`pyvista.PLYReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.png``       | :class:`pyvista.PNGReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.pnm``       | :class:`pyvista.PNMReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.pts``       | :class:`pyvista.PTSReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.pvd``       | :class:`pyvista.PVDReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.pvti``      | :class:`pyvista.XMLPImageDataReader`        |
-    +----------------+---------------------------------------------+
-    | ``.pvtk``      | :class:`pyvista.VTKPDataSetReader`          |
-    +----------------+---------------------------------------------+
-    | ``.pvtr``      | :class:`pyvista.XMLPRectilinearGridReader`  |
-    +----------------+---------------------------------------------+
-    | ``.pvtu``      | :class:`pyvista.XMLPUnstructuredGridReader` |
-    +----------------+---------------------------------------------+
-    | ``.res``       | :class:`pyvista.MFIXReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.segy``      | :class:`pyvista.SegYReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.sgy``       | :class:`pyvista.SegYReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.slc``       | :class:`pyvista.SLCReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.stl``       | :class:`pyvista.STLReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.tif``       | :class:`pyvista.TIFFReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.tiff``      | :class:`pyvista.TIFFReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
-    +----------------+---------------------------------------------+
-    | ``.vrt``       | :class:`pyvista.ProStarReader`              |
-    +----------------+---------------------------------------------+
-    | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
-    +----------------+---------------------------------------------+
-    | ``.vtk``       | :class:`pyvista.VTKDataSetReader`           |
-    +----------------+---------------------------------------------+
-    | ``.vtkhdf``    | :class:`pyvista.HDFReader`                  |
-    +----------------+---------------------------------------------+
-    | ``.vtm``       | :class:`pyvista.XMLMultiBlockDataReader`    |
-    +----------------+---------------------------------------------+
-    | ``.vtmb``      | :class:`pyvista.XMLMultiBlockDataReader`    |
-    +----------------+---------------------------------------------+
-    | ``.vtp``       | :class:`pyvista.XMLPolyDataReader`          |
-    +----------------+---------------------------------------------+
-    | ``.vtr``       | :class:`pyvista.XMLRectilinearGridReader`   |
-    +----------------+---------------------------------------------+
-    | ``.vts``       | :class:`pyvista.XMLStructuredGridReader`    |
-    +----------------+---------------------------------------------+
-    | ``.vtu``       | :class:`pyvista.XMLUnstructuredGridReader`  |
-    +----------------+---------------------------------------------+
-    | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
-    +----------------+---------------------------------------------+
-    | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
-    +----------------+---------------------------------------------+
+    .. include:: /api/readers/readers_table.rst
 
     Parameters
     ----------
@@ -228,7 +102,7 @@ class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self: BaseVTKReader) -> None:
-        self._data_object: pyvista.DataObject | None = None
+        self._data_object: pv.DataObject | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename) -> None:
@@ -707,14 +581,22 @@ class TimeReader(ABC):
 
 
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
-    """XML Image Data Reader for .vti files."""
+    """XML Image Data Reader for .vti files.
+
+    Wraps :vtk:`vtkXMLImageDataReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataReader'
 
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
-    """Parallel XML Image Data Reader for .pvti files."""
+    """Parallel XML Image Data Reader for .pvti files.
+
+    Wraps :vtk:`vtkXMLPImageDataReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPImageDataReader'
@@ -722,6 +604,8 @@ class XMLPImageDataReader(BaseReader, PointCellDataSelection):
 
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     """XML RectilinearGrid Reader for .vtr files.
+
+    Wraps :vtk:`vtkXMLRectilinearGridReader`.
 
     Examples
     --------
@@ -747,7 +631,11 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
-    """Parallel XML RectilinearGrid Reader for .pvtr files."""
+    """Parallel XML RectilinearGrid Reader for .pvtr files.
+
+    Wraps :vtk:`vtkXMLPRectilinearGridReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPRectilinearGridReader'
@@ -755,6 +643,8 @@ class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """XML UnstructuredGrid Reader for .vtu files.
+
+    Wraps :vtk:`vtkXMLUnstructuredGridReader`.
 
     Examples
     --------
@@ -780,7 +670,11 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
-    """Parallel XML UnstructuredGrid Reader for .pvtu files."""
+    """Parallel XML UnstructuredGrid Reader for .pvtu files.
+
+    Wraps :vtk:`vtkXMLPUnstructuredGridReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPUnstructuredGridReader'
@@ -788,6 +682,8 @@ class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     """XML PolyData Reader for .vtp files.
+
+    Wraps :vtk:`vtkXMLPolyDataReader`.
 
     Examples
     --------
@@ -817,6 +713,8 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     """XML StructuredGrid Reader for .vts files.
 
+    Wraps :vtk:`vtkXMLStructuredGridReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -836,7 +734,11 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
 
 
 class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
-    """XML MultiBlock Data Reader for .vtm or .vtmb files."""
+    """XML MultiBlock Data Reader for .vtm or .vtmb files.
+
+    Wraps :vtk:`vtkXMLMultiBlockDataReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataReader'
@@ -844,6 +746,8 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
+
+    Wraps :vtk:`vtkGenericEnSightReader`.
 
     Examples
     --------
@@ -940,6 +844,8 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     By default, pyvista enables all patch arrays.  This is a deviation
     from the vtk default.
+
+    Wraps :vtk:`vtkOpenFOAMReader`.
 
     """
 
@@ -1219,6 +1125,8 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 class POpenFOAMReader(OpenFOAMReader):
     """Parallel OpenFOAM Reader for .foam files.
 
+    Wraps :vtk:`vtkPOpenFOAMReader`.
+
     Can read parallel-decomposed mesh information and time dependent data.
     This reader can be used for serial generated data,
     parallel reconstructed data, and decomposed data.
@@ -1271,6 +1179,8 @@ class POpenFOAMReader(OpenFOAMReader):
 class PLYReader(BaseReader):
     """PLY Reader for reading .ply files.
 
+    Wraps :vtk:`vtkPLYReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -1291,6 +1201,8 @@ class PLYReader(BaseReader):
 
 class OBJReader(BaseReader):
     """OBJ Reader for reading .obj files.
+
+    Wraps :vtk:`vtkOBJReader`.
 
     Examples
     --------
@@ -1313,6 +1225,8 @@ class OBJReader(BaseReader):
 class STLReader(BaseReader):
     """STL Reader for .stl files.
 
+    Wraps :vtk:`vtkSTLReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -1334,6 +1248,8 @@ class STLReader(BaseReader):
 class TecplotReader(BaseReader):
     """Tecplot Reader for ascii .dat files.
 
+    Wraps :vtk:`vtkTecplotReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -1351,6 +1267,8 @@ class TecplotReader(BaseReader):
 
 class VTKDataSetReader(BaseReader):
     """VTK Data Set Reader for .vtk files.
+
+    Wraps :vtk:`vtkDataSetReader`.
 
     Notes
     -----
@@ -1387,7 +1305,11 @@ class VTKDataSetReader(BaseReader):
 
 
 class VTKPDataSetReader(BaseReader):
-    """Parallel VTK Data Set Reader for .pvtk files."""
+    """Parallel VTK Data Set Reader for .pvtk files.
+
+    Wraps :vtk:`vtkPDataSetReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPDataSetReader'
@@ -1395,6 +1317,8 @@ class VTKPDataSetReader(BaseReader):
 
 class BYUReader(BaseReader):
     """BYU Reader for .g files.
+
+    Wraps :vtk:`vtkBYUReader`.
 
     Examples
     --------
@@ -1417,6 +1341,8 @@ class BYUReader(BaseReader):
 class FacetReader(BaseReader):
     """Facet Reader for .facet files.
 
+    Wraps :vtk:`vtkFacetReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -1436,7 +1362,11 @@ class FacetReader(BaseReader):
 
 
 class Plot3DMetaReader(BaseReader):
-    """Plot3DMeta Reader for .p3d files."""
+    """Plot3DMeta Reader for .p3d files.
+
+    Wraps :vtk:`vtkPlot3DMetaReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPlot3DMetaReader'
@@ -1468,6 +1398,8 @@ class Plot3DFunctionEnum(enum.IntEnum):
 
 class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader.
+
+    Wraps :vtk:`vtkMultiBlockPLOT3DReader`.
 
     The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
     :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as
@@ -1936,6 +1868,8 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 class BinaryMarchingCubesReader(BaseReader):
     """BinaryMarchingCubes Reader for .tri files.
 
+    Wraps :vtk:`vtkMCubesReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2010,7 +1944,7 @@ class _PVDReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read data and store it."""
-        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
+        self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
@@ -2104,6 +2038,8 @@ class PVDReader(BaseReader, TimeReader):
 class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     """Class for reading .nek5000 files produced by Nek5000 and NekRS.
 
+    Wraps :vtk:`vtkNek5000Reader`.
+
     .. versionadded:: 0.45.0
 
     .. note::
@@ -2125,9 +2061,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     def __init__(self, path):
         # nek5000 reader requires vtk >= 9.3
-        if pyvista.vtk_version_info < (9, 3):
+        if pv.vtk_version_info < (9, 3):
             msg = 'Nek5000Reader is only available for vtk>=9.3'
-            raise pyvista.VTKVersionError(msg)
+            raise pv.VTKVersionError(msg)
 
         super().__init__(path)
 
@@ -2280,6 +2216,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 class DICOMReader(BaseReader):
     """DICOM Reader for reading ``.dcm`` files.
 
+    Wraps :vtk:`vtkDICOMImageReader`.
+
     This reader reads a single file or a path containing a several ``.dcm``
     files (DICOM stack).
 
@@ -2309,6 +2247,8 @@ class DICOMReader(BaseReader):
 class BMPReader(BaseReader):
     """BMP Reader for .bmp files.
 
+    Wraps :vtk:`vtkBMPReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2329,6 +2269,8 @@ class BMPReader(BaseReader):
 
 class DEMReader(BaseReader):
     """DEM Reader for .dem files.
+
+    Wraps :vtk:`vtkDEMReader`.
 
     Examples
     --------
@@ -2351,6 +2293,8 @@ class DEMReader(BaseReader):
 class JPEGReader(BaseReader):
     """JPEG Reader for .jpeg and .jpg files.
 
+    Wraps :vtk:`vtkJPEGReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2371,6 +2315,8 @@ class JPEGReader(BaseReader):
 
 class MetaImageReader(BaseReader):
     """Meta Image Reader for .mha and .mhd files.
+
+    Wraps :vtk:`vtkMetaImageReader`.
 
     Examples
     --------
@@ -2393,6 +2339,8 @@ class MetaImageReader(BaseReader):
 class NIFTIReader(BaseReader):
     """NIFTI Reader for .nii and .nii.gz files.
 
+    Wraps :vtk:`vtkNIFTIImageReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2413,6 +2361,8 @@ class NIFTIReader(BaseReader):
 
 class NRRDReader(BaseReader):
     """NRRDReader for .nrrd and .nhdr files.
+
+    Wraps :vtk:`vtkNrrdReader`.
 
     Examples
     --------
@@ -2435,6 +2385,8 @@ class NRRDReader(BaseReader):
 class PNGReader(BaseReader):
     """PNGReader for .png files.
 
+    Wraps :vtk:`vtkPNGReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2455,6 +2407,8 @@ class PNGReader(BaseReader):
 
 class PNMReader(BaseReader):
     """PNMReader for .pnm files.
+
+    Wraps :vtk:`vtkPNMReader`.
 
     Examples
     --------
@@ -2477,6 +2431,8 @@ class PNMReader(BaseReader):
 class SLCReader(BaseReader):
     """SLCReader for .slc files.
 
+    Wraps :vtk:`vtkSLCReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2497,6 +2453,8 @@ class SLCReader(BaseReader):
 
 class TIFFReader(BaseReader):
     """TIFFReader for .tif and .tiff files.
+
+    Wraps :vtk:`vtkTIFFReader`.
 
     Examples
     --------
@@ -2521,6 +2479,8 @@ class TIFFReader(BaseReader):
 
 class HDRReader(BaseReader):
     """HDRReader for .hdr files.
+
+    Wraps :vtk:`vtkHDRReader`.
 
     Examples
     --------
@@ -2550,7 +2510,11 @@ class HDRReader(BaseReader):
 
 
 class PTSReader(BaseReader):
-    """PTSReader for .pts files."""
+    """PTSReader for .pts files.
+
+    Wraps :vtk:`vtkPTSReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkPTSReader'
@@ -2558,6 +2522,8 @@ class PTSReader(BaseReader):
 
 class AVSucdReader(BaseReader):
     """AVSucdReader for .inp files.
+
+    Wraps :vtk:`vtkAVSucdReader`.
 
     Examples
     --------
@@ -2580,8 +2546,7 @@ class AVSucdReader(BaseReader):
 class HDFReader(BaseReader):
     """HDFReader for .hdf files.
 
-    .. note::
-        This reader requires vtk version >=9.1.0.
+    Wraps :vtk:`vtkHDFReader`.
 
     Examples
     --------
@@ -2604,7 +2569,7 @@ class HDFReader(BaseReader):
     def read(self):  # type: ignore[override]
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
-            with pyvista.VtkErrorCatcher(raise_errors=True):
+            with pv.VtkErrorCatcher(raise_errors=True):
                 return super().read()
         except RuntimeError as err:  # pragma: no cover
             if "Can't find the `Type` attribute." in str(err):
@@ -2619,28 +2584,44 @@ class HDFReader(BaseReader):
 
 
 class GLTFReader(BaseReader):
-    """GLTFeader for .gltf and .glb files."""
+    """GLTFeader for .gltf and .glb files.
+
+    Wraps :vtk:`vtkGLTFReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkGLTFReader'
 
 
 class FluentReader(BaseReader):
-    """FluentReader for .cas files."""
+    """FluentReader for .cas files.
+
+    Wraps :vtk:`vtkFLUENTReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkFLUENTReader'
 
 
 class MFIXReader(BaseReader):
-    """MFIXReader for .res files."""
+    """MFIXReader for .res files.
+
+    Wraps :vtk:`vtkMFIXReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMFIXReader'
 
 
 class SegYReader(BaseReader):
-    """SegYReader for .sgy and .segy files."""
+    """SegYReader for .sgy and .segy files.
+
+    Wraps :vtk:`vtkSegYReader`.
+
+    """
 
     _vtk_module_name = 'vtkIOSegY'
     _vtk_class_name = 'vtkSegYReader'
@@ -2666,7 +2647,7 @@ class _GIFReader(BaseVTKReader):
         from PIL import ImageSequence  # noqa: PLC0415
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
+        self._data_object = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames  # type: ignore[attr-defined]
@@ -2709,6 +2690,8 @@ class GIFReader(BaseReader):
 
 class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
+
+    Wraps :vtk:`vtkXdmfReader`.
 
     Parameters
     ----------
@@ -2778,6 +2761,8 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
 class XMLPartitionedDataSetReader(BaseReader):
     """XML PartitionedDataSet Reader for reading .vtpd files.
 
+    Wraps :vtk:`vtkXMLPartitionedDataSetReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2799,6 +2784,8 @@ class XMLPartitionedDataSetReader(BaseReader):
 class FLUENTCFFReader(BaseReader):
     """FLUENTCFFReader for .h5 files.
 
+    Wraps :vtk:`vtkFLUENTCFFReader`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2817,6 +2804,8 @@ class FLUENTCFFReader(BaseReader):
 
 class GambitReader(BaseReader):
     """GambitReader for .neu files.
+
+    Wraps :vtk:`vtkGAMBITReader`.
 
     .. versionadded:: 0.44.0
 
@@ -2837,6 +2826,8 @@ class GambitReader(BaseReader):
 
 class GaussianCubeReader(BaseReader):
     """GaussianCubeReader for .cube files.
+
+    Wraps :vtk:`vtkGaussianCubeReader`.
 
     Examples
     --------
@@ -2930,6 +2921,8 @@ class GaussianCubeReader(BaseReader):
 class MINCImageReader(BaseReader):
     """MINCImageReader for .mnc files.
 
+    Wraps :vtk:`vtkMINCImageReader`.
+
     .. versionadded:: 0.44.0
 
     Examples
@@ -2949,6 +2942,8 @@ class MINCImageReader(BaseReader):
 
 class PDBReader(BaseReader):
     """PDBReader for .pdb files.
+
+    Wraps :vtk:`vtkPDBReader`.
 
     .. versionadded:: 0.44.0
 
@@ -2970,6 +2965,8 @@ class PDBReader(BaseReader):
 class GESignaReader(BaseReader):
     """GESignaReader for .MR files.
 
+    Wraps :vtk:`vtkGESignaReader`.
+
     .. versionadded:: 0.44.0
 
     Examples
@@ -2989,6 +2986,8 @@ class GESignaReader(BaseReader):
 
 class ParticleReader(BaseReader):
     """ParticleReader for .raw files.
+
+    Wraps :vtk:`vtkParticleReader`.
 
     .. versionadded:: 0.44.0
 
@@ -3050,6 +3049,8 @@ class ParticleReader(BaseReader):
 class ProStarReader(BaseReader):
     """ProStarReader for .vrt files.
 
+    Wraps :vtk:`vtkProStarReader`.
+
     Reads geometry in proSTAR (STARCD) file format.
 
     .. versionadded:: 0.44.0
@@ -3072,7 +3073,7 @@ class ProStarReader(BaseReader):
 class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
     """ExodusIIReader for .e and .exo files.
 
-    Reads Exodus II files
+    Reads Exodus II files. Wraps :vtk:`vtkExodusIIReader`.
 
     .. versionadded:: 0.45.0
 
@@ -3103,7 +3104,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
 
-    def read_global(self) -> pyvista.Table:
+    def read_global(self) -> pv.Table:
         """Read enabled global data.
 
         Returns

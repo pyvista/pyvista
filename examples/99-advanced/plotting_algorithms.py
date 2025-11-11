@@ -54,10 +54,10 @@ def update_resolution(value):
 # Pass the :vtk:`vtkConeSource` (a :vtk:`vtkAlgorithm` subclass) directly to the
 # plotter and connect a slider widget to our callback that adjusts the
 # resolution.
-p = pv.Plotter()
-p.add_mesh(algo, color='red')
-p.add_slider_widget(update_resolution, [5, 100], title='Resolution')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(algo, color='red')
+pl.add_slider_widget(update_resolution, [5, 100], title='Resolution')
+pl.show()
 
 # %%
 # Here is another example using :vtk:`vtkRegularPolygonSource`.
@@ -73,11 +73,11 @@ def update_n_sides(value):
     poly_source.SetNumberOfSides(res)
 
 
-p = pv.Plotter()
-p.add_mesh_clip_box(poly_source, color='red')
-p.add_slider_widget(update_n_sides, [3, 25], title='N Sides')
-p.view_xy()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_clip_box(poly_source, color='red')
+pl.add_slider_widget(update_n_sides, [3, 25], title='N Sides')
+pl.view_xy()
+pl.show()
 
 
 # %%
@@ -112,8 +112,8 @@ contour.SetNumberOfContours(1)
 contour.SetValue(0, 0.95 * splatter.GetRadius())
 
 # Use PyVista to plot output of contour filter
-p = pv.Plotter(notebook=0)
-p.add_mesh(mesh, style='wireframe')
-p.add_mesh(contour, color=True)
-p.add_slider_widget(splatter.SetRadius, [0.01, 0.05])
-p.show()
+pl = pv.Plotter(notebook=0)
+pl.add_mesh(mesh, style='wireframe')
+pl.add_mesh(contour, color=True)
+pl.add_slider_widget(splatter.SetRadius, [0.01, 0.05])
+pl.show()

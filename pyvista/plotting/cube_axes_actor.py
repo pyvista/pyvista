@@ -9,7 +9,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
@@ -198,17 +198,17 @@ class CubeAxesActor(
         self._z_label_visibility = z_label_visibility
 
         # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-        default_fmt = '%.1f' if pyvista.vtk_version_info < (9, 5, 99) else '{0:.1f}'
+        default_fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'
         if x_label_format is None:
-            x_label_format = pyvista.global_theme.font.fmt
+            x_label_format = pv.global_theme.font.fmt
             if x_label_format is None:
                 x_label_format = default_fmt
         if y_label_format is None:
-            y_label_format = pyvista.global_theme.font.fmt
+            y_label_format = pv.global_theme.font.fmt
             if y_label_format is None:
                 y_label_format = default_fmt
         if z_label_format is None:
-            z_label_format = pyvista.global_theme.font.fmt
+            z_label_format = pv.global_theme.font.fmt
             if z_label_format is None:
                 z_label_format = default_fmt
 
@@ -324,7 +324,7 @@ class CubeAxesActor(
     @property
     def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
-        if (9, 3, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+        if (9, 3, 0) <= pv.vtk_version_info < (9, 5, 0):
             offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
             self.GetTitleOffset(offx, offy)  # type: ignore[call-arg]
             return offx, offy  # type: ignore[return-value]
@@ -333,7 +333,7 @@ class CubeAxesActor(
 
     @title_offset.setter
     def title_offset(self, offset: float | MutableSequence[float]):
-        vtk_geq_9_3 = pyvista.vtk_version_info >= (9, 3)
+        vtk_geq_9_3 = pv.vtk_version_info >= (9, 3)
 
         if vtk_geq_9_3:
             if isinstance(offset, float):
@@ -360,12 +360,12 @@ class CubeAxesActor(
         self.SetTitleOffset(offset)  # type: ignore[arg-type]
 
     @property
-    def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
+    def camera(self) -> pv.Camera:  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: pyvista.Camera):
+    def camera(self, camera: pv.Camera):
         self.SetCamera(camera)
 
     @property

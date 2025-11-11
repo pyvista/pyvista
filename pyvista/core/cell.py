@@ -7,7 +7,7 @@ from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from pyvista import PolyData
     from pyvista import UnstructuredGrid
 
     from ._typing_core import CellsLike
@@ -188,7 +189,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
 
-    def cast_to_polydata(self: Self) -> pyvista.PolyData:
+    def cast_to_polydata(self: Self) -> PolyData:
         """Cast this cell to PolyData.
 
         Can only be used for 0D, 1D, or 2D cells.
@@ -217,14 +218,14 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """
         cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
         if self.dimension == 0:
-            return pyvista.PolyData(self.points.copy(), verts=cells)
+            return pv.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
-            return pyvista.PolyData(self.points.copy(), lines=cells)
+            return pv.PolyData(self.points.copy(), lines=cells)
         if self.dimension == 2:
             if self.type == CellType.TRIANGLE_STRIP:
-                return pyvista.PolyData(self.points.copy(), strips=cells)
+                return pv.PolyData(self.points.copy(), strips=cells)
             else:
-                return pyvista.PolyData(self.points.copy(), faces=cells)
+                return pv.PolyData(self.points.copy(), faces=cells)
         else:
             msg = f'3D cells cannot be cast to PolyData: got cell type {self.type}'
             raise ValueError(msg)
@@ -262,7 +263,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
             cell_ids.insert(0, len(cell_ids))
         else:
             cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
-        return pyvista.UnstructuredGrid(
+        return pv.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
             self.points.copy(),
@@ -562,7 +563,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         attrs.append(('N Faces', self.n_faces, '{}'))  # type: ignore[arg-type]
         attrs.append(('N Edges', self.n_edges, '{}'))  # type: ignore[arg-type]
         bds = self.bounds
-        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        fmt = f'{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}'
         attrs.append(('X Bounds', (bds[0], bds[1]), fmt))  # type: ignore[arg-type]
         attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))  # type: ignore[arg-type]
         attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))  # type: ignore[arg-type]
@@ -820,7 +821,7 @@ class CellArray(
         cls: type[CellArray],
         cells: MatrixLike[int],
         deep: bool = False,  # noqa: FBT001, FBT002
-    ) -> pyvista.CellArray:
+    ) -> CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -837,15 +838,15 @@ class CellArray(
             Constructed ``CellArray``.
 
         """
-        cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
+        cells = np.asarray(cells, dtype=pv.ID_TYPE)
         n_cells, cell_size = cells.shape
-        offsets = cell_size * np.arange(n_cells + 1, dtype=pyvista.ID_TYPE)
+        offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
         cellarr = cls()
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> pyvista.CellArray:
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -860,8 +861,8 @@ class CellArray(
 
         """
         offsets = np.cumsum([len(c) for c in cells])
-        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
-        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        offsets = np.concatenate([[0], offsets], dtype=pv.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pv.ID_TYPE)
         return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 

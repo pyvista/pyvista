@@ -9,8 +9,9 @@ from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
@@ -115,7 +116,7 @@ def Capsule(  # noqa: PLR0917
     >>> capsule.plot(show_edges=True)
 
     """
-    if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+    if pv.vtk_version_info >= (9, 3):  # pragma: no cover
         algo = CylinderSource(
             center=center,
             direction=direction,
@@ -303,7 +304,7 @@ def CylinderStructured(  # noqa: PLR0917
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
 
     # Create the grid
-    grid = pyvista.StructuredGrid()
+    grid = pv.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
@@ -863,7 +864,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
         """
         r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
+        x, y, z = pv.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     points = []
@@ -933,7 +934,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
             for itheta in range(ntheta - 1):
                 cells.append(4)
                 cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-                celltypes.append(pyvista.CellType.TETRA)
+                celltypes.append(pv.CellType.TETRA)
 
         # Next tetras that form with origin and bottom axis point
         #   origin is 0
@@ -950,7 +951,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                         _index(0, nphi - 1, itheta),
                     ],
                 )
-                celltypes.append(pyvista.CellType.TETRA)
+                celltypes.append(pv.CellType.TETRA)
 
         # Pyramids that form to origin but without an axis point
         for iphi, itheta in product(range(nphi - 1), range(ntheta - 1)):
@@ -964,7 +965,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                     0,
                 ],
             )
-            celltypes.append(pyvista.CellType.PYRAMID)
+            celltypes.append(pv.CellType.PYRAMID)
 
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
@@ -984,7 +985,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                     _index(ir + 1, 0, itheta),
                 ],
             )
-            celltypes.append(pyvista.CellType.WEDGE)
+            celltypes.append(pv.CellType.WEDGE)
 
     # now go downwards
     if negative_axis:
@@ -1002,7 +1003,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
                     _index(ir + 1, nphi - 1, itheta + 1),
                 ],
             )
-            celltypes.append(pyvista.CellType.WEDGE)
+            celltypes.append(pv.CellType.WEDGE)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
@@ -1021,9 +1022,9 @@ def SolidSphereGeneric(  # noqa: PLR0917
                 _index(ir + 1, iphi, itheta + 1),
             ],
         )
-        celltypes.append(pyvista.CellType.HEXAHEDRON)
+        celltypes.append(pv.CellType.HEXAHEDRON)
 
-    mesh = pyvista.UnstructuredGrid(cells, celltypes, points)
+    mesh = pv.UnstructuredGrid(cells, celltypes, points)
     mesh.rotate_y(90, inplace=True)
     translate(mesh, center, direction)
     return mesh
@@ -1146,11 +1147,11 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
 
     >>> import pyvista as pv
     >>> mesh = pv.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
-    >>> plotter = pv.Plotter()
-    >>> actor = plotter.add_mesh(mesh, color='k', line_width=10)
-    >>> plotter.camera.azimuth = 45
-    >>> plotter.camera.zoom(0.8)
-    >>> plotter.show()
+    >>> pl = pv.Plotter()
+    >>> actor = pl.add_mesh(mesh, color='k', line_width=10)
+    >>> pl.camera.azimuth = 45
+    >>> pl.camera.zoom(0.8)
+    >>> pl.show()
 
     """
     if points is None:
@@ -1307,7 +1308,7 @@ def Cube(  # noqa: PLR0917
 @_deprecate_positional_args(allowed=['bounds'])
 def Box(
     bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
-    level: int = 0,
+    level: int | VectorLike[int] = 0,
     quads: bool = True,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
@@ -1318,8 +1319,14 @@ def Box(
         Specify the bounding box of the cube.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    level : int, default: 0
+    level : int | VectorLike[int], default: 0
         Level of subdivision of the faces.
+
+        .. note::
+            The algorithm is not optimized when a 3 length vector is given.
+
+        .. versionadded:: 0.47
+            Enable specifying different values for x, y and z directions.
 
     quads : bool, default: True
         Flag to tell the source to generate either a quad or two
@@ -1338,8 +1345,21 @@ def Box(
     >>> mesh = pv.Box(level=2)
     >>> mesh.plot(show_edges=True)
 
+    Set the level separately for each axis.
+
+    >>> mesh = pv.Box(level=[1, 2, 3])
+    >>> mesh.plot(show_edges=True)
+
     """
-    return BoxSource(level=level, quads=quads, bounds=bounds).output
+    level_vector = _validation.validate_array3(level, broadcast=True, dtype_out=int, name='level')
+    if np.all(level_vector == level_vector[0]):
+        return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
+
+    mesh = pv.ImageData(dimensions=level_vector + 2)
+    mesh = mesh.extract_geometry().resize(bounds=bounds)
+    if not quads:
+        mesh = mesh.triangulate()
+    return mesh
 
 
 @_deprecate_positional_args
@@ -1689,7 +1709,7 @@ def Wavelet(  # noqa: PLR0917
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast('pyvista.ImageData', wrap(wavelet_source.GetOutput()))
+    return cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
 
 
 @_deprecate_positional_args
@@ -1777,7 +1797,7 @@ def CircularArc(  # noqa: PLR0917
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pyvista.PolyData', arc)
+    return cast('pv.PolyData', arc)
 
 
 @_deprecate_positional_args
@@ -1860,7 +1880,7 @@ def CircularArcFromNormal(  # noqa: PLR0917
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, angle_, resolution + 1)
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pyvista.PolyData', arc)
+    return cast('pv.PolyData', arc)
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
@@ -1919,7 +1939,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = _vtk.vtkUnstructuredGrid()
-    ug.SetPoints(pyvista.vtk_points(np.array(points), deep=False))
+    ug.SetPoints(pv.vtk_points(np.array(points), deep=False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return wrap(ug)
@@ -1961,7 +1981,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return wrap(pyvista.PolyData(points, cells))
+    return wrap(pv.PolyData(points, cells))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2037,7 +2057,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return wrap(pyvista.PolyData(points, cells))
+    return wrap(pv.PolyData(points, cells))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2073,7 +2093,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return wrap(pyvista.PolyData(points, cells))
+    return wrap(pv.PolyData(points, cells))
 
 
 @_deprecate_positional_args
@@ -2112,7 +2132,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pyvista.PolyData(points, cells))
+    return wrap(pv.PolyData(points, cells))
 
 
 @_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
@@ -2155,7 +2175,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pyvista.PolyData(points, cells))
+    return wrap(pv.PolyData(points, cells))
 
 
 @_deprecate_positional_args
