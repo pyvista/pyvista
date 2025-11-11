@@ -933,7 +933,7 @@ class DataSetAttributes(
          ('data1', pyvista_ndarray([0, 1, 2, 3, 4, 5]))]
 
         """
-        return list(zip(self.keys(), self.values()))
+        return list(zip(self.keys(), self.values(), strict=True))
 
     def keys(self: Self) -> list[str]:
         """Return the names of the arrays as a list.

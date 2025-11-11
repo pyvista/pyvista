@@ -413,7 +413,7 @@ class ImageDataFilters(DataSetFilters):
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
-            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions, strict=True)
         )
         voi = self._compute_voi_from_index(
             indices, index_mode=index_mode, strict_index=strict_index
@@ -952,7 +952,7 @@ class ImageDataFilters(DataSetFilters):
             padding = _validate_padding(margin_)
             # Do not pad singleton dims
             singleton_dims = np.array(self.dimensions) == 1
-            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
+            mask = [x for pair in zip(singleton_dims, singleton_dims, strict=True) for x in pair]
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 
@@ -5866,7 +5866,7 @@ class ImageDataFilters(DataSetFilters):
             else:  # dtype_policy == 'match'
                 dtype_out = all_dtypes[0]
 
-            for img, scalars in zip(all_images, all_scalars):
+            for img, scalars in zip(all_images, all_scalars, strict=True):
                 array = img.point_data[scalars]
                 img.point_data[scalars] = array.astype(dtype_out, copy=False)
         else:
@@ -5891,7 +5891,9 @@ class ImageDataFilters(DataSetFilters):
                     )
                     raise ValueError(msg)
 
-                for img, n_components, scalars in zip(all_images, all_n_components, all_scalars):
+                for img, n_components, scalars in zip(
+                    all_images, all_n_components, all_scalars, strict=True
+                ):
                     if n_components < target_n_components:
                         array = img.point_data[scalars]
                         if n_components < 3:

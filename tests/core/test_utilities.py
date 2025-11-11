@@ -325,7 +325,7 @@ def test_read_force_ext(tmpdir):
     )
 
     dummy_extension = '.dummy'
-    for fname, type_ in zip(fnames, types):
+    for fname, type_ in zip(fnames, types, strict=True):
         path = Path(fname)
         root = str(path.parent / path.stem)
         original_ext = path.suffix

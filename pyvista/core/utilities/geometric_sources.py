@@ -3207,7 +3207,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         # Init datasets
         names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
         polys = [pv.PolyData() for _ in range(len(names))]
-        self._output = pv.MultiBlock(dict(zip(names, polys)))
+        self._output = pv.MultiBlock(dict(zip(names, polys, strict=True)))
 
         # Store shaft/tip references in separate vars for convenience
         self._shaft_datasets = (polys[0], polys[1], polys[2])
@@ -3807,7 +3807,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         self._normal_sign = tuple(valid_sign)
 
         # Modify sources
-        for source, axis_vector, sign_ in zip(self.sources, np.eye(3), valid_sign):
+        for source, axis_vector, sign_ in zip(self.sources, np.eye(3), valid_sign, strict=True):
             has_positive_normal = np.dot(source.normal, axis_vector) > 0
             if has_positive_normal and sign_ == '-':
                 source.flip_normal()
@@ -3910,12 +3910,12 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
             dtype_out=float,
             to_tuple=True,
         )
-        for source, dist in zip(self.sources, valid_distance):
+        for source, dist in zip(self.sources, valid_distance, strict=True):
             source.push(dist)
 
     def update(self: OrthogonalPlanesSource) -> None:
         """Update the output of the source."""
-        for source, plane in zip(self.sources, self._output):
+        for source, plane in zip(self.sources, self._output, strict=True):
             plane.copy_from(source.output)
 
     @property
@@ -4374,7 +4374,7 @@ class CubeFacesSource(CubeSource):
         output = self._output
 
         # Modify each face mesh of the output
-        for index, (name, points) in enumerate(zip(self.names, face_points)):
+        for index, (name, points) in enumerate(zip(self.names, face_points, strict=True)):
             output.set_block_name(index, name)
             face_poly = output[index]
             face_center = np.mean(points, axis=0)
