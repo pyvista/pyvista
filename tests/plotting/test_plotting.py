@@ -3146,6 +3146,7 @@ def test_add_text():
     pl.show()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_add_text_latex():
     """Test LaTeX symbols."""
     pl = pv.Plotter()
