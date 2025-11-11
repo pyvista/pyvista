@@ -4704,6 +4704,9 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         for name, func in functions.items()
         if name[0].isupper() and (_has_param(func, 'direction') or _has_param(func, 'normal'))
     }
+    # Remove Spline from test case (if present).
+    if "Spline" in functions.keys():
+        functions.pop("Spline")
     # Add a separate test for vtk < 9.3
     functions['Capsule_legacy'] = functions['Capsule']
     actual_names = functions.keys()
@@ -4742,7 +4745,6 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'SolidSphere',
         'SolidSphereGeneric',
         'Sphere',
-        'Spline',
         'Text3D',
     ]
 

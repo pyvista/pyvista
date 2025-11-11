@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 def Spline(
-    points: VectorLike[float] | MatrixLike[float] | None,
+    points: VectorLike[float] | MatrixLike[float],
     n_points: int | None = None,
     *,
     closed: bool = False,
