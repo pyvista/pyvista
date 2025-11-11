@@ -8,8 +8,6 @@ import pytest
 import pyvista as pv
 
 PROJECT_ROOT = Path(pv.__file__).parent.parent
-TESTS_ROOT = PROJECT_ROOT / 'tests'
-assert TESTS_ROOT.is_dir()
 
 # Common grep arguments
 COMMON_GREP_ARGS = [
@@ -25,6 +23,13 @@ COMMON_GREP_ARGS = [
 ]
 
 
+@pytest.fixture(scope='session')
+def tests_root(request):
+    tests = request.config.rootpath / 'tests'
+    assert tests.is_dir()
+    return tests
+
+
 def _run_grep(args, pattern, path):
     return subprocess.run(
         ['grep', *args, pattern, path],
@@ -35,10 +40,10 @@ def _run_grep(args, pattern, path):
 
 
 @pytest.mark.skip_windows('Needs grep')
-def test_no_bare_vtk_imports_in_tests():
+def test_no_bare_vtk_imports_in_tests(tests_root):
     # Search for `import vtk` or `from vtk`
     pattern = r'^[[:space:]]*(import[[:space:]]+vtk\b|from[[:space:]]+vtk\b)'
-    result = _run_grep(COMMON_GREP_ARGS, pattern, TESTS_ROOT)
+    result = _run_grep(COMMON_GREP_ARGS, pattern, tests_root)
     assert result.returncode != 0, (
         "Found bare 'import vtk' or `from vtk` imports, import vtk from pyvista instead, e.g. "
         '`from pyvista.core import _vtk_core as _vtk`\n\n'
