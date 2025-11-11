@@ -7994,7 +7994,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         kernel = (1 - np.abs(xv)) * (1 - np.abs(yv)) * (1 - np.abs(zv))
         kernel = np.clip(kernel, 0, 1)
 
-        kernel_image = pyvista.ImageData(dimensions=kernel_dimensions)
+        kernel_image = pv.ImageData(dimensions=kernel_dimensions)
         kernel_image.point_data['values'] = kernel.ravel(order='F')
 
         alg = _vtk.vtkFastSplatter()
