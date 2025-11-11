@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
@@ -1307,7 +1308,7 @@ def Cube(  # noqa: PLR0917
 @_deprecate_positional_args(allowed=['bounds'])
 def Box(
     bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
-    level: int = 0,
+    level: int | VectorLike[int] = 0,
     quads: bool = True,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
@@ -1318,8 +1319,14 @@ def Box(
         Specify the bounding box of the cube.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    level : int, default: 0
+    level : int | VectorLike[int], default: 0
         Level of subdivision of the faces.
+
+        .. note::
+            The algorithm is not optimized when a 3 length vector is given.
+
+        .. versionadded:: 0.47
+            Enable specifying different values for x, y and z directions.
 
     quads : bool, default: True
         Flag to tell the source to generate either a quad or two
@@ -1338,8 +1345,21 @@ def Box(
     >>> mesh = pv.Box(level=2)
     >>> mesh.plot(show_edges=True)
 
+    Set the level separately for each axis.
+
+    >>> mesh = pv.Box(level=[1, 2, 3])
+    >>> mesh.plot(show_edges=True)
+
     """
-    return BoxSource(level=level, quads=quads, bounds=bounds).output
+    level_vector = _validation.validate_array3(level, broadcast=True, dtype_out=int, name='level')
+    if np.all(level_vector == level_vector[0]):
+        return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
+
+    mesh = pv.ImageData(dimensions=level_vector + 2)
+    mesh = mesh.extract_geometry().resize(bounds=bounds)
+    if not quads:
+        mesh = mesh.triangulate()
+    return mesh
 
 
 @_deprecate_positional_args
