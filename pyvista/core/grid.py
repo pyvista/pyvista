@@ -626,6 +626,15 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     """
 
     _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {  # type: ignore[assignment]
+        '.bmp': _vtk.vtkBMPWriter,
+        '.jpeg': _vtk.vtkJPEGWriter,
+        '.jpg': _vtk.vtkJPEGWriter,
+        '.nii': _vtk.vtkNIFTIImageWriter,
+        '.nii.gz': _vtk.vtkNIFTIImageWriter,
+        '.png': _vtk.vtkPNGWriter,
+        '.pnm': _vtk.vtkPNMWriter,
+        '.tif': _vtk.vtkTIFFWriter,
+        '.tiff': _vtk.vtkTIFFWriter,
         '.vtk': _vtk.vtkDataSetWriter,
         '.vti': _vtk.vtkXMLImageDataWriter,
     }

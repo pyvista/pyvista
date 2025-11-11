@@ -471,6 +471,12 @@ from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
+from vtkmodules.vtkIOImage import vtkBMPWriter as vtkBMPWriter
+from vtkmodules.vtkIOImage import vtkJPEGWriter as vtkJPEGWriter
+from vtkmodules.vtkIOImage import vtkNIFTIImageWriter as vtkNIFTIImageWriter
+from vtkmodules.vtkIOImage import vtkPNGWriter as vtkPNGWriter
+from vtkmodules.vtkIOImage import vtkPNMWriter as vtkPNMWriter
+from vtkmodules.vtkIOImage import vtkTIFFWriter as vtkTIFFWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader

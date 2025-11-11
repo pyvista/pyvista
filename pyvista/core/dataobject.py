@@ -24,6 +24,7 @@ from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
@@ -241,7 +242,6 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
             writer.SetFileName(str(file_path))
-            writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
                 mesh_ = cast('pv.DataSet', mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
@@ -255,6 +255,15 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 # enable alpha channel if applicable
                 if mesh_[array_name].shape[-1] == 4:
                     writer.SetEnableAlpha(True)
+            elif isinstance(writer, _vtk.vtkTIFFWriter):
+                # Need to flip y axis tp ensure read/save round trip works
+                flip = _vtk.vtkImageFlip()
+                flip.SetInputData(mesh_)
+                flip.SetFilteredAxis(1)
+                flip.Update()
+                mesh_ = flip.GetOutput()
+
+            writer.SetInputData(mesh_)
             writer.Write()
 
         if self._WRITERS is None:
@@ -267,7 +276,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
-        file_ext = file_path.suffix
+        file_ext = get_ext(file_path)
 
         if file_ext == '.vtkhdf' and binary is False:
             msg = '.vtkhdf files can only be written in binary format.'
@@ -291,7 +300,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             save_pickle(filename, self)
         else:
             msg = (
-                'Invalid file extension for this data type.'
+                f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
                 f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
             raise ValueError(msg)
