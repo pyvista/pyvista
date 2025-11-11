@@ -32,7 +32,6 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import _vtk
-from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
@@ -3147,17 +3146,8 @@ def test_add_text():
     pl.show()
 
 
-@pytest.mark.skipif(
-    not check_math_text_support(),
-    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
-    'MathText requires matplotlib<3.6',
-)
-@pytest.mark.usefixtures('recwarn')
 def test_add_text_latex():
-    """Test LaTeX symbols.
-
-    For VTK<=9.2.2, this requires matplotlib<3.6
-    """
+    """Test LaTeX symbols."""
     pl = pv.Plotter()
     pl.add_text(r'$\rho$', position='upper_left', font_size=150, color='blue')
     pl.show()
