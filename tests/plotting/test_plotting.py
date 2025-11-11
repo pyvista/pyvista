@@ -4741,6 +4741,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'SolidSphere',
         'SolidSphereGeneric',
         'Sphere',
+        'Spline',
         'Text3D',
     ]
 
