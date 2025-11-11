@@ -166,6 +166,7 @@ from vtkmodules.vtkRenderingVolume import vtkGPUVolumeRayCastMapper as vtkGPUVol
 from vtkmodules.vtkRenderingVolume import (
     vtkUnstructuredGridVolumeRayCastMapper as vtkUnstructuredGridVolumeRayCastMapper,
 )
+from vtkmodules.vtkRenderingVolume import vtkVolumeMapper as vtkVolumeMapper
 from vtkmodules.vtkRenderingVolume import vtkVolumePicker as vtkVolumePicker
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle as vtkContextInteractorStyle
 
