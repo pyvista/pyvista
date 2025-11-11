@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -121,7 +121,7 @@ def Spline(
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
     if closed:
         spline_function.ClosedOn()
     else:
