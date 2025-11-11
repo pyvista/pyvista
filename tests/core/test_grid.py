@@ -439,8 +439,13 @@ def test_init_bad_filename():
 
 
 def test_save_bad_extension():
-    with pytest.raises(FileNotFoundError):
-        pv.UnstructuredGrid('file.abc')
+    match = (
+        "Invalid file extension '.abc' for data type <class "
+        "'pyvista.core.pointset.UnstructuredGrid'>.\n"
+        "Must be one of: ['.vtu', '.vtk', '.vtkhdf', '.pkl', '.pickle']"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.UnstructuredGrid().save('file.abc')
 
 
 @pytest.mark.parametrize(

@@ -301,7 +301,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         else:
             msg = (
                 f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
-                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
             raise ValueError(msg)
 
