@@ -256,9 +256,17 @@ class CameraPosition(_NoNewAttrMixin):
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         """List representation method."""
         return '[{},\n {},\n {}]'.format(*self.to_list())
+
+    def __repr__(self) -> str:
+        """Explicit representation of CameraPosition."""
+        return (
+            f'{CameraPosition.__name__}(position={self._position},\n'
+            f'               focal_point={self._focal_point},\n'
+            f'               viewup={self._viewup})'
+        )
 
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
