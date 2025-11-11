@@ -972,6 +972,8 @@ def test_tiff_reader_writer(tmp_path):
     mesh.save(new_filename)
     old = pv.read(filename)
     new = pv.read(new_filename)
+    # We should be able to do `assert new == old` but the equality check is too strict since
+    # there is floating point error associated with the spacing, so use `np.allclose` instead
     assert np.allclose(old.active_scalars, new.active_scalars)
     assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
 
