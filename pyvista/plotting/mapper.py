@@ -1240,7 +1240,7 @@ def _mapper_has_data_set_input(mapper):
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
 
 
-def _mapper_get_data_set_input(mapper):
+def _mapper_get_data_set_input(mapper) -> _vtk.vtkDataSet:
     """Get data set input from mapper using the appropriate method.
 
     Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
