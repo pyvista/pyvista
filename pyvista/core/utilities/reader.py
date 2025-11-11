@@ -2476,6 +2476,12 @@ class TIFFReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkTIFFReader'
 
+    def _set_defaults_post(self) -> None:
+        """Set defaults on reader post setting file, if needed."""
+        # Fix bug with default TIFF orientation https://gitlab.kitware.com/vtk/vtk/-/issues/19587
+        ORIENTATION_BOTLEFT = 4
+        self.reader.SetOrientationType(ORIENTATION_BOTLEFT)
+
 
 class HDRReader(BaseReader):
     """HDRReader for .hdr files.

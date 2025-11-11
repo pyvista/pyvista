@@ -446,11 +446,12 @@ def test_save_bad_extension():
     match = (
         "Invalid file extension '.abc' for data type <class "
         "'pyvista.core.pointset.UnstructuredGrid'>.\n"
-        f"Must be one of: {valid_ext}"
+        f'Must be one of: {valid_ext}'
     )
 
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.UnstructuredGrid().save('file.abc')
+
 
 @pytest.mark.parametrize(
     ('nonlinear_input', 'linear_output'),

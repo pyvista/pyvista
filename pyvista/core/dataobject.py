@@ -242,6 +242,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
             writer.SetFileName(str(file_path))
+            writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
                 mesh_ = cast('pv.DataSet', mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
@@ -255,15 +256,6 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 # enable alpha channel if applicable
                 if mesh_[array_name].shape[-1] == 4:
                     writer.SetEnableAlpha(True)
-            elif isinstance(writer, _vtk.vtkTIFFWriter):
-                # Need to flip y axis tp ensure read/save round trip works
-                flip = _vtk.vtkImageFlip()
-                flip.SetInputData(mesh_)
-                flip.SetFilteredAxis(1)
-                flip.Update()
-                mesh_ = flip.GetOutput()
-
-            writer.SetInputData(mesh_)
             writer.Write()
 
         if self._WRITERS is None:
