@@ -21,14 +21,16 @@ def test_spline():
     points = np.column_stack((x, y, z))
     spline = pv.Spline(points, 1000)
     assert spline.n_points == 1000
-    # test parametrize by length (check that it produces different points, i.e. absolute distance max > 0)
+    # test parametrize by length. Check that it produces different points
+    # i.e. absolute distance max > 0
     # vtk default is to parametrize by length
     spline_by_length = pv.Spline(points, 1000, parameterize_by_length=False)
     assert spline_by_length.n_points == 1000
     points_abs_diff = np.abs(spline.points - spline_by_length.points)
     print(points_abs_diff.max())
     assert points_abs_diff.max() > 0
-    # test closing (check if bounds are equal before and after closing, which is untrue on test case)
+    # test closing, check if bounds are equal before and after closing
+    # which is untrue on test case
     spline_closed = pv.Spline(points, 1000, closed=True)
     assert spline.bounds != spline_closed.bounds
     # test that boundary type / value change has an effect on produced splines
@@ -54,8 +56,12 @@ def test_spline():
                                                 right_constraint_type=boundary_type,
                                                 right_derivative_value = 1.0)
 
-            points_abs_diff_left_val = np.abs(spline_boundary_left_val.points - spline_boundary_left.points)
-            points_abs_diff_right_val = np.abs(spline_boundary_right_val.points - spline_boundary_right.points)
+            points_abs_diff_left_val = np.abs(
+                spline_boundary_left_val.points - spline_boundary_left.points
+            )
+            points_abs_diff_right_val = np.abs(
+                spline_boundary_right_val.points - spline_boundary_right.points
+            )
             assert points_abs_diff_left_val.max() > 0
             assert points_abs_diff_right_val.max() > 0
 

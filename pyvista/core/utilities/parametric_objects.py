@@ -54,15 +54,20 @@ def Spline(
         .. versionadded:: 0.46.5
 
     left_constraint_type : int, optional
-        Derivative constraint type at the left side, has to be 0, 1, 2, or 3. 
+        Derivative constraint type at the left side.
+        Has to be 0, 1, 2, or 3.
         As per vtk documentation :
         "
-        0: the first derivative at left(right) most point is determined from 
-        the line defined from the first(last) two points.
-        1: the first derivative at left(right) most point is set to Left(Right)Value.
-        2: the second derivative at left(right) most point is set to Left(Right)Value.
-        3: the second derivative at left(right)most points is Left(Right)Value times 
-        second derivative at first interior point.
+        0: the first derivative at left(right)
+            most point is determined from
+            the line defined from the first(last) two points.
+        1: the first derivative at left(right) most point
+            is set to Left(Right)Value. (DEFAULT BEHAVIOR)
+        2: the second derivative at left(right) most point
+            is set to Left(Right)Value.
+        3: the second derivative at left(right)most points
+            is Left(Right)Value times second derivative
+        at first interior point.
         ".
         .. versionadded:: 0.46.5
 
@@ -72,7 +77,8 @@ def Spline(
         .. versionadded:: 0.46.5
 
     right_constraint_type : int, optional
-        Derivative constraint type at the right side, has to be 0, 1, 2, or 3. 
+        Derivative constraint type at the right side
+        Has to be 0, 1, 2, or 3.
         See left_constraint_type description.
         .. versionadded:: 0.46.5
 
