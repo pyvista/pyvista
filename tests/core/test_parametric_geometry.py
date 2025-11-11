@@ -27,7 +27,6 @@ def test_spline():
     spline_by_length = pv.Spline(points, 1000, parameterize_by_length=False)
     assert spline_by_length.n_points == 1000
     points_abs_diff = np.abs(spline.points - spline_by_length.points)
-    print(points_abs_diff.max())
     assert points_abs_diff.max() > 0
     # test closing, check if bounds are equal before and after closing
     # which is untrue on test case
@@ -39,7 +38,6 @@ def test_spline():
         spline_boundary_right = pv.Spline(points, 1000, right_constraint_type=boundary_type)
         points_abs_diff_left = np.abs(spline.points - spline_boundary_left.points)
         points_abs_diff_right = np.abs(spline.points - spline_boundary_right.points)
-        print(boundary_type, points_abs_diff_left.max(), points_abs_diff_right.max())
         # based on output, it looks like vtk default is 1
         # because it produces an absolute difference in points array of 0.0.
         if boundary_type != 1:
