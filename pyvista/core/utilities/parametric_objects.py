@@ -69,26 +69,26 @@ def Spline(
             is Left(Right)Value times second derivative
         at first interior point.
         ".
-        .. versionadded:: 0.46.5
+        .. versionadded:: 0.47.0
 
 
     left_derivative_value : float, optional
         Value of derivative on left side.
-        .. versionadded:: 0.46.5
+        .. versionadded:: 0.47.0
 
     right_constraint_type : int, optional
         Derivative constraint type at the right side
         Has to be 0, 1, 2, or 3.
         See left_constraint_type description.
-        .. versionadded:: 0.46.5
+        .. versionadded:: 0.47.0
 
     right_derivative_value : float, optional
         Value of derivative on left side.
-        .. versionadded:: 0.46.5
+        .. versionadded:: 0.47.0
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
-        .. versionadded:: 0.46.5
+        .. versionadded:: 0.47.0
 
     Returns
     -------
