@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
@@ -15,13 +15,14 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
+    from pyvista import DataSet
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
 
 def algorithm_to_mesh_handler(
     mesh_or_algo, port=0
-) -> tuple[pyvista.DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None]:
+) -> tuple[DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None]:
     """Handle :vtk:`vtkAlgorithms` where mesh objects are expected.
 
     This is a convenience method to handle :vtk:`vtkAlgorithms` when passed to methods
@@ -142,7 +143,7 @@ class PreserveTypeAlgorithmBase(
 
         """
         inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
-        if isinstance(inp, pyvista.PointSet):
+        if isinstance(inp, pv.PointSet):
             return inp.cast_to_polydata()
         return inp
 

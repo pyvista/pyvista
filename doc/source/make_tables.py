@@ -403,15 +403,15 @@ class LineStyleTable(DocTable):
     @staticmethod
     def generate_img(line_style, img_path):
         """Generate and save an image of the given line_style."""
-        p = pv.Plotter(off_screen=True, window_size=[100, 50])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[100, 50])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         chart.line([0, 1], [0, 0], color='b', width=3.0, style=line_style)
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # Generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[18:25, 22:85, :]
 
         # exit early if the image already exists and is the same
@@ -419,7 +419,7 @@ class LineStyleTable(DocTable):
             return
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
 
 class MarkerStyleTable(DocTable):
@@ -469,15 +469,15 @@ class MarkerStyleTable(DocTable):
     @staticmethod
     def generate_img(marker_style, img_path):
         """Generate and save an image of the given marker_style."""
-        p = pv.Plotter(off_screen=True, window_size=[100, 100])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[100, 100])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         chart.scatter([0], [0], color='b', size=9, style=marker_style)
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[40:53, 47:60, :]
 
         # exit early if the image already exists and is the same
@@ -485,7 +485,7 @@ class MarkerStyleTable(DocTable):
             return
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
 
 class ColorSchemeTable(DocTable):
@@ -540,8 +540,8 @@ class ColorSchemeTable(DocTable):
     @staticmethod
     def generate_img(color_scheme, img_path):
         """Generate and save an image of the given color_scheme."""
-        p = pv.Plotter(off_screen=True, window_size=[240, 120])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[240, 120])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         # Use a temporary plot to determine the total number of colors in this scheme
         tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation='H')
@@ -551,10 +551,10 @@ class ColorSchemeTable(DocTable):
         plot.pen.color = 'w'
         chart.x_range = [0, n_colors]
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # Generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[34:78, 22:225, :]
 
         # exit early if the image already exists and is the same
@@ -562,7 +562,7 @@ class ColorSchemeTable(DocTable):
             return n_colors
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
         return n_colors
 
@@ -2196,13 +2196,13 @@ class DatasetCard:
             return img_path
         IMG_WIDTH, IMG_HEIGHT = 400, 300
         not_available_mesh = pv.Text3D('Not Available')
-        p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
-        p.background_color = 'white'
-        p.add_mesh(not_available_mesh, color='black')
-        p.view_xy()
-        p.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
-        p.enable_parallel_projection()
-        img_array = p.show(screenshot=True)
+        pl = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
+        pl.background_color = 'white'
+        pl.add_mesh(not_available_mesh, color='black')
+        pl.view_xy()
+        pl.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
+        pl.enable_parallel_projection()
+        img_array = pl.show(screenshot=True)
         img = Image.fromarray(img_array)
         img.save(img_path)
         return img_path

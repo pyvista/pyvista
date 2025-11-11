@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .renderer import Renderer
@@ -36,7 +36,7 @@ class BackgroundRenderer(Renderer):
 
         # read the image first as we don't need to create a render if
         # the image path is invalid
-        image_data = pyvista.read(image_path)
+        image_data = pv.read(image_path)
 
         super().__init__(parent, border=False)
         self.SetLayer(0)

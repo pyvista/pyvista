@@ -8,7 +8,7 @@ from typing import get_args
 
 from typing_extensions import TypeIs
 
-import pyvista
+import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 
 JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
@@ -114,4 +114,4 @@ def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
     >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
     """
-    pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
+    pv.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
