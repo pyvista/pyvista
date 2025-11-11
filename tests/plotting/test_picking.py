@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import _vtk
 from pyvista.plotting.errors import PyVistaPickingError
 
 if TYPE_CHECKING:
@@ -111,11 +111,11 @@ def test_multi_cell_picking(through):
     cube = pv.Cube()
 
     # Test with algorithm source to make sure connections work with picking
-    src = vtk.vtkSphereSource()
+    src = _vtk.vtkSphereSource()
     src.SetCenter((1, 0, 0))
-    mapper = vtk.vtkDataSetMapper()
+    mapper = _vtk.vtkDataSetMapper()
     mapper.SetInputConnection(src.GetOutputPort())
-    actor = vtk.vtkActor()
+    actor = _vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.SetPickable(True)
 

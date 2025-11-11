@@ -94,6 +94,7 @@ from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkLogger as vtkLogger
 from vtkmodules.vtkCommonCore import vtkLookupTable as vtkLookupTable
 from vtkmodules.vtkCommonCore import vtkMath as vtkMath
+from vtkmodules.vtkCommonCore import vtkObjectBase as vtkObjectBase
 from vtkmodules.vtkCommonCore import vtkOutputWindow as vtkOutputWindow
 from vtkmodules.vtkCommonCore import vtkPoints as vtkPoints
 from vtkmodules.vtkCommonCore import vtkSignedCharArray as vtkSignedCharArray

@@ -11,8 +11,8 @@ from typing import get_origin
 import numpy as np
 import pytest
 import scipy
-from vtk import vtkTransform
 
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core import pyvista_ndarray
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
@@ -69,7 +69,7 @@ from tests.conftest import NUMPY_VERSION_INFO
         np.eye(4).tolist(),
         vtkmatrix_from_array(np.eye(3)),
         vtkmatrix_from_array(np.eye(4)),
-        vtkTransform(),
+        _vtk.vtkTransform(),
     ],
 )
 def test_validate_transform4x4(transform_like):

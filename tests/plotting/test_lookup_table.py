@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
+from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -236,7 +236,7 @@ def test_table_values_update(lut):
 
 def test_to_tf(lut):
     tf = lut.to_color_tf()
-    assert isinstance(tf, vtk.vtkColorTransferFunction)
+    assert isinstance(tf, _vtk.vtkColorTransferFunction)
 
 
 def test_map_value(lut):
@@ -279,5 +279,5 @@ def test_custom_opacity(lut):
 @pytest.mark.parametrize('clamping', [True, False])
 def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
-    assert isinstance(tf, vtk.vtkPiecewiseFunction)
+    assert isinstance(tf, _vtk.vtkPiecewiseFunction)
     assert tf.GetClamping() == int(clamping)

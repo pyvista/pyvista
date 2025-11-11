@@ -13,9 +13,9 @@ from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
@@ -247,7 +247,7 @@ def test_vtk_colors(vtk_color):
     name = vtk_synonyms.get(name, name)
 
     # Get expected hex value from vtkNamedColors
-    color3ub = vtk.vtkNamedColors().GetColor3ub(name)
+    color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")

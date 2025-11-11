@@ -7,10 +7,10 @@ import weakref
 
 import numpy as np
 import pytest
-from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
@@ -158,7 +158,7 @@ def test_pen():
 def test_wrapping():
     width = 5
     # Test wrapping of VTK Pen object
-    pen = vtkPen()
+    pen = _vtk.vtkPen()
     wrappedPen = charts.Pen(_wrap=pen)
     assert wrappedPen.__this__ == pen.__this__
     assert wrappedPen.width == pen.GetWidth()
