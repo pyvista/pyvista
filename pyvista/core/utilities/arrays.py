@@ -455,7 +455,7 @@ def get_array_association(  # noqa: PLR0917
         msg = f'Data field ({preference}) not supported.'
         raise ValueError(msg)
 
-    matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
+    matches = [pref for pref, array in zip(preferences, arrays, strict=True) if array is not None]
     # optionally raise if no match
     if not matches:
         if err:
