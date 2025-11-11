@@ -594,7 +594,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     keys_after = output.keys()
 
     assert (output is multi) == inplace
-    for block_in, block_out in zip(multi, output):
+    for block_in, block_out in zip(multi, output, strict=True):
         assert (block_in is block_out) == inplace or (block_in is None)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
@@ -1057,8 +1057,8 @@ def test_multiblock_partitioned_zip(container):
     # Test `__iter__` and `__next__` inheritance
     list_ = [None, None]
     composite = container(list_)
-    zipped_container = list(zip(composite, composite))
-    zipped_list = list(zip(list_, list_))
+    zipped_container = list(zip(composite, composite, strict=True))
+    zipped_list = list(zip(list_, list_, strict=True))
 
     assert len(zipped_container) == len(zipped_list)
     assert len(zipped_container[0]) == len(zipped_list[0])
@@ -1427,7 +1427,7 @@ def test_flatten_copy(multiblock_all, copy):
 
     multi_out = multiblock_all.flatten(copy=copy)
     assert multi_in is not multi_out
-    for block_in, block_out in zip(multi_in, multi_out):
+    for block_in, block_out in zip(multi_in, multi_out, strict=True):
         assert block_in == block_out
         assert (block_in is block_out) == (not copy)
 
@@ -1470,7 +1470,7 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     flat_output = output.flatten(copy=False, check_duplicate_keys=False)
 
     assert flat_inputs.n_blocks == flat_output.n_blocks
-    for block_in, block_out in zip(flat_inputs, flat_output):
+    for block_in, block_out in zip(flat_inputs, flat_output, strict=True):
         assert ((block_in is block_out) == inplace) or block_out is None
 
     # Test root MultiBlock

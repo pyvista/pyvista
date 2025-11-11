@@ -50,7 +50,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Build Documentation
-        run: timeout 1800 tox run -e docs-build
+        run: timeout 3600 tox run -e docs-build
 
       - name: Dump Sphinx Build Warnings and Errors
         if: always()
