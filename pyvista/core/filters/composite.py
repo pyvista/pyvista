@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
@@ -211,7 +211,7 @@ class CompositeFilters(DataObjectFilters):
             return self
 
         # Create a copy and replace all the blocks
-        output = pyvista.MultiBlock()
+        output = pv.MultiBlock()
         output.shallow_copy(self, recursive=True)
         for ids, name, block in get_iterator(output, skip_none, skip_empty):
             filtered = apply_filter(function, ids, name, block)
@@ -327,7 +327,7 @@ class CompositeFilters(DataObjectFilters):
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)
+        box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
     @_deprecate_positional_args
@@ -359,7 +359,7 @@ class CompositeFilters(DataObjectFilters):
         """
         if nested:
             return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
-        box = pyvista.Box(bounds=self.bounds)
+        box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     @_deprecate_positional_args
@@ -387,7 +387,7 @@ class CompositeFilters(DataObjectFilters):
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:  # type: ignore[attr-defined]
-                ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
+                ids = np.arange(block.n_points, dtype=pv.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
         alg = _vtk.vtkPolyDataNormals()

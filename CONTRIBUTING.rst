@@ -826,9 +826,9 @@ the ``verify_image_cache`` fixture can be utilized:
 
     def test_add_background_image_not_global(verify_image_cache):
         verify_image_cache.skip = True  # Turn off caching
-        plotter = pyvista.Plotter()
-        plotter.add_mesh(sphere)
-        plotter.show()
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.show()
         # Turn on caching for further plotting
         verify_image_cache.skip = False
         ...

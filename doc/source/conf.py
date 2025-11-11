@@ -539,7 +539,7 @@ html_theme_options = {
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
-    'max_navbar_depth': 3,
+    'max_navbar_depth': 4,
     'icon_links': [
         {
             'name': 'Slack Community',
@@ -764,3 +764,4 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_js_file('redirect_fragments.js')

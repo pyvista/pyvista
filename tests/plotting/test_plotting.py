@@ -1675,21 +1675,21 @@ def test_vector_plotting_doesnt_modify_data(multicomp_poly):
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_vector_array_fail_with_incorrect_component(multicomp_poly):
     """Test failure modes of component argument."""
-    p = pv.Plotter()
+    pl = pv.Plotter()
 
     # Non-Integer
     with pytest.raises(TypeError):
-        p.add_mesh(multicomp_poly, scalars='vector_values_points', component=1.5)
+        pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=1.5)
 
     # Component doesn't exist
-    p = pv.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
-        p.add_mesh(multicomp_poly, scalars='vector_values_points', component=3)
+        pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=3)
 
     # Component doesn't exist
-    p = pv.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
-        p.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
+        pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
 
 
 def test_camera(sphere):
@@ -1874,37 +1874,37 @@ def test_link_views(sphere):
 @pytest.mark.skip_windows
 @pytest.mark.usefixtures('verify_image_cache')
 def test_link_views_camera_set():
-    p = pv.Plotter(shape=(1, 2))
-    p.add_mesh(pv.Cone())
-    assert not p.renderer.camera_set
-    p.subplot(0, 1)
-    p.add_mesh(pv.Cube())
-    assert not p.renderer.camera_set
-    p.link_views()  # make sure the default isometric view is used
-    for renderer in p.renderers:
+    pl = pv.Plotter(shape=(1, 2))
+    pl.add_mesh(pv.Cone())
+    assert not pl.renderer.camera_set
+    pl.subplot(0, 1)
+    pl.add_mesh(pv.Cube())
+    assert not pl.renderer.camera_set
+    pl.link_views()  # make sure the default isometric view is used
+    for renderer in pl.renderers:
         assert not renderer.camera_set
-    p.show()
+    pl.show()
 
-    p = pv.Plotter(shape=(1, 2))
-    p.add_mesh(pv.Cone())
-    p.subplot(0, 1)
-    p.add_mesh(pv.Cube())
-    p.link_views()
-    p.unlink_views()
-    for renderer in p.renderers:
+    pl = pv.Plotter(shape=(1, 2))
+    pl.add_mesh(pv.Cone())
+    pl.subplot(0, 1)
+    pl.add_mesh(pv.Cube())
+    pl.link_views()
+    pl.unlink_views()
+    for renderer in pl.renderers:
         assert not renderer.camera_set
-    p.show()
+    pl.show()
 
     wavelet = pv.Wavelet().clip('x')
-    p = pv.Plotter(shape=(1, 2))
-    p.add_mesh(wavelet, color='red')
-    p.subplot(0, 1)
-    p.add_mesh(wavelet, color='red')
-    p.link_views()
-    p.camera_position = pv.CameraPosition(
+    pl = pv.Plotter(shape=(1, 2))
+    pl.add_mesh(wavelet, color='red')
+    pl.subplot(0, 1)
+    pl.add_mesh(wavelet, color='red')
+    pl.link_views()
+    pl.camera_position = pv.CameraPosition(
         position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
     )
-    p.show()
+    pl.show()
 
 
 def test_orthographic_slicer(uniform):
@@ -1912,29 +1912,29 @@ def test_orthographic_slicer(uniform):
     slices = uniform.slice_orthogonal()
 
     # Orthographic Slicer
-    p = pv.Plotter(shape=(2, 2))
+    pl = pv.Plotter(shape=(2, 2))
 
-    p.subplot(1, 1)
-    p.add_mesh(slices, clim=uniform.get_data_range())
-    p.add_axes()
-    p.enable()
+    pl.subplot(1, 1)
+    pl.add_mesh(slices, clim=uniform.get_data_range())
+    pl.add_axes()
+    pl.enable()
 
-    p.subplot(0, 0)
-    p.add_mesh(slices['XY'])
-    p.view_xy()
-    p.disable()
+    pl.subplot(0, 0)
+    pl.add_mesh(slices['XY'])
+    pl.view_xy()
+    pl.disable()
 
-    p.subplot(0, 1)
-    p.add_mesh(slices['XZ'])
-    p.view_xz(negative=True)
-    p.disable()
+    pl.subplot(0, 1)
+    pl.add_mesh(slices['XZ'])
+    pl.view_xz(negative=True)
+    pl.disable()
 
-    p.subplot(1, 0)
-    p.add_mesh(slices['YZ'])
-    p.view_yz()
-    p.disable()
+    pl.subplot(1, 0)
+    pl.add_mesh(slices['YZ'])
+    pl.view_yz()
+    pl.disable()
 
-    p.show()
+    pl.show()
 
 
 def test_remove_actor(uniform):
@@ -2116,11 +2116,11 @@ def test_plot_compare_four():
 @skip_lesser_9_4_X_depth_peeling
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.enable_depth_peeling()
-    p.disable_depth_peeling()
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.enable_depth_peeling()
+    pl.disable_depth_peeling()
+    pl.show()
 
 
 @pytest.mark.skip_windows('No testing on windows for EDL')
@@ -2130,19 +2130,19 @@ def test_plot_eye_dome_lighting_plot(airplane):
 
 @pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plotter(airplane):
-    p = pv.Plotter()
-    p.add_mesh(airplane)
-    p.enable_eye_dome_lighting()
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(airplane)
+    pl.enable_eye_dome_lighting()
+    pl.show()
 
 
 @pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_enable_disable(airplane):
-    p = pv.Plotter()
-    p.add_mesh(airplane)
-    p.enable_eye_dome_lighting()
-    p.disable_eye_dome_lighting()
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(airplane)
+    pl.enable_eye_dome_lighting()
+    pl.disable_eye_dome_lighting()
+    pl.show()
 
 
 @pytest.mark.skip_windows
@@ -2165,9 +2165,9 @@ def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['opac'] = opac
-    p = pv.Plotter()
-    p.add_mesh(uniform, scalars='Spatial Point Data', opacity='opac')
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(uniform, scalars='Spatial Point Data', opacity='opac')
+    pl.show()
 
 
 @skip_windows_mesa
@@ -2175,9 +2175,9 @@ def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['unc'] = opac
-    p = pv.Plotter()
-    p.add_mesh(uniform, scalars='Spatial Point Data', opacity='unc', use_transparency=True)
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(uniform, scalars='Spatial Point Data', opacity='unc', use_transparency=True)
+    pl.show()
 
 
 def test_opacity_by_array_user_transform(uniform, verify_image_cache):
@@ -2187,9 +2187,9 @@ def test_opacity_by_array_user_transform(uniform, verify_image_cache):
 
     # Test with user defined transfer function
     opacities = [0, 0.2, 0.9, 0.2, 0.1]
-    p = pv.Plotter()
-    p.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
+    pl.show()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2198,10 +2198,10 @@ def test_opacity_mismatched_fail(uniform):
     uniform['unc'] = opac
 
     # Test using mismatched arrays
-    p = pv.Plotter()
+    pl = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
         # cell scalars vs point opacity
-        p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
+        pl.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
 @skip_windows_mesa
@@ -2213,16 +2213,16 @@ def test_opacity_by_array_preference():
     tetra.point_data['opac'] = tetra.cell_data['opac'] = opacities
 
     # test opacity by key
-    p = pv.Plotter()
-    p.add_mesh(tetra.copy(), opacity='opac', preference='cell')
-    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
-    p.close()
+    pl = pv.Plotter()
+    pl.add_mesh(tetra.copy(), opacity='opac', preference='cell')
+    pl.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity='opac', preference='point')
+    pl.close()
 
     # test opacity by array
-    p = pv.Plotter()
-    p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
-    p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
+    pl.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
+    pl.show()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2292,35 +2292,35 @@ def test_closing_and_mem_cleanup(verify_image_cache):
     n = 5
     for _ in range(n):
         for _ in range(n):
-            p = pv.Plotter()
+            pl = pv.Plotter()
             for k in range(n):
-                p.add_mesh(pv.Sphere(radius=k))
-            p.show()
+                pl.add_mesh(pv.Sphere(radius=k))
+            pl.show()
         pv.close_all()
 
 
 def test_above_below_scalar_range_annotations():
-    p = pv.Plotter()
-    p.add_mesh(
+    pl = pv.Plotter()
+    pl.add_mesh(
         examples.load_uniform(),
         clim=[100, 500],
         cmap='viridis',
         below_color='blue',
         above_color='red',
     )
-    p.show()
+    pl.show()
 
 
 def test_user_annotations_scalar_bar_mesh(uniform):
-    p = pv.Plotter()
-    p.add_mesh(uniform, annotations={100.0: 'yum'})
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(uniform, annotations={100.0: 'yum'})
+    pl.show()
 
 
 def test_fixed_font_size_annotation_text_scaling_off():
-    p = pv.Plotter()
+    pl = pv.Plotter()
     sargs = {'title_font_size': 12, 'label_font_size': 10}
-    p.add_mesh(
+    pl.add_mesh(
         examples.load_uniform(),
         clim=[100, 500],
         cmap='viridis',
@@ -2329,15 +2329,15 @@ def test_fixed_font_size_annotation_text_scaling_off():
         annotations={300.0: 'yum'},
         scalar_bar_args=sargs,
     )
-    p.show()
+    pl.show()
 
 
 def test_user_annotations_scalar_bar_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 
-    p = pv.Plotter()
-    p.add_volume(uniform, scalars='Spatial Point Data', annotations={100.0: 'yum'})
-    p.show()
+    pl = pv.Plotter()
+    pl.add_volume(uniform, scalars='Spatial Point Data', annotations={100.0: 'yum'})
+    pl.show()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2345,16 +2345,16 @@ def test_user_matrix_volume(uniform):
     shear = np.eye(4)
     shear[0, 1] = 1
 
-    p = pv.Plotter()
-    volume = p.add_volume(uniform, user_matrix=shear)
+    pl = pv.Plotter()
+    volume = pl.add_volume(uniform, user_matrix=shear)
     np.testing.assert_almost_equal(volume.user_matrix, shear)
 
     match = 'Shape must be one of [(3, 3), (4, 4)].'
     with pytest.raises(ValueError, match=re.escape(match)):
-        p.add_volume(uniform, user_matrix=np.eye(5))
+        pl.add_volume(uniform, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
-        p.add_volume(uniform, user_matrix='invalid')
+        pl.add_volume(uniform, user_matrix='invalid')
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2362,16 +2362,16 @@ def test_user_matrix_mesh(sphere):
     shear = np.eye(4)
     shear[0, 1] = 1
 
-    p = pv.Plotter()
-    actor = p.add_mesh(sphere, user_matrix=shear)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, user_matrix=shear)
     np.testing.assert_almost_equal(actor.user_matrix, shear)
 
     match = 'Shape must be one of [(3, 3), (4, 4)].'
     with pytest.raises(ValueError, match=re.escape(match)):
-        p.add_mesh(sphere, user_matrix=np.eye(5))
+        pl.add_mesh(sphere, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
-        p.add_mesh(sphere, user_matrix='invalid')
+        pl.add_mesh(sphere, user_matrix='invalid')
 
 
 def test_user_matrix_silhouette(airplane):
@@ -2390,8 +2390,8 @@ def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
 
-    p = pv.Plotter()
-    p.add_mesh(sphere, scalar_bar_args=sargs)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalar_bar_args=sargs)
 
     assert sargs == sargs_copy
 
@@ -2401,8 +2401,8 @@ def test_scalar_bar_args_unmodified_add_volume(uniform):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
 
-    p = pv.Plotter()
-    p.add_volume(uniform, scalar_bar_args=sargs)
+    pl = pv.Plotter()
+    pl.add_volume(uniform, scalar_bar_args=sargs)
 
     assert sargs == sargs_copy
 
@@ -2415,9 +2415,9 @@ def test_plot_string_array(verify_image_cache):
     labels[mesh['Spatial Cell Data'] < 300] = 'Medium'
     labels[mesh['Spatial Cell Data'] < 100] = 'Low'
     mesh['labels'] = labels
-    p = pv.Plotter()
-    p.add_mesh(mesh, scalars='labels')
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, scalars='labels')
+    pl.show()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2465,14 +2465,14 @@ def test_default_name_tracking():
     N = 10
     color = 'tan'
 
-    p = pv.Plotter()
+    pl = pv.Plotter()
     for i in range(N):
         for j in range(N):
             center = (i, j, 0)
             mesh = pv.Sphere(center=center)
-            p.add_mesh(mesh, color=color)
-    n_made_it = len(p.renderer._actors)
-    p.show()
+            pl.add_mesh(mesh, color=color)
+    n_made_it = len(pl.renderer._actors)
+    pl.show()
     assert n_made_it == N**2
 
     # release attached scalars
@@ -2611,14 +2611,14 @@ def test_index_vs_loc():
 
 def test_interactive_update():
     # Regression test for #1053
-    p = pv.Plotter()
-    p.show(interactive_update=True)
-    assert isinstance(p.iren.interactor, vtk.vtkRenderWindowInteractor)
-    p.close()
+    pl = pv.Plotter()
+    pl.show(interactive_update=True)
+    assert isinstance(pl.iren.interactor, vtk.vtkRenderWindowInteractor)
+    pl.close()
 
-    p = pv.Plotter()
+    pl = pv.Plotter()
     with pytest.warns(UserWarning, match=r'The plotter will close immediately automatically'):
-        p.show(auto_close=True, interactive_update=True)
+        pl.show(auto_close=True, interactive_update=True)
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2647,10 +2647,10 @@ def test_log_scale(uniform):
 @pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([[-0.5], [-0.5], [0]])])
 def test_set_focus(point):
     plane = pv.Plane()
-    p = pv.Plotter()
-    p.add_mesh(plane, color='tan', show_edges=True)
-    p.set_focus(point)  # focus on corner of the plane
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(plane, color='tan', show_edges=True)
+    pl.set_focus(point)  # focus on corner of the plane
+    pl.show()
 
 
 @pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([[-0.5], [-0.5], [0]])])
@@ -2659,11 +2659,11 @@ def test_set_viewup(verify_image_cache, vector):
 
     plane = pv.Plane()
     plane_higher = pv.Plane(center=(0, 0, 1), i_size=0.5, j_size=0.5)
-    p = pv.Plotter()
-    p.add_mesh(plane, color='tan', show_edges=False)
-    p.add_mesh(plane_higher, color='red', show_edges=False)
-    p.set_viewup(vector)
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(plane, color='tan', show_edges=False)
+    pl.add_mesh(plane_higher, color='red', show_edges=False)
+    pl.set_viewup(vector)
+    pl.show()
 
 
 def test_plot_shadows():
@@ -3968,15 +3968,15 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
 
     mesh = examples.load_uniform().slice()
-    p = pv.Plotter()
-    p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
     # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
     fmt = '%.3f' if pv.vtk_version_info < (9, 5, 99) else '{:.3f}'
-    p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
-    p.camera_position = pv.CameraPosition(
+    pl.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
+    pl.camera_position = pv.CameraPosition(
         position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
     )
-    p.show()
+    pl.show()
 
 
 def test_plot_individual_cell(hexbeam):
@@ -4340,15 +4340,15 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
 )
 def test_xyz_assembly(test_kwargs, assembly, obj_kwargs, verify_image_cache):
     verify_image_cache.high_variance_test = True
-    plot = pv.Plotter()
+    pl = pv.Plotter()
     assembly = assembly(**test_kwargs, **obj_kwargs, label_color='white')
-    plot.add_actor(assembly)
+    pl.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
-        assembly.camera = plot.camera
+        assembly.camera = pl.camera
     if test_kwargs:
         # Add second axes at the origin for visual reference
-        plot.add_axes_at_origin(x_color='black', y_color='black', z_color='black', labels_off=True)
-    plot.show()
+        pl.add_axes_at_origin(x_color='black', y_color='black', z_color='black', labels_off=True)
+    pl.show()
 
 
 @pytest.mark.parametrize(
@@ -4357,12 +4357,12 @@ def test_xyz_assembly(test_kwargs, assembly, obj_kwargs, verify_image_cache):
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
 def test_xyz_assembly_show_labels_false(assembly):
-    plot = pv.Plotter()
+    pl = pv.Plotter()
     assembly = assembly(show_labels=False)
-    plot.add_actor(assembly)
+    pl.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
-        assembly.camera = plot.camera
-    plot.show()
+        assembly.camera = pl.camera
+    pl.show()
 
 
 @pytest.mark.parametrize('relative_position', [(0, 0, -0.5), (0, 0, 0.5)], ids=['bottom', 'top'])
@@ -4385,10 +4385,10 @@ def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
 
-    plot = pv.Plotter()
-    plot.add_actor(axes)
-    plot.camera.zoom(1.5)
-    plot.show()
+    pl = pv.Plotter()
+    pl.add_actor(axes)
+    pl.camera.zoom(1.5)
+    pl.show()
 
 
 def test_axes_actor_properties():
@@ -4414,10 +4414,10 @@ def test_axes_actor_properties():
     axes_actor.z_axis_shaft_properties.color = z_color
     axes_actor.z_axis_tip_properties.color = z_color
 
-    plot = pv.Plotter()
-    plot.add_actor(axes_actor)
-    plot.camera.zoom(1.5)
-    plot.show()
+    pl = pv.Plotter()
+    pl.add_actor(axes_actor)
+    pl.camera.zoom(1.5)
+    pl.show()
 
 
 def test_show_bounds_no_labels():
@@ -4804,38 +4804,38 @@ def test_direction_objects(direction_obj_test_case):
     text_kwargs = dict(font_size=10)
     axes_kwargs = dict(viewport=(0, 0, 1.0, 1.0))
 
-    plot = pv.Plotter(shape=(2, 2))
+    pl = pv.Plotter(shape=(2, 2))
 
-    plot.subplot(0, 0)
-    plot.add_mesh(_create_object())
-    plot.add_text(name, **text_kwargs)
-    plot.add_axes()
+    pl.subplot(0, 0)
+    pl.add_mesh(_create_object())
+    pl.add_text(name, **text_kwargs)
+    pl.add_axes()
 
     direction = (1, 0, 0) if positive_dir else (-1, 0, 0)
     obj = _create_object(_direction=direction)
-    plot.subplot(1, 0)
-    plot.add_mesh(obj)
-    plot.add_text(f'{direction_param_name}={direction}', **text_kwargs)
-    plot.view_yz()
-    plot.add_axes(**axes_kwargs)
+    pl.subplot(1, 0)
+    pl.add_mesh(obj)
+    pl.add_text(f'{direction_param_name}={direction}', **text_kwargs)
+    pl.view_yz()
+    pl.add_axes(**axes_kwargs)
 
     direction = (0, 1, 0) if positive_dir else (0, -1, 0)
     obj = _create_object(_direction=direction)
-    plot.subplot(1, 1)
-    plot.add_mesh(obj)
-    plot.add_text(f'{direction_param_name}={direction}', **text_kwargs)
-    plot.view_zx()
-    plot.add_axes(**axes_kwargs)
+    pl.subplot(1, 1)
+    pl.add_mesh(obj)
+    pl.add_text(f'{direction_param_name}={direction}', **text_kwargs)
+    pl.view_zx()
+    pl.add_axes(**axes_kwargs)
 
     direction = (0, 0, 1) if positive_dir else (0, 0, -1)
     obj = _create_object(_direction=direction)
-    plot.subplot(0, 1)
-    plot.add_mesh(obj)
-    plot.add_text(f'{direction_param_name}={direction}', **text_kwargs)
-    plot.view_xy()
-    plot.add_axes(**axes_kwargs)
+    pl.subplot(0, 1)
+    pl.add_mesh(obj)
+    pl.add_text(f'{direction_param_name}={direction}', **text_kwargs)
+    pl.view_xy()
+    pl.add_axes(**axes_kwargs)
 
-    plot.show()
+    pl.show()
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -4891,9 +4891,9 @@ def test_contour_labels_boundary_style(
             component_mode='multi',
         )
         assert label_meshes.n_blocks <= len(values)
-        plot.add_mesh(label_meshes[0], color='red', label=str(values[0]))
-        plot.add_mesh(label_meshes[1], color='lime', label=str(values[1]))
-        plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
+        pl.add_mesh(label_meshes[0], color='red', label=str(values[0]))
+        pl.add_mesh(label_meshes[1], color='lime', label=str(values[1]))
+        pl.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
 
     def _generate_mesh(style):
         with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -4930,21 +4930,21 @@ def test_contour_labels_boundary_style(
     external_mesh.points += (0, 0, 1)
     internal_mesh.points += (0, 0, -1)
 
-    plot = pv.Plotter()
+    pl = pv.Plotter()
 
     plot_boundary_labels(external_mesh)
-    plot.add_text(EXTERNAL, position='upper_left')
+    pl.add_text(EXTERNAL, position='upper_left')
 
     plot_boundary_labels(all_mesh)
-    plot.add_text(ALL, position='left_edge')
+    pl.add_text(ALL, position='left_edge')
 
     plot_boundary_labels(internal_mesh)
-    plot.add_text(INTERNAL, position='lower_left')
+    pl.add_text(INTERNAL, position='lower_left')
 
-    plot.camera_position = pv.CameraPosition(
+    pl.camera_position = pv.CameraPosition(
         position=(5, 4, 3.5), focal_point=(1, 1, 1), viewup=(0.0, 0.0, 1.0)
     )
-    plot.show(return_cpos=True)
+    pl.show(return_cpos=True)
 
 
 @pytest.mark.parametrize(
@@ -4980,18 +4980,18 @@ def test_contour_labels_smoothing_constraint(
 
     # Add box of fixed size for scale
     box = pv.Box(bounds=(0, 10, 0, 10, 0, 10)).extract_all_edges()
-    plot = pv.Plotter()
-    plot.add_mesh(mesh, show_scalar_bar=False)
-    plot.add_mesh(box)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, show_scalar_bar=False)
+    pl.add_mesh(box)
 
     # Configure plot to enable showing one side of the mesh to visualize
     # the scale of the smoothing applied by the smoothing constraints
-    plot.enable_parallel_projection()
-    plot.view_yz()
-    plot.show_grid()
-    plot.reset_camera()
-    plot.camera.zoom(1.5)
-    plot.show()
+    pl.enable_parallel_projection()
+    pl.view_yz()
+    pl.show_grid()
+    pl.reset_camera()
+    pl.camera.zoom(1.5)
+    pl.show()
 
 
 @pytest.mark.usefixtures('_show_edges')
@@ -5012,11 +5012,11 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     with pytest.warns(pv.PyVistaDeprecationWarning):
         mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
 
-    plot = pv.Plotter()
-    plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
-    plot.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
-    plot.view_xy()
-    plot.show()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
+    pl.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
+    pl.view_xy()
+    pl.show()
 
 
 @pytest.mark.skip_windows('Windows colors all plane cells red (bug?)')
@@ -5080,12 +5080,12 @@ def test_cube_faces_source(name, value):
 
 
 def test_planes_assembly():
-    plot = pv.Plotter()
+    pl = pv.Plotter()
     actor = pv.PlanesAssembly()
-    plot.add_actor(actor)
-    actor.camera = plot.camera
-    plot.add_axes()
-    plot.show()
+    pl.add_actor(actor)
+    actor.camera = pl.camera
+    pl.add_axes()
+    pl.show()
 
 
 # Difference in clipping generates error of approx 500
@@ -5098,7 +5098,7 @@ def test_planes_assembly():
 def test_planes_assembly_label_position(
     label_kwarg, camera_position, label_mode, label_size, label_offset
 ):
-    plot = pv.Plotter()
+    pl = pv.Plotter()
 
     for edge in ('right', 'top', 'left', 'bottom'):
         for position in (-1, -0.5, 0, 0.5, 1):
@@ -5113,11 +5113,11 @@ def test_planes_assembly_label_position(
             )
             label_name = str(position) + edge[0].upper()
             setattr(actor, label_kwarg, label_name)
-            plot.add_actor(actor)
-            actor.camera = plot.camera
-    plot.camera_position = camera_position
-    plot.add_axes_at_origin()
-    plot.show()
+            pl.add_actor(actor)
+            actor.camera = pl.camera
+    pl.camera_position = camera_position
+    pl.add_axes_at_origin()
+    pl.show()
 
 
 BOUNDS = (-50, 50, -10, 30, -80, 80)
@@ -5129,7 +5129,7 @@ BOUNDS = (-50, 50, -10, 30, -80, 80)
 )
 @pytest.mark.parametrize('label_size', [25, 50])
 def test_planes_assembly_label_size(bounds, label_size):
-    plot = pv.Plotter()
+    pl = pv.Plotter()
     labels = ['FIRST ', 'SECOND ', 'THIRD ']
     common_kwargs = dict(bounds=bounds, label_size=label_size, opacity=0.1)
     for label_mode in ['2D', '3D']:
@@ -5141,9 +5141,9 @@ def test_planes_assembly_label_size(bounds, label_size):
             label_color='white' if label_mode == '3D' else 'black',
             **common_kwargs,
         )
-        plot.add_actor(actor)
-        actor.camera = plot.camera
-    plot.show()
+        pl.add_actor(actor)
+        actor.camera = pl.camera
+    pl.show()
 
 
 @pytest.fixture
@@ -5262,4 +5262,19 @@ def test_clip_box_crinkle(as_multiblock):
     pl.add_mesh(clipped_right, show_edges=True)
     pl.add_mesh(clipped_left, show_edges=True)
     pl.view_xy()
+    pl.show()
+
+
+def test_box():
+    box = pv.Box(level=0)
+    box['cell_data'] = np.arange(box.n_cells)
+
+    box_multi = pv.Box(level=[0, 1, 2]).translate((-3, 3, 0))
+    box_multi['cell_data'] = np.arange(box_multi.n_cells)
+
+    pl = pv.Plotter()
+    pl.add_mesh(box_multi, show_edges=True, cmap='turbo')
+    pl.add_mesh(box, show_edges=True, cmap='turbo')
+    pl.add_point_labels(box_multi.points, np.arange(box_multi.n_points))
+    pl.add_point_labels(box.points, np.arange(box.n_points))
     pl.show()
