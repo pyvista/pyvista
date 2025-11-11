@@ -47,14 +47,12 @@ def test_spline():
             assert points_abs_diff_right.max() > 0
         # vtk doc says: "The value is used only if the left(right) constraint is type 1-3."
         if boundary_type != 0:
-            spline_boundary_left_val = pv.Spline(points,
-                                                    1000,
-                                                    left_constraint_type=boundary_type,
-                                                    left_derivative_value = 1.0)
-            spline_boundary_right_val = pv.Spline(points,
-                                                1000,
-                                                right_constraint_type=boundary_type,
-                                                right_derivative_value = 1.0)
+            spline_boundary_left_val = pv.Spline(
+                points, 1000, left_constraint_type=boundary_type, left_derivative_value=1.0
+            )
+            spline_boundary_right_val = pv.Spline(
+                points, 1000, right_constraint_type=boundary_type, right_derivative_value=1.0
+            )
 
             points_abs_diff_left_val = np.abs(
                 spline_boundary_left_val.points - spline_boundary_left.points
@@ -64,6 +62,7 @@ def test_spline():
             )
             assert points_abs_diff_left_val.max() > 0
             assert points_abs_diff_right_val.max() > 0
+
 
 def test_kochanek_spline():
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
