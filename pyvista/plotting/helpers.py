@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
@@ -58,7 +58,7 @@ def plot_arrows(cent, direction, **kwargs):
     >>> pv.plot_arrows(cent, direction)
 
     """
-    return pyvista.plot([cent, direction], **kwargs)
+    return pv.plot([cent, direction], **kwargs)
 
 
 @_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
@@ -130,7 +130,7 @@ def plot_compare_four(  # noqa: PLR0917
 
     plotter_kwargs['notebook'] = notebook
 
-    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
+    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):

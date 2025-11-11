@@ -7,7 +7,7 @@ import weakref
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -367,7 +367,7 @@ class ScalarBars(_NoNewAttrMixin):
             raise ValueError(msg)
 
         if theme is None:
-            theme = pyvista.global_theme
+            theme = pv.global_theme
 
         if interactive is None:
             interactive = theme.interactive
@@ -446,7 +446,7 @@ class ScalarBars(_NoNewAttrMixin):
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = pyvista.LookupTable()
+            lut = pv.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0

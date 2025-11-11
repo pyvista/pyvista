@@ -539,7 +539,7 @@ html_theme_options = {
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
-    'max_navbar_depth': 3,
+    'max_navbar_depth': 4,
     'icon_links': [
         {
             'name': 'Slack Community',
