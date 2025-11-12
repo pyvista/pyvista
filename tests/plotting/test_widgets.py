@@ -8,10 +8,10 @@ from unittest.mock import ANY
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
@@ -502,7 +502,7 @@ def test_add_camera_orientation_widget():
 
 
 def test_plot_algorithm_widgets():
-    algo = vtk.vtkRTAnalyticSource()
+    algo = _vtk.vtkRTAnalyticSource()
 
     pl = pv.Plotter()
     pl.add_mesh_clip_box(algo, crinkle=True)
@@ -535,7 +535,7 @@ def test_add_volume_clip_plane(uniform):
         pl.add_volume_clip_plane(pv.Sphere())
 
     widget = pl.add_volume_clip_plane(uniform)
-    assert isinstance(widget, vtk.vtkImplicitPlaneWidget)
+    assert isinstance(widget, _vtk.vtkImplicitPlaneWidget)
     assert pl.volume.mapper.GetClippingPlanes().GetNumberOfItems() == 1
     pl.close()
 

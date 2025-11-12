@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
+from pyvista.plotting import _vtk
 
 
 def test_pointset_basic():
@@ -25,7 +25,7 @@ def test_pointset_basic():
 
 
 def test_pointset_from_vtk():
-    vtk_pset = vtk.vtkPointSet()
+    vtk_pset = _vtk.vtkPointSet()
 
     np_points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
     points = pv.vtk_points(np_points, deep=False)
@@ -54,7 +54,7 @@ def test_pointset_from_vtk():
 
 
 def test_pointset_wrap():
-    vtk_pset = vtk.vtkPointSet()
+    vtk_pset = _vtk.vtkPointSet()
     np_points = np.array([[0.0, 0.0, 0.0]])
     points = pv.vtk_points(np_points, deep=False)
     vtk_pset.SetPoints(points)
@@ -127,7 +127,7 @@ def test_filters_return_pointset(sphere):
 
 def test_pointset_clip_vtk_bug(sphere):
     pointset = sphere.cast_to_pointset()
-    alg = vtk.vtkTableBasedClipDataSet()
+    alg = _vtk.vtkTableBasedClipDataSet()
     alg.SetClipFunction(pv.generate_plane((1, 0, 0), (0, 0, 0)))
 
     # Filter works with PolyData

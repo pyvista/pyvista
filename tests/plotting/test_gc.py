@@ -6,15 +6,15 @@ import subprocess
 from typing import Any
 
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.core import _vtk_core as _vtk
 
 
 @pytest.mark.expect_check_gc_fail
 def test_leak_vtk() -> None:
     """Create a vtk leak with a simple self-reference."""
-    sphere = vtk.vtkSphereSource()
+    sphere = _vtk.vtkSphereSource()
     sphere.self_ref = sphere
 
 

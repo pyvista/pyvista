@@ -7,10 +7,10 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.geometric_objects import translate
 
 
@@ -161,7 +161,7 @@ def test_text3d_source_empty_string():
     if pv.vtk_version_info == (9, 0, 3):
         mx, mn = 1, -1
     else:
-        mx, mn = vtk.VTK_DOUBLE_MAX, vtk.VTK_DOUBLE_MIN
+        mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
 
     assert out.bounds == (mx, mn, mx, mn, mx, mn)
 

@@ -4,12 +4,11 @@ from types import GeneratorType
 
 import numpy as np
 import pytest
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -429,7 +428,7 @@ def test_set_shallow_regular_cells():
 def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
     idarr = numpy_to_idarr(mask)
-    assert np.allclose(mask.nonzero()[0], vtk_to_numpy(idarr))
+    assert np.allclose(mask.nonzero()[0], _vtk.vtk_to_numpy(idarr))
 
 
 def test_cell_types():
@@ -500,8 +499,8 @@ def test_cell_types():
         'BEZIER_PYRAMID',
     ]
     for cell_type in cell_types:
-        if hasattr(vtk, 'VTK_' + cell_type):
-            assert getattr(pv.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
+        if hasattr(_vtk, 'VTK_' + cell_type):
+            assert getattr(pv.CellType, cell_type) == getattr(_vtk, 'VTK_' + cell_type)
 
 
 def test_n_cells_deprecated():
