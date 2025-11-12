@@ -204,7 +204,7 @@ def _warn_xserver() -> None:  # pragma: no cover
             'This system does not appear to be running an xserver.\n'
             'PyVista will likely segfault when rendering.\n\n'
             'Alternatively, an offscreen version using OSMesa libraries '
-            'and ``vtk-osmesa`` is available.\n',
+            'and ``vtk`` is available as of VTK 9.5.\n',
             stacklevel=2,
         )
 
