@@ -4210,7 +4210,7 @@ def test_plot_cubemap_alone(cubemap, verify_image_cache):
     cubemap.plot()
 
 
-@pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of _vtk.')
+@pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of VTK.')
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 
