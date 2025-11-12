@@ -10,11 +10,11 @@ from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import CellType
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
@@ -439,8 +439,18 @@ def test_init_bad_filename():
 
 
 def test_save_bad_extension():
-    with pytest.raises(FileNotFoundError):
-        pv.UnstructuredGrid('file.abc')
+    valid_ext = ['.vtu', '.vtk', '.pkl', '.pickle']
+    if pv.vtk_version_info >= (9, 4):
+        valid_ext.insert(2, '.vtkhdf')
+
+    match = (
+        "Invalid file extension '.abc' for data type <class "
+        "'pyvista.core.pointset.UnstructuredGrid'>.\n"
+        f'Must be one of: {valid_ext}'
+    )
+
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.UnstructuredGrid().save('file.abc')
 
 
 @pytest.mark.parametrize(
@@ -491,7 +501,7 @@ def test_linear_copy_surf_elem():
     grid = pv.UnstructuredGrid(cells, celltypes, points, deep=False)
     lgrid = grid.linear_copy()
 
-    qfilter = vtk.vtkMeshQuality()
+    qfilter = _vtk.vtkMeshQuality()
     qfilter.SetInputData(lgrid)
     qfilter.Update()
     qual = pv.wrap(qfilter.GetOutput())['Quality']
@@ -1896,8 +1906,8 @@ def empty_poly_cast_to_ugrid():
 
     # Make sure a proper ugrid does not have these as None
     ugrid = pv.UnstructuredGrid()
-    assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
-    assert isinstance(get_cell_types(ugrid), vtk.vtkUnsignedCharArray)
+    assert isinstance(ugrid.GetCells(), _vtk.vtkCellArray)
+    assert isinstance(get_cell_types(ugrid), _vtk.vtkUnsignedCharArray)
 
     return cast_ugrid
 
@@ -1928,7 +1938,7 @@ def appended_images():
     slice0 = create_slice(0)
     slice1 = create_slice(1)
 
-    append = vtk.vtkImageAppend()
+    append = _vtk.vtkImageAppend()
     append.SetAppendAxis(2)
     append.AddInputData(slice0)
     append.AddInputData(slice1)

@@ -826,9 +826,9 @@ the ``verify_image_cache`` fixture can be utilized:
 
     def test_add_background_image_not_global(verify_image_cache):
         verify_image_cache.skip = True  # Turn off caching
-        plotter = pyvista.Plotter()
-        plotter.add_mesh(sphere)
-        plotter.show()
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.show()
         # Turn on caching for further plotting
         verify_image_cache.skip = False
         ...
@@ -1525,16 +1525,15 @@ created the following will occur:
 #.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-#.  Locally test and build the documentation with link checking to make
-    sure no links are outdated. Be sure to run ``make clean`` to ensure
-    no results are cached.
+#.  Locally test and build the documentation. Be sure to run ``make clean``
+    to ensure no results are cached.
 
     .. code-block:: bash
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
        tox run -e doctest-modules
-       make html -b linkcheck
+       tox run -e docs-build
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.

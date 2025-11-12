@@ -13,9 +13,9 @@ from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
@@ -76,7 +76,7 @@ def test_color():
         assert pv.Color(h_prefix + h) == i_rgba
     # Check dict
     for channels in itertools.product(*pv.Color.CHANNEL_NAMES):
-        dct = dict(zip(channels, i_rgba))
+        dct = dict(zip(channels, i_rgba, strict=True))
         assert pv.Color(dct) == i_rgba
     # Check opacity
     for opacity in (i_opacity, f_opacity, h_opacity):
@@ -101,7 +101,7 @@ def test_color():
     assert pv.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
     # Check iteration and indexing
     c = pv.Color(i_rgba)
-    assert all(ci == fi for ci, fi in zip(c, f_rgba))
+    assert all(ci == fi for ci, fi in zip(c, f_rgba, strict=True))
     for i, cnames in enumerate(pv.Color.CHANNEL_NAMES):
         assert c[i] == f_rgba[i]
         assert all(c[i] == c[cname] for cname in cnames)
@@ -185,21 +185,21 @@ def pytest_generate_tests(metafunc):
         color_names = list(CSS4_COLORS.keys())
         color_values = list(CSS4_COLORS.values())
 
-        test_cases = zip(color_names, color_values)
+        test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('css4_color', test_cases, ids=color_names)
 
     if 'tab_color' in metafunc.fixturenames:
         color_names = list(TABLEAU_COLORS.keys())
         color_values = list(TABLEAU_COLORS.values())
 
-        test_cases = zip(color_names, color_values)
+        test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('tab_color', test_cases, ids=color_names)
 
     if 'vtk_color' in metafunc.fixturenames:
         color_names = list(pv.plotting.colors._VTK_COLORS.keys())
         color_values = list(pv.plotting.colors._VTK_COLORS.values())
 
-        test_cases = zip(color_names, color_values)
+        test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('vtk_color', test_cases, ids=color_names)
 
     if 'color_synonym' in metafunc.fixturenames:
@@ -247,7 +247,7 @@ def test_vtk_colors(vtk_color):
     name = vtk_synonyms.get(name, name)
 
     # Get expected hex value from vtkNamedColors
-    color3ub = vtk.vtkNamedColors().GetColor3ub(name)
+    color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")

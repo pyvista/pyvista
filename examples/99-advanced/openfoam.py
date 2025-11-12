@@ -7,7 +7,7 @@ Plot OpenFOAM data
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 # %%
@@ -20,7 +20,7 @@ from pyvista import examples
 # in prior versions.
 
 filename = examples.download_cavity(load=False)
-reader = pyvista.POpenFOAMReader(filename)
+reader = pv.POpenFOAMReader(filename)
 
 # %%
 # OpenFOAM datasets include multiple sub-datasets including the internal mesh
@@ -97,7 +97,7 @@ def slice_z_center(mesh):
 
 
 slice_internal_mesh = slice_z_center(internal_mesh)
-slice_boundaries = pyvista.MultiBlock(
+slice_boundaries = pv.MultiBlock(
     {key: slice_z_center(boundaries[key]) for key in boundaries.keys()},
 )
 
@@ -115,10 +115,10 @@ streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
 # Plot streamlines colored by velocity magnitude.  Additionally, the moving
 # and fixed wall boundaries are plotted.
 
-plotter = pyvista.Plotter()
-plotter.add_mesh(slice_boundaries['movingWall'], color='red', line_width=3)
-plotter.add_mesh(slice_boundaries['fixedWalls'], color='black', line_width=3)
-plotter.add_mesh(streamlines.tube(radius=0.0005), scalars='U')
-plotter.view_xy()
-plotter.enable_parallel_projection()
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(slice_boundaries['movingWall'], color='red', line_width=3)
+pl.add_mesh(slice_boundaries['fixedWalls'], color='black', line_width=3)
+pl.add_mesh(streamlines.tube(radius=0.0005), scalars='U')
+pl.view_xy()
+pl.enable_parallel_projection()
+pl.show()

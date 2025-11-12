@@ -281,7 +281,7 @@ def test_ensightreader_timepoints():
     mesh_3 = reader.read()
 
     # assert all the data is different
-    for m_1, m_3 in zip(mesh_1, mesh_3):
+    for m_1, m_3 in zip(mesh_1, mesh_3, strict=True):
         assert not all(m_1['DENS'] == m_3['DENS'])
 
     reader.set_active_time_point(0)
@@ -841,7 +841,7 @@ def test_read_cgns():
     assert reader.family_array_status('inflow') is True
 
 
-def test_bmpreader():
+def test_bmp_reader_writer(tmp_path):
     filename = examples.download_masonry_texture(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.BMPReader)
@@ -849,6 +849,10 @@ def test_bmpreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.bmp'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_demreader():
@@ -861,14 +865,22 @@ def test_demreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_jpegreader():
-    filename = examples.planets.download_mars_surface(load=False)
+def test_jpeg_reader_writer(tmp_path):
+    filename = examples.download_bird(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.JPEGReader)
     assert reader.path == filename
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.jpg'
+    mesh.save(new_filename)
+    assert pv.compare_images(filename, new_filename) < 5
+
+    new_filename = tmp_path / 'new.jpeg'
+    mesh.save(new_filename)
+    assert pv.compare_images(filename, new_filename) < 5
 
 
 def test_meta_image_reader():
@@ -881,7 +893,7 @@ def test_meta_image_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_nifti_reader():
+def test_nifti_reader_writer(tmp_path):
     filename = examples.download_brain_atlas_with_sides(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.NIFTIReader)
@@ -889,6 +901,14 @@ def test_nifti_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.nii'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
+
+    new_filename = tmp_path / 'new.nii.gz'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_nrrd_reader():
@@ -901,7 +921,7 @@ def test_nrrd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_png_reader():
+def test_png_reader_writer(tmp_path):
     filename = examples.download_vtk_logo(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.PNGReader)
@@ -910,8 +930,12 @@ def test_png_reader():
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
 
+    new_filename = tmp_path / 'new.png'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
-def test_pnm_reader():
+
+def test_pnm_reader_writer(tmp_path):
     filename = examples.download_gourds_pnm(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.PNMReader)
@@ -919,6 +943,10 @@ def test_pnm_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.pnm'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_slc_reader():
@@ -931,7 +959,7 @@ def test_slc_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_tiff_reader():
+def test_tiff_reader_writer(tmp_path):
     filename = examples.download_crater_imagery(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.TIFFReader)
@@ -939,6 +967,22 @@ def test_tiff_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.tif'
+    mesh.save(new_filename)
+    old = pv.read(filename)
+    new = pv.read(new_filename)
+    # We should be able to do `assert new == old` but the equality check is too strict since
+    # there is floating point error associated with the spacing, so use `np.allclose` instead
+    assert np.allclose(old.active_scalars, new.active_scalars)
+    assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
+
+    new_filename = tmp_path / 'new.tiff'
+    mesh.save(new_filename)
+    old = pv.read(filename)
+    new = pv.read(new_filename)
+    assert np.allclose(old.active_scalars, new.active_scalars)
+    assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
 
 
 def test_hdr_reader():

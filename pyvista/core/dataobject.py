@@ -12,7 +12,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
@@ -24,6 +24,7 @@ from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
@@ -175,7 +176,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         """
 
-        def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
+        def _warn_multiblock_nested_field_data(mesh: pv.MultiBlock) -> None:
             iterator = mesh.recursive_iterator('all', node_type='parent')
             for index, name, nested_multiblock in iterator:
                 if len(nested_multiblock.field_data.keys()) > 0:
@@ -192,8 +193,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                         stacklevel=2,
                     )
 
-        def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
-            if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+        def _check_multiblock_hdf_types(mesh: pv.MultiBlock) -> None:
+            if (9, 4, 0) <= pv.vtk_version_info < (9, 5, 0):
                 if mesh.is_nested:
                     msg = (
                         'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
@@ -208,11 +209,11 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                     raise TypeError(msg)
 
             supported_block_types: list[type] = [
-                pyvista.PolyData,
-                pyvista.UnstructuredGrid,
+                pv.PolyData,
+                pv.UnstructuredGrid,
                 type(None),
-                pyvista.MultiBlock,
-                pyvista.PartitionedDataSet,
+                pv.MultiBlock,
+                pv.PartitionedDataSet,
             ]
             for id_, name, block in mesh.recursive_iterator('all'):
                 if type(block) not in supported_block_types:
@@ -227,7 +228,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                     )
                     raise TypeError(msg)
 
-        def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
+        def _warn_imagedata_direction_matrix(mesh: pv.ImageData) -> None:
             if not np.allclose(mesh.direction_matrix, np.eye(3)):
                 warnings.warn(
                     'The direction matrix for ImageData will not be saved using the '
@@ -243,7 +244,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
-                mesh_ = cast('pyvista.DataSet', mesh_)  # type: ignore[unreachable]
+                mesh_ = cast('pv.DataSet', mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
                     writer.SetArrayName(texture)
                     array_name = texture
@@ -267,7 +268,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
-        file_ext = file_path.suffix
+        file_ext = get_ext(file_path)
 
         if file_ext == '.vtkhdf' and binary is False:
             msg = '.vtkhdf files can only be written in binary format.'
@@ -277,11 +278,11 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         self._store_metadata()
 
         # warn if data will be lost
-        if isinstance(self, pyvista.MultiBlock):
+        if isinstance(self, pv.MultiBlock):
             _warn_multiblock_nested_field_data(self)
             if file_ext == '.vtkhdf':
                 _check_multiblock_hdf_types(self)
-        if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
+        if isinstance(self, pv.ImageData) and file_ext == '.vtk':
             _warn_imagedata_direction_matrix(self)
 
         writer_exts = self._WRITERS.keys()
@@ -291,8 +292,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             save_pickle(filename, self)
         else:
             msg = (
-                'Invalid file extension for this data type.'
-                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
+                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
             raise ValueError(msg)
 
@@ -473,13 +474,13 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             return True
 
         # these attrs use numpy.array_equal
-        if isinstance(self, pyvista.ImageData):
+        if isinstance(self, pv.ImageData):
             equal_attrs = ['extent', 'index_to_physical_matrix']
         else:
             equal_attrs = ['points', 'cells']
-            if isinstance(self, pyvista.PolyData):
+            if isinstance(self, pv.PolyData):
                 equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
-            elif isinstance(self, pyvista.UnstructuredGrid):
+            elif isinstance(self, pv.UnstructuredGrid):
                 equal_attrs.append('celltypes')
                 equal_attrs.append('polyhedron_faces')
                 equal_attrs.append('polyhedron_face_locations')
@@ -842,13 +843,13 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
-        pickle_format = pyvista.PICKLE_FORMAT
+        pickle_format = pv.PICKLE_FORMAT
         if pickle_format == 'vtk':
             return self._serialize_vtk_pickle_format()
         elif pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
         # Invalid format, use the setter to raise an error
-        pyvista.set_pickle_format(pickle_format)
+        pv.set_pickle_format(pickle_format)
 
     def _serialize_vtk_pickle_format(
         self: Self,
@@ -878,7 +879,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
-        if isinstance(self, pyvista.MultiBlock):
+        if isinstance(self, pv.MultiBlock):
             msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
                 "\nUse `pyvista.PICKLE_FORMAT='vtk'`."
@@ -886,7 +887,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             raise TypeError(msg)
         state = self.__dict__.copy()
 
-        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+        if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
             # not pass all settings down to the sub-writers. Until this is fixed, use the
             # dataset-specific writers
@@ -915,7 +916,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
+        elif pv.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -927,7 +928,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT`
         # is not shared between processes
-        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
+        state['PICKLE_FORMAT'] = pv.PICKLE_FORMAT
         return state
 
     def __setstate__(self: Self, state: Any) -> None:

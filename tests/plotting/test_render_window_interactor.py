@@ -10,7 +10,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.render_window_interactor import InteractorStyleImage
 from pyvista.plotting.render_window_interactor import InteractorStyleJoystickActor
 from pyvista.plotting.render_window_interactor import InteractorStyleJoystickCamera
@@ -314,8 +313,12 @@ def test_poked_subplot_context():
 @pytest.mark.skip_plotting
 def test_add_pick_observer():
     pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
+    with pytest.raises(ValueError, match='`add_pick_obeserver` has been deprecated'):
         pl.iren.add_pick_obeserver(empty_callback)
+
+    if pv.version_info >= (0, 48):
+        pytest.fail('Remove `Plotter.iren.add_pick_obeserver` method')
+
     pl = pv.Plotter()
     pl.iren.add_pick_observer(empty_callback)
 

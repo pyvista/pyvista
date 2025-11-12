@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -65,7 +65,7 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     # get interpolation density
     u_res = n_points
@@ -144,7 +144,7 @@ def KochanekSpline(  # noqa: PLR0917
 
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()

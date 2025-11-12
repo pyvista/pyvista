@@ -115,12 +115,12 @@ curvsurf.plot(texture=tex)
 mesh = curvsurf.extract_surface()
 
 # Create a plotter object
-plotter = pv.Plotter(notebook=False, off_screen=True)
+pl = pv.Plotter(notebook=False, off_screen=True)
 
-actor = plotter.add_mesh(mesh, smooth_shading=True, color='white')
+actor = pl.add_mesh(mesh, smooth_shading=True, color='white')
 
 # Open a gif
-plotter.open_gif('texture.gif')
+pl.open_gif('texture.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
@@ -140,11 +140,11 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
     # must update normals when smooth shading is enabled
     mesh.compute_normals(cell_normals=False, inplace=True)
-    plotter.write_frame()
-    plotter.clear()
+    pl.write_frame()
+    pl.clear()
 
 # Closes and finalizes movie
-plotter.close()
+pl.close()
 
 # %%
 # Textures with Transparency

@@ -8,11 +8,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
@@ -371,7 +370,7 @@ def test_field_uint8(hexbeam):
 
 def test_bitarray_points(hexbeam):
     n = hexbeam.n_points
-    vtk_array = vtk.vtkBitArray()
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -386,7 +385,7 @@ def test_bitarray_points(hexbeam):
 
 def test_bitarray_cells(hexbeam):
     n = hexbeam.n_cells
-    vtk_array = vtk.vtkBitArray()
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -401,7 +400,7 @@ def test_bitarray_cells(hexbeam):
 
 def test_bitarray_field(hexbeam):
     n = hexbeam.n_cells // 3
-    vtk_array = vtk.vtkBitArray()
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -553,7 +552,7 @@ def active_component_consistency_check(grid, component_type, field_association='
         f'Get{vtk_component_type}',
     )()
 
-    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
+    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, _vtk.vtk_to_numpy(vtk_arr))
 
 
 def test_set_active_vectors(hexbeam):
@@ -868,21 +867,21 @@ def test_shallow_copy_back_propagation():
     Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
     """
     # Case 1
-    points = vtk.vtkPoints()
+    points = _vtk.vtkPoints()
     points.InsertNextPoint(0.0, 0.0, 0.0)
     points.InsertNextPoint(1.0, 0.0, 0.0)
     points.InsertNextPoint(2.0, 0.0, 0.0)
-    original = vtk.vtkPolyData()
+    original = _vtk.vtkPolyData()
     original.SetPoints(points)
     wrapped = pv.PolyData(original, deep=False)
     wrapped.points[:] = 2.8
-    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    orig_points = _vtk.vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
     # Case 2
-    original = vtk.vtkPolyData()
+    original = _vtk.vtkPolyData()
     wrapped = pv.PolyData(original, deep=False)
     wrapped.points = np.random.default_rng().random((5, 3))
-    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    orig_points = _vtk.vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
 
 

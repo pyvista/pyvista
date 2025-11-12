@@ -14,7 +14,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 
@@ -363,7 +363,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                [  0.,   0.,   0.]])
 
         """
-        if pyvista.vtk_version_info >= (9, 4, 0):
+        if pv.vtk_version_info >= (9, 4, 0):
             return convert_array(self.GetPoints().GetData())
 
         xx, yy, zz = self.meshgrid
@@ -625,7 +625,18 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {  # type: ignore[assignment]
+    _WRITERS: ClassVar[
+        dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter | _vtk.vtkImageWriter]]
+    ] = {  # type: ignore[assignment]
+        '.bmp': _vtk.vtkBMPWriter,
+        '.jpeg': _vtk.vtkJPEGWriter,
+        '.jpg': _vtk.vtkJPEGWriter,
+        '.nii': _vtk.vtkNIFTIImageWriter,
+        '.nii.gz': _vtk.vtkNIFTIImageWriter,
+        '.png': _vtk.vtkPNGWriter,
+        '.pnm': _vtk.vtkPNMWriter,
+        '.tif': _vtk.vtkTIFFWriter,
+        '.tiff': _vtk.vtkTIFFWriter,
         '.vtk': _vtk.vtkDataSetWriter,
         '.vti': _vtk.vtkXMLImageDataWriter,
     }
@@ -761,10 +772,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             voi[axis * 2] = index_offset + start
             voi[axis * 2 + 1] = index_offset + stop - 1
 
-        clipped = pyvista.ImageDataFilters._clip_extent(voi, clip_to=self.extent)
+        clipped = pv.ImageDataFilters._clip_extent(voi, clip_to=self.extent)
         if strict_index and (
-            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2]))
-            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2]))
+            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2], strict=True))
+            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2], strict=True))
         ):
             msg = (
                 f'The requested volume of interest {tuple(voi)} '
@@ -801,7 +812,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                [1., 1., 1.]])
 
         """
-        if pyvista.vtk_version_info >= (9, 4, 0):
+        if pv.vtk_version_info >= (9, 4, 0):
             return convert_array(self.GetPoints().GetData())
 
         # Handle empty case
@@ -825,9 +836,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         direction = self.direction_matrix
         if not np.array_equal(direction, np.eye(3)):
-            return (
-                pyvista.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
-            )
+            return pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
         return points
 
     @points.setter
@@ -967,7 +976,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
-        fmt = '{}, {}, {}'.format(*[pyvista.FLOAT_FORMAT] * 3)
+        fmt = '{}, {}, {}'.format(*[pv.FLOAT_FORMAT] * 3)
         attrs.append(('Spacing', self.spacing, fmt))
         return attrs
 
@@ -995,7 +1004,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         rectilinear_coords = self._generate_rectilinear_coords()
-        grid = pyvista.RectilinearGrid(*rectilinear_coords)
+        grid = pv.RectilinearGrid(*rectilinear_coords)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
@@ -1200,7 +1209,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def index_to_physical_matrix(
         self: Self, matrix: TransformLike
     ) -> None:  # numpydoc ignore=GL08
-        T, R, N, S, K = pyvista.Transform(matrix).decompose()
+        T, R, N, S, K = pv.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
             warnings.warn(
                 'The transformation matrix has a shear component which has been removed. \n'
@@ -1235,4 +1244,4 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def physical_to_index_matrix(
         self: Self, matrix: TransformLike
     ) -> None:  # numpydoc ignore=GL08
-        self.index_to_physical_matrix = pyvista.Transform(matrix).inverse_matrix
+        self.index_to_physical_matrix = pv.Transform(matrix).inverse_matrix

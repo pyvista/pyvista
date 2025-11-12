@@ -14,7 +14,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -413,7 +413,7 @@ class ImageDataFilters(DataSetFilters):
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
-            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions, strict=True)
         )
         voi = self._compute_voi_from_index(
             indices, index_mode=index_mode, strict_index=strict_index
@@ -814,18 +814,16 @@ class ImageDataFilters(DataSetFilters):
                 else:
                     msg = 'mask cannot be `False`.'
                     raise ValueError(msg)
-            elif isinstance(mask_, pyvista.ImageData):
+            elif isinstance(mask_, pv.ImageData):
                 mesh = mask_
                 scalars = None
             else:
-                mesh = pyvista.ImageData(dimensions=self.dimensions, offset=self.offset)
+                mesh = pv.ImageData(dimensions=self.dimensions, offset=self.offset)
                 scalars = 'scalars'
                 mesh[scalars] = mask_
 
             field, scalars_ = _validate_scalars(mesh, scalars)
-            array = cast(
-                'pyvista.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field)
-            )
+            array = cast('pv.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field))
             num_components = 1 if array.ndim == 1 else array.shape[1]
 
             # Create a binary foreground/background mask array
@@ -925,7 +923,7 @@ class ImageDataFilters(DataSetFilters):
             # Offset to center the new cropped region around the original center
             new_offset = center - ((new_dimensions - 1) // 2)
 
-            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_dimensions(dimensions_):
             valid_dims = _validation.validate_array3(
@@ -947,14 +945,14 @@ class ImageDataFilters(DataSetFilters):
             half_size = (new_dimensions - 1) // 2
             new_offset = center - half_size
 
-            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_margin(margin_):
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
             # Do not pad singleton dims
             singleton_dims = np.array(self.dimensions) == 1
-            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
+            mask = [x for pair in zip(singleton_dims, singleton_dims, strict=True) for x in pair]
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 
@@ -966,7 +964,7 @@ class ImageDataFilters(DataSetFilters):
             elif offset_ is None:
                 return _voi_from_dimensions(dimensions_)
             else:
-                return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
+                return pv.ImageData(dimensions=dimensions, offset=offset).extent
 
         if factor is not None:
             voi = _voi_from_factor(factor)
@@ -2255,7 +2253,7 @@ class ImageDataFilters(DataSetFilters):
             )
             raise ValueError(msg)
 
-    def _flip_uniform(self, axis) -> pyvista.ImageData:
+    def _flip_uniform(self, axis) -> pv.ImageData:
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -2265,7 +2263,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return cast('pyvista.ImageData', wrap(alg.GetOutput()))
+        return cast('pv.ImageData', wrap(alg.GetOutput()))
 
     @_deprecate_positional_args
     def contour_labeled(  # noqa: PLR0917
@@ -2279,7 +2277,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> pyvista.PolyData:
+    ) -> pv.PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp
@@ -2436,7 +2434,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pyvista.vtk_verbosity('off'):
+        with pv.vtk_verbosity('off'):
             _update_alg(
                 alg, progress_bar=progress_bar, message='Performing Labeled Surface Extraction'
             )
@@ -2734,11 +2732,11 @@ class ImageDataFilters(DataSetFilters):
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
-        ...     plotter = pv.Plotter()
-        ...     plotter.add_mesh(colored_mesh, show_edges=True)
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(colored_mesh, show_edges=True)
         ...     if zoom:
-        ...         plotter.camera.zoom(zoom)
-        ...     return plotter
+        ...         pl.camera.zoom(zoom)
+        ...     return pl
         >>>
         >>> labels_plotter(image).show()
 
@@ -3001,7 +2999,7 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError(msg)
 
         if orient_faces is None:
-            orient_faces = bool(pyvista.vtk_version_info < (9, 5, 99))
+            orient_faces = bool(pv.vtk_version_info < (9, 5, 99))
         else:
             warnings.warn(
                 'Use of `orient_faces` is deprecated and should not be used. It will be removed '
@@ -3023,10 +3021,10 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
-        active_scalars = cast('pyvista.pyvista_ndarray', alg_input.active_scalars)
+        active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
-            return pyvista.PolyData()
+            return pv.PolyData()
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
@@ -3044,7 +3042,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                array_=cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
+                array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
                 select_inputs_=select_inputs,
                 select_outputs_=select_outputs,
             )
@@ -3059,10 +3057,10 @@ class ImageDataFilters(DataSetFilters):
 
         # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pyvista.vtk_verbosity('off'):
+        with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
-        output: pyvista.PolyData = _get_output(alg)
+        output: pv.PolyData = _get_output(alg)
 
         (  # Clear temp scalars from input
             alg_input.point_data.remove(temp_scalars_name)
@@ -3119,7 +3117,7 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
-            if pyvista.vtk_version_info >= (9, 4):
+            if pv.vtk_version_info >= (9, 4):
                 filter_ = _vtk.vtkOrientPolyData()
                 filter_.SetInputData(output)
                 filter_.ConsistencyOn()
@@ -3569,7 +3567,7 @@ class ImageDataFilters(DataSetFilters):
         cell_data = self.cell_data
 
         # Get data to use and operations to perform for the conversion
-        new_image = pyvista.ImageData()
+        new_image = pv.ImageData()
 
         if points_to_cells:
             output_scalars = scalars or _get_output_scalars('point')
@@ -3648,7 +3646,7 @@ class ImageDataFilters(DataSetFilters):
         pad_all_scalars: bool = False,
         progress_bar: bool = False,
         pad_singleton_dims: bool | None = None,
-    ) -> pyvista.ImageData:
+    ) -> ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
         .. versionadded:: 0.44.0
@@ -3979,7 +3977,7 @@ class ImageDataFilters(DataSetFilters):
         constant_value: int | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> tuple[pyvista.ImageData, NDArray[int], NDArray[int]]:
+    ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
         Only points whose `scalar` value is within the `scalar_range` are considered for
@@ -4210,7 +4208,7 @@ class ImageDataFilters(DataSetFilters):
                 msg = '`point_seeds` must be specified when `extraction_mode="seeded"`.'
                 raise ValueError(msg)
             elif not isinstance(point_seeds, _vtk.vtkDataSet):
-                point_seeds = pyvista.PointSet(point_seeds)
+                point_seeds = pv.PointSet(point_seeds)
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
@@ -4929,7 +4927,7 @@ class ImageDataFilters(DataSetFilters):
         # Setup reference image
         if reference_image is None:
             # Use the input as a reference
-            reference_image = pyvista.ImageData()
+            reference_image = pv.ImageData()
             reference_image.copy_structure(input_image)
             reference_image_provided = False
         else:
@@ -4939,7 +4937,7 @@ class ImageDataFilters(DataSetFilters):
                     'parameters.\n`reference_image` must define the geometry exclusively.'
                 )
                 raise ValueError(msg)
-            _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
+            _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
             reference_image_provided = True
 
         # Use SetMagnificationFactors to indirectly set the dimensions.
@@ -5315,7 +5313,7 @@ class ImageDataFilters(DataSetFilters):
             preference=preference,
             component_mode=component_mode,
             split=split,
-            mesh_type=pyvista.ImageData,
+            mesh_type=pv.ImageData,
         )
         if isinstance(validated, tuple):
             (
@@ -5377,7 +5375,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Generate output array
         input_array = cast(
-            'pyvista.pyvista_ndarray',
+            'pv.pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
         )
         array_out = np.full_like(input_array, fill_value=fill_value)
@@ -5386,7 +5384,7 @@ class ImageDataFilters(DataSetFilters):
         )
         array_out[id_mask] = replacement_values
 
-        output = pyvista.ImageData()
+        output = pv.ImageData()
         output.copy_structure(self)
         output[array_name] = array_out
         return output
@@ -5759,7 +5757,7 @@ class ImageDataFilters(DataSetFilters):
         all_extents: list[tuple[int, int, int, int, int, int]] = []
         for i, img in enumerate(all_images):
             if i > 0:
-                _validation.check_instance(img, pyvista.ImageData)
+                _validation.check_instance(img, pv.ImageData)
 
             # Create shallow copies so we can safely modify if needed
             img_copy = img.copy(deep=False)
@@ -5868,7 +5866,7 @@ class ImageDataFilters(DataSetFilters):
             else:  # dtype_policy == 'match'
                 dtype_out = all_dtypes[0]
 
-            for img, scalars in zip(all_images, all_scalars):
+            for img, scalars in zip(all_images, all_scalars, strict=True):
                 array = img.point_data[scalars]
                 img.point_data[scalars] = array.astype(dtype_out, copy=False)
         else:
@@ -5893,7 +5891,9 @@ class ImageDataFilters(DataSetFilters):
                     )
                     raise ValueError(msg)
 
-                for img, n_components, scalars in zip(all_images, all_n_components, all_scalars):
+                for img, n_components, scalars in zip(
+                    all_images, all_n_components, all_scalars, strict=True
+                ):
                     if n_components < target_n_components:
                         array = img.point_data[scalars]
                         if n_components < 3:
@@ -5924,7 +5924,7 @@ class ImageDataFilters(DataSetFilters):
             whole_extent[1::2] = maxs
 
             # Create background image
-            background_img = pyvista.ImageData(origin=self.origin, spacing=self.spacing)
+            background_img = pv.ImageData(origin=self.origin, spacing=self.spacing)
             background_img.field_data.update(self.field_data)
             background_img.extent = whole_extent
             target_shape = (background_img.n_points, target_n_components)

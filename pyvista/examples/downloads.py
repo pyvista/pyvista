@@ -29,6 +29,7 @@ from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
 import sys
+from typing import TYPE_CHECKING
 from typing import cast
 import warnings
 
@@ -37,7 +38,7 @@ import pooch
 from pooch import Unzip
 from pooch.utils import get_logger
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.fileio import get_ext
@@ -50,6 +51,9 @@ from pyvista.examples._dataset_loader import _load_as_multiblock
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
+if TYPE_CHECKING:
+    from pyvista import ImageData
+    from pyvista import MultiBlock
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
 POOCH_LOGGER.setLevel(logging.CRITICAL)
@@ -1525,7 +1529,7 @@ def _sparse_points_reader(saved_file):
     table_points.SetYColumn('y')
     table_points.SetZColumn('z')
     table_points.Update()
-    return pyvista.wrap(table_points.GetOutput())
+    return pv.wrap(table_points.GetOutput())
 
 
 _dataset_sparse_points = _SingleFileDownloadableDatasetLoader(
@@ -3667,13 +3671,13 @@ def _kitchen_split_load_func(mesh):
         'cookingPlate': (17, 19, 7, 9, 6, 6),
         'furniture': (17, 19, 7, 9, 11, 11),
     }
-    kitchen = pyvista.MultiBlock()
+    kitchen = pv.MultiBlock()
     for key, extent in extents.items():
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = pyvista.core.filters._get_output(alg)
+        result = pv.core.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -4737,7 +4741,7 @@ def download_gpr_path(load=True):  # noqa: FBT002
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
-    load_func=pyvista.PolyData,  # type: ignore[arg-type]
+    load_func=pv.PolyData,  # type: ignore[arg-type]
 )
 
 
@@ -4960,7 +4964,7 @@ def download_drill(load=True):  # noqa: FBT002
 
     """
     # Silence warning: unexpected data at end of line in OBJ file
-    with pyvista.vtk_verbosity('off'):
+    with pv.vtk_verbosity('off'):
         return _download_dataset(_dataset_drill, load=load)
 
 
@@ -5309,7 +5313,7 @@ def download_lshape(load=True):  # noqa: FBT002
 
 def _lshape_files_func():
     def read_func(filename):
-        reader = pyvista.get_reader(filename)
+        reader = pv.get_reader(filename)
         reader.set_active_time_set(1)
         reader.set_active_time_value(1.0)
         return reader.read()
@@ -5390,17 +5394,17 @@ def download_single_sphere_animation(load=True):  # noqa: FBT002
 
     Generate the animation.
 
-    >>> plotter = pv.Plotter()
-    >>> plotter.open_gif(gif_filename)
+    >>> pl = pv.Plotter()
+    >>> pl.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
-    ...     _ = plotter.add_mesh(mesh, smooth_shading=True)
-    ...     _ = plotter.add_text(f'Time: {time_value:.0f}', color='black')
-    ...     plotter.write_frame()
-    ...     plotter.clear()
-    ...     plotter.enable_lightkit()
-    >>> plotter.close()
+    ...     _ = pl.add_mesh(mesh, smooth_shading=True)
+    ...     _ = pl.add_text(f'Time: {time_value:.0f}', color='black')
+    ...     pl.write_frame()
+    ...     pl.clear()
+    ...     pl.enable_lightkit()
+    >>> pl.close()
 
     .. seealso::
 
@@ -5450,17 +5454,17 @@ def download_dual_sphere_animation(load=True):  # noqa: FBT002
 
     Generate the animation.
 
-    >>> plotter = pv.Plotter()
-    >>> plotter.open_gif(gif_filename)
+    >>> pl = pv.Plotter()
+    >>> pl.open_gif(gif_filename)
     >>> for time_value in reader.time_values:
     ...     reader.set_active_time_value(time_value)
     ...     mesh = reader.read()
-    ...     _ = plotter.add_mesh(mesh, smooth_shading=True)
-    ...     _ = plotter.add_text(f'Time: {time_value:.0f}', color='black')
-    ...     plotter.write_frame()
-    ...     plotter.clear()
-    ...     plotter.enable_lightkit()
-    >>> plotter.close()
+    ...     _ = pl.add_mesh(mesh, smooth_shading=True)
+    ...     _ = pl.add_text(f'Time: {time_value:.0f}', color='black')
+    ...     pl.write_frame()
+    ...     pl.clear()
+    ...     pl.enable_lightkit()
+    >>> pl.close()
 
     .. seealso::
 
@@ -5575,7 +5579,7 @@ def download_openfoam_tubes(load=True):  # noqa: FBT002
 
 
 def _openfoam_tubes_read_func(filename):
-    reader = pyvista.OpenFOAMReader(filename)
+    reader = pv.OpenFOAMReader(filename)
     reader.set_active_time_value(1000)
     return reader.read()
 
@@ -6043,7 +6047,7 @@ def download_cgns_multi(load=True):  # noqa: FBT002
 
 
 def _cgns_multi_read_func(filename):
-    reader = pyvista.get_reader(filename)
+    reader = pv.get_reader(filename)
     # Disable reading the boundary patch. This generates messages like
     # "Skipping BC_t node: BC_t type 'BCFarfield' not supported yet."
     reader.load_boundary_patch = False
@@ -6059,7 +6063,7 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 @_deprecate_positional_args
 def download_dicom_stack(
     load: bool = True,  # noqa: FBT001, FBT002
-) -> pyvista.ImageData | str:
+) -> ImageData | str:
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)
@@ -6494,7 +6498,7 @@ def download_cloud_dark_matter(load=True):  # noqa: FBT002
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,  # type: ignore[arg-type]
+    load_func=pv.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -6560,7 +6564,7 @@ def download_cloud_dark_matter_dense(load=True):  # noqa: FBT002
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,  # type: ignore[arg-type]
+    load_func=pv.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -7600,13 +7604,11 @@ def download_victorian_goblet_face_illusion(load=True):  # noqa: FBT002
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> mesh = examples.download_victorian_goblet_face_illusion()
-    >>> plotter = pv.Plotter(lighting='none')
-    >>> _ = plotter.add_mesh(
-    ...     mesh, edge_color='gray', color='white', show_edges=True
-    ... )
-    >>> _ = plotter.add_floor('-x', color='black')
-    >>> plotter.enable_parallel_projection()
-    >>> plotter.show(cpos='yz')
+    >>> pl = pv.Plotter(lighting='none')
+    >>> _ = pl.add_mesh(mesh, edge_color='gray', color='white', show_edges=True)
+    >>> _ = pl.add_floor('-x', color='black')
+    >>> pl.enable_parallel_projection()
+    >>> pl.show(cpos='yz')
 
     .. seealso::
 
@@ -7698,7 +7700,7 @@ def _reservoir_load_func(grid):
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
-    read_func=pyvista.ExplicitStructuredGrid,  # type: ignore[arg-type]
+    read_func=pv.ExplicitStructuredGrid,  # type: ignore[arg-type]
     load_func=_reservoir_load_func,
 )
 
@@ -7887,9 +7889,9 @@ class _WholeBodyCTUtilities:
             raise RuntimeError(msg)
 
     @staticmethod
-    def add_metadata(dataset: pyvista.MultiBlock, colors_module_path: str):
+    def add_metadata(dataset: MultiBlock, colors_module_path: str):
         # Add color and id mappings to dataset
-        segmentations = cast('pyvista.MultiBlock', dataset['segmentations'])
+        segmentations = cast('pv.MultiBlock', dataset['segmentations'])
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
@@ -7900,19 +7902,19 @@ class _WholeBodyCTUtilities:
         )
 
     @staticmethod
-    def label_map_from_masks(masks: pyvista.MultiBlock):
+    def label_map_from_masks(masks: MultiBlock):
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
-        n_points = cast('pyvista.ImageData', masks[0]).n_points
+        n_points = cast('pv.ImageData', masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
-            mask = cast('pyvista.ImageData', masks[name])
+            mask = cast('pv.ImageData', masks[name])
             label_map_array[mask.active_scalars == 1] = i + 1
 
         # Add scalars to a new image
-        label_map_image = pyvista.ImageData()
-        label_map_image.copy_structure(cast('pyvista.ImageData', masks[0]))
+        label_map_image = pv.ImageData()
+        label_map_image.copy_structure(cast('pv.ImageData', masks[0]))
         label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
         return label_map_image
 
@@ -8610,7 +8612,7 @@ def download_nek5000(load=True):  # noqa: FBT002
 
     """
     # Silence info messages about 2D mesh found
-    with pyvista.vtk_verbosity('off'):
+    with pv.vtk_verbosity('off'):
         return _download_dataset(_dataset_nek5000, load=load)
 
 

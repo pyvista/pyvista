@@ -9,9 +9,9 @@ import inspect
 import platform
 
 import pytest
-from vtk import vtkObjectBase
 
 import pyvista as pv
+from pyvista.core import _vtk_core as _vtk
 from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests
@@ -63,7 +63,7 @@ def check_gc(request):
     for obj in gc.get_objects():
         # Micro-optimized for performance as this is called millions of times
         try:
-            if isinstance(obj, vtkObjectBase) and obj.__class__.__name__.startswith('vtk'):
+            if isinstance(obj, _vtk.vtkObjectBase) and obj.__class__.__name__.startswith('vtk'):
                 before.add(id(obj))
         except ReferenceError:
             pass
@@ -83,7 +83,7 @@ def check_gc(request):
         # Micro-optimized for performance as this is called millions of times
         try:
             if (
-                isinstance(obj, vtkObjectBase)
+                isinstance(obj, _vtk.vtkObjectBase)
                 and obj.__class__.__name__.startswith('vtk')
                 and id(obj) not in before
             ):

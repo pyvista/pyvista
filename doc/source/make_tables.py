@@ -42,6 +42,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -61,6 +62,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
+READERS_DIR = 'api/readers'
 CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
@@ -168,6 +170,53 @@ class DocTable:
         """
         msg = 'Subclasses should specify a get_row method.'
         raise NotImplementedError(msg)
+
+
+class ReadersTable(DocTable):
+    """Class to generate table for readers."""
+
+    path = f'{READERS_DIR}/readers_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table:: PyVista Readers
+        |   :widths: 50 50
+        |   :header-rows: 1
+        |
+        |   * - Reader
+        |     - File Extension(s)
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        # Convert ext->reader mapping into reader->ext mapping
+        reader_extensions: dict[pv.BaseReader, set[str]] = {
+            reader: set() for reader in set(CLASS_READERS.values())
+        }
+        for ext, reader in CLASS_READERS.items():
+            reader_extensions[reader].add(ext)
+        # Sort by the class name of the reader
+        return sorted(
+            reader_extensions.items(),
+            key=lambda item: item[0].__name__,
+        )
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, _, row_data):
+        reader, extensions = row_data
+        reader_fmt = f':class:`~pyvista.{reader.__name__}`'
+        extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
+        return cls.row_template.format(reader_fmt, extensions_fmt)
 
 
 class CellQualityMeasuresTable(DocTable):
@@ -403,15 +452,15 @@ class LineStyleTable(DocTable):
     @staticmethod
     def generate_img(line_style, img_path):
         """Generate and save an image of the given line_style."""
-        p = pv.Plotter(off_screen=True, window_size=[100, 50])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[100, 50])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         chart.line([0, 1], [0, 0], color='b', width=3.0, style=line_style)
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # Generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[18:25, 22:85, :]
 
         # exit early if the image already exists and is the same
@@ -419,7 +468,7 @@ class LineStyleTable(DocTable):
             return
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
 
 class MarkerStyleTable(DocTable):
@@ -469,15 +518,15 @@ class MarkerStyleTable(DocTable):
     @staticmethod
     def generate_img(marker_style, img_path):
         """Generate and save an image of the given marker_style."""
-        p = pv.Plotter(off_screen=True, window_size=[100, 100])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[100, 100])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         chart.scatter([0], [0], color='b', size=9, style=marker_style)
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[40:53, 47:60, :]
 
         # exit early if the image already exists and is the same
@@ -485,7 +534,7 @@ class MarkerStyleTable(DocTable):
             return
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
 
 class ColorSchemeTable(DocTable):
@@ -540,8 +589,8 @@ class ColorSchemeTable(DocTable):
     @staticmethod
     def generate_img(color_scheme, img_path):
         """Generate and save an image of the given color_scheme."""
-        p = pv.Plotter(off_screen=True, window_size=[240, 120])
-        p.background_color = 'w'
+        pl = pv.Plotter(off_screen=True, window_size=[240, 120])
+        pl.background_color = 'w'
         chart = pv.Chart2D()
         # Use a temporary plot to determine the total number of colors in this scheme
         tmp_plot = chart.bar([0], [[1]] * 2, color=color_scheme, orientation='H')
@@ -551,10 +600,10 @@ class ColorSchemeTable(DocTable):
         plot.pen.color = 'w'
         chart.x_range = [0, n_colors]
         chart.hide_axes()
-        p.add_chart(chart)
+        pl.add_chart(chart)
 
         # Generate and crop the image
-        _, img = p.show(screenshot=True, return_cpos=True)
+        _, img = pl.show(screenshot=True, return_cpos=True)
         img = img[34:78, 22:225, :]
 
         # exit early if the image already exists and is the same
@@ -562,7 +611,7 @@ class ColorSchemeTable(DocTable):
             return n_colors
 
         # save it
-        p._save_image(img, img_path, False)
+        pl._save_image(img, img_path, False)
 
         return n_colors
 
@@ -2196,13 +2245,13 @@ class DatasetCard:
             return img_path
         IMG_WIDTH, IMG_HEIGHT = 400, 300
         not_available_mesh = pv.Text3D('Not Available')
-        p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
-        p.background_color = 'white'
-        p.add_mesh(not_available_mesh, color='black')
-        p.view_xy()
-        p.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
-        p.enable_parallel_projection()
-        img_array = p.show(screenshot=True)
+        pl = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
+        pl.background_color = 'white'
+        pl.add_mesh(not_available_mesh, color='black')
+        pl.view_xy()
+        pl.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
+        pl.enable_parallel_projection()
+        img_array = pl.show(screenshot=True)
         img = Image.fromarray(img_array)
         img.save(img_path)
         return img_path
@@ -2455,7 +2504,7 @@ class DatasetPropsGenerator:
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
-        url_dict = {url: name for name, url in zip(names, urls)}
+        url_dict = {url: name for name, url in zip(names, urls, strict=True)}
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         return '\n'.join(rst_links)
@@ -3315,6 +3364,10 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables() -> list[str]:  # noqa: D103
+    # Make reader tables
+    os.makedirs(READERS_DIR, exist_ok=True)
+    ReadersTable.generate()
+
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
     CellQualityMeasuresTable.generate()

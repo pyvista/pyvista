@@ -7,7 +7,7 @@ ci:
 
 repos:
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.4.3
+    rev: v0.4.5
     hooks:
       - id: blackdoc
         args: ["--skip-string-normalization"]
@@ -57,19 +57,19 @@ repos:
         files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.10.01
+    rev: 2025.10.20
     hooks:
       - id: sp-repo-review
         args: ["--show=errskip"]
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.0
+    rev: 0.34.1
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.3
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
@@ -111,11 +111,11 @@ repos:
           ]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.14.2
+    rev: v1.16.2
     hooks:
       - id: zizmor
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
-    rev: v1.0.0
+    rev: v1.0.1
     hooks:
       - id: sphinx-lint
