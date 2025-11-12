@@ -6,9 +6,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -436,7 +436,7 @@ def test_actors_prop_collection_init():
 
 @pytest.fixture
 def prop_collection():
-    vtk_collection = vtk.vtkPropCollection()
+    vtk_collection = _vtk.vtkPropCollection()
     coll = _PropCollection(vtk_collection)
     yield coll
     del vtk_collection
@@ -605,7 +605,7 @@ def test_enable_antialising_raises(aa_type):
 def test_add_actor_raises():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match=re.escape('Culling option (foo) not understood.')):
-        pl.renderer.add_actor(vtk.vtkActor(), culling='foo')
+        pl.renderer.add_actor(_vtk.vtkActor(), culling='foo')
 
 
 @pytest.mark.parametrize('grid', [1.0, 1, object()])

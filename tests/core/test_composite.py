@@ -8,7 +8,6 @@ import weakref
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import ImageData
@@ -18,33 +17,34 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
 
 
 def test_multi_block_init_vtk():
-    multi = vtk.vtkMultiBlockDataSet()
-    multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkStructuredGrid())
+    multi = _vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, _vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, _vtk.vtkStructuredGrid())
     multi = MultiBlock(multi)
     assert isinstance(multi, MultiBlock)
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), StructuredGrid)
-    multi = vtk.vtkMultiBlockDataSet()
-    multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkStructuredGrid())
+    multi = _vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, _vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, _vtk.vtkStructuredGrid())
     multi = MultiBlock(multi, deep=True)
     assert isinstance(multi, MultiBlock)
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), StructuredGrid)
     # Test nested structure
-    multi = vtk.vtkMultiBlockDataSet()
-    multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkImageData())
-    nested = vtk.vtkMultiBlockDataSet()
-    nested.SetBlock(0, vtk.vtkUnstructuredGrid())
-    nested.SetBlock(1, vtk.vtkStructuredGrid())
+    multi = _vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, _vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, _vtk.vtkImageData())
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, _vtk.vtkUnstructuredGrid())
+    nested.SetBlock(1, _vtk.vtkStructuredGrid())
     multi.SetBlock(2, nested)
     # Wrap the nested structure
     multi = MultiBlock(multi)
@@ -97,14 +97,14 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     # Now overwrite a block
     multi[4] = pv.Sphere()
     assert isinstance(multi[4], PolyData)
-    multi[4] = vtk.vtkUnstructuredGrid()
+    multi[4] = _vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pv.UnstructuredGrid)
 
     with pytest.raises(ValueError, match=r'Cannot nest a composite dataset in itself.'):
         multi.append(multi)
 
     with pytest.raises(TypeError, match='dataset should not be or contain an array'):
-        multi.append(vtk.vtkFloatArray())
+        multi.append(_vtk.vtkFloatArray())
 
 
 def test_multi_block_set_get_ers():

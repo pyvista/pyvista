@@ -14,11 +14,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting import _plotting
+from pyvista.plotting import _vtk
 from pyvista.plotting.errors import RenderWindowUnavailable
 
 if TYPE_CHECKING:
@@ -157,7 +157,7 @@ def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
         pl.add_mesh(pv.Sphere(), texture='foo')
 
     m = mocker.patch.object(plotter, 'numpy_to_texture')
-    m.return_value = vtk.vtkTexture()
+    m.return_value = _vtk.vtkTexture()
     with pytest.raises(
         ValueError,
         match=re.escape('Input mesh does not have texture coordinates to support the texture.'),
@@ -252,7 +252,7 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), vtk.vtkAlgorithm()
+    m.return_value = pv.PolyData(), _vtk.vtkAlgorithm()
 
     pl = pv.Plotter()
     match = re.escape(
@@ -867,7 +867,7 @@ def test_legend_font(sphere):
         size=[0.1, 0.1],
         font_family='times',
     )
-    assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
+    assert legend.GetEntryTextProperty().GetFontFamily() == _vtk.VTK_TIMES
 
 
 @pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')

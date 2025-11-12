@@ -22,7 +22,6 @@ from typing import TypeVar
 import numpy as np
 from PIL import Image
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import demos
@@ -32,7 +31,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
-from pyvista.plotting import check_math_text_support
+from pyvista.plotting import _vtk
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
@@ -906,7 +905,7 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
         vertical=True,
     )
     pl.add_scalar_bar(background_color='white', n_colors=256)
-    assert isinstance(pl.scalar_bar, vtk.vtkScalarBarActor)
+    assert isinstance(pl.scalar_bar, _vtk.vtkScalarBarActor)
     pl.show()
 
 
@@ -1011,13 +1010,13 @@ def test_legend_subplots(sphere, cube):
     pl.add_mesh(sphere, color='blue', smooth_shading=True, label='Sphere')
     assert pl.legend is None
     pl.add_legend(bcolor='w')
-    assert isinstance(pl.legend, vtk.vtkActor2D)
+    assert isinstance(pl.legend, _vtk.vtkActor2D)
 
     pl.subplot(0, 1)
     pl.add_mesh(cube, color='r', label='Cube')
     assert pl.legend is None
     pl.add_legend(bcolor='w')
-    assert isinstance(pl.legend, vtk.vtkActor2D)
+    assert isinstance(pl.legend, _vtk.vtkActor2D)
 
     pl.show()
 
@@ -2613,7 +2612,7 @@ def test_interactive_update():
     # Regression test for #1053
     pl = pv.Plotter()
     pl.show(interactive_update=True)
-    assert isinstance(pl.iren.interactor, vtk.vtkRenderWindowInteractor)
+    assert isinstance(pl.iren.interactor, _vtk.vtkRenderWindowInteractor)
     pl.close()
 
     pl = pv.Plotter()
@@ -3030,7 +3029,7 @@ def test_pointset_plot_as_points(pointset):
 
 
 def test_pointset_plot_vtk():
-    pointset = vtk.vtkPointSet()
+    pointset = _vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
     pointset.SetPoints(points)
 
@@ -3040,7 +3039,7 @@ def test_pointset_plot_vtk():
 
 
 def test_pointset_plot_as_points_vtk():
-    pointset = vtk.vtkPointSet()
+    pointset = _vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
     pointset.SetPoints(points)
 
@@ -3147,17 +3146,9 @@ def test_add_text():
     pl.show()
 
 
-@pytest.mark.skipif(
-    not check_math_text_support(),
-    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
-    'MathText requires matplotlib<3.6',
-)
-@pytest.mark.usefixtures('recwarn')
+@pytest.mark.needs_vtk_version(9, 4, 0)
 def test_add_text_latex():
-    """Test LaTeX symbols.
-
-    For VTK<=9.2.2, this requires matplotlib<3.6
-    """
+    """Test LaTeX symbols."""
     pl = pv.Plotter()
     pl.add_text(r'$\rho$', position='upper_left', font_size=150, color='blue')
     pl.show()
@@ -3605,7 +3596,7 @@ def test_remove_bounds_axes(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     actor = pl.show_bounds(grid='front', location='outer')
-    assert isinstance(actor, vtk.vtkActor)
+    assert isinstance(actor, _vtk.vtkActor)
     pl.remove_bounds_axes()
     pl.show()
 
@@ -4026,7 +4017,7 @@ def test_plot_algorithm_scalars():
     assert mesh.active_scalars_name != name
     assert mesh.active_scalars_name != name2
 
-    alg = vtk.vtkGeometryFilter()
+    alg = _vtk.vtkGeometryFilter()
     alg.SetInputDataObject(mesh)
 
     pl = pv.Plotter()
@@ -4039,7 +4030,7 @@ def test_plot_algorithm_scalars():
 
 
 def test_algorithm_add_points():
-    algo = vtk.vtkRTAnalyticSource()
+    algo = _vtk.vtkRTAnalyticSource()
 
     pl = pv.Plotter()
     pl.add_points(algo)
@@ -4048,7 +4039,7 @@ def test_algorithm_add_points():
 
 def test_algorithm_add_point_labels():
     algo = pv.ConeSource()
-    elev = vtk.vtkElevationFilter()
+    elev = _vtk.vtkElevationFilter()
     elev.SetInputConnection(algo.GetOutputPort())
     elev.SetLowPoint(0, 0, -1)
     elev.SetHighPoint(0, 0, 1)
@@ -4059,18 +4050,18 @@ def test_algorithm_add_point_labels():
 
 
 def test_pointset_to_polydata_algorithm(pointset):
-    alg = vtk.vtkElevationFilter()
+    alg = _vtk.vtkElevationFilter()
     alg.SetInputDataObject(pointset)
 
     pl = pv.Plotter()
     pl.add_mesh(alg, scalars='Elevation')
     pl.show()
 
-    assert isinstance(alg.GetOutputDataObject(0), vtk.vtkPointSet)
+    assert isinstance(alg.GetOutputDataObject(0), _vtk.vtkPointSet)
 
 
 def test_add_ids_algorithm():
-    algo = vtk.vtkCubeSource()
+    algo = _vtk.vtkCubeSource()
 
     alg = algorithms.add_ids_algorithm(algo)
 

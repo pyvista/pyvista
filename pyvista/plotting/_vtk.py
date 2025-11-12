@@ -32,6 +32,7 @@ from vtkmodules.vtkChartsCore import vtkPlotPoints3D as vtkPlotPoints3D
 from vtkmodules.vtkChartsCore import vtkPlotStacked as vtkPlotStacked
 from vtkmodules.vtkChartsCore import vtkPlotSurface as vtkPlotSurface
 from vtkmodules.vtkCommonColor import vtkColorSeries as vtkColorSeries
+from vtkmodules.vtkCommonColor import vtkNamedColors as vtkNamedColors
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage as vtkInteractorStyleImage
 from vtkmodules.vtkInteractionStyle import (
     vtkInteractorStyleJoystickActor as vtkInteractorStyleJoystickActor,
@@ -165,6 +166,7 @@ from vtkmodules.vtkRenderingVolume import vtkGPUVolumeRayCastMapper as vtkGPUVol
 from vtkmodules.vtkRenderingVolume import (
     vtkUnstructuredGridVolumeRayCastMapper as vtkUnstructuredGridVolumeRayCastMapper,
 )
+from vtkmodules.vtkRenderingVolume import vtkVolumeMapper as vtkVolumeMapper
 from vtkmodules.vtkRenderingVolume import vtkVolumePicker as vtkVolumePicker
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle as vtkContextInteractorStyle
 

@@ -74,6 +74,8 @@ from vtkmodules.vtkCommonComputationalGeometry import (
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricTorus as vtkParametricTorus
 from vtkmodules.vtkCommonCore import VTK_ARIAL as VTK_ARIAL
 from vtkmodules.vtkCommonCore import VTK_COURIER as VTK_COURIER
+from vtkmodules.vtkCommonCore import VTK_DOUBLE_MAX as VTK_DOUBLE_MAX
+from vtkmodules.vtkCommonCore import VTK_DOUBLE_MIN as VTK_DOUBLE_MIN
 from vtkmodules.vtkCommonCore import VTK_FONT_FILE as VTK_FONT_FILE
 from vtkmodules.vtkCommonCore import VTK_TIMES as VTK_TIMES
 from vtkmodules.vtkCommonCore import VTK_UNSIGNED_CHAR as VTK_UNSIGNED_CHAR
@@ -94,6 +96,7 @@ from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkLogger as vtkLogger
 from vtkmodules.vtkCommonCore import vtkLookupTable as vtkLookupTable
 from vtkmodules.vtkCommonCore import vtkMath as vtkMath
+from vtkmodules.vtkCommonCore import vtkObjectBase as vtkObjectBase
 from vtkmodules.vtkCommonCore import vtkOutputWindow as vtkOutputWindow
 from vtkmodules.vtkCommonCore import vtkPoints as vtkPoints
 from vtkmodules.vtkCommonCore import vtkSignedCharArray as vtkSignedCharArray
