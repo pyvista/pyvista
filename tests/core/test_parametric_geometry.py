@@ -24,9 +24,10 @@ def test_spline():
     # test parametrize by length. Check that it produces different points
     # i.e. absolute distance max > 0
     # vtk default is to parametrize by length
-    spline_by_length = pv.Spline(points, 1000, parameterize_by_length=False)
-    assert spline_by_length.n_points == 1000
-    points_abs_diff = np.abs(spline.points - spline_by_length.points)
+    spline_by_length = pv.Spline(points, 1000, parameterize_by_length=True)
+    spline_by_index = pv.Spline(points, 1000, parameterize_by_length=False)
+    assert spline_by_length.n_points == spline_by_index.n_points == 1000
+    points_abs_diff = np.abs(spline_by_index.points - spline_by_length.points)
     assert points_abs_diff.max() > 0
     # test closing, check if bounds are equal before and after closing
     # which is untrue on test case
