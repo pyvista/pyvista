@@ -50,6 +50,7 @@ if TYPE_CHECKING:
         | _vtk.vtkXMLWriter
         | _vtk.vtkDataWriter
         | _vtk.vtkHDFWriter
+        | _vtk.vtkImageWriter
     )
     _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
