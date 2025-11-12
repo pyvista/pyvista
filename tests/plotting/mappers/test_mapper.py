@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.mapper import DataSetMapper
 
 
@@ -33,9 +33,9 @@ def test_bounds(dataset_mapper):
 
 
 def test_lookup_table(dataset_mapper):
-    assert isinstance(dataset_mapper.lookup_table, vtk.vtkLookupTable)
+    assert isinstance(dataset_mapper.lookup_table, _vtk.vtkLookupTable)
 
-    table = vtk.vtkLookupTable()
+    table = _vtk.vtkLookupTable()
 
     dataset_mapper.lookup_table = table
     assert dataset_mapper.lookup_table is table

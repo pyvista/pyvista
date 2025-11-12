@@ -6,11 +6,11 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-import vtk as _vtk
 
 from pyvista import examples
 from pyvista import pyvista_ndarray
 from pyvista import vtk_points
+from pyvista.core import _vtk_core as _vtk
 
 
 @pytest.fixture

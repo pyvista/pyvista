@@ -47,7 +47,7 @@ def start_xvfb(wait=3, window_size=None):
     # Deprecated on 0.45.0, estimated removal on 0.48.0
     warnings.warn(
         'This function is deprecated and will be removed in future version of '
-        'PyVista. Use vtk-osmesa instead.',
+        'PyVista. Use vtk with osmesa instead.',
         PyVistaDeprecationWarning,
         stacklevel=2,
     )

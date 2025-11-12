@@ -24,6 +24,7 @@ from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
@@ -267,7 +268,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
-        file_ext = file_path.suffix
+        file_ext = get_ext(file_path)
 
         if file_ext == '.vtkhdf' and binary is False:
             msg = '.vtkhdf files can only be written in binary format.'
@@ -291,8 +292,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             save_pickle(filename, self)
         else:
             msg = (
-                'Invalid file extension for this data type.'
-                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
+                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
             raise ValueError(msg)
 

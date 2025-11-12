@@ -18,10 +18,10 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
@@ -734,7 +734,7 @@ def test_glyph_cell_point_data(sphere):
 
 
 class InterrogateVTKGlyph3D:
-    def __init__(self, alg: vtk.vtkGlyph3D):
+    def __init__(self, alg: _vtk.vtkGlyph3D):
         self.alg = alg
 
     @property
@@ -2137,7 +2137,7 @@ BIG_VOLUME = 2**3
 @pytest.fixture
 def labeled_data():
     def append(mesh1, mesh2):
-        filter_ = vtk.vtkAppendFilter()
+        filter_ = _vtk.vtkAppendFilter()
         filter_.AddInputData(mesh1)
         filter_.AddInputData(mesh2)
         filter_.Update()
