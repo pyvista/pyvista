@@ -233,7 +233,10 @@ def _meshio_info_dict():
         name = io_class.__name__.removeprefix('vtk').removesuffix('Reader').removesuffix('Writer')
         if not name.startswith('VTKP'):
             name = name.removeprefix('VTK')
-        for class_name in ['DataSet', 'Image', 'Data', 'Partitioned', *get_args(_mesh_types)]:
+        # Remove terms from name
+        class_names = get_args(_mesh_types)
+        other_names = ['DataSet', 'Image', 'Data', 'Partitioned']
+        for class_name in [*class_names, *other_names]:
             name = name.replace(class_name, '')
         if name == '':
             # Use a single extension as the format name
