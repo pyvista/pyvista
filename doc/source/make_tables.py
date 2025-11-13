@@ -42,6 +42,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.reader import _CLASS_READER_OUTPUT_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
@@ -179,32 +180,43 @@ class ReadersTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: PyVista Readers
-        |   :widths: 50 50
+        |   :widths: 33 33 33
         |   :header-rows: 1
         |
         |   * - Reader
         |     - File Extension(s)
+        |     - Output Type(s)
         """,
     )
     row_template = _aligned_dedent(
         """
         |   * - {}
         |     - {}
+        |     - {}
         """,
     )
 
     @classmethod
     def fetch_data(cls):
-        # Convert ext->reader mapping into reader->ext mapping
-        reader_extensions: dict[pv.BaseReader, set[str]] = {
-            reader: set() for reader in set(CLASS_READERS.values())
+        # Create dict for reader info: extension(s) and output type(s)
+        reader_info: dict[pv.BaseReader, tuple[set[str], set[str]]] = {
+            reader: (set(), set()) for reader in set(CLASS_READERS.values())
         }
+        # Store extension(s)
         for ext, reader in CLASS_READERS.items():
-            reader_extensions[reader].add(ext)
+            extensions, _ = reader_info[reader]
+            extensions.add(ext)
+        # Store output type(s)
+        for reader, types in _CLASS_READER_OUTPUT_TYPE.items():
+            _, ouput_types = reader_info[reader]
+            if isinstance(types, tuple):
+                ouput_types.update(types)
+            else:
+                ouput_types.add(types)
         # Sort by the class name of the reader
         return sorted(
-            reader_extensions.items(),
-            key=lambda item: item[0].__name__,
+            reader_info.items(),
+            key=lambda item: item[0].__name__.lower(),
         )
 
     @classmethod
@@ -213,10 +225,12 @@ class ReadersTable(DocTable):
 
     @classmethod
     def get_row(cls, _, row_data):
-        reader, extensions = row_data
+        reader, info = row_data
+        extensions, output_types = info
         reader_fmt = f':class:`~pyvista.{reader.__name__}`'
         extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
-        return cls.row_template.format(reader_fmt, extensions_fmt)
+        output_types_fmt = ', '.join(f':class:`~pyvista.{typ}`' for typ in sorted(output_types))
+        return cls.row_template.format(reader_fmt, extensions_fmt, output_types_fmt)
 
 
 class CellQualityMeasuresTable(DocTable):

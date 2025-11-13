@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
+from typing import get_args
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -3748,4 +3750,82 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
+}
+
+_mesh_types = Literal[
+    'UnstructuredGrid',
+    'ImageData',
+    'PolyData',
+    'MultiBlock',
+    'RectilinearGrid',
+    'StructuredGrid',
+    'PointSet',
+    'PartitionedDataSet',
+]
+_legacy_dataset_types = Literal[  # no PointSet
+    'UnstructuredGrid',
+    'ImageData',
+    'PolyData',
+    'MultiBlock',
+    'RectilinearGrid',
+    'StructuredGrid',
+]
+
+# Define reader output types. Primarily used for testing and documentation.
+_CLASS_READER_OUTPUT_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_types, ...]] = {
+    AVSucdReader: 'UnstructuredGrid',
+    BinaryMarchingCubesReader: 'PolyData',
+    BMPReader: 'ImageData',
+    BYUReader: 'PolyData',
+    CGNSReader: 'MultiBlock',
+    DEMReader: 'ImageData',
+    DICOMReader: 'ImageData',
+    EnSightReader: 'MultiBlock',
+    ExodusIIReader: 'MultiBlock',
+    FacetReader: 'PolyData',
+    FLUENTCFFReader: 'MultiBlock',
+    FluentReader: 'UnstructuredGrid',
+    GambitReader: 'UnstructuredGrid',
+    GaussianCubeReader: ('ImageData', 'PolyData'),
+    GESignaReader: 'ImageData',
+    GIFReader: 'ImageData',
+    GLTFReader: 'MultiBlock',
+    HDFReader: ('ImageData', 'PolyData', 'UnstructuredGrid', 'PartitionedDataSet', 'MultiBlock'),
+    HDRReader: 'ImageData',
+    JPEGReader: 'ImageData',
+    MetaImageReader: 'ImageData',
+    MFIXReader: 'UnstructuredGrid',
+    MINCImageReader: 'ImageData',
+    NIFTIReader: 'ImageData',
+    NRRDReader: 'ImageData',
+    Nek5000Reader: 'UnstructuredGrid',
+    OBJReader: 'PolyData',
+    PDBReader: 'PolyData',
+    PLYReader: 'PolyData',
+    PNGReader: 'ImageData',
+    PNMReader: 'ImageData',
+    POpenFOAMReader: 'MultiBlock',
+    PVDReader: 'MultiBlock',
+    ParticleReader: 'PolyData',
+    Plot3DMetaReader: 'MultiBlock',
+    ProStarReader: 'UnstructuredGrid',
+    PTSReader: 'PolyData',
+    SegYReader: ('StructuredGrid', 'ImageData'),
+    SLCReader: 'ImageData',
+    STLReader: 'PolyData',
+    TIFFReader: 'ImageData',
+    TecplotReader: 'MultiBlock',
+    VTKDataSetReader: get_args(_legacy_dataset_types),
+    VTKPDataSetReader: get_args(_legacy_dataset_types),
+    XdmfReader: ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid'),
+    XMLImageDataReader: 'ImageData',
+    XMLMultiBlockDataReader: 'MultiBlock',
+    XMLPartitionedDataSetReader: 'PartitionedDataSet',
+    XMLPolyDataReader: 'PolyData',
+    XMLPRectilinearGridReader: 'RectilinearGrid',
+    XMLPUnstructuredGridReader: 'UnstructuredGrid',
+    XMLRectilinearGridReader: 'RectilinearGrid',
+    XMLStructuredGridReader: 'StructuredGrid',
+    XMLUnstructuredGridReader: 'UnstructuredGrid',
+    XMLPImageDataReader: 'ImageData',
 }
