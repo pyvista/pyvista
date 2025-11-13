@@ -8,13 +8,13 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
+from pyvista.utilities._warn_external import warn_external
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -184,13 +184,12 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                     from pyvista.core.filters.composite import _format_nested_index
 
                     index_fmt = _format_nested_index(index)
-                    warnings.warn(
+                    warn_external(
                         f"Nested MultiBlock at index {index_fmt} with name '{name}' "
                         f'has field data which will not be saved.\n'
                         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
                         'Use `move_nested_field_data_to_root` to store the field data '
                         'with the root MultiBlock before saving.',
-                        stacklevel=2,
                     )
 
         def _check_multiblock_hdf_types(mesh: pv.MultiBlock) -> None:
@@ -230,12 +229,11 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         def _warn_imagedata_direction_matrix(mesh: pv.ImageData) -> None:
             if not np.allclose(mesh.direction_matrix, np.eye(3)):
-                warnings.warn(
+                warn_external(
                     'The direction matrix for ImageData will not be saved using the '
                     'legacy `.vtk` format.\n'
                     'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
                     'Use the `.vti` extension instead (XML format).',
-                    stacklevel=2,
                 )
 
         def _write_vtk(mesh_: DataObject) -> None:

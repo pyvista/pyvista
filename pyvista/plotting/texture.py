@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
 
@@ -13,6 +12,7 @@ from pyvista.core import _validation
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
+from pyvista.utilities._warn_external import warn_external
 
 from . import _vtk
 
@@ -728,11 +728,10 @@ def numpy_to_texture(image):
     """
     if image.dtype != np.uint8:
         image = image.astype(np.uint8)
-        warnings.warn(
+        warn_external(
             'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
             'and converted to np.uint8.',
             UserWarning,
-            stacklevel=2,
         )
 
     return Texture(image)  # type: ignore[abstract]

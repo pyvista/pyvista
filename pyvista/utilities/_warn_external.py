@@ -7,10 +7,7 @@ import sys
 import warnings
 
 
-def warn_external(
-    message: str,
-    category: type[Warning] | None = None,
-):
+def warn_external(message: str, category: type[Warning] | None = None):
     """`warnings.warn` wrapper that sets *stacklevel* to "outside PyVista".
 
     Taken and modified from Matplotlib

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 import time
-import warnings
 
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.utilities._warn_external import warn_external
 
 XVFB_INSTALL_NOTES = """Please install Xvfb with:
 
@@ -45,11 +45,10 @@ def start_xvfb(wait=3, window_size=None):
 
     """
     # Deprecated on 0.45.0, estimated removal on 0.48.0
-    warnings.warn(
+    warn_external(
         'This function is deprecated and will be removed in future version of '
         'PyVista. Use vtk with osmesa instead.',
         PyVistaDeprecationWarning,
-        stacklevel=2,
     )
 
     from pyvista import global_theme  # noqa: PLC0415

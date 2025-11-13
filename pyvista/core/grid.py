@@ -10,13 +10,13 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import cast
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.utilities._warn_external import warn_external
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -1038,7 +1038,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
                 'instead.'
             )
-            warnings.warn(msg, RuntimeWarning, stacklevel=2)
+            warn_external(msg, RuntimeWarning)
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
@@ -1211,10 +1211,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     ) -> None:  # numpydoc ignore=GL08
         T, R, N, S, K = pv.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
-            warnings.warn(
+            warn_external(
                 'The transformation matrix has a shear component which has been removed. \n'
                 'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
-                stacklevel=2,
             )
 
         self.origin = T
