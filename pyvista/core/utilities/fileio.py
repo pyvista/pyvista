@@ -210,6 +210,8 @@ def read(  # noqa: PLR0911, PLR0917
 
     See :func:`pyvista.get_reader` for list of vtk formats supported.
 
+    .. include:: /api/utilities/mesh_io.rst
+
     .. note::
        See https://github.com/nschloe/meshio for formats supported by
        ``meshio``. Be sure to install ``meshio`` with ``pip install

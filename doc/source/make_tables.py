@@ -44,6 +44,7 @@ from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -64,6 +65,7 @@ if TYPE_CHECKING:
 
 # Paths to directories in which resulting rst files and images are stored.
 READERS_DIR = 'api/readers'
+MESHIO_DIR = 'api/utilities/io_table'
 CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
@@ -88,6 +90,9 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
+
+SUCCESS_SYMBOL = ':material-regular:`check;2em;sd-text-success`'
+ERROR_SYMBOL = ':material-regular:`close;2em;sd-text-error`'
 
 
 def _aligned_dedent(txt):
@@ -173,6 +178,111 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
+def _swap_extension_mapping(mapping: dict[str, type[Any]]) -> dict[type[Any], set[str]]:
+    # Convert extension->cls mapping into cls->extension mapping
+    class_extensions: dict[pv.BaseReader, set[str]] = {cls: set() for cls in set(mapping.values())}
+    for ext, cls in mapping.items():
+        class_extensions[cls].add(ext)
+    # Sort by the class name of the reader
+    return _sort_by_class_name(class_extensions)
+
+
+def _sort_by_class_name(mapping: dict[Any, Any]):
+    return sorted(
+        mapping.items(),
+        key=lambda item: item[0].__name__.lower(),
+    )
+
+
+def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
+    # Create dict for reader info: extension(s) and output type(s)
+    reader_info: dict[pv.BaseReader, tuple[set[str], set[str]]] = {
+        reader: (set(), set()) for reader in set(CLASS_READERS.values())
+    }
+    # Store extensions
+    for reader, extensions in _swap_extension_mapping(CLASS_READERS):
+        info_extensions, _ = reader_info[reader]
+        info_extensions.update(extensions)
+
+    # Store output type(s)
+    for reader, types in _CLASS_READER_RETURN_TYPE.items():
+        _, ouput_types = reader_info[reader]
+        if isinstance(types, tuple):
+            ouput_types.update(types)
+        else:
+            ouput_types.add(types)
+
+    # Sort by the class name of the reader
+    return _sort_by_class_name(reader_info)
+
+
+READER_INFO: dict[pv.BaseReader, tuple[set[str], set[str]]] = _reader_info_dict()
+
+
+@dataclass
+class FileFormatInfo:
+    name: str
+    extensions: set[str]
+    readable: bool = False
+    writeable: bool = False
+
+
+def _meshio_info_dict():
+    def get_format_name(io_class: type, extensions: set[str]) -> str:
+        # Clean up the names of both reader and writer classes
+        name = io_class.__name__.removeprefix('vtk').removesuffix('Reader').removesuffix('Writer')
+        if not name.startswith('VTKP'):
+            name = name.removeprefix('VTK')
+        for class_name in ['DataSet', *get_args(_mesh_types)]:
+            name = name.replace(class_name, '')
+        if name == '':
+            # Use a single extension as the format name
+            assert len(extensions) == 1, (
+                f'File format name could not be determined for {io_class.__name__}'
+            )
+            name = next(iter(extensions)).removeprefix('.').upper()
+        return name
+
+    meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
+    reader_info = _reader_info_dict()
+    for class_name in get_args(_mesh_types):
+        meshio_info[class_name]: dict[str, FileFormatInfo] = {}
+
+        # Store reader info first
+        for reader, (extensions, return_type) in reader_info:
+            return_types = [return_type] if isinstance(return_type, str) else return_type
+            if class_name in return_types:
+                # This reader may return this class, so include it
+                format_name = get_format_name(reader, extensions)
+                info = FileFormatInfo(name=format_name, extensions=extensions, readable=True)
+                meshio_info[class_name][format_name] = info
+
+        # Store writer info next
+        cls = eval('pv.' + class_name)
+        writer_extensions = _swap_extension_mapping(cls._WRITERS)
+        for writer, extensions in writer_extensions:
+            # Check if the format was already added from the reader
+            format_name = get_format_name(writer, extensions)
+            if format_name in meshio_info[class_name].keys():
+                # Ensure reader and writer have compatible extensions
+                reader_extensions = meshio_info[class_name][format_name].extensions
+                msg = (
+                    f'Writable extensions {extensions} should be a subset of readable extensions'
+                    f' {reader_extensions} for file format {format_name!r}.'
+                )
+                assert extensions <= reader_extensions, msg
+
+                meshio_info[class_name][format_name].writeable = True
+            else:
+                info = FileFormatInfo(name=format_name, extensions=extensions, writeable=True)
+                meshio_info[class_name][format_name] = info
+
+    return meshio_info
+
+
+MESHIO_INFO = _meshio_info_dict()
+
+
 class ReadersTable(DocTable):
     """Class to generate table for readers."""
 
@@ -198,26 +308,7 @@ class ReadersTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        # Create dict for reader info: extension(s) and output type(s)
-        reader_info: dict[pv.BaseReader, tuple[set[str], set[str]]] = {
-            reader: (set(), set()) for reader in set(CLASS_READERS.values())
-        }
-        # Store extension(s)
-        for ext, reader in CLASS_READERS.items():
-            extensions, _ = reader_info[reader]
-            extensions.add(ext)
-        # Store output type(s)
-        for reader, types in _CLASS_READER_RETURN_TYPE.items():
-            _, ouput_types = reader_info[reader]
-            if isinstance(types, tuple):
-                ouput_types.update(types)
-            else:
-                ouput_types.add(types)
-        # Sort by the class name of the reader
-        return sorted(
-            reader_info.items(),
-            key=lambda item: item[0].__name__.lower(),
-        )
+        return READER_INFO
 
     @classmethod
     def get_header(cls, _):
@@ -231,6 +322,86 @@ class ReadersTable(DocTable):
         extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
         output_types_fmt = ', '.join(f':class:`~pyvista.{typ}`' for typ in sorted(output_types))
         return cls.row_template.format(reader_fmt, extensions_fmt, output_types_fmt)
+
+
+class MeshIOTable(DocTable):
+    """Class to generate table for reading/saving a mesh type."""
+
+    header = _aligned_dedent(
+        """
+        |.. list-table::
+        |   :widths: 25 25 25 25
+        |   :header-rows: 1
+        |
+        |   * - File Format
+        |     - File Extension(s)
+        |     - :func:`~pyvista.read`
+        |     - :func:`~pyvista.DataObject.save`
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    class_name: str
+
+    @property
+    @final
+    def path(self):
+        assert isinstance(self.class_name, str), 'Class name must be defined.'
+        return f'{MESHIO_DIR}/{self.class_name}_io_table.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        return MESHIO_INFO[cls.class_name].values()
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, _, row_data: FileFormatInfo):
+        extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(row_data.extensions)])
+        readable = SUCCESS_SYMBOL if row_data.readable else ERROR_SYMBOL
+        writeable = SUCCESS_SYMBOL if row_data.writeable else ERROR_SYMBOL
+        return cls.row_template.format(row_data.name, extensions_fmt, readable, writeable)
+
+
+class ImageDataIOTable(MeshIOTable):
+    class_name = 'ImageData'
+
+
+class RectilinearGridIOTable(MeshIOTable):
+    class_name = 'RectilinearGrid'
+
+
+class StructuredGridIOTable(MeshIOTable):
+    class_name = 'StructuredGrid'
+
+
+class PointSetIOTable(MeshIOTable):
+    class_name = 'PointSet'
+
+
+class PolyDataIOTable(MeshIOTable):
+    class_name = 'PolyData'
+
+
+class UnstructuredGridIOTable(MeshIOTable):
+    class_name = 'UnstructuredGrid'
+
+
+class MultiBlockIOTable(MeshIOTable):
+    class_name = 'MultiBlock'
+
+
+class PartitionedDataSetIOTable(MeshIOTable):
+    class_name = 'PartitionedDataSet'
 
 
 class CellQualityMeasuresTable(DocTable):
@@ -299,11 +470,8 @@ class CellQualityMeasuresTable(DocTable):
     def get_row(cls, _, row_data):
         measures, measure = row_data
 
-        success = ':material-regular:`check;2em;sd-text-success`'
-        error = ':material-regular:`close;2em;sd-text-error`'
-
         def _get_table_entry(cell_type):
-            return success if cell_type in measures[measure] else error
+            return SUCCESS_SYMBOL if cell_type in measures[measure] else ERROR_SYMBOL
 
         table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
         return cls.row_template.format(f'``{measure}``', *table_entries)
@@ -3381,6 +3549,17 @@ def make_all_tables() -> list[str]:  # noqa: D103
     # Make reader tables
     os.makedirs(READERS_DIR, exist_ok=True)
     ReadersTable.generate()
+
+    # Make mesh IO tables
+    os.makedirs(MESHIO_DIR, exist_ok=True)
+    ImageDataIOTable.generate()
+    RectilinearGridIOTable.generate()
+    StructuredGridIOTable.generate()
+    PolyDataIOTable.generate()
+    PolyDataIOTable.generate()
+    UnstructuredGridIOTable.generate()
+    MultiBlockIOTable.generate()
+    PartitionedDataSetIOTable.generate()
 
     # Make cell quality tables
     os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
