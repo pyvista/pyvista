@@ -42,7 +42,7 @@ from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.misc import _classproperty
-from pyvista.core.utilities.reader import _CLASS_READER_OUTPUT_TYPE
+from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
@@ -185,7 +185,7 @@ class ReadersTable(DocTable):
         |
         |   * - Reader
         |     - File Extension(s)
-        |     - Output Type(s)
+        |     - Return Type(s)
         """,
     )
     row_template = _aligned_dedent(
@@ -207,7 +207,7 @@ class ReadersTable(DocTable):
             extensions, _ = reader_info[reader]
             extensions.add(ext)
         # Store output type(s)
-        for reader, types in _CLASS_READER_OUTPUT_TYPE.items():
+        for reader, types in _CLASS_READER_RETURN_TYPE.items():
             _, ouput_types = reader_info[reader]
             if isinstance(types, tuple):
                 ouput_types.update(types)

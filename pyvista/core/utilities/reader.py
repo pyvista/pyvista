@@ -3772,7 +3772,7 @@ _legacy_dataset_types = Literal[  # no PointSet
 ]
 
 # Define reader output types. Primarily used for testing and documentation.
-_CLASS_READER_OUTPUT_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_types, ...]] = {
+_CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_types, ...]] = {
     AVSucdReader: 'UnstructuredGrid',
     BinaryMarchingCubesReader: 'PolyData',
     BMPReader: 'ImageData',

@@ -15,7 +15,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
-from pyvista.core.utilities.reader import _CLASS_READER_OUTPUT_TYPE
+from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples.downloads import download_file
 
@@ -30,7 +30,7 @@ except ModuleNotFoundError:
 
 
 def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
-    mesh_type = _CLASS_READER_OUTPUT_TYPE[type(reader)]
+    mesh_type = _CLASS_READER_RETURN_TYPE[type(reader)]
     allowed_types = (mesh_type,) if isinstance(mesh_type, str) else mesh_type
     actual_type = type(mesh).__name__
     assert actual_type in allowed_types
@@ -38,8 +38,8 @@ def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
 
 def test_reader_output_type_defined():
     expected = set(CLASS_READERS.values())
-    actual = set(_CLASS_READER_OUTPUT_TYPE.keys())
-    assert actual == expected, 'Output type must be defined for every reader'
+    actual = set(_CLASS_READER_RETURN_TYPE.keys())
+    assert actual == expected, 'Return type must be defined for every reader'
 
 
 def test_read_raises():
