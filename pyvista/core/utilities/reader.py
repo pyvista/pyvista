@@ -3766,7 +3766,6 @@ _legacy_dataset_types = Literal[  # no PointSet
     'UnstructuredGrid',
     'ImageData',
     'PolyData',
-    'MultiBlock',
     'RectilinearGrid',
     'StructuredGrid',
 ]
