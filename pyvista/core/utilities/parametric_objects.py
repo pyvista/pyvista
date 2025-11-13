@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-def Spline(  # noqa: PLR0917
+def Spline(
     points: VectorLike[float] | MatrixLike[float],
     n_points: int | None = None,
     closed: bool = False,
@@ -50,7 +50,7 @@ def Spline(  # noqa: PLR0917
 
     parameterize_by_length : bool, optional
       Parametrize by length rather than point index.
-    
+
     left_constraint_type : int, optional
       Derivative constraint type at the left side.
       Has to be 0, 1, 2, or 3.
@@ -69,12 +69,12 @@ def Spline(  # noqa: PLR0917
 
     left_derivative_value : float, optional
       Value of derivative on left side.
-    
+
     right_constraint_type : int, optional
       Derivative constraint type at the right side
       Has to be 0, 1, 2, or 3.
       See left_constraint_type description.
-    
+
     right_derivative_value : float, optional
       Value of derivative on left side.
 
@@ -108,6 +108,7 @@ def Spline(  # noqa: PLR0917
     ...     line_width=10,
     ...     show_scalar_bar=False,
     ... )
+
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
