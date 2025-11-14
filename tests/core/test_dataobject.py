@@ -148,7 +148,7 @@ def test_eq_string_array():
 
 def test_metadata_save(hexbeam, tmpdir):
     """Test if complex and bool metadata is saved and restored."""
-    filename = tmpdir.join('hexbeam.vtk')
+    filename = tmpdir.join('hexbeam.pkl')
 
     hexbeam.clear_data()
     point_data = np.arange(hexbeam.n_points)
