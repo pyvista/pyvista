@@ -42,7 +42,6 @@ from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
-from pyvista.core.utilities import set_vtkwriter_mode
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -2934,13 +2933,12 @@ def test_max_positional_args_matches_pyproject():
     assert expected_value == _MAX_POSITIONAL_ARGS
 
 
-def test_save_compression():
-    writer = _vtk.vtkXMLUnstructuredGridWriter()
-
-    for compressor in get_args(_CompressionOptions):
-        if compressor is None:
-            set_vtkwriter_mode(writer, use_binary=True, compression=None)
-            assert writer.GetCompressor() is None
-        else:
-            set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
-            assert compressor in str(type(writer.GetCompressor())).lower()
+@pytest.mark.parametrize('compression', get_args(_CompressionOptions))
+def test_writer_compression(compression):
+    writer = pv.XMLUnstructuredGridWriter('', pv.UnstructuredGrid())
+    writer.compression = compression
+    if compression is None:
+        assert writer.writer.GetCompressor() is None
+    else:
+        compressor = writer.writer.GetCompressor()
+        assert compression in str(type(compressor)).lower()
