@@ -126,10 +126,7 @@ class BaseWriter(_NoNewAttrMixin):
             try:
                 setattr(self, name, value)
             except AttributeError:
-                try:
-                    setattr(self.writer, name, value)
-                except AttributeError:
-                    return
+                pass
         return
 
 
