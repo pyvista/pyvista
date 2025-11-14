@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 def Spline(
     points: VectorLike[float] | MatrixLike[float],
     n_points: int | None = None,
-    closed: bool = False,
     *,
+    closed: bool = False,
     parameterize_by_length: bool | None = None,
     left_constraint_type: int | None = None,
     left_derivative_value: float | None = None,

@@ -123,7 +123,7 @@ ribbon.plot(color=True)
 
 # %%
 # Closing a spline
-# +++++++
+# ++++++++++++++++
 #
 # Create a spline and its closed counterpart.
 spline = pv.Spline(points, 1000)
@@ -135,7 +135,7 @@ pl.show()
 
 # %%
 # Parametrizing on length versus index
-# +++++++
+# ++++++++++++++++++++++++++++++++++++
 #
 # Create a spline by parametrizing based on length (default) or point index
 pl = pv.Plotter()
@@ -148,7 +148,7 @@ pl.show()
 
 # %%
 # Boundary type
-# +++++++
+# +++++++++++++
 #
 # Create a spline and see the effect of boundary type
 # Boundary type can be 0, 1, 2 or 3
@@ -163,7 +163,7 @@ pl.show()
 
 # %%
 # Boundary value
-# +++++++
+# ++++++++++++++
 #
 # Create a spline and see the effect of boundary value
 # (can be set at left and right value, has no effect for boundary type 0)
