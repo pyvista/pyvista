@@ -234,6 +234,7 @@ from .state_manager import allow_new_attributes as allow_new_attributes
 from .state_manager import vtk_snake_case as vtk_snake_case
 from .state_manager import vtk_verbosity as vtk_verbosity
 from .transform import Transform as Transform
+from .writer import BaseWriter as BaseWriter
 from .writer import BMPWriter as BMPWriter
 from .writer import DataSetWriter as DataSetWriter
 from .writer import HDFWriter as HDFWriter
@@ -250,7 +251,7 @@ from .writer import RectilinearGridWriter as RectilinearGridWriter
 from .writer import SimplePointsWriter as SimplePointsWriter
 from .writer import STLWriter as STLWriter
 from .writer import StructuredGridWriter as StructuredGridWriter
-from .writer import TIFFWriter as TIFFWriter, BaseWriter as BaseWriter
+from .writer import TIFFWriter as TIFFWriter
 from .writer import UnstructuredGridWriter as UnstructuredGridWriter
 from .writer import XMLImageDataWriter as XMLImageDataWriter
 from .writer import XMLMultiBlockDataWriter as XMLMultiBlockDataWriter
