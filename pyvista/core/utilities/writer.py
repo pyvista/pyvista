@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 
     from pyvista import DataObject
     from pyvista import NumpyArray
-_binary_or_ascii = Literal['binary', 'ascii']
+
+_DataModeOptions = Literal['binary', 'ascii']
 
 
 @abstract_class
@@ -32,7 +33,7 @@ class _DataModeMixin:
     def writer(self) -> vtkWriter: ...
 
     @property
-    def data_mode(self) -> _binary_or_ascii:
+    def data_mode(self) -> _DataModeOptions:
         try:
             mode = self.writer.GetDataMode()
         except AttributeError:
@@ -40,8 +41,8 @@ class _DataModeMixin:
         return 'binary' if mode == 1 else 'ascii'
 
     @data_mode.setter
-    def data_mode(self, mode: _binary_or_ascii) -> None:
-        _validation.check_contains(get_args(_binary_or_ascii), mode, name='data_mode')
+    def data_mode(self, mode: _DataModeOptions) -> None:
+        _validation.check_contains(get_args(_DataModeOptions), mode, name='data_mode')
         if mode == 'binary':
             try:
                 self.writer.SetDataModeToBinary()  # DataWriter, PLYWriter, STLWriter
@@ -59,18 +60,15 @@ class BaseWriter(_NoNewAttrMixin):
     """The base writer class.
 
     The base functionality includes writing data to a file,
-    and allowing access to the underlying vtk writer. See
-    :func:`pyvista.get_writer` for an example using
-    a built-in subclass.
+    and allowing access to the underlying vtk writer.
 
     Parameters
     ----------
     path : str, Path
-        Path of the file to read.
+        Path of the file to write to.
 
-
-    path : str, Path
-        Path of the file to read.
+    data_object : DataObject
+        Data object to write.
 
     """
 
@@ -78,23 +76,23 @@ class BaseWriter(_NoNewAttrMixin):
     _vtk_class_name: str = ''
 
     def __init__(self, path: str | Path, data_object: DataObject) -> None:
-        """Initialize Reader by setting path."""
+        """Initialize writer."""
         self._writer = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
         self.path = path
         self.data_object = data_object
 
     def __repr__(self) -> str:
-        """Representation of a Reader object."""
+        """Representation of a writer object."""
         return f"{self.__class__.__name__}('{self.path}')"
 
     @property
     def writer(self) -> vtkWriter:
-        """Return the vtk Reader object.
+        """Return the vtk writer object.
 
         Returns
         -------
-        pyvista.BaseReader
-            An instance of the Reader object.
+        vtkWriter
+            An instance of the vtk writer.
 
         """
         return self._writer
