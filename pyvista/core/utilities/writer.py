@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+import contextlib
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
@@ -123,11 +124,8 @@ class BaseWriter(_NoNewAttrMixin):
     def _apply_kwargs_safely(self, **kwargs) -> None:
         """Try to set property keyword values and ignore attribute errors."""
         for name, value in kwargs.items():
-            try:
+            with contextlib.suppress(AttributeError):
                 setattr(self, name, value)
-            except AttributeError:
-                pass
-        return
 
 
 class BMPWriter(BaseWriter):
