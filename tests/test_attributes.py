@@ -195,6 +195,12 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['render_window_interactor'] = pv.Plotter().iren
     elif issubclass(pyvista_class, pv.BaseReader):
         kwargs['path'] = __file__  # Dummy file to pass is_file() checks
+    elif pyvista_class is pv.XMLPartitionedDataSetWriter:
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.PartitionedDataSet()
+    elif issubclass(pyvista_class, pv.BaseWriter):
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.PolyData()
     return kwargs
 
 
