@@ -3347,7 +3347,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        ExplicitStructuredGrid or None
+        output : ExplicitStructuredGrid | None
             A deep copy of this grid if ``inplace=False`` with the
             hidden cells, or this grid with the hidden cells if
             otherwise.

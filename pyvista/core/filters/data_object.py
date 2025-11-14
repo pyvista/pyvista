@@ -1359,7 +1359,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+        output : DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
             Clipped mesh when ``return_clipped=False`` or a tuple containing the
             unclipped and clipped meshes. Output mesh type matches input type for
             :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
