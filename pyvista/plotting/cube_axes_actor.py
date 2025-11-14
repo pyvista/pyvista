@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -16,6 +15,7 @@ from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.utilities._warn_external import warn_external
 
 from . import _vtk
 
@@ -342,7 +342,7 @@ class CubeAxesActor(
                     f'Accepts now a sequence of (x,y) offsets. '
                     f'Setting the x offset to {(x := 0.0)}'
                 )
-                warnings.warn(msg, UserWarning, stacklevel=2)
+                warn_external(msg, UserWarning)
                 self.SetTitleOffset([x, offset])
             else:
                 self.SetTitleOffset(offset)
@@ -353,7 +353,7 @@ class CubeAxesActor(
                 f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
                 f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
             )
-            warnings.warn(msg, UserWarning, stacklevel=2)
+            warn_external(msg, UserWarning)
             self.SetTitleOffset(y)  # type: ignore[arg-type]
             return
 

@@ -12,7 +12,6 @@ from __future__ import annotations
 import contextlib
 import sys
 from typing import NamedTuple
-import warnings
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
 from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper as VTKObjectWrapper
@@ -521,6 +520,8 @@ from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader as vtkXMLUnstructur
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter as vtkXMLUnstructuredGridWriter
 from vtkmodules.vtkIOXML import vtkXMLWriter as vtkXMLWriter
 
+from pyvista.utilities._warn_external import warn_external
+
 with contextlib.suppress(ImportError):
     # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
     from vtkmodules.vtkImagingMorphological import (
@@ -611,7 +612,7 @@ def _get_vtk_version():
             f'Unable to detect VTK version. '
             f'Defaulting to {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)}'
         )
-        warnings.warn(msg, stacklevel=2)
+        warn_external(msg)
         major, minor, micro = _MIN_SUPPORTED_VTK_VERSION
     return VersionInfo(major, minor, micro)
 
@@ -697,7 +698,7 @@ class DisableVtkSnakeCase:
                     if state == 'error':
                         raise pv.PyVistaAttributeError(msg)
                     else:
-                        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+                        warn_external(msg, RuntimeWarning)
 
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)

@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -29,6 +28,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.utilities._warn_external import warn_external
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -179,7 +179,7 @@ class DataObjectFilters:
                 'Previously it defaulted to `True`, but will change to `False`. '
                 'Explicitly set `inplace` to `True` or `False` to silence this warning.'
             )
-            warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+            warn_external(msg, PyVistaDeprecationWarning)
             inplace = True  # The old default behavior
 
         if isinstance(self, pv.MultiBlock):
@@ -234,11 +234,10 @@ class DataObjectFilters:
                     dataset_attrs[vector_name] = vector_arr.astype(np.float32)
                     converted_ints = True
         if converted_ints:
-            warnings.warn(
+            warn_external(
                 'Integer points, vector and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
-                stacklevel=2,
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -285,7 +284,7 @@ class DataObjectFilters:
                     'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
                     'shear transformations.'
                 )
-                warnings.warn(msg, stacklevel=2)
+                warn_external(msg)
 
             # Lump scale and reflection together
             scale = S * N
@@ -295,7 +294,7 @@ class DataObjectFilters:
                     'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
                     'StructuredGrid first to fully support rotations.'
                 )
-                warnings.warn(msg, stacklevel=2)
+                warn_external(msg)
             else:
                 # Lump any reflections from the rotation into the scale
                 scale *= np.diagonal(R)
@@ -2092,11 +2091,10 @@ class DataObjectFilters:
 
         """
         if use_all_points is not None:
-            warnings.warn(
+            warn_external(
                 "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
                 'supported. This parameter has no effect and is always `True`.',
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
 
         alg = _vtk.vtkExtractEdges()

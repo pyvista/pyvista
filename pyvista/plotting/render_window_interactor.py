@@ -9,7 +9,6 @@ from inspect import signature
 import logging
 import time
 from typing import Literal
-import warnings
 import weakref
 
 import numpy as np
@@ -20,6 +19,7 @@ from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
+from pyvista.utilities._warn_external import warn_external
 
 from . import _vtk
 from .opts import PickerType
@@ -572,10 +572,9 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if (
             vtk_version_info < (9, 3, 0) and scene is not None and len(self._plotter.renderers) > 1
         ):  # pragma: no cover
-            warnings.warn(
+            warn_external(
                 'Interaction with charts is not possible when using multiple subplots.'
                 'Upgrade to VTK 9.3 or newer to enable this feature.',
-                stacklevel=2,
             )
             scene = None
         self._context_style.SetScene(scene)

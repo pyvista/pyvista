@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
-import warnings
 
 import numpy as np
 
@@ -13,6 +12,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.utilities._warn_external import warn_external
 
 if TYPE_CHECKING:
     from pyvista import PolyData
@@ -76,12 +76,11 @@ def vtk_points(  # noqa: PLR0917
             raise
 
     if force_float and not np.issubdtype(points_.dtype, np.floating):
-        warnings.warn(
+        warn_external(
             'Points is not a float type. This can cause issues when '
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
-            stacklevel=2,
         )
         points_ = points_.astype(np.float32)
 
