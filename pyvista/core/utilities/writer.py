@@ -268,7 +268,7 @@ class PLYWriter(BaseWriter, _DataModeMixin):
         self.writer.SetArrayName(array_name)
 
         # enable alpha channel if applicable
-        enable_alpha = self.data_object[array_name].shape[-1] == 4
+        enable_alpha = self.data_object[array_name].shape[-1] == 4  # type: ignore[index]
         self.writer.SetEnableAlpha(enable_alpha)
 
 

@@ -2988,7 +2988,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
-    }  # type: ignore[assignment]
+    }
 
     def __init__(self, *args, deep: bool = False, **kwargs):  # noqa: ARG002
         """Initialize the explicit structured grid."""
