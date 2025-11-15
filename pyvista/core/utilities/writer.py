@@ -32,7 +32,7 @@ _DataFormatOptions = Literal['binary', 'ascii']
 
 
 @abstract_class
-class _DataModeMixin:
+class _DataFormatMixin:
     # Different writers use different values to indicate the current format
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
@@ -166,7 +166,7 @@ class BMPWriter(BaseWriter):
     _vtk_class_name = 'vtkBMPWriter'
 
 
-class DataSetWriter(BaseWriter, _DataModeMixin):
+class DataSetWriter(BaseWriter, _DataFormatMixin):
     """DataSetWriter for VTK legacy dataset files ``.vtk``.
 
     Wraps :vtk:`vtkDataSetWriter`.
@@ -312,7 +312,7 @@ class OBJWriter(BaseWriter):
     _vtk_class_name = 'vtkOBJWriter'
 
 
-class PLYWriter(BaseWriter, _DataModeMixin):
+class PLYWriter(BaseWriter, _DataFormatMixin):
     """PLYWriter for PLY polygonal ``.ply`` files.
 
     Wraps :vtk:`vtkPLYWriter`.
@@ -377,7 +377,7 @@ class PNMWriter(BaseWriter):
     _vtk_class_name = 'vtkPNMWriter'
 
 
-class PolyDataWriter(BaseWriter, _DataModeMixin):
+class PolyDataWriter(BaseWriter, _DataFormatMixin):
     """PolyDataWriter for legacy VTK PolyData ``.vtk`` files.
 
     Wraps :vtk:`vtkPolyDataWriter`.
@@ -390,7 +390,7 @@ class PolyDataWriter(BaseWriter, _DataModeMixin):
     _vtk_class_name = 'vtkPolyDataWriter'
 
 
-class RectilinearGridWriter(BaseWriter, _DataModeMixin):
+class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
     """RectilinearGridWriter for legacy VTK rectilinear grid ``.vtk`` files.
 
     Wraps :vtk:`vtkRectilinearGridWriter`.
@@ -403,7 +403,7 @@ class RectilinearGridWriter(BaseWriter, _DataModeMixin):
     _vtk_class_name = 'vtkRectilinearGridWriter'
 
 
-class STLWriter(BaseWriter, _DataModeMixin):
+class STLWriter(BaseWriter, _DataFormatMixin):
     """STLWriter for stereolithography  ``.stl`` files.
 
     Wraps :vtk:`vtkSTLWriter`.
@@ -416,7 +416,7 @@ class STLWriter(BaseWriter, _DataModeMixin):
     _vtk_class_name = 'vtkSTLWriter'
 
 
-class SimplePointsWriter(BaseWriter, _DataModeMixin):
+class SimplePointsWriter(BaseWriter, _DataFormatMixin):
     """SimplePointsWriter for simple point-set ``.xyz`` files.
 
     Wraps :vtk:`vtkSimplePointsWriter`.
@@ -429,7 +429,7 @@ class SimplePointsWriter(BaseWriter, _DataModeMixin):
     _vtk_class_name = 'vtkSimplePointsWriter'
 
 
-class StructuredGridWriter(BaseWriter, _DataModeMixin):
+class StructuredGridWriter(BaseWriter, _DataFormatMixin):
     """StructuredGridWriter for legacy VTK structured grid ``.vtk`` files.
 
     Wraps :vtk:`vtkStructuredGridWriter`.
@@ -455,7 +455,7 @@ class TIFFWriter(BaseWriter):
     _vtk_class_name = 'vtkTIFFWriter'
 
 
-class UnstructuredGridWriter(BaseWriter, _DataModeMixin):
+class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
     """UnstructuredGridWriter for legacy VTK unstructured grid ``.vtk`` files.
 
     Wraps :vtk:`vtkUnstructuredGridWriter`.
@@ -469,8 +469,8 @@ class UnstructuredGridWriter(BaseWriter, _DataModeMixin):
 
 
 @abstract_class
-class _XMLWriter(BaseWriter, _DataModeMixin):
-    _format_mapping = _DataModeMixin._ascii0_binary1
+class _XMLWriter(BaseWriter, _DataFormatMixin):
+    _format_mapping = _DataFormatMixin._ascii0_binary1
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
