@@ -74,7 +74,6 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
-from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
@@ -2951,7 +2950,7 @@ def get_concrete_writers():
     """Collect all concrete BaseWriter subclasses"""
     concrete_writers = []
     for obj in vars(pv.core.utilities.writer).values():
-        if not (inspect.isclass(obj) and issubclass(obj, BaseWriter)):
+        if not (inspect.isclass(obj) and issubclass(obj, pv.BaseWriter)):
             continue
         # Skip abstract
         try:
@@ -2980,6 +2979,8 @@ def test_writer_data_mode_mixin(writer_cls):
     assert obj.data_format == 'binary'
     obj.data_format = 'ascii'
     assert obj.data_format == 'ascii'
+    obj.data_format = 'binary'
+    assert obj.data_format == 'binary'
 
 
 def test_ply_writer(sphere, tmp_path):
