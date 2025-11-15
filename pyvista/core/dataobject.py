@@ -248,11 +248,41 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
             from vtkmodules.vtkIOLegacy import vtkDataSetWriter
 
-            writer = vtkDataSetWriter()
-            pv.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
-            writer.SetFileName(str(file_path))
-            writer.SetInputData(mesh_)
-            writer.Write()
+            class Writer:
+                def __init__(self, path: str | Path, data_object: DataObject) -> None:
+                    """Initialize writer."""
+                    self._writer = vtkDataSetWriter()
+                    self.path = path
+                    self.data_object = data_object
+
+                @property
+                def writer(self):
+                    return self._writer
+
+                @property
+                def path(self):
+                    return self.writer.GetFileName()
+
+                @path.setter
+                def path(self, path: str | Path) -> None:
+                    self.writer.SetFileName(str(path))
+
+                @property
+                def data_object(self) -> DataObject:  # numpydoc ignore=RT01
+                    """Get or set the dataset to write."""
+                    return self._data_object
+
+                @data_object.setter
+                def data_object(self, data_object: DataObject) -> None:
+                    self._data_object = data_object
+                    self.writer.SetInputData(data_object)
+
+                def write(self) -> None:
+                    """Write data to path."""
+                    self.writer.Write()
+
+            writer = Writer(file_path, mesh_)
+            writer.write()
 
         if self._WRITERS is None:
             msg = (  # type: ignore[unreachable]
