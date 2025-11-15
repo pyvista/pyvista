@@ -251,31 +251,10 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             class Writer:
                 def __init__(self, path: str | Path, data_object: DataObject) -> None:
                     """Initialize writer."""
-                    self._writer = vtkDataSetWriter()
-                    self.path = path
-                    self.data_object = data_object
-
-                @property
-                def writer(self):
-                    return self._writer
-
-                @property
-                def path(self):
-                    return self.writer.GetFileName()
-
-                @path.setter
-                def path(self, path: str | Path) -> None:
+                    self.writer = vtkDataSetWriter()
                     self.writer.SetFileName(str(path))
-
-                @property
-                def data_object(self) -> DataObject:  # numpydoc ignore=RT01
-                    """Get or set the dataset to write."""
-                    return self._data_object
-
-                @data_object.setter
-                def data_object(self, data_object: DataObject) -> None:
-                    self._data_object = data_object
-                    self.writer.SetInputData(data_object)
+                    self.data_object = data_object
+                    self.writer.SetInputData(self.data_object)
 
                 def write(self) -> None:
                     """Write data to path."""
