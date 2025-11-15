@@ -14,6 +14,7 @@ import numpy as np
 
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
+from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -206,10 +207,12 @@ class HDFWriter(BaseWriter):
     _vtk_class_name = 'vtkHDFWriter'
 
     def _execute_before_write(self) -> None:
-        # Check multiblock block types
         import pyvista as pv  # noqa: PLC0415
 
-        if isinstance(mesh := self.data_object, pv.MultiBlock) and pv.vtk_version_info < (9, 5, 0):
+        if not isinstance(mesh := self.data_object, pv.MultiBlock):
+            return
+        # Check multiblock block types
+        if pv.vtk_version_info < (9, 5, 0):
             if mesh.is_nested:
                 msg = (
                     'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
@@ -514,22 +517,7 @@ class XMLMultiBlockDataWriter(_XMLWriter):
     _vtk_class_name = 'vtkXMLMultiBlockDataWriter'
 
     def _execute_before_write(self) -> None:
-        # Warn if nested field data will be lost
-        iterator = self.data_object.recursive_iterator('all', node_type='parent')
-        for index, name, nested_multiblock in iterator:
-            if len(nested_multiblock.field_data.keys()) > 0:
-                # Avoid circular import
-                from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
-
-                index_fmt = _format_nested_index(index)
-                msg = (
-                    f"Nested MultiBlock at index {index_fmt} with name '{name}' "
-                    f'has field data which will not be saved.\n'
-                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-                    'Use `move_nested_field_data_to_root` to store the field data '
-                    'with the root MultiBlock before saving.'
-                )
-                warnings.warn(msg, stacklevel=2)
+        _warn_multiblock_nested_field_data(self.data_object)
 
 
 class XMLPartitionedDataSetWriter(_XMLWriter):

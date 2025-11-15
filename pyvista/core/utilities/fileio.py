@@ -46,6 +46,26 @@ _T = TypeVar('_T')
 PICKLE_EXT = ('.pkl', '.pickle')
 
 
+def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+    if not isinstance(mesh, pv.MultiBlock):
+        return
+    iterator = mesh.recursive_iterator('all', node_type='parent')
+    for index, name, nested_multiblock in iterator:
+        if len(nested_multiblock.field_data.keys()) > 0:
+            # Avoid circular import
+            from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
+
+            index_fmt = _format_nested_index(index)
+            msg = (
+                f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                f'has field data which will not be saved.\n'
+                'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                'Use `move_nested_field_data_to_root` to store the field data '
+                'with the root MultiBlock before saving.'
+            )
+            warnings.warn(msg, stacklevel=2)
+
+
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
 
@@ -945,7 +965,7 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
             f'Only {pv.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
         raise TypeError(msg)
-
+    _warn_multiblock_nested_field_data(mesh)
     with open(filename_str, 'wb') as f:  # noqa: PTH123
         pickle.dump(mesh, f)
 
