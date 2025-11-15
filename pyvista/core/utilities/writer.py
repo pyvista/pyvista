@@ -338,6 +338,7 @@ class PLYWriter(BaseWriter, _DataModeMixin):
         if isinstance(texture, str):
             array_name = texture
         else:
+            _validation.validate_array(texture, must_have_dtype='uint8', name='texture')
             array_name = '_color_array'
             self.data_object[array_name] = texture
         self.writer.SetArrayName(array_name)

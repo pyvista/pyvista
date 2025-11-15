@@ -1516,25 +1516,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if ftype in ['.stl', '.ply'] and recompute_normals:
             with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
-
-        # validate texture
-        if ftype == '.ply' and texture is not None:
-            if isinstance(texture, str):
-                if self[texture].dtype != np.uint8:
-                    msg = f'Invalid datatype {self[texture].dtype} of texture array "{texture}"'
-                    raise ValueError(msg)
-            elif isinstance(texture, np.ndarray):
-                if texture.dtype != np.uint8:
-                    msg = f'Invalid datatype {texture.dtype} of texture array'
-                    raise ValueError(msg)
-            else:
-                msg = (  # type: ignore[unreachable]
-                    f'Invalid type {type(texture)} for texture.  '
-                    'Should be either a string representing a point or '
-                    'cell array, or a numpy array.'
-                )
-                raise TypeError(msg)
-
         super().save(filename, binary=binary, texture=texture, compression=compression)
 
     @property
