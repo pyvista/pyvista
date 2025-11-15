@@ -132,6 +132,7 @@ pl = pv.Plotter()
 pl.add_mesh(spline.tube(radius=0.05))
 pl.add_mesh(spline_closed, line_width=4, color='r')
 pl.show()
+pl.close()
 
 # %%
 # Parametrizing on length versus index
@@ -145,6 +146,7 @@ pl.add_mesh(spline, line_width=4)
 pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
 pl.add_mesh(spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show()
+pl.close()
 
 # %%
 # Boundary type
@@ -160,6 +162,7 @@ for boundary_type in range(4):
     spline.cell_data['boundary_type'] = np.array([boundary_type], dtype=np.uint8)
     pl.add_mesh(spline, line_width=4)
 pl.show()
+pl.close()
 
 # %%
 # Boundary value
@@ -174,6 +177,7 @@ for boundary_value in range(4):
     spline.cell_data['boundary_value'] = np.array([boundary_value * mult])
     pl.add_mesh(spline, line_width=4)
 pl.show()
+pl.close()
 
 # %%
 # .. tags:: load
