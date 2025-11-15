@@ -110,12 +110,12 @@ class BaseWriter(_NoNewAttrMixin):
     @property
     def data_object(self) -> DataObject:  # numpydoc ignore=RT01
         """Get or set the dataset to write."""
-        return self._dataset
+        return self._data_object
 
     @data_object.setter
-    def data_object(self, data: DataObject) -> None:
-        self._dataset = data
-        self.writer.SetInputData(data)
+    def data_object(self, data_object: DataObject) -> None:
+        self._data_object = data_object
+        self.writer.SetInputData(data_object)
 
     def write(self) -> None:
         """Write data to path."""
