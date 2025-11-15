@@ -21,23 +21,70 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None = None) -> PolyData:
+def Spline(
+    points: VectorLike[float] | MatrixLike[float],
+    n_points: int | None = None,
+    *,
+    closed: bool = False,
+    parameterize_by_length: bool | None = None,
+    left_constraint_type: int | None = None,
+    left_derivative_value: float | None = None,
+    right_constraint_type: int | None = None,
+    right_derivative_value: float | None = None,
+    **kwargs,
+) -> PolyData:
     """Create a spline from points.
 
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points to build a spline out of.  Array must be 3D
-        and directionally ordered.
+      Array of points to build a spline out of.  Array must be 3D
+      and directionally ordered.
 
     n_points : int, optional
-        Number of points to interpolate along the points array. Defaults to
-        ``points.shape[0]``.
+      Number of points to interpolate along the points array. Defaults to
+      ``points.shape[0]``.
+
+    closed : bool, default: False
+      Close the spline if True (both ends are joined). Is not closed by default.
+
+    parameterize_by_length : bool, optional
+      Parametrize by length rather than point index.
+
+    left_constraint_type : int, optional
+      Derivative constraint type at the left side.
+      Has to be 0, 1, 2, or 3.
+      As per vtk documentation :
+
+      0: the first derivative at left(right)
+      most point is determined from
+      the line defined from the first(last) two points.
+      1: the first derivative at left(right) most point
+      is set to Left(Right)Value. (DEFAULT BEHAVIOR)
+      2: the second derivative at left(right) most point
+      is set to Left(Right)Value.
+      3: the second derivative at left(right)most points
+      is Left(Right)Value times second derivative
+      at first interior point.
+
+    left_derivative_value : float, optional
+      Value of derivative on left side.
+
+    right_constraint_type : int, optional
+      Derivative constraint type at the right side
+      Has to be 0, 1, 2, or 3.
+      See left_constraint_type description.
+
+    right_derivative_value : float, optional
+      Value of derivative on left side.
+
+    **kwargs : dict, optional
+      See :func:`surface_from_para` for additional keyword arguments.
 
     Returns
     -------
     pyvista.PolyData
-        Line mesh of spline.
+      Line mesh of spline.
 
     See Also
     --------
@@ -66,14 +113,36 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pv.vtk_points(points_, deep=False))
+    if closed:
+        spline_function.ClosedOn()
+    else:
+        spline_function.ClosedOff()
+    if parameterize_by_length is not None:
+        if parameterize_by_length:
+            spline_function.ParameterizeByLengthOn()
+        else:
+            spline_function.ParameterizeByLengthOff()
+    if left_constraint_type is not None:
+        left_constraint_type_ = _validation.validate_number(
+            left_constraint_type, must_be_in_range=[0, 3], must_be_integer=True
+        )
+        spline_function.SetLeftConstraint(left_constraint_type_)
+    if right_constraint_type is not None:
+        right_constraint_type_ = _validation.validate_number(
+            right_constraint_type, must_be_in_range=[0, 3], must_be_integer=True
+        )
+        spline_function.SetRightConstraint(right_constraint_type_)
+    if left_derivative_value is not None:
+        spline_function.SetLeftValue(left_derivative_value)
+    if right_derivative_value is not None:
+        spline_function.SetRightValue(right_derivative_value)
 
     # get interpolation density
     u_res = n_points
     if u_res is None:
         u_res = points_.shape[0]
-
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res=u_res)
+    spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
     return spline.compute_arc_length()
 
 
