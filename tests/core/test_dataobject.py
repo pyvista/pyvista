@@ -482,6 +482,15 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
         pv.Sphere().save('foo.vtp')
 
 
+def test_save_compression(sphere, tmp_path):
+    path = tmp_path / 'tmp.vtp'
+    sphere.save(path, compression='zlib')
+    compressed_size = path.stat().st_size
+    sphere.save(path, compression=None)
+    uncompressed_size = path.stat().st_size
+    assert compressed_size < (uncompressed_size / 4)
+
+
 def test_is_empty(ant):
     assert pv.MultiBlock().is_empty
     assert not pv.MultiBlock([ant]).is_empty

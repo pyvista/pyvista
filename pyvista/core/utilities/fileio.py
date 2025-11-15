@@ -21,7 +21,6 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
@@ -43,18 +42,28 @@ if TYPE_CHECKING:
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
-
-if TYPE_CHECKING:
-    _VTKWriterAlias = (
-        _vtk.vtkXMLPartitionedDataSetWriter
-        | _vtk.vtkXMLWriter
-        | _vtk.vtkDataWriter
-        | _vtk.vtkHDFWriter
-        | _vtk.vtkImageWriter
-    )
-    _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
-
+_T = TypeVar('_T')
 PICKLE_EXT = ('.pkl', '.pickle')
+
+
+def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+    if not isinstance(mesh, pv.MultiBlock):
+        return
+    iterator = mesh.recursive_iterator('all', node_type='parent')
+    for index, name, nested_multiblock in iterator:
+        if len(nested_multiblock.field_data.keys()) > 0:
+            # Avoid circular import
+            from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
+
+            index_fmt = _format_nested_index(index)
+            msg = (
+                f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                f'has field data which will not be saved.\n'
+                'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                'Use `move_nested_field_data_to_root` to store the field data '
+                'with the root MultiBlock before saving.'
+            )
+            warnings.warn(msg, stacklevel=2)
 
 
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
@@ -138,10 +147,10 @@ def get_ext(filename: str | Path) -> str:
 
 @_deprecate_positional_args(allowed=['vtk_writer'])
 def set_vtkwriter_mode(
-    vtk_writer: _VTKWriterType,
+    vtk_writer: _T,
     use_binary: bool = True,  # noqa: FBT001, FBT002
     compression: _CompressionOptions = 'zlib',
-) -> _VTKWriterType:
+) -> _T:
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -169,13 +178,14 @@ def set_vtkwriter_mode(
     from vtkmodules.vtkIOGeometry import vtkSTLWriter  # noqa: PLC0415
     from vtkmodules.vtkIOLegacy import vtkDataWriter  # noqa: PLC0415
     from vtkmodules.vtkIOPLY import vtkPLYWriter  # noqa: PLC0415
+    from vtkmodules.vtkIOXML import vtkXMLWriter  # noqa: PLC0415
 
     if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
         else:
             vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
+    elif isinstance(vtk_writer, vtkXMLWriter):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
             supported = get_args(_CompressionOptions)
@@ -957,7 +967,7 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
             f'Only {pv.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
         raise TypeError(msg)
-
+    _warn_multiblock_nested_field_data(mesh)
     with open(filename_str, 'wb') as f:  # noqa: PTH123
         pickle.dump(mesh, f)
 

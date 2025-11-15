@@ -201,10 +201,10 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     texture = np.ones((sphere.n_points, 3), np.float32)
     if as_str:
         sphere.point_data['texture'] = texture
-        with pytest.raises(ValueError, match='Invalid datatype'):
+        with pytest.raises(TypeError, match='incorrect dtype'):
             sphere.save(filename, texture='texture')
     else:
-        with pytest.raises(ValueError, match='Invalid datatype'):
+        with pytest.raises(TypeError, match='incorrect dtype'):
             sphere.save(filename, texture=texture)
 
     with pytest.raises(TypeError):
