@@ -253,8 +253,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                     """Initialize writer."""
                     self.writer = vtkDataSetWriter()
                     self.writer.SetFileName(str(path))
-                    self.data_object = data_object
-                    self.writer.SetInputData(self.data_object)
+                    self.writer.SetInputData(data_object)
 
                 def write(self) -> None:
                     """Write data to path."""
