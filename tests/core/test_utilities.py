@@ -2966,6 +2966,8 @@ def get_concrete_writers():
 @pytest.mark.parametrize('writer_cls', get_concrete_writers())
 def test_writer_data_mode_mixin(writer_cls):
     """Test that classes with an ascii setter have a data_mode property."""
+    if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
     if not any('ascii' in attr.lower() for attr in dir(writer_cls._vtk_class)):
         pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
 
@@ -2973,8 +2975,7 @@ def test_writer_data_mode_mixin(writer_cls):
     mesh = (
         pv.PartitionedDataSet() if writer_cls is pv.XMLPartitionedDataSetWriter else pv.PolyData()
     )
-    if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
-        pytest.xfail('Needs vtk 9.4')
+
     obj = writer_cls('', mesh)
     assert obj.data_format == 'binary'
     obj.data_format = 'ascii'
