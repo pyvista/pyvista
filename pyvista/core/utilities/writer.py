@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import contextlib
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import Literal
 from typing import get_args
 
@@ -25,27 +26,35 @@ if TYPE_CHECKING:
     from pyvista import DataObject
     from pyvista import NumpyArray
 
-_DataModeOptions = Literal['binary', 'ascii']
+_DataFormatOptions = Literal['binary', 'ascii']
 
 
 @abstract_class
 class _DataModeMixin:
+    _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
+    _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
+    _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
+
     @property
     @abstractmethod
     def writer(self) -> vtkWriter: ...
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.data_format = 'binary'
+
     @property
-    def data_mode(self) -> _DataModeOptions:
+    def data_format(self) -> _DataFormatOptions:
         try:
             mode = self.writer.GetDataMode()
         except AttributeError:
             mode = self.writer.GetFileType()
-        return 'binary' if mode == 1 else 'ascii'
+        return self._format_mapping[mode]
 
-    @data_mode.setter
-    def data_mode(self, mode: _DataModeOptions) -> None:
-        _validation.check_contains(get_args(_DataModeOptions), mode, name='data_mode')
-        if mode == 'binary':
+    @data_format.setter
+    def data_format(self, data_format: _DataFormatOptions) -> None:
+        _validation.check_contains(get_args(_DataFormatOptions), data_format, name='data format')
+        if data_format == 'binary':
             try:
                 self.writer.SetDataModeToBinary()  # DataWriter, PLYWriter, STLWriter
             except AttributeError:
@@ -80,6 +89,7 @@ class BaseWriter(_NoNewAttrMixin):
     def __init__(self, path: str | Path, data_object: DataObject) -> None:
         """Initialize writer."""
         self._writer = self._vtk_class()
+        super().__init__()
         self.path = path
         self.data_object = data_object
 
@@ -391,10 +401,11 @@ class UnstructuredGridWriter(BaseWriter, _DataModeMixin):
 
 @abstract_class
 class _XMLWriter(BaseWriter, _DataModeMixin):
+    _format_mapping = _DataModeMixin._ascii0_binary1
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.compression = 'zlib'
-        self.data_mode = 'binary'
 
     @property
     def compression(self) -> _CompressionOptions:
