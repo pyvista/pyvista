@@ -2970,10 +2970,11 @@ def test_writer_data_mode_mixin(writer_cls):
         pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
 
     assert _DataModeMixin in writer_cls.__mro__, f'{writer_cls.__name__} missing DataModeMixin'
-    # Create any mesh that won't
     mesh = (
         pv.PartitionedDataSet() if writer_cls is pv.XMLPartitionedDataSetWriter else pv.PolyData()
     )
+    if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
     obj = writer_cls('', mesh)
     assert obj.data_format == 'binary'
     obj.data_format = 'ascii'
