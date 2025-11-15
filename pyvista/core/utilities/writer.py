@@ -12,9 +12,10 @@ import numpy as np
 
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.reader import _lazy_vtk_instantiation
+from pyvista.core.utilities.reader import _lazy_vtk_import
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -78,13 +79,17 @@ class BaseWriter(_NoNewAttrMixin):
 
     def __init__(self, path: str | Path, data_object: DataObject) -> None:
         """Initialize writer."""
-        self._writer = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
+        self._writer = self._vtk_class()
         self.path = path
         self.data_object = data_object
 
     def __repr__(self) -> str:
         """Representation of a writer object."""
         return f"{self.__class__.__name__}('{self.path}')"
+
+    @_classproperty
+    def _vtk_class(self) -> vtkWriter:
+        return _lazy_vtk_import(self._vtk_module_name, self._vtk_class_name)
 
     @property
     def writer(self) -> vtkWriter:
@@ -141,7 +146,7 @@ class BMPWriter(BaseWriter):
     _vtk_class_name = 'vtkBMPWriter'
 
 
-class DataSetWriter(BaseWriter):
+class DataSetWriter(BaseWriter, _DataModeMixin):
     """DataSetWriter for VTK legacy dataset files ``.vtk``.
 
     Wraps :vtk:`vtkDataSetWriter`.
@@ -293,7 +298,7 @@ class PNMWriter(BaseWriter):
     _vtk_class_name = 'vtkPNMWriter'
 
 
-class PolyDataWriter(BaseWriter):
+class PolyDataWriter(BaseWriter, _DataModeMixin):
     """PolyDataWriter for legacy VTK PolyData ``.vtk`` files.
 
     Wraps :vtk:`vtkPolyDataWriter`.
@@ -306,7 +311,7 @@ class PolyDataWriter(BaseWriter):
     _vtk_class_name = 'vtkPolyDataWriter'
 
 
-class RectilinearGridWriter(BaseWriter):
+class RectilinearGridWriter(BaseWriter, _DataModeMixin):
     """RectilinearGridWriter for legacy VTK rectilinear grid ``.vtk`` files.
 
     Wraps :vtk:`vtkRectilinearGridWriter`.
@@ -332,7 +337,7 @@ class STLWriter(BaseWriter, _DataModeMixin):
     _vtk_class_name = 'vtkSTLWriter'
 
 
-class SimplePointsWriter(BaseWriter):
+class SimplePointsWriter(BaseWriter, _DataModeMixin):
     """SimplePointsWriter for simple point-set ``.xyz`` files.
 
     Wraps :vtk:`vtkSimplePointsWriter`.
@@ -345,7 +350,7 @@ class SimplePointsWriter(BaseWriter):
     _vtk_class_name = 'vtkSimplePointsWriter'
 
 
-class StructuredGridWriter(BaseWriter):
+class StructuredGridWriter(BaseWriter, _DataModeMixin):
     """StructuredGridWriter for legacy VTK structured grid ``.vtk`` files.
 
     Wraps :vtk:`vtkStructuredGridWriter`.
@@ -371,7 +376,7 @@ class TIFFWriter(BaseWriter):
     _vtk_class_name = 'vtkTIFFWriter'
 
 
-class UnstructuredGridWriter(BaseWriter):
+class UnstructuredGridWriter(BaseWriter, _DataModeMixin):
     """UnstructuredGridWriter for legacy VTK unstructured grid ``.vtk`` files.
 
     Wraps :vtk:`vtkUnstructuredGridWriter`.

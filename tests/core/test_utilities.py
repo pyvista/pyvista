@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+import inspect
 import itertools
 import json
 import operator
@@ -73,6 +74,8 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
+from pyvista.core.utilities.writer import BaseWriter
+from pyvista.core.utilities.writer import _DataModeMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
@@ -2942,3 +2945,28 @@ def test_writer_compression(compression):
     else:
         compressor = writer.writer.GetCompressor()
         assert compression in str(type(compressor)).lower()
+
+
+def get_concrete_writers():
+    """Collect all concrete BaseWriter subclasses"""
+    concrete_writers = []
+    for obj in vars(pv.core.utilities.writer).values():
+        if not (inspect.isclass(obj) and issubclass(obj, BaseWriter)):
+            continue
+        # Skip abstract
+        try:
+            obj()
+        except TypeError as e:
+            if 'abstract' in repr(e):
+                continue
+        concrete_writers.append(obj)
+    return concrete_writers
+
+
+@pytest.mark.parametrize('writer_cls', get_concrete_writers())
+def test_writer_has_data_mode_mixin(writer_cls):
+    """Test that classes with an ascii setter have a data_mode property."""
+    if not any('ascii' in attr.lower() for attr in dir(writer_cls._vtk_class)):
+        pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
+
+    assert _DataModeMixin in writer_cls.__mro__, f'{writer_cls.__name__} missing DataModeMixin'

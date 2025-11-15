@@ -33,10 +33,10 @@ if TYPE_CHECKING:
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 
 
-def _lazy_vtk_instantiation(module_name, class_name):
-    """Lazy import and instantiation of a class from vtkmodules."""
+def _lazy_vtk_import(module_name, class_name) -> type:
+    """Lazy import of a class from vtkmodules."""
     module = importlib.import_module(f'vtkmodules.{module_name}')
-    return getattr(module, class_name)()
+    return getattr(module, class_name)
 
 
 def get_reader(filename, force_ext=None):
@@ -166,7 +166,7 @@ class BaseReader(_NoNewAttrMixin):
     def __init__(self, path) -> None:
         """Initialize Reader by setting path."""
         if self._vtk_class_name:
-            self._reader = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
+            self._reader = _lazy_vtk_import(self._vtk_module_name, self._vtk_class_name)()
         else:
             # edge case where some class customization is needed on instantiation
             self._reader = self._class_reader()
@@ -2106,9 +2106,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.TIME_STEPS()
 
         vtkinfo = self.reader.GetOutputInformation(0)
@@ -2138,9 +2138,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         float
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
@@ -2165,9 +2165,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             Time or iteration value to set as active.
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
@@ -3119,9 +3119,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             Global data from Exodus II file
 
         """
-        global_extractor = _lazy_vtk_instantiation(
+        global_extractor = _lazy_vtk_import(
             'vtkFiltersExtraction', 'vtkExtractExodusGlobalTemporalVariables'
-        )
+        )()
 
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()
@@ -3444,9 +3444,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
