@@ -341,7 +341,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
         else:
             array_name = '_color_array'
             array = texture
-            self.data_object[array_name] = texture  # type: ignore[index]
+            self.data_object[array_name] = texture
 
         _validation.check_subdtype(array, 'uint8', name='texture')
         self.writer.SetArrayName(array_name)
