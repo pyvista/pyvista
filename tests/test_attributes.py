@@ -285,6 +285,8 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pytest.skip(
                 f'Parent {_vtkWrapper.__name__} is not compatible with {_NoNewAttrMixin.__name__}.'
             )
+        elif pyvista_class is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+            pytest.skip('Requires vtk 9.4')
 
     skip_test_for_some_classes()
     instance = try_init_pyvista_object(pyvista_class)
