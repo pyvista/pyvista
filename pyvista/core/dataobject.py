@@ -237,12 +237,22 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 )
 
         def _write_vtk(mesh_: DataObject) -> None:
-            writer = mesh_._WRITERS[file_ext](file_path, mesh_)
-            data_mode = 'binary' if binary else 'ascii'
-            writer._apply_kwargs_safely(
-                texture=texture, data_mode=data_mode, compression=compression
-            )
-            writer.write()
+            if file_ext != '.vtk':
+                writer = mesh_._WRITERS[file_ext](file_path, mesh_)
+                data_mode = 'binary' if binary else 'ascii'
+                writer._apply_kwargs_safely(
+                    texture=texture, data_mode=data_mode, compression=compression
+                )
+                writer.write()
+                return
+
+            from vtkmodules.vtkIOLegacy import vtkDataSetWriter
+
+            writer = vtkDataSetWriter()
+            pv.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
+            writer.SetFileName(str(file_path))
+            writer.SetInputData(mesh_)
+            writer.Write()
 
         if self._WRITERS is None:
             msg = (  # type: ignore[unreachable]
