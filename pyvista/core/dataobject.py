@@ -238,9 +238,9 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext](file_path, mesh_)
-            data_mode = 'binary' if binary else 'ascii'
+            data_format = 'binary' if binary else 'ascii'
             writer._apply_kwargs_safely(
-                texture=texture, data_mode=data_mode, compression=compression
+                texture=texture, data_format=data_format, compression=compression
             )
             writer.write()
 
