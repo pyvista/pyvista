@@ -7,7 +7,6 @@ from collections import UserDict
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
 
@@ -173,77 +172,6 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file size.
 
         """
-
-        def _warn_multiblock_nested_field_data(mesh: pv.MultiBlock) -> None:
-            iterator = mesh.recursive_iterator('all', node_type='parent')
-            for index, name, nested_multiblock in iterator:
-                if len(nested_multiblock.field_data.keys()) > 0:
-                    # Avoid circular import
-                    from pyvista.core.filters.composite import _format_nested_index
-
-                    index_fmt = _format_nested_index(index)
-                    warnings.warn(
-                        f"Nested MultiBlock at index {index_fmt} with name '{name}' "
-                        f'has field data which will not be saved.\n'
-                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-                        'Use `move_nested_field_data_to_root` to store the field data '
-                        'with the root MultiBlock before saving.',
-                        stacklevel=2,
-                    )
-
-        def _check_multiblock_hdf_types(mesh: pv.MultiBlock) -> None:
-            if (9, 4, 0) <= pv.vtk_version_info < (9, 5, 0):
-                if mesh.is_nested:
-                    msg = (
-                        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
-                        '\nUpgrade to VTK>=9.5 for this functionality.'
-                    )
-                    raise TypeError(msg)
-                if type(None) in mesh.block_types:
-                    msg = (
-                        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
-                        '\nUpgrade to VTK>=9.5 for this functionality.'
-                    )
-                    raise TypeError(msg)
-
-            supported_block_types: list[type] = [
-                pv.PolyData,
-                pv.UnstructuredGrid,
-                type(None),
-                pv.MultiBlock,
-                pv.PartitionedDataSet,
-            ]
-            for id_, name, block in mesh.recursive_iterator('all'):
-                if type(block) not in supported_block_types:
-                    from pyvista.core.filters.composite import _format_nested_index
-
-                    index_fmt = _format_nested_index(id_)
-                    msg = (
-                        f"Block at index {index_fmt} with name '{name}' has type "
-                        f'{block.__class__.__name__!r} '
-                        f'which cannot be saved to the .vtkhdf format.\n'
-                        f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
-                    )
-                    raise TypeError(msg)
-
-        def _warn_imagedata_direction_matrix(mesh: pv.ImageData) -> None:
-            if not np.allclose(mesh.direction_matrix, np.eye(3)):
-                warnings.warn(
-                    'The direction matrix for ImageData will not be saved using the '
-                    'legacy `.vtk` format.\n'
-                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                    'Use the `.vti` extension instead (XML format).',
-                    stacklevel=2,
-                )
-
-        def _write_vtk(mesh_: DataObject) -> None:
-            writer = mesh_._WRITERS[file_ext](file_path, mesh_)
-            data_format = 'binary' if binary else 'ascii'
-            writer._apply_kwargs_safely(
-                texture=texture, data_format=data_format, compression=compression
-            )
-            writer.write()
-
         if self._WRITERS is None:
             msg = (  # type: ignore[unreachable]
                 f'{self.__class__.__name__} writers are not specified,'
@@ -260,20 +188,19 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             msg = '.vtkhdf files can only be written in binary format.'
             raise ValueError(msg)
 
-        # store complex and bitarray types as field data
+        # Store complex and bitarray types as field data
         self._store_metadata()
 
-        # warn if data will be lost
-        if isinstance(self, pv.MultiBlock):
-            _warn_multiblock_nested_field_data(self)
-            if file_ext == '.vtkhdf':
-                _check_multiblock_hdf_types(self)
-        if isinstance(self, pv.ImageData) and file_ext == '.vtk':
-            _warn_imagedata_direction_matrix(self)
-
+        # Save the object
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
-            _write_vtk(self)
+            # Save using the writer
+            writer = self._WRITERS[file_ext](file_path, self)
+            data_format = 'binary' if binary else 'ascii'
+            writer._apply_kwargs_safely(
+                texture=texture, data_format=data_format, compression=compression
+            )
+            writer.write()
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
         else:

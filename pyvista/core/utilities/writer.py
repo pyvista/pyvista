@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import get_args
+import warnings
 
 import numpy as np
 
@@ -31,6 +32,7 @@ _DataFormatOptions = Literal['binary', 'ascii']
 
 @abstract_class
 class _DataModeMixin:
+    # Different writers use different values to indicate the current format
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
     _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
@@ -132,8 +134,15 @@ class BaseWriter(_NoNewAttrMixin):
         self._data_object = data_object
         self.writer.SetInputData(data_object)
 
+    def _execute_before_write(self) -> None:
+        """Execute code before calling `write()`.
+
+        Subclasses may optionally define this, e.g. to issue warnings.
+        """
+
     def write(self) -> None:
         """Write data to path."""
+        self._execute_before_write()
         self.writer.Write()
 
     def _apply_kwargs_safely(self, **kwargs) -> None:
@@ -168,6 +177,21 @@ class DataSetWriter(BaseWriter, _DataModeMixin):
     _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetWriter'
 
+    def _execute_before_write(self) -> None:
+        import pyvista as pv  # noqa: PLC0415
+
+        # Warn if data will be lost
+        if isinstance(mesh := self.data_object, pv.ImageData) and not np.allclose(
+            mesh.direction_matrix, np.eye(3)
+        ):
+            msg = (
+                'The direction matrix for ImageData will not be saved using the '
+                'legacy `.vtk` format.\n'
+                'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
+                'Use the `.vti` extension instead (XML format).'
+            )
+            warnings.warn(msg, stacklevel=2)
+
 
 class HDFWriter(BaseWriter):
     """HDFWriter for ``.hdf`` and ``.vtkhdf`` files.
@@ -180,6 +204,44 @@ class HDFWriter(BaseWriter):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFWriter'
+
+    def _execute_before_write(self) -> None:
+        # Check multiblock block types
+        import pyvista as pv  # noqa: PLC0415
+
+        if isinstance(mesh := self.data_object, pv.MultiBlock) and pv.vtk_version_info < (9, 5, 0):
+            if mesh.is_nested:
+                msg = (
+                    'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                    '\nUpgrade to VTK>=9.5 for this functionality.'
+                )
+                raise TypeError(msg)
+            if type(None) in mesh.block_types:
+                msg = (
+                    'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                    '\nUpgrade to VTK>=9.5 for this functionality.'
+                )
+                raise TypeError(msg)
+
+        supported_block_types: list[type] = [
+            pv.PolyData,
+            pv.UnstructuredGrid,
+            type(None),
+            pv.MultiBlock,
+            pv.PartitionedDataSet,
+        ]
+        for id_, name, block in mesh.recursive_iterator('all'):
+            if type(block) not in supported_block_types:
+                from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
+
+                index_fmt = _format_nested_index(id_)
+                msg = (
+                    f"Block at index {index_fmt} with name '{name}' has type "
+                    f'{block.__class__.__name__!r} '
+                    f'which cannot be saved to the .vtkhdf format.\n'
+                    f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
+                )
+                raise TypeError(msg)
 
 
 class HoudiniPolyDataWriter(BaseWriter):
@@ -450,6 +512,24 @@ class XMLMultiBlockDataWriter(_XMLWriter):
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataWriter'
+
+    def _execute_before_write(self) -> None:
+        # Warn if nested field data will be lost
+        iterator = self.data_object.recursive_iterator('all', node_type='parent')
+        for index, name, nested_multiblock in iterator:
+            if len(nested_multiblock.field_data.keys()) > 0:
+                # Avoid circular import
+                from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
+
+                index_fmt = _format_nested_index(index)
+                msg = (
+                    f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                    f'has field data which will not be saved.\n'
+                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                    'Use `move_nested_field_data_to_root` to store the field data '
+                    'with the root MultiBlock before saving.'
+                )
+                warnings.warn(msg, stacklevel=2)
 
 
 class XMLPartitionedDataSetWriter(_XMLWriter):
