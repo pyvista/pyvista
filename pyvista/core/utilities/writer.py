@@ -337,14 +337,17 @@ class PLYWriter(BaseWriter, _DataModeMixin):
         _validation.check_instance(texture, (str, np.ndarray), name='texture')
         if isinstance(texture, str):
             array_name = texture
+            array = self.data_object[array_name]
         else:
-            _validation.validate_array(texture, must_have_dtype='uint8', name='texture')
             array_name = '_color_array'
+            array = texture
             self.data_object[array_name] = texture
+
+        _validation.check_subdtype(array, 'uint8', name='texture')
         self.writer.SetArrayName(array_name)
 
         # enable alpha channel if applicable
-        enable_alpha = self.data_object[array_name].shape[-1] == 4  # type: ignore[index]
+        enable_alpha = array.shape[-1] == 4  # type: ignore[index]
         self.writer.SetEnableAlpha(enable_alpha)
 
 

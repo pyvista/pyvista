@@ -2980,3 +2980,22 @@ def test_writer_data_mode_mixin(writer_cls):
     assert obj.data_format == 'binary'
     obj.data_format = 'ascii'
     assert obj.data_format == 'ascii'
+
+
+def test_ply_writer(sphere, tmp_path):
+    path = tmp_path / 'sphere.ply'
+    writer = pv.PLYWriter(path, sphere)
+    assert writer.path == str(path)
+    assert repr(writer) == f'PLYWriter({str(path)!r})'
+
+    array = np.arange(sphere.n_points)
+    with pytest.raises(TypeError, match='incorrect dtype'):
+        writer.texture = array
+    array = array.astype('uint8')
+
+    # Test array is implicitly added to mesh
+    texture_name = '_color_array'
+    writer.texture = array
+    assert writer.texture == texture_name
+    writer.texture = texture_name
+    assert writer.texture == texture_name
