@@ -129,6 +129,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
     ) -> None:
         """Save this vtk object to file.
 
+        .. include:: /api/utilities/mesh_io.rst
+
         .. versionadded:: 0.45
 
             Support saving pickled meshes
