@@ -98,7 +98,7 @@ class BaseWriter(_NoNewAttrMixin):
 
     def __repr__(self) -> str:
         """Representation of a writer object."""
-        return f"{self.__class__.__name__}('{self.path}')"
+        return f'{self.__class__.__name__}({self.path!r})'
 
     @_classproperty
     def _vtk_class(self) -> vtkWriter:
