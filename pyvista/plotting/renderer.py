@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -19,6 +18,7 @@ import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -742,10 +742,9 @@ class Renderer(
             if uses_egl():  # pragma: no cover
                 # only display the warning when not building documentation
                 if not pv.BUILDING_GALLERY:
-                    warnings.warn(
+                    warn_external(
                         'VTK compiled with OSMesa/EGL does not properly support '
                         'FXAA anti-aliasing and SSAA will be used instead.',
-                        stacklevel=2,
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -1368,10 +1367,9 @@ class Renderer(
         if box is None:
             box = self._theme.axes.box
         if box:
-            warnings.warn(
+            warn_external(
                 '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
             if box_args is None:
                 box_args = {}
@@ -1975,24 +1973,18 @@ class Renderer(
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
-            warnings.warn(
-                '`xlabel` is deprecated. Use `xtitle` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`xlabel` is deprecated. Use `xtitle` instead.', PyVistaDeprecationWarning
             )
         if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
-            warnings.warn(
-                '`ylabel` is deprecated. Use `ytitle` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`ylabel` is deprecated. Use `ytitle` instead.', PyVistaDeprecationWarning
             )
         if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
-            warnings.warn(
-                '`zlabel` is deprecated. Use `ztitle` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`zlabel` is deprecated. Use `ztitle` instead.', PyVistaDeprecationWarning
             )
         assert_empty_kwargs(**kwargs)
 
@@ -4182,9 +4174,8 @@ class Renderer(
                     face_ = args.pop('face', None)
 
                     if args:
-                        warnings.warn(
-                            f'Some of the arguments given to legend are not used.\n{args}',
-                            stacklevel=2,
+                        warn_external(
+                            f'Some of the arguments given to legend are not used.\n{args}'
                         )
                 elif isinstance(args, str):
                     # Only passing label

@@ -12,10 +12,11 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import TypeVar
-import warnings
 
 import numpy as np
 from typing_extensions import Self
+
+from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
     from typing import Any
@@ -229,7 +230,7 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warnings.warn(formatted_exception, stacklevel=2)
+        warn_external(formatted_exception)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201

@@ -12,12 +12,12 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -122,10 +122,9 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         self.association = association
         self.name = name
         # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
+        warn_external(
             'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:

@@ -36,4 +36,5 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
             frame = frame.f_back
         # preemptively break reference cycle between locals and the frame
         del frame
-    warnings.warn(message, category, **kwargs)
+
+    warnings.warn(message, category, **kwargs)  # type: ignore[call-overload]

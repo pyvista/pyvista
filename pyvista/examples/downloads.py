@@ -31,7 +31,6 @@ import shutil
 import sys
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 import pooch
@@ -40,6 +39,7 @@ from pooch.utils import get_logger
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
@@ -70,7 +70,7 @@ _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/
 
 def _warn_invalid_dir_not_used(path, env_var):
     msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
-    warnings.warn(msg, stacklevel=2)
+    warn_external(msg)
 
 
 def _get_vtk_data_source() -> tuple[str, bool]:
@@ -121,7 +121,7 @@ def _warn_if_path_not_accessible(path: str | Path, msg: str):
     except (PermissionError, OSError):
         # Warn, don't raise just in case there's an environment issue.
         msg = f'Unable to access path: {path}\n{msg}'
-        warnings.warn(msg, stacklevel=2)
+        warn_external(msg)
 
 
 SOURCE, _FILE_CACHE = _get_vtk_data_source()
