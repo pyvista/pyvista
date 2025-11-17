@@ -10,9 +10,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TextIO
-from typing import TypeVar
 from typing import cast
-from typing import get_args
 from typing import overload
 import warnings
 
@@ -20,7 +18,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
@@ -42,7 +39,6 @@ if TYPE_CHECKING:
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
-_T = TypeVar('_T')
 PICKLE_EXT = ('.pkl', '.pickle')
 
 
@@ -143,65 +139,6 @@ def get_ext(filename: str | Path) -> str:
         ext_pre = path.suffix.lower()
         ext = f'{ext_pre}{ext}'
     return ext
-
-
-@_deprecate_positional_args(allowed=['vtk_writer'])
-def set_vtkwriter_mode(
-    vtk_writer: _T,
-    use_binary: bool = True,  # noqa: FBT001, FBT002
-    compression: _CompressionOptions = 'zlib',
-) -> _T:
-    """Set any vtk writer to write as binary or ascii.
-
-    Parameters
-    ----------
-    vtk_writer
-        The vtk writer instance to be configured. Must be one of :vtk:`vtkDataWriter`,
-        :vtk:`vtkPLYWriter`, :vtk:`vtkSTLWriter`, :vtk:`vtkXMLWriter`.
-    use_binary : bool, default: True
-        If ``True``, the writer is set to write files in binary format. If
-        ``False``, the writer is set to write files in ASCII format.
-    compression : str or None, default: 'zlib'
-        The compression type to use when ``use_binary`` is ``True`` and ``vtk_writer``
-        is of type :vtk:`vtkXMLWriter`. This argument has no effect otherwise.
-        Acceptable values are ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``.
-        ``None`` indicates no compression.
-
-        .. versionadded:: 0.47
-
-    Returns
-    -------
-    :vtk:`vtkDataWriter` | :vtk:`vtkPLYWriter` | :vtk:`vtkSTLWriter` | :vtk:`vtkXMLWriter`
-        The configured vtk writer instance.
-
-    """
-    from vtkmodules.vtkIOGeometry import vtkSTLWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOLegacy import vtkDataWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOPLY import vtkPLYWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOXML import vtkXMLWriter  # noqa: PLC0415
-
-    if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
-        if use_binary:
-            vtk_writer.SetFileTypeToBinary()
-        else:
-            vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, vtkXMLWriter):
-        if use_binary:
-            vtk_writer.SetDataModeToBinary()
-            supported = get_args(_CompressionOptions)
-
-            _validation.check_contains(supported, must_contain=compression, name='compression')
-            if compression is None:
-                vtk_writer.SetCompressorTypeToNone()
-            elif compression == 'zlib':
-                vtk_writer.SetCompressorTypeToZLib()
-            elif compression == 'lz4':
-                vtk_writer.SetCompressorTypeToLZ4()
-            else:
-                vtk_writer.SetCompressorTypeToLZMA()
-        else:
-            vtk_writer.SetDataModeToAscii()
-    return vtk_writer
 
 
 @_deprecate_positional_args(allowed=['filename'])

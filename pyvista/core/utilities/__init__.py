@@ -49,7 +49,6 @@ from .fileio import read_texture as read_texture
 from .fileio import save_meshio as save_meshio
 from .fileio import save_pickle as save_pickle
 from .fileio import set_pickle_format as set_pickle_format
-from .fileio import set_vtkwriter_mode as set_vtkwriter_mode
 from .fileio import to_meshio as to_meshio
 from .geometric_objects import NORMALS as NORMALS
 from .geometric_objects import Arrow as Arrow
