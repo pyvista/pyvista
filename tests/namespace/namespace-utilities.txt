@@ -180,7 +180,6 @@ set_algorithm_input, <function set_algorithm_input at 0x7f72f5e07f70>
 set_default_active_scalars, <function set_default_active_scalars at 0x7f72f5e07ee0>
 set_default_active_vectors, <function set_default_active_vectors at 0x7f72f5e07e50>
 set_error_output_file, <function set_error_output_file at 0x7f72f5cea3a0>
-set_vtkwriter_mode, <function set_vtkwriter_mode at 0x7f72f5e02e50>
 sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/utilities/sphinx_gallery.py'>
 start_xvfb, <function start_xvfb at 0x7f72f5cb4940>
 surface_from_para, <function surface_from_para at 0x7f72f5cb4160>

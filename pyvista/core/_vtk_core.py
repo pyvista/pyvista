@@ -469,57 +469,7 @@ from vtkmodules.vtkImagingSources import vtkImageNoiseSource as vtkImageNoiseSou
 from vtkmodules.vtkImagingSources import vtkImageSinusoidSource as vtkImageSinusoidSource
 from vtkmodules.vtkImagingStencil import vtkImageStencil as vtkImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil as vtkPolyDataToImageStencil
-from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
-from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
-from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
-from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
-from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
-from vtkmodules.vtkIOImage import vtkBMPWriter as vtkBMPWriter
-from vtkmodules.vtkIOImage import vtkImageWriter as vtkImageWriter
-from vtkmodules.vtkIOImage import vtkJPEGWriter as vtkJPEGWriter
-from vtkmodules.vtkIOImage import vtkNIFTIImageWriter as vtkNIFTIImageWriter
-from vtkmodules.vtkIOImage import vtkPNGWriter as vtkPNGWriter
-from vtkmodules.vtkIOImage import vtkPNMWriter as vtkPNMWriter
-from vtkmodules.vtkIOImage import vtkTIFFWriter as vtkTIFFWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
-from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
-from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
-from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
-from vtkmodules.vtkIOLegacy import vtkDataWriter as vtkDataWriter
-from vtkmodules.vtkIOLegacy import vtkPolyDataReader as vtkPolyDataReader
-from vtkmodules.vtkIOLegacy import vtkPolyDataWriter as vtkPolyDataWriter
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridReader as vtkRectilinearGridReader
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridWriter as vtkRectilinearGridWriter
-from vtkmodules.vtkIOLegacy import vtkSimplePointsWriter as vtkSimplePointsWriter
-from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridReader
-from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
-from vtkmodules.vtkIOParallelXML import (
-    vtkXMLPartitionedDataSetWriter as vtkXMLPartitionedDataSetWriter,
-)
-from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
-from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
-from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
-from vtkmodules.vtkIOXML import vtkXMLImageDataWriter as vtkXMLImageDataWriter
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader as vtkXMLMultiBlockDataReader
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataWriter as vtkXMLMultiBlockDataWriter
-from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader as vtkXMLPartitionedDataSetReader
-from vtkmodules.vtkIOXML import vtkXMLPImageDataReader as vtkXMLPImageDataReader
-from vtkmodules.vtkIOXML import vtkXMLPolyDataReader as vtkXMLPolyDataReader
-from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter as vtkXMLPolyDataWriter
-from vtkmodules.vtkIOXML import vtkXMLPRectilinearGridReader as vtkXMLPRectilinearGridReader
-from vtkmodules.vtkIOXML import vtkXMLPUnstructuredGridReader as vtkXMLPUnstructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLReader as vtkXMLReader
-from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader as vtkXMLRectilinearGridReader
-from vtkmodules.vtkIOXML import vtkXMLRectilinearGridWriter as vtkXMLRectilinearGridWriter
-from vtkmodules.vtkIOXML import vtkXMLStructuredGridReader as vtkXMLStructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLStructuredGridWriter as vtkXMLStructuredGridWriter
-from vtkmodules.vtkIOXML import vtkXMLTableReader as vtkXMLTableReader
-from vtkmodules.vtkIOXML import vtkXMLTableWriter as vtkXMLTableWriter
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader as vtkXMLUnstructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter as vtkXMLUnstructuredGridWriter
-from vtkmodules.vtkIOXML import vtkXMLWriter as vtkXMLWriter
 
 with contextlib.suppress(ImportError):
     # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224

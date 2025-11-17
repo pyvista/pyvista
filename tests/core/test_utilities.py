@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import contextlib
+import inspect
 import itertools
 import json
 import operator
@@ -42,7 +43,6 @@ from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
-from pyvista.core.utilities import set_vtkwriter_mode
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -74,6 +74,7 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
+from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
@@ -2934,13 +2935,71 @@ def test_max_positional_args_matches_pyproject():
     assert expected_value == _MAX_POSITIONAL_ARGS
 
 
-def test_save_compression():
-    writer = _vtk.vtkXMLUnstructuredGridWriter()
+@pytest.mark.parametrize('compression', get_args(_CompressionOptions))
+def test_writer_compression(compression):
+    writer = pv.XMLUnstructuredGridWriter('', pv.UnstructuredGrid())
+    writer.compression = compression
+    if compression is None:
+        assert writer.writer.GetCompressor() is None
+    else:
+        compressor = writer.writer.GetCompressor()
+        assert compression in str(type(compressor)).lower()
 
-    for compressor in get_args(_CompressionOptions):
-        if compressor is None:
-            set_vtkwriter_mode(writer, use_binary=True, compression=None)
-            assert writer.GetCompressor() is None
-        else:
-            set_vtkwriter_mode(writer, use_binary=True, compression=compressor)
-            assert compressor in str(type(writer.GetCompressor())).lower()
+
+def get_concrete_writers():
+    """Collect all concrete BaseWriter subclasses"""
+    concrete_writers = []
+    for obj in vars(pv.core.utilities.writer).values():
+        if not (inspect.isclass(obj) and issubclass(obj, pv.BaseWriter)):
+            continue
+        # Skip abstract
+        try:
+            obj()
+        except TypeError as e:
+            if 'abstract' in repr(e):
+                continue
+        concrete_writers.append(obj)
+    return concrete_writers
+
+
+@pytest.mark.parametrize('writer_cls', get_concrete_writers())
+def test_writer_data_mode_mixin(writer_cls):
+    """Test that classes with an ascii setter have a data_mode property."""
+    if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
+    if not any('ascii' in attr.lower() for attr in dir(writer_cls._vtk_class)):
+        pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
+
+    assert _DataFormatMixin in writer_cls.__mro__, f'{writer_cls.__name__} missing DataModeMixin'
+    mesh = (
+        pv.PartitionedDataSet() if writer_cls is pv.XMLPartitionedDataSetWriter else pv.PolyData()
+    )
+
+    obj = writer_cls('', mesh)
+    assert obj.data_format == 'binary'
+    obj.data_format = 'ascii'
+    assert obj.data_format == 'ascii'
+    obj.data_format = 'binary'
+    assert obj.data_format == 'binary'
+
+
+def test_ply_writer(sphere, tmp_path):
+    path = tmp_path / 'sphere.ply'
+    writer = pv.PLYWriter(path, sphere)
+    assert writer.path == str(path)
+
+    if not sys.platform.startswith('win'):
+        # Skip repr check on Windows due to escaped backslashes
+        assert repr(writer) == f'PLYWriter({str(path)!r})'
+
+    array = np.arange(sphere.n_points)
+    with pytest.raises(TypeError, match='incorrect dtype'):
+        writer.texture = array
+    array = array.astype('uint8')
+
+    # Test array is implicitly added to mesh
+    texture_name = '_color_array'
+    writer.texture = array
+    assert writer.texture == texture_name
+    writer.texture = texture_name
+    assert writer.texture == texture_name
