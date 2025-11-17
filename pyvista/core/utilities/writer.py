@@ -91,6 +91,26 @@ class BaseWriter(_FileIOBase):
         self.path = path
         self.data_object = data_object
 
+    @classmethod
+    def _get_extension_mapping(cls) -> dict[str, type]:
+        import pyvista as pv  # noqa: PLC0415
+
+        mapping: dict[str, type] = {}
+        all_mesh_types = (
+            pv.ImageData,
+            pv.RectilinearGrid,
+            pv.StructuredGrid,
+            pv.PointSet,
+            pv.PolyData,
+            pv.UnstructuredGrid,
+            pv.ExplicitStructuredGrid,
+            pv.MultiBlock,
+            pv.PartitionedDataSet,
+        )
+        for mesh_type in all_mesh_types:
+            mapping.update(mesh_type._WRITERS)
+        return mapping
+
     @property
     def writer(self) -> vtkWriter:
         """Return the vtk writer object.

@@ -2984,8 +2984,11 @@ def test_writer_data_mode_mixin(writer_cls):
 
 
 def test_ply_writer(sphere, tmp_path):
+    writer_cls = pv.PLYWriter
+    assert writer_cls.extensions == {'.ply'}
+
     path = tmp_path / 'sphere.ply'
-    writer = pv.PLYWriter(path, sphere)
+    writer = writer_cls(path, sphere)
     assert writer.path == str(path)
 
     if not sys.platform.startswith('win'):

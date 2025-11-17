@@ -73,10 +73,23 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         """Set the path."""
 
     @_classproperty
-    def _vtk_class(self) -> vtkWriter | None:
-        if self._vtk_module_name and self._vtk_class_name:
-            return _lazy_vtk_import(self._vtk_module_name, self._vtk_class_name)
+    def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
+        if cls._vtk_module_name and cls._vtk_class_name:
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
         return None
+
+    @classmethod
+    @abstractmethod
+    def _get_extension_mapping(cls) -> dict[str, type]: ...
+
+    @_classproperty
+    def extensions(cls) -> frozenset[str]:  # noqa: N805
+        """Return the file extensions associated with this class."""
+        extensions = set()
+        for ext, typ in cls._get_extension_mapping().items():
+            if typ is cls:  # type: ignore[comparison-overlap]
+                extensions.add(ext)
+        return frozenset(extensions)
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
