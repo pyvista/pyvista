@@ -81,6 +81,7 @@ test = [
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
+  'libcst<1.8.7',
   'meshio<5.4.0',
   'nest-asyncio2<1.7.0',
   'numpydoc<1.10.0',
