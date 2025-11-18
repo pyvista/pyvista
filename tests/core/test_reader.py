@@ -1480,12 +1480,12 @@ def test_exodus_reader_ext():
     # test against mug and exodus to check different valid file
     # extensions: .e and .exo
     reader = pv.ExodusIIReader
-    assert reader.extensions == {
+    assert reader.extensions == (
         '.e',
         '.ex2',
         '.exii',
         '.exo',
-    }
+    )
 
     fname_e = examples.download_mug(load=False)
     fname_exo = examples.download_exodus(load=False)

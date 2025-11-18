@@ -2997,7 +2997,7 @@ def test_fileio_extensions(cls):
 
 def test_ply_writer(sphere, tmp_path):
     writer_cls = pv.PLYWriter
-    assert writer_cls.extensions == {'.ply'}
+    assert writer_cls.extensions == ('.ply',)
 
     path = tmp_path / 'sphere.ply'
     writer = writer_cls(path, sphere)

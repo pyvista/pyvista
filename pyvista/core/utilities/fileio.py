@@ -83,7 +83,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
 
     @_classproperty
-    def extensions(cls) -> frozenset[str]:  # noqa: N805
+    def extensions(cls) -> tuple[str, ...]:  # noqa: N805
         """Return the file extension(s) associated with this class.
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
@@ -95,7 +95,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
             for ext, typ in mapping.items():
                 if typ is cls:  # type: ignore[comparison-overlap]
                     extensions.add(ext)
-        return frozenset(extensions)
+        return tuple(sorted(extensions))
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
