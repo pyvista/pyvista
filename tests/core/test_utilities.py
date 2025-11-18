@@ -2989,6 +2989,8 @@ def test_writer_data_mode_mixin(writer_cls):
 
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
 def test_fileio_extensions(cls):
+    if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
     if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
         # These classes are not associated with any extensions
         pytest.xfail()
