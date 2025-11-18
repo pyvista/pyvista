@@ -84,7 +84,12 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @_classproperty
     def extensions(cls) -> frozenset[str]:  # noqa: N805
-        """Return the file extensions associated with this class."""
+        """Return the file extension(s) associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
         extensions = set()
         for mapping in cls._get_extension_mappings():
             for ext, typ in mapping.items():
