@@ -179,8 +179,8 @@ class BaseReader(_FileIOBase):
         return f"{self.__class__.__name__}('{self.path}')"
 
     @classmethod
-    def _get_extension_mapping(cls) -> dict[str, type]:
-        return CLASS_READERS
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        return [CLASS_READERS]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.

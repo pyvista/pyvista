@@ -80,15 +80,16 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @classmethod
     @abstractmethod
-    def _get_extension_mapping(cls) -> dict[str, type]: ...
+    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
 
     @_classproperty
     def extensions(cls) -> frozenset[str]:  # noqa: N805
         """Return the file extensions associated with this class."""
         extensions = set()
-        for ext, typ in cls._get_extension_mapping().items():
-            if typ is cls:  # type: ignore[comparison-overlap]
-                extensions.add(ext)
+        for mapping in cls._get_extension_mappings():
+            for ext, typ in mapping.items():
+                if typ is cls:  # type: ignore[comparison-overlap]
+                    extensions.add(ext)
         return frozenset(extensions)
 
 

@@ -92,10 +92,9 @@ class BaseWriter(_FileIOBase):
         self.data_object = data_object
 
     @classmethod
-    def _get_extension_mapping(cls) -> dict[str, type]:
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
         import pyvista as pv  # noqa: PLC0415
 
-        mapping: dict[str, type] = {}
         all_mesh_types = (
             pv.ImageData,
             pv.RectilinearGrid,
@@ -107,9 +106,7 @@ class BaseWriter(_FileIOBase):
             pv.MultiBlock,
             pv.PartitionedDataSet,
         )
-        for mesh_type in all_mesh_types:
-            mapping.update(mesh_type._WRITERS)
-        return mapping
+        return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
     @property
     def writer(self) -> vtkWriter:
