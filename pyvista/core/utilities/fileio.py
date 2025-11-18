@@ -59,7 +59,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
-        """Representation of a writer object."""
+        """Representation of a FileIO object."""
         return f'{self.__class__.__name__}({self.path!r})'
 
     @property
