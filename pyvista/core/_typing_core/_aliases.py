@@ -41,7 +41,7 @@ ArrayLike = _ArrayLike[NumberType]
 if Rotation is not None:
     RotationLike = MatrixLike[float] | _vtk.vtkMatrix3x3 | Rotation
 else:
-    RotationLike = MatrixLike[float], _vtk.vtkMatrix3x3  # type: ignore[misc]
+    RotationLike = MatrixLike[float] | _vtk.vtkMatrix3x3  # type: ignore[misc]
 TransformLike = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
 
 
