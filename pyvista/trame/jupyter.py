@@ -466,7 +466,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     """
     try:
-        import nest_asyncio  # noqa: PLC0415
+        import nest_asyncio2  # noqa: PLC0415
     except ImportError:
         msg = (
             'Please install `nest_asyncio` to automagically launch the trame server '
@@ -480,6 +480,6 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this
-    nest_asyncio.apply()
+    nest_asyncio2.apply()
 
     return asyncio.run(launch_it())
