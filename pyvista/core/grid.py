@@ -17,6 +17,17 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.utilities.writer import BaseWriter
+from pyvista.core.utilities.writer import BMPWriter
+from pyvista.core.utilities.writer import DataSetWriter
+from pyvista.core.utilities.writer import JPEGWriter
+from pyvista.core.utilities.writer import NIFTIImageWriter
+from pyvista.core.utilities.writer import PNGWriter
+from pyvista.core.utilities.writer import PNMWriter
+from pyvista.core.utilities.writer import RectilinearGridWriter
+from pyvista.core.utilities.writer import TIFFWriter
+from pyvista.core.utilities.writer import XMLImageDataWriter
+from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -177,14 +188,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     """
 
-    _WRITERS: ClassVar[
-        dict[
-            str,
-            type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
-        ]
-    ] = {  # type: ignore[assignment]
-        '.vtk': _vtk.vtkRectilinearGridWriter,
-        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.vtk': RectilinearGridWriter,
+        '.vtr': XMLRectilinearGridWriter,
     }
 
     def __init__(
@@ -625,20 +631,18 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[
-        dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter | _vtk.vtkImageWriter]]
-    ] = {  # type: ignore[assignment]
-        '.bmp': _vtk.vtkBMPWriter,
-        '.jpeg': _vtk.vtkJPEGWriter,
-        '.jpg': _vtk.vtkJPEGWriter,
-        '.nii': _vtk.vtkNIFTIImageWriter,
-        '.nii.gz': _vtk.vtkNIFTIImageWriter,
-        '.png': _vtk.vtkPNGWriter,
-        '.pnm': _vtk.vtkPNMWriter,
-        '.tif': _vtk.vtkTIFFWriter,
-        '.tiff': _vtk.vtkTIFFWriter,
-        '.vtk': _vtk.vtkDataSetWriter,
-        '.vti': _vtk.vtkXMLImageDataWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.bmp': BMPWriter,
+        '.jpeg': JPEGWriter,
+        '.jpg': JPEGWriter,
+        '.nii': NIFTIImageWriter,
+        '.nii.gz': NIFTIImageWriter,
+        '.png': PNGWriter,
+        '.pnm': PNMWriter,
+        '.tif': TIFFWriter,
+        '.tiff': TIFFWriter,
+        '.vtk': DataSetWriter,
+        '.vti': XMLImageDataWriter,
     }
 
     @_deprecate_positional_args(allowed=['uinput'])
