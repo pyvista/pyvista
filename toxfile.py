@@ -14,16 +14,6 @@ if TYPE_CHECKING:
 
 @impl
 def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001, D103
-    if 'vtk_dev' in env_conf.env_name:
-        # Remove vtk from deps since it's installed separately
-        deps_obj = env_conf['deps']
-        deps = deps_obj.lines()
-
-        filtered = [d for d in deps if not d.strip().startswith('vtk')]
-
-        # Mutate deps
-        deps_obj.raw = '\n'.join(filtered)
-
     if os.environ.get('CI', 'false').lower() != 'true':
         return
 
