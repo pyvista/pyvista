@@ -24,6 +24,7 @@ Some key differences include:
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TypeAlias
 from typing import TypeVar
 
 import numpy as np
@@ -43,38 +44,40 @@ _NumberType = TypeVar(  # noqa: PYI018
     bound=np.floating | np.integer | np.bool_ | float | int | bool,
 )
 
-NumpyArray = npt.NDArray[NumberType]
+NumpyArray: TypeAlias = npt.NDArray[NumberType]
 
-_FiniteNestedList = (
+_FiniteNestedList: TypeAlias = (
     list[NumberType]
     | list[list[NumberType]]
     | list[list[list[NumberType]]]
     | list[list[list[list[NumberType]]]]
 )
-_FiniteNestedTuple = (
+_FiniteNestedTuple: TypeAlias = (
     tuple[NumberType]
     | tuple[tuple[NumberType]]
     | tuple[tuple[tuple[NumberType]]]
     | tuple[tuple[tuple[tuple[NumberType]]]]
 )
 
-_ArrayLike1D = NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
-_ArrayLike2D = (
+_ArrayLike1D: TypeAlias = (
+    NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
+)
+_ArrayLike2D: TypeAlias = (
     NumpyArray[NumberType]
     | Sequence[Sequence[NumberType]]
     | Sequence[Sequence[NumpyArray[NumberType]]]
 )
-_ArrayLike3D = (
+_ArrayLike3D: TypeAlias = (
     NumpyArray[NumberType]
     | Sequence[Sequence[Sequence[NumberType]]]
     | Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]
 )
-_ArrayLike4D = (
+_ArrayLike4D: TypeAlias = (
     NumpyArray[NumberType]
     | Sequence[Sequence[Sequence[Sequence[NumberType]]]]
     | Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]]
 )
-_ArrayLike = (
+_ArrayLike: TypeAlias = (
     _ArrayLike1D[NumberType]
     | _ArrayLike2D[NumberType]
     | _ArrayLike3D[NumberType]
