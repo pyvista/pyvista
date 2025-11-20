@@ -11,10 +11,12 @@
     return s.toLowerCase().replace(/[._-]/g, "");
   }
 
-  const tail = path.substring(path.lastIndexOf("/") + 1);
+  // Strip trailing .html for comparison and redirect target
+  const cleanPath = path.replace(/\.html$/, "");
+  const tail = cleanPath.substring(cleanPath.lastIndexOf("/") + 1);
 
   if (norm(tail) === norm(frag)) {
-    // Replace URL without reloading the full page twice
-    history.replaceState({}, "", path);
+    // Replace URL without reloading the page
+    history.replaceState({}, "", cleanPath);
   }
 })();
