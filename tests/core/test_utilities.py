@@ -2946,11 +2946,11 @@ def test_writer_compression(compression):
         assert compression in str(type(compressor)).lower()
 
 
-def get_concrete_writers():
+def get_concrete_classes(module, abc):
     """Collect all concrete BaseWriter subclasses"""
-    concrete_writers = []
-    for obj in vars(pv.core.utilities.writer).values():
-        if not (inspect.isclass(obj) and issubclass(obj, pv.BaseWriter)):
+    concrete_classes = []
+    for obj in vars(module).values():
+        if not (inspect.isclass(obj) and issubclass(obj, abc)):
             continue
         # Skip abstract
         try:
@@ -2958,11 +2958,15 @@ def get_concrete_writers():
         except TypeError as e:
             if 'abstract' in repr(e):
                 continue
-        concrete_writers.append(obj)
-    return concrete_writers
+        concrete_classes.append(obj)
+    return concrete_classes
 
 
-@pytest.mark.parametrize('writer_cls', get_concrete_writers())
+WRITER_CLASSES = get_concrete_classes(pv.core.utilities.writer, pv.BaseWriter)
+READER_CLASSES = get_concrete_classes(pv.core.utilities.reader, pv.BaseReader)
+
+
+@pytest.mark.parametrize('writer_cls', WRITER_CLASSES)
 def test_writer_data_mode_mixin(writer_cls):
     """Test that classes with an ascii setter have a data_mode property."""
     if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
@@ -2983,9 +2987,22 @@ def test_writer_data_mode_mixin(writer_cls):
     assert obj.data_format == 'binary'
 
 
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_extensions(cls):
+    if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
+    if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
+        # These classes are not associated with any extensions
+        pytest.xfail()
+    assert len(cls.extensions) > 0
+
+
 def test_ply_writer(sphere, tmp_path):
+    writer_cls = pv.PLYWriter
+    assert writer_cls.extensions == ('.ply',)
+
     path = tmp_path / 'sphere.ply'
-    writer = pv.PLYWriter(path, sphere)
+    writer = writer_cls(path, sphere)
     assert writer.path == str(path)
 
     if not sys.platform.startswith('win'):
