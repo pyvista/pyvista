@@ -36,6 +36,8 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from pyvista import MultiBlock
+
     from ._typing_core import NumpyArray
     from .utilities.writer import BaseWriter
 
@@ -958,3 +960,21 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
     @abstractmethod
     def is_empty(self) -> bool:
         """Return ``True`` if the object is empty."""
+
+    def cast_to_multiblock(self) -> MultiBlock:
+        """Convert this :class:`DataObject` to a :class:`~pyvista.MultiBlock`.
+
+        Uses :vtk:`vtkConvertToMultiBlockDataSet` internally.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        MultiBlock
+            Converted dataset.
+
+        """
+        alg = _vtk.vtkConvertToMultiBlockDataSet()
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return wrap(alg.GetOutput())  # type:ignore[return-value]
