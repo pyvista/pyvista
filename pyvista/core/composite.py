@@ -13,6 +13,7 @@ import itertools
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
 from typing import Union
@@ -44,6 +45,8 @@ from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 from .utilities.misc import _BoundsSizeMixin
+from .utilities.writer import HDFWriter
+from .utilities.writer import XMLMultiBlockDataWriter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -51,6 +54,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
 
     from ._typing_core import NumpyArray
+    from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
@@ -134,9 +138,11 @@ class MultiBlock(
 
     plot = pv._plot.plot
 
-    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = dict.fromkeys(
+        ['.vtm', '.vtmb'], XMLMultiBlockDataWriter
+    )
     if _vtk.vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
+        _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(self: MultiBlock, *args, **kwargs) -> None:
         """Initialize multi block."""

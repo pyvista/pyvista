@@ -43,6 +43,20 @@ from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+from .utilities.writer import BaseWriter
+from .utilities.writer import HDFWriter
+from .utilities.writer import HoudiniPolyDataWriter
+from .utilities.writer import IVWriter
+from .utilities.writer import OBJWriter
+from .utilities.writer import PLYWriter
+from .utilities.writer import PolyDataWriter
+from .utilities.writer import SimplePointsWriter
+from .utilities.writer import STLWriter
+from .utilities.writer import StructuredGridWriter
+from .utilities.writer import UnstructuredGridWriter
+from .utilities.writer import XMLPolyDataWriter
+from .utilities.writer import XMLStructuredGridWriter
+from .utilities.writer import XMLUnstructuredGridWriter
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -53,21 +67,6 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
-
-    _PolyDataWriterAlias = (
-        _vtk.vtkPLYWriter
-        | _vtk.vtkXMLPolyDataWriter
-        | _vtk.vtkSTLWriter
-        | _vtk.vtkPolyDataWriter
-        | _vtk.vtkHoudiniPolyDataWriter
-        | _vtk.vtkOBJWriter
-        | _vtk.vtkIVWriter
-        | _vtk.vtkHDFWriter
-    )
-
-    _UnstructuredGridWriterAlias = (
-        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
-    )
 
 
 DEFAULT_INPLACE_WARNING = (
@@ -85,8 +84,8 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
-        '.xyz': _vtk.vtkSimplePointsWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.xyz': SimplePointsWriter,
     }
 
     @_deprecate_positional_args
@@ -733,22 +732,17 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     _USE_STRICT_N_FACES = False
 
-    _WRITERS: ClassVar[
-        dict[
-            str,
-            (type[_PolyDataWriterAlias]),
-        ]
-    ] = {  # type: ignore[assignment]
-        '.ply': _vtk.vtkPLYWriter,
-        '.vtp': _vtk.vtkXMLPolyDataWriter,
-        '.stl': _vtk.vtkSTLWriter,
-        '.vtk': _vtk.vtkPolyDataWriter,
-        '.geo': _vtk.vtkHoudiniPolyDataWriter,
-        '.obj': _vtk.vtkOBJWriter,
-        '.iv': _vtk.vtkIVWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.ply': PLYWriter,
+        '.vtp': XMLPolyDataWriter,
+        '.stl': STLWriter,
+        '.vtk': PolyDataWriter,
+        '.geo': HoudiniPolyDataWriter,
+        '.obj': OBJWriter,
+        '.iv': IVWriter,
     }
     if _vtk.vtk_version_info >= (9, 4):
-        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
+        _WRITERS.update({'.vtkhdf': HDFWriter})
 
     @_deprecate_positional_args(allowed=['var_inp', 'faces'])
     def __init__(  # noqa: PLR0917
@@ -1522,25 +1516,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if ftype in ['.stl', '.ply'] and recompute_normals:
             with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
-
-        # validate texture
-        if ftype == '.ply' and texture is not None:
-            if isinstance(texture, str):
-                if self[texture].dtype != np.uint8:
-                    msg = f'Invalid datatype {self[texture].dtype} of texture array "{texture}"'
-                    raise ValueError(msg)
-            elif isinstance(texture, np.ndarray):
-                if texture.dtype != np.uint8:
-                    msg = f'Invalid datatype {texture.dtype} of texture array'
-                    raise ValueError(msg)
-            else:
-                msg = (  # type: ignore[unreachable]
-                    f'Invalid type {type(texture)} for texture.  '
-                    'Should be either a string representing a point or '
-                    'cell array, or a numpy array.'
-                )
-                raise TypeError(msg)
-
         super().save(filename, binary=binary, texture=texture, compression=compression)
 
     @property
@@ -1828,17 +1803,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     """
 
-    _WRITERS: ClassVar[
-        dict[
-            str,
-            type[_UnstructuredGridWriterAlias],
-        ]
-    ] = {  # type: ignore[assignment]
-        '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
-        '.vtk': _vtk.vtkUnstructuredGridWriter,
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.vtu': XMLUnstructuredGridWriter,
+        '.vtk': UnstructuredGridWriter,
     }
     if _vtk.vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
+        _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -2578,9 +2548,10 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     """
 
-    _WRITERS: ClassVar[
-        dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
-    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}  # type: ignore[assignment]
+    _WRITERS: ClassVar[dict[str, type[StructuredGridWriter | XMLStructuredGridWriter]]] = {
+        '.vtk': StructuredGridWriter,
+        '.vts': XMLStructuredGridWriter,
+    }  # type: ignore[assignment]
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the structured grid."""
@@ -2995,12 +2966,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
     """
 
-    _WRITERS: ClassVar[
-        dict[
-            str,
-            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
-        ]
-    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}  # type: ignore[assignment]
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.vtu': XMLUnstructuredGridWriter,
+        '.vtk': UnstructuredGridWriter,
+    }
 
     def __init__(self, *args, deep: bool = False, **kwargs):  # noqa: ARG002
         """Initialize the explicit structured grid."""

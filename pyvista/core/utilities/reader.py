@@ -7,11 +7,12 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 from functools import wraps
-import importlib
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
+from typing import get_args
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -21,7 +22,9 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
+from .fileio import _FileIOBase
 from .fileio import _get_ext_force
+from .fileio import _lazy_vtk_import
 from .fileio import _process_filename
 from .helpers import wrap
 from .misc import _NoNewAttrMixin
@@ -31,12 +34,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
-
-
-def _lazy_vtk_instantiation(module_name, class_name):
-    """Lazy import and instantiation of a class from vtkmodules."""
-    module = importlib.import_module(f'vtkmodules.{module_name}')
-    return getattr(module, class_name)()
+CLASS_READERS: dict[str, type[BaseReader]] = {}
 
 
 def get_reader(filename, force_ext=None):
@@ -144,7 +142,7 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader(_NoNewAttrMixin):
+class BaseReader(_FileIOBase):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -160,13 +158,11 @@ class BaseReader(_NoNewAttrMixin):
     """
 
     _class_reader: Any = None
-    _vtk_module_name: str = ''
-    _vtk_class_name: str = ''
 
     def __init__(self, path) -> None:
         """Initialize Reader by setting path."""
-        if self._vtk_class_name:
-            self._reader = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
+        if cls := self._vtk_class:
+            self._reader = cls()
         else:
             # edge case where some class customization is needed on instantiation
             self._reader = self._class_reader()
@@ -181,6 +177,10 @@ class BaseReader(_NoNewAttrMixin):
     def __repr__(self) -> str:
         """Representation of a Reader object."""
         return f"{self.__class__.__name__}('{self.path}')"
+
+    @classmethod
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        return [CLASS_READERS]
 
     def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.
@@ -2106,9 +2106,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.TIME_STEPS()
 
         vtkinfo = self.reader.GetOutputInformation(0)
@@ -2138,9 +2138,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         float
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
@@ -2165,9 +2165,9 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             Time or iteration value to set as active.
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.UPDATE_TIME_STEP()
         vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
@@ -3119,9 +3119,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             Global data from Exodus II file
 
         """
-        global_extractor = _lazy_vtk_instantiation(
+        global_extractor = _lazy_vtk_import(
             'vtkFiltersExtraction', 'vtkExtractExodusGlobalTemporalVariables'
-        )
+        )()
 
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()
@@ -3444,9 +3444,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_instantiation(
+        vtkStreaming = _lazy_vtk_import(
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
-        )
+        )()
         key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
@@ -3748,4 +3748,81 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
+}
+
+_mesh_types = Literal[
+    'UnstructuredGrid',
+    'ImageData',
+    'PolyData',
+    'MultiBlock',
+    'RectilinearGrid',
+    'StructuredGrid',
+    'PointSet',
+    'PartitionedDataSet',
+]
+_legacy_dataset_types = Literal[  # no PointSet
+    'UnstructuredGrid',
+    'ImageData',
+    'PolyData',
+    'RectilinearGrid',
+    'StructuredGrid',
+]
+
+# Define reader output types. Primarily used for testing and documentation.
+_CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_types, ...]] = {
+    AVSucdReader: 'UnstructuredGrid',
+    BinaryMarchingCubesReader: 'PolyData',
+    BMPReader: 'ImageData',
+    BYUReader: 'PolyData',
+    CGNSReader: 'MultiBlock',
+    DEMReader: 'ImageData',
+    DICOMReader: 'ImageData',
+    EnSightReader: 'MultiBlock',
+    ExodusIIReader: 'MultiBlock',
+    FacetReader: 'PolyData',
+    FLUENTCFFReader: 'MultiBlock',
+    FluentReader: 'UnstructuredGrid',
+    GambitReader: 'UnstructuredGrid',
+    GaussianCubeReader: ('ImageData', 'PolyData'),
+    GESignaReader: 'ImageData',
+    GIFReader: 'ImageData',
+    GLTFReader: 'MultiBlock',
+    HDFReader: ('ImageData', 'PolyData', 'UnstructuredGrid', 'PartitionedDataSet', 'MultiBlock'),
+    HDRReader: 'ImageData',
+    JPEGReader: 'ImageData',
+    MetaImageReader: 'ImageData',
+    MFIXReader: 'UnstructuredGrid',
+    MINCImageReader: 'ImageData',
+    NIFTIReader: 'ImageData',
+    NRRDReader: 'ImageData',
+    Nek5000Reader: 'UnstructuredGrid',
+    OBJReader: 'PolyData',
+    PDBReader: 'PolyData',
+    PLYReader: 'PolyData',
+    PNGReader: 'ImageData',
+    PNMReader: 'ImageData',
+    POpenFOAMReader: 'MultiBlock',
+    PVDReader: 'MultiBlock',
+    ParticleReader: 'PolyData',
+    Plot3DMetaReader: 'MultiBlock',
+    ProStarReader: 'UnstructuredGrid',
+    PTSReader: 'PolyData',
+    SegYReader: ('StructuredGrid', 'ImageData'),
+    SLCReader: 'ImageData',
+    STLReader: 'PolyData',
+    TIFFReader: 'ImageData',
+    TecplotReader: 'MultiBlock',
+    VTKDataSetReader: get_args(_legacy_dataset_types),
+    VTKPDataSetReader: get_args(_legacy_dataset_types),
+    XdmfReader: ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid'),
+    XMLImageDataReader: 'ImageData',
+    XMLMultiBlockDataReader: 'MultiBlock',
+    XMLPartitionedDataSetReader: 'PartitionedDataSet',
+    XMLPolyDataReader: 'PolyData',
+    XMLPRectilinearGridReader: 'RectilinearGrid',
+    XMLPUnstructuredGridReader: 'UnstructuredGrid',
+    XMLRectilinearGridReader: 'RectilinearGrid',
+    XMLStructuredGridReader: 'StructuredGrid',
+    XMLUnstructuredGridReader: 'UnstructuredGrid',
+    XMLPImageDataReader: 'ImageData',
 }
