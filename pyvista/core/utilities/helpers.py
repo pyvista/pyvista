@@ -252,7 +252,7 @@ def wrap(  # noqa: PLR0911
     raise NotImplementedError(msg)
 
 
-def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock]:
+def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDataSet]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -266,7 +266,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock]:
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pv.DataSet, pv.MultiBlock))
+    return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
