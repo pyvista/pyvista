@@ -39,7 +39,7 @@ points[0:5, :]
 
 
 def lines_from_points(points):
-    """Given an array of points, make a line set"""
+    """Given an array of points, make a line set."""
     poly = pv.PolyData()
     poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
@@ -126,6 +126,7 @@ ribbon.plot(color=True)
 # ++++++++++++++++
 #
 # Create a spline and its closed counterpart.
+
 spline = pv.Spline(points, 1000)
 spline_closed = pv.Spline(points, 1000, closed=True)
 pl = pv.Plotter()
@@ -138,7 +139,8 @@ pl.close()
 # Parametrizing on length versus index
 # ++++++++++++++++++++++++++++++++++++
 #
-# Create a spline by parametrizing based on length (default) or point index
+# Create a spline by parametrizing based on length (default) or point index.
+
 pl = pv.Plotter()
 spline = pv.Spline(points)
 spline_by_index = pv.Spline(points, parameterize_by_length=False)
@@ -152,9 +154,9 @@ pl.close()
 # Boundary type
 # +++++++++++++
 #
-# Create a spline and see the effect of boundary type
-# Boundary type can be 0, 1, 2 or 3
-# (default behavior is 1)
+# Create a spline and see the effect of boundary type.
+# Boundary type can be 0, 1, 2 or 3, with the definition of the boundary types
+# in :func:`pyvista.Spline`.
 
 pl = pv.Plotter()
 for boundary_type in range(4):
@@ -168,8 +170,9 @@ pl.close()
 # Boundary value
 # ++++++++++++++
 #
-# Create a spline and see the effect of boundary value
-# (can be set at left and right value, has no effect for boundary type 0)
+# Create a spline and see the effect of boundary value. It can be set at left
+# and right value and has no effect for boundary type 0.
+
 pl = pv.Plotter()
 mult = 1
 for boundary_value in range(4):

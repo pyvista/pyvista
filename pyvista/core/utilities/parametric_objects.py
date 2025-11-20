@@ -38,53 +38,48 @@ def Spline(
     Parameters
     ----------
     points : numpy.ndarray
-      Array of points to build a spline out of.  Array must be 3D
-      and directionally ordered.
+        Array of points to build a spline out of. Array must be 3D and
+        directionally ordered.
 
     n_points : int, optional
-      Number of points to interpolate along the points array. Defaults to
-      ``points.shape[0]``.
+        Number of points to interpolate along the points array. Defaults to
+        ``points.shape[0]``.
 
     closed : bool, default: False
-      Close the spline if True (both ends are joined). Is not closed by default.
+        Close the spline if ``True`` (both ends are joined). Not closed by default.
 
     parameterize_by_length : bool, optional
-      Parametrize by length rather than point index.
+        Parametrize by length rather than point index.
 
     left_constraint_type : int, optional
-      Derivative constraint type at the left side.
-      Has to be 0, 1, 2, or 3.
-      As per vtk documentation :
+        Derivative constraint type at the left side. Must be 0, 1, 2, or 3:
 
-      0: the first derivative at left(right)
-      most point is determined from
-      the line defined from the first(last) two points.
-      1: the first derivative at left(right) most point
-      is set to Left(Right)Value. (DEFAULT BEHAVIOR)
-      2: the second derivative at left(right) most point
-      is set to Left(Right)Value.
-      3: the second derivative at left(right)most points
-      is Left(Right)Value times second derivative
-      at first interior point.
+        - ``0``: The first derivative at the left(right) most point is determined
+          from the line defined from the first(last) two points.
+        - ``1``: Default: the first derivative at the left(right) most point is set to
+          Left(Right) value.
+        - ``2``: The second derivative at the left(right) most point is set to
+          Left(Right) value.
+        - ``3``: The second derivative at left(right) most points is
+          Left(Right) value times second derivative at first interior point.
 
     left_derivative_value : float, optional
-      Value of derivative on left side.
+        Value of derivative on left side.
 
     right_constraint_type : int, optional
-      Derivative constraint type at the right side
-      Has to be 0, 1, 2, or 3.
-      See left_constraint_type description.
+        Derivative constraint type at the right side. Must be 0, 1, 2, or
+        3. See ``left_constraint_type`` description.
 
     right_derivative_value : float, optional
-      Value of derivative on left side.
+        Value of derivative on left side.
 
     **kwargs : dict, optional
-      See :func:`surface_from_para` for additional keyword arguments.
+        See :func:`surface_from_para` for additional keyword arguments.
 
     Returns
     -------
     pyvista.PolyData
-      Line mesh of spline.
+        Line mesh of spline.
 
     See Also
     --------
