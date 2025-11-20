@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Sequence
+import importlib
 import itertools
 from pathlib import Path
 import pickle
@@ -19,6 +22,8 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .observers import Observer
 
@@ -27,6 +32,7 @@ if TYPE_CHECKING:
 
     import imageio
     import meshio
+    from vtk import vtkWriter
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
@@ -40,6 +46,56 @@ if TYPE_CHECKING:
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 PICKLE_EXT = ('.pkl', '.pickle')
+
+
+def _lazy_vtk_import(module_name: str, class_name: str) -> type:
+    """Lazy import of a class from vtkmodules."""
+    module = importlib.import_module(f'vtkmodules.{module_name}')
+    return getattr(module, class_name)
+
+
+class _FileIOBase(ABC, _NoNewAttrMixin):
+    _vtk_module_name: str = ''
+    _vtk_class_name: str = ''
+
+    def __repr__(self) -> str:
+        """Representation of a FileIO object."""
+        return f'{self.__class__.__name__}({self.path!r})'
+
+    @property
+    @abstractmethod
+    def path(self) -> str:
+        """Get the path."""
+
+    @path.setter
+    @abstractmethod
+    def path(self, path: str | Path) -> None:
+        """Set the path."""
+
+    @_classproperty
+    def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
+        if cls._vtk_module_name and cls._vtk_class_name:
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
+        return None
+
+    @classmethod
+    @abstractmethod
+    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+
+    @_classproperty
+    def extensions(cls) -> tuple[str, ...]:  # noqa: N805
+        """Return the file extension(s) associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
+        extensions = set()
+        for mapping in cls._get_extension_mappings():
+            for ext, typ in mapping.items():
+                if typ is cls:  # type: ignore[comparison-overlap]
+                    extensions.add(ext)
+        return tuple(sorted(extensions))
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:

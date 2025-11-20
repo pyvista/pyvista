@@ -14,11 +14,9 @@ import numpy as np
 
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
+from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
-from pyvista.core.utilities.misc import _classproperty
-from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.reader import _lazy_vtk_import
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -70,7 +68,7 @@ class _DataFormatMixin:
 
 
 @abstract_class
-class BaseWriter(_NoNewAttrMixin):
+class BaseWriter(_FileIOBase):
     """The base writer class.
 
     The base functionality includes writing data to a file,
@@ -86,9 +84,6 @@ class BaseWriter(_NoNewAttrMixin):
 
     """
 
-    _vtk_module_name: str = ''
-    _vtk_class_name: str = ''
-
     def __init__(self, path: str | Path, data_object: DataObject) -> None:
         """Initialize writer."""
         self._writer = self._vtk_class()
@@ -96,13 +91,22 @@ class BaseWriter(_NoNewAttrMixin):
         self.path = path
         self.data_object = data_object
 
-    def __repr__(self) -> str:
-        """Representation of a writer object."""
-        return f'{self.__class__.__name__}({self.path!r})'
+    @classmethod
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        import pyvista as pv  # noqa: PLC0415
 
-    @_classproperty
-    def _vtk_class(self) -> vtkWriter:
-        return _lazy_vtk_import(self._vtk_module_name, self._vtk_class_name)
+        all_mesh_types = (
+            pv.ImageData,
+            pv.RectilinearGrid,
+            pv.StructuredGrid,
+            pv.PointSet,
+            pv.PolyData,
+            pv.UnstructuredGrid,
+            pv.ExplicitStructuredGrid,
+            pv.MultiBlock,
+            pv.PartitionedDataSet,
+        )
+        return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
     @property
     def writer(self) -> vtkWriter:
