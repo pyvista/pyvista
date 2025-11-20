@@ -500,3 +500,13 @@ def test_is_empty(ant):
 
     assert pv.Table().is_empty
     assert not pv.Table(dict(a=np.array([0]))).is_empty
+
+
+def test_cast_to_multiblock(multiblock_all):
+    partitioned = pv.PartitionedDataSet()
+    multiblock = pv.MultiBlock()
+    pointset = pv.PointSet()
+
+    for block in [*multiblock_all, partitioned, multiblock, pointset]:
+        multi = block.cast_to_multiblock()
+        assert isinstance(multi, pv.MultiBlock)
