@@ -67,12 +67,12 @@ class ConvertWarningsToExternal(VisitorBasedCodemodCommand):
             )
             RemoveImportsVisitor.remove_unused_import(self.context, 'warnings')
 
-            # Remove stacklevel from call. Relies on the fact that pos args are
-            # passed before keyword args
+            # Remove all except `category` and `message` from call.
+            # Relies on the fact that pos args are passed before keyword args
             a, kw = get_args_kwargs(original_node.args)
             bound = _WARN_SIGNATURE.bind(*a, **kw)
             b_arguments = bound.arguments
-            b_arguments.pop('stacklevel', None)
+            b_arguments = {a: v for a, v in b_arguments.items() if a in ['category', 'message']}
 
             args: list[cst.Arg] = list(b_arguments.values())
 

@@ -36,7 +36,8 @@ def test_warnings_converter(
     warnings.warn("foo", category=UserWarning, stacklevel=1)
     warnings.warn(message="foo", category=UserWarning, stacklevel=1)
     warnings.warn(category=UserWarning, stacklevel=1, message="foo")
-    """
+    warnings.warn(category=UserWarning, stacklevel=1, message="foo", source='bar', skip_file_prefixes=('',))
+    """  # noqa: E501
     with (file := (tmp_path / 'file.py')).open('w') as f:
         f.write(textwrap.dedent(test))
 
@@ -62,6 +63,7 @@ def test_warnings_converter(
         warn_external("foo", UserWarning)
         warn_external("foo", UserWarning)
         warn_external("foo", category=UserWarning)
+        warn_external(message="foo", category=UserWarning)
         warn_external(message="foo", category=UserWarning)
         warn_external(message="foo", category=UserWarning)
         """
