@@ -308,7 +308,7 @@ class Report(scooby.Report):
             'ipywidgets',
             'jupyter-server-proxy',
             'jupyterlab',
-            'nest-asyncio',
+            'nest-asyncio2',
         ]
 
         # Information about the GPU - catch all Exception in case there is a rendering

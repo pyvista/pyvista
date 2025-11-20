@@ -44,7 +44,7 @@ io = ['imageio', 'meshio>=5.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
-  'nest-asyncio',
+  'nest-asyncio2',
   'trame-client>=2.12.7',
   'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
   'trame-vtk>=2.5.8',
@@ -82,7 +82,7 @@ test = [
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'meshio<5.4.0',
-  'nest-asyncio<1.6.1',
+  'nest-asyncio2<1.7.0',
   'numpydoc<1.10.0',
   'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
