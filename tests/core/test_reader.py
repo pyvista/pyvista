@@ -1479,6 +1479,13 @@ def test_read_write_pickle(tmp_path, data_object, ext):
 def test_exodus_reader_ext():
     # test against mug and exodus to check different valid file
     # extensions: .e and .exo
+    reader = pv.ExodusIIReader
+    assert reader.extensions == (
+        '.e',
+        '.ex2',
+        '.exii',
+        '.exo',
+    )
 
     fname_e = examples.download_mug(load=False)
     fname_exo = examples.download_exodus(load=False)
@@ -1486,8 +1493,8 @@ def test_exodus_reader_ext():
     e_reader = pv.get_reader(fname_e)
     exo_reader = pv.get_reader(fname_exo)
 
-    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
-    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(e_reader, pv.ExodusIIReader)
+    assert isinstance(exo_reader, pv.ExodusIIReader)
 
     assert_output_type(e_reader.read(), e_reader)
     assert_output_type(exo_reader.read(), exo_reader)
