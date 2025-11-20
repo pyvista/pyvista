@@ -966,12 +966,15 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         Uses :vtk:`vtkConvertToMultiBlockDataSet` internally.
 
+        .. versionadded:: 0.47
+
         Returns
         -------
         MultiBlock
+            Converted dataset.
 
         """
         alg = _vtk.vtkConvertToMultiBlockDataSet()
         alg.SetInputDataObject(self)
         alg.Update()
-        return wrap(alg.GetOutput())
+        return wrap(alg.GetOutput())  # type:ignore[return-value]
