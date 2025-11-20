@@ -130,6 +130,7 @@ docs = [
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==1.18.2',
+  'nest-asyncio2==1.6.3',
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
