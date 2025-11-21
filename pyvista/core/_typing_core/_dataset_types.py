@@ -13,27 +13,25 @@ from pyvista.core.pointset import PolyData
 from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.pointset import _PointSet
 
+#: Type variable for PyVista ``Grid`` classes.
 _GridType = TypeVar('_GridType', bound=Grid)
-_GridType.__doc__ = """Type variable for PyVista ``Grid`` classes."""
 
+#: Type variable for PyVista ``PointGrid`` classes.
 _PointGridType = TypeVar('_PointGridType', bound=PointGrid)
-_PointGridType.__doc__ = """Type variable for PyVista ``PointGrid`` classes."""
 
+#: Type variable for PyVista ``PointSet`` classes.
 _PointSetType = TypeVar('_PointSetType', bound=_PointSet)
-_PointSetType.__doc__ = """Type variable for PyVista ``PointSet`` classes."""
 
+#: Type variable for :class:`~pyvista.DataSet` classes.
 _DataSetType = TypeVar('_DataSetType', bound=DataSet)
-_DataSetType.__doc__ = """Type variable for :class:`~pyvista.DataSet` classes."""
 
+#: Type variable for :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` classes.
 _DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=DataSet | MultiBlock)
-_DataSetOrMultiBlockType.__doc__ = (
-    """Type variable for :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` classes."""
-)
 
+#: """Type variable for :class:`~pyvista.DataObject` classes."""
 _DataObjectType = TypeVar('_DataObjectType', bound=DataObject)
-_DataObjectType.__doc__ = """Type variable for :class:`~pyvista.DataObject` classes."""
 
 
 # Undocumented
-_PolyDataType = TypeVar('_PolyDataType', bound=PolyData)  # noqa: PYI018
-_UnstructuredGridType = TypeVar('_UnstructuredGridType', bound=UnstructuredGrid)  # noqa: PYI018
+_PolyDataType = TypeVar('_PolyDataType', bound=PolyData)
+_UnstructuredGridType = TypeVar('_UnstructuredGridType', bound=UnstructuredGrid)
