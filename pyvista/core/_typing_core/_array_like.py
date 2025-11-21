@@ -35,7 +35,7 @@ NumberType = TypeVar(
     'NumberType',
     bound=np.floating | np.integer | np.bool_ | float | int | bool,
 )
-NumberType.__doc__ = """Type variable for numeric data types."""
+"""Type variable for numeric data types."""
 
 # Create a copy of the typevar which can be used for annotating a second variable.
 # Its definition should be identical to `NumberType`

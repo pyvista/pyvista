@@ -37,33 +37,33 @@ else:
 Number = Union[int, float]
 
 VectorLike = _ArrayLike1D[NumberType]
-VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
+"""One-dimensional array-like object with numerical values.
 
 Includes sequences and numpy arrays.
 """
 
 MatrixLike = _ArrayLike2D[NumberType]
-MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
+"""Two-dimensional array-like object with numerical values.
 
 Includes singly-nested sequences and numpy arrays.
 """
 
 ArrayLike = _ArrayLike[NumberType]
-ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
+"""Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
 if Rotation is not None:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    """Array or object representing a spatial rotation.
+
+    Includes 3x3 arrays and SciPy Rotation objects.
+    """
 else:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
-RotationLike.__doc__ = """Array or object representing a spatial rotation.
-
-Includes 3x3 arrays and SciPy Rotation objects.
-"""
 
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
-TransformLike.__doc__ = """Array or object representing a spatial transformation.
+"""Array or object representing a spatial transformation.
 
 Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 
@@ -119,7 +119,7 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
-InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
+"""Interaction event mostly used for widgets.
 
 Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
 """

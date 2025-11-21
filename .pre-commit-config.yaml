@@ -49,6 +49,7 @@ repos:
       - id: trailing-whitespace
         exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv|tests/test_cli\.py)
       - id: check-docstring-first
+        exclude: ^(.*/_typing[^/]*/.*\.py|.*/_typing[^/]*\.py|.*/__init__\.py)$
       - id: end-of-file-fixer
         exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
       - id: mixed-line-ending
