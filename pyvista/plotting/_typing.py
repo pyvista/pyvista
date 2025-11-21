@@ -48,7 +48,6 @@ NamedColormaps = Union[
 
 ColormapOptions = NamedColormaps | list[str] | mpl.colors.Colormap
 
-#: 'Any object convertible to a :class:`Color`.'
 ColorLike = Union[
     tuple[int, int, int],
     tuple[int, int, int, int],
@@ -62,6 +61,9 @@ ColorLike = Union[
     'Color',
     _vtk.vtkColor3ub,
 ]
+# Overwrite default docstring, as sphinx is not able to capture the docstring
+# when it is put beneath the definition somehow?
+ColorLike.__doc__ = 'Any object convertible to a :class:`Color`.'
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']
 OpacityOptions = Literal[
@@ -87,14 +89,13 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
-
-#: Any object used to set a :class:`Camera`.
 CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
     | VectorLike[float]
     | MatrixLike[float]
     | CameraPosition
 )
+CameraPositionOptions.__doc__ = 'Any object used to set a :class:`Camera`.'
 
 
 class BackfaceArgs(TypedDict, total=False):
