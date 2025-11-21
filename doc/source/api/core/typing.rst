@@ -27,7 +27,7 @@ Includes sequences, nested sequences, and numpy arrays. Scalar values are not in
 pyvista.MatrixLike
 ~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with numerical values.
-Includes singly-nested sequences and numpy arrays.
+Includes singly nested sequences and numpy arrays.
 
 .. currentmodule:: pyvista
 
