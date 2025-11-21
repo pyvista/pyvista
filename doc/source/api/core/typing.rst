@@ -18,6 +18,7 @@ Type variable for numeric data types.
 pyvista.ArrayLike
 ~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with numerical values.
+
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 
 .. currentmodule:: pyvista
@@ -27,6 +28,7 @@ Includes sequences, nested sequences, and numpy arrays. Scalar values are not in
 pyvista.MatrixLike
 ~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with numerical values.
+
 Includes singly nested sequences and numpy arrays.
 
 .. currentmodule:: pyvista
@@ -37,6 +39,7 @@ Includes singly nested sequences and numpy arrays.
 pyvista.VectorLike
 ~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with numerical values.
+
 Includes sequences and numpy arrays.
 
 .. currentmodule:: pyvista
