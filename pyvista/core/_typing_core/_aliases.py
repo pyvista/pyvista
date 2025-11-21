@@ -35,37 +35,15 @@ else:
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
 Number = Union[int, float]
-
 VectorLike = _ArrayLike1D[NumberType]
-"""One-dimensional array-like object with numerical values.
-
-Includes sequences and numpy arrays.
-"""
-
 MatrixLike = _ArrayLike2D[NumberType]
-"""Two-dimensional array-like object with numerical values.
-
-Includes singly-nested sequences and numpy arrays.
-"""
-
 ArrayLike = _ArrayLike[NumberType]
-"""Any-dimensional array-like object with numerical values.
 
-Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
-"""
 if Rotation is not None:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
-    """Array or object representing a spatial rotation.
-
-    Includes 3x3 arrays and SciPy Rotation objects.
-    """
 else:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
-
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
-"""Array or object representing a spatial transformation.
-
-Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 
 
 class BoundsTuple(NamedTuple):
@@ -119,7 +97,3 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
-"""Interaction event mostly used for widgets.
-
-Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
-"""

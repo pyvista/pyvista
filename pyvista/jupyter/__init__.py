@@ -12,8 +12,6 @@ import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 
 JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
-"""Jupyter backend to use."""
-
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
 

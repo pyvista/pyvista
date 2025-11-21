@@ -61,8 +61,6 @@ ColorLike = Union[
     'Color',
     _vtk.vtkColor3ub,
 ]
-"""Any object convertible to a :class:`Color`."""
-
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']
 OpacityOptions = Literal[
@@ -88,14 +86,12 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
-
 CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
     | VectorLike[float]
     | MatrixLike[float]
     | CameraPosition
 )
-"""Any object used to set a :class:`Camera`."""
 
 
 class BackfaceArgs(TypedDict, total=False):
