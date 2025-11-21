@@ -606,10 +606,8 @@ def test_block_picking(multiblock_poly):
 
 
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
-def test_element_picking(mode, request):
-    if mode == 'point':
-        request.node.add_marker(pytest.mark.skip_check_gc)
-
+@pytest.mark.skip_check_gc
+def test_element_picking(mode):
     class Tracker:
         def __init__(self):
             self.last_picked = None
