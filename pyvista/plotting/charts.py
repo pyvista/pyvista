@@ -1547,6 +1547,25 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
+    def legend(self):
+        """Return the chart's legend. Fixes issue #7963.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> x = np.linspace(0, 10, 1000)
+        >>> y = np.sin(x ** 2)
+        >>> chart = pv.Chart2D()
+        >>> chart.line(x, y, label='My Data')
+
+        >>> legend = chart.legend
+        >>> legend.vertical_alignment = vtk.vtkChartLegend.BOTTOM
+        >>> legend.horizontal_alignment = vtk.vtkChartLegend.LEFT
+        >>> legend.brush.opacity = 160
+        """
+        return self.GetLegend() # type: ignore[attr-defined]
+
+    @property
+    @doc_subs
     def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
