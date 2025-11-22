@@ -1553,7 +1553,7 @@ class _Chart(DocSubs):
         >>> import pyvista as pv
         >>> import numpy as np
         >>> x = np.linspace(0, 10, 1000)
-        >>> y = np.sin(x ** 2)
+        >>> y = np.sin(x**2)
         >>> chart = pv.Chart2D()
         >>> chart.line(x, y, label='My Data')
 
@@ -1562,7 +1562,7 @@ class _Chart(DocSubs):
         >>> legend.horizontal_alignment = vtk.vtkChartLegend.LEFT
         >>> legend.brush.opacity = 160
         """
-        return self.GetLegend() # type: ignore[attr-defined]
+        return self.GetLegend()  # type: ignore[attr-defined]
 
     @property
     @doc_subs
