@@ -373,7 +373,7 @@ def show_trame(
 
     Returns
     -------
-    ipywidgets.widgets.HTML or handler result
+    output : ipywidgets.widgets.HTML or handler result
         Returns a HTML IFrame widget or the result of the passed handler.
 
     """

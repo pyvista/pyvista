@@ -628,7 +628,7 @@ def spherical_to_cartesian(r, phi, theta):
 
     Returns
     -------
-    numpy.ndarray, numpy.ndarray, numpy.ndarray
+    output : numpy.ndarray, numpy.ndarray, numpy.ndarray
         Cartesian coordinates.
 
     """

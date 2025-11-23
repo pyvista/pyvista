@@ -1680,7 +1680,7 @@ class Transform(
 
         Returns
         -------
-        np.ndarray | DataSet | MultiBlock | Prop3D
+        output : np.ndarray | DataSet | MultiBlock | Prop3D
             Transformed array, dataset, or actor.
 
         See Also
@@ -1977,7 +1977,7 @@ class Transform(
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Transformed dataset.
 
         See Also
@@ -2758,7 +2758,7 @@ class Transform(
 
         Returns
         -------
-        scipy.spatial.transform.Rotation | np.ndarray
+        output : scipy.spatial.transform.Rotation | np.ndarray
             Rotation object or array depending on the representation.
 
         See Also

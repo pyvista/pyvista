@@ -2695,8 +2695,8 @@ class ImageDataFilters(DataSetFilters):
 
         References
         ----------
-        S. Frisken, “SurfaceNets for Multi-Label Segmentations with Preservation of
-        Sharp Boundaries”, J. Computer Graphics Techniques, 2022. Available online:
+        S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
+        Sharp Boundaries, J. Computer Graphics Techniques, 2022. Available online:
         http://jcgt.org/published/0011/01/03/
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
@@ -5213,7 +5213,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData or pyvista.MultiBlock
+        output : pyvista.ImageData | pyvista.MultiBlock
             Image with selected values or a composite of meshes with selected
             values, depending on ``split``.
 

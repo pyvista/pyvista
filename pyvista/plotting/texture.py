@@ -524,7 +524,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Returns
         -------
-        pyvista.Actor | None
+        output : pyvista.Actor | None
             See the returns section of :func:`pyvista.plot`.
 
         Examples

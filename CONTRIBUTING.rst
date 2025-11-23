@@ -325,10 +325,13 @@ Note the following:
   ``numpydoc``'s documentation where there are no empty lines between parameter
   docstrings.
 * This docstring also contains a returns section and an examples section.
-* The returns section does not include the parameter name if the function has
-  a single return value. Multiple return values (not shown) should have
-  descriptive parameter names for each returned value, in the same format as
-  the input parameters.
+* The returns section structure depends on the number of return values and types:
+    * for a single return value with a single return type, the parameter name
+      can be omitted (as shown above),
+    * for a single return value with multiple types (ie. ``str | int``), the parameter
+      must be specified (not shown),
+    * for multiple return values (not shown), descriptive parameter names for each returned value
+      must be specified in the same format as the input parameters.
 * The examples section references the "full example" in the gallery if it
   exists.
 

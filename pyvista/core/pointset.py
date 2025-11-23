@@ -3316,7 +3316,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        ExplicitStructuredGrid or None
+        output : ExplicitStructuredGrid | None
             A deep copy of this grid if ``inplace=False`` with the
             hidden cells, or this grid with the hidden cells if
             otherwise.
@@ -3487,7 +3487,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        int | numpy.ndarray | None
+        output : int | numpy.ndarray | None
             Cell IDs. ``None`` if ``coords`` is outside the grid extent.
 
         See Also
@@ -3537,7 +3537,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        numpy.ndarray | None
+        output : numpy.ndarray | None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 

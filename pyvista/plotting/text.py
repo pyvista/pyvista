@@ -703,7 +703,7 @@ class TextProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTextProper
 
         Returns
         -------
-        str | None
+        output : str | None
             Font family or None.
 
         """

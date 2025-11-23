@@ -2032,7 +2032,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        int or numpy.ndarray
+        output : int | numpy.ndarray
             Index or indices of the cell in this mesh that contains
             the given point.
 
@@ -2850,7 +2850,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        bool or numpy.ndarray
+        output : bool | numpy.ndarray
             Whether point(s) is/are inside cell. A single bool is only returned if
             the input point has shape ``(3,)``.
 
