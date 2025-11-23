@@ -296,6 +296,9 @@ from vtkmodules.vtkFiltersCore import vtkCleanPolyData as vtkCleanPolyData
 from vtkmodules.vtkFiltersCore import vtkClipPolyData as vtkClipPolyData
 from vtkmodules.vtkFiltersCore import vtkConnectivityFilter as vtkConnectivityFilter
 from vtkmodules.vtkFiltersCore import vtkContourFilter as vtkContourFilter
+from vtkmodules.vtkFiltersCore import (
+    vtkConvertToMultiBlockDataSet as vtkConvertToMultiBlockDataSet,
+)
 from vtkmodules.vtkFiltersCore import vtkCutter as vtkCutter
 from vtkmodules.vtkFiltersCore import vtkDecimatePolylineFilter as vtkDecimatePolylineFilter
 from vtkmodules.vtkFiltersCore import vtkDecimatePro as vtkDecimatePro
