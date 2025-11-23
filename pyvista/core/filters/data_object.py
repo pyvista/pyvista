@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import cast
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -127,7 +127,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Transformed dataset. Return type matches input.
 
         See Also
@@ -179,7 +179,7 @@ class DataObjectFilters:
                 'Previously it defaulted to `True`, but will change to `False`. '
                 'Explicitly set `inplace` to `True` or `False` to silence this warning.'
             )
-            warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+            warn_external(msg, PyVistaDeprecationWarning)
             inplace = True  # The old default behavior
 
         if isinstance(self, pv.MultiBlock):
@@ -234,11 +234,10 @@ class DataObjectFilters:
                     dataset_attrs[vector_name] = vector_arr.astype(np.float32)
                     converted_ints = True
         if converted_ints:
-            warnings.warn(
+            warn_external(
                 'Integer points, vector and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
-                stacklevel=2,
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -285,7 +284,7 @@ class DataObjectFilters:
                     'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
                     'shear transformations.'
                 )
-                warnings.warn(msg, stacklevel=2)
+                warn_external(msg)
 
             # Lump scale and reflection together
             scale = S * N
@@ -295,7 +294,7 @@ class DataObjectFilters:
                     'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
                     'StructuredGrid first to fully support rotations.'
                 )
-                warnings.warn(msg, stacklevel=2)
+                warn_external(msg)
             else:
                 # Lump any reflections from the rotation into the scale
                 scale *= np.diagonal(R)
@@ -362,7 +361,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Reflected dataset. Return type matches input.
 
         See Also
@@ -420,7 +419,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -483,7 +482,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -547,7 +546,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -615,7 +614,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -679,7 +678,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Rotated dataset. Return type matches input.
 
         See Also
@@ -748,7 +747,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Translated dataset. Return type matches input.
 
         See Also
@@ -808,7 +807,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Scaled dataset. Return type matches input.
 
         See Also
@@ -899,7 +898,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Resized dataset. Return type matches input.
 
         Examples
@@ -1034,7 +1033,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Flipped dataset. Return type matches input.
 
         See Also
@@ -1096,7 +1095,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Flipped dataset. Return type matches input.
 
         See Also
@@ -1158,7 +1157,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Flipped dataset. Return type matches input.
 
         See Also
@@ -1224,7 +1223,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset flipped about its normal. Return type matches input.
 
         See Also
@@ -1359,7 +1358,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+        output : DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
             Clipped mesh when ``return_clipped=False`` or a tuple containing the
             unclipped and clipped meshes. Output mesh type matches input type for
             :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
@@ -2092,11 +2091,10 @@ class DataObjectFilters:
 
         """
         if use_all_points is not None:
-            warnings.warn(
+            warn_external(
                 "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
                 'supported. This parameter has no effect and is always `True`.',
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
 
         alg = _vtk.vtkExtractEdges()
@@ -2167,7 +2165,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
 
@@ -2255,7 +2253,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with `cell_data` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.  Return type matches input.
@@ -2367,7 +2365,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2437,7 +2435,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the cell data transformed into point data.
             Return type matches input.
 
@@ -2483,7 +2481,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2558,7 +2556,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2697,7 +2695,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset containing resampled data.
 
         See Also
@@ -2834,7 +2832,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet | MultiBlock
+        output : DataSet | MultiBlock
             Dataset with the computed mesh quality. Return type matches input.
             Cell data array(s) with the computed quality measure(s) are included.
 

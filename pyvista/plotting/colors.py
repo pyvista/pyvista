@@ -1861,7 +1861,7 @@ class Color(_NoNewAttrMixin):
 
         Returns
         -------
-        str | None
+        output : str | None
             The color name, in case this color has a name; otherwise ``None``.
 
         Examples

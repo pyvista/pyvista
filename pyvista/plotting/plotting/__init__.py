@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import warnings
 
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 
@@ -28,9 +28,5 @@ def __getattr__(name):
         f'The `pyvista.plotting.plotting` module has been deprecated. '
         f'`{name}` is now imported as: `{import_path}`.'
     )
-    warnings.warn(
-        message,
-        PyVistaDeprecationWarning,
-        stacklevel=2,
-    )
+    warn_external(message, PyVistaDeprecationWarning)
     return value

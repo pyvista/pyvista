@@ -81,6 +81,7 @@ test = [
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
+  'libcst<1.8.7',
   'meshio<5.4.0',
   'nest-asyncio2<1.7.0',
   'numpydoc<1.10.0',
@@ -327,6 +328,7 @@ checks = [
   'PR08', # 'Parameter "{param_name}" description should start with a capital letter",
   'PR09', # 'Parameter "{param_name}" description should finish with "."',
   'PR10', # 'Parameter "{param_name}" requires a space before the colon separating the parameter name and type",
+  'RT02', # "The first line of the Returns section should contain only the type, unless multiple values are being returned",
   'SA01', # Not all docstrings need a see also
   'SA04', # See also section does not need descriptions
   'SS05', # Appears to be broken.
@@ -480,10 +482,12 @@ allow-dict-calls-with-keyword-arguments = true
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests/*' = ['D']
+'hooks/*' = ['INP001']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
-'pyvista/core/_typing_core/_aliases.py' = ['PYI047']
-'pyvista/core/_typing_core/_array_like.py' = ['PYI047']
+'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
+'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']
+'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']
 'pyvista/core/_vtk_core.py' = ['ANN', 'PLC0414']

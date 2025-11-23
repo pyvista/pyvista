@@ -1620,7 +1620,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pyvista.MultiBlock or None
+        output : pyvista.DataSet | pyvista.MultiBlock | None
             Dataset from the given index if it exists.
 
         See Also
@@ -1664,7 +1664,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pyvista.MultiBlock or None
+        output : pyvista.DataSet | pyvista.MultiBlock | None
             Dataset from the given index if it exists.
 
         See Also
@@ -2040,7 +2040,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pyvista.MultiBlock
+        output : pyvista.DataSet | pyvista.MultiBlock
             Dataset from the given index that was removed.
 
         Examples

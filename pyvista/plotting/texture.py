@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
 
 import pyvista as pv
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
@@ -524,7 +524,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Returns
         -------
-        pyvista.Actor | None
+        output : pyvista.Actor | None
             See the returns section of :func:`pyvista.plot`.
 
         Examples
@@ -728,11 +728,10 @@ def numpy_to_texture(image):
     """
     if image.dtype != np.uint8:
         image = image.astype(np.uint8)
-        warnings.warn(
+        warn_external(
             'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
             'and converted to np.uint8.',
             UserWarning,
-            stacklevel=2,
         )
 
     return Texture(image)  # type: ignore[abstract]

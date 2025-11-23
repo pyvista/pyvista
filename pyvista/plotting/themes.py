@@ -40,9 +40,9 @@ import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-import warnings
 
 import pyvista  # noqa: TC001
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -69,10 +69,9 @@ def _set_plot_theme_from_env() -> None:
             set_plot_theme(theme.lower())
         except ValueError:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
-            warnings.warn(
+            warn_external(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
-                stacklevel=2,
             )
 
 
@@ -1557,7 +1556,7 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):
         if enabled and self.jupyter_extension_enabled:
-            warnings.warn('Enabling server_proxy will disable jupyter_extension', stacklevel=2)
+            warn_external('Enabling server_proxy will disable jupyter_extension')
             self._jupyter_extension_enabled = False
 
         self._server_proxy_enabled = bool(enabled)
@@ -1578,9 +1577,8 @@ class _TrameConfig(_ThemeConfig):
 
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):
-        warnings.warn(
-            'The jupyter_extension_available flag is read only and is automatically detected.',
-            stacklevel=2,
+        warn_external(
+            'The jupyter_extension_available flag is read only and is automatically detected.'
         )
 
     @property
@@ -1595,7 +1593,7 @@ class _TrameConfig(_ThemeConfig):
             raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
-            warnings.warn('Enabling jupyter_extension will disable server_proxy', stacklevel=2)
+            warn_external('Enabling jupyter_extension will disable server_proxy')
             self._server_proxy_enabled = False
 
         self._jupyter_extension_enabled = bool(enabled)

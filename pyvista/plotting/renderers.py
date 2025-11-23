@@ -346,7 +346,7 @@ class Renderers(_NoNewAttrMixin):
 
         Returns
         -------
-        numpy.ndarray or numpy.int64
+        output : numpy.ndarray | numpy.int64
             2D location on the plotting grid.
 
         """
@@ -379,7 +379,7 @@ class Renderers(_NoNewAttrMixin):
 
         Returns
         -------
-        tuple[int] | tuple[int, int]
+        output : tuple[int] | tuple[int, int]
             Shape of the renderers.
 
         """

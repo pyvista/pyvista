@@ -5,6 +5,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -250,13 +251,10 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         if culling is not None:
             self.culling = culling
         if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
-            import warnings  # noqa: PLC0415
-
-            warnings.warn(
+            warn_external(
                 '`edge_opacity` cannot be used under VTK v9.3.0. '
                 'Try installing VTK v9.3.0 or newer.',
                 UserWarning,
-                stacklevel=2,
             )
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity

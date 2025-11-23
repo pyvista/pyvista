@@ -8,12 +8,13 @@ import os
 from typing import TYPE_CHECKING
 from typing import Concatenate
 from typing import Literal
-import warnings
 
 from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
+
+from pyvista._warn_external import warn_external
 
 try:
     from ipywidgets.widgets import HTML
@@ -77,7 +78,7 @@ class TrameJupyterServerDownError(RuntimeError):
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
-        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE, stacklevel=2)  # pragma: no cover
+        warn_external(JUPYTER_SERVER_DOWN_MESSAGE)  # pragma: no cover
         # and Error
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
@@ -372,7 +373,7 @@ def show_trame(
 
     Returns
     -------
-    ipywidgets.widgets.HTML or handler result
+    output : ipywidgets.widgets.HTML or handler result
         Returns a HTML IFrame widget or the result of the passed handler.
 
     """
