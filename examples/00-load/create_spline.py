@@ -39,7 +39,7 @@ points[0:5, :]
 
 
 def lines_from_points(points):
-    """Given an array of points, make a line set"""
+    """Given an array of points, make a line set."""
     poly = pv.PolyData()
     poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
@@ -115,10 +115,72 @@ tube.plot(scalars='theta', smooth_shading=True)
 # Ribbons
 # +++++++
 #
-# Ayy of the lines from the examples above can be used to create ribbons.
+# Any of the lines from the examples above can be used to create ribbons.
 # Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.
 
 ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
+
+# %%
+# Closing a spline
+# ++++++++++++++++
+#
+# Create a spline and its closed counterpart.
+
+spline = pv.Spline(points, 1000)
+spline_closed = pv.Spline(points, 1000, closed=True)
+pl = pv.Plotter()
+pl.add_mesh(spline.tube(radius=0.05))
+pl.add_mesh(spline_closed, line_width=4, color='r')
+pl.show()
+pl.close()
+
+# %%
+# Parametrizing on length versus index
+# ++++++++++++++++++++++++++++++++++++
+#
+# Create a spline by parametrizing based on length (default) or point index.
+
+pl = pv.Plotter()
+spline = pv.Spline(points)
+spline_by_index = pv.Spline(points, parameterize_by_length=False)
+pl.add_mesh(spline, line_width=4)
+pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True)
+pl.show()
+pl.close()
+
+# %%
+# Boundary type
+# +++++++++++++
+#
+# Create a spline and see the effect of boundary type.
+# Boundary type can be 0, 1, 2 or 3, with the definition of the boundary types
+# in :func:`pyvista.Spline`.
+
+pl = pv.Plotter()
+for boundary_type in range(4):
+    spline = pv.Spline(points, 1000, left_constraint_type=boundary_type, left_derivative_value=1)
+    spline.cell_data['boundary_type'] = np.array([boundary_type], dtype=np.uint8)
+    pl.add_mesh(spline, line_width=4)
+pl.show()
+pl.close()
+
+# %%
+# Boundary value
+# ++++++++++++++
+#
+# Create a spline and see the effect of boundary value. It can be set at left
+# and right value and has no effect for boundary type 0.
+
+pl = pv.Plotter()
+mult = 1
+for boundary_value in range(4):
+    spline = pv.Spline(points, 1000, left_derivative_value=boundary_value * mult)
+    spline.cell_data['boundary_value'] = np.array([boundary_value * mult])
+    pl.add_mesh(spline, line_width=4)
+pl.show()
+pl.close()
+
 # %%
 # .. tags:: load
