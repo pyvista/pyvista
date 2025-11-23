@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 import os
 import sys
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -157,10 +157,9 @@ def voxelize(  # noqa: PLR0917
 
     """
     # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warnings.warn(
+    warn_external(
         '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
         PyVistaDeprecationWarning,
-        stacklevel=2,
     )
     return _voxelize_legacy(
         mesh=mesh,
@@ -392,11 +391,10 @@ def voxelize_volume(  # noqa: PLR0917
 
     """
     # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warnings.warn(
+    warn_external(
         '`pyvista.voxelize_volume` is deprecated. Use '
         '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
         PyVistaDeprecationWarning,
-        stacklevel=2,
     )
     mesh = wrap(mesh)
     if density is None:
