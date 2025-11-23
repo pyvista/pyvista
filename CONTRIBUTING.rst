@@ -385,13 +385,13 @@ versions of backwards compatibility to give users the ability to update their
 software and scripts.
 
 Here's an example of a soft deprecation of a function. Note the usage of both
-the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
-directive.
+the ``PyVistaDeprecationWarning`` warning, the ``.. deprecated`` Sphinx
+directive and the ``warn_external`` helper function.
 
 .. code-block:: python
 
-    import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista._warn_external import warn_external  # available from 0.47
 
 
     def addition(a, b):
@@ -415,7 +415,7 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        warnings.warn(
+        warn_external(
             '`addition` has been deprecated. Use pyvista.add instead',
             PyVistaDeprecationWarning,
         )

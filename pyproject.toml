@@ -81,6 +81,7 @@ test = [
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
+  'libcst<1.8.7',
   'meshio<5.4.0',
   'nest-asyncio2<1.7.0',
   'numpydoc<1.10.0',
@@ -481,6 +482,7 @@ allow-dict-calls-with-keyword-arguments = true
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests/*' = ['D']
+'hooks/*' = ['INP001']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']

@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
 from typing import get_args
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
@@ -1098,10 +1098,9 @@ class ImageDataFilters(DataSetFilters):
         >>> iclosed.plot()
 
         """
-        warnings.warn(
+        warn_external(
             'image_dilate_erode is deprecated. Use dilate, erode, open, or close instead.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
         alg = _vtk.vtkImageDilateErode3D()
@@ -2369,14 +2368,13 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
-        warnings.warn(
+        warn_external(
             'This filter produces unexpected results and is deprecated. '
             'Use `contour_labels` instead.'
             '\nRefer to the documentation for `contour_labeled` for details on how to '
             'transition to the new filter.'
             '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
@@ -3001,12 +2999,11 @@ class ImageDataFilters(DataSetFilters):
         if orient_faces is None:
             orient_faces = bool(pv.vtk_version_info < (9, 5, 99))
         else:
-            warnings.warn(
+            warn_external(
                 'Use of `orient_faces` is deprecated and should not be used. It will be removed '
                 'in a future version. With VTK 9.6 or later, the faces always have correct '
                 'orientation by default.',
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
 
         _validation.check_contains(
@@ -3816,19 +3813,17 @@ class ImageDataFilters(DataSetFilters):
         # Deprecated on v0.45.0, estimated removal on v0.48.0
         if pad_singleton_dims is not None:
             if pad_singleton_dims:
-                warnings.warn(
+                warn_external(
                     'Use of `pad_singleton_dims=True` is deprecated. '
                     'Use `dimensionality="3D"` instead',
                     PyVistaDeprecationWarning,
-                    stacklevel=2,
                 )
                 dimensionality = '3D'
             else:
-                warnings.warn(
+                warn_external(
                     'Use of `pad_singleton_dims=False` is deprecated. '
                     'Use `dimensionality="preserve"` instead',
                     PyVistaDeprecationWarning,
-                    stacklevel=2,
                 )
                 dimensionality = 'preserve'
 

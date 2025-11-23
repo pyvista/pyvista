@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -161,13 +161,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn(
-                    'Opacity scalars contain values over 1', stacklevel=2
-                )  # pragma: no cover
+                warn_external('Opacity scalars contain values over 1')  # pragma: no cover
             if np.any(opacity < 0):
-                warnings.warn(
-                    'Opacity scalars contain values less than 0', stacklevel=2
-                )  # pragma: no cover
+                warn_external('Opacity scalars contain values less than 0')  # pragma: no cover
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
