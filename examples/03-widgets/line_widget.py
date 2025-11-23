@@ -16,6 +16,14 @@ the ``name`` argument in ``add_mesh``.
 """
 
 # sphinx_gallery_start_ignore
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 # widgets do not work in interactive examples
 from __future__ import annotations
 
