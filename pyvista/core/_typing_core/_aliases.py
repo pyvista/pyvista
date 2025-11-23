@@ -6,7 +6,7 @@ import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
-from typing import TypeAlias
+from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -34,16 +34,16 @@ else:
 #
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
-Number: TypeAlias = int | float
-VectorLike: TypeAlias = _ArrayLike1D[NumberType]
-MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
-ArrayLike: TypeAlias = _ArrayLike[NumberType]
+Number = Union[int, float]
+VectorLike = _ArrayLike1D[NumberType]
+MatrixLike = _ArrayLike2D[NumberType]
+ArrayLike = _ArrayLike[NumberType]
 
 if Rotation is not None:
-    RotationLike: TypeAlias = MatrixLike[float] | _vtk.vtkMatrix3x3 | Rotation
+    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
 else:
-    RotationLike = MatrixLike[float] | _vtk.vtkMatrix3x3  # type: ignore[misc]
-TransformLike: TypeAlias = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
+    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
+TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
 
 
 class BoundsTuple(NamedTuple):
@@ -89,11 +89,11 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
+CellsLike = Union[MatrixLike[int], VectorLike[int]]
 
-CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
+CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]
+_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
-InteractionEventType: TypeAlias = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
+InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
