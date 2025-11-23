@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
 from pyvista.plotting.texture import numpy_to_texture
 
 
@@ -103,7 +103,7 @@ def test_skybox_example():
     assert texture.cube_map is True
 
     skybox = texture.to_skybox()
-    assert isinstance(skybox, vtk.vtkOpenGLSkybox)
+    assert isinstance(skybox, _vtk.vtkOpenGLSkybox)
 
 
 def test_flip_x(texture):
@@ -201,10 +201,10 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     texture = np.ones((sphere.n_points, 3), np.float32)
     if as_str:
         sphere.point_data['texture'] = texture
-        with pytest.raises(ValueError, match='Invalid datatype'):
+        with pytest.raises(TypeError, match='incorrect dtype'):
             sphere.save(filename, texture='texture')
     else:
-        with pytest.raises(ValueError, match='Invalid datatype'):
+        with pytest.raises(TypeError, match='incorrect dtype'):
             sphere.save(filename, texture=texture)
 
     with pytest.raises(TypeError):

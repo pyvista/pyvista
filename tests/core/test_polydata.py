@@ -593,7 +593,7 @@ def test_merge_main_has_priority(input_, main_has_priority):
         """Return True if scalars on two meshes only differ by point order."""
         return all(
             new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name])
+            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
             for j in (this.points == point).all(-1).nonzero()
         )
 
@@ -713,9 +713,13 @@ def test_save(sphere, extension, binary, tmpdir):
         if extension == '.vtp':
             with Path(filename).open() as f:
                 assert 'binary' in f.read(1000)
+        elif extension in ('.geo', '.obj', '.iv'):
+            # Binary is not supported
+            assert not is_binary(filename)
         else:
-            is_binary(filename)
+            assert is_binary(filename)
     else:
+        assert not is_binary(filename)
         with Path(filename).open() as f:
             fst = f.read(100).lower()
             assert (

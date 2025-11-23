@@ -27,7 +27,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 3
 
 
-data_array = [8, 7, 6, 5, 4, 3, 2, 1]
+data_array = np.arange(start=8, stop=0, step=-1, dtype=np.int8)
 points_volume = pv.ImageData(dimensions=(2, 2, 2))
 points_volume.point_data['Data'] = data_array
 
@@ -62,18 +62,18 @@ cells_volume.plot(show_edges=True)
 cell_centers = cells_volume.cell_centers()
 cell_edges = cells_volume.extract_all_edges()
 
-plot = pv.Plotter()
-plot.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
-plot.add_mesh(cell_edges, color='black', line_width=2)
-plot.add_points(
+pl = pv.Plotter()
+pl.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
+pl.add_mesh(cell_edges, color='black', line_width=2)
+pl.add_points(
     cell_centers,
     render_points_as_spheres=True,
     color='red',
     point_size=20,
 )
-plot.camera.azimuth = -25
-plot.camera.elevation = 25
-plot.show()
+pl.camera.azimuth = -25
+pl.camera.elevation = 25
+pl.show()
 
 # %%#
 # As long as only one kind of scalar data is used (i.e. either point or cell
@@ -211,16 +211,16 @@ cells_image.plot(**plot_kwargs)
 
 cell_centers = cells_image.cell_centers()
 
-plot = pv.Plotter()
-plot.add_mesh(points_image, color=True, opacity=0.7)
-plot.add_mesh(cells_image, style='wireframe', color='black', line_width=2)
-plot.add_points(
+pl = pv.Plotter()
+pl.add_mesh(points_image, color=True, opacity=0.7)
+pl.add_mesh(cells_image, style='wireframe', color='black', line_width=2)
+pl.add_points(
     cell_centers,
     render_points_as_spheres=True,
     color='red',
     point_size=20,
 )
-plot.view_xy()
-plot.show()
+pl.view_xy()
+pl.show()
 # %%
 # .. tags:: filter

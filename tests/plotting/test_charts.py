@@ -7,10 +7,10 @@ import weakref
 
 import numpy as np
 import pytest
-from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
@@ -52,9 +52,9 @@ class PlotterChanged:
 
 @pytest.fixture
 def pl():
-    p = pv.Plotter(window_size=(600, 600))
-    p.background_color = 'w'
-    return p
+    pl = pv.Plotter(window_size=(600, 600))
+    pl.background_color = 'w'
+    return pl
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ def test_pen():
 def test_wrapping():
     width = 5
     # Test wrapping of VTK Pen object
-    pen = vtkPen()
+    pen = _vtk.vtkPen()
     wrappedPen = charts.Pen(_wrap=pen)
     assert wrappedPen.__this__ == pen.__this__
     assert wrappedPen.width == pen.GetWidth()
@@ -546,7 +546,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.color_scheme = cs
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]['id']
-    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
+    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors, strict=True))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
     ]
@@ -560,7 +560,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.colors = cs
     assert plot.color_scheme == cs
     plot.colors = colors
-    assert all(pc == c for pc, c in zip(plot.colors, colors))
+    assert all(pc == c for pc, c in zip(plot.colors, colors, strict=True))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
     ]
@@ -689,7 +689,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
     assert plot.orientation == ori
     assert plot.labels == l
 
@@ -734,7 +734,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
     assert plot.labels == l
 
     # Test single comp constructor

@@ -42,16 +42,7 @@ jobs:
         id: lychee
         uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0
         with:
-          args: >
-            --cache
-            --no-progress
-            --verbose
-            './doc/source/**/*.md'
-            './doc/source/**/*.rst'
-            './doc/source/**/*.txt'
-            './pyvista/**/*.py'
-            './examples/**/*.py'
-            './examples_trame/**/*.py'
+          args: "."
           fail: false
 
       - name: "Report Failure"

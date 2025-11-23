@@ -13,7 +13,7 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista.core import _validation
@@ -182,7 +182,7 @@ class DataObjectFilters:
             warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
             inplace = True  # The old default behavior
 
-        if isinstance(self, pyvista.MultiBlock):
+        if isinstance(self, pv.MultiBlock):
             return self.generic_filter(
                 'transform',
                 trans=trans,
@@ -225,7 +225,7 @@ class DataObjectFilters:
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [self.point_data, self.cell_data]
-        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
+        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
             for vector_name in vector_names:
                 if vector_name is None:
                     continue
@@ -255,25 +255,25 @@ class DataObjectFilters:
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
         _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        vtk_filter_output = pyvista.core.filters._get_output(f)
+        vtk_filter_output = pv.core.filters._get_output(f)
 
         output = self if inplace else self.__class__()
 
-        if isinstance(output, pyvista.ImageData):
+        if isinstance(output, pv.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
             # but VTK 9+ supports oriented images.
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
             # from the filter output but manually transform the structure
             output.copy_structure(self)  # type: ignore[arg-type]
             current_matrix = output.index_to_physical_matrix
-            new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
+            new_matrix = pv.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
 
             output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
             output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
             output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
-        elif isinstance(output, pyvista.RectilinearGrid):
+        elif isinstance(output, pv.RectilinearGrid):
             # vtkTransformFilter returns a StructuredGrid, but we can return
             # RectilinearGrid if we ignore shear and rotations
             # Follow similar decomposition performed by ImageData.index_to_physical_matrix
@@ -997,7 +997,7 @@ class DataObjectFilters:
         scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
 
         # Apply transformation
-        transform = pyvista.Transform()
+        transform = pv.Transform()
         transform.translate(-current_center)
         transform.scale(scale_factors)
         transform.translate(target_center)
@@ -1274,13 +1274,13 @@ class DataObjectFilters:
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
         apply_vtk_94x_patch = (
-            isinstance(self, pyvista.PointSet)
-            and pyvista.vtk_version_info >= (9, 4)
-            and pyvista.vtk_version_info < (9, 5)
+            isinstance(self, pv.PointSet)
+            and pv.vtk_version_info >= (9, 4)
+            and pv.vtk_version_info < (9, 5)
         )
         mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
 
-        if isinstance(mesh_in, pyvista.PolyData):
+        if isinstance(mesh_in, pv.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
@@ -1429,7 +1429,7 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['bounds'])
     def clip_box(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
+        bounds: float | VectorLike[float] | pv.PolyData | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
         factor: float = 0.35,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -1504,7 +1504,7 @@ class DataObjectFilters:
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
         if isinstance(bounds, (float, int)):
             bounds = [bounds, bounds, bounds]
-        elif isinstance(bounds, pyvista.PolyData):
+        elif isinstance(bounds, pv.PolyData):
             poly = bounds
             if poly.n_cells != 6:
                 msg = 'The bounds mesh must have only 6 faces.'
@@ -1763,8 +1763,8 @@ class DataObjectFilters:
             y = self.center[1]
         if z is None:
             z = self.center[2]
-        output = pyvista.MultiBlock()
-        if isinstance(self, pyvista.MultiBlock):
+        output = pv.MultiBlock()
+        if isinstance(self, pv.MultiBlock):
             for i in range(self.n_blocks):
                 data = self[i]
                 output.append(
@@ -1922,8 +1922,8 @@ class DataObjectFilters:
         )
         center = list(center)
         # Make each of the slices
-        output = pyvista.MultiBlock()
-        if isinstance(self, pyvista.MultiBlock):
+        output = pv.MultiBlock()
+        if isinstance(self, pv.MultiBlock):
             for i in range(self.n_blocks):
                 data = self[i]
                 output.append(
@@ -1955,7 +1955,7 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['line'])
     def slice_along_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        line: pyvista.PolyData,
+        line: pv.PolyData,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         contour: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2104,7 +2104,7 @@ class DataObjectFilters:
         # Always use all points since VTK >= 9.2 is required
         alg.SetUseAllPoints(True)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
-        with pyvista.vtk_verbosity('off'):
+        with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
         output = _get_output(alg)
         if clear_data:
@@ -2331,7 +2331,7 @@ class DataObjectFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
-        input_mesh = self.cast_to_poly_points() if isinstance(self, pyvista.PointSet) else self
+        input_mesh = self.cast_to_poly_points() if isinstance(self, pv.PointSet) else self
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
@@ -2405,7 +2405,7 @@ class DataObjectFilters:
             alg, progress_bar=progress_bar, message='Transforming cell data into point data.'
         )
         active_scalars = None
-        if not isinstance(self, pyvista.MultiBlock):
+        if not isinstance(self, pv.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
@@ -2526,7 +2526,7 @@ class DataObjectFilters:
             alg, progress_bar=progress_bar, message='Transforming point data into cell data'
         )
         active_scalars = None
-        if not isinstance(self, pyvista.MultiBlock):
+        if not isinstance(self, pv.MultiBlock):
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
@@ -2908,7 +2908,7 @@ class DataObjectFilters:
         )
         return (
             self.generic_filter(cell_quality)  # type: ignore[return-value]
-            if isinstance(self, pyvista.MultiBlock)
+            if isinstance(self, pv.MultiBlock)
             else cell_quality(self)
         )
 
@@ -2995,7 +2995,7 @@ def _remove_unused_points_post_clip(clip_output, input_bounds):
 
     return (
         clip_output.generic_filter(maybe_remove_unused_points)
-        if isinstance(clip_output, pyvista.MultiBlock)
+        if isinstance(clip_output, pv.MultiBlock)
         else maybe_remove_unused_points(clip_output)
     )
 
@@ -3006,9 +3006,9 @@ def _cast_output_to_match_input_type(
     # Ensure output type matches input type
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
-        if isinstance(mesh_in, pyvista.PolyData) and not isinstance(mesh_out, pyvista.PolyData):
+        if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
             return mesh_out.extract_geometry()
-        elif isinstance(mesh_in, pyvista.PointSet) and not isinstance(mesh_out, pyvista.PointSet):
+        elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out
 
@@ -3017,13 +3017,14 @@ def _cast_output_to_match_input_type(
         for (ids, _, block_out), block_in in zip(
             mesh_out.recursive_iterator('all', skip_none=True),
             mesh_in.recursive_iterator(skip_none=True),
+            strict=True,
         ):
             mesh_out.replace(ids, cast_output(block_out, block_in))
         return mesh_out
 
     return (
         cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
-        if isinstance(output_mesh, pyvista.MultiBlock)
+        if isinstance(output_mesh, pv.MultiBlock)
         else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
     )
 
@@ -3096,7 +3097,7 @@ class _Crinkler:
             )
 
             for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                self_iter, a_iter, b_iter, active_scalars_info_
+                self_iter, a_iter, b_iter, active_scalars_info_, strict=False
             ):
                 crinkled = extract_cells_from_block(block_self, block_a, block_b, scalars_info)
                 # Replace blocks with crinkled ones
@@ -3108,7 +3109,7 @@ class _Crinkler:
                     multi_b.replace(ids, crinkled[1])
             return multi_a if multi_b is None else (multi_a, multi_b)
 
-        if isinstance(dataset, pyvista.MultiBlock):
+        if isinstance(dataset, pv.MultiBlock):
             return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
         return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
 
@@ -3116,7 +3117,7 @@ class _Crinkler:
     def add_cell_ids(dataset: DataSet | MultiBlock):
         # Add Cell IDs to all blocks and keep track of scalars to restore later
         active_scalars_info = []
-        if isinstance(dataset, pyvista.MultiBlock):
+        if isinstance(dataset, pv.MultiBlock):
             blocks: Iterable[DataSet] = dataset.recursive_iterator(
                 'blocks', **_Crinkler.ITER_KWARGS
             )

@@ -60,7 +60,6 @@ File IO
    read_texture
    save_meshio
    set_pickle_format
-   set_vtkwriter_mode
    to_meshio
 
 
@@ -148,8 +147,8 @@ The PyVista library provides a way of getting the version installed in your
 environment.
 
 >>> # Output the version of PyVista.
->>> import pyvista
->>> pyvista.version_info
+>>> import pyvista as pv
+>>> pv.version_info
 (0, 44, 0)
 
 VTK Version Information
@@ -158,10 +157,10 @@ The PyVista library is heavily dependent on VTK and provides an easy
 way of getting the version of VTK in your environment.
 
 >>> # Output the version of VTK.
->>> import pyvista
->>> pyvista.vtk_version_info
+>>> import pyvista as pv
+>>> pv.vtk_version_info
 VTKVersionInfo(major=9, minor=1, micro=0)
 
 >>> # Get the major version of VTK
->>> pyvista.vtk_version_info.major
+>>> pv.vtk_version_info.major
 9

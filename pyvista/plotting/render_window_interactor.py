@@ -17,7 +17,6 @@ import numpy as np
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_core import DisableVtkSnakeCase
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
@@ -506,9 +505,9 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         ...     def __repr__(self):
         ...         return 'A custom interactor style.'
 
-        >>> plotter = pv.Plotter()
-        >>> plotter.iren.style = MyCustomInteractorStyle()
-        >>> plotter.iren.style
+        >>> pl = pv.Plotter()
+        >>> pl.iren.style = MyCustomInteractorStyle()
+        >>> pl.iren.style
         A custom interactor style.
 
         """
@@ -617,12 +616,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Camera interactive style (which is also the default):
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_trackball_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_trackball_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTrackballCamera(self)
@@ -696,12 +695,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         dolly.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_custom_trackball_style(left='dolly')
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_custom_trackball_style(left='dolly')
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTrackballCamera(self)
@@ -838,13 +837,13 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         ParaView-like 2D style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_parallel_projection()
-        >>> plotter.enable_2d_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_parallel_projection()
+        >>> pl.enable_2d_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.enable_custom_trackball_style(
@@ -878,12 +877,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Actor interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_trackball_actor_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_trackball_actor_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTrackballActor(self)
@@ -906,12 +905,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_image_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_image_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleImage(self)
@@ -937,12 +936,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Camera interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_joystick_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_joystick_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleJoystickCamera(self)
@@ -969,12 +968,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Actor interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_joystick_actor_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_joystick_actor_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleJoystickActor(self)
@@ -993,12 +992,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Zoom interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_zoom_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_zoom_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleZoom(self)
@@ -1067,21 +1066,21 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_terrain_style()
+        >>> pl.show()  # doctest:+SKIP
 
         Use controls that are closer to the default style:
 
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleTerrain(self)
@@ -1154,12 +1153,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         Pick interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_rubber_band_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_rubber_band_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleRubberBandPick(self)
@@ -1187,12 +1186,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         2D interactive style:
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
-        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
-        >>> plotter.show_axes()
-        >>> plotter.enable_rubber_band_2d_style()
-        >>> plotter.show()  # doctest:+SKIP
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = pl.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> pl.show_axes()
+        >>> pl.enable_rubber_band_2d_style()
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.style = InteractorStyleRubberBand2D(self)
@@ -1515,11 +1514,11 @@ class RenderWindowInteractor(_NoNewAttrMixin):
                 picker.SetTolerance(0.025)
         self.interactor.SetPicker(picker)
 
-    def add_pick_obeserver(self, observer):
+    def add_pick_obeserver(self, observer):  # noqa: ARG002
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use
+            This function has been deprecated. Use
             :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
@@ -1528,12 +1527,8 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             The observer function to call when a pick event ends.
 
         """
-        warnings.warn(
-            '`add_pick_obeserver` is deprecated, use `add_pick_observer`',
-            PyVistaDeprecationWarning,
-            stacklevel=2,
-        )
-        self.add_pick_observer(observer)
+        msg = '`add_pick_obeserver` has been deprecated, use `add_pick_observer`'
+        raise ValueError(msg)
 
     def add_pick_observer(self, observer):
         """Add an observer to call back when pick events end.

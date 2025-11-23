@@ -509,20 +509,34 @@ def test_cone():
     assert np.any(cone.faces)
 
 
-def test_box():
-    geom = pv.Box()
-    assert np.any(geom.points)
-
+@pytest.mark.parametrize('level', [3, (3, 3, 3)])
+def test_box(level):
+    level_int = 3 if isinstance(level, int) else level[0]
     bounds = [-10.0, 10.0, 10.0, 20.0, -5.0, 5.0]
-    level = 3
     quads = True
     mesh1 = pv.Box(bounds, level=level, quads=quads)
-    assert mesh1.n_cells == (level + 1) * (level + 1) * 6
+    assert mesh1.n_cells == (level_int + 1) * (level_int + 1) * 6
     assert np.allclose(mesh1.bounds, bounds)
 
     quads = False
     mesh2 = pv.Box(bounds, level=level, quads=quads)
     assert mesh2.n_cells == mesh1.n_cells * 2
+
+
+def test_box_multi_level_equal():
+    box1 = pv.Box(level=5)
+    box2 = pv.Box(level=[5, 5, 5])
+    assert box1 == box2
+
+
+@pytest.mark.parametrize('level', [[3, 4, 5], (3, 3, 3)])
+@pytest.mark.parametrize(
+    ('quads', 'celltype'), [(True, pv.CellType.QUAD), (False, pv.CellType.TRIANGLE)]
+)
+def test_box_multi_level_cell_type(level, quads, celltype):
+    box = pv.Box(level=level, quads=quads)
+    celltypes = set(box.cast_to_unstructured_grid().celltypes)
+    assert celltypes == {celltype}
 
 
 def test_polygon():
@@ -776,6 +790,7 @@ def test_ellipse():
         range(5),
         [4, 8, 6, 12, 20],
         [4, 6, 8, 20, 12],
+        strict=True,
     ),
 )
 def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):

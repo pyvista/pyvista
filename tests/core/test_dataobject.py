@@ -410,7 +410,7 @@ def test_pickle_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets):
+    for r, dataset in zip(res, datasets, strict=True):
         assert r == dataset.n_points
 
 
@@ -482,6 +482,15 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
         pv.Sphere().save('foo.vtp')
 
 
+def test_save_compression(sphere, tmp_path):
+    path = tmp_path / 'tmp.vtp'
+    sphere.save(path, compression='zlib')
+    compressed_size = path.stat().st_size
+    sphere.save(path, compression=None)
+    uncompressed_size = path.stat().st_size
+    assert compressed_size < (uncompressed_size / 4)
+
+
 def test_is_empty(ant):
     assert pv.MultiBlock().is_empty
     assert not pv.MultiBlock([ant]).is_empty
@@ -491,3 +500,13 @@ def test_is_empty(ant):
 
     assert pv.Table().is_empty
     assert not pv.Table(dict(a=np.array([0]))).is_empty
+
+
+def test_cast_to_multiblock(multiblock_all):
+    partitioned = pv.PartitionedDataSet()
+    multiblock = pv.MultiBlock()
+    pointset = pv.PointSet()
+
+    for block in [*multiblock_all, partitioned, multiblock, pointset]:
+        multi = block.cast_to_multiblock()
+        assert isinstance(multi, pv.MultiBlock)

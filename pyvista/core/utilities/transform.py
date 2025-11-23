@@ -5,17 +5,19 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transformations import _decomposition_as_homogeneous
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
@@ -33,6 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.core.utilities.transformations import _FiveArrays
 
 
 class Transform(
@@ -273,6 +276,9 @@ class Transform(
                     [self.compose(t) for t in trans]
             else:
                 self.compose(trans)
+
+        self._decomposition_cache: _FiveArrays | None = None
+        self._decomposition_mtime = -1
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
@@ -546,6 +552,9 @@ class Transform(
         pyvista.DataObjectFilters.resize
             Resize a mesh.
 
+        scale_factors, has_scale
+            Get info about the transform's scale component.
+
         Examples
         --------
         Compose a scale matrix.
@@ -639,8 +648,14 @@ class Transform(
 
         See Also
         --------
+        flip_x, flip_y, flip_z
+            Convenience methods for reflecting about the x-, y-, or z-axis.
+
         pyvista.DataObjectFilters.reflect
             Reflect a mesh.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -705,8 +720,14 @@ class Transform(
 
         See Also
         --------
+        reflect, flip_y, flip_z
+            Similar reflection methods.
+
         pyvista.DataObjectFilters.flip_x
             Flip a mesh about the x-axis.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -765,8 +786,14 @@ class Transform(
 
         See Also
         --------
+        reflect, flip_x, flip_z
+            Similar reflection methods.
+
         pyvista.DataObjectFilters.flip_y
             Flip a mesh about the y-axis.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -825,8 +852,14 @@ class Transform(
 
         See Also
         --------
+        reflect, flip_x, flip_y
+            Similar reflection methods.
+
         pyvista.DataObjectFilters.flip_z
             Flip a mesh about the z-axis.
+
+        reflection, has_reflection
+            Get info about the transform's reflection component.
 
         Examples
         --------
@@ -881,6 +914,9 @@ class Transform(
         --------
         pyvista.DataObjectFilters.translate
             Translate a mesh.
+
+        translation, has_translation
+            Get info about the transform's translation component.
 
         Examples
         --------
@@ -949,7 +985,9 @@ class Transform(
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_y, rotate_z, rotate_vector
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate
             Rotate a mesh.
@@ -1048,7 +1086,9 @@ class Transform(
 
         See Also
         --------
-        as_rotation
+        rotate_y, rotate_z, rotate_vector, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
@@ -1117,7 +1157,9 @@ class Transform(
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_z, rotate_vector, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
@@ -1186,7 +1228,9 @@ class Transform(
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_y, rotate_vector, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
@@ -1259,7 +1303,9 @@ class Transform(
 
         See Also
         --------
-        as_rotation
+        rotate_x, rotate_y, rotate_z, rotate
+            Similar rotation methods.
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
             Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
@@ -1442,7 +1488,7 @@ class Transform(
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
-        """Return the inverse of the current transformation :attr:`matrix`.
+        """Return the inverse of the current transformation :attr:`~Transform.matrix`.
 
         Notes
         -----
@@ -1570,7 +1616,7 @@ class Transform(
         inverse: bool = False,
         copy: bool = True,
     ):
-        """Apply the current transformation :attr:`matrix` to points, vectors, a dataset, or actor.
+        """Apply the current transformation :attr:`~Transform.matrix` to points, vectors, a dataset, or actor.
 
         .. note::
 
@@ -1708,7 +1754,7 @@ class Transform(
                [0., 0., 2., 0.],
                [0., 0., 0., 1.]])
 
-        """
+        """  # noqa: E501
 
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
@@ -1738,15 +1784,15 @@ class Transform(
             (
                 np.ndarray,
                 Sequence,
-                pyvista.DataSet,
-                pyvista.MultiBlock,
-                pyvista.Prop3D,
+                pv.DataSet,
+                pv.MultiBlock,
+                pv.Prop3D,
             ),
         )
 
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+        if isinstance(obj, (pv.DataSet, pv.MultiBlock)):
             allowed = ['active_vectors', 'all_vectors', None]
             _check_mode('datasets', mode, allowed)
             if mode in ['active_vectors', None]:
@@ -1761,7 +1807,7 @@ class Transform(
         matrix = self.inverse_matrix if inverse else self.matrix
 
         # Transform actor
-        if isinstance(obj, pyvista.Prop3D):
+        if isinstance(obj, pv.Prop3D):
             allowed = ['replace', 'pre-multiply', 'post-multiply', None]
             _check_mode('actors', mode, allowed)
             if mode in ['post-multiply', None]:
@@ -1806,7 +1852,7 @@ class Transform(
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
-        """Apply the current transformation :attr:`matrix` to a point or points.
+        """Apply the current transformation :attr:`~Transform.matrix` to a point or points.
 
         This is equivalent to ``apply(points, 'points')``. See :meth:`apply` for
         details and examples.
@@ -1853,7 +1899,7 @@ class Transform(
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
-        """Apply the current transformation :attr:`matrix` to a vector or vectors.
+        """Apply the current transformation :attr:`~Transform.matrix` to a vector or vectors.
 
         This is equivalent to ``apply(vectors, 'vectors')``. See :meth:`apply` for
         details and examples.
@@ -1901,7 +1947,7 @@ class Transform(
         copy: bool = True,
         inverse: bool = False,
     ) -> _DataSetOrMultiBlockType:
-        """Apply the current transformation :attr:`matrix` to a dataset.
+        """Apply the current transformation :attr:`~Transform.matrix` to a dataset.
 
         This is equivalent to ``apply(dataset, mode)``. See :meth:`apply` for details
         and examples.
@@ -1959,7 +2005,7 @@ class Transform(
         copy: bool = True,
         inverse: bool = False,
     ) -> Prop3D:
-        """Apply the current transformation :attr:`matrix` to an actor.
+        """Apply the current transformation :attr:`~Transform.matrix` to an actor.
 
         This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and
         examples.
@@ -2010,17 +2056,7 @@ class Transform(
         """
         return self.apply(actor, mode, inverse=inverse, copy=copy)
 
-    def decompose(
-        self: Transform,
-        *,
-        homogeneous: bool = False,
-    ) -> tuple[
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-    ]:
+    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveArrays:
         """Decompose the current transformation into its components.
 
         Decompose the :attr:`matrix` ``M`` into
@@ -2078,9 +2114,21 @@ class Transform(
         --------
         compose
             Compose a transformation.
-        as_rotation
-            Get this transform's rotation component.
 
+        translation, has_translation
+            Get info about this transform's translation component.
+
+        rotation_matrix, rotation_axis_angle, as_rotation, has_rotation
+            Get info about this transform's rotation component.
+
+        reflection, has_reflection
+            Get info about this transform's reflection component.
+
+        scale_factors, has_scale
+            Get info about this transform's scale component.
+
+        shear_matrix, has_shear
+            Get info about this transform's shear component.
 
         Examples
         --------
@@ -2210,10 +2258,15 @@ class Transform(
         array([-0.99944491, -2.0022213 , -3.        ])
 
         """
-        return decomposition(
-            self.matrix,
-            homogeneous=homogeneous,
-        )
+        if (current_mtime := self.GetMTime()) != self._decomposition_mtime:
+            # Recompute and cache
+            self._decomposition_cache = decomposition(self.matrix, homogeneous=False)
+            self._decomposition_mtime = current_mtime
+
+        cache = cast('_FiveArrays', self._decomposition_cache)
+        if homogeneous:
+            return _decomposition_as_homogeneous(*cache)
+        return cache
 
     def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
@@ -2336,7 +2389,9 @@ class Transform(
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
             translate_away = Transform().translate(-point_array)
             translate_toward = Transform().translate(point_array)
-            if multiply_mode == 'post' or self._multiply_mode == 'post':
+            if multiply_mode == 'post' or (
+                multiply_mode is None and self._multiply_mode == 'post'
+            ):
                 return translate_away, translate_toward
             else:
                 return translate_toward, translate_away
@@ -2344,7 +2399,7 @@ class Transform(
 
     @property
     def check_finite(self: Transform) -> bool:  # numpydoc ignore: RT01
-        """Check that the :attr:`matrix` and :attr:`inverse_matrix` have finite values.
+        """Check that the :attr:`~Transform.matrix` and :attr:`~Transform.inverse_matrix` have finite values.
 
         If ``True``, all transformations are checked to ensure they only contain
         finite values (i.e. no ``NaN`` or ``Inf`` values) and a ``ValueError`` is raised
@@ -2352,12 +2407,309 @@ class Transform(
         defined and/or are numerically unstable.
 
         This flag is enabled by default.
-        """
+        """  # noqa: E501
         return self._check_finite
 
     @check_finite.setter
     def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
+
+    @property
+    def translation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the translation component of the current transformation :attr:`~Transform.matrix`.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_translation, translate, decompose
+
+        Examples
+        --------
+        Compose a translation and get the translation component.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform() + (1, 2, 3)
+        >>> trans.translation
+        (1.0, 2.0, 3.0)
+
+        Compose a second translation and get the component again.
+
+        >>> trans += (4, 5, 6)
+        >>> trans.translation
+        (5.0, 7.0, 9.0)
+
+        """  # noqa: E501
+        return self.GetPosition()
+
+    @property
+    def rotation_axis_angle(
+        self,
+    ) -> tuple[tuple[float, float, float], float]:  # numpydoc ignore=RT01
+        """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a vector and angle.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_rotation, rotation_matrix, rotate_vector, as_rotation, decompose
+
+        Examples
+        --------
+        Compose a rotation from a vector and angle.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform().rotate_vector((1, 2, 3), 30)
+
+        Get the rotation axis and angle.
+
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.2672, 0.5345, 0.8017)
+        >>> angle
+        30.0
+
+        Compose a second rotation around the same axis and get the axis and angle again.
+
+        >>> _ = trans.rotate_vector((1, 2, 3), 40)
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.2672, 0.5345, 0.8017)
+        >>> angle
+        70.0
+
+        """  # noqa: E501
+        # Decompose first to ensure we have a proper rotation
+        _, R, _, _, _ = self.decompose()
+        wxyz = Transform(R).GetOrientationWXYZ()
+        return wxyz[1:4], wxyz[0]
+
+    @property
+    def rotation_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
+
+        The rotation is orthonormal and right-handed with positive determinant.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_rotation, rotation_axis_angle, rotate, as_rotation, decompose
+
+        Examples
+        --------
+        Compose a rotation about the z-axis.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform().rotate_z(90)
+
+        Get the rotation matrix.
+
+        >>> trans.rotation_matrix
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        Compose a second rotation and get the rotation matrix again.
+
+        >>> _ = trans.rotate_y(-90)
+        >>> trans.rotation_matrix
+        array([[ 0.,  0., -1.],
+               [ 1.,  0.,  0.],
+               [ 0., -1.,  0.]])
+
+        """  # noqa: E501
+        _, R, _, _, _ = self.decompose()
+        return R
+
+    @property
+    def reflection(self) -> Literal[1, -1]:  # numpydoc ignore=RT01
+        """Return the reflection component of the current transformation :attr:`~Transform.matrix` as an integer.
+
+        ``1`` is returned if there is no reflection, and ``-1`` is returned if there
+        is a reflection.
+
+        See Also
+        --------
+        has_reflection, reflect, decompose
+
+        Examples
+        --------
+        Create a transform and get its reflection.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform()
+        >>> trans.reflection
+        1
+
+        Compose a reflection about the x-axis and get the reflection again.
+
+        >>> _ = trans.flip_x()
+        >>> trans.reflection
+        -1
+
+        Compose a second reflection and get the reflection again.
+
+        >>> _ = trans.flip_y()
+        >>> trans.reflection
+        1
+
+        """  # noqa: E501
+        _, _, N, _, _ = self.decompose()
+        return N.astype(int).tolist()
+
+    @property
+    def scale_factors(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the scaling component of the current transformation :attr:`~Transform.matrix`.
+
+        The scaling factors are always positive.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_scale, scale, decompose
+
+        Examples
+        --------
+        Compose a scale matrix and get the scale factors.
+
+        >>> import pyvista as pv
+        >>> trans = pv.Transform() * (1, 2, 3)
+        >>> trans.scale_factors
+        (1.0, 2.0, 3.0)
+
+        Compose a second scale matrix and get the factors again.
+
+        >>> trans *= (4, 5, 6)
+        >>> trans.scale_factors
+        (4.0, 10.0, 18.0)
+
+        """
+        # Use PyVista's decompose instead of vtk's GetScale() method
+        _, _, _, S, _ = self.decompose()
+        return tuple(S.tolist())
+
+    @property
+    def shear_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return the shear component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        has_shear, compose, decompose
+
+        Examples
+        --------
+        Compose a symmetric shear matrix.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1
+        >>> shear[1, 0] = 0.1
+        >>> trans = pv.Transform(shear)
+
+        Get the shear matrix. The shear matrix is the same as the input in this particular example,
+        but in general this is not the case.
+
+        >>> trans.shear_matrix
+        array([[1. , 0.1, 0. ],
+               [0.1, 1. , 0. ],
+               [0. , 0. , 1. ]])
+
+        Compose an asymmetric shear matrix instead.
+
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1
+        >>> trans = pv.Transform(shear)
+
+        Get the shear matrix. In this case, shear differs from the input because asymmetric shear
+        can be decomposed into scale factors and a rotation.
+
+        >>> trans.shear_matrix
+        array([[1.        , 0.05      , 0.        ],
+               [0.04975124, 1.        , 0.        ],
+               [0.        , 0.        , 1.        ]])
+
+        >>> trans.scale_factors
+        (0.9987523388778445, 1.0037461005722337, 1.0)
+
+        >>> axis, angle = trans.rotation_axis_angle
+        >>> axis
+        (0.0, 0.0, -1.0)
+        >>> angle
+        2.8624
+
+        """  # noqa: E501
+        _, _, _, _, K = self.decompose()
+        return K
+
+    @property
+    def has_translation(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a translation component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        translation, translate, decompose
+
+        """  # noqa: E501
+        return not np.allclose(self.translation, np.zeros((3,)))
+
+    @property
+    def has_rotation(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a rotation component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        rotation_matrix, rotate, decompose
+
+        """  # noqa: E501
+        return not np.allclose(self.rotation_matrix, np.eye(3))
+
+    @property
+    def has_reflection(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a reflection component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        reflection, reflect, decompose
+
+        """  # noqa: E501
+        return self.reflection == -1
+
+    @property
+    def has_scale(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a scale component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        scale_factors, scale, decompose
+
+        """  # noqa: E501
+        return not np.allclose(self.scale_factors, np.ones((3,)))
+
+    @property
+    def has_shear(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the current transformation :attr:`~Transform.matrix` has a shear component.
+
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        shear_matrix, compose, decompose
+
+        """  # noqa: E501
+        return not np.allclose(self.shear_matrix, np.eye(3))
 
     def as_rotation(
         self,
@@ -2411,8 +2763,8 @@ class Transform(
 
         See Also
         --------
-        decompose
-            Alternative method for obtaining the rotation component (and others).
+        rotation_matrix, rotation_axis_angle, decompose
+            Get this transform's rotation component `without` using SciPy.
         rotate, rotate_x, rotate_y, rotate_z, rotate_vector
             Compose a rotation matrix.
 

@@ -74,6 +74,8 @@ from vtkmodules.vtkCommonComputationalGeometry import (
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricTorus as vtkParametricTorus
 from vtkmodules.vtkCommonCore import VTK_ARIAL as VTK_ARIAL
 from vtkmodules.vtkCommonCore import VTK_COURIER as VTK_COURIER
+from vtkmodules.vtkCommonCore import VTK_DOUBLE_MAX as VTK_DOUBLE_MAX
+from vtkmodules.vtkCommonCore import VTK_DOUBLE_MIN as VTK_DOUBLE_MIN
 from vtkmodules.vtkCommonCore import VTK_FONT_FILE as VTK_FONT_FILE
 from vtkmodules.vtkCommonCore import VTK_TIMES as VTK_TIMES
 from vtkmodules.vtkCommonCore import VTK_UNSIGNED_CHAR as VTK_UNSIGNED_CHAR
@@ -94,6 +96,7 @@ from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkLogger as vtkLogger
 from vtkmodules.vtkCommonCore import vtkLookupTable as vtkLookupTable
 from vtkmodules.vtkCommonCore import vtkMath as vtkMath
+from vtkmodules.vtkCommonCore import vtkObjectBase as vtkObjectBase
 from vtkmodules.vtkCommonCore import vtkOutputWindow as vtkOutputWindow
 from vtkmodules.vtkCommonCore import vtkPoints as vtkPoints
 from vtkmodules.vtkCommonCore import vtkSignedCharArray as vtkSignedCharArray
@@ -293,6 +296,9 @@ from vtkmodules.vtkFiltersCore import vtkCleanPolyData as vtkCleanPolyData
 from vtkmodules.vtkFiltersCore import vtkClipPolyData as vtkClipPolyData
 from vtkmodules.vtkFiltersCore import vtkConnectivityFilter as vtkConnectivityFilter
 from vtkmodules.vtkFiltersCore import vtkContourFilter as vtkContourFilter
+from vtkmodules.vtkFiltersCore import (
+    vtkConvertToMultiBlockDataSet as vtkConvertToMultiBlockDataSet,
+)
 from vtkmodules.vtkFiltersCore import vtkCutter as vtkCutter
 from vtkmodules.vtkFiltersCore import vtkDecimatePolylineFilter as vtkDecimatePolylineFilter
 from vtkmodules.vtkFiltersCore import vtkDecimatePro as vtkDecimatePro
@@ -466,50 +472,7 @@ from vtkmodules.vtkImagingSources import vtkImageNoiseSource as vtkImageNoiseSou
 from vtkmodules.vtkImagingSources import vtkImageSinusoidSource as vtkImageSinusoidSource
 from vtkmodules.vtkImagingStencil import vtkImageStencil as vtkImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil as vtkPolyDataToImageStencil
-from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
-from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
-from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
-from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
-from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
-from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
-from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
-from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
-from vtkmodules.vtkIOLegacy import vtkDataWriter as vtkDataWriter
-from vtkmodules.vtkIOLegacy import vtkPolyDataReader as vtkPolyDataReader
-from vtkmodules.vtkIOLegacy import vtkPolyDataWriter as vtkPolyDataWriter
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridReader as vtkRectilinearGridReader
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridWriter as vtkRectilinearGridWriter
-from vtkmodules.vtkIOLegacy import vtkSimplePointsWriter as vtkSimplePointsWriter
-from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridReader
-from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
-from vtkmodules.vtkIOParallelXML import (
-    vtkXMLPartitionedDataSetWriter as vtkXMLPartitionedDataSetWriter,
-)
-from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
-from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
-from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
-from vtkmodules.vtkIOXML import vtkXMLImageDataWriter as vtkXMLImageDataWriter
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader as vtkXMLMultiBlockDataReader
-from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataWriter as vtkXMLMultiBlockDataWriter
-from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader as vtkXMLPartitionedDataSetReader
-from vtkmodules.vtkIOXML import vtkXMLPImageDataReader as vtkXMLPImageDataReader
-from vtkmodules.vtkIOXML import vtkXMLPolyDataReader as vtkXMLPolyDataReader
-from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter as vtkXMLPolyDataWriter
-from vtkmodules.vtkIOXML import vtkXMLPRectilinearGridReader as vtkXMLPRectilinearGridReader
-from vtkmodules.vtkIOXML import vtkXMLPUnstructuredGridReader as vtkXMLPUnstructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLReader as vtkXMLReader
-from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader as vtkXMLRectilinearGridReader
-from vtkmodules.vtkIOXML import vtkXMLRectilinearGridWriter as vtkXMLRectilinearGridWriter
-from vtkmodules.vtkIOXML import vtkXMLStructuredGridReader as vtkXMLStructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLStructuredGridWriter as vtkXMLStructuredGridWriter
-from vtkmodules.vtkIOXML import vtkXMLTableReader as vtkXMLTableReader
-from vtkmodules.vtkIOXML import vtkXMLTableWriter as vtkXMLTableWriter
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader as vtkXMLUnstructuredGridReader
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter as vtkXMLUnstructuredGridWriter
-from vtkmodules.vtkIOXML import vtkXMLWriter as vtkXMLWriter
 
 with contextlib.suppress(ImportError):
     # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224

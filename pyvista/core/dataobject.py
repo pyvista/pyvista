@@ -7,12 +7,10 @@ from collections import UserDict
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
@@ -24,9 +22,9 @@ from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
-from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
@@ -38,8 +36,10 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from pyvista import MultiBlock
+
     from ._typing_core import NumpyArray
-    from .utilities.fileio import _VTKWriterAlias
+    from .utilities.writer import BaseWriter
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -61,7 +61,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {}
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {}
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -128,6 +128,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
     ) -> None:
         """Save this vtk object to file.
 
+        .. include:: /api/utilities/mesh_io.rst
+
         .. versionadded:: 0.45
 
             Support saving pickled meshes
@@ -174,89 +176,6 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file size.
 
         """
-
-        def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
-            iterator = mesh.recursive_iterator('all', node_type='parent')
-            for index, name, nested_multiblock in iterator:
-                if len(nested_multiblock.field_data.keys()) > 0:
-                    # Avoid circular import
-                    from pyvista.core.filters.composite import _format_nested_index
-
-                    index_fmt = _format_nested_index(index)
-                    warnings.warn(
-                        f"Nested MultiBlock at index {index_fmt} with name '{name}' "
-                        f'has field data which will not be saved.\n'
-                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-                        'Use `move_nested_field_data_to_root` to store the field data '
-                        'with the root MultiBlock before saving.',
-                        stacklevel=2,
-                    )
-
-        def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
-            if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
-                if mesh.is_nested:
-                    msg = (
-                        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
-                        '\nUpgrade to VTK>=9.5 for this functionality.'
-                    )
-                    raise TypeError(msg)
-                if type(None) in mesh.block_types:
-                    msg = (
-                        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
-                        '\nUpgrade to VTK>=9.5 for this functionality.'
-                    )
-                    raise TypeError(msg)
-
-            supported_block_types: list[type] = [
-                pyvista.PolyData,
-                pyvista.UnstructuredGrid,
-                type(None),
-                pyvista.MultiBlock,
-                pyvista.PartitionedDataSet,
-            ]
-            for id_, name, block in mesh.recursive_iterator('all'):
-                if type(block) not in supported_block_types:
-                    from pyvista.core.filters.composite import _format_nested_index
-
-                    index_fmt = _format_nested_index(id_)
-                    msg = (
-                        f"Block at index {index_fmt} with name '{name}' has type "
-                        f'{block.__class__.__name__!r} '
-                        f'which cannot be saved to the .vtkhdf format.\n'
-                        f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
-                    )
-                    raise TypeError(msg)
-
-        def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
-            if not np.allclose(mesh.direction_matrix, np.eye(3)):
-                warnings.warn(
-                    'The direction matrix for ImageData will not be saved using the '
-                    'legacy `.vtk` format.\n'
-                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                    'Use the `.vti` extension instead (XML format).',
-                    stacklevel=2,
-                )
-
-        def _write_vtk(mesh_: DataObject) -> None:
-            writer = mesh_._WRITERS[file_ext]()
-            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
-            writer.SetFileName(str(file_path))
-            writer.SetInputData(mesh_)
-            if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
-                mesh_ = cast('pyvista.DataSet', mesh_)  # type: ignore[unreachable]
-                if isinstance(texture, str):
-                    writer.SetArrayName(texture)
-                    array_name = texture
-                elif isinstance(texture, np.ndarray):
-                    array_name = '_color_array'
-                    mesh_[array_name] = texture
-                    writer.SetArrayName(array_name)
-
-                # enable alpha channel if applicable
-                if mesh_[array_name].shape[-1] == 4:
-                    writer.SetEnableAlpha(True)
-            writer.Write()
-
         if self._WRITERS is None:
             msg = (  # type: ignore[unreachable]
                 f'{self.__class__.__name__} writers are not specified,'
@@ -267,32 +186,31 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
-        file_ext = file_path.suffix
+        file_ext = get_ext(file_path)
 
         if file_ext == '.vtkhdf' and binary is False:
             msg = '.vtkhdf files can only be written in binary format.'
             raise ValueError(msg)
 
-        # store complex and bitarray types as field data
+        # Store complex and bitarray types as field data
         self._store_metadata()
 
-        # warn if data will be lost
-        if isinstance(self, pyvista.MultiBlock):
-            _warn_multiblock_nested_field_data(self)
-            if file_ext == '.vtkhdf':
-                _check_multiblock_hdf_types(self)
-        if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
-            _warn_imagedata_direction_matrix(self)
-
+        # Save the object
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
-            _write_vtk(self)
+            # Save using the writer
+            writer = self._WRITERS[file_ext](file_path, self)
+            data_format = 'binary' if binary else 'ascii'
+            writer._apply_kwargs_safely(
+                texture=texture, data_format=data_format, compression=compression
+            )
+            writer.write()
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
         else:
             msg = (
-                'Invalid file extension for this data type.'
-                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
+                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
             raise ValueError(msg)
 
@@ -473,13 +391,13 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             return True
 
         # these attrs use numpy.array_equal
-        if isinstance(self, pyvista.ImageData):
+        if isinstance(self, pv.ImageData):
             equal_attrs = ['extent', 'index_to_physical_matrix']
         else:
             equal_attrs = ['points', 'cells']
-            if isinstance(self, pyvista.PolyData):
+            if isinstance(self, pv.PolyData):
                 equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
-            elif isinstance(self, pyvista.UnstructuredGrid):
+            elif isinstance(self, pv.UnstructuredGrid):
                 equal_attrs.append('celltypes')
                 equal_attrs.append('polyhedron_faces')
                 equal_attrs.append('polyhedron_face_locations')
@@ -842,13 +760,13 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
-        pickle_format = pyvista.PICKLE_FORMAT
+        pickle_format = pv.PICKLE_FORMAT
         if pickle_format == 'vtk':
             return self._serialize_vtk_pickle_format()
         elif pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
         # Invalid format, use the setter to raise an error
-        pyvista.set_pickle_format(pickle_format)
+        pv.set_pickle_format(pickle_format)
 
     def _serialize_vtk_pickle_format(
         self: Self,
@@ -878,7 +796,15 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
-        if isinstance(self, pyvista.MultiBlock):
+        from vtkmodules.vtkIOLegacy import vtkDataSetWriter
+        from vtkmodules.vtkIOXML import vtkXMLImageDataWriter
+        from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
+        from vtkmodules.vtkIOXML import vtkXMLRectilinearGridWriter
+        from vtkmodules.vtkIOXML import vtkXMLStructuredGridWriter
+        from vtkmodules.vtkIOXML import vtkXMLTableWriter
+        from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
+
+        if isinstance(self, pv.MultiBlock):
             msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
                 "\nUse `pyvista.PICKLE_FORMAT='vtk'`."
@@ -886,18 +812,18 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             raise TypeError(msg)
         state = self.__dict__.copy()
 
-        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+        if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
             # not pass all settings down to the sub-writers. Until this is fixed, use the
             # dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             writers = {
-                _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
-                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
-                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
-                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
-                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
-                _vtk.vtkTable: _vtk.vtkXMLTableWriter,
+                _vtk.vtkImageData: vtkXMLImageDataWriter,
+                _vtk.vtkStructuredGrid: vtkXMLStructuredGridWriter,
+                _vtk.vtkRectilinearGrid: vtkXMLRectilinearGridWriter,
+                _vtk.vtkUnstructuredGrid: vtkXMLUnstructuredGridWriter,
+                _vtk.vtkPolyData: vtkXMLPolyDataWriter,
+                _vtk.vtkTable: vtkXMLTableWriter,
             }
 
             for parent_type, writer_type in writers.items():
@@ -915,8 +841,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
-            writer = _vtk.vtkDataSetWriter()
+        elif pv.PICKLE_FORMAT.lower() == 'legacy':
+            writer = vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
             writer.SetFileTypeToBinary()
@@ -927,7 +853,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT`
         # is not shared between processes
-        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
+        state['PICKLE_FORMAT'] = pv.PICKLE_FORMAT
         return state
 
     def __setstate__(self: Self, state: Any) -> None:
@@ -974,6 +900,14 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             preferred since it supports more objects (e.g. MultiBlock).
 
         """
+        from vtkmodules.vtkIOLegacy import vtkDataSetReader
+        from vtkmodules.vtkIOXML import vtkXMLImageDataReader
+        from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
+        from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader
+        from vtkmodules.vtkIOXML import vtkXMLStructuredGridReader
+        from vtkmodules.vtkIOXML import vtkXMLTableReader
+        from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
+
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
             'PICKLE_FORMAT',
@@ -987,12 +921,12 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             # Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             readers = {
-                _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
-                _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
-                _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
-                _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
-                _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
-                _vtk.vtkTable: _vtk.vtkXMLTableReader,
+                _vtk.vtkImageData: vtkXMLImageDataReader,
+                _vtk.vtkStructuredGrid: vtkXMLStructuredGridReader,
+                _vtk.vtkRectilinearGrid: vtkXMLRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: vtkXMLUnstructuredGridReader,
+                _vtk.vtkPolyData: vtkXMLPolyDataReader,
+                _vtk.vtkTable: vtkXMLTableReader,
             }
 
             for parent_type, reader_type in readers.items():
@@ -1008,7 +942,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = _vtk.vtkDataSetReader()
+            reader = vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
                 reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]
@@ -1026,3 +960,21 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
     @abstractmethod
     def is_empty(self) -> bool:
         """Return ``True`` if the object is empty."""
+
+    def cast_to_multiblock(self) -> MultiBlock:
+        """Convert this :class:`DataObject` to a :class:`~pyvista.MultiBlock`.
+
+        Uses :vtk:`vtkConvertToMultiBlockDataSet` internally.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        MultiBlock
+            Converted dataset.
+
+        """
+        alg = _vtk.vtkConvertToMultiBlockDataSet()
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return wrap(alg.GetOutput())  # type:ignore[return-value]

@@ -64,8 +64,8 @@ mesh.point_data['scalars'] = rng_int
 glyphs = mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, N - 1))
 
 # create plotter and add our glyphs with some nontrivial lighting
-plotter = pv.Plotter()
-plotter.add_mesh(glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False)
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False)
+pl.show()
 # %%
 # .. tags:: filter

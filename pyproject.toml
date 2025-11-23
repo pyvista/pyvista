@@ -44,9 +44,9 @@ io = ['imageio', 'meshio>=5.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
-  'nest-asyncio',
+  'nest-asyncio2',
   'trame-client>=2.12.7',
-  'trame-server>=2.11.7',
+  'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
   'trame-vtk>=2.5.8',
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
@@ -59,7 +59,7 @@ pinned = [ # Pinned versions of core dependencies
   'numpy<2.4.0',
   'pillow<12.1.0',
   'pooch<1.9.0',
-  'scooby<0.11.0',
+  'scooby<0.12.0',
   'typing-extensions<4.16.0',
 ]
 
@@ -82,7 +82,7 @@ test = [
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'meshio<5.4.0',
-  'nest-asyncio<1.6.1',
+  'nest-asyncio2<1.7.0',
   'numpydoc<1.10.0',
   'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
@@ -130,6 +130,7 @@ docs = [
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==1.18.2',
+  'nest-asyncio2==1.6.3',
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
@@ -417,7 +418,6 @@ ignore = [
   'ANN003', # Missing annotations for `*kwargs`
   'ANN401', # Disallow `Any`
   'B904', # https://github.com/pyvista/pyvista/pull/6022
-  'B905', # zip() without explicit strict parameter - will be addressed in separate PR
   'COM812', # May cause conflicts when used with the formatter
   'D105', # Missing docstring in magic method
   'D107', # Missing docstring in `__init__`
@@ -483,8 +483,8 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/tests/*' = ['D']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
-'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
-'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']
+'pyvista/core/_typing_core/_aliases.py' = ['PYI047']
+'pyvista/core/_typing_core/_array_like.py' = ['PYI047']
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']
 'pyvista/core/_vtk_core.py' = ['ANN', 'PLC0414']

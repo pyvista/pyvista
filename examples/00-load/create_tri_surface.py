@@ -96,9 +96,9 @@ polygon.faces = np.insert(ids, 0, len(ids))
 
 surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
 
-p = pv.Plotter()
-p.add_mesh(surf, show_edges=True)
-p.add_mesh(polygon, color='red', opacity=0.5)
-p.show(cpos='xy')
+pl = pv.Plotter()
+pl.add_mesh(surf, show_edges=True)
+pl.add_mesh(polygon, color='red', opacity=0.5)
+pl.show(cpos='xy')
 # %%
 # .. tags:: load
