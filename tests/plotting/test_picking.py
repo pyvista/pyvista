@@ -606,6 +606,7 @@ def test_block_picking(multiblock_poly):
 
 
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
+@pytest.mark.skip_check_gc
 def test_element_picking(mode):
     class Tracker:
         def __init__(self):

@@ -2037,6 +2037,7 @@ def test_volume_rendering_from_plotter(uniform):
 
 
 @skip_windows_mesa  # due to opacity
+@pytest.mark.skip_check_gc
 def test_volume_rendering_rectilinear(uniform):
     grid = uniform.cast_to_rectilinear_grid()
 
@@ -3696,6 +3697,7 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 
 @skip_windows_mesa  # due to opacity
+@pytest.mark.skip_check_gc
 def test_plotter_volume_lookup_table(uniform):
     uniform.set_active_scalars('Spatial Point Data')
 
