@@ -26,11 +26,13 @@ def Spline(
     n_points: int | None = None,
     *,
     closed: bool = False,
-    parameterize_by_length: bool | None = None,
-    left_constraint_type: int | None = None,
-    left_derivative_value: float | None = None,
-    right_constraint_type: int | None = None,
-    right_derivative_value: float | None = None,
+    parameterize_by: str = 'length',
+    boundary_constraint: str | None = 'finite_difference',
+    boundary_value: float | None = None,
+    left_boundary_constraint: str | None = None,
+    left_boundary_value: float | None = None,
+    right_boundary_constraint: str | None = None,
+    right_boundary_value: float | None = None,
     **kwargs,
 ) -> PolyData:
     """Create a spline from points.
@@ -48,30 +50,48 @@ def Spline(
     closed : bool, default: False
         Close the spline if ``True`` (both ends are joined). Not closed by default.
 
-    parameterize_by_length : bool, optional
-        Parametrize by length rather than point index.
+    parameterize_by : str, default: 'length'
+        Parametrize spline by length or point index.
 
-    left_constraint_type : int, optional
-        Derivative constraint type at the left side. Must be 0, 1, 2, or 3:
-
-        - ``0``: The first derivative at the left(right) most point is determined
-          from the line defined from the first(last) two points.
-        - ``1``: Default: the first derivative at the left(right) most point is set to
+    boundary_constraint : str, optional, default: 'finite_difference'
+        Derivative constraint type at both boundaries of the spline. Must be one of:
+        - 'finite_difference': The first derivative at the left(right) most point is determined
+          from the line defined from the first(last) two points. (Default)
+        - 'clamped': Default: the first derivative at the left(right) most point is set to
           Left(Right) value.
-        - ``2``: The second derivative at the left(right) most point is set to
+        - 'second': The second derivative at the left(right) most point is set to
           Left(Right) value.
-        - ``3``: The second derivative at left(right) most points is
+        - 'scaled_second': The second derivative at left(right) most points is
           Left(Right) value times second derivative at first interior point.
+        Should be set to ``None`` if ``left_boundary_constraint``
+        or ``right_boundary_constraint`` are set.
 
-    left_derivative_value : float, optional
-        Value of derivative on left side.
+    left_boundary_constraint : str, optional
+        Derivative constraint type at left side of the spline only. See ``boundary_constraint``.
+        Should be set to ``None`` if ``boundary_constraint`` is set.
+
+    right_boundary_constraint : str, optional
+        Derivative constraint type at right side of the spline only. See ``boundary_constraint``.
+        Should be set to ``None`` if ``boundary_constraint`` is set.
+
+    boundary_value : float, optional
+        Value of derivative at both ends of the spline. Should be set to ``None``
+        if ``left_boundary_value`` or ``right_boundary_value`` are set.
+        Should also be set to None if the boundary type is 'finite_difference'.
 
     right_constraint_type : int, optional
         Derivative constraint type at the right side. Must be 0, 1, 2, or
         3. See ``left_constraint_type`` description.
 
-    right_derivative_value : float, optional
-        Value of derivative on left side.
+    left_boundary_value : float, optional
+        Value of derivative on left side of the spline only. Should be set to ``None``
+        if ``boundary_value`` is set.
+        Should also be set to None if the boundary type is 'finite_difference'.
+
+    right_boundary_value : float, optional
+        Value of derivative on right side of the spline only. Should be set to ``None``
+        if ``boundary_value`` is set.
+        Should also be set to None if the boundary type is 'finite_difference'.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -112,26 +132,53 @@ def Spline(
         spline_function.ClosedOn()
     else:
         spline_function.ClosedOff()
-    if parameterize_by_length is not None:
-        if parameterize_by_length:
-            spline_function.ParameterizeByLengthOn()
-        else:
-            spline_function.ParameterizeByLengthOff()
-    if left_constraint_type is not None:
-        left_constraint_type_ = _validation.validate_number(
-            left_constraint_type, must_be_in_range=[0, 3], must_be_integer=True
-        )
-        spline_function.SetLeftConstraint(left_constraint_type_)
-    if right_constraint_type is not None:
-        right_constraint_type_ = _validation.validate_number(
-            right_constraint_type, must_be_in_range=[0, 3], must_be_integer=True
-        )
-        spline_function.SetRightConstraint(right_constraint_type_)
-    if left_derivative_value is not None:
-        spline_function.SetLeftValue(left_derivative_value)
-    if right_derivative_value is not None:
-        spline_function.SetRightValue(right_derivative_value)
-
+    if parameterize_by == 'length':
+        spline_function.ParameterizeByLengthOn()
+    elif parameterize_by == 'index':
+        spline_function.ParameterizeByLengthOff()
+    else:  # pragma: no cover
+        msg = f'Invalid parametrization of points {parameterize_by}'
+        raise ValueError(msg)
+    if left_boundary_constraint is None and boundary_constraint is not None:
+        left_boundary_constraint = boundary_constraint
+    if right_boundary_constraint is None and boundary_constraint is not None:
+        right_boundary_constraint = boundary_constraint
+    _boundary_types_dict = {
+        'finite_difference': 0,
+        'clamped': 1,
+        'second': 2,
+        'scaled_second': 3,
+    }
+    if left_boundary_constraint in _boundary_types_dict.keys():
+        spline_function.SetLeftConstraint(_boundary_types_dict[left_boundary_constraint])
+    else:  # pragma: no cover
+        msg = f'Invalid boundary constraint {left_boundary_constraint}'
+        raise ValueError(msg)
+    if right_boundary_constraint in _boundary_types_dict.keys():
+        spline_function.SetRightConstraint(_boundary_types_dict[right_boundary_constraint])
+    else:  # pragma: no cover
+        msg = f'Invalid boundary constraint {right_boundary_constraint}'
+        raise ValueError(msg)
+    if left_boundary_value is None and boundary_value is not None:
+        left_boundary_value = boundary_value
+    if right_boundary_value is None and boundary_value is not None:
+        right_boundary_value = boundary_value
+    if (
+        left_boundary_value is not None and left_boundary_constraint == 'finite_difference'
+    ):  # pragma: no cover
+        msg = f"""finite difference not compatible with
+        boundary value {left_boundary_value} (should be None)"""
+        raise ValueError(msg)
+    if (
+        right_boundary_value is not None and right_boundary_constraint == 'finite_difference'
+    ):  # pragma: no cover
+        msg = f"""finite difference not compatible with
+        boundary value {left_boundary_value} (should be None)"""
+        raise ValueError(msg)
+    if left_boundary_value is not None:
+        spline_function.SetLeftValue(left_boundary_value)
+    if right_boundary_value is not None:
+        spline_function.SetRightValue(right_boundary_value)
     # get interpolation density
     u_res = n_points
     if u_res is None:
