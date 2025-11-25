@@ -2961,3 +2961,60 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.n_points == 0
+
+    @property
+    def dimensionality(self: Self) -> Literal[0, 1, 2, 3]:
+        """Return the spatial dimensions spanned by this dataset.
+
+        .. versionchanged:: 0.47
+
+            This property is now generalized for all datasets. Previously, it was only available
+            for datasets with a ``dimensions`` property.
+
+        Returns
+        -------
+        int
+            The dimensionality of the dataset.
+
+        Examples
+        --------
+        A single point has ``0`` dimensionality.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+        >>> mesh.dimensionality
+        0
+
+        With two points, the dimensionality is ``1``.
+
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> mesh.dimensionality
+        1
+
+        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
+        a dimensionality of ``2``.
+
+        >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Plane` also has dimensionality of ``2``, even if it's arbitrarily
+        rotated in space.
+
+        >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Cube` has a dimensionality of 3.
+
+        >>> mesh = pv.Cube()
+        >>> mesh.dimensionality
+        3
+
+        """
+        if hasattr(self, 'dimensions'):
+            dims = np.asarray(self.dimensions)
+            return int(3 - (dims == 1).sum())  # type: ignore[return-value]
+        elif self.n_points == 0:
+            return 0
+        return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
