@@ -142,8 +142,8 @@ pl.close()
 # Create a spline by parametrizing based on length (default) or point index.
 
 pl = pv.Plotter()
-spline = pv.Spline(points, parameterize_by='length')
-spline_by_index = pv.Spline(points, parameterize_by='index')
+spline = pv.Spline(points, parametrize_by='length')
+spline_by_index = pv.Spline(points, parametrize_by='index')
 pl.add_mesh(spline, line_width=4)
 pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
 pl.add_mesh(spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True)

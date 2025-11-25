@@ -26,7 +26,7 @@ def Spline(
     n_points: int | None = None,
     *,
     closed: bool = False,
-    parameterize_by: str = 'length',
+    parametrize_by: str = 'length',
     boundary_constraints: tuple[str] | str = 'clamped',
     boundary_values: tuple[float] | float | None = 0.0,
     **kwargs,
@@ -46,10 +46,10 @@ def Spline(
     closed : bool, default: False
         Close the spline if ``True`` (both ends are joined). Not closed by default.
 
-    parameterize_by : str, default: 'length'
+    parametrize_by : str, default: 'length'
         Parametrize spline by length or point index.
 
-    boundary_constraints : Tuple[str] | str, optional, default: ('clamped', 'clamped')
+    boundary_constraints : tuple[str] | str, optional, default: 'clamped'
         Derivative constraint type at both boundaries of the spline.
         Can be set by a single string (both ends) or a tuple of length equal to 2.
         Each value be one of:
@@ -106,22 +106,27 @@ def Spline(
         spline_function.ClosedOn()
     else:
         spline_function.ClosedOff()
-    if parameterize_by == 'length':
+    if parametrize_by == 'length':
         spline_function.ParameterizeByLengthOn()
-    elif parameterize_by == 'index':
+    elif parametrize_by == 'index':
         spline_function.ParameterizeByLengthOff()
     else:  # pragma: no cover
-        msg = f'Invalid parametrization of points {parameterize_by}'
+        msg = f'Invalid parametrization of points {parametrize_by}'
         raise ValueError(msg)
     # handle single argument for constraint and values at both ends
     if type(boundary_constraints) is str:
-        boundary_constraints = (boundary_constraints, boundary_constraints)
+        tuple_boundary_constraints = (boundary_constraints, boundary_constraints)
+    else:
+        tuple_boundary_constraints = boundary_constraints
     if type(boundary_values) is float or boundary_values is None:
         boundary_values = (boundary_values, boundary_values)
-    if len(boundary_constraints) != 2:
+    else:
+        tuple_boundary_values = boundary_values
+
+    if len(tuple_boundary_constraints) != 2:
         msg = 'Invalid size for boundary constraints'
         raise ValueError(msg)
-    if len(boundary_values) != 2:
+    if len(tuple_boundary_values) != 2:
         msg = 'Invalid size for boundary values'
         raise ValueError(msg)
     _boundary_types_dict = {
@@ -131,7 +136,7 @@ def Spline(
         'scaled_second': 3,
     }
     for incr, (constraint, value) in enumerate(
-        zip(boundary_constraints, boundary_values, strict=True)
+        zip(tuple_boundary_constraints, tuple_boundary_values, strict=True)
     ):
         if constraint in _boundary_types_dict.keys():
             if incr == 0:
