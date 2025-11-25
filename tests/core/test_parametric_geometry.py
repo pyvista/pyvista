@@ -99,6 +99,21 @@ def test_spline():
         )
         points_abs_diff = np.abs(spline_single_arg.points - spline_both_args.points)
         assert points_abs_diff.max() == 0
+    # test invalid number of boundary constraints/values
+    with pytest.raises(ValueError, match='boundary constraints'):
+        spline_both_args = pv.Spline(
+            points,
+            1000,
+            boundary_constraints = ('clamped', 'clamped', 'clamped'),
+            boundary_values = (0.0, 0.0)
+        )
+    with pytest.raises(ValueError, match='boundary values'):
+        spline_both_args = pv.Spline(
+            points,
+            1000,
+            boundary_constraints = ('clamped', 'clamped'),
+            boundary_values = (0.0, 0.0, 0.0)
+        )
 
 
 def test_kochanek_spline():
