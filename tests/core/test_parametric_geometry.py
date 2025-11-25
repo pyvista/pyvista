@@ -104,15 +104,15 @@ def test_spline():
         spline_both_args = pv.Spline(
             points,
             1000,
-            boundary_constraints = ('clamped', 'clamped', 'clamped'),
-            boundary_values = (0.0, 0.0)
+            boundary_constraints=('clamped', 'clamped', 'clamped'),
+            boundary_values=(0.0, 0.0),
         )
     with pytest.raises(ValueError, match='boundary values'):
         spline_both_args = pv.Spline(
             points,
             1000,
-            boundary_constraints = ('clamped', 'clamped'),
-            boundary_values = (0.0, 0.0, 0.0)
+            boundary_constraints=('clamped', 'clamped'),
+            boundary_values=(0.0, 0.0, 0.0),
         )
 
 
