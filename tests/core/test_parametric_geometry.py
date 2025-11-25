@@ -24,8 +24,8 @@ def test_spline():
     # test parametrize by length. Check that it produces different points
     # i.e. absolute distance max > 0
     # vtk default is to parametrize by length
-    spline_by_length = pv.Spline(points, 1000, parameterize_by="length")
-    spline_by_index = pv.Spline(points, 1000, parameterize_by="index")
+    spline_by_length = pv.Spline(points, 1000, parameterize_by='length')
+    spline_by_index = pv.Spline(points, 1000, parameterize_by='index')
     assert spline_by_length.n_points == spline_by_index.n_points == 1000
     points_abs_diff = np.abs(spline_by_index.points - spline_by_length.points)
     assert points_abs_diff.max() > 0
@@ -36,16 +36,18 @@ def test_spline():
     # test that boundary type / value change has an effect on produced splines
     for boundary_type in ['finite_difference', 'clamped', 'second', 'scaled_second']:
         val = None if boundary_type == 'finite_difference' else 0.0
-        spline_boundary_left = pv.Spline(points,
-                                         1000,
-                                         boundary_constraints = (boundary_type, 'clamped'),
-                                         boundary_values=(val, 0.0)
-                                        )
-        spline_boundary_right = pv.Spline(points,
-                                          1000,
-                                          boundary_constraints = ('clamped', boundary_type),
-                                          boundary_values=(0.0, val)
-                                        )
+        spline_boundary_left = pv.Spline(
+            points,
+            1000,
+            boundary_constraints=(boundary_type, 'clamped'),
+            boundary_values=(val, 0.0),
+        )
+        spline_boundary_right = pv.Spline(
+            points,
+            1000,
+            boundary_constraints=('clamped', boundary_type),
+            boundary_values=(0.0, val),
+        )
         points_abs_diff_left = np.abs(spline.points - spline_boundary_left.points)
         points_abs_diff_right = np.abs(spline.points - spline_boundary_right.points)
         if boundary_type != 'clamped':
@@ -56,14 +58,14 @@ def test_spline():
             spline_boundary_left_val = pv.Spline(
                 points,
                 1000,
-                boundary_constraints = (boundary_type, 'clamped'),
-                boundary_values = (1.0, 0.0)
+                boundary_constraints=(boundary_type, 'clamped'),
+                boundary_values=(1.0, 0.0),
             )
             spline_boundary_right_val = pv.Spline(
                 points,
                 1000,
-                boundary_constraints = ('clamped', boundary_type),
-                boundary_values = (0.0, 1.0)
+                boundary_constraints=('clamped', boundary_type),
+                boundary_values=(0.0, 1.0),
             )
 
             points_abs_diff_left_val = np.abs(
@@ -79,32 +81,24 @@ def test_spline():
                 spline_boundary_left_val = pv.Spline(
                     points,
                     1000,
-                    boundary_constraints = (boundary_type, 'clamped'),
-                    boundary_values = (1.0, 0.0)
+                    boundary_constraints=(boundary_type, 'clamped'),
+                    boundary_values=(1.0, 0.0),
                 )
     # test that boundary types and values can be set with a single argument
     # without changing from setting with both arguments
     for boundary_type in ['finite_difference', 'clamped', 'second', 'scaled_second']:
         val = None if boundary_type == 'finite_difference' else 0.0
         spline_single_arg = pv.Spline(
-            points,
-            1000,
-            boundary_constraints = boundary_type,
-            boundary_values = val
+            points, 1000, boundary_constraints=boundary_type, boundary_values=val
         )
         spline_both_args = pv.Spline(
             points,
             1000,
-            boundary_constraints = (boundary_type, boundary_type),
-            boundary_values = (val, val)
+            boundary_constraints=(boundary_type, boundary_type),
+            boundary_values=(val, val),
         )
-        points_abs_diff = np.abs(
-            spline_single_arg.points - spline_both_args.points
-        )
+        points_abs_diff = np.abs(spline_single_arg.points - spline_both_args.points)
         assert points_abs_diff.max() == 0
-
-
-
 
 
 def test_kochanek_spline():

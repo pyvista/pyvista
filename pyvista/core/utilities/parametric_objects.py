@@ -27,7 +27,7 @@ def Spline(
     *,
     closed: bool = False,
     parameterize_by: str = 'length',
-    boundary_constraints: tuple[str] | str = "clamped",
+    boundary_constraints: tuple[str] | str = 'clamped',
     boundary_values: tuple[float] | float | None = 0.0,
     **kwargs,
 ) -> PolyData:
@@ -131,10 +131,8 @@ def Spline(
         'scaled_second': 3,
     }
     for incr, (constraint, value) in enumerate(
-        zip(boundary_constraints,
-            boundary_values,
-            strict=True)
-        ):
+        zip(boundary_constraints, boundary_values, strict=True)
+    ):
         if constraint in _boundary_types_dict.keys():
             if incr == 0:
                 spline_function.SetLeftConstraint(_boundary_types_dict[constraint])
@@ -143,9 +141,9 @@ def Spline(
         else:  # pragma: no cover
             msg = f'Invalid boundary constraint {constraint}'
             raise ValueError(msg)
-        if (value is not None and constraint == 'finite_difference'):  # pragma: no cover
-            msg = f'''finite difference not compatible with
-            boundary value {value} (should be None)'''
+        if value is not None and constraint == 'finite_difference':  # pragma: no cover
+            msg = f"""finite difference not compatible with
+            boundary value {value} (should be None)"""
             raise ValueError(msg)
         elif value is not None:
             if incr == 0:
