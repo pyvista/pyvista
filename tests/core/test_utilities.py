@@ -207,8 +207,12 @@ def test_min_supported_vtk_version_matches_pyproject():
         # dependencies live under [project]
         dependencies = pyproject_data.get('project', {}).get('dependencies', [])
 
-        # find the first vtk>= spec
-        min_vtk = next(dep.split('>=')[1] for dep in dependencies if 'vtk>=' in dep)
+        # find the first vtk>= spec and strip env markers after `;`
+        min_vtk = next(
+            dep.split(';', 1)[0].strip().split('>=', 1)[1]
+            for dep in dependencies
+            if 'vtk>=' in dep.split(';', 1)[0]
+        )
         assert isinstance(min_vtk, str)
         assert len(min_vtk) > 0
         return tuple(map(int, min_vtk.split('.')))
