@@ -115,7 +115,7 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData or dict[str, pyvista.PolyData]
+    output : pyvista.PolyData or dict[str, pyvista.PolyData]
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
@@ -217,7 +217,7 @@ def plot_logo(  # noqa: PLR0917
 
     Returns
     -------
-    Plotter or camera position
+    output : Plotter or camera position
         Returns the plotter instance if ``just_return_plotter`` is ``True``,
         otherwise returns the camera position if ``screenshot`` is specified,
         otherwise shows the plot.

@@ -287,7 +287,7 @@ def convert_array(  # noqa: PLR0917
 
     Returns
     -------
-    :vtk:`vtkDataArray` | numpy.ndarray
+    output : :vtk:`vtkDataArray` | numpy.ndarray
         The converted array.  If input is a :class:`numpy.ndarray` then
         returns :vtk:`vtkDataArray` or if input is :vtk:`vtkDataArray` then
         returns NumPy ``ndarray``.
@@ -355,7 +355,7 @@ def get_array(  # noqa: PLR0917
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -535,7 +535,7 @@ def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | 
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -555,7 +555,7 @@ def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | 
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -575,7 +575,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -790,7 +790,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
 
     Returns
     -------
-    :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
+    output : :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         VTK matrix.
 
     """

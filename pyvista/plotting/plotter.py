@@ -34,6 +34,7 @@ import scooby
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -199,13 +200,12 @@ def _warn_xserver() -> None:  # pragma: no cover
         if uses_egl():
             return
 
-        warnings.warn(
+        warn_external(
             '\n'
             'This system does not appear to be running an xserver.\n'
             'PyVista will likely segfault when rendering.\n\n'
             'Alternatively, an offscreen version using OSMesa libraries '
             'and ``vtk`` is available as of VTK 9.5.\n',
-            stacklevel=2,
         )
 
 
@@ -444,7 +444,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        :vtk:`vtkRenderWindow` | None
+        output : :vtk:`vtkRenderWindow` | None
             Render window if the plotter is not closed.
 
         Notes
@@ -504,7 +504,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             'and will removed in a future version of PyVista. '
             'Set the theme when initializing the plotter instance instead.'
         )
-        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+        warn_external(msg, PyVistaDeprecationWarning)
 
         if not isinstance(theme, pv.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
@@ -753,7 +753,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        str | Path
+        output : str | Path
             The exported filename.
 
         """
@@ -874,22 +874,20 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 continue
                             dataset = mapper.dataset
                             if not isinstance(dataset, pv.PolyData):
-                                warnings.warn(
+                                warn_external(
                                     'Plotter contains non-PolyData datasets. These have been '
                                     'overwritten with PolyData surfaces and are internally '
                                     'copies of the original datasets.',
-                                    stacklevel=2,
                                 )
 
                                 try:
                                     dataset = dataset.extract_surface()
                                     mapper.SetInputData(dataset)
                                 except (AttributeError, ValueError, TypeError):  # pragma: no cover
-                                    warnings.warn(
+                                    warn_external(
                                         'During gLTF export, failed to convert some '
                                         'datasets to PolyData. Exported scene will not have '
                                         'all datasets.',
-                                        stacklevel=2,
                                     )
 
                             if 'Normals' in dataset.point_data:
@@ -1083,7 +1081,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple[int] | tuple[int, int]
+        output : tuple[int] | tuple[int, int]
             Shape of the plotter.
 
         Examples
@@ -2030,9 +2028,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             return
         # If render window is not current
         if self.render_window is None:
-            warnings.warn(
-                'Attempting to set window_size on an unavailable render widow.', stacklevel=2
-            )
+            warn_external('Attempting to set window_size on an unavailable render widow.')
             yield self
             return
         size_before = self.window_size
@@ -3674,11 +3670,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mapper = mapper
 
         if render_lines_as_tubes and show_edges:
-            warnings.warn(
+            warn_external(
                 '`show_edges=True` not supported when `render_lines_as_tubes=True`. '
                 'Ignoring `show_edges`.',
                 UserWarning,
-                stacklevel=2,
             )
             show_edges = False
 
@@ -4593,7 +4588,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 raise ValueError(msg)
             if opacity != 'linear':
                 opacity = 'linear'
-                warnings.warn('Ignoring custom opacity due to RGBA scalars.', stacklevel=2)
+                warn_external('Ignoring custom opacity due to RGBA scalars.')
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -5033,11 +5028,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         """
         # Deprecated on 0.43.0, estimated removal on v0.46.0
-        warnings.warn(
+        warn_external(
             'This method is deprecated and will be removed in a future version of '
             'PyVista. Directly modify the scalars of a mesh in-place instead.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
         if mesh is None:
@@ -5242,7 +5236,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        CornerAnnotation | Text
+        output : CornerAnnotation | Text
             Text actor added to plot.
 
         Examples
@@ -6359,11 +6353,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 if self.last_image is not None:
                     # Save last image
                     if scale is not None:
-                        warnings.warn(
+                        warn_external(
                             'This plotter is closed and cannot be scaled. '
                             'Using the last saved image. '
                             'Try using the `image_scale` property directly.',
-                            stacklevel=2,
                         )
                     return self._save_image(self.last_image, filename, return_img)
                 # Plotter hasn't been rendered or was improperly closed
@@ -7236,7 +7229,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if interactive_update and auto_close is None:
             auto_close = False
         elif interactive_update and auto_close:
-            warnings.warn(
+            warn_external(
                 textwrap.dedent(
                     """
                     The plotter will close immediately automatically since ``auto_close=True``.
@@ -7244,7 +7237,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     interact with the plotter interactively.
                     """,
                 ).strip(),
-                stacklevel=2,
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
@@ -7272,9 +7264,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
-            warnings.warn(
-                'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.',
-                stacklevel=2,
+            warn_external(
+                'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
         jupyter_disp = None
@@ -7337,18 +7328,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
-                warnings.warn(
+                warn_external(
                     '`auto_close` ignored: by clicking the exit button, '
                     'you have destroyed the render window and we have to '
                     'close it out.',
-                    stacklevel=2,
                 )
             self.close()
             if screenshot:
-                warnings.warn(
+                warn_external(
                     'A screenshot is unable to be taken as the render window is not current or '
                     'rendering is suppressed.',
-                    stacklevel=2,
                 )
         if _is_current:
             if pv.ON_SCREENSHOT:
@@ -7433,7 +7422,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        CornerAnnotation | Text
+        output : CornerAnnotation | Text
             Text actor added to plot.
 
         Examples

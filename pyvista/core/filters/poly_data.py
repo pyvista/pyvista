@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import MissingDataError
@@ -276,10 +276,9 @@ class PolyDataFilters(DataSetFilters):
         if bool_inter.is_empty:
             inter, s1, s2 = self.intersection(other_mesh)
             if inter.is_empty and s1.is_empty and s2.is_empty:
-                warnings.warn(
+                warn_external(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
-                    stacklevel=2,
                 )
         return bool_inter
 
@@ -1795,11 +1794,10 @@ class PolyDataFilters(DataSetFilters):
 
         has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
-            warnings.warn(
+            warn_external(
                 'Since 0.45, use of `attribute_error=True` is deprecated.'
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
             enable_all_attribute_error = True
             if normals is None:
@@ -1832,7 +1830,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
         if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
             if boundary_constraints:
-                warnings.warn('`boundary_constraints` requires vtk >= 9.3.', stacklevel=2)
+                warn_external('`boundary_constraints` requires vtk >= 9.3.')
         else:
             alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
             alg.SetBoundaryWeightFactor(boundary_weight)
@@ -2934,7 +2932,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
                 except (ValueError, TypeError, KeyError):  # pragma: no cover
-                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh', stacklevel=2)
+                    warn_external(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -2962,11 +2960,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
+        warn_external(
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
             'Note that `inplace` is now `False` by default for the new filter.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             msg = 'Can only flip normals on an all triangle mesh.'
@@ -3561,12 +3558,11 @@ class PolyDataFilters(DataSetFilters):
         """
         if capping is None:
             capping = False
-            warnings.warn(
+            warn_external(
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
-                stacklevel=2,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -3713,12 +3709,11 @@ class PolyDataFilters(DataSetFilters):
         """
         if capping is None:
             capping = False
-            warnings.warn(
+            warn_external(
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
-                stacklevel=2,
             )
 
         if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:
