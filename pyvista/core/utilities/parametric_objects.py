@@ -119,16 +119,9 @@ def Spline(
     else:
         tuple_boundary_constraints = boundary_constraints
     if type(boundary_values) is float or boundary_values is None:
-        boundary_values = (boundary_values, boundary_values)
+        tuple_boundary_values = (boundary_values, boundary_values)
     else:
         tuple_boundary_values = boundary_values
-
-    if len(tuple_boundary_constraints) != 2:
-        msg = 'Invalid size for boundary constraints'
-        raise ValueError(msg)
-    if len(tuple_boundary_values) != 2:
-        msg = 'Invalid size for boundary values'
-        raise ValueError(msg)
     _boundary_types_dict = {
         'finite_difference': 0,
         'clamped': 1,
