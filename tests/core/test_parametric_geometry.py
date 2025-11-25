@@ -24,8 +24,8 @@ def test_spline():
     # test parametrize by length. Check that it produces different points
     # i.e. absolute distance max > 0
     # vtk default is to parametrize by length
-    spline_by_length = pv.Spline(points, 1000, parameterize_by_length=True)
-    spline_by_index = pv.Spline(points, 1000, parameterize_by_length=False)
+    spline_by_length = pv.Spline(points, 1000, parameterize_by="length")
+    spline_by_index = pv.Spline(points, 1000, parameterize_by="index")
     assert spline_by_length.n_points == spline_by_index.n_points == 1000
     points_abs_diff = np.abs(spline_by_index.points - spline_by_length.points)
     assert points_abs_diff.max() > 0
@@ -34,23 +34,25 @@ def test_spline():
     spline_closed = pv.Spline(points, 1000, closed=True)
     assert spline.bounds != spline_closed.bounds
     # test that boundary type / value change has an effect on produced splines
-    for boundary_type in range(4):
-        spline_boundary_left = pv.Spline(points, 1000, left_constraint_type=boundary_type)
-        spline_boundary_right = pv.Spline(points, 1000, right_constraint_type=boundary_type)
+    for boundary_type in ['finite_difference', 'clamped', 'second', 'scaled_second']:
+        if boundary_type == 'finite_difference':
+            val = None
+        else:
+            val = 0.0
+        spline_boundary_left = pv.Spline(points, 1000, boundary_constraints = (boundary_type, 'clamped'), boundary_values=(val, 0.0))
+        spline_boundary_right = pv.Spline(points, 1000, boundary_constraints = ('clamped', boundary_type),  boundary_values=(0.0, val))
         points_abs_diff_left = np.abs(spline.points - spline_boundary_left.points)
         points_abs_diff_right = np.abs(spline.points - spline_boundary_right.points)
-        # based on output, it looks like vtk default is 1
-        # because it produces an absolute difference in points array of 0.0.
-        if boundary_type != 1:
+        if boundary_type != 'clamped':
             assert points_abs_diff_left.max() > 0
             assert points_abs_diff_right.max() > 0
         # vtk doc says: "The value is used only if the left(right) constraint is type 1-3."
-        if boundary_type != 0:
+        if boundary_type != 'finite_difference':
             spline_boundary_left_val = pv.Spline(
-                points, 1000, left_constraint_type=boundary_type, left_derivative_value=1.0
+                points, 1000, boundary_constraints = (boundary_type, 'clamped'), boundary_values = (1.0, 0.0)
             )
             spline_boundary_right_val = pv.Spline(
-                points, 1000, right_constraint_type=boundary_type, right_derivative_value=1.0
+                points, 1000, boundary_constraints = ('clamped', boundary_type), boundary_values = (0.0, 1.0)
             )
 
             points_abs_diff_left_val = np.abs(

@@ -142,8 +142,8 @@ pl.close()
 # Create a spline by parametrizing based on length (default) or point index.
 
 pl = pv.Plotter()
-spline = pv.Spline(points)
-spline_by_index = pv.Spline(points, parameterize_by_length=False)
+spline = pv.Spline(points, parameterize_by="length")
+spline_by_index = pv.Spline(points, parameterize_by="index")
 pl.add_mesh(spline, line_width=4)
 pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
 pl.add_mesh(spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True)
@@ -155,13 +155,17 @@ pl.close()
 # +++++++++++++
 #
 # Create a spline and see the effect of boundary type.
-# Boundary type can be 0, 1, 2 or 3, with the definition of the boundary types
+# Boundary type can be 'finite_difference', 'clamped', 'second', 'scaled_second', with the definition of the boundary types
 # in :func:`pyvista.Spline`.
 
 pl = pv.Plotter()
-for boundary_type in range(4):
-    spline = pv.Spline(points, 1000, left_constraint_type=boundary_type, left_derivative_value=1)
-    spline.cell_data['boundary_type'] = np.array([boundary_type], dtype=np.uint8)
+for boundary_id, boundary_type in enumerate(['finite_difference', 'clamped', 'second', 'scaled_second']):
+    if boundary_type == 'finite_difference':
+        val = None
+    else:
+        val = 1.0
+    spline = pv.Spline(points, 1000, boundary_constraints=(boundary_type, boundary_type), boundary_values=(val, val))
+    spline.cell_data['boundary_type'] = np.array([boundary_id], dtype=np.uint8)
     pl.add_mesh(spline, line_width=4)
 pl.show()
 pl.close()
@@ -176,7 +180,7 @@ pl.close()
 pl = pv.Plotter()
 mult = 1
 for boundary_value in range(4):
-    spline = pv.Spline(points, 1000, left_derivative_value=boundary_value * mult)
+    spline = pv.Spline(points, 1000, boundary_values=(boundary_value * mult, boundary_value * mult))
     spline.cell_data['boundary_value'] = np.array([boundary_value * mult])
     pl.add_mesh(spline, line_width=4)
 pl.show()
