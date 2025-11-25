@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from math import pi
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista as pv
@@ -13,6 +14,7 @@ from pyvista.core import _vtk_core as _vtk
 
 from .geometric_sources import translate
 from .helpers import wrap
+
 if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
@@ -25,8 +27,8 @@ def Spline(
     *,
     closed: bool = False,
     parameterize_by: str = 'length',
-    boundary_values: Tuple[float] = (0.0, 0.0),
-    boundary_constraints: Tuple[str] = ("clamped", "clamped"),
+    boundary_values: tuple[float] = (0.0, 0.0),
+    boundary_constraints: tuple[str] = ("clamped", "clamped"),
     **kwargs,
 ) -> PolyData:
     """Create a spline from points.
@@ -61,8 +63,8 @@ def Spline(
         or ``right_boundary_constraint`` are set.
 
     boundary_values : Tuple[str], optional, default: (0.0, 0.0)
-        Values of derivative at both ends of the spline. 
-        
+        Values of derivative at both ends of the spline.
+
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
@@ -109,32 +111,34 @@ def Spline(
     else:  # pragma: no cover
         msg = f'Invalid parametrization of points {parameterize_by}'
         raise ValueError(msg)
-    left_boundary_value,  right_boundary_value = boundary_values
-    left_boundary_constraint,  right_boundary_constraint = boundary_constraints
     _boundary_types_dict = {
         'finite_difference': 0,
         'clamped': 1,
         'second': 2,
         'scaled_second': 3,
     }
-    for incr, (constraint, value) in enumerate(zip(boundary_constraints, boundary_values)):
+    for incr, (constraint, value) in enumerate(
+        zip(boundary_constraints,
+            boundary_values,
+            strict=True)
+        ):
         if constraint in _boundary_types_dict.keys():
             if incr == 0:
                 spline_function.SetLeftConstraint(_boundary_types_dict[constraint])
-            else: 
+            else:
                 spline_function.SetRightConstraint(_boundary_types_dict[constraint])
         else:  # pragma: no cover
-            msg = f'Invalid boundary constraint {left_boundary_constraint}'
+            msg = f'Invalid boundary constraint {constraint}'
             raise ValueError(msg)
         if (value is not None and constraint == 'finite_difference'):  # pragma: no cover
-            msg = f'finite difference not compatible with left boundary value {left_boundary_value} (should be None)'
+            msg = f'''finite difference not compatible with
+            boundary value {value} (should be None)'''
             raise ValueError(msg)
-        else:
-            if value is not None:
-                if incr == 0:
-                    spline_function.SetLeftValue(value)
-                else: 
-                    spline_function.SetRightValue(value)
+        elif value is not None:
+            if incr == 0:
+                spline_function.SetLeftValue(value)
+            else:
+                spline_function.SetRightValue(value)
 
     # get interpolation density
     u_res = n_points

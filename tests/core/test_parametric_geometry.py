@@ -35,12 +35,17 @@ def test_spline():
     assert spline.bounds != spline_closed.bounds
     # test that boundary type / value change has an effect on produced splines
     for boundary_type in ['finite_difference', 'clamped', 'second', 'scaled_second']:
-        if boundary_type == 'finite_difference':
-            val = None
-        else:
-            val = 0.0
-        spline_boundary_left = pv.Spline(points, 1000, boundary_constraints = (boundary_type, 'clamped'), boundary_values=(val, 0.0))
-        spline_boundary_right = pv.Spline(points, 1000, boundary_constraints = ('clamped', boundary_type),  boundary_values=(0.0, val))
+        val = None if boundary_type == 'finite_difference' else 0.0
+        spline_boundary_left = pv.Spline(points,
+                                         1000,
+                                         boundary_constraints = (boundary_type, 'clamped'),
+                                         boundary_values=(val, 0.0)
+                                        )
+        spline_boundary_right = pv.Spline(points,
+                                          1000,
+                                          boundary_constraints = ('clamped', boundary_type),
+                                          boundary_values=(0.0, val)
+                                        )
         points_abs_diff_left = np.abs(spline.points - spline_boundary_left.points)
         points_abs_diff_right = np.abs(spline.points - spline_boundary_right.points)
         if boundary_type != 'clamped':
@@ -49,10 +54,16 @@ def test_spline():
         # vtk doc says: "The value is used only if the left(right) constraint is type 1-3."
         if boundary_type != 'finite_difference':
             spline_boundary_left_val = pv.Spline(
-                points, 1000, boundary_constraints = (boundary_type, 'clamped'), boundary_values = (1.0, 0.0)
+                points,
+                1000,
+                boundary_constraints = (boundary_type, 'clamped'),
+                boundary_values = (1.0, 0.0)
             )
             spline_boundary_right_val = pv.Spline(
-                points, 1000, boundary_constraints = ('clamped', boundary_type), boundary_values = (0.0, 1.0)
+                points,
+                1000,
+                boundary_constraints = ('clamped', boundary_type),
+                boundary_values = (0.0, 1.0)
             )
 
             points_abs_diff_left_val = np.abs(
@@ -63,6 +74,15 @@ def test_spline():
             )
             assert points_abs_diff_left_val.max() > 0
             assert points_abs_diff_right_val.max() > 0
+        else:
+            with pytest.raises(ValueError, match='not compatible'):
+                spline_boundary_left_val = pv.Spline(
+                    points,
+                    1000,
+                    boundary_constraints = (boundary_type, 'clamped'),
+                    boundary_values = (1.0, 0.0)
+                )
+
 
 
 def test_kochanek_spline():
