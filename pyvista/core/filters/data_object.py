@@ -55,7 +55,7 @@ class DataObjectFilters:
     points: pyvista_ndarray
 
     @_deprecate_positional_args(allowed=['trans'])
-    def transform(  # type: ignore[misc]  # noqa: PLR0917
+    def transform(  # noqa: PLR0917
         self: _MeshType_co,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -330,7 +330,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args(allowed=['normal'])
-    def reflect(  # type: ignore[misc]  # noqa: PLR0917
+    def reflect(  # noqa: PLR0917
         self: _MeshType_co,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -388,7 +388,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_x(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_x(  # noqa: PLR0917
         self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -452,7 +452,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_y(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_y(  # noqa: PLR0917
         self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -515,7 +515,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_z(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_z(  # noqa: PLR0917
         self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -579,7 +579,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['vector', 'angle'])
-    def rotate_vector(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_vector(  # noqa: PLR0917
         self: _MeshType_co,
         vector: VectorLike[float],
         angle: float,
@@ -647,7 +647,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['rotation'])
-    def rotate(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate(  # noqa: PLR0917
         self: _MeshType_co,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
@@ -776,7 +776,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['xyz'])
-    def scale(  # type: ignore[misc]  # noqa: PLR0917
+    def scale(  # noqa: PLR0917
         self: _MeshType_co,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1005,7 +1005,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args
-    def flip_x(  # type: ignore[misc]
+    def flip_x(
         self: _MeshType_co,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1067,7 +1067,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args
-    def flip_y(  # type: ignore[misc]
+    def flip_y(
         self: _MeshType_co,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1129,7 +1129,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args
-    def flip_z(  # type: ignore[misc]
+    def flip_z(
         self: _MeshType_co,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1191,7 +1191,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args(allowed=['normal'])
-    def flip_normal(  # type: ignore[misc]  # noqa: PLR0917
+    def flip_normal(  # noqa: PLR0917
         self: _MeshType_co,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -3117,7 +3117,8 @@ class _Crinkler:
         active_scalars_info = []
         if isinstance(dataset, pv.MultiBlock):
             blocks: Iterable[DataSet] = dataset.recursive_iterator(
-                'blocks', **_Crinkler.ITER_KWARGS
+                'blocks',
+                **_Crinkler.ITER_KWARGS,  # type: ignore[call-overload]
             )
         else:
             blocks = [dataset]

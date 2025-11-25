@@ -3045,7 +3045,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=self.renderer.next_color if color is None or color is True else color,
+            color=self.renderer.next_color if color is None or color is True else color,  # type: ignore[comparison-overlap]
             style=style,
             edge_color=edge_color,
             render_points_as_spheres=render_points_as_spheres,
@@ -3982,7 +3982,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=self.renderer.next_color if color is None or color is True else color,
+            color=self.renderer.next_color if color is None or color is True else color,  # type: ignore[comparison-overlap]
             style=style if style != 'points_gaussian' else 'points',
             edge_color=edge_color,
             render_lines_as_tubes=render_lines_as_tubes,
