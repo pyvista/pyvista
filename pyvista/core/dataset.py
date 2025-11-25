@@ -2966,7 +2966,10 @@ class DataSet(DataSetFilters, DataObject):
     def dimensionality(self: Self) -> Literal[0, 1, 2, 3]:
         """Return the spatial dimensions spanned by this dataset.
 
-        .. versionadded:: 0.47
+        .. versionchanged:: 0.47
+
+            This property is now generalized for all datasets. Previously, it was only available
+            for datasets with a ``dimensions`` property.
 
         Returns
         -------
@@ -2988,8 +2991,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.dimensionality
         1
 
-        :class:`~pyvista.ImageData` where one of its dimensions is one has a dimensionality
-        of ``2``.
+        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
+        a dimensionality of ``2``.
 
         >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
         >>> mesh.dimensionality
