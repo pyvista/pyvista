@@ -606,6 +606,7 @@ def test_block_picking(multiblock_poly):
 
 
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
+@pytest.mark.skip_check_gc("vtkDataArray not gc'd with 'point' mode on Python 3.14 vtk dev wheels")
 def test_element_picking(mode):
     class Tracker:
         def __init__(self):
