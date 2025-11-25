@@ -167,8 +167,8 @@ for boundary_id, boundary_type in enumerate(possible_boundary_types):
     val = None if boundary_type == 'finite_difference' else 1.0
     spline = pv.Spline(points,
                        1000,
-                       boundary_constraints=(boundary_type, boundary_type),
-                       boundary_values=(val, val)
+                       boundary_constraints=boundary_type,
+                       boundary_values=val
                     )
     spline.cell_data['boundary_type'] = np.array([boundary_id], dtype=np.uint8)
     pl.add_mesh(spline, line_width=4)

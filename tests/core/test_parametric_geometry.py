@@ -82,6 +82,28 @@ def test_spline():
                     boundary_constraints = (boundary_type, 'clamped'),
                     boundary_values = (1.0, 0.0)
                 )
+    # test that boundary types and values can be set with a single argument
+    # without changing from setting with both arguments
+    for boundary_type in ['finite_difference', 'clamped', 'second', 'scaled_second']:
+        val = None if boundary_type == 'finite_difference' else 0.0
+        spline_single_arg = pv.Spline(
+            points,
+            1000,
+            boundary_constraints = boundary_type,
+            boundary_values = val
+        )
+        spline_both_args = pv.Spline(
+            points,
+            1000,
+            boundary_constraints = (boundary_type, boundary_type),
+            boundary_values = (val, val)
+        )
+        points_abs_diff = np.abs(
+            spline_single_arg.points - spline_both_args.points
+        )
+        assert points_abs_diff.max() == 0
+
+
 
 
 

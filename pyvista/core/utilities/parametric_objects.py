@@ -27,8 +27,8 @@ def Spline(
     *,
     closed: bool = False,
     parameterize_by: str = 'length',
-    boundary_values: tuple[float] = (0.0, 0.0),
-    boundary_constraints: tuple[str] = ("clamped", "clamped"),
+    boundary_constraints: tuple[str] | str = "clamped",
+    boundary_values: tuple[float] | float | None = 0.0,
     **kwargs,
 ) -> PolyData:
     """Create a spline from points.
@@ -49,8 +49,10 @@ def Spline(
     parameterize_by : str, default: 'length'
         Parametrize spline by length or point index.
 
-    boundary_constraints : Tuple[str], optional, default: ('clamped', 'clamped')
-        Derivative constraint type at both boundaries of the spline. Must be one of:
+    boundary_constraints : Tuple[str] | str, optional, default: ('clamped', 'clamped')
+        Derivative constraint type at both boundaries of the spline.
+        Can be set by a single string (both ends) or a tuple of length equal to 2.
+        Each value be one of:
         - 'finite_difference': The first derivative at the left(right) most point is determined
           from the line defined from the first(last) two points. (Default)
         - 'clamped': Default: the first derivative at the left(right) most point is set to
@@ -59,11 +61,11 @@ def Spline(
           Left(Right) value.
         - 'scaled_second': The second derivative at left(right) most points is
           Left(Right) value times second derivative at first interior point.
-        Should be set to ``None`` if ``left_boundary_constraint``
-        or ``right_boundary_constraint`` are set.
 
-    boundary_values : Tuple[str], optional, default: (0.0, 0.0)
+    boundary_values : Tuple[float] | float | None, optional, default: (0.0, 0.0)
         Values of derivative at both ends of the spline.
+        Can be set by a single float, or a tuple of floats or None (see below).
+        Has to be None for each end with boundary constraint type 'finite_difference'.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -110,6 +112,17 @@ def Spline(
         spline_function.ParameterizeByLengthOff()
     else:  # pragma: no cover
         msg = f'Invalid parametrization of points {parameterize_by}'
+        raise ValueError(msg)
+    # handle single argument for constraint and values at both ends
+    if type(boundary_constraints) is str:
+        boundary_constraints = (boundary_constraints, boundary_constraints)
+    if type(boundary_values) is float or boundary_values is None:
+        boundary_values = (boundary_values, boundary_values)
+    if len(boundary_constraints) != 2:
+        msg = 'Invalid size for boundary constraints'
+        raise ValueError(msg)
+    if len(boundary_values) != 2:
+        msg = 'Invalid size for boundary values'
         raise ValueError(msg)
     _boundary_types_dict = {
         'finite_difference': 0,
