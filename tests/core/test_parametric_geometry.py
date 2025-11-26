@@ -85,6 +85,7 @@ def test_spline():
                     boundary_values=(1.0, 0.0),
                 )
 
+
 def test_kochanek_spline():
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
