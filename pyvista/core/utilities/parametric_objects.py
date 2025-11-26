@@ -27,8 +27,8 @@ def Spline(
     *,
     closed: bool = False,
     parametrize_by: str = 'length',
-    boundary_values: tuple[float] = (0.0, 0.0),
-    boundary_constraints: tuple[str] = ('clamped', 'clamped'),
+    boundary_values: tuple[float | None, float | None] = (0.0, 0.0),
+    boundary_constraints: tuple[str, str] = ('clamped', 'clamped'),
     **kwargs,
 ) -> PolyData:
     """Create a spline from points.
@@ -49,7 +49,7 @@ def Spline(
     parametrize_by : str, default: 'length'
         Parametrize spline by length or point index.
 
-    boundary_constraints : tuple[str] | str, optional, default: 'clamped'
+    boundary_constraints : tuple[str], optional, default: 'clamped'
         Derivative constraint type at both boundaries of the spline.
         Can be set by a single string (both ends) or a tuple of length equal to 2.
         Each value be one of:
@@ -62,7 +62,7 @@ def Spline(
         - 'scaled_second': The second derivative at left(right) most points is
           Left(Right) value times second derivative at first interior point.
 
-    boundary_values : Tuple[float] | float | None, optional, default: (0.0, 0.0)
+    boundary_values : tuple[float | None], optional, default: (0.0, 0.0)
         Values of derivative at both ends of the spline.
         Can be set by a single float, or a tuple of floats or None (see below).
         Has to be None for each end with boundary constraint type 'finite_difference'.
@@ -114,14 +114,6 @@ def Spline(
         msg = f'Invalid parametrization of points {parametrize_by}'
         raise ValueError(msg)
     # handle single argument for constraint and values at both ends
-    if type(boundary_constraints) is str:
-        tuple_boundary_constraints = (boundary_constraints, boundary_constraints)
-    else:
-        tuple_boundary_constraints = boundary_constraints
-    if type(boundary_values) is float or boundary_values is None:
-        tuple_boundary_values = (boundary_values, boundary_values)
-    else:
-        tuple_boundary_values = boundary_values
     _boundary_types_dict = {
         'finite_difference': 0,
         'clamped': 1,
@@ -129,7 +121,7 @@ def Spline(
         'scaled_second': 3,
     }
     for incr, (constraint, value) in enumerate(
-        zip(tuple_boundary_constraints, tuple_boundary_values, strict=True)
+        zip(boundary_constraints, boundary_values, strict=True)
     ):
         if constraint in _boundary_types_dict.keys():
             if incr == 0:
