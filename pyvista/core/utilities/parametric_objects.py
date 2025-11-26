@@ -54,13 +54,13 @@ def Spline(
         Can be set by a single string (both ends) or a tuple of length equal to 2.
         Each value be one of:
         - 'finite_difference': The first derivative at the left(right) most point is determined
-          from the line defined from the first(last) two points. (Default)
+        from the line defined from the first(last) two points. (Default)
         - 'clamped': Default: the first derivative at the left(right) most point is set to
-          Left(Right) value.
+        Left(Right) value.
         - 'second': The second derivative at the left(right) most point is set to
-          Left(Right) value.
+        Left(Right) value.
         - 'scaled_second': The second derivative at left(right) most points is
-          Left(Right) value times second derivative at first interior point.
+        Left(Right) value times second derivative at first interior point.
 
     boundary_values : tuple[float | None], optional, default: (0.0, 0.0)
         Values of derivative at both ends of the spline.
