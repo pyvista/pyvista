@@ -27,8 +27,8 @@ def Spline(
     *,
     closed: bool = False,
     parametrize_by: str = 'length',
-    boundary_constraints: tuple[str] | str = 'clamped',
-    boundary_values: tuple[float] | float | None = 0.0,
+    boundary_values: tuple[float] = (0.0, 0.0),
+    boundary_constraints: tuple[str] = ('clamped', 'clamped'),
     **kwargs,
 ) -> PolyData:
     """Create a spline from points.
