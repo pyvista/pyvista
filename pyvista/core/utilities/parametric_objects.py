@@ -54,11 +54,11 @@ def Spline(
         Close the spline if ``True`` (both ends are joined). Not closed by default.
 
     parametrize_by : str, default: 'length'
-        Parametrize spline by length or point index.
+        Parametrize spline by ``'length'`` or by point ``'index'``.
 
     boundary_constraints : str | Sequence[str], optional, default: 'clamped'
         Derivative constraint type at both boundaries of the spline.
-        Can be set by a single string (one for each left/right end) or a sequence of length 2.
+        Can be set by a single string or a sequence of length 2 (one for each left/right end).
         Each value must be one of:
 
         - ``'finite_difference'``: The first derivative at the left(right) most point is determined
@@ -71,7 +71,7 @@ def Spline(
           Left(Right) value times second derivative at first interior point.
 
     boundary_values : float | Sequence[float | None], optional
-        Values of derivative at both ends of the spline.
+        Values of derivative at both ends of the spline used by the ``boundary_constraints`` type.
         Can be set a single float, or a sequence of floats or None (one value for each left/right
         end). If a single value is provided, the same value is used for both ends.
         Value must be None for each end with boundary constraint type ``'finite_difference'``.
