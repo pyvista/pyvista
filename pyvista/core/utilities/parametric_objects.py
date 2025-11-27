@@ -141,6 +141,8 @@ def Spline(
         )
         if isinstance(boundary_values, Sequence):
             _validation.check_length(boundary_values, exact_length=2, name='boundary_values')
+            for val in boundary_values:
+                _validation.check_instance(val, (float, type(None)), name='boundary_values')
             values_pair = boundary_values
         else:
             values_pair = (boundary_values, boundary_values)
