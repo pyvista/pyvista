@@ -688,7 +688,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(points, lines=pv.CellArray.from_regular_cells(lines))
-    >>> mesh.cell_data['line_idx'] = np.arange(n_lines, dtype=float)
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
     >>> mesh.plot(scalars='line_idx')
 
     Construct a set of random triangle strips using a ``pv.CellArray``.
@@ -706,7 +706,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
     ... )
-    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips, dtype=float)
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
     >>> mesh.plot(show_edges=True, scalars='strip_idx')
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
