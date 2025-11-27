@@ -77,7 +77,7 @@ def test_spline():
             assert points_abs_diff_left_val.max() > 0
             assert points_abs_diff_right_val.max() > 0
         else:
-            with pytest.raises(ValueError, match='not compatible'):
+            with pytest.raises(ValueError, match='finite difference boundary value must be None'):
                 spline_boundary_left_val = pv.Spline(
                     points,
                     1000,

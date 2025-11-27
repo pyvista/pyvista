@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from math import pi
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 
@@ -20,15 +23,19 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
+_ParametrizeByOptions = Literal['length', 'index']
+_BoundaryConstraintOptions = Literal['finite_difference', 'clamped', 'second', 'scaled_second']
+
 
 def Spline(
     points: VectorLike[float] | MatrixLike[float],
     n_points: int | None = None,
     *,
     closed: bool = False,
-    parametrize_by: str = 'length',
-    boundary_values: tuple[float | None, float | None] = (0.0, 0.0),
-    boundary_constraints: tuple[str, str] = ('clamped', 'clamped'),
+    parametrize_by: _ParametrizeByOptions = 'length',
+    boundary_constraints: _BoundaryConstraintOptions
+    | tuple[_BoundaryConstraintOptions, _BoundaryConstraintOptions] = 'clamped',
+    boundary_values: float | tuple[float | None, float | None] | None = None,
     **kwargs,
 ) -> PolyData:
     """Create a spline from points.
@@ -49,23 +56,25 @@ def Spline(
     parametrize_by : str, default: 'length'
         Parametrize spline by length or point index.
 
-    boundary_constraints : tuple[str], optional, default: 'clamped'
+    boundary_constraints : str | Sequence[str], optional, default: 'clamped'
         Derivative constraint type at both boundaries of the spline.
-        Can be set by a single string (both ends) or a tuple of length equal to 2.
-        Each value be one of:
-        - 'finite_difference': The first derivative at the left(right) most point is determined
-        from the line defined from the first(last) two points. (Default)
-        - 'clamped': Default: the first derivative at the left(right) most point is set to
-        Left(Right) value.
-        - 'second': The second derivative at the left(right) most point is set to
-        Left(Right) value.
-        - 'scaled_second': The second derivative at left(right) most points is
-        Left(Right) value times second derivative at first interior point.
+        Can be set by a single string (one for each left/right end) or a sequence of length 2.
+        Each value must be one of:
 
-    boundary_values : tuple[float | None], optional, default: (0.0, 0.0)
+        - ``'finite_difference'``: The first derivative at the left(right) most point is determined
+          from the line defined from the first(last) two points.
+        - ``'clamped'``: Default: the first derivative at the left(right) most point is set to
+          Left(Right) value. (Default)
+        - ``'second'``: The second derivative at the left(right) most point is set to
+          Left(Right) value.
+        - ``'scaled_second'``: The second derivative at left(right) most points is
+          Left(Right) value times second derivative at first interior point.
+
+    boundary_values : float | Sequence[float | None], optional
         Values of derivative at both ends of the spline.
-        Can be set by a single float, or a tuple of floats or None (see below).
-        Has to be None for each end with boundary constraint type 'finite_difference'.
+        Can be set a single float, or a sequence of floats or None (one value for each left/right
+        end). If a single value is provided, the same value is used for both ends.
+        Value must be None for each end with boundary constraint type ``'finite_difference'``.
 
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
@@ -99,47 +108,74 @@ def Spline(
     ... )
 
     """
+
+    # Validate inputs
+    def check_constraint(value: str) -> None:
+        _validation.check_contains(
+            get_args(_BoundaryConstraintOptions), must_contain=value, name='boundary_constraints'
+        )
+
     points_ = _validation.validate_arrayNx3(points, name='points')
+    _validation.check_contains(
+        get_args(_ParametrizeByOptions), must_contain=parametrize_by, name='parametrize_by'
+    )
+
+    # Ensure we have valid constraint, value pairs
+    _validation.check_instance(boundary_constraints, Sequence, name='boundary_constraints')
+    if isinstance(boundary_constraints, str):
+        check_constraint(boundary_constraints)
+        constraints_pair = (boundary_constraints, boundary_constraints)
+    else:
+        _validation.check_length(boundary_constraints, exact_length=2, name='boundary_constraints')
+        check_constraint(boundary_constraints[0])
+        check_constraint(boundary_constraints[1])
+        constraints_pair = boundary_constraints
+
+    if boundary_values is None:
+        values_list: list[float | None]
+        values_list = [None if c == 'finite_difference' else 0.0 for c in constraints_pair]
+        values_pair: Sequence[float | None] = values_list
+    else:
+        _validation.check_instance(
+            boundary_values, (Sequence, float, type(None)), name='boundary_values'
+        )
+        if isinstance(boundary_values, Sequence):
+            _validation.check_length(boundary_values, exact_length=2, name='boundary_values')
+            values_pair = boundary_values
+        else:
+            values_pair = (boundary_values, boundary_values)
+
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pv.vtk_points(points_, deep=False))
+
     if closed:
         spline_function.ClosedOn()
     else:
         spline_function.ClosedOff()
+
     if parametrize_by == 'length':
         spline_function.ParameterizeByLengthOn()
-    elif parametrize_by == 'index':
+    else:
         spline_function.ParameterizeByLengthOff()
-    else:  # pragma: no cover
-        msg = f'Invalid parametrization of points {parametrize_by}'
-        raise ValueError(msg)
-    # handle single argument for constraint and values at both ends
+
     _boundary_types_dict = {
         'finite_difference': 0,
         'clamped': 1,
         'second': 2,
         'scaled_second': 3,
     }
-    for incr, (constraint, value) in enumerate(
-        zip(boundary_constraints, boundary_values, strict=True)
+    for left_right, constraint, value in zip(
+        ('Left', 'Right'), constraints_pair, values_pair, strict=True
     ):
-        if constraint in _boundary_types_dict.keys():
-            if incr == 0:
-                spline_function.SetLeftConstraint(_boundary_types_dict[constraint])
-            else:
-                spline_function.SetRightConstraint(_boundary_types_dict[constraint])
-        else:  # pragma: no cover
-            msg = f'Invalid boundary constraint {constraint}'
-            raise ValueError(msg)
-        if value is not None and constraint == 'finite_difference':  # pragma: no cover
-            msg = f"""finite difference not compatible with
-            boundary value {value} (should be None)"""
-            raise ValueError(msg)
-        elif value is not None:
-            if incr == 0:
-                spline_function.SetLeftValue(value)
-            else:
-                spline_function.SetRightValue(value)
+        method = f'Set{left_right}Constraint'
+        getattr(spline_function, method)(_boundary_types_dict[constraint])
+
+        if value is not None:
+            if constraint == 'finite_difference':
+                msg = f'finite difference boundary value must be None, got {value}'
+                raise ValueError(msg)
+            method = f'Set{left_right}Value'
+            getattr(spline_function, method)(value)
 
     # get interpolation density
     u_res = n_points
