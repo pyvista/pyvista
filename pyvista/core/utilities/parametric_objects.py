@@ -64,11 +64,11 @@ def Spline(
         - ``'finite_difference'``: The first derivative at the left(right) most point is determined
           from the line defined from the first(last) two points.
         - ``'clamped'``: Default: the first derivative at the left(right) most point is set to
-          Left(Right) value. (Default)
+          Left(Right) ``boundary_values``. (Default)
         - ``'second'``: The second derivative at the left(right) most point is set to
-          Left(Right) value.
+          Left(Right) ``boundary_values``.
         - ``'scaled_second'``: The second derivative at left(right) most points is
-          Left(Right) value times second derivative at first interior point.
+          Left(Right) ``boundary_values`` times second derivative at first interior point.
 
     boundary_values : float | Sequence[float | None], optional
         Values of derivative at both ends of the spline used by the ``boundary_constraints`` type.
