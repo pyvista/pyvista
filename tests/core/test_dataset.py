@@ -1551,6 +1551,9 @@ def test_dimensionality():
     mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     assert mesh.dimensionality == 1
 
+    mesh = pv.ImageData()
+    assert mesh.dimensionality == 0
+
     mesh = pv.ImageData(dimensions=(100, 100, 1))
     assert mesh.dimensionality == 2
 
