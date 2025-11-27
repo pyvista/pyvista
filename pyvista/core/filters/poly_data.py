@@ -3439,7 +3439,7 @@ class PolyDataFilters(DataSetFilters):
         >>> points = np.column_stack((x, y, z))
         >>> pdata = pv.PolyData(points)
         >>> pdata.lines = np.hstack((n, range(n)))
-        >>> pdata['distance'] = np.arange(n, dtype=float)
+        >>> pdata['distance'] = range(n)
         >>> ribbon = pdata.ribbon(width=0.2)
         >>> ribbon.plot(show_scalar_bar=False)
 
