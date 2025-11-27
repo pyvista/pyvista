@@ -3012,9 +3012,9 @@ class DataSet(DataSetFilters, DataObject):
         3
 
         """
-        if hasattr(self, 'dimensions'):
+        if self.n_points == 0:
+            return 0
+        elif hasattr(self, 'dimensions'):
             dims = np.asarray(self.dimensions)
             return int(3 - (dims == 1).sum())  # type: ignore[return-value]
-        elif self.n_points == 0:
-            return 0
         return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
