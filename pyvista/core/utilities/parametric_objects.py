@@ -86,6 +86,7 @@ def Spline(
 
     See Also
     --------
+    :ref:`create_spline_example`
     :ref:`distance_along_spline_example`
 
     Examples
@@ -110,9 +111,9 @@ def Spline(
     """
 
     # Validate inputs
-    def check_constraint(value: str) -> None:
+    def check_constraint(value: str, name: str) -> None:
         _validation.check_contains(
-            get_args(_BoundaryConstraintOptions), must_contain=value, name='boundary_constraints'
+            get_args(_BoundaryConstraintOptions), must_contain=value, name=name
         )
 
     points_ = _validation.validate_arrayNx3(points, name='points')
@@ -121,14 +122,15 @@ def Spline(
     )
 
     # Ensure we have valid constraint, value pairs
-    _validation.check_instance(boundary_constraints, Sequence, name='boundary_constraints')
+    name = 'boundary_constraints'
+    _validation.check_instance(boundary_constraints, Sequence, name=name)
     if isinstance(boundary_constraints, str):
-        check_constraint(boundary_constraints)
+        check_constraint(boundary_constraints, name=name)
         constraints_pair = (boundary_constraints, boundary_constraints)
     else:
-        _validation.check_length(boundary_constraints, exact_length=2, name='boundary_constraints')
-        check_constraint(boundary_constraints[0])
-        check_constraint(boundary_constraints[1])
+        _validation.check_length(boundary_constraints, exact_length=2, name=name)
+        check_constraint(boundary_constraints[0], name=name)
+        check_constraint(boundary_constraints[1], name=name)
         constraints_pair = boundary_constraints
 
     if boundary_values is None:
@@ -136,13 +138,13 @@ def Spline(
         values_list = [None if c == 'finite_difference' else 0.0 for c in constraints_pair]
         values_pair: Sequence[float | None] = values_list
     else:
-        _validation.check_instance(
-            boundary_values, (Sequence, float, type(None)), name='boundary_values'
-        )
+        name = 'boundary_values'
+        allowed_types = float, int, type(None)
+        _validation.check_instance(boundary_values, (Sequence, *allowed_types), name=name)
         if isinstance(boundary_values, Sequence):
-            _validation.check_length(boundary_values, exact_length=2, name='boundary_values')
+            _validation.check_length(boundary_values, exact_length=2, name=name)
             for val in boundary_values:
-                _validation.check_instance(val, (float, type(None)), name='boundary_values')
+                _validation.check_instance(val, allowed_types, name=name)
             values_pair = boundary_values
         else:
             values_pair = (boundary_values, boundary_values)

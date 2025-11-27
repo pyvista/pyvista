@@ -122,7 +122,7 @@ ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
 
 # %%
-# Closing a spline
+# Closing a Spline
 # ++++++++++++++++
 #
 # Create a spline and its closed counterpart.
@@ -133,10 +133,9 @@ pl = pv.Plotter()
 pl.add_mesh(spline.tube(radius=0.05))
 pl.add_mesh(spline_closed, line_width=4, color='r')
 pl.show()
-pl.close()
 
 # %%
-# Parametrizing on length versus index
+# Parametrizing by Length Versus Index
 # ++++++++++++++++++++++++++++++++++++
 #
 # Create a spline by parametrizing based on length (default) or point index.
@@ -148,48 +147,67 @@ pl.add_mesh(spline, line_width=4)
 pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
 pl.add_mesh(spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show()
-pl.close()
 
 # %%
-# Boundary type
-# +++++++++++++
+# Boundary Constraints
+# ++++++++++++++++++++
 #
-# Create a spline and see the effect of boundary type.
+# Create a spline and see the effect of boundary constraint.
 # Boundary type can be 'finite_difference', 'clamped', 'second', 'scaled_second'
 # with the definition of the boundary types in :func:`pyvista.Spline`.
+#
+# To visualize the different splines, we label each one using integer ID scalars
+# and merge them into a single mesh.
 
 pl = pv.Plotter()
-possible_boundary_types = ['finite_difference', 'clamped', 'second', 'scaled_second']
-for boundary_id, boundary_type in enumerate(possible_boundary_types):
-    val = None if boundary_type == 'finite_difference' else 1.0
+mesh = pv.PolyData()
+constraint_map = {'finite_difference': 0, 'clamped': 1, 'second': 2, 'scaled_second': 3}
+for constraint, constraint_id in constraint_map.items():
+    val = None if constraint == 'finite_difference' else 1.0
     spline = pv.Spline(
         points,
         1000,
-        boundary_constraints=(boundary_type, boundary_type),
-        boundary_values=(val, val),
+        boundary_constraints=constraint,
+        boundary_values=val,
     )
-    spline.cell_data['boundary_type'] = np.array([boundary_id], dtype=np.uint8)
-    pl.add_mesh(spline, line_width=4)
+    spline.cell_data['boundary_constraint'] = np.array([constraint_id], dtype=np.uint8)
+    mesh = pv.merge([mesh, spline], merge_points=False)
+
+colored_mesh, color_map = mesh.color_labels(output_scalars='boundary_constraint', return_dict=True)
+legend_map = dict(zip(constraint_map.keys(), color_map.values(), strict=True))
+pl.add_mesh(colored_mesh, line_width=4, rgb=True)
+pl.add_legend(legend_map)
+cpos = pv.CameraPosition(
+    position=(2.0, -2.0, 11.0), focal_point=(-0.8, 3.3, -0.4), viewup=(0.0, 1.0, 0.5)
+)
+pl.camera_position = cpos
 pl.show()
-pl.close()
+
 
 # %%
-# Boundary value
-# ++++++++++++++
+# Boundary Values
+# +++++++++++++++
 #
 # Create a spline and see the effect of boundary value. It can be set at left
 # and right value and has no effect for boundary type 0.
 
 pl = pv.Plotter()
-mult = 1
+mesh = pv.PolyData()
 for boundary_value in range(4):
     spline = pv.Spline(
-        points, 1000, boundary_values=(boundary_value * mult, boundary_value * mult)
+        points,
+        1000,
+        boundary_constraints='clamped',
+        boundary_values=boundary_value,
     )
-    spline.cell_data['boundary_value'] = np.array([boundary_value * mult])
-    pl.add_mesh(spline, line_width=4)
+    spline.cell_data['boundary_value'] = np.array([boundary_value], dtype=float)
+    mesh = pv.merge([mesh, spline], merge_points=False)
+
+colored_mesh, color_map = mesh.color_labels(output_scalars='boundary_value', return_dict=True)
+pl.add_mesh(colored_mesh, line_width=4, rgb=True)
+pl.add_legend(color_map)
+pl.camera_position = cpos
 pl.show()
-pl.close()
 
 # %%
 # .. tags:: load
