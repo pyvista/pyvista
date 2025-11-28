@@ -8716,7 +8716,7 @@ def download_warping_spheres(*, load=True):
 
     Returns
     -------
-    PartitionedDataSet | str
+    output : PartitionedDataSet | str
         Data object or filename depending on ``load``.
 
     Examples
