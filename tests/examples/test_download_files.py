@@ -1238,3 +1238,12 @@ def test_download_yinyang():
 
     mesh = examples.download_yinyang()
     assert isinstance(mesh, pv.ImageData)
+
+
+def test_download_warping_spheres():
+    filename = examples.download_warping_spheres(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.vtkhdf'
+
+    mesh = examples.download_warping_spheres()
+    assert isinstance(mesh, pv.PartitionedDataSet)
