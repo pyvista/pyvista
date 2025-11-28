@@ -99,7 +99,7 @@ test = [
   'sphinx-book-theme<1.2.0',
   'sphinx-design<0.7.0',
   'sphinx-gallery<0.20.0',
-  'sphinx<8.3.0',
+  'sphinx==9.0.0rc1',
   'sympy<1.15.0',
   'tqdm<4.68.0',
   'trame-vtk>=2.5.8,<2.9.1',
