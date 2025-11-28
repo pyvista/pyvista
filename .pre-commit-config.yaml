@@ -82,11 +82,9 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.3
     hooks:
+      - id: ruff-format
       - id: ruff-check
         args: [--fix, --show-fixes]
-        exclude: tests/core/typing
-      - id: ruff-format
-        exclude: tests/core/typing
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.6.2
