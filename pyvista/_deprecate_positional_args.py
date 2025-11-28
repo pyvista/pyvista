@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
-import warnings
 
 from typing_extensions import ParamSpec
 
 from pyvista._version import version_info
+from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -241,7 +241,7 @@ def _deprecate_positional_args(
                             f'From version {version_str}, passing {this} as{a}positional '
                             f'argument{s} will result in a TypeError.'
                         )
-                        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=stack_level)
+                        warn_external(msg, PyVistaDeprecationWarning)
 
                     warn_positional_args()
 
