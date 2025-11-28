@@ -1240,10 +1240,12 @@ def test_download_yinyang():
     assert isinstance(mesh, pv.ImageData)
 
 
+@pytest.mark.needs_vtk_version(9, 4, 0)
 def test_download_warping_spheres():
     filename = examples.download_warping_spheres(load=False)
     assert (p := Path(filename)).is_file()
     assert p.suffix == '.vtkhdf'
 
     mesh = examples.download_warping_spheres()
-    assert isinstance(mesh, pv.PartitionedDataSet)
+    expected = pv.PolyData if pv.vtk_version_info < (9, 5, 0) else pv.PartitionedDataSet
+    assert isinstance(mesh, expected)

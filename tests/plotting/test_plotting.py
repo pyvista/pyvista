@@ -5272,3 +5272,8 @@ def test_box():
     pl.add_point_labels(box_multi.points, np.arange(box_multi.n_points))
     pl.add_point_labels(box.points, np.arange(box.n_points))
     pl.show()
+
+
+def test_partitioned_dataset(sphere):
+    mesh = pv.PartitionedDataSet([sphere])
+    mesh.plot()
