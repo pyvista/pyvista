@@ -10,7 +10,6 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
-from .composite import MultiBlock
 from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
@@ -49,8 +48,6 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     """
 
     plot = pv._plot.plot
-    as_polydata_blocks = MultiBlock.as_polydata_blocks
-    generic_filter = MultiBlock.generic_filter
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {'.vtpd': XMLPartitionedDataSetWriter}
 
