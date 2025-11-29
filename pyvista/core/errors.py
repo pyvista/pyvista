@@ -213,3 +213,7 @@ class PyVistaFutureWarning(Warning):
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
+
+
+class PyVistaInvalidMeshWarning(Warning):
+    """Warning for invalid mesh properties."""

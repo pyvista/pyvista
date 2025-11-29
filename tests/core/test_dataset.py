@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import re
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -1562,3 +1563,55 @@ def test_dimensionality():
 
     mesh = pv.Cube()
     assert mesh.dimensionality == 3
+
+
+@pytest.fixture
+def sphere_with_invalid_arrays(sphere):
+    def add_vtk_array(dataset, name, values, association: Literal['point', 'cell']):
+        arr = _vtk.vtkFloatArray()
+        arr.SetName(name)
+        arr.SetNumberOfComponents(1)
+
+        for v in values:
+            arr.InsertNextValue(float(v))
+
+        if association == 'point':
+            dataset.GetPointData().AddArray(arr)
+        else:  # association == "cell":
+            dataset.GetCellData().AddArray(arr)
+
+    # Invalid point arrays
+    add_vtk_array(sphere, 'foo', range(10), association='point')
+    add_vtk_array(sphere, 'bar', range(15), association='point')
+
+    # Invalid cell arrays
+    add_vtk_array(sphere, 'ham', range(11), association='cell')
+    add_vtk_array(sphere, 'eggs', range(16), association='cell')
+
+    return sphere
+
+
+def test_validate_point_arrays(sphere_with_invalid_arrays):
+    sphere_with_invalid_arrays.cell_data.clear()
+    match = (
+        'Point array length(s) do not match the number\n'
+        'of points in the mesh. This can lead to a segmentation fault with some filters.\n'
+        "Expected length: 422. Invalid array(s): 'foo' (10), 'bar' (15)"
+    )
+    with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
+        report = sphere_with_invalid_arrays.validate_array_lengths()
+    assert report.invalid_point_arrays == ['foo', 'bar']
+    assert report.invalid_cell_arrays is None
+
+
+def test_validate_cell_arrays(sphere_with_invalid_arrays):
+    sphere_with_invalid_arrays.point_data.clear()
+    match = (
+        'Cell array length(s) do not match the number\n'
+        'of cells in the mesh. This can lead to a segmentation fault with some filters.\n'
+        "Expected length: 840. Invalid array(s): 'ham' (11), 'eggs' (16)"
+    )
+    with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
+        report = sphere_with_invalid_arrays.validate_array_lengths()
+    assert report.invalid_cell_arrays == ['ham', 'eggs']
+    assert report.invalid_point_arrays is None

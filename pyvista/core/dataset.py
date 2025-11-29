@@ -11,6 +11,7 @@ from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
+from typing import get_args
 from typing import overload
 
 import numpy as np
@@ -3018,3 +3019,96 @@ class DataSet(DataSetFilters, DataObject):
             dims = np.asarray(self.dimensions)
             return int(3 - (dims == 1).sum())  # type: ignore[return-value]
         return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
+
+    def validate_array_lengths(self) -> _MeshValidationReport:
+        """Validate point and cell data arrays match n_points and n_cells, respectively.
+
+        Returns
+        -------
+        _MeshValidationReport
+            Report.
+
+        """
+        report = _MeshValidationReport(self)
+        report.warn()
+        return report
+
+
+_MeshValidationOptions = Literal['invalid_point_arrays', 'invalid_cell_arrays']
+_DEFAULT_VALIDATION_ARGS: tuple[_MeshValidationOptions, ...] = get_args(_MeshValidationOptions)
+
+
+class _MeshValidationReport:
+    def __init__(
+        self,
+        mesh: DataSet,
+        validation_fields: tuple[_MeshValidationOptions, ...] = _DEFAULT_VALIDATION_ARGS,
+    ) -> None:
+        self._n_points = mesh.n_points
+        self._n_cells = mesh.n_cells
+
+        self._invalid_point_arrays: dict[str, int] | None = None
+        if 'invalid_point_arrays' in validation_fields:
+            self._invalid_point_arrays = _MeshValidationReport._validate_arrays(
+                mesh.point_data, mesh.n_points
+            )
+        self._invalid_cell_arrays: dict[str, int] | None = None
+        if 'invalid_cell_arrays' in validation_fields:
+            self._invalid_cell_arrays = _MeshValidationReport._validate_arrays(
+                mesh.cell_data, mesh.n_cells
+            )
+
+    @property
+    def invalid_point_arrays(self) -> list[str] | None:
+        if invalid_point_arrays := self._invalid_point_arrays:
+            return list(invalid_point_arrays.keys())
+        return None
+
+    @property
+    def invalid_cell_arrays(self) -> list[str] | None:
+        if invalid_point_arrays := self._invalid_cell_arrays:
+            return list(invalid_point_arrays.keys())
+        return None
+
+    @property
+    def _invalid_point_arrays_msg(self) -> str:
+        if invalid_point_arrays := self._invalid_point_arrays:
+            return _MeshValidationReport._invalid_array_length_msg(
+                invalid_arrays=invalid_point_arrays, kind='Point', expected=self._n_points
+            )
+        return ''
+
+    @property
+    def _invalid_cell_arrays_msg(self) -> str:
+        if invalid_cell_arrays := self._invalid_cell_arrays:
+            return _MeshValidationReport._invalid_array_length_msg(
+                invalid_arrays=invalid_cell_arrays, kind='Cell', expected=self._n_cells
+            )
+        return ''
+
+    @staticmethod
+    def _invalid_array_length_msg(
+        invalid_arrays: dict[str, int], kind: Literal['Point', 'Cell'], expected: int
+    ) -> str:
+        msg_template = (
+            '{kind} array length(s) do not match the number\nof {kind_lower} in the mesh. '
+            'This can lead to a segmentation fault with some filters.\n'
+            'Expected length: {expected}. Invalid array(s): {details}'
+        )
+        details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
+        return msg_template.format(
+            kind=kind,
+            kind_lower=kind.lower() + 's',
+            expected=expected,
+            details=details,
+        )
+
+    @staticmethod
+    def _validate_arrays(arrays: DataSetAttributes, expected: int) -> dict[str, int]:
+        return {name: len(arrays[name]) for name in arrays if len(arrays[name]) != expected}
+
+    def warn(self) -> None:
+        if msg := self._invalid_point_arrays_msg:
+            warn_external(msg, pv.PyVistaInvalidMeshWarning)
+        if msg := self._invalid_cell_arrays_msg:
+            warn_external(msg, pv.PyVistaInvalidMeshWarning)

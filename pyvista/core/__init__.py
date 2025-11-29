@@ -22,6 +22,7 @@ from .errors import PyVistaAttributeError as PyVistaAttributeError
 from .errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning
 from .errors import PyVistaFutureWarning as PyVistaFutureWarning
+from .errors import PyVistaInvalidMeshWarning as PyVistaInvalidMeshWarning
 from .errors import PyVistaPipelineError as PyVistaPipelineError
 from .errors import VTKVersionError as VTKVersionError
 from .filters import CompositeFilters as CompositeFilters
