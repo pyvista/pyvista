@@ -272,7 +272,7 @@ class Viewer(BaseViewer):
 
         Returns
         -------
-        PyVistaRemoteLocalView, PyVistaRemoteView, or PyVistaLocalView
+        output : PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
             Trame view interface for pyvista.
 
         """

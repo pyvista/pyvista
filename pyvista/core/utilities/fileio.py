@@ -15,12 +15,12 @@ from typing import Literal
 from typing import TextIO
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -115,7 +115,7 @@ def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
                 'Use `move_nested_field_data_to_root` to store the field data '
                 'with the root MultiBlock before saving.'
             )
-            warnings.warn(msg, stacklevel=2)
+            warn_external(msg)
 
 
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
@@ -335,11 +335,10 @@ def read(  # noqa: PLR0911, PLR0917
             reader.show_progress()
         mesh = reader.read()
         if observer.has_event_occurred():
-            warnings.warn(
+            warn_external(
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'
                 f'\t"{observer.get_message()}"',
-                stacklevel=2,
             )
         return mesh
 
@@ -358,10 +357,9 @@ def _apply_attrs_to_reader(
         Mapping of methods to call on reader.
 
     """
-    warnings.warn(
+    warn_external(
         'attrs use is deprecated.  Use a Reader class for more flexible control',
         PyVistaDeprecationWarning,
-        stacklevel=2,
     )
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)
@@ -597,7 +595,7 @@ def read_grdecl(
 
         Returns
         -------
-        list | str
+        output : list | str
             A list or a string.
 
         """
@@ -767,17 +765,15 @@ def read_grdecl(
                 cond1 = grid_unit.startswith(keywords['MAPUNITS'].lower())
 
                 if not cond1:
-                    warnings.warn(
+                    warn_external(
                         'Unable to convert relative coordinates with different '
                         'grid and map units. Skipping conversion.',
-                        stacklevel=2,
                     )
 
             except KeyError:
-                warnings.warn(
+                warn_external(
                     "Unable to convert relative coordinates without keyword 'MAPUNITS'. "
                     'Skipping conversion.',
-                    stacklevel=2,
                 )
                 cond1 = False
 
@@ -785,10 +781,9 @@ def read_grdecl(
                 origin = keywords['MAPAXES'][2:4]
 
             except KeyError:
-                warnings.warn(
+                warn_external(
                     "Unable to convert relative coordinates without keyword 'MAPAXES'. "
                     'Skipping conversion.',
-                    stacklevel=2,
                 )
                 origin = None
 

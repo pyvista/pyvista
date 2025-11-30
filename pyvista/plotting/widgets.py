@@ -497,7 +497,7 @@ class WidgetHelper:
 
         Returns
         -------
-        :vtk:`vtkImplicitPlaneWidget` | :vtk:`vtkPlaneWidget`
+        output : :vtk:`vtkImplicitPlaneWidget` | :vtk:`vtkPlaneWidget`
             Plane widget.
 
         Examples
@@ -918,7 +918,7 @@ class WidgetHelper:
 
         Returns
         -------
-        :vtk:`vtkPlaneWidget` | :vtk:`vtkImplicitPlaneWidget`
+        output : :vtk:`vtkPlaneWidget` | :vtk:`vtkImplicitPlaneWidget`
             The VTK plane widget depending on the value of ``implicit``.
 
         See Also

@@ -12,12 +12,12 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
@@ -533,7 +533,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData or tuple
+        output : pyvista.PolyData | tuple
             Clipped dataset if ``both=False``.  If ``both=True`` then
             returns a tuple of both clipped datasets.
 
@@ -1773,14 +1773,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                warnings.warn(
-                    'No data to use for scale. scale will be set to False.', stacklevel=2
+                warn_external(
+                    'No data to use for scale. scale will be set to False.'
                 )  # pragma: no cover
                 do_scale = False
             except AmbiguousDataError as err:
-                warnings.warn(
-                    f'{err}\nIt is unclear which one to use. scale will be set to False.',
-                    stacklevel=2,
+                warn_external(
+                    f'{err}\nIt is unclear which one to use. scale will be set to False.'
                 )
                 do_scale = False
             else:
@@ -1809,15 +1808,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             try:
                 set_default_active_vectors(dataset)
             except MissingDataError:
-                warnings.warn(
-                    'No vector-like data to use for orient. orient will be set to False.',
-                    stacklevel=2,
+                warn_external(
+                    'No vector-like data to use for orient. orient will be set to False.'
                 )
                 orient = False
             except AmbiguousDataError as err:
-                warnings.warn(
-                    f'{err}\nIt is unclear which one to use. orient will be set to False.',
-                    stacklevel=2,
+                warn_external(
+                    f'{err}\nIt is unclear which one to use. orient will be set to False.'
                 )
                 orient = False
 
@@ -2099,11 +2096,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # Deprecated on v0.43.0
         keep_largest = kwargs.pop('largest', False)
         if keep_largest:  # pragma: no cover
-            warnings.warn(
+            warn_external(
                 "Use of `largest=True` is deprecated. Use 'largest' or "
                 "`extraction_mode='largest'` instead.",
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
             extraction_mode = 'largest'
 
@@ -2214,10 +2210,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             raise ValueError(msg)
 
         if region_assignment_mode == 'unspecified' and extraction_mode == 'specified':
-            warnings.warn(
+            warn_external(
                 'Using the `unspecified` region assignment mode with the `specified` extraction mode can be unintuitive. Ignore this warning if this was intentional.',  # noqa: E501
                 UserWarning,
-                stacklevel=2,
             )
 
         alg.SetRegionIdAssignmentMode(modes[region_assignment_mode])
@@ -3245,16 +3240,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         if max_time is not None:
             if max_length is not None:
-                warnings.warn(
+                warn_external(
                     '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
                     PyVistaDeprecationWarning,
-                    stacklevel=2,
                 )
             else:
-                warnings.warn(
+                warn_external(
                     '``max_time`` parameter is deprecated.  It will be removed in v0.48',
                     PyVistaDeprecationWarning,
-                    stacklevel=2,
                 )
                 max_length = max_time
 
@@ -4734,7 +4727,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid or pyvista.MultiBlock
+        output : pyvista.UnstructuredGrid | pyvista.MultiBlock
             An extracted mesh or a composite of extracted meshes, depending on ``split``.
 
         Examples
@@ -5434,7 +5427,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData or pyvista.UnstructuredGrid
+        output : pyvista.PolyData | pyvista.UnstructuredGrid
             Mesh with merged points. PolyData is returned only if the input is PolyData.
 
         Examples
@@ -5564,7 +5557,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 msg += '\nIts value cannot be False for vtk>=9.5.0.'
                 raise ValueError(msg)
             else:
-                warnings.warn(msg, pv.PyVistaDeprecationWarning, stacklevel=2)
+                warn_external(msg, pv.PyVistaDeprecationWarning)
         elif not vtk_at_least_95:
             # Set default for older VTK:
             main_has_priority = True
@@ -5742,7 +5735,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
             "new filter does not include an array named ``'CellQuality'`"
         )
-        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+        warn_external(msg, PyVistaDeprecationWarning)
 
         alg = _vtk.vtkCellQuality()
         possible_measure_setters = {
@@ -6311,7 +6304,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.MultiBlock or pyvista.UnstructuredGrid
+        output : pyvista.MultiBlock | pyvista.UnstructuredGrid
             UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
 
         Examples
@@ -6446,7 +6439,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.MultiBlock or pyvista.PolyData
+        output : pyvista.MultiBlock | pyvista.PolyData
             MultiBlock with six named cube faces when ``as_composite=True`` and
             PolyData otherwise.
 
@@ -6603,7 +6596,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.MultiBlock or pyvista.PolyData
+        output : pyvista.MultiBlock | pyvista.PolyData
             MultiBlock with six named cube faces when ``as_composite=True`` and
             PolyData otherwise.
 

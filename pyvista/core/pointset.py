@@ -2671,31 +2671,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         self.Modified()
 
     @property
-    def dimensionality(self) -> int:
-        """Return the dimensionality of the grid.
-
-        Returns
-        -------
-        int
-            The grid dimensionality.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
-        >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
-        >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
-        >>> grid = pv.StructuredGrid(x, y, z)
-        >>> grid.dimensionality
-        3
-
-        """
-        dims = np.asarray(self.dimensions)
-        return int(3 - (dims == 1).sum())
-
-    @property
     def x(self):  # numpydoc ignore=RT01
         """Return the X coordinates of all points.
 
@@ -3316,7 +3291,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        ExplicitStructuredGrid or None
+        output : ExplicitStructuredGrid | None
             A deep copy of this grid if ``inplace=False`` with the
             hidden cells, or this grid with the hidden cells if
             otherwise.
@@ -3413,26 +3388,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return self._dimensions()
 
     @property
-    def dimensionality(self) -> int:
-        """Return the dimensionality of the grid.
-
-        Returns
-        -------
-        int
-            The grid dimensionality.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()
-        >>> grid.dimensionality
-        3
-
-        """
-        dims = np.asarray(self.dimensions)
-        return int(3 - (dims == 1).sum())
-
-    @property
     def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
@@ -3487,7 +3442,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        int | numpy.ndarray | None
+        output : int | numpy.ndarray | None
             Cell IDs. ``None`` if ``coords`` is outside the grid extent.
 
         See Also
@@ -3537,7 +3492,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        numpy.ndarray | None
+        output : numpy.ndarray | None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 

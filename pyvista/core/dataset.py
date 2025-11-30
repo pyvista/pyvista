@@ -12,12 +12,12 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -122,10 +122,9 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         self.association = association
         self.name = name
         # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
+        warn_external(
             'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
@@ -2033,7 +2032,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        int or numpy.ndarray
+        output : int | numpy.ndarray
             Index or indices of the cell in this mesh that contains
             the given point.
 
@@ -2851,7 +2850,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        bool or numpy.ndarray
+        output : bool | numpy.ndarray
             Whether point(s) is/are inside cell. A single bool is only returned if
             the input point has shape ``(3,)``.
 
@@ -2962,3 +2961,60 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.n_points == 0
+
+    @property
+    def dimensionality(self: Self) -> Literal[0, 1, 2, 3]:
+        """Return the spatial dimensions spanned by this dataset.
+
+        .. versionchanged:: 0.47
+
+            This property is now generalized for all datasets. Previously, it was only available
+            for datasets with a ``dimensions`` property.
+
+        Returns
+        -------
+        int
+            The dimensionality of the dataset.
+
+        Examples
+        --------
+        A single point has ``0`` dimensionality.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+        >>> mesh.dimensionality
+        0
+
+        With two points, the dimensionality is ``1``.
+
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> mesh.dimensionality
+        1
+
+        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
+        a dimensionality of ``2``.
+
+        >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Plane` also has dimensionality of ``2``, even if it's arbitrarily
+        rotated in space.
+
+        >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Cube` has a dimensionality of 3.
+
+        >>> mesh = pv.Cube()
+        >>> mesh.dimensionality
+        3
+
+        """
+        if self.n_points == 0:
+            return 0
+        elif hasattr(self, 'dimensions'):
+            dims = np.asarray(self.dimensions)
+            return int(3 - (dims == 1).sum())  # type: ignore[return-value]
+        return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]

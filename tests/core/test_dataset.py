@@ -1539,3 +1539,26 @@ def test_active_array_info_deprecated():
     if pv._version.version_info[:2] > (0, 48):
         msg = 'Remove this deprecated class'
         raise RuntimeError(msg)
+
+
+def test_dimensionality():
+    mesh = pv.PointSet()
+    assert mesh.dimensionality == 0
+
+    mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+    assert mesh.dimensionality == 0
+
+    mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    assert mesh.dimensionality == 1
+
+    mesh = pv.ImageData()
+    assert mesh.dimensionality == 0
+
+    mesh = pv.ImageData(dimensions=(100, 100, 1))
+    assert mesh.dimensionality == 2
+
+    mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+    assert mesh.dimensionality == 2
+
+    mesh = pv.Cube()
+    assert mesh.dimensionality == 3

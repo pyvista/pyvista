@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
-import warnings
 import weakref
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -285,7 +285,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         Returns
         -------
-        numpy.ndarray or None
+        output : numpy.ndarray | None
             Picked point if available.
 
         """
@@ -482,10 +482,8 @@ class PickingInterface:  # numpydoc ignore=PR01
         """
         self._validate_picker_not_in_use()
         if 'use_mesh' in kwargs:
-            warnings.warn(
-                '`use_mesh` is deprecated. See `use_picker` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`use_mesh` is deprecated. See `use_picker` instead.', PyVistaDeprecationWarning
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -694,7 +692,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pyvista.Actor or None
+        output : pyvista.Actor | None
             Picked actor if available.
 
         """
@@ -710,7 +708,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pyvista.DataSet or None
+        output : pyvista.DataSet | None
             Picked mesh if available.
 
         """
@@ -741,15 +739,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
             Picked object if available.
 
         """  # noqa: E501
         # deprecated in 0.47, error in 0.48, remove in 0.49
-        warnings.warn(
-            category=PyVistaDeprecationWarning,
-            message='Use the `picked_cells` attribute instead.',
-            stacklevel=2,
+        warn_external(
+            category=PyVistaDeprecationWarning, message='Use the `picked_cells` attribute instead.'
         )
         return self._picked_cell
 
@@ -776,7 +772,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
             Picked object if available.
 
         """  # noqa: E501
@@ -791,7 +787,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        int or None
+        output : int | None
             Picked block if available. If ``-1``, then a non-composite dataset
             was selected.
 
@@ -1091,7 +1087,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # noqa: BLE001  # pragma: no cover
-                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e), stacklevel=2)  # type: ignore[call-overload]
+                    warn_external('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[arg-type]
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)  # type: ignore[union-attr]
@@ -1212,13 +1208,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     old_name, new_name = 'orig_extract_id', 'original_cell_ids'
 
                     #  deprecated in 0.47, rename in v0.49
-                    warnings.warn(
+                    warn_external(
                         category=PyVistaDeprecationWarning,
                         message=(
                             f'The `{old_name}` cell data has been deprecated and will be renamed'
                             f' to `{new_name} in a future version of PyVista.'
                         ),
-                        stacklevel=2,
                     )
                     input_mesh.cell_data[old_name] = (ids := np.arange(input_mesh.n_cells))
                     input_mesh.cell_data[new_name] = ids
@@ -1359,10 +1354,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        warnings.warn(
+                        warn_external(
                             'Display representations other than `surface` will result '
                             'in incorrect results.',
-                            stacklevel=2,
                         )
                     smesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()

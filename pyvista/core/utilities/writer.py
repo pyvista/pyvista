@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import get_args
-import warnings
 
 import numpy as np
 
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
@@ -195,7 +195,7 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
                 'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
                 'Use the `.vti` extension instead (XML format).'
             )
-            warnings.warn(msg, stacklevel=2)
+            warn_external(msg)
 
 
 class HDFWriter(BaseWriter):

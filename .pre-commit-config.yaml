@@ -68,14 +68,23 @@ repos:
     hooks:
       - id: check-github-workflows
 
+  - repo: local
+    hooks:
+      - id: warn_external
+        name: Convert warnings to warn_external
+        language: python
+        entry: python -m libcst.tool codemod -x hooks.warnings.ConvertWarningsToExternal --no-format
+        additional_dependencies: [libcst]
+        files: ^pyvista/
+        types: [file, python]
+        exclude: pyvista/_warn_external.py
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.3
     hooks:
+      - id: ruff-format
       - id: ruff-check
         args: [--fix, --show-fixes]
-        exclude: tests/core/typing
-      - id: ruff-format
-        exclude: tests/core/typing
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.6.2
