@@ -145,7 +145,6 @@ result.plot(
     cmap='jet',
     show_edges=True,
     scalar_bar_args={'title': 'Von Mises Stress (Pa)'},
-    cpos='xy',
 )
 
 ###############################################################################
