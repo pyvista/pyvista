@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import shutil
 
@@ -86,7 +85,7 @@ class OfflineViewerDirective(Directive):
         rel_viewer_path = (
             Path() / relpath_to_source_root / '_static' / Path(HTML_VIEWER_PATH).name
         ).as_posix()
-        rel_asset_path = Path(os.path.relpath(dest_file, static_path)).as_posix()
+        rel_asset_path = f'/{Path(dest_file).relative_to(output_dir).as_posix()}'
         html = (
             f"<iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' "
             "width='100%%' height='400px' frameborder='0'></iframe>"
