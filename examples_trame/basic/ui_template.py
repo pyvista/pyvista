@@ -4,6 +4,15 @@ This example demonstrates how to use ``plotter_ui`` to add a PyVista
 ``Plotter`` to a UI with scene controls and standard UI features.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "pyvista",
+#   "trame>=2.5.2",
+# ]
+# ///
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt

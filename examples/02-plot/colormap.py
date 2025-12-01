@@ -8,6 +8,15 @@ Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
 values with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 from matplotlib.colors import ListedColormap

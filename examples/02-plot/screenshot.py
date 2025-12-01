@@ -5,6 +5,14 @@ Saving Screenshots
 ~~~~~~~~~~~~~~~~~~
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
