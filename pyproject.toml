@@ -115,7 +115,7 @@ docs-trame-vtk = [
 ]
 
 docs = [
-  'atsphinx-mini18n==0.4.1',
+  'atsphinx-mini18n==0.5.0',
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
@@ -133,7 +133,7 @@ docs = [
   'nest-asyncio2==1.6.3',
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
-  'pypandoc==1.15',
+  'pypandoc==1.16.2',
   'pytest-sphinx==0.6.3',
   'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
@@ -147,7 +147,7 @@ docs = [
   'sphinx-togglebutton==0.3.2',
   'sphinx-toolbox==4.0.0',
   'sphinx==8.2.3',
-  'sphinxcontrib-asciinema==0.4.2',
+  'sphinxcontrib-asciinema==0.4.3',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
