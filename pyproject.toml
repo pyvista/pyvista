@@ -111,7 +111,7 @@ test = [
 ]
 
 docs-trame-vtk = [
-  'trame-vtk==2.10.0', # Do not upgrade, see https://github.com/pyvista/pyvista/issues/7721. Unpin when https://github.com/Kitware/trame-vtk/issues/94 is closed
+  'trame-vtk==2.8.15', # Do not upgrade, see https://github.com/pyvista/pyvista/issues/7721. Unpin when https://github.com/Kitware/trame-vtk/issues/94 is closed
 ]
 
 docs = [
