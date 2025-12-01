@@ -2,6 +2,7 @@
 # See https://pre-commit.ci/
 ci:
   autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
   autofix_prs: true
   autoupdate_schedule: monthly
 
