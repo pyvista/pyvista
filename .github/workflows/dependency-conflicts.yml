@@ -12,7 +12,7 @@ env:
   TOX_COLORED: "yes"
 
 jobs:
-  uv lock:
+  uv-lock:
     permissions:
       contents: read
     runs-on: ubuntu-latest
