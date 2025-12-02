@@ -8,9 +8,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  TOX_COLORED: "yes"
-
 jobs:
   uv-lock:
     permissions:
