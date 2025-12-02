@@ -30,7 +30,7 @@ jobs:
       startsWith(github.event.pull_request.head.ref, 'docker')
       )
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 

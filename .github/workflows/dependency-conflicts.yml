@@ -1,24 +1,20 @@
-name: Static Type Checking
+name: Check Dependency Conflicts
 
 on:
   pull_request:
-  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  TOX_COLORED: "yes"
-
 jobs:
-  mypy:
+  uv-lock:
     permissions:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -28,8 +24,8 @@ jobs:
           python-version: 3.13
           cache: "pip"
 
-      - name: Install tox-uv
-        run: pip install tox-uv
+      - name: Install uv
+        run: pip install uv
 
-      - name: Run Mypy
-        run: tox run -e mypy
+      - name: Run uv lock
+        run: uv lock
