@@ -160,7 +160,7 @@ docs = [
 ]
 
 docs-test = [
-  "pytest-pyvista[vtksz]@git+https://github.com/pyvista/pytest-pyvista",
+  'pytest-pyvista[vtksz]==0.3.2',
   'pytest-xdist<3.9.0',
   { include-group = "docs-trame-vtk" },
   { include-group = 'pinned' },
