@@ -1,0 +1,34 @@
+name: Dependency Conflicts
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TOX_COLORED: "yes"
+
+jobs:
+  uv_lock:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+          cache: "pip"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Run uv lock
+        run: uv lock
