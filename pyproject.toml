@@ -111,7 +111,7 @@ test = [
 ]
 
 docs-trame-vtk = [
-  'trame-vtk==2.10.0', # Do not upgrade, see https://github.com/pyvista/pyvista/issues/7721. Unpin when https://github.com/Kitware/trame-vtk/issues/94 is closed
+  'trame-vtk==2.8.15', # Do not upgrade, see https://github.com/pyvista/pyvista/issues/7721. Unpin when https://github.com/Kitware/trame-vtk/issues/94 is closed
 ]
 
 docs = [
@@ -238,6 +238,7 @@ run.patch = ["subprocess"]
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
+log_level = 'INFO'
 
 # Keep spaces between filter warnings since order matters (see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings)
 filterwarnings = [
