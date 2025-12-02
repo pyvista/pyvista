@@ -65,7 +65,7 @@ jobs:
 
       - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
         if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: pyvista/vtk-data
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -102,7 +102,7 @@ jobs:
 
     runs-on: ${{ matrix.runner-labels }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -187,7 +187,7 @@ jobs:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
       PARALLEL: "-n4" # flag for pytest-xdist
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -259,7 +259,7 @@ jobs:
       matrix:
         python-version: ["3.14"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -324,7 +324,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -390,7 +390,7 @@ jobs:
     permissions:
       id-token: write # this permission is mandatory for trusted publishing
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -406,4 +406,4 @@ jobs:
 
       - name: Upload to PyPi
         if: matrix.python-version == '3.13' && startsWith(github.ref, 'refs/tags/v')
-        uses: pypa/gh-action-pypi-publish@ab69e431e9c9f48a3310be0a56527c679f56e04d
+        uses: pypa/gh-action-pypi-publish@3317ede93a4981d0fc490510c6fcf8bf0e92ed05
