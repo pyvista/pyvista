@@ -2,12 +2,13 @@
 # See https://pre-commit.ci/
 ci:
   autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
   autofix_prs: true
   autoupdate_schedule: monthly
 
 repos:
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.4.5
+    rev: v0.4.6
     hooks:
       - id: blackdoc
         args: ["--skip-string-normalization"]
@@ -57,14 +58,14 @@ repos:
         files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.10.20
+    rev: 2025.11.21
     hooks:
       - id: sp-repo-review
         args: ["--show=errskip"]
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.1
+    rev: 0.35.0
     hooks:
       - id: check-github-workflows
 
@@ -80,16 +81,14 @@ repos:
         exclude: pyvista/_warn_external.py
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.3
+    rev: v0.14.7
     hooks:
+      - id: ruff-format
       - id: ruff-check
         args: [--fix, --show-fixes]
-        exclude: tests/core/typing
-      - id: ruff-format
-        exclude: tests/core/typing
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.6.2
+    rev: v3.7.3
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -122,11 +121,11 @@ repos:
           ]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.16.2
+    rev: v1.18.0
     hooks:
       - id: zizmor
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
-    rev: v1.0.1
+    rev: v1.0.2
     hooks:
       - id: sphinx-lint
