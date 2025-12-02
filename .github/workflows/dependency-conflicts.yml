@@ -1,4 +1,4 @@
-name: Dependency Conflicts
+name: Check Dependency Conflicts
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ env:
   TOX_COLORED: "yes"
 
 jobs:
-  uv_lock:
+  uv lock:
     permissions:
       contents: read
     runs-on: ubuntu-latest
