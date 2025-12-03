@@ -83,7 +83,7 @@ test = [
   'ipywidgets<9.0.0',
   'libcst<1.8.7',
   'meshio<5.4.0',
-  'nest-asyncio2<1.7.0',
+  'nest-asyncio2<1.8.0',
   'numpydoc<1.10.0',
   'pandas<=2.4.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
