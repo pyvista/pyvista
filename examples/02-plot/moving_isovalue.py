@@ -41,40 +41,40 @@ surface = surfaces[0].copy()
 
 filename = 'isovalue.gif'
 
-plotter = pv.Plotter(off_screen=True)
+pl = pv.Plotter(off_screen=True)
 # Open a movie file
-plotter.open_gif(filename)
+pl.open_gif(filename)
 
 # Add initial mesh
-plotter.add_mesh(
+pl.add_mesh(
     surface,
     opacity=0.5,
     clim=vol.get_data_range(),
     show_scalar_bar=False,
 )
 # Add outline for reference
-plotter.add_mesh(vol.outline_corners(), color='k')
+pl.add_mesh(vol.outline_corners(), color='k')
 
 print('Orient the view, then press "q" to close window and produce movie')
-plotter.camera_position = [
-    (392.9783280407326, 556.4341372317185, 235.51220650196404),
-    (88.69563012828344, 119.06774369173661, 72.61750326143748),
-    (-0.19275936948097383, -0.2218876327549124, 0.9558293278131397),
-]
+pl.camera_position = pv.CameraPosition(
+    position=(392.9783280407326, 556.4341372317185, 235.51220650196404),
+    focal_point=(88.69563012828344, 119.06774369173661, 72.61750326143748),
+    viewup=(-0.19275936948097383, -0.2218876327549124, 0.9558293278131397),
+)
 
 # initial render and do NOT close
-plotter.show(auto_close=False)
+pl.show(auto_close=False)
 
 # Run through each frame
 for surf in surfaces:
     surface.copy_from(surf)
-    plotter.write_frame()  # Write this frame
+    pl.write_frame()  # Write this frame
 # Run through backwards
 for surf in surfaces[::-1]:
     surface.copy_from(surf)
-    plotter.write_frame()  # Write this frame
+    pl.write_frame()  # Write this frame
 
 # Be sure to close the plotter when finished
-plotter.close()
+pl.close()
 # %%
 # .. tags:: plot

@@ -42,9 +42,9 @@ poly
 # %%
 # Now plot the points with labels using :func:`~pyvista.Plotter.add_point_labels`.
 
-plotter = pv.Plotter()
-plotter.add_point_labels(poly, 'My Labels', point_size=20, font_size=36)
-plotter.show()
+pl = pv.Plotter()
+pl.add_point_labels(poly, 'My Labels', point_size=20, font_size=36)
+pl.show()
 
 
 # %%
@@ -59,17 +59,19 @@ grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
 # %%
 # Create plotting class and add the unstructured grid
-plotter = pv.Plotter()
-plotter.add_mesh(grid, show_edges=True, color='lightblue')
+pl = pv.Plotter()
+pl.add_mesh(grid, show_edges=True, color='lightblue')
 
 # Add labels to points on the yz plane (where x == 0)
 points = grid.points
 mask = points[:, 0] == 0
-plotter.add_point_labels(points[mask], points[mask].tolist(), point_size=20, font_size=36)
+pl.add_point_labels(points[mask], points[mask].tolist(), point_size=20, font_size=36)
 
-plotter.camera_position = [(-1.5, 1.5, 3.0), (0.05, 0.6, 1.2), (0.2, 0.9, -0.25)]
+pl.camera_position = pv.CameraPosition(
+    position=(-1.5, 1.5, 3.0), focal_point=(0.05, 0.6, 1.2), viewup=(0.2, 0.9, -0.25)
+)
 
-plotter.show()
+pl.show()
 
 
 # %%
@@ -81,16 +83,18 @@ plotter.show()
 mesh = examples.load_uniform().slice()
 
 # %%
-p = pv.Plotter()
+pl = pv.Plotter()
 
 # Add the mesh:
-p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
+pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
 # Add the points with scalar labels:
-p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36)
+pl.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36)
 
 # Use a nice camera position:
-p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+pl.camera_position = pv.CameraPosition(
+    position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
+)
 
-p.show()
+pl.show()
 # %%
 # .. tags:: plot

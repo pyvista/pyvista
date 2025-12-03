@@ -10,14 +10,13 @@ import json
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
-from typing import TypeVar
 from typing import cast
 from typing import overload
 
 import numpy as np
 import numpy.typing as npt
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
@@ -31,26 +30,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
-
-# Mapping from types in `vtkType.h` to the corresponding array class
-VTK_ARRAY_TYPES = {
-    _vtk.VTK_BIT: _vtk.vtkBitArray,
-    _vtk.VTK_CHAR: _vtk.vtkCharArray,
-    _vtk.VTK_SIGNED_CHAR: _vtk.vtkSignedCharArray,
-    _vtk.VTK_UNSIGNED_CHAR: _vtk.vtkUnsignedCharArray,
-    _vtk.VTK_SHORT: _vtk.vtkShortArray,
-    _vtk.VTK_UNSIGNED_SHORT: _vtk.vtkUnsignedShortArray,
-    _vtk.VTK_INT: _vtk.vtkIntArray,
-    _vtk.VTK_UNSIGNED_INT: _vtk.vtkUnsignedIntArray,
-    _vtk.VTK_LONG: _vtk.vtkLongArray,
-    _vtk.VTK_UNSIGNED_LONG: _vtk.vtkUnsignedLongArray,
-    _vtk.VTK_FLOAT: _vtk.vtkFloatArray,
-    _vtk.VTK_DOUBLE: _vtk.vtkDoubleArray,
-    _vtk.VTK_ID_TYPE: _vtk.vtkIdTypeArray,
-    _vtk.VTK_STRING: _vtk.vtkStringArray,
-    _vtk.VTK_LONG_LONG: _vtk.vtkLongLongArray,
-    _vtk.VTK_UNSIGNED_LONG_LONG: _vtk.vtkUnsignedLongLongArray,
-}
 
 
 class FieldAssociation(enum.Enum):
@@ -182,16 +161,13 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-_vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N816
-
-
 @_deprecate_positional_args(allowed=['array'])
-def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001, FBT002
+def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkAbstractArray:  # noqa: FBT001, FBT002
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
     ----------
-    array : :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
+    array : :vtk:`vtkAbstractArray`
         VTK array.
 
     deep : bool, optional
@@ -200,7 +176,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
 
     Returns
     -------
-    :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
+    :vtk:`vtkAbstractArray`
         Copy of the original VTK array.
 
     Examples
@@ -217,21 +193,11 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
     1.0
 
     """
-    if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
+    if not isinstance(array, _vtk.vtkAbstractArray):
         msg = f'Invalid type {type(array)}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    try:
-        new_array = type(array)()
-    except TypeError:
-        # Array appears abstract and is likely implicit
-        # Init array from the array type instead
-        array_type = array.GetArrayType()
-        vtk_array_class = VTK_ARRAY_TYPES.get(array_type)
-        if vtk_array_class is None:  # pragma: no cover
-            msg = f'Array could not be copied, unsupported array type code: {array_type}'
-            raise TypeError(msg)
-        new_array = vtk_array_class()  # type: ignore[assignment]
+    new_array = _vtk.vtkAbstractArray.CreateArray(array.GetDataType())
 
     if deep:
         new_array.DeepCopy(array)
@@ -321,7 +287,7 @@ def convert_array(  # noqa: PLR0917
 
     Returns
     -------
-    :vtk:`vtkDataArray` | numpy.ndarray
+    output : :vtk:`vtkDataArray` | numpy.ndarray
         The converted array.  If input is a :class:`numpy.ndarray` then
         returns :vtk:`vtkDataArray` or if input is :vtk:`vtkDataArray` then
         returns NumPy ``ndarray``.
@@ -389,7 +355,7 @@ def get_array(  # noqa: PLR0917
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -489,7 +455,7 @@ def get_array_association(  # noqa: PLR0917
         msg = f'Data field ({preference}) not supported.'
         raise ValueError(msg)
 
-    matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
+    matches = [pref for pref, array in zip(preferences, arrays, strict=True) if array is not None]
     # optionally raise if no match
     if not matches:
         if err:
@@ -545,14 +511,14 @@ def _assoc_array(
     vtk_attr = f'Get{association.title()}Data'
     python_attr = f'{association.lower()}_data'
 
-    if isinstance(obj, pyvista.DataSet):
+    if isinstance(obj, pv.DataSet):
         try:
             return getattr(obj, python_attr).get_array(name)
         except KeyError:  # pragma: no cover
             return None
     abstract_array = getattr(obj, vtk_attr)().GetAbstractArray(name)
     if abstract_array is not None:
-        return pyvista.pyvista_ndarray(abstract_array)
+        return pv.pyvista_ndarray(abstract_array)
     return None
 
 
@@ -569,7 +535,7 @@ def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | 
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -589,7 +555,7 @@ def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | 
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -609,7 +575,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
 
     Returns
     -------
-    pyvista.pyvista_ndarray or None
+    output : pyvista.pyvista_ndarray | None
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
@@ -635,7 +601,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
     """
     vtkarr = obj.GetRowData().GetAbstractArray(name)
     if vtkarr is not None:
-        return pyvista.pyvista_ndarray(convert_array(vtkarr))
+        return pv.pyvista_ndarray(convert_array(vtkarr))
     else:
         return None
 
@@ -824,7 +790,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
 
     Returns
     -------
-    :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
+    output : :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         VTK matrix.
 
     """
@@ -842,7 +808,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
     return matrix
 
 
-def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoTuple:
+def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -910,7 +876,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
-def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoTuple:
+def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     """Set a default scalars array on mesh, if not already set.
 
     If an active scalars already exists, no changes are made.

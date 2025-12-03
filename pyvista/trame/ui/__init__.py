@@ -9,9 +9,10 @@ applications.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import warnings
 
 from trame.app import get_server
+
+from pyvista._warn_external import warn_external
 
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
@@ -50,7 +51,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
         viewer = _VIEWERS[plotter._id_name]
         if suppress_rendering != plotter.suppress_rendering:
             plotter.suppress_rendering = suppress_rendering
-            warnings.warn(
+            warn_external(
                 'Suppress rendering on the plotter is changed to ' + str(suppress_rendering),
                 UserWarning,
             )
@@ -106,7 +107,7 @@ def plotter_ui(
 
     Returns
     -------
-    PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
+    output : PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
         Trame view interface for pyvista.
 
     """

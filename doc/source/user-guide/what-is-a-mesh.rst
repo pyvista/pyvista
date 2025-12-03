@@ -44,13 +44,13 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
     :context:
 
     # must have this here as our global backend may not be static
-    import pyvista
-    pyvista.set_plot_theme('document')
-    pyvista.set_jupyter_backend('static')
-    pyvista.global_theme.window_size = [600, 400]
-    pyvista.global_theme.axes.show = False
-    pyvista.global_theme.anti_aliasing = 'fxaa'
-    pyvista.global_theme.show_scalar_bar = False
+    import pyvista as pv
+    pv.set_plot_theme('document')
+    pv.set_jupyter_backend('static')
+    pv.global_theme.window_size = [600, 400]
+    pv.global_theme.axes.show = False
+    pv.global_theme.anti_aliasing = 'fxaa'
+    pv.global_theme.show_scalar_bar = False
 
 
 .. pyvista-plot::
@@ -73,9 +73,9 @@ connectivity between points such as this gridded mesh:
     from pyvista import examples
 
     mesh = examples.load_hexbeam()
-    cpos = [(6.20, 3.00, 7.50),
-            (0.16, 0.13, 2.65),
-            (-0.28, 0.94, -0.21)]
+    cpos = pv.CameraPosition(position=(6.20, 3.00, 7.50),
+                             focal_point=(0.16, 0.13, 2.65),
+                             viewup=(-0.28, 0.94, -0.21))
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, show_edges=True, color='white')
@@ -95,9 +95,11 @@ Or this triangulated surface:
     pl.add_mesh(mesh, show_edges=True, color='white')
     pl.add_points(mesh.points, color='red',
                   point_size=2)
-    pl.camera_position = [(0.02, 0.30, 0.73),
-                          (0.02, 0.03, -0.022),
-                          (-0.03, 0.94, -0.34)]
+    pl.camera_position = pv.CameraPosition(
+        position=(0.02, 0.30, 0.73),
+        focal_point=(0.02, 0.03, -0.022),
+        viewup=(-0.03, 0.94, -0.34)
+    )
     pl.show()
 
 
@@ -123,9 +125,11 @@ between eight points in that mesh:
     pl.add_mesh(single_cell, color='pink', edge_color='blue',
                 line_width=5, show_edges=True)
 
-    pl.camera_position = [(6.20, 3.00, 7.50),
-                          (0.16, 0.13, 2.65),
-                          (-0.28, 0.94, -0.21)]
+    pl.camera_position = pv.CameraPosition(
+        position=(6.20, 3.00, 7.50),
+        focal_point=(0.16, 0.13, 2.65),
+        viewup=(-0.28, 0.94, -0.21)
+    )
     pl.show()
 
 
@@ -158,7 +162,7 @@ interpolated across the cells.
 .. pyvista-plot::
     :context:
 
-    mesh.point_data['my point values'] = np.arange(mesh.n_points)
+    mesh.point_data['my point values'] = np.arange(mesh.n_points, dtype=float)
     mesh.plot(scalars='my point values', cpos=cpos, show_edges=True)
 
 Cell Data
@@ -170,7 +174,7 @@ face or 3D volume) is assigned the value of that attribute.
 .. pyvista-plot::
     :context:
 
-    mesh.cell_data['my cell values'] = np.arange(mesh.n_cells)
+    mesh.cell_data['my cell values'] = np.arange(mesh.n_cells, dtype=float)
     mesh.plot(scalars='my cell values', cpos=cpos, show_edges=True)
 
 Here's a comparison of point data versus cell data and how point data
@@ -216,10 +220,10 @@ Note how this varies from assigning scalars to each point
    :context:
 
    cube = pv.Cube()
-   cube.cell_data['myscalars'] = range(6)
+   cube.cell_data['myscalars'] = np.arange(6,dtype=float)
 
    other_cube = cube.copy()
-   other_cube.point_data['myscalars'] = range(8)
+   other_cube.point_data['myscalars'] = np.arange(8,dtype=float)
 
    pl = pv.Plotter(shape=(1, 2), border_width=1)
    pl.add_mesh(cube, cmap='coolwarm')

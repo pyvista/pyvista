@@ -64,7 +64,9 @@ def pytest_generate_tests(metafunc):
                 return any(base.__name__[:3].lower() == 'vtk' for base in bases)
 
             inherits_from_vtk = {
-                name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
+                name: cls
+                for name, cls in zip(class_names, class_types, strict=True)
+                if inherits_from_vtk(cls)
             }
             assert inherits_from_vtk
             return inherits_from_vtk
@@ -84,7 +86,7 @@ def pytest_generate_tests(metafunc):
 
         class_map = {
             name: cls
-            for name, cls in zip(class_names, class_types)
+            for name, cls in zip(class_names, class_types, strict=True)
             if not name.startswith('_') and not issubclass(cls, tuple(SKIP_SUBCLASS))
         }
         metafunc.parametrize('pyvista_class', list(class_map.values()), ids=list(class_map.keys()))
@@ -193,6 +195,12 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['render_window_interactor'] = pv.Plotter().iren
     elif issubclass(pyvista_class, pv.BaseReader):
         kwargs['path'] = __file__  # Dummy file to pass is_file() checks
+    elif pyvista_class is pv.XMLPartitionedDataSetWriter:
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.PartitionedDataSet()
+    elif issubclass(pyvista_class, pv.BaseWriter):
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.PolyData()
     return kwargs
 
 
@@ -251,6 +259,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pv.PVDReader,
             pv.CGNSReader,
             pv.ExodusIIBlockSet,
+            pv.DEMReader,
         ):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Test fails without proper dataset files.')
@@ -276,6 +285,8 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pytest.skip(
                 f'Parent {_vtkWrapper.__name__} is not compatible with {_NoNewAttrMixin.__name__}.'
             )
+        elif pyvista_class is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+            pytest.skip('Requires vtk 9.4')
 
     skip_test_for_some_classes()
     instance = try_init_pyvista_object(pyvista_class)

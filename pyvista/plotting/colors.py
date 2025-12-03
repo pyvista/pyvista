@@ -33,7 +33,7 @@ from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import _validation
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -1505,7 +1505,7 @@ class Color(_NoNewAttrMixin):
 
         # Use default color if no color is provided
         if color is None:
-            color = pyvista.global_theme.color if default_color is None else default_color
+            color = pv.global_theme.color if default_color is None else default_color
 
         _validation.check_instance(
             color, (Color, str, dict, list, tuple, np.ndarray, _vtk.vtkColor3ub), name='color'
@@ -1529,7 +1529,7 @@ class Color(_NoNewAttrMixin):
             else:  # pragma: no cover
                 msg = f'Unexpected color type: {type(color)}'
                 raise TypeError(msg)
-            self._name = color_names.get(self.hex_rgb, None)
+            self._name = color_names.get(self.hex_rgb)
         except ValueError as e:
             msg = (
                 '\n'
@@ -1861,7 +1861,7 @@ class Color(_NoNewAttrMixin):
 
         Returns
         -------
-        str | None
+        output : str | None
             The color name, in case this color has a name; otherwise ``None``.
 
         Examples

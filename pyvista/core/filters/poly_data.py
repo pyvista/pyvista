@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import MissingDataError
@@ -75,8 +75,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
-            poly_data = pyvista.PolyData(poly_data)  # type: ignore[arg-type]
+        if not isinstance(poly_data, pv.PolyData):  # pragma: no cover
+            poly_data = pv.PolyData(poly_data)  # type: ignore[arg-type]
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -87,7 +87,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
+        orig_id = cast('NumpyArray[float]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -99,7 +99,7 @@ class PolyDataFilters(DataSetFilters):
                 'Unable to perform boolean operations on an identical surface.'
             )
             raise ValueError(msg)
-        if not isinstance(other_mesh, pyvista.PolyData):
+        if not isinstance(other_mesh, pv.PolyData):
             msg = 'Input mesh must be PolyData.'
             raise TypeError(msg)
         if not self.is_all_triangles or not other_mesh.is_all_triangles:  # type: ignore[attr-defined]
@@ -276,7 +276,7 @@ class PolyDataFilters(DataSetFilters):
         if bool_inter.is_empty:
             inter, s1, s2 = self.intersection(other_mesh)
             if inter.is_empty and s1.is_empty and s2.is_empty:
-                warnings.warn(
+                warn_external(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
                 )
@@ -414,7 +414,7 @@ class PolyDataFilters(DataSetFilters):
         >>> appended.plot()
 
         """
-        if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
+        if not all(isinstance(mesh, pv.PolyData) for mesh in meshes):
             msg = 'All meshes need to be of PolyData type'
             raise TypeError(msg)
 
@@ -534,10 +534,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # check if dataset or datasets are not polydata
-        if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
-            is_polydata = all(isinstance(data, pyvista.PolyData) for data in dataset)
+        if isinstance(dataset, (list, tuple, pv.MultiBlock)):
+            is_polydata = all(isinstance(data, pv.PolyData) for data in dataset)
         else:
-            is_polydata = isinstance(dataset, pyvista.PolyData)
+            is_polydata = isinstance(dataset, pv.PolyData)
 
         if inplace and not is_polydata:
             msg = 'In-place merge requires both input datasets to be PolyData.'
@@ -559,7 +559,7 @@ class PolyDataFilters(DataSetFilters):
             # must use extract_geometry to ensure they get converted back
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
-            if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
+            if isinstance(dataset, (list, tuple, pv.MultiBlock)):
                 dataset_has_lines_strips = any(
                     ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset
                 )
@@ -569,7 +569,7 @@ class PolyDataFilters(DataSetFilters):
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
                 merged = merged.extract_geometry()
             else:
-                polydata_merged = pyvista.PolyData(
+                polydata_merged = pv.PolyData(
                     merged.points,
                     faces=merged.GetCells(),
                     deep=False,
@@ -1386,8 +1386,8 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pyvista.PolyData(poly_data)  # type: ignore[arg-type]
+        if not isinstance(poly_data, pv.PolyData):
+            poly_data = pv.PolyData(poly_data)  # type: ignore[arg-type]
         n_sides = max(n_sides, 3)
         tube = _vtk.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
@@ -1794,7 +1794,7 @@ class PolyDataFilters(DataSetFilters):
 
         has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
-            warnings.warn(
+            warn_external(
                 'Since 0.45, use of `attribute_error=True` is deprecated.'
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
@@ -1828,9 +1828,9 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
-        if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
+        if pv.vtk_version_info < (9, 3, 0):  # pragma: no cover
             if boundary_constraints:
-                warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
+                warn_external('`boundary_constraints` requires vtk >= 9.3.')
         else:
             alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
             alg.SetBoundaryWeightFactor(boundary_weight)
@@ -1981,7 +1981,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined]
+                np.arange(self.n_points, dtype=pv.ID_TYPE),  # type: ignore[attr-defined]
                 'pyvistaOriginalPointIds',
             )
 
@@ -2463,6 +2463,12 @@ class PolyDataFilters(DataSetFilters):
         This requires a mesh and a line segment defined by an origin
         and end_point.
 
+        .. warning::
+
+            This filter uses the mesh's :attr:`~pyvista.PolyData.obbTree` property internally to
+            compute the intersection. Since the obb tree is cached, the intersection may not be
+            valid if the mesh's geometry is modified in between filter calls.
+
         Parameters
         ----------
         origin : sequence[float]
@@ -2530,16 +2536,14 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells = np.array(intersection_cells)  # type: ignore[assignment]
 
         if plot:
-            plotter = pyvista.Plotter(off_screen=off_screen)
-            plotter.add_mesh(self, label='Test Mesh')
+            pl = pv.Plotter(off_screen=off_screen)
+            pl.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
-            plotter.add_lines(segment, color='b', label='Ray Segment')
-            plotter.add_mesh(
-                intersection_points, color='r', point_size=10, label='Intersection Points'
-            )
-            plotter.add_legend()
-            plotter.add_axes()
-            plotter.show()
+            pl.add_lines(segment, color='b', label='Ray Segment')
+            pl.add_mesh(intersection_points, color='r', point_size=10, label='Intersection Points')
+            pl.add_legend()
+            pl.add_axes()
+            pl.show()
 
         return intersection_points, intersection_cells
 
@@ -2671,7 +2675,9 @@ class PolyDataFilters(DataSetFilters):
                 origin_to_centre_lengths + self.length
             )
 
-            for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
+            for id_r, origin, second_point in zip(
+                retry_ray_indices, origins_retry, second_points, strict=True
+            ):
                 locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
                 if locs.any():
                     if first_point:
@@ -2729,20 +2735,20 @@ class PolyDataFilters(DataSetFilters):
         """
         edges = DataSetFilters.extract_feature_edges(self, progress_bar=progress_bar)
 
-        plotter = pyvista.Plotter(
+        pl = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None),
             notebook=kwargs.pop('notebook', None),
         )
-        plotter.add_mesh(
+        pl.add_mesh(
             edges,
             color=edge_color,
             style='wireframe',
             label='Edges',
             line_width=line_width,
         )
-        plotter.add_mesh(self, label='Mesh', **kwargs)
-        plotter.add_legend()  # type: ignore[call-arg]
-        return plotter.show()
+        pl.add_mesh(self, label='Mesh', **kwargs)
+        pl.add_legend()  # type: ignore[call-arg]
+        return pl.show()
 
     @_deprecate_positional_args
     def plot_normals(  # type: ignore[misc]  # noqa: PLR0917
@@ -2805,14 +2811,14 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, faces=True, show_edges=True)
 
         """
-        plotter = pyvista.Plotter(
+        pl = pv.Plotter(
             off_screen=kwargs.pop('off_screen', None),
             notebook=kwargs.pop('notebook', None),
         )
         if show_mesh:
-            plotter.add_mesh(self, **kwargs)
+            pl.add_mesh(self, **kwargs)
 
-        color = pyvista.Color(color, default_color=pyvista.global_theme.edge_color)
+        color = pv.Color(color, default_color=pv.global_theme.edge_color)
 
         if faces:
             centers = self.cell_centers().points[::use_every]
@@ -2824,7 +2830,7 @@ class PolyDataFilters(DataSetFilters):
         if flip:
             normals *= -1  # type: ignore[misc]
 
-        plotter.add_arrows(
+        pl.add_arrows(
             centers,
             normals[::use_every],
             mag=mag,
@@ -2832,7 +2838,7 @@ class PolyDataFilters(DataSetFilters):
             show_scalar_bar=False,
         )
 
-        return plotter.show()
+        return pl.show()
 
     @_deprecate_positional_args(allowed=['remove', 'mode'])
     def remove_points(  # noqa: PLR0917
@@ -2910,11 +2916,11 @@ class PolyDataFilters(DataSetFilters):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
+        faces = np.empty((nfaces, 4), dtype=pv.ID_TYPE)
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
-        newmesh = pyvista.PolyData(new_points, faces, deep=True)
+        newmesh = pv.PolyData(new_points, faces, deep=True)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested
@@ -2926,7 +2932,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
                 except (ValueError, TypeError, KeyError):  # pragma: no cover
-                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
+                    warn_external(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -2954,7 +2960,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
+        warn_external(
             '`flip_normals` is deprecated. Use `flip_faces` instead. '
             'Note that `inplace` is now `False` by default for the new filter.',
             PyVistaDeprecationWarning,
@@ -3433,7 +3439,7 @@ class PolyDataFilters(DataSetFilters):
         >>> points = np.column_stack((x, y, z))
         >>> pdata = pv.PolyData(points)
         >>> pdata.lines = np.hstack((n, range(n)))
-        >>> pdata['distance'] = range(n)
+        >>> pdata['distance'] = np.arange(n, dtype=float)
         >>> ribbon = pdata.ribbon(width=0.2)
         >>> ribbon.plot(show_scalar_bar=False)
 
@@ -3552,7 +3558,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if capping is None:
             capping = False
-            warnings.warn(
+            warn_external(
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
@@ -3703,7 +3709,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if capping is None:
             capping = False
-            warnings.warn(
+            warn_external(
                 'The default value of the ``capping`` keyword argument will change in '
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
@@ -4066,7 +4072,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # other mesh must be a polydata
-        if not isinstance(other_mesh, pyvista.PolyData):
+        if not isinstance(other_mesh, pv.PolyData):
             other_mesh = other_mesh.extract_surface()
 
         # according to VTK limitations

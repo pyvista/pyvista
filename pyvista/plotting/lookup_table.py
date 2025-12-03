@@ -9,7 +9,7 @@ from typing import cast
 import matplotlib as mpl
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -557,7 +557,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
             return
         color = self.nan_color
         if color is None:
-            color = Color(pyvista.global_theme.nan_color)
+            color = Color(pv.global_theme.nan_color)
         self.nan_color = Color(self.nan_color, opacity=value)
 
     @property
@@ -651,7 +651,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
-            self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
+            self.SetAboveRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
             self.SetUseAboveRangeColor(True)
         else:
             self.SetAboveRangeColor(*Color(value).float_rgba)
@@ -679,7 +679,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
     def above_range_opacity(self, value):
         color = self.above_range_color
         if color is None:
-            color = Color(pyvista.global_theme.above_range_color)
+            color = Color(pv.global_theme.above_range_color)
         self.above_range_color = Color(color, opacity=value)
 
     @property
@@ -715,7 +715,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
-            self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
+            self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
@@ -743,7 +743,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
     def below_range_opacity(self, value):
         color = self.below_range_color
         if color is None:
-            color = Color(pyvista.global_theme.below_range_color)
+            color = Color(pv.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
     @_deprecate_positional_args(allowed=['cmap', 'n_values'])
@@ -963,7 +963,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
 
         vtk_str = self.GetAnnotations()
         values = [str(vtk_str.GetValue(ii)) for ii in range(n_items)]
-        return dict(zip(keys, values))
+        return dict(zip(keys, values, strict=True))
 
     @annotations.setter
     def annotations(self, values: dict[float, str] | None):
@@ -1012,10 +1012,10 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
 
         """
         # need a trivial polydata for this
-        mesh = pyvista.PolyData(np.zeros((2, 3)))
+        mesh = pv.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pyvista.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
+        pl = pv.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False

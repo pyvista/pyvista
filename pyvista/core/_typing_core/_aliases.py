@@ -35,37 +35,15 @@ else:
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
 Number = Union[int, float]
-
 VectorLike = _ArrayLike1D[NumberType]
-VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
-
-Includes sequences and numpy arrays.
-"""
-
 MatrixLike = _ArrayLike2D[NumberType]
-MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
-
-Includes singly-nested sequences and numpy arrays.
-"""
-
 ArrayLike = _ArrayLike[NumberType]
-ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
-Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
-"""
 if Rotation is not None:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
 else:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
-RotationLike.__doc__ = """Array or object representing a spatial rotation.
-
-Includes 3x3 arrays and SciPy Rotation objects.
-"""
-
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
-TransformLike.__doc__ = """Array or object representing a spatial transformation.
-
-Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 
 
 class BoundsTuple(NamedTuple):
@@ -95,7 +73,7 @@ class BoundsTuple(NamedTuple):
         field_size = max(len(f) for f in fields)
         name = self.__class__.__name__
         whitespace = (len(name) + 1) * ' '
-        for i, items in enumerate(zip(fields, split_strings)):
+        for i, items in enumerate(zip(fields, split_strings, strict=True)):
             field, parts = items
             if has_dot[i]:
                 left, right = parts
@@ -119,7 +97,3 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
-InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
-
-Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
-"""

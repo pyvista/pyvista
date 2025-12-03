@@ -8,11 +8,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
@@ -161,7 +160,7 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
         assert data['new_array'].shape == (0,)
     else:
         # Expect error for all other cases
-        with pytest.raises(ValueError, match='Invalid array shape.'):
+        with pytest.raises(ValueError, match=r'Invalid array shape.'):
             data['new_array'] = empty_array
 
 
@@ -371,7 +370,7 @@ def test_field_uint8(hexbeam):
 
 def test_bitarray_points(hexbeam):
     n = hexbeam.n_points
-    vtk_array = vtk.vtkBitArray()
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -386,7 +385,7 @@ def test_bitarray_points(hexbeam):
 
 def test_bitarray_cells(hexbeam):
     n = hexbeam.n_cells
-    vtk_array = vtk.vtkBitArray()
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -401,7 +400,7 @@ def test_bitarray_cells(hexbeam):
 
 def test_bitarray_field(hexbeam):
     n = hexbeam.n_cells // 3
-    vtk_array = vtk.vtkBitArray()
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -505,7 +504,7 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
     m.ndim = 1
 
     sphere = pv.Sphere(radius=math.pi)
-    with pytest.raises(ValueError, match='Active vectors are not vectors.'):
+    with pytest.raises(ValueError, match=r'Active vectors are not vectors.'):
         sphere.arrows  # noqa: B018
 
 
@@ -553,7 +552,7 @@ def active_component_consistency_check(grid, component_type, field_association='
         f'Get{vtk_component_type}',
     )()
 
-    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
+    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, _vtk.vtk_to_numpy(vtk_arr))
 
 
 def test_set_active_vectors(hexbeam):
@@ -868,21 +867,21 @@ def test_shallow_copy_back_propagation():
     Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
     """
     # Case 1
-    points = vtk.vtkPoints()
+    points = _vtk.vtkPoints()
     points.InsertNextPoint(0.0, 0.0, 0.0)
     points.InsertNextPoint(1.0, 0.0, 0.0)
     points.InsertNextPoint(2.0, 0.0, 0.0)
-    original = vtk.vtkPolyData()
+    original = _vtk.vtkPolyData()
     original.SetPoints(points)
     wrapped = pv.PolyData(original, deep=False)
     wrapped.points[:] = 2.8
-    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    orig_points = _vtk.vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
     # Case 2
-    original = vtk.vtkPolyData()
+    original = _vtk.vtkPolyData()
     wrapped = pv.PolyData(original, deep=False)
     wrapped.points = np.random.default_rng().random((5, 3))
-    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    orig_points = _vtk.vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
 
 
@@ -973,10 +972,10 @@ def test_find_cells_along_line():
 
 def test_find_cells_along_line_raises():
     mesh = pv.Cube()
-    with pytest.raises(TypeError, match='Point A must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point A must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0], [0, 0, 1])
 
-    with pytest.raises(TypeError, match='Point B must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point B must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0, -1], [0, 0])
 
 
@@ -1029,7 +1028,7 @@ def test_find_cells_within_bounds_raises():
     mesh = pv.Cube()
     with pytest.raises(
         TypeError,
-        match='Bounds must be a length six tuple of floats.',
+        match=r'Bounds must be a length six tuple of floats.',
     ):
         mesh.find_cells_within_bounds([0, 0])
 
@@ -1088,6 +1087,16 @@ def test_get_data_range(hexbeam):
     rng = hexbeam.get_data_range('sample_cell_scalars', preference='cell')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
+
+
+def test_get_data_range_bool():
+    mesh = pv.ImageData(dimensions=(2, 1, 1))
+    mesh['data'] = [True, False]
+    assert mesh['data'].dtype == bool
+    rng = mesh.get_data_range()
+    assert rng[0].dtype == bool
+    assert rng[1].dtype == bool
+    assert rng == (np.bool_(False), np.bool_(True))
 
 
 def test_actual_memory_size(hexbeam):
@@ -1530,3 +1539,26 @@ def test_active_array_info_deprecated():
     if pv._version.version_info[:2] > (0, 48):
         msg = 'Remove this deprecated class'
         raise RuntimeError(msg)
+
+
+def test_dimensionality():
+    mesh = pv.PointSet()
+    assert mesh.dimensionality == 0
+
+    mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+    assert mesh.dimensionality == 0
+
+    mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    assert mesh.dimensionality == 1
+
+    mesh = pv.ImageData()
+    assert mesh.dimensionality == 0
+
+    mesh = pv.ImageData(dimensions=(100, 100, 1))
+    assert mesh.dimensionality == 2
+
+    mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+    assert mesh.dimensionality == 2
+
+    mesh = pv.Cube()
+    assert mesh.dimensionality == 3

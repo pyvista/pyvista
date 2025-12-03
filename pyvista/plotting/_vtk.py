@@ -9,6 +9,12 @@ the entire library.
 
 from __future__ import annotations
 
+# Magic imports needed to make LaTeX rendering work. See https://discourse.vtk.org/t/how-to-check-if-mathtext-is-supported-without-importing-all-of-vtk/16038
+# isort: off
+import vtkmodules.vtkRenderingFreeType  # noqa: F401
+import vtkmodules.vtkRenderingMatplotlib  # noqa: F401
+# isort: on
+
 from vtkmodules.vtkChartsCore import vtkAxis as vtkAxis
 from vtkmodules.vtkChartsCore import vtkChart as vtkChart
 from vtkmodules.vtkChartsCore import vtkChartBox as vtkChartBox
@@ -26,6 +32,7 @@ from vtkmodules.vtkChartsCore import vtkPlotPoints3D as vtkPlotPoints3D
 from vtkmodules.vtkChartsCore import vtkPlotStacked as vtkPlotStacked
 from vtkmodules.vtkChartsCore import vtkPlotSurface as vtkPlotSurface
 from vtkmodules.vtkCommonColor import vtkColorSeries as vtkColorSeries
+from vtkmodules.vtkCommonColor import vtkNamedColors as vtkNamedColors
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage as vtkInteractorStyleImage
 from vtkmodules.vtkInteractionStyle import (
     vtkInteractorStyleJoystickActor as vtkInteractorStyleJoystickActor,
@@ -159,6 +166,7 @@ from vtkmodules.vtkRenderingVolume import vtkGPUVolumeRayCastMapper as vtkGPUVol
 from vtkmodules.vtkRenderingVolume import (
     vtkUnstructuredGridVolumeRayCastMapper as vtkUnstructuredGridVolumeRayCastMapper,
 )
+from vtkmodules.vtkRenderingVolume import vtkVolumeMapper as vtkVolumeMapper
 from vtkmodules.vtkRenderingVolume import vtkVolumePicker as vtkVolumePicker
 from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle as vtkContextInteractorStyle
 

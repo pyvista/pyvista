@@ -12,7 +12,7 @@ from typing import overload
 import numpy as np
 from typing_extensions import TypeIs
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -193,21 +193,21 @@ def wrap(  # noqa: PLR0911
     if dataset is None:
         return None
 
-    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+    if isinstance(dataset, tuple(pv._wrappers.values())):
         # Return object if it is already wrapped
         return cast('DataObject', dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
-    if isinstance(dataset, (np.ndarray, pyvista.pyvista_ndarray)):
+    if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
         if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pyvista.PolyData(dataset)
+            return pv.PolyData(dataset)
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
-            return pyvista.PolyData(dataset)
+            return pv.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.ImageData(dimensions=dataset.shape)
-            if isinstance(dataset, pyvista.pyvista_ndarray):
+            mesh = pv.ImageData(dimensions=dataset.shape)
+            if isinstance(dataset, pv.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.asarray(dataset)
             mesh['values'] = dataset.ravel(order='F')
@@ -219,13 +219,13 @@ def wrap(  # noqa: PLR0911
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
-        return pyvista.pyvista_ndarray(dataset)
+        return pv.pyvista_ndarray(dataset)
 
     # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return pyvista._wrappers[key](dataset)
+            return pv._wrappers[key](dataset)
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
@@ -238,13 +238,13 @@ def wrap(  # noqa: PLR0911
     if dataset.__class__.__name__ == 'Trimesh':
         # trimesh doesn't pad faces
         dataset = cast('Trimesh', dataset)
-        polydata = pyvista.PolyData.from_regular_faces(
+        polydata = pv.PolyData.from_regular_faces(
             np.asarray(dataset.vertices),
             faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
-        if hasattr(dataset.visual, 'uv') and dataset.visual.uv is not None:
-            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
+        if hasattr(dataset.visual, 'uv') and dataset.visual.uv is not None:  # type: ignore[union-attr]
+            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)  # type: ignore[union-attr]
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
@@ -252,7 +252,7 @@ def wrap(  # noqa: PLR0911
     raise NotImplementedError(msg)
 
 
-def is_pyvista_dataset(obj: Any) -> TypeIs[pyvista.DataSet | pyvista.MultiBlock]:
+def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -266,7 +266,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[pyvista.DataSet | pyvista.MultiBlock]
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
+    return isinstance(obj, (pv.DataSet, pv.MultiBlock))
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):

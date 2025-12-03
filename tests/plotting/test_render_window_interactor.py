@@ -10,7 +10,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.render_window_interactor import InteractorStyleImage
 from pyvista.plotting.render_window_interactor import InteractorStyleJoystickActor
 from pyvista.plotting.render_window_interactor import InteractorStyleJoystickCamera
@@ -56,7 +55,7 @@ def test_process_events_raises(mocker: MockerFixture):
 
     with pytest.raises(
         RuntimeError,
-        match='Render window interactor must be initialized before processing events.',
+        match=r'Render window interactor must be initialized before processing events.',
     ):
         pl.iren.process_events()
 
@@ -211,11 +210,6 @@ def test_track_click_position():
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
-@pytest.mark.needs_vtk_version(
-    (9, 2),
-    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents '
-    'until VTK9.2.',
-)
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)
@@ -319,8 +313,12 @@ def test_poked_subplot_context():
 @pytest.mark.skip_plotting
 def test_add_pick_observer():
     pl = pv.Plotter()
-    with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
+    with pytest.raises(ValueError, match='`add_pick_obeserver` has been deprecated'):
         pl.iren.add_pick_obeserver(empty_callback)
+
+    if pv.version_info >= (0, 48):
+        pytest.fail('Remove `Plotter.iren.add_pick_obeserver` method')
+
     pl = pv.Plotter()
     pl.iren.add_pick_observer(empty_callback)
 

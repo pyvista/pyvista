@@ -1,15 +1,8 @@
 name: Build Documentation
 
-# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
-  pull_request: # Uses cache
-  workflow_dispatch: # Able to not use cache by user demand
-    inputs:
-      cache:
-        description: "Use build cache"
-        required: false
-        default: "true"
-  # No cache enabled for `schedule` and `push`
+  pull_request:
+  workflow_dispatch:
   schedule:
     - cron: "0 0 1 * *" # once a month on main
   push:
@@ -22,89 +15,44 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  USE_CACHE: ${{
-    (
-    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
-    (github.event_name == 'pull_request') ||
-    (github.event_name == 'push')
-    ) &&
-    !startsWith(github.ref, 'refs/tags/v') &&
-    !startsWith(github.ref, 'refs/heads/release/') &&
-    !startsWith(github.ref, 'refs/heads/main')
-    }}
-  PYDEVD_DISABLE_FILE_VALIDATION: "1"
-  PYTEST_ADDOPTS: "--color=yes"
-  FORCE_COLOR: "True"
-  VTK_DEFAULT_OPENGL_WINDOW: "vtkEGLRenderWindow"
-
 permissions:
   id-token: none
 
 jobs:
   doc:
     name: Build Documentation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04-self-hosted-gpu
     env:
-      PYVISTA_OFF_SCREEN: "True"
-      ALLOW_PLOTTING: true
-      SHELLOPTS: "errexit:pipefail"
-      SPHINX_JOBS: "-j1" # Public GitHub runners have 2 real cores
+      PARALLEL: "-j2" # Public GitHub runners have 2 real cores
+      TOX_COLORED: "yes"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      - name: Set environment for self-hosted
+        if: runner.environment == 'self-hosted'
+        run: |
+          echo "PARALLEL=-j8" >> $GITHUB_ENV
+
+      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
+        if: runner.environment != 'self-hosted'
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
-      - name: Install PyVista and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
-
-      - name: PyVista Report
-        run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
-          pip list
-
-      - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
-        with:
-          path: doc/source/examples/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache Sphinx build directory
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
-        with:
-          path: doc/_build/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Build Documentation
-        run: |
-          make -C doc \
-          gen-external-examples \
-          gen-dataset-gallery \
-          html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
+        run: timeout 3600 tox run -e docs-build
 
-      - name: Dump Sphinx Warnings and Errors
+      - name: Dump Sphinx Build Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
 
@@ -112,25 +60,15 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Test Documentation
+      - name: Dump Sphinx Execution Error Logs
         if: always()
-        run: pytest tests/doc/tst_doc_build.py
+        run: |
+          shopt -s nullglob
+          for f in /tmp/sphinx-err-*.log; do
+            cat "$f"
+          done
 
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images-failed
-          path: _doc_debug_images_failed
-
-      - name: Upload Test Debug Images
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images
-          path: _doc_debug_images
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         with:
           repository: pyvista/pyvista-doc-translations
@@ -141,16 +79,17 @@ jobs:
       - name: Build I18N Documentation
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
-          make -C doc \
-          gen-external-examples \
-          gen-dataset-gallery \
-          mini18n-html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
+          tox run -e docs-build -- mini18n-html
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
           rm -rf doc/_build/mini18n-html
 
-      - name: Upload HTML documentation
+      - name: Dump Sphinx Build Warnings and Errors
         if: always()
-        uses: actions/upload-artifact@v4
+        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+
+      - name: Upload HTML documentation
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
         with:
           name: docs-build
           path:
@@ -163,15 +102,15 @@ jobs:
             !doc/_build/html/user-guide/**/*.vtksz
 
       - name: Upload non-interactive HTML documentation
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
         with:
           name: docs-build-light
           path: |
             doc/_build/html/
             !doc/_build/html/**/*.vtksz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: examples
           path: doc/source/examples/
@@ -181,10 +120,53 @@ jobs:
           mkdir _notebooks
           find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pyvista-notebooks
           path: _notebooks
+
+  test:
+    name: Test Documentation
+    runs-on: ubuntu-22.04
+    needs: doc
+    if: ${{ !cancelled() }}
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: docs-build
+          path: doc/_build/html
+
+      - name: Test Documentation
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test
+
+      - name: Upload Images for Failed Tests
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: doc-failed-test-images
+          path: _doc_failed_test_images
+
+      - name: Upload Generated Images
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: doc-generated-test-images
+          path: _doc_generated_test_images
 
   preview:
     name: Preview Development Documentation
@@ -192,7 +174,7 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: docs-build
           path: .
@@ -218,7 +200,7 @@ jobs:
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: docs-build
           path: .
@@ -244,16 +226,16 @@ jobs:
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install Dependencies
         run: |
           pip install cookiecutter
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: pyvista-notebooks
           path: .

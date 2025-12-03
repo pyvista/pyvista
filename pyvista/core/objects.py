@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
@@ -302,8 +302,8 @@ class Table(DataObject, _vtk.vtkTable):
                 """Format array information for printing (internal helper)."""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
+                dl = pv.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pv.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
                 dtype = None if arr is None else arr.dtype
                 return row.format(key, dtype, ncomp, dl, dh)

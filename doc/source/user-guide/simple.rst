@@ -153,14 +153,14 @@ that is bound to each PyVista data object.
    :context:
 
    # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.smooth_shading = True
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 
 .. pyvista-plot::
@@ -184,10 +184,10 @@ code after calling :func:`show() <pyvista.Plotter.show>`.
 
     mesh = examples.load_airplane()
 
-    plotter = pv.Plotter()    # instantiate the plotter
-    plotter.add_mesh(mesh)    # add a mesh to the scene
-    plotter.camera.zoom(2)    # Note how we can now access underlying attributes
-    plotter.show()            # show the rendering window
+    pl = pv.Plotter()    # instantiate the plotter
+    pl.add_mesh(mesh)    # add a mesh to the scene
+    pl.camera.zoom(2)    # Note how we can now access underlying attributes
+    pl.show()            # show the rendering window
 
 
 Optionally :func:`show() <pyvista.Plotter.show>` can return
@@ -203,11 +203,11 @@ without having to manually interact with the plotting window:
 .. code-block:: python
 
     # reuse the camera position from the previous plotter
-    cpos = plotter.camera_position
-    plotter = pv.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='lightblue')
-    plotter.camera_position = cpos
-    plotter.show(screenshot='airplane.png')
+    cpos = pl.camera_position
+    pl = pv.Plotter(off_screen=True)
+    pl.add_mesh(mesh, color='lightblue')
+    pl.camera_position = cpos
+    pl.show(screenshot='airplane.png')
 
 
 Be sure to check out all the available plotters and their options for
@@ -220,6 +220,29 @@ your use case:
   information see the `pyvistaqt`_ library)
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
+
+Command Line
+------------
+
+Starting from version ``0.47``, meshes can be plotted from one (or more)
+files using a command line tool such that:
+
+.. code-block:: shell
+
+    pyvista plot <files> [OPTIONS]
+    python -m pyvista plot <files> [OPTIONS]
+
+.. note::
+    Providing multiple files renders them inside the same window.
+
+Most options available in :func:`pyvista.plot` are exposed by the command line.
+Run the ``--help`` command to see all options:
+
+
+.. code-block:: shell
+
+    pyvista plot --help
+    python -m pyvista plot --help
 
 
 

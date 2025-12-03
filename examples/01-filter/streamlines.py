@@ -45,13 +45,15 @@ streamlines, src = mesh.streamlines(
 # Display the results. Please note that because this dataset's velocity field
 # was measured with low resolution, many streamlines travel outside the artery.
 
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='k')
-p.add_mesh(streamlines.tube(radius=0.15))
-p.add_mesh(src)
-p.add_mesh(mesh.contour([160]).extract_all_edges(), color='grey', opacity=0.25)
-p.camera_position = [(182.0, 177.0, 50), (139, 105, 19), (-0.2, -0.2, 1)]
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='k')
+pl.add_mesh(streamlines.tube(radius=0.15))
+pl.add_mesh(src)
+pl.add_mesh(mesh.contour([160]).extract_all_edges(), color='grey', opacity=0.25)
+pl.camera_position = pv.CameraPosition(
+    position=(182.0, 177.0, 50), focal_point=(139, 105, 19), viewup=(-0.2, -0.2, 1)
+)
+pl.show()
 
 
 # %%
@@ -72,12 +74,14 @@ streamlines, src = mesh.streamlines(
 boundary = mesh.decimate_boundary().extract_all_edges()
 
 sargs = dict(vertical=True, title_font_size=16)
-p = pv.Plotter()
-p.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
-p.add_mesh(src)
-p.add_mesh(boundary, color='grey', opacity=0.25)
-p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
+pl.add_mesh(src)
+pl.add_mesh(boundary, color='grey', opacity=0.25)
+pl.camera_position = pv.CameraPosition(
+    position=(10, 9.5, -43), focal_point=(87.0, 73.5, 123.0), viewup=(-0.5, -0.7, 0.5)
+)
+pl.show()
 
 
 # %%
@@ -99,25 +103,29 @@ print([array_name for array_name in streamlines.array_names if array_name not in
 # Plot streamlines colored by the time along the streamlines.
 
 sargs = dict(vertical=True, title_font_size=16)
-p = pv.Plotter()
-p.add_mesh(
+pl = pv.Plotter()
+pl.add_mesh(
     streamlines.tube(radius=0.2),
     scalars='IntegrationTime',
     clim=[0, 1000],
     lighting=False,
     scalar_bar_args=sargs,
 )
-p.add_mesh(boundary, color='grey', opacity=0.25)
-p.add_mesh(source_mesh, color='red')
-p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
-p.show()
+pl.add_mesh(boundary, color='grey', opacity=0.25)
+pl.add_mesh(source_mesh, color='red')
+pl.camera_position = pv.CameraPosition(
+    position=(10, 9.5, -43), focal_point=(87.0, 73.5, 123.0), viewup=(-0.5, -0.7, 0.5)
+)
+pl.show()
 
 
 # %%
 # Kitchen
 # +++++++
 #
-kpos = [(-6.68, 11.9, 11.6), (3.5, 2.5, 1.26), (0.45, -0.4, 0.8)]
+kpos = pv.CameraPosition(
+    position=(-6.68, 11.9, 11.6), focal_point=(3.5, 2.5, 1.26), viewup=(0.45, -0.4, 0.8)
+)
 
 mesh = examples.download_kitchen()
 kitchen = examples.download_kitchen(split=True)
@@ -126,12 +134,12 @@ kitchen = examples.download_kitchen(split=True)
 streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71), max_length=200)
 
 # %%
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='k')
-p.add_mesh(kitchen, color=True)
-p.add_mesh(streamlines.tube(radius=0.01), scalars='velocity', lighting=False)
-p.camera_position = kpos
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='k')
+pl.add_mesh(kitchen, color=True)
+pl.add_mesh(streamlines.tube(radius=0.01), scalars='velocity', lighting=False)
+pl.camera_position = kpos
+pl.show()
 
 
 # %%
@@ -163,7 +171,9 @@ stream, src = mesh.streamlines(
     source_radius=0.1,
 )
 # %%
-cpos = [(1.2, 1.2, 1.2), (-0.0, -0.0, -0.0), (0.0, 0.0, 1.0)]
+cpos = pv.CameraPosition(
+    position=(1.2, 1.2, 1.2), focal_point=(-0.0, -0.0, -0.0), viewup=(0.0, 0.0, 1.0)
+)
 stream.tube(radius=0.0015).plot(cpos=cpos)
 # %%
 # .. tags:: filter

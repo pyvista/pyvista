@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 import os
 import sys
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -157,7 +157,7 @@ def voxelize(  # noqa: PLR0917
 
     """
     # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warnings.warn(
+    warn_external(
         '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
         PyVistaDeprecationWarning,
     )
@@ -184,7 +184,7 @@ def _voxelize_legacy(
     generating the PyVista logo.
 
     """
-    if not pyvista.is_pyvista_dataset(mesh):
+    if not pv.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
     if density is None:
         density = mesh.length / 100
@@ -232,8 +232,8 @@ def _voxelize_legacy(
     # not y-x-z ordering, see https://github.com/pyvista/pyvista/pull/4365
 
     # Create unstructured grid from the structured grid
-    grid = pyvista.StructuredGrid(x, y, z)
-    ugrid = pyvista.UnstructuredGrid(grid)
+    grid = pv.StructuredGrid(x, y, z)
+    ugrid = pv.UnstructuredGrid(grid)
 
     if enclosed:
         # Normalise cells to unit size
@@ -391,7 +391,7 @@ def voxelize_volume(  # noqa: PLR0917
 
     """
     # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warnings.warn(
+    warn_external(
         '`pyvista.voxelize_volume` is deprecated. Use '
         '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
         PyVistaDeprecationWarning,
@@ -439,7 +439,7 @@ def voxelize_volume(  # noqa: PLR0917
             z = np.arange(z_min, z_max, density_z)
 
     # Create a RectilinearGrid
-    voi = pyvista.RectilinearGrid(x, y, z)
+    voi = pv.RectilinearGrid(x, y, z)
 
     # get part of the mesh within the mesh's bounding surface.
     selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
@@ -493,7 +493,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         msg = 'Please specify dimensions.'
         raise NotImplementedError(msg)
     dimensions = np.array(dimensions, dtype=int)
-    image = pyvista.ImageData()
+    image = pv.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
@@ -530,7 +530,7 @@ def grid_from_sph_coords(theta, phi, r):
     y_cart = z * np.sin(y) * np.sin(x)
     z_cart = z * np.cos(y)
     # Make a grid object
-    return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
+    return pv.StructuredGrid(x_cart, y_cart, z_cart)
 
 
 @_deprecate_positional_args
@@ -628,7 +628,7 @@ def spherical_to_cartesian(r, phi, theta):
 
     Returns
     -------
-    numpy.ndarray, numpy.ndarray, numpy.ndarray
+    output : numpy.ndarray, numpy.ndarray, numpy.ndarray
         Cartesian coordinates.
 
     """
@@ -712,7 +712,7 @@ def merge(  # noqa: PLR0917
         raise ValueError(msg)
 
     first = datasets[0]
-    if not isinstance(first, pyvista.DataSet):
+    if not isinstance(first, pv.DataSet):
         msg = f'Expected pyvista.DataSet, not {type(first).__name__}'
         raise TypeError(msg)
 

@@ -41,8 +41,8 @@ spheres.plot(show_scalar_bar=False)
 # ~~~~~~~~~~~~~~~~
 
 # Create a plotter object and set the scalars to the Z height
-plotter = pv.Plotter(notebook=False)
-plotter.add_mesh(
+pl = pv.Plotter(notebook=False)
+pl.add_mesh(
     spheres,
     show_edges=False,
     show_scalar_bar=False,
@@ -51,7 +51,7 @@ plotter.add_mesh(
 )
 
 # Open a gif
-plotter.open_gif('glyph_wave.gif')
+pl.open_gif('glyph_wave.gif')
 
 # Update Z and write a frame for each updated mesh
 nframe = 30
@@ -66,9 +66,9 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     spheres.copy_from(new_spheres)
 
     # Write a frame. This triggers a render.
-    plotter.write_frame()
+    pl.write_frame()
 
 # Close and finalize the gif
-plotter.close()
+pl.close()
 # %%
 # .. tags:: plot

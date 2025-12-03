@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Iterable
+from collections.abc import Sequence
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
-import warnings
+from typing import get_args
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
@@ -29,7 +31,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from typing import Any
 
     from numpy.typing import NDArray
 
@@ -39,6 +41,38 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
+_InterpolationOptions = Literal[
+    'nearest',
+    'linear',
+    'cubic',
+    'lanczos',
+    'hamming',
+    'blackman',
+    'bspline',
+    'bspline0',
+    'bspline1',
+    'bspline2',
+    'bspline3',
+    'bspline4',
+    'bspline5',
+    'bspline6',
+    'bspline7',
+    'bspline8',
+    'bspline9',
+]
+_AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
+_ConcatenateModeOptions = Literal[
+    'strict',
+    'resample-off-axis',
+    'resample-match',
+    'resample-proportional',
+    'crop-off-axis',
+    'crop-match',
+    'preserve-extents',
+]
+_ConcatenateDTypePolicyOptions = Literal['strict', 'promote', 'match']
+_ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 
 
 @abstract_class
@@ -379,7 +413,7 @@ class ImageDataFilters(DataSetFilters):
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
-            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions, strict=True)
         )
         voi = self._compute_voi_from_index(
             indices, index_mode=index_mode, strict_index=strict_index
@@ -780,18 +814,16 @@ class ImageDataFilters(DataSetFilters):
                 else:
                     msg = 'mask cannot be `False`.'
                     raise ValueError(msg)
-            elif isinstance(mask_, pyvista.ImageData):
+            elif isinstance(mask_, pv.ImageData):
                 mesh = mask_
                 scalars = None
             else:
-                mesh = pyvista.ImageData(dimensions=self.dimensions, offset=self.offset)
+                mesh = pv.ImageData(dimensions=self.dimensions, offset=self.offset)
                 scalars = 'scalars'
                 mesh[scalars] = mask_
 
             field, scalars_ = _validate_scalars(mesh, scalars)
-            array = cast(
-                'pyvista.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field)
-            )
+            array = cast('pv.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field))
             num_components = 1 if array.ndim == 1 else array.shape[1]
 
             # Create a binary foreground/background mask array
@@ -891,7 +923,7 @@ class ImageDataFilters(DataSetFilters):
             # Offset to center the new cropped region around the original center
             new_offset = center - ((new_dimensions - 1) // 2)
 
-            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_dimensions(dimensions_):
             valid_dims = _validation.validate_array3(
@@ -913,14 +945,14 @@ class ImageDataFilters(DataSetFilters):
             half_size = (new_dimensions - 1) // 2
             new_offset = center - half_size
 
-            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_margin(margin_):
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
             # Do not pad singleton dims
             singleton_dims = np.array(self.dimensions) == 1
-            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
+            mask = [x for pair in zip(singleton_dims, singleton_dims, strict=True) for x in pair]
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 
@@ -932,7 +964,7 @@ class ImageDataFilters(DataSetFilters):
             elif offset_ is None:
                 return _voi_from_dimensions(dimensions_)
             else:
-                return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
+                return pv.ImageData(dimensions=dimensions, offset=offset).extent
 
         if factor is not None:
             voi = _voi_from_factor(factor)
@@ -1004,6 +1036,10 @@ class ImageDataFilters(DataSetFilters):
     ):
         """Dilates one value and erodes another.
 
+        .. deprecated:: 0.47.0
+            :meth:`image_dilate_erode` is deprecated. Use :meth:`dilate`, :meth:`erode`,
+            :meth:`open`, or :meth:`close` instead.
+
         ``image_dilate_erode`` will dilate one value and erode another. It uses
         an elliptical footprint, and only erodes/dilates on the boundary of the
         two values. The filter is restricted to the X, Y, and Z axes for now.
@@ -1055,13 +1091,18 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh = uni.image_threshold([400, 600])
         >>> ithresh.plot()
 
-        Note how there is a hole in the thresholded image. Apply a dilation/
-        erosion filter with a large kernel to fill that hole in.
+        Note how there is a hole in the thresholded image. Apply a closing
+        filter with a large kernel to fill that hole in.
 
-        >>> idilate = ithresh.image_dilate_erode(kernel_size=[5, 5, 5])
-        >>> idilate.plot()
+        >>> iclosed = ithresh.close(kernel_size=[5, 5, 5])
+        >>> iclosed.plot()
 
         """
+        warn_external(
+            'image_dilate_erode is deprecated. Use dilate, erode, open, or close instead.',
+            PyVistaDeprecationWarning,
+        )
+
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
@@ -1087,6 +1128,639 @@ class ImageDataFilters(DataSetFilters):
         alg.SetErodeValue(erode_value)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
+
+    def _get_binary_values(  # type: ignore[misc]
+        self: ImageData,
+        scalars: str,
+        association: Literal[FieldAssociation.POINT],
+        *,
+        binary: bool | VectorLike[float] | None,
+    ) -> tuple[float, float] | None:
+        if binary is None:
+            # Value is unset, so check if the scalars are actually binary
+            array = self.get_array(scalars, association)
+            min_val, max_val = self.get_data_range(array)
+            # Binary if bool or two adjacent integers or two unique values
+            # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
+            if array.dtype == np.bool_ or (
+                np.issubdtype(array.dtype, np.integer) and (max_val - min_val) == 1
+            ):
+                return min_val, max_val
+            else:
+                unique = np.unique(array)
+                if unique.size in [1, 2]:
+                    return unique.min(), unique.max()
+            return None  # Scalars are not binary
+
+        elif binary is True:
+            # Use the range to set the values
+            return self.get_data_range(scalars, association)
+        elif binary is False:
+            # Do not return any values
+            return None
+        else:
+            # Binary values are set explicitly
+            return _validation.validate_data_range(binary, name='binary values')
+
+    def _configure_dilate_erode_alg(  # type: ignore[misc]
+        self: ImageData,
+        *,
+        kernel_size: int | VectorLike[int],
+        scalars: str,
+        association: Literal[FieldAssociation.POINT],
+        binary_values: tuple[float, float] | None,
+        operation: Literal['dilation', 'erosion'],
+    ) -> (
+        _vtk.vtkImageContinuousErode3D
+        | _vtk.vtkImageContinuousDilate3D
+        | _vtk.vtkImageDilateErode3D
+    ):
+        alg: (
+            _vtk.vtkImageContinuousErode3D
+            | _vtk.vtkImageContinuousDilate3D
+            | _vtk.vtkImageDilateErode3D
+        )
+
+        if binary_values is not None:
+            background_val, foreground_val = binary_values
+            if operation == 'dilation':
+                dilate_value = foreground_val
+                erode_value = background_val
+            else:
+                dilate_value = background_val
+                erode_value = foreground_val
+
+            alg = _vtk.vtkImageDilateErode3D()
+            alg.SetDilateValue(dilate_value)
+            alg.SetErodeValue(erode_value)
+        else:
+            alg = (
+                _vtk.vtkImageContinuousDilate3D()
+                if operation == 'dilation'
+                else _vtk.vtkImageContinuousErode3D()
+            )
+
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            association.value,
+            scalars,
+        )
+
+        kernal_sz = _validation.validate_array3(kernel_size, broadcast=True, name='kernel_size')
+        alg.SetKernelSize(*kernal_sz)
+        return alg
+
+    def _get_alg_output_from_input(self, alg, *, progress_bar: bool, operation: str):
+        alg.SetInputDataObject(self)
+        _update_alg(alg, progress_bar=progress_bar, message=f'Performing {operation}')
+        return _get_output(alg)
+
+    def _validate_point_scalars(  # type: ignore[misc]
+        self: ImageData, scalars: str | None = None
+    ) -> tuple[Literal[FieldAssociation.POINT], str]:
+        if scalars is None:
+            field, scalars = set_default_active_scalars(self)
+            if field == FieldAssociation.CELL:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = self.get_array_association(scalars, preference='point')
+            if field == FieldAssociation.CELL:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        return cast('Literal[FieldAssociation.POINT]', field), scalars
+
+    def dilate(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
+        *,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
+    ):
+        """Morphologically dilate grayscale or binary data.
+
+        This filter may be used to dilate grayscale images with continuous data, binary images
+        with a single background and foreground value, or multi-label images.
+
+        For binary inputs with two unique values, this filter uses :vtk:`vtkImageDilateErode3D`
+        by default to perform fast binary dilation over an ellipsoidal neighborhood. Otherwise,
+        the slower class :vtk:`vtkImageContinuousDilate3D` is used to perform generalized grayscale
+        dilation by replacing each pixel with the maximum over an ellipsoidal neighborhood.
+
+        Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
+        filter.
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are dilated, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        binary : bool | VectorLike[float], optional
+            Control if binary dilation or continuous dilation is used.
+
+            If set, :vtk:`vtkImageDilateErode3D` is used to strictly dilate with two values.
+            Set this to ``True`` to dilate the maximum value in ``scalars`` with its minimum value,
+            or set it to two values ``[background_value, foreground_value]`` to dilate
+            ``foreground_value`` with ``background_value`` explicitly.
+
+            Set this to ``False`` to use :vtk:`vtkImageContinuousDilate3D` to perform continuous
+            dilation.
+
+            By default, ``binary`` is ``True`` if the input has two unique values, and ``False``
+            otherwise.
+
+            .. note::
+                - If the input is a binary mask, setting ``binary=True`` produces the same output
+                  as ``binary=False``, but the filter is much more performant.
+                - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
+                  the dilation to two values, e.g. for multi-label segmentation masks.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been dilated.
+
+        See Also
+        --------
+        erode, open, close
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        .. pyvista-plot::
+            :force_static:
+
+            Create a toy example with two non-zero grayscale foreground values
+            :meth:`padded <pad_image>` with a background of zeros.
+
+            >>> import pyvista as pv
+            >>> im = pv.ImageData(dimensions=(2, 1, 1))
+            >>> im['data'] = [128, 255]
+            >>> im = im.pad_image(pad_value=0, pad_size=2, dimensionality=2)
+
+            Define a custom plotter to plot pixels as cells.
+
+            >>> def image_plotter(image):
+            ...     pl = pv.Plotter()
+            ...     pl.add_mesh(
+            ...         image.points_to_cells(),
+            ...         cmap='grey',
+            ...         clim=[0, 255],
+            ...         show_scalar_bar=False,
+            ...         show_edges=True,
+            ...         lighting=False,
+            ...         line_width=3,
+            ...     )
+            ...     pl.camera_position = 'xy'
+            ...     pl.camera.tight()
+            ...     pl.enable_anti_aliasing()
+            ...     return pl
+
+            Show the image.
+
+            >>> image_plotter(im).show()
+
+            Dilate it with default settings. Observe that `both` foreground values are dilated.
+
+            >>> dilated = im.dilate()
+            >>> image_plotter(dilated).show()
+
+            Use a larger kernel size.
+
+            >>> dilated = im.dilate(kernel_size=5)
+            >>> image_plotter(dilated).show()
+
+            Use an asymmetric kernel.
+
+            >>> dilated = im.dilate(kernel_size=(2, 4, 1))
+            >>> image_plotter(dilated).show()
+
+            Use binary dilation. By default, the max value (``255`` in this example) is dilated
+            with the min value (``0`` in this example). All other values are unaffected.
+
+            >>> dilated = im.dilate(binary=True)
+            >>> image_plotter(dilated).show()
+
+            Equivalently, set the binary values for the dilation explicitly.
+
+            >>> dilated = im.dilate(binary=[0, 255])
+            >>> image_plotter(dilated).show()
+
+            Use binary dilation with the other foreground value instead.
+
+            >>> dilated = im.dilate(binary=[0, 128])
+            >>> image_plotter(dilated).show()
+
+        """
+        association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
+        operation: Literal['dilation'] = 'dilation'
+        alg = self._configure_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary_values=binary_values,
+            operation=operation,
+        )
+        return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
+
+    def erode(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
+        *,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
+    ):
+        """Morphologically erode grayscale or binary data.
+
+        This filter may be used to erode grayscale images with continuous data, binary images
+        with a single background and foreground value, or multi-label images.
+
+        For binary inputs with two unique values, this filter uses :vtk:`vtkImageDilateErode3D`
+        by default to perform fast binary erosion over an ellipsoidal neighborhood. Otherwise,
+        the slower class :vtk:`vtkImageContinuousErode3D` is used to perform generalized grayscale
+        erosion by replacing each pixel with the minimum over an ellipsoidal neighborhood.
+
+        Optionally, the ``binary`` keyword may be used to explicitly control the behavior of the
+        filter.
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are eroded, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        binary : bool | VectorLike[float], optional
+            Control if binary erosion or continuous erosion is used.
+
+            If set, :vtk:`vtkImageDilateErode3D` is used to strictly erode with two values.
+            Set this to ``True`` to erode the maximum value in ``scalars`` with its minimum value,
+            or set it to two values ``[background_value, foreground_value]`` to erode
+            ``foreground_value`` with ``background_value`` explicitly.
+
+            Set this to ``False`` to use :vtk:`vtkImageContinuousErode3D` to perform continuous
+            erosion.
+
+            By default, ``binary`` is ``True`` if the input has two unique values, and ``False``
+            otherwise.
+
+            .. note::
+                - If the input is a binary mask, setting ``binary=True`` produces the same output
+                  as ``binary=False``, but the filter is much more performant.
+                - Setting ``binary=[background_value, foreground_value]`` is useful to `isolate`
+                  the erosion to two values, e.g. for multi-label segmentation masks.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been eroded.
+
+        See Also
+        --------
+        dilate, open, close
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        .. pyvista-plot::
+            :force_static:
+
+            Create a toy example with two non-zero grayscale foreground regions
+            using :meth:`pad_image`.
+
+            >>> import pyvista as pv
+            >>> # Create an initial background point
+            >>> im = pv.ImageData(dimensions=(1, 1, 1))
+            >>> im['data'] = [0]
+            >>> # Add a foreground region
+            >>> im = im.pad_image(pad_value=255, pad_size=(4, 3), dimensionality=2)
+            >>> # Add a second foreground region
+            >>> im = im.pad_image(pad_value=128, pad_size=(2, 0, 1, 0))
+            >>> # Add background values to two sides
+            >>> im = im.pad_image(pad_value=0, pad_size=(1, 0))
+
+            Define a custom plotter to plot pixels as cells.
+
+            >>> def image_plotter(image):
+            ...     pl = pv.Plotter()
+            ...     pl.add_mesh(
+            ...         image.points_to_cells(),
+            ...         cmap='grey',
+            ...         clim=[0, 255],
+            ...         show_scalar_bar=False,
+            ...         show_edges=True,
+            ...         lighting=False,
+            ...         line_width=3,
+            ...     )
+            ...     pl.camera_position = 'xy'
+            ...     pl.camera.tight()
+            ...     pl.enable_anti_aliasing()
+            ...     return pl
+
+            Show the image.
+
+            >>> image_plotter(im).show()
+
+            Erode it with default settings. Observe that `both` foreground values are eroded.
+
+            >>> eroded = im.erode()
+            >>> image_plotter(eroded).show()
+
+            Use a larger kernel size.
+
+            >>> eroded = im.erode(kernel_size=5)
+            >>> image_plotter(eroded).show()
+
+            Use an asymmetric kernel.
+
+            >>> eroded = im.erode(kernel_size=(2, 4, 1))
+            >>> image_plotter(eroded).show()
+
+            Use binary erosion. By default, the max value (``255`` in this example) is eroded
+            with the min value (``0`` in this example). All other values are unaffected.
+
+            >>> eroded = im.erode(binary=True)
+            >>> image_plotter(eroded).show()
+
+            Equivalently, set the binary values for the erosion explicitly.
+
+            >>> eroded = im.erode(binary=[0, 255])
+            >>> image_plotter(eroded).show()
+
+            Use binary erosion with the other foreground value instead.
+
+            >>> eroded = im.erode(binary=[0, 128])
+            >>> image_plotter(eroded).show()
+
+        """
+        association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
+        operation: Literal['erosion'] = 'erosion'
+        alg = self._configure_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary_values=binary_values,
+            operation=operation,
+        )
+        return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
+
+    def open(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
+        *,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
+    ):
+        """Perform morphological opening on continuous or binary data.
+
+        Opening is an :meth:`erosion <erode>` followed by a :meth:`dilation <dilate>`.
+        It is used to remove small objects/noise while preserving the shape and size of larger
+        objects.
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are opened, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        binary : bool | VectorLike[float], optional
+            Control if binary opening or continuous opening is used. Refer to
+            :meth:`erode` and/or :meth:`dilate` for details about using this keyword.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been opened.
+
+        See Also
+        --------
+        close, erode, dilate
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
+        for context.
+
+        >>> from pyvista import examples
+        >>> im = examples.download_chest()
+        >>> clim = im.get_data_range()
+        >>> kwargs = dict(
+        ...     cmap='grey',
+        ...     clim=clim,
+        ...     lighting=False,
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     show_axes=False,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> im.plot(**kwargs)
+
+        Use ``open`` to remove small objects in the lungs.
+
+        >>> opened = im.open(kernel_size=15)
+        >>> opened.plot(**kwargs)
+
+        """
+        # Opening: erosion followed by dilation
+        # Note: we need to configure both algorithms before getting the output since
+        # the selected erosion/dilation values may be affected by the alg update
+        association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
+
+        erosion: Literal['erosion'] = 'erosion'
+        erosion_alg = self._configure_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary_values=binary_values,
+            operation=erosion,
+        )
+
+        dilation: Literal['dilation'] = 'dilation'
+        dilation_alg = self._configure_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary_values=binary_values,
+            operation=dilation,
+        )
+
+        # Get filter outputs: erode then dilate
+        erosion_output = self._get_alg_output_from_input(
+            erosion_alg, progress_bar=progress_bar, operation=erosion
+        )
+        return erosion_output._get_alg_output_from_input(
+            dilation_alg, progress_bar=progress_bar, operation=dilation
+        )
+
+    def close(  # type: ignore[misc]
+        self: ImageData,
+        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
+        *,
+        binary: bool | VectorLike[float] | None = None,
+        progress_bar: bool = False,
+    ):
+        """Perform morphological closing on continuous or binary data.
+
+        Closing is a :meth:`dilation <dilate>` followed by an :meth:`erosion <erode>`.
+        It is used to fill small holes/gaps while preserving the shape and size of larger objects.
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+            Determines the size of the kernel along the xyz-axes. Only non-singleton dimensions
+            are closed, e.g. a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)`` produce the same
+            result for 2D images.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        binary : bool | VectorLike[float], optional
+            Control if binary closing or continuous closing is used. Refer to
+            :meth:`dilate` and/or :meth:`erode` for details about using this keyword.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been closed.
+
+        See Also
+        --------
+        open, erode, dilate
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+
+        >>> from pyvista import examples
+        >>> im = examples.download_yinyang()
+
+        Use ``close`` with a relatively small kernel to fill the top black edge of the yinyang.
+
+        >>> closed = im.close(kernel_size=5)
+        >>> kwargs = dict(
+        ...     cmap='grey',
+        ...     lighting=False,
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     show_axes=False,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> closed.plot(**kwargs)
+
+        Use a much larger kernel to also fill the small black circle.
+
+        >>> closed = im.close(kernel_size=25)
+        >>> closed.plot(**kwargs)
+
+        Since closing is the inverse of opening, we can alternatively use :meth:`open` to
+        fill the white foreground values instead of the black background.
+
+        >>> opened = im.open(kernel_size=25)
+        >>> opened.plot(**kwargs)
+
+        """
+        # Closing: dilation followed by erosion
+        # Note: we need to configure both algorithms before getting the output since
+        # the selected erosion/dilation values may be affected by the alg update
+        association, scalars = self._validate_point_scalars(scalars)
+        binary_values = self._get_binary_values(scalars, association, binary=binary)
+
+        dilation: Literal['dilation'] = 'dilation'
+        dilation_alg = self._configure_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary_values=binary_values,
+            operation=dilation,
+        )
+
+        erosion: Literal['erosion'] = 'erosion'
+        erosion_alg = self._configure_dilate_erode_alg(
+            kernel_size=kernel_size,
+            scalars=scalars,
+            association=association,
+            binary_values=binary_values,
+            operation=erosion,
+        )
+
+        # Get filter outputs: dilate then erode
+        dilation_output = self._get_alg_output_from_input(
+            dilation_alg, progress_bar=progress_bar, operation=erosion
+        )
+        return dilation_output._get_alg_output_from_input(
+            erosion_alg, progress_bar=progress_bar, operation=dilation
+        )
 
     @_deprecate_positional_args(allowed=['threshold'])
     def image_threshold(  # noqa: PLR0917
@@ -1578,7 +2252,7 @@ class ImageDataFilters(DataSetFilters):
             )
             raise ValueError(msg)
 
-    def _flip_uniform(self, axis) -> pyvista.ImageData:
+    def _flip_uniform(self, axis) -> pv.ImageData:
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -1588,7 +2262,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return cast('pyvista.ImageData', wrap(alg.GetOutput()))
+        return cast('pv.ImageData', wrap(alg.GetOutput()))
 
     @_deprecate_positional_args
     def contour_labeled(  # noqa: PLR0917
@@ -1602,7 +2276,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> pyvista.PolyData:
+    ) -> pv.PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp
@@ -1694,7 +2368,7 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
-        warnings.warn(
+        warn_external(
             'This filter produces unexpected results and is deprecated. '
             'Use `contour_labels` instead.'
             '\nRefer to the documentation for `contour_labeled` for details on how to '
@@ -1758,7 +2432,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pyvista.vtk_verbosity('off'):
+        with pv.vtk_verbosity('off'):
             _update_alg(
                 alg, progress_bar=progress_bar, message='Performing Labeled Surface Extraction'
             )
@@ -1774,7 +2448,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        orient_faces: bool = True,
+        orient_faces: bool | None = None,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1906,7 +2580,14 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        orient_faces : bool, default: True
+        orient_faces : bool, optional
+            .. deprecated:: 0.47
+
+                This keyword should not be used and will be removed in a future version. It was
+                meant to address a vtk bug where the faces generated by :vtk:`vtkSurfaceNets3D`
+                have incorrect orientation. This bug is fixed in VTK 9.6, and therefore the faces
+                now always have correct orientation by default.
+
             Orient the faces of the generated contours so that they have consistent
             ordering and face outward. If ``False``, the generated polygons may have
             inconsistent ordering and orientation, which can negatively impact
@@ -2014,8 +2695,8 @@ class ImageDataFilters(DataSetFilters):
 
         References
         ----------
-        S. Frisken, “SurfaceNets for Multi-Label Segmentations with Preservation of
-        Sharp Boundaries”, J. Computer Graphics Techniques, 2022. Available online:
+        S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
+        Sharp Boundaries, J. Computer Graphics Techniques, 2022. Available online:
         http://jcgt.org/published/0011/01/03/
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
@@ -2049,11 +2730,11 @@ class ImageDataFilters(DataSetFilters):
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
-        ...     plotter = pv.Plotter()
-        ...     plotter.add_mesh(colored_mesh, show_edges=True)
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(colored_mesh, show_edges=True)
         ...     if zoom:
-        ...         plotter.camera.zoom(zoom)
-        ...     return plotter
+        ...         pl.camera.zoom(zoom)
+        ...     return pl
         >>>
         >>> labels_plotter(image).show()
 
@@ -2315,6 +2996,16 @@ class ImageDataFilters(DataSetFilters):
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
 
+        if orient_faces is None:
+            orient_faces = bool(pv.vtk_version_info < (9, 5, 99))
+        else:
+            warn_external(
+                'Use of `orient_faces` is deprecated and should not be used. It will be removed '
+                'in a future version. With VTK 9.6 or later, the faces always have correct '
+                'orientation by default.',
+                PyVistaDeprecationWarning,
+            )
+
         _validation.check_contains(
             ['all', 'internal', 'external', 'strict_external'],
             must_contain=boundary_style,
@@ -2327,10 +3018,10 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
-        active_scalars = cast('pyvista.pyvista_ndarray', alg_input.active_scalars)
+        active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
-            return pyvista.PolyData()
+            return pv.PolyData()
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
@@ -2348,7 +3039,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                array_=cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
+                array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
                 select_inputs_=select_inputs,
                 select_outputs_=select_outputs,
             )
@@ -2363,10 +3054,10 @@ class ImageDataFilters(DataSetFilters):
 
         # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pyvista.vtk_verbosity('off'):
+        with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
-        output: pyvista.PolyData = _get_output(alg)
+        output: pv.PolyData = _get_output(alg)
 
         (  # Clear temp scalars from input
             alg_input.point_data.remove(temp_scalars_name)
@@ -2423,7 +3114,7 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
-            if pyvista.vtk_version_info >= (9, 4):
+            if pv.vtk_version_info >= (9, 4):
                 filter_ = _vtk.vtkOrientPolyData()
                 filter_.SetInputData(output)
                 filter_.ConsistencyOn()
@@ -2873,7 +3564,7 @@ class ImageDataFilters(DataSetFilters):
         cell_data = self.cell_data
 
         # Get data to use and operations to perform for the conversion
-        new_image = pyvista.ImageData()
+        new_image = pv.ImageData()
 
         if points_to_cells:
             output_scalars = scalars or _get_output_scalars('point')
@@ -2952,7 +3643,7 @@ class ImageDataFilters(DataSetFilters):
         pad_all_scalars: bool = False,
         progress_bar: bool = False,
         pad_singleton_dims: bool | None = None,
-    ) -> pyvista.ImageData:
+    ) -> ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
         .. versionadded:: 0.44.0
@@ -3122,14 +3813,14 @@ class ImageDataFilters(DataSetFilters):
         # Deprecated on v0.45.0, estimated removal on v0.48.0
         if pad_singleton_dims is not None:
             if pad_singleton_dims:
-                warnings.warn(
+                warn_external(
                     'Use of `pad_singleton_dims=True` is deprecated. '
                     'Use `dimensionality="3D"` instead',
                     PyVistaDeprecationWarning,
                 )
                 dimensionality = '3D'
             else:
-                warnings.warn(
+                warn_external(
                     'Use of `pad_singleton_dims=False` is deprecated. '
                     'Use `dimensionality="preserve"` instead',
                     PyVistaDeprecationWarning,
@@ -3281,7 +3972,7 @@ class ImageDataFilters(DataSetFilters):
         constant_value: int | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> tuple[pyvista.ImageData, NDArray[int], NDArray[int]]:
+    ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
         Only points whose `scalar` value is within the `scalar_range` are considered for
@@ -3512,7 +4203,7 @@ class ImageDataFilters(DataSetFilters):
                 msg = '`point_seeds` must be specified when `extraction_mode="seeded"`.'
                 raise ValueError(msg)
             elif not isinstance(point_seeds, _vtk.vtkDataSet):
-                point_seeds = pyvista.PointSet(point_seeds)
+                point_seeds = pv.PointSet(point_seeds)
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
@@ -3726,10 +4417,9 @@ class ImageDataFilters(DataSetFilters):
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
-        interpolation: Literal[
-            'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
-        ] = 'nearest',
+        interpolation: _InterpolationOptions = 'nearest',
         *,
+        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         anti_aliasing: bool = False,
@@ -3772,13 +4462,20 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman'
-            Interpolation mode to use. By default, ``'nearest'`` is used which
-            duplicates (if upsampling) or removes (if downsampling) values but
-            does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
-            and cubic interpolation, respectively, and may modify the values. The
-            ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
-            and may be used to preserve sharp details and/or reduce image artifacts.
+        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
+            Interpolation mode to use.
+
+            - ``'nearest'`` (default) duplicates (if upsampling) or removes (if downsampling)
+              values but does not modify them.
+            - ``'linear'`` and ``'cubic'`` use linear and cubic interpolation, respectively.
+            - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+              and may be used to preserve sharp details and/or reduce image artifacts.
+            - ``'bspline'`` uses an n-degree basis spline to smoothly interpolate across points.
+              The default degree is ``3``, but can range from ``0`` to ``9``. Append the desired
+              degree to the string to set it, e.g. ``'bspline5'`` for a 5th-degree B-spline.
+
+            .. versionadded:: 0.47
+                Added ``'bspline'`` interpolation.
 
             .. note::
 
@@ -3789,6 +4486,15 @@ class ImageDataFilters(DataSetFilters):
                 - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
                 - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
+        border_mode : 'clamp' | 'wrap' | 'mirror', default: 'clamp'
+            Controls the interpolation at the image's borders.
+
+            - ``'clamp'`` - values outside the image are clamped to the nearest edge.
+            - ``'wrap'`` - values outside the image are wrapped periodically along the axis.
+            - ``'mirror'`` - values outside the image are mirrored at the boundary.
+
+            .. versionadded:: 0.47
+
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
             to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
@@ -3796,7 +4502,7 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
             of the resampled image will all match the reference image.
 
-        dimensions : VectorLike[int]
+        dimensions : VectorLike[int], optional
             Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
 
             .. note::
@@ -3869,7 +4575,7 @@ class ImageDataFilters(DataSetFilters):
         :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
         instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
-        >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
+        >>> def image_plotter(image: pv.ImageData, clim=(0, 255)) -> pv.Plotter:
         ...     pl = pv.Plotter()
         ...     image = image.points_to_cells()
         ...     pl.add_mesh(
@@ -3877,10 +4583,13 @@ class ImageDataFilters(DataSetFilters):
         ...         lighting=False,
         ...         show_edges=True,
         ...         cmap='grey',
+        ...         clim=clim,
         ...         show_scalar_bar=False,
+        ...         line_width=3,
         ...     )
         ...     pl.view_xy()
         ...     pl.camera.tight()
+        ...     pl.enable_anti_aliasing()
         ...     return pl
 
         Show the image.
@@ -4065,31 +4774,31 @@ class ImageDataFilters(DataSetFilters):
         :func:`~pyvista.examples.downloads.download_puppy` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
-        >>> puppy = examples.download_puppy()
-        >>> puppy.dimensions
-        (1600, 1200, 1)
+        >>> bird = examples.download_bird()
+        >>> bird.dimensions
+        (458, 342, 1)
 
         >>> gourds = examples.download_gourds()
         >>> gourds.dimensions
         (640, 480, 1)
 
-        Use ``reference_image`` to resample the puppy to match the gourds geometry or
+        Use ``reference_image`` to resample the bird to match the gourds geometry or
         vice-versa.
 
-        >>> puppy_resampled = puppy.resample(reference_image=gourds)
-        >>> puppy_resampled.dimensions
+        >>> bird_resampled = bird.resample(reference_image=gourds)
+        >>> bird_resampled.dimensions
         (640, 480, 1)
 
-        >>> gourds_resampled = gourds.resample(reference_image=puppy)
+        >>> gourds_resampled = gourds.resample(reference_image=bird)
         >>> gourds_resampled.dimensions
-        (1600, 1200, 1)
+        (458, 342, 1)
 
-        Downsample the puppy image to 1/10th its original resolution using ``'lanczos'``
+        Downsample the gourds image to 1/10th its original resolution using ``'lanczos'``
         interpolation.
 
-        >>> downsampled = puppy.resample(0.1, 'lanczos')
+        >>> downsampled = gourds.resample(1 / 8, 'lanczos')
         >>> downsampled.dimensions
-        (160, 120, 1)
+        (80, 60, 1)
 
         Compare the downsampled image to the original and zoom in to show detail.
 
@@ -4103,20 +4812,67 @@ class ImageDataFilters(DataSetFilters):
         ...     plt.camera.zoom(3.0)
         ...     return plt
 
-        >>> plt = compare_images_plotter(puppy, downsampled)
+        >>> plt = compare_images_plotter(gourds, downsampled)
         >>> plt.show()
 
         Note that downsampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
-        >>> downsampled2 = puppy.resample(0.1, 'lanczos', anti_aliasing=True)
+        >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
 
         Compare down-sampling with aliasing (left) to without aliasing (right).
 
         >>> plt = compare_images_plotter(downsampled, downsampled2)
         >>> plt.show()
 
+        Load an MRI of a knee and downsample it.
+
+        >>> knee = pv.examples.download_knee().resample(
+        ...     0.1, 'linear', anti_aliasing=True
+        ... )
+
+        Crop and plot it.
+
+        >>> knee = knee.crop(normalized_bounds=[0.2, 0.8, 0.2, 0.8, 0.0, 1.0])
+        >>> vmin = knee.active_scalars.min()
+        >>> vmax = knee.active_scalars.max()
+        >>> plt = image_plotter(knee, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Upsample it with B-spline interpolation. The interpolation is very smooth.
+
+        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Use the ``'wrap'`` border mode. Note how points at the border are brighter than previously,
+        since the bright pixels from the opposite edge are now included in the interpolation.
+
+        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
+        Compare B-spline interpolation to ``'hamming'``.
+
+        >>> upsampled = knee.resample(2.0, 'hamming')
+        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> plt.show()
+
         """
+
+        def set_border_mode(
+            obj: _vtk.vtkImageBSplineCoefficients | _vtk.vtkAbstractImageInterpolator,
+        ):
+            if border_mode == 'clamp':
+                obj.SetBorderModeToClamp()
+            elif border_mode == 'mirror':
+                obj.SetBorderModeToMirror()
+            elif border_mode == 'wrap':
+                obj.SetBorderModeToRepeat()
+            else:  # pragma: no cover
+                msg = f"Unexpected border mode '{border_mode}'."  # type: ignore[unreachable]
+                raise RuntimeError(msg)
+
         # Process scalars
         if scalars is None:
             field, name = set_default_active_scalars(self)
@@ -4130,9 +4886,14 @@ class ImageDataFilters(DataSetFilters):
         input_dtype = active_scalars.dtype
         has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman'],
+            get_args(_InterpolationOptions),
             must_contain=interpolation,
             name='interpolation',
+        )
+        _validation.check_contains(
+            ['clamp', 'wrap', 'mirror'],
+            must_contain=border_mode,
+            name='border_mode',
         )
         if has_int_scalars:
             # int (long long) is not supported by the filter so we cast to float
@@ -4161,7 +4922,7 @@ class ImageDataFilters(DataSetFilters):
         # Setup reference image
         if reference_image is None:
             # Use the input as a reference
-            reference_image = pyvista.ImageData()
+            reference_image = pv.ImageData()
             reference_image.copy_structure(input_image)
             reference_image_provided = False
         else:
@@ -4171,7 +4932,7 @@ class ImageDataFilters(DataSetFilters):
                     'parameters.\n`reference_image` must define the geometry exclusively.'
                 )
                 raise ValueError(msg)
-            _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
+            _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
             reference_image_provided = True
 
         # Use SetMagnificationFactors to indirectly set the dimensions.
@@ -4235,10 +4996,24 @@ class ImageDataFilters(DataSetFilters):
         elif interpolation == 'blackman':
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
+        elif interpolation.startswith('bspline'):
+            interpolator = _vtk.vtkImageBSplineInterpolator()
+            # Set degree
+            degree = 3 if interpolation.endswith('bspline') else int(interpolation[-1])
+            interpolator.SetSplineDegree(degree)
+            # Need to pre-compute coefficients
+            coefficients = _vtk.vtkImageBSplineCoefficients()
+            coefficients.SetInputData(input_image)
+            set_border_mode(coefficients)
+            _update_alg(
+                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
+            )
+            input_image = _get_output(coefficients)
         else:  # pragma: no cover
-            msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
+            msg = f"Unexpected interpolation mode '{interpolation}'."
             raise RuntimeError(msg)
 
+        set_border_mode(interpolator)
         if anti_aliasing and np.any(magnification_factors < 1.0):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
@@ -4248,7 +5023,7 @@ class ImageDataFilters(DataSetFilters):
         resize_filter.SetInterpolator(interpolator)
 
         # Get output
-        _update_alg(resize_filter, progress_bar=progress_bar)
+        _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
         output_image = _get_output(resize_filter).copy(deep=False)
 
         # Set geometry from the reference
@@ -4438,7 +5213,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData or pyvista.MultiBlock
+        output : pyvista.ImageData | pyvista.MultiBlock
             Image with selected values or a composite of meshes with selected
             values, depending on ``split``.
 
@@ -4533,7 +5308,7 @@ class ImageDataFilters(DataSetFilters):
             preference=preference,
             component_mode=component_mode,
             split=split,
-            mesh_type=pyvista.ImageData,
+            mesh_type=pv.ImageData,
         )
         if isinstance(validated, tuple):
             (
@@ -4595,7 +5370,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Generate output array
         input_array = cast(
-            'pyvista.pyvista_ndarray',
+            'pv.pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
         )
         array_out = np.full_like(input_array, fill_value=fill_value)
@@ -4604,9 +5379,566 @@ class ImageDataFilters(DataSetFilters):
         )
         array_out[id_mask] = replacement_values
 
-        output = pyvista.ImageData()
+        output = pv.ImageData()
         output.copy_structure(self)
         output[array_name] = array_out
+        return output
+
+    def concatenate(  # type: ignore[misc]
+        self: ImageData,
+        images: ImageData | Sequence[ImageData],
+        axis: _AxisOptions | None = None,
+        *,
+        mode: _ConcatenateModeOptions | None = None,
+        dtype_policy: _ConcatenateDTypePolicyOptions | None = None,
+        component_policy: _ConcatenateComponentPolicyOptions | None = None,
+        background_value: float | VectorLike[float] = 0.0,
+        resample_kwargs: dict[str, Any] | None = None,
+    ):
+        """Combine multiple images into one.
+
+        This filter uses :vtk:`vtkImageAppend` to combine multiple images. By default, images are
+        concatenated along the specified ``axis``, and all images must have:
+
+        #. identical dimensions except along the specified ``axis``,
+        #. the same scalar dtype, and
+        #. the same number of scalar components.
+
+        Use ``mode`` for cases with mismatched dimensions, ``dtype_policy`` for cases with
+        mismatched dtypes, and/or ``component_policy`` for cases with mismatched scalar components.
+
+        The output has the same :attr:`~pyvista.ImageData.origin` and
+        :attr:`~pyvista.ImageData.spacing` as the first input. The origin and spacing of all other
+        inputs are ignored.
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        images : ImageData | Sequence[ImageData]
+            The input image(s) to concatenate. The default active scalars are used for all images.
+
+        axis : int | str, default: 'x'
+            Axis along which the images are concatenated:
+
+            - ``0`` or ``'x'``: x-axis
+            - ``1`` or ``'y'``: y-axis
+            - ``2`` or ``'z'``: z-axis
+
+        mode : str, default: 'strict'
+            Concatenation mode to use. This determines how images are placed in the output. All
+            modes operate along the specified ``axis`` except for ``'preserve-extents'``.
+            Specify one of:
+
+            - ``'strict'``: all images must have identical dimensions except along the specified
+              ``axis``.
+            - ``'resample-off-axis'``: :meth:`resample` off-axis dimensions of concatenated images
+              to match the input. The on-axis dimension is `not` resampled.
+            - ``'resample-match'``: :meth:`resample` all dimensions of concatenated images
+              to match the input dimensions exactly. This is similar to ``'resample-off-axis'``,
+              except the on-axis dimension is `also` resampled.
+            - ``'resample-proportional'``: :meth:`resample` concatenated images proportionally to
+              preserve their aspect ratio(s).
+            - ``'crop-off-axis'``: :meth:`crop` off-axis dimensions of concatenated images
+              to match the input. The on-axis dimension is `not` cropped.
+            - ``'crop-match'``: Use :meth:`crop` to center-crop concatenated images such that
+              their dimensions match the input dimensions exactly. This is similar to
+              ``'crop-off-axis'``, except the on-axis dimension is `also` cropped.
+            - ``'preserve-extents'``: the extents of all images are preserved and used to place the
+              images in the output. The whole extent of the output is the union of the input whole
+              extents. The origin and spacing is taken from the first input. ``axis`` is not used
+              by this mode.
+
+            .. note::
+                Images may be padded with ``background_value`` in some cases when there are
+                mismatched dimensions.
+
+        dtype_policy : 'strict' | 'promote' | 'match', default: 'strict'
+            - ``'strict'``: Do not cast any scalar array dtypes. All images being concatenated must
+              have the same dtype, else a ``TypeError`` is raised.
+            - ``'promote'``: Use :func:`numpy.result_type` to compute the dtype of the output
+              image scalars. This option safely casts all input arrays to a common dtype before
+              concatenating.
+            - ``'match'``: Cast all array dtypes to match the input's dtype. This casting is
+              unsafe as it may downcast values and lose precision.
+
+        component_policy : 'strict' | 'promote_rgba', default: 'strict'
+            - ``'strict'``: Do not modify the number of components of any scalars. All images being
+              concatenated must have the same number of components, else a ``ValueError`` is
+              raised.
+            - ``'promote_rgba'``: Increase the number of components if necessary. Grayscale scalars
+              with one component may be promoted to RGB scalars by duplicating values,
+              and RGB scalars may be promoted to RGBA scalars by including an opacity component.
+              For integer dtypes, the opacity is set to the max int representable by the dtype;
+              for floats it is set to ``1.0``.
+
+        background_value : float | VectorLike[float], default: 0
+            Value or multi-component vector to use as background. The output may be padded with
+            this value for some ``modes`` when there are mismatched dimensions.
+
+        resample_kwargs : dict, optional
+            Keyword arguments passed to :meth:`resample` when using ``'resample-off-axis'`` or
+            ``'resample-proportional'`` modes. Specify ``interpolation``, ``border_mode`` or
+            ``anti_aliasing`` options.
+
+        Returns
+        -------
+        ImageData
+            The concatenated image.
+
+        Examples
+        --------
+        .. pyvista-plot::
+            :force_static:
+
+            Load a 2D image: :func:`~pyvista.examples.downloads.download_beach`.
+
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> beach = examples.download_beach()
+
+            Use :meth:`select_values` to make a second version with white values converted to black
+            to distinguish it from the original.
+
+            >>> white = [255, 255, 255]
+            >>> black = [0, 0, 0]
+            >>> beach_black = beach.select_values(white, fill_value=black, invert=True)
+
+            Concatenate them along the x-axis.
+
+            >>> concatenated = beach.concatenate(beach_black, axis='x')
+            >>> plot_kwargs = dict(
+            ...     rgb=True,
+            ...     lighting=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ...     show_axes=False,
+            ...     show_scalar_bar=False,
+            ... )
+            >>> concatenated.plot(**plot_kwargs)
+
+            Concatenate them along the y-axis.
+
+            >>> concatenated = beach.concatenate(beach_black, axis='y')
+            >>> concatenated.plot(**plot_kwargs)
+
+            By default, concatenation requires that all off-axis dimensions match the input. Use
+            the ``mode`` keyword to enable concatenation with mismatched dimensions.
+
+            Load a second 2D image with different dimensions:
+            :func:`~pyvista.examples.downloads.download_bird`.
+
+            >>> bird = examples.download_bird()
+            >>> bird.dimensions
+            (458, 342, 1)
+            >>> beach.dimensions
+            (100, 100, 1)
+
+            Concatenate using ``'resample-proportional'`` mode to preserve the aspect ratio of the
+            concatenated image. Linear interpolation with antialiasing is used to avoid sampling
+            artifacts.
+
+            >>> resample_kwargs = {'interpolation': 'linear', 'anti_aliasing': True}
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (233, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The
+            ``bird``'s aspect ratio is preserved and padded with zeros so that it can be stacked
+            on top of ``beach``.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird,
+            ...     axis='z',
+            ...     mode='resample-proportional',
+            ...     resample_kwargs=resample_kwargs,
+            ... )
+            >>> concatenated.dimensions
+            (100, 100, 2)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-off-axis'`` to only resample off-axis dimensions. This option may
+            distort the image.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-off-axis', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (558, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'resample-match'`` to resample all dimensions to match the input exactly. This
+            option may also distort the image.
+
+            >>> concatenated = beach.concatenate(
+            ...     bird, mode='resample-match', resample_kwargs=resample_kwargs
+            ... )
+            >>> concatenated.dimensions
+            (200, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the
+            desired result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is
+            completely overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
+
+            >>> beach.extent
+            (0, 99, 0, 99, 0, 0)
+            >>> bird.extent
+            (0, 457, 0, 341, 0, 0)
+
+            >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+            >>> concatenated.extent
+            (0, 457, 0, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial
+            overlap instead.
+
+            >>> beach.offset = (-50, -50, 0)
+            >>> beach.extent
+            (-50, 49, -50, 49, 0, 0)
+
+            >>> concatenated = beach.concatenate(bird, mode='preserve-extents')
+            >>> concatenated.extent
+            (-50, 457, -50, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Reverse the concatenation order, and use a green background value.
+
+            >>> green = pv.Color('green').int_rgb
+            >>> concatenated = bird.concatenate(
+            ...     beach, mode='preserve-extents', background_value=green
+            ... )
+            >>> concatenated.extent
+            (-50, 457, -50, 341, 0, 0)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'crop-off-axis'`` to only crop off-axis dimensions.
+
+            >>> concatenated = beach.concatenate(bird, mode='crop-off-axis')
+            >>> concatenated.dimensions
+            (558, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Reverse the concatenation order.
+
+            >>> concatenated = bird.concatenate(beach, mode='crop-off-axis')
+            >>> concatenated.dimensions
+            (558, 342, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Use ``'crop-match'`` to center-crop the images to match the input's
+            dimensions.
+
+            >>> concatenated = beach.concatenate(bird, mode='crop-match')
+            >>> concatenated.dimensions
+            (200, 100, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Reverse the concatenation order, and use a grey background value.
+
+            >>> concatenated = bird.concatenate(
+            ...     beach, mode='crop-match', background_value=128
+            ... )
+            >>> concatenated.dimensions
+            (558, 342, 1)
+            >>> concatenated.plot(**plot_kwargs)
+
+            Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+
+            >>> yinyang = examples.download_yinyang()
+
+            Use ``component_policy`` to concatenate grayscale images with RGB(A) images.
+
+            >>> concatenated = yinyang.concatenate(
+            ...     beach, mode='resample-proportional', component_policy='promote_rgba'
+            ... )
+            >>> concatenated.plot(**plot_kwargs)
+
+            The grayscale portion of the image is promoted to RGB in this case and the entire
+            image has 3 components:
+
+            >>> concatenated.active_scalars.shape
+            (292068, 3)
+
+        """
+
+        def _compute_dimensions(
+            reference_dimensions: tuple[int, int, int], image_dimensions: tuple[int, int, int]
+        ) -> tuple[int, int, int]:
+            # Image must match the reference's non-concatenating axes exactly,
+            # but we leave the image's concatenating axis unchanged
+            new_dims = list(reference_dimensions)
+            new_dims[axis_num] = image_dimensions[axis_num]
+            return cast('tuple[int, int, int]', tuple(new_dims))
+
+        def _compute_sample_rate(
+            reference_image: ImageData, image: ImageData
+        ) -> tuple[np.float64, np.int64 | None]:
+            ref_dims = np.array(reference_image.dimensions)
+            img_dims = np.array(image.dimensions)
+            # Try to preserve image aspect ratio
+            off_axis = np.arange(3) != axis_num
+            not_singleton = ref_dims != 1
+            fixed_axes = off_axis & not_singleton
+
+            # Resample the image proportionally to match the axes
+            sample_rate_array = ref_dims / img_dims
+            if sample_rate_array[fixed_axes].size == 0:
+                return np.float64(1.0), None
+            sample_rate = sample_rate_array[fixed_axes][0]
+            n_fixed_axes = np.count_nonzero(fixed_axes)
+
+            if n_fixed_axes == 1:
+                # No issues resampling to match the single axis
+                return sample_rate, None
+            elif n_fixed_axes == 2:
+                # We must check that both axes have the same proportion for both images
+                ref_ratio = ref_dims[fixed_axes][0] / ref_dims[fixed_axes][1]
+                img_ratio = img_dims[fixed_axes][0] / img_dims[fixed_axes][1]
+                if np.isclose(ref_ratio, img_ratio):
+                    return sample_rate, None
+            # Need to choose between two sampling rates
+            # We pick the smaller rate then pad out the image later
+            sample_rate = sample_rate_array[fixed_axes].min()
+            pad_axis = np.where((sample_rate_array != sample_rate) & fixed_axes)[0][0]
+            return sample_rate, pad_axis
+
+        # Validate mode
+        if mode is not None:
+            options = get_args(_ConcatenateModeOptions)
+            _validation.check_contains(options, must_contain=mode, name='mode')
+        else:
+            mode = 'strict'
+
+        # Validate axis
+        mapping_axis_to_num = {'x': 0, 'y': 1, 'z': 2, 0: 0, 1: 1, 2: 2}
+        mapping_axis_to_str = {'x': 'x', 'y': 'y', 'z': 'z', 0: 'x', 1: 'y', 2: 'z'}
+        if axis is not None:
+            if mode == 'preserve-extents':
+                msg = "The axis keyword cannot be used with 'preserve-extents' mode."
+                raise ValueError(msg)
+            options = get_args(_AxisOptions)
+            _validation.check_contains(options, must_contain=axis, name='axis')
+            axis_num = mapping_axis_to_num[axis]
+        else:
+            axis_num = 0
+
+        # Validate dtype policy
+        if dtype_policy is not None:
+            options = get_args(_ConcatenateDTypePolicyOptions)
+            _validation.check_contains(options, must_contain=dtype_policy, name='dtype_policy')
+        else:
+            dtype_policy = 'strict'
+
+        # Validate component policy
+        if component_policy is not None:
+            options = get_args(_ConcatenateComponentPolicyOptions)
+            _validation.check_contains(
+                options, must_contain=component_policy, name='component_policy'
+            )
+        else:
+            component_policy = 'strict'
+
+        all_images = [self, *images] if isinstance(images, Sequence) else [self, images]
+
+        self_dimensions = self.dimensions
+        all_dtypes: list[np.dtype] = []
+        all_n_components: list[int] = []
+        all_scalars: list[str] = []
+        all_extents: list[tuple[int, int, int, int, int, int]] = []
+        for i, img in enumerate(all_images):
+            if i > 0:
+                _validation.check_instance(img, pv.ImageData)
+
+            # Create shallow copies so we can safely modify if needed
+            img_copy = img.copy(deep=False)
+            _, scalars = img_copy._validate_point_scalars()
+            all_scalars.append(scalars)
+            array = img.point_data[scalars]
+            all_dtypes.append(array.dtype)
+            n_components = array.shape[1] if array.ndim == 2 else array.ndim
+            all_n_components.append(n_components)
+
+            if mode == 'preserve-extents':
+                all_extents.append(img.extent)
+            elif i > 0:
+                if (dims := img.dimensions) != self_dimensions:
+                    # Need to deal with the dimensions mismatch
+                    if mode == 'strict':
+                        # Allow mismatch only along concatenating axis
+                        for ax in range(3):
+                            if ax != axis_num and dims[ax] != self_dimensions[ax]:
+                                image_num = f'{i - 1} ' if len(all_images) > 2 else ''
+                                this_axis = mapping_axis_to_str[ax]
+                                msg = (
+                                    f'Image {image_num}dimensions {img.dimensions} must '
+                                    f'match off-axis dimensions {self.dimensions} for axis '
+                                    f'{axis_num}.\nGot {this_axis} dimension {dims[ax]}, expected '
+                                    f'{self_dimensions[ax]}. Use the `mode` keyword to allow '
+                                    f'concatenation with\nmismatched dimensions.'
+                                )
+                                raise ValueError(msg)
+                    elif mode.startswith('resample'):
+                        kwargs = {}
+                        if resample_kwargs:
+                            _validation.check_instance(resample_kwargs, dict)
+                            allowed_kwargs = ('anti_aliasing', 'interpolation', 'border_mode')
+                            for kwarg in resample_kwargs.keys():
+                                _validation.check_contains(
+                                    allowed_kwargs, must_contain=kwarg, name='resample_kwargs'
+                                )
+                            kwargs.update(resample_kwargs)
+
+                        pad_axis = None
+                        if mode == 'resample-off-axis':
+                            kwargs['dimensions'] = _compute_dimensions(
+                                self_dimensions, img.dimensions
+                            )
+                        elif mode == 'resample-match':
+                            kwargs['dimensions'] = self_dimensions
+                        else:  # mode == 'resample-proportional
+                            sample_rate, pad_axis = _compute_sample_rate(self, img)
+                            kwargs['sample_rate'] = sample_rate
+
+                        img_copy = img_copy.resample(**kwargs)
+                        if pad_axis is not None:
+                            # Pad out 3D case where one axis is mismatched
+                            xyz_padding = np.abs(
+                                np.array(img_copy.dimensions) - np.array(self_dimensions)
+                            )
+                            pad_size = np.zeros((6,), dtype=int)
+                            pad_ind = pad_axis * 2 + 1
+                            pad_size[pad_ind] = xyz_padding[pad_axis]
+                            img_copy = img_copy.pad_image(
+                                pad_size=pad_size, pad_value=background_value
+                            )
+
+                    elif mode == 'crop-off-axis':
+                        dimensions = _compute_dimensions(self_dimensions, img_copy.dimensions)
+                        img_copy = img_copy.crop(dimensions=dimensions)
+                    else:  # mode == 'crop-match'
+                        img_copy = img_copy.crop(dimensions=self_dimensions)
+
+                        if (
+                            not np.array_equal(background_value, 0)
+                            and img_copy.dimensions != self_dimensions
+                        ):
+                            # vtkImageAppend pads with zeros by default, if we want any other value
+                            # though we need to pad these values ourselves beforehand
+                            dimensions_padding = np.zeros((3,), dtype=int)
+                            dimensions_diff = np.array(self_dimensions) - img_copy.dimensions
+                            needs_padding = (dimensions_diff > 0) & (np.arange(3) != axis_num)
+                            dimensions_padding[needs_padding] = dimensions_diff[needs_padding]
+                            pad_size = np.zeros((6,), dtype=int)
+                            pad_ind = np.nonzero(needs_padding)[0] * 2 + 1  # type: ignore[assignment]
+                            pad_size[pad_ind] = dimensions_padding[needs_padding]
+                            img_copy = img_copy.pad_image(
+                                pad_size=pad_size, pad_value=background_value
+                            )
+
+            if mode.startswith(('resample', 'crop')):
+                # These modes should not be affected by offset, so we zero it
+                img_copy.offset = (0, 0, 0)
+
+            # Replace input with modified copy
+            all_images[i] = img_copy
+
+        if len(set(all_dtypes)) > 1:
+            # Need to cast all scalars to the same dtype
+            if dtype_policy == 'strict':
+                msg = (
+                    f'The dtypes of the scalar arrays do not match. Got multiple '
+                    f"dtypes: {set(all_dtypes)}.\nSet the dtype policy to 'promote' or "
+                    f"'match' to cast the inputs to a single dtype."
+                )
+                raise TypeError(msg)
+            elif dtype_policy == 'promote':
+                dtype_out = np.result_type(*all_dtypes)
+            else:  # dtype_policy == 'match'
+                dtype_out = all_dtypes[0]
+
+            for img, scalars in zip(all_images, all_scalars, strict=True):
+                array = img.point_data[scalars]
+                img.point_data[scalars] = array.astype(dtype_out, copy=False)
+        else:
+            dtype_out = all_images[0].point_data[all_scalars[0]].dtype
+
+        target_n_components = max(all_n_components)
+        if len(set(all_n_components)) > 1:
+            # Need to ensure all scalars have the same number of components
+            if component_policy == 'strict':
+                msg = (
+                    f'The number of components in the scalar arrays do not match. Got n '
+                    f'components: {set(all_n_components)}.\nSet the component policy to '
+                    f"'promote_rgba' to automatically increase the number of components as needed."
+                )
+                raise ValueError(msg)
+            else:  # component_policy == 'promote_rgba'
+                if not set(all_n_components) < {1, 3, 4}:
+                    msg = (
+                        'Unable to promote scalar components. Only promotion for grayscale (1 '
+                        'component), RGB (3 components),\nand RGBA (4 components) is supported. '
+                        f'Got: {set(all_n_components)}'
+                    )
+                    raise ValueError(msg)
+
+                for img, n_components, scalars in zip(
+                    all_images, all_n_components, all_scalars, strict=True
+                ):
+                    if n_components < target_n_components:
+                        array = img.point_data[scalars]
+                        if n_components < 3:
+                            array = np.vstack((array, array, array)).T  # type: ignore[assignment]
+                        if target_n_components == 4:
+                            fill_value = (
+                                np.iinfo(dtype_out).max
+                                if np.issubdtype(dtype_out, np.integer)
+                                else 1.0
+                            )
+                            new_array = np.full((len(array), 4), fill_value, dtype=dtype_out)
+                            new_array[:, :3] = array
+                            array = new_array  # type: ignore[assignment]
+
+                        img.point_data[scalars] = array
+
+        if mode == 'preserve-extents' and not np.array_equal(background_value, 0):
+            # vtkImageAppend pads with zeros by default, but if we want any other value
+            # we create a new background image and insert it as the first image
+
+            # Compute whole extent of all images
+            extents = np.array(all_extents)
+            mins = extents.min(axis=0)[0::2]
+            maxs = extents.max(axis=0)[1::2]
+
+            whole_extent = np.zeros((6,), dtype=int)
+            whole_extent[0::2] = mins
+            whole_extent[1::2] = maxs
+
+            # Create background image
+            background_img = pv.ImageData(origin=self.origin, spacing=self.spacing)
+            background_img.field_data.update(self.field_data)
+            background_img.extent = whole_extent
+            target_shape = (background_img.n_points, target_n_components)
+            value = np.array(background_value, dtype=dtype_out)
+            background_img.point_data[all_scalars[0]] = np.broadcast_to(value, target_shape)
+
+            all_images.insert(0, background_img)
+
+        alg = _vtk.vtkImageAppend()
+        alg.SetAppendAxis(axis_num)
+        alg.SetPreserveExtents(mode == 'preserve-extents')
+
+        for img in all_images:
+            alg.AddInputData(img)
+
+        _update_alg(alg)
+        output = _get_output(alg)
+        if mode != 'preserve-extents':
+            output.offset = self.offset
         return output
 
 

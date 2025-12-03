@@ -6,11 +6,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 import trimesh
-import vtk
-from vtk.util import numpy_support
 
 import pyvista as pv
-from pyvista.core import _vtk_core
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -33,7 +31,7 @@ def test_wrap_pyvista_ndarray(sphere):
 def test_wrap_raises():
     with pytest.raises(
         NotImplementedError,
-        match='NumPy array could not be wrapped pyvista.',
+        match=r'NumPy array could not be wrapped pyvista.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
 
@@ -63,12 +61,12 @@ def test_wrap_raises_unable():
 @pytest.mark.parametrize(
     'dtypes',
     [
-        (np.float64, _vtk_core.vtkDoubleArray),
-        (np.float32, _vtk_core.vtkFloatArray),
-        (np.int64, _vtk_core.vtkTypeInt64Array),
-        (np.int32, _vtk_core.vtkTypeInt32Array),
-        (np.int8, _vtk_core.vtkSignedCharArray),
-        (np.uint8, _vtk_core.vtkUnsignedCharArray),
+        (np.float64, _vtk.vtkDoubleArray),
+        (np.float32, _vtk.vtkFloatArray),
+        (np.int64, _vtk.vtkTypeInt64Array),
+        (np.int32, _vtk.vtkTypeInt32Array),
+        (np.int8, _vtk.vtkSignedCharArray),
+        (np.uint8, _vtk.vtkUnsignedCharArray),
     ],
 )
 def test_wrap_pyvista_ndarray_vtk(dtypes):
@@ -121,7 +119,7 @@ def test_make_tri_mesh(sphere):
 
 
 def test_wrappers():
-    vtk_data = vtk.vtkPolyData()
+    vtk_data = _vtk.vtkPolyData()
     pv_data = pv.wrap(vtk_data)
     assert isinstance(pv_data, pv.PolyData)
 
@@ -165,7 +163,7 @@ def test_wrap_no_copy():
     assert mesh == wrapped
     assert wrapped is mesh
 
-    mesh = vtk.vtkPolyData()
+    mesh = _vtk.vtkPolyData()
     wrapped = pv.wrap(mesh)
     assert wrapped == pv.wrap(wrapped)
     assert wrapped is pv.wrap(wrapped)
@@ -223,12 +221,12 @@ def test_array_association():
 
     # missing cases
     mesh.clear_data()
-    with pytest.raises(KeyError, match='not present in this dataset.'):
+    with pytest.raises(KeyError, match=r'not present in this dataset.'):
         assoc = mesh.get_array_association('missing')
     assoc = pv.get_array_association(mesh, 'missing', err=False)
     assert assoc == FieldAssociation.NONE
 
-    with pytest.raises(ValueError, match='not supported.'):
+    with pytest.raises(ValueError, match=r'not supported.'):
         mesh.get_array_association('name', preference='row')
 
 
@@ -385,7 +383,7 @@ def test_vtk_points_force_float(force_float, expected_data_type):
             vtk_points = pv.vtk_points(np_points, force_float=force_float)
     else:
         vtk_points = pv.vtk_points(np_points, force_float=force_float)
-    as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
+    as_numpy = _vtk.vtk_to_numpy(vtk_points.GetData())
 
     assert as_numpy.dtype == expected_data_type
 

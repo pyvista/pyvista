@@ -3,10 +3,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import scipy
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
@@ -282,9 +282,9 @@ def test_actor_backface_prop(actor):
 
 
 def test_vol_actor_prop(vol_actor):
-    assert isinstance(vol_actor.prop, vtk.vtkVolumeProperty)
+    assert isinstance(vol_actor.prop, _vtk.vtkVolumeProperty)
 
-    prop = vtk.vtkVolumeProperty()
+    prop = _vtk.vtkVolumeProperty()
     vol_actor.prop = prop
     assert vol_actor.prop is prop
 

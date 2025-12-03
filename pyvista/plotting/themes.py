@@ -40,9 +40,9 @@ import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-import warnings
 
 import pyvista  # noqa: TC001
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -69,7 +69,7 @@ def _set_plot_theme_from_env() -> None:
             set_plot_theme(theme.lower())
         except ValueError:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
-            warnings.warn(
+            warn_external(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
             )
@@ -108,8 +108,16 @@ def set_plot_theme(theme):
     Parameters
     ----------
     theme : str
-        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
-        or ``'paraview'``.
+        The theme name.  Available predefined theme names include:
+
+        - ``'dark'``,
+        - ``'default'``,
+        - ``'document'``,
+        - ``'document_build'``,
+        - ``'document_pro'``,
+        - ``'paraview'``,
+        - ``'testing'`` and
+        - ``'vtk'``.
 
     Examples
     --------
@@ -996,9 +1004,9 @@ class _Font(_ThemeConfig):
 
     >>> pv.global_theme.font.color = 'grey'
 
-    Set the string formatter used to format numerical data to '%.6e'
+    Set the string formatter used to format numerical data to '{:.6e}'
 
-    >>> pv.global_theme.font.fmt = '%.6e'
+    >>> pv.global_theme.font.fmt = '{:.6e}'
 
     """
 
@@ -1133,10 +1141,10 @@ class _Font(_ThemeConfig):
 
         Examples
         --------
-        Set the string formatter used to format numerical data to '%.6e'.
+        Set the string formatter used to format numerical data to '{:.6e}'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
         return self._fmt  # type: ignore[return-value]
@@ -1548,7 +1556,7 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):
         if enabled and self.jupyter_extension_enabled:
-            warnings.warn('Enabling server_proxy will disable jupyter_extension')
+            warn_external('Enabling server_proxy will disable jupyter_extension')
             self._jupyter_extension_enabled = False
 
         self._server_proxy_enabled = bool(enabled)
@@ -1569,8 +1577,8 @@ class _TrameConfig(_ThemeConfig):
 
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):
-        warnings.warn(
-            'The jupyter_extension_available flag is read only and is automatically detected.',
+        warn_external(
+            'The jupyter_extension_available flag is read only and is automatically detected.'
         )
 
     @property
@@ -1585,7 +1593,7 @@ class _TrameConfig(_ThemeConfig):
             raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
-            warnings.warn('Enabling jupyter_extension will disable server_proxy')
+            warn_external('Enabling jupyter_extension will disable server_proxy')
             self._server_proxy_enabled = False
 
         self._jupyter_extension_enabled = bool(enabled)
@@ -1946,11 +1954,11 @@ class Theme(_ThemeConfig):
         ...     **dargs,
         ... )
         >>> p.link_views()
-        >>> p.camera_position = [
-        ...     (-1.67, -5.10, 2.06),
-        ...     (0.0, 0.0, 0.0),
-        ...     (0.00, 0.37, 0.93),
-        ... ]
+        >>> p.camera_position = pv.CameraPosition(
+        ...     position=(-1.67, -5.10, 2.06),
+        ...     focal_point=(0.0, 0.0, 0.0),
+        ...     viewup=(0.00, 0.37, 0.93),
+        ... )
         >>> p.show()  # doctest: +SKIP
 
         """
@@ -2315,9 +2323,9 @@ class Theme(_ThemeConfig):
 
         >>> pv.global_theme.font.color = 'grey'
 
-        String formatter used to format numerical data to '%.6e'.
+        String formatter used to format numerical data to '{:.6e}'.
 
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
         return self._font

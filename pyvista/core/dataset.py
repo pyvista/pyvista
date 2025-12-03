@@ -12,12 +12,12 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -48,6 +48,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from typing_extensions import Self
+
+    from pyvista import Cell
+    from pyvista import PointSet
 
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
@@ -119,7 +122,7 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         self.association = association
         self.name = name
         # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
+        warn_external(
             'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
             PyVistaDeprecationWarning,
         )
@@ -188,7 +191,7 @@ class DataSet(DataSetFilters, DataObject):
 
     """
 
-    plot = pyvista._plot.plot
+    plot = pv._plot.plot
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""
@@ -590,7 +593,7 @@ class DataSet(DataSetFilters, DataObject):
     @property
     def arrows(
         self: Self,
-    ) -> pyvista.PolyData | None:
+    ) -> pv.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points or cells of the mesh and
@@ -952,7 +955,7 @@ class DataSet(DataSetFilters, DataObject):
         # If array has no tuples return a NaN range
         if arr is None:
             return (np.nan, np.nan)
-        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not (arr.dtype == bool or np.issubdtype(arr.dtype, np.number)):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
@@ -1353,7 +1356,7 @@ class DataSet(DataSetFilters, DataObject):
         self: Self,
         name: str,
         preference: CellLiteral | PointLiteral | FieldLiteral = 'cell',
-    ) -> pyvista.pyvista_ndarray:
+    ) -> pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
         Parameters
@@ -1569,10 +1572,10 @@ class DataSet(DataSetFilters, DataObject):
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
         attrs.append(('N Points', self.GetNumberOfPoints(), '{}'))
-        if isinstance(self, pyvista.PolyData):
+        if isinstance(self, pv.PolyData):
             attrs.append(('N Strips', self.n_strips, '{}'))
         bds = self.bounds
-        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        fmt = f'{pv.FLOAT_FORMAT}, {pv.FLOAT_FORMAT}'
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
@@ -1612,10 +1615,10 @@ class DataSet(DataSetFilters, DataObject):
                 if isinstance(arr, str):
                     # Convert string scalar into a numpy array. Otherwise, get_data_range
                     # will treat the string as an array name, not an array value.
-                    arr = pyvista.pyvista_ndarray(arr)  # type: ignore[arg-type]
+                    arr = pv.pyvista_ndarray(arr)  # type: ignore[arg-type]
                 dl, dh = self.get_data_range(arr)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
+                dl = pv.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pv.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1
@@ -1680,7 +1683,7 @@ class DataSet(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def cast_to_unstructured_grid(self: Self) -> pyvista.UnstructuredGrid:
+    def cast_to_unstructured_grid(self: Self) -> pv.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
@@ -1708,7 +1711,7 @@ class DataSet(DataSetFilters, DataObject):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1741,7 +1744,7 @@ class DataSet(DataSetFilters, DataObject):
         <class 'pyvista.core.pointset.PointSet'>
 
         """
-        pset = pyvista.PointSet()
+        pset = pv.PointSet()
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
@@ -1749,7 +1752,7 @@ class DataSet(DataSetFilters, DataObject):
         return pset
 
     @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001, FBT002
+    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pv.PolyData:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1798,7 +1801,7 @@ class DataSet(DataSetFilters, DataObject):
             Spatial Cell Data       float64    (1000,)
 
         """
-        pset = pyvista.PolyData(self.points.copy())
+        pset = pv.PolyData(self.points.copy())
         if pass_cell_data:
             cell_data = self.copy()
             cell_data.clear_point_data()
@@ -2029,7 +2032,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        int or numpy.ndarray
+        output : int | numpy.ndarray
             Index or indices of the cell in this mesh that contains
             the given point.
 
@@ -2251,7 +2254,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self: Self, index: int) -> pyvista.Cell:
+    def get_cell(self: Self, index: int) -> Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2313,13 +2316,13 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()
+        cell = pv.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
 
     @property
-    def cell(self: Self) -> Iterator[pyvista.Cell]:
+    def cell(self: Self) -> Iterator[Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -2823,7 +2826,7 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-        if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+        if (9, 4, 0) <= pv.vtk_version_info < (9, 5, 0):
             # Need to reverse the order
             return out[::-1]
         return out
@@ -2847,7 +2850,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        bool or numpy.ndarray
+        output : bool | numpy.ndarray
             Whether point(s) is/are inside cell. A single bool is only returned if
             the input point has shape ``(3,)``.
 
@@ -2958,3 +2961,60 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.n_points == 0
+
+    @property
+    def dimensionality(self: Self) -> Literal[0, 1, 2, 3]:
+        """Return the spatial dimensions spanned by this dataset.
+
+        .. versionchanged:: 0.47
+
+            This property is now generalized for all datasets. Previously, it was only available
+            for datasets with a ``dimensions`` property.
+
+        Returns
+        -------
+        int
+            The dimensionality of the dataset.
+
+        Examples
+        --------
+        A single point has ``0`` dimensionality.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+        >>> mesh.dimensionality
+        0
+
+        With two points, the dimensionality is ``1``.
+
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> mesh.dimensionality
+        1
+
+        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
+        a dimensionality of ``2``.
+
+        >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Plane` also has dimensionality of ``2``, even if it's arbitrarily
+        rotated in space.
+
+        >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+        >>> mesh.dimensionality
+        2
+
+        A :func:`~pyvista.Cube` has a dimensionality of 3.
+
+        >>> mesh = pv.Cube()
+        >>> mesh.dimensionality
+        3
+
+        """
+        if self.n_points == 0:
+            return 0
+        elif hasattr(self, 'dimensions'):
+            dims = np.asarray(self.dimensions)
+            return int(3 - (dims == 1).sum())  # type: ignore[return-value]
+        return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
