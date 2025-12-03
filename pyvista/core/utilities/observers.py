@@ -12,9 +12,9 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
-import warnings
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKOutputMessageError
 from pyvista.core.errors import VTKOutputMessageWarning
@@ -146,7 +146,7 @@ class VtkErrorCatcher:
         raise VTKOutputMessageError(message)
 
     def _emit_warning(self, message: str):
-        warnings.warn(message, VTKOutputMessageWarning)
+        warn_external(message, VTKOutputMessageWarning)
 
 
 class VtkEvent(NamedTuple):
