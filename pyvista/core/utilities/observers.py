@@ -54,12 +54,12 @@ class VtkErrorCatcher:
     Parameters
     ----------
     raise_errors : bool, default: False
-        Raise a :class:`~pyvista.VTKExecutionError` (a runtime error) when a VTK error
+        Raise a ``pyvista.VTKExecutionError`` (a runtime error) when a VTK error
         is observed.
 
         .. versionchanged:: 0.47
 
-            A :class:`~pyvista.VTKExecutionError` is now raised instead of a generic
+            A ``pyvista.VTKExecutionError`` is now raised instead of a generic
             ``RuntimeError``.
 
     send_to_logging : bool, default: True
@@ -67,7 +67,7 @@ class VtkErrorCatcher:
         also be sent to logging.
 
     emit_warnings : bool, default: False
-        Emit a :class:`~pyvista.VTKExecutionWarning` (a runtime warning) when a VTK warning
+        Emit a ``pyvista.VTKExecutionWarning`` (a runtime warning) when a VTK warning
         is observed.
 
         .. versionadded:: 0.47
