@@ -767,7 +767,7 @@ def load_frog_tissues():
     Make and show plot
 
     >>> pl = pv.Plotter()
-    >>> _ = p.add_volume(
+    >>> _ = pl.add_volume(
     ...     data,
     ...     clim=clim,
     ...     ambient=ambient,
