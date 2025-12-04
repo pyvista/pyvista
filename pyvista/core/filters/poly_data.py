@@ -2038,6 +2038,12 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Clip a closed polydata surface with a plane.
 
+        The origin and normal may be set explicitly or implicitly using a
+        :func:`~pyvista.Plane`.
+
+        If no parameters are given, the clip will occur in the center
+        of the dataset along the x-axis.
+
         This currently only supports one plane but could be
         implemented to handle a plane collection.
 
@@ -3331,6 +3337,9 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Project points of this mesh to a plane.
 
+        The origin and normal may be set explicitly or implicitly using a
+        :func:`~pyvista.Plane`.
+
         Parameters
         ----------
         origin : VectorLike[float], optional
@@ -3386,7 +3395,7 @@ class PolyDataFilters(DataSetFilters):
         ...     viewup=(-0.25, -0.25, 1.0),
         ... )
         >>> pl.camera_position = cpos
-        >>> pl.show(return_cpos=True)
+        >>> pl.show()
 
         """
         origin_, normal_ = _validate_plane_origin_and_normal(

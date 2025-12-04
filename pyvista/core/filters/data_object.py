@@ -1327,7 +1327,7 @@ class DataObjectFilters:
         :func:`~pyvista.Plane`.
 
         If no parameters are given, the clip will occur in the center
-        of that dataset along the x-axis.
+        of the dataset along the x-axis.
 
         Parameters
         ----------
@@ -1649,7 +1649,11 @@ class DataObjectFilters:
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
-        If no origin is specified, the center of the input dataset will be used.
+        The origin and normal may be set explicitly or implicitly using a
+        :func:`~pyvista.Plane`.
+
+        If no parameters are given, the clip will occur in the center
+        of the dataset along the x-axis.
 
         Parameters
         ----------
