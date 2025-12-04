@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import NumpyArray
+    from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
     from pyvista import VectorLike
@@ -1310,7 +1312,7 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['normal'])
     def clip(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        normal: VectorLike[float] | NormalsLiteral = 'x',
+        normal: VectorLike[float] | NormalsLiteral | None = None,
         origin: VectorLike[float] | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
         value: float = 0.0,
@@ -1318,25 +1320,31 @@ class DataObjectFilters:
         return_clipped: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
+        plane: PolyData | None = None,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
-        If no parameters are given the clip will occur in the center
-        of that dataset.
+        The origin and normal may be set explicitly or implicitly using a
+        :func:`~pyvista.Plane`.
+
+        If no parameters are given, the clip will occur in the center
+        of that dataset along the x-axis.
 
         Parameters
         ----------
-        normal : tuple(float) | str, default: 'x'
-            Length 3 tuple for the normal vector direction. Can also
+        normal : VectorLike[float] | str, optional
+            Length-3 vector for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+            The ``'x'`` direction is used by default.
 
-        origin : sequence[float], optional
+        origin : VectorLike[float], optional
             The center ``(x, y, z)`` coordinate of the plane on which the clip
             occurs. The default is the center of the dataset.
 
         invert : bool, default: True
-            Flag on whether to flip/invert the clip.
+            If ``True``, remove mesh parts in the ``normal`` direction from ``origin``.
+            If ``False``, remove parts in the opposite direction.
 
         value : float, default: 0.0
             Set the clipping value along the normal direction.
@@ -1355,6 +1363,14 @@ class DataObjectFilters:
             clip. This adds the ``"cell_ids"`` array to the ``cell_data``
             attribute that tracks the original cell IDs of the original
             dataset.
+
+        plane : PolyData, optional
+            Plane mesh to use for clipping. Use this as an alternative to
+            setting ``origin`` and ``normal``. The mean of the plane's normal
+            vectors is used for the ``normal`` parameter and the mean of the
+            plane's points is used for the ``origin`` parameter.
+
+            .. versionadded:: 0.47
 
         Returns
         -------
@@ -1387,9 +1403,16 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        normal_: VectorLike[float] = NORMALS[normal.lower()] if isinstance(normal, str) else normal
-        # find center of data if origin not specified
-        origin_ = self.center if origin is None else origin
+        origin_: VectorLike[float]
+        normal_: VectorLike[float]
+        if plane is not None:
+            origin_, normal_ = _validate_origin_and_normal_from_plane(origin, normal, plane)
+        else:
+            normal = 'x' if normal is None else normal
+            normal_ = NORMALS[normal.lower()] if isinstance(normal, str) else normal
+            # find center of data if origin not specified
+            origin_ = self.center if origin is None else origin
+
         # create the plane for clipping
         function = generate_plane(normal_, origin_)
         # run the clip
@@ -3128,3 +3151,21 @@ class _Crinkler:
                 block.n_cells, dtype=_Crinkler.INT_DTYPE
             )
         return active_scalars_info
+
+
+def _validate_origin_and_normal_from_plane(
+    origin, normal, plane
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    if normal is not None or origin is not None:
+        msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+        raise TypeError(msg)
+    _validation.check_instance(plane, pv.PolyData, name='plane')
+    if (dimensionality := plane.dimensionality) != 2:
+        msg = (
+            f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
+            f'{dimensionality}.'
+        )
+        raise ValueError(msg)
+    origin = plane.points.mean(axis=0)
+    normal = plane.point_normals.mean(axis=0)
+    return origin, normal

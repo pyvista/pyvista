@@ -148,6 +148,15 @@ def test_clip_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_clip_filter_plane(ant):
+    origin = (1, 2, 3)
+    normal = (4, 5, 6)
+    plane = pv.Plane(center=origin, direction=normal)
+    output_no_plane = ant.clip(origin=origin, normal=normal)
+    output_with_plane = ant.clip(plane=plane)
+    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
+
+
 def test_transform_raises(sphere):
     matrix = np.diag((1, 1, 1, 0))
     match = re.escape('Transform element (3,3), the inverse scale term, is zero')
