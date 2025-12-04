@@ -3358,7 +3358,7 @@ class PolyDataFilters(DataSetFilters):
             points.
 
         plane : PolyData, optional
-            :func:`~pyvista.Plane` mesh project to. Use this as an
+            :func:`~pyvista.Plane` mesh to project to. Use this as an
             alternative to setting ``origin`` and ``normal``. The mean of the
             plane's normal vectors is used for the ``normal`` parameter and
             the mean of the plane's points is used for the ``origin`` parameter.
