@@ -53,7 +53,7 @@ line = lines_from_points(points)
 line
 
 # %%
-line['scalars'] = np.arange(line.n_points, dtype=float)
+line['scalars'] = np.arange(line.n_points)
 tube = line.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
@@ -73,7 +73,7 @@ def polyline_from_points(points):
 
 
 polyline = polyline_from_points(points)
-polyline['scalars'] = np.arange(polyline.n_points, dtype=float)
+polyline['scalars'] = np.arange(polyline.n_points)
 tube = polyline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
@@ -88,7 +88,7 @@ spline = pv.Spline(points, 1000)
 # Plot spline as a tube
 
 # add scalars to spline and plot it
-spline['scalars'] = np.arange(spline.n_points, dtype=float)
+spline['scalars'] = np.arange(spline.n_points)
 tube = spline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 

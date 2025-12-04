@@ -16,6 +16,10 @@ provides. See :func:`~pyvista.Plotter.enable_depth_peeling`.
 # sphinx_gallery_thumbnail_number = 2
 from __future__ import annotations
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import pyvista as pv
 from pyvista import examples
 

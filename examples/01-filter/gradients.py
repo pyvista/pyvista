@@ -15,6 +15,11 @@ Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 
 from __future__ import annotations
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 1

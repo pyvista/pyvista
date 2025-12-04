@@ -1,4 +1,4 @@
-"""
+r"""
 .. _add_example_example:
 
 Adding a New Gallery Example
@@ -37,39 +37,38 @@ After this preamble is complete, the first code block begins. This is where you
 typically set up your imports.
 
 .. note::
-   By default, the documentation scrapper will generate both a static image and
-   an interactive widget for each plot. If you want to turn this feature off
-   define at the top of your file:
+    By default, the documentation scrapper will generate both a static image and
+    an interactive widget for each plot. If you want to turn this feature off,
+    define at the top of your file:
 
+    .. code-block::
 
-   ``# sphinx_gallery_start_ignore``
+        # \sphinx_gallery_start_ignore (remove the \)
+        PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+        # \sphinx_gallery_end_ignore (remove the \)
 
-   ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True``
+    Note that the ``sphinx_gallery_start_ignore`` and ``sphinx_gallery_end_ignore``
+    flags have been escaped to appear in the current documentation.
+    See ``Sphinx-Gallery`` `documentation <https://sphinx-gallery.github.io/stable/configuration.html#hiding-code-blocks>`_
+    for more details.
 
-   ``# sphinx_gallery_end_ignore``
+    If you want to use static images only for some of your plots, define
+    ``PYVISTA_GALLERY_FORCE_STATIC`` before the ``plot``/``show`` command that
+    produces the image you want to turn into static:
 
-   If you want to use static images only for some of your plots. Define
-   ``PYVISTA_GALLERY_FORCE_STATIC`` before the ``plot``/``show`` command that
-   produces the image you want to turn into static.
+    .. code-block::
 
-   .. code-block::
+        ...
+        pl.show()  # this will be interactive plot
 
-       ...
-       pl.show()  # this will be interactive plot
-
-       # sphinx_gallery_start_ignore
-       PYVISTA_GALLERY_FORCE_STATIC = True
-       # sphinx_gallery_end_ignore
-       ...
-       pl.show()  # this will be static plot
-
+        # \sphinx_gallery_start_ignore (remove the \)
+        PYVISTA_GALLERY_FORCE_STATIC = True
+        # \sphinx_gallery_end_ignore (remove the \)
+        ...
+        pl.show()  # this will be static plot
 
 """
 
-from __future__ import annotations
-
-import pyvista as pv
-from pyvista import examples
 
 # %%
 # Section Title
@@ -86,6 +85,11 @@ from pyvista import examples
 # As in Jupyter notebooks, if a statement is unassigned at the end of a code
 # block, output will be generated and printed to the screen according to its
 # ``__repr__`` method.  Otherwise, you can use ``print()`` to output text.
+
+from __future__ import annotations
+
+import pyvista as pv
+from pyvista import examples
 
 # Create a dataset and exercise it's repr method
 dataset = pv.Sphere()
