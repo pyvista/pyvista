@@ -148,23 +148,32 @@ def test_clip_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_clip_filter_plane(ant):
+@pytest.mark.parametrize(
+    'filt',
+    [
+        pv.DataObjectFilters.clip,
+        pv.DataObjectFilters.slice,
+        pv.PolyDataFilters.clip_closed_surface,
+        pv.PolyDataFilters.project_points_to_plane,
+    ],
+)
+def test_filters_with_plane_arg(filt, ant):
     origin = (1, 2, 3)
     normal = (4, 5, 6)
     plane = pv.Plane(center=origin, direction=normal)
-    output_no_plane = ant.clip(origin=origin, normal=normal)
-    output_with_plane = ant.clip(plane=plane)
+    output_no_plane = filt(ant, origin=origin, normal=normal)
+    output_with_plane = filt(ant, plane=plane)
     assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
 
     match = 'The plane mesh must be planar. Got a non-planar mesh with dimensionality of 3.'
     with pytest.raises(ValueError, match=match):
-        ant.clip(plane=pv.Box())
+        filt(ant, plane=pv.Box())
 
     match = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
     with pytest.raises(ValueError, match=match):
-        ant.clip(plane=plane, normal='x')
+        filt(ant, plane=plane, normal='x')
     with pytest.raises(ValueError, match=match):
-        ant.clip(plane=plane, origin=(0, 0, 0))
+        filt(ant, plane=plane, origin=(0, 0, 0))
 
 
 def test_transform_raises(sphere):

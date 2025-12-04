@@ -2109,7 +2109,9 @@ class PolyDataFilters(DataSetFilters):
         if self.n_open_edges > 0:
             msg = 'This surface appears to be non-manifold.'
             raise ValueError(msg)
-        origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='x'
+        )
         # create the plane for clipping
         vtk_plane = generate_plane(normal_, origin_)
         collection = _vtk.vtkPlaneCollection()
@@ -3368,12 +3370,28 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> projected = sphere.project_points_to_plane()
-        >>> projected.plot(show_edges=True, line_width=3)
+
+        Plot the projected sphere along with the original.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(projected, show_edges=True, line_width=3)
+        >>> _ = pl.add_mesh(sphere)
+        >>> _ = pl.show_grid()
+        >>> cpos = pv.CameraPosition(
+        ...     position=(2.5, 2.5, 1.1),
+        ...     focal_point=(0.0, 0.0, -0.3),
+        ...     viewup=(-0.25, -0.25, 1.0),
+        ... )
+        >>> pl.camera_position = cpos
+        >>> pl.show(return_cpos=True)
 
         """
-        origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
-        if origin is None:
-            origin_ = np.array(origin_) - np.array(normal_) * self.length / 2.0
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='z'
+        )
+        if origin is None and plane is None:
+            # Default validated origin is the mesh's center which we need to translate
+            origin_ -= normal_ * self.length / 2.0
         # Make plane
         plane = generate_plane(normal_, origin_)
         # choose what mesh to use

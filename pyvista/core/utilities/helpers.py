@@ -311,6 +311,7 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     origin: VectorLike[float] | None,
     normal: VectorLike[float] | _NormalsLiteral | None,
     plane: PolyData | None,
+    default_normal: _NormalsLiteral,
 ) -> tuple[NumpyArray[float], NumpyArray[float]]:
     def _get_origin_and_normal_from_plane(
         plane_: PolyData,
@@ -327,15 +328,13 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         normal = plane_.point_normals.mean(axis=0)
         return origin, normal
 
-    # origin_: VectorLike[float]
-    # normal_: VectorLike[float]
     if plane is not None:
         if normal is not None or origin is not None:
             msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
             raise ValueError(msg)
         origin_, normal_ = _get_origin_and_normal_from_plane(plane)
     else:
-        normal = 'x' if normal is None else normal
+        normal = default_normal if normal is None else normal
         normal = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
         normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
 
