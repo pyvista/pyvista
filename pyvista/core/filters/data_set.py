@@ -4505,10 +4505,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Plot the regions.
 
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_composite(multiblock, multi_colors=True)
-        >>> _ = plot.show_grid()
-        >>> plot.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_composite(multiblock, multi_colors=True)
+        >>> _ = pl.show_grid()
+        >>> pl.show()
 
         Note that the block names are generic by default.
 
@@ -4533,14 +4533,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> _ = [block.clear_data() for block in multiblock]
         >>>
-        >>> plot = pv.Plotter()
-        >>> plot.set_color_cycler('default')
+        >>> pl = pv.Plotter()
+        >>> pl.set_color_cycler('default')
         >>> _ = [
-        ...     plot.add_mesh(block, label=label)
+        ...     pl.add_mesh(block, label=label)
         ...     for block, label in zip(multiblock, labels)
         ... ]
-        >>> _ = plot.add_legend()
-        >>> plot.show()
+        >>> _ = pl.add_legend()
+        >>> pl.show()
 
         """
         if values is None and ranges is None:
@@ -7665,14 +7665,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> def mask_and_polydata_plotter(mask, poly):
         ...     voxel_cells = mask.points_to_cells().threshold(0.5)
         ...
-        ...     plot = pv.Plotter()
-        ...     _ = plot.add_mesh(voxel_cells, color='blue')
-        ...     _ = plot.add_mesh(poly, color='lime')
-        ...     plot.camera_position = 'xy'
+        ...     pl = pv.Plotter()
+        ...     _ = pl.add_mesh(voxel_cells, color='blue')
+        ...     _ = pl.add_mesh(poly, color='lime')
+        ...     pl.camera_position = 'xy'
         ...     return plot
 
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         The spacing of the mask image is automatically adjusted to match the
         density of the input.
@@ -7681,14 +7681,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> poly = examples.download_bunny()
         >>> mask = poly.voxelize_binary_mask()
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         Control the spacing manually instead. Here, a very coarse spacing is used.
 
         >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         Note that the spacing is only approximate. Check the mask's actual spacing.
 
@@ -7707,8 +7707,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Set the dimensions instead of the spacing.
 
         >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         >>> mask.dimensions
         (10, 20, 30)
@@ -7722,8 +7722,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Now create the mask from the polydata using the volume as a reference.
 
         >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         Visualize the effect of internal surfaces.
 
@@ -7731,10 +7731,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 100, 50)
         ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(binary_mask)
+        >>> _ = pl.add_mesh(mesh.slice(), color='red')
+        >>> pl.show(cpos='yz')
 
         Note how the intersection is excluded from the mask.
         To include the voxels delimited by internal surfaces in the foreground, the internal
@@ -7762,11 +7762,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
 
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask_1)
-        >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
-        >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(binary_mask_1)
+        >>> _ = pl.add_mesh(cylinder_1.slice(), color='red')
+        >>> _ = pl.add_mesh(cylinder_2.slice(), color='red')
+        >>> pl.show(cpos='yz')
 
         When multiple internal surfaces are nested, they are successively treated as
         interfaces between background and foreground.
@@ -7775,10 +7775,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 50, 50)
         ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(binary_mask)
+        >>> _ = pl.add_mesh(mesh.slice(), color='red')
+        >>> pl.show(cpos='yz')
 
         """
         surface = wrap(self).extract_geometry()

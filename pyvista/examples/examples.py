@@ -766,7 +766,7 @@ def load_frog_tissues():
 
     Make and show plot
 
-    >>> p = pv.Plotter()
+    >>> pl = pv.Plotter()
     >>> _ = p.add_volume(
     ...     data,
     ...     clim=clim,
@@ -782,8 +782,8 @@ def load_frog_tissues():
     ...     cmap=cmap,
     ...     resolution=res,
     ... )
-    >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
-    >>> p.show()
+    >>> pl.camera_position = 'yx'  # Set camera to provide a dorsal view
+    >>> pl.show()
 
     .. seealso::
 
