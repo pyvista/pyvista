@@ -315,7 +315,6 @@ from vtkmodules.vtkFiltersCore import vtkImageAppend as vtkImageAppend
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
-from vtkmodules.vtkFiltersCore import vtkMergeFilter as vtkMergeFilter
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation

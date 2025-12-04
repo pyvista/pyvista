@@ -851,8 +851,10 @@ def _generate_vtk_err():
 
 def _generate_vtk_warn():
     """Simple operation which generates a VTK warning."""
+    from vtkmodules.vtkFiltersCore import vtkMergeFilter
+
     # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
-    merge = _vtk.vtkMergeFilter()
+    merge = vtkMergeFilter()
     merge.AddInputData(_vtk.vtkPolyData())
     merge.Update()
 

@@ -54,20 +54,38 @@ class VtkErrorCatcher:
     Parameters
     ----------
     raise_errors : bool, default: False
-        Raise a ``RuntimeError`` when a VTK error is encountered.
+        Raise a :class:`~pyvista.VTKOutputMessageError` (a runtime error) when a VTK error
+        is observed.
+
+        .. versionchanged:: 0.47
+
+            A :class:`~pyvista.VTKOutputMessageError` is now raised instead of a generic
+            ``RuntimeError``.
 
     send_to_logging : bool, default: True
         Determine whether VTK errors raised within the context should
         also be sent to logging.
 
     emit_warnings : bool, default: False
-        Emit a ``RuntimeWarning`` when a VTK warning is encountered.
+        Emit a :class:`~pyvista.VTKOutputMessageWarning` when a VTK warning is observed.
 
-        .. versionadded:: 0.46
+        .. versionadded:: 0.47
 
     Examples
     --------
-    Catch VTK errors using the context manager.
+    Catch VTK errors using the context manager. This only sends to
+    logging by default.
+
+    >>> import pyvista as pv
+    >>> with pv.VtkErrorCatcher() as error_catcher:
+    ...     sphere = pv.Sphere()
+
+    Raise VTK errors as Python errors and emit VTK warnings as Python warnings.
+
+    >>> with pv.VtkErrorCatcher(
+    ...     raise_errors=True, emit_warnings=True
+    ... ) as error_catcher:
+    ...     sphere = pv.Sphere()
 
     """
 
@@ -119,17 +137,29 @@ class VtkErrorCatcher:
 
     @property
     def events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed."""
+        """List of all VTK warning and error events observed.
+
+        .. versionadded:: 0.47
+
+        """
         return [*self._warning_observer.event_history, *self._error_observer.event_history]
 
     @property
     def error_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed."""
+        """List of VTK error events observed.
+
+        .. versionadded:: 0.47
+
+        """
         return self._error_observer.event_history
 
     @property
     def warning_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed."""
+        """List of VTK error events observed.
+
+        .. versionadded:: 0.47
+
+        """
         return self._warning_observer.event_history
 
     @property
