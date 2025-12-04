@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import ClassVar
 
+    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import NumpyArray
@@ -1406,7 +1407,7 @@ class DataObjectFilters:
         origin_: VectorLike[float]
         normal_: VectorLike[float]
         if plane is not None:
-            origin_, normal_ = _validate_origin_and_normal_from_plane(origin, normal, plane)
+            origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
         else:
             normal = 'x' if normal is None else normal
             normal_ = NORMALS[normal.lower()] if isinstance(normal, str) else normal
@@ -3153,19 +3154,37 @@ class _Crinkler:
         return active_scalars_info
 
 
-def _validate_origin_and_normal_from_plane(
-    origin, normal, plane
-) -> tuple[NumpyArray[float], NumpyArray[float]]:
-    if normal is not None or origin is not None:
-        msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
-        raise TypeError(msg)
-    _validation.check_instance(plane, pv.PolyData, name='plane')
-    if (dimensionality := plane.dimensionality) != 2:
-        msg = (
-            f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
-            f'{dimensionality}.'
-        )
-        raise ValueError(msg)
-    origin = plane.points.mean(axis=0)
-    normal = plane.point_normals.mean(axis=0)
-    return origin, normal
+def _validate_plane_origin_and_normal(  # noqa: PLR0917
+    mesh: DataObject,
+    origin: VectorLike[float] | None,
+    normal: VectorLike[float] | NormalsLiteral | None,
+    plane: PolyData | None,
+) -> tuple[VectorLike[float], VectorLike[float]]:
+    def _get_origin_and_normal_from_plane(
+        plane_: PolyData,
+    ) -> tuple[NumpyArray[float], NumpyArray[float]]:
+        _validation.check_instance(plane_, pv.PolyData, name='plane')
+
+        if (dimensionality := plane_.dimensionality) != 2:
+            msg = (
+                f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
+                f'{dimensionality}.'
+            )
+            raise ValueError(msg)
+        origin = plane_.points.mean(axis=0)
+        normal = plane_.point_normals.mean(axis=0)
+        return origin, normal
+
+    origin_: VectorLike[float]
+    normal_: VectorLike[float]
+    if plane is not None:
+        if normal is not None or origin is not None:
+            msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+            raise ValueError(msg)
+        origin_, normal_ = _get_origin_and_normal_from_plane(plane)
+    else:
+        normal = 'x' if normal is None else normal
+        normal_ = NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        # find center of data if origin not specified
+        origin_ = mesh.center if origin is None else origin
+    return origin_, normal_

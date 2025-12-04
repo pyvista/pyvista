@@ -156,6 +156,16 @@ def test_clip_filter_plane(ant):
     output_with_plane = ant.clip(plane=plane)
     assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
 
+    match = 'The plane mesh must be planar. Got a non-planar mesh with dimensionality of 3.'
+    with pytest.raises(ValueError, match=match):
+        ant.clip(plane=pv.Box())
+
+    match = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+    with pytest.raises(ValueError, match=match):
+        ant.clip(plane=plane, normal='x')
+    with pytest.raises(ValueError, match=match):
+        ant.clip(plane=plane, origin=(0, 0, 0))
+
 
 def test_transform_raises(sphere):
     matrix = np.diag((1, 1, 1, 0))
