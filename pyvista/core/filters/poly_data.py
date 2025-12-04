@@ -3320,7 +3320,13 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace: bool = False):  # noqa: FBT001, FBT002
+    def project_points_to_plane(  # type: ignore[misc]  # noqa: PLR0917
+        self: PolyData,
+        origin: VectorLike[float] | None = None,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        plane: PolyData | None = None,
+    ):
         """Project points of this mesh to a plane.
 
         Parameters
@@ -3336,6 +3342,14 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, default: False
             Whether to overwrite the original mesh with the projected
             points.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to use for clipping. Use this as an
+            alternative to setting ``origin`` and ``normal``. The mean of the
+            plane's normal vectors is used for the ``normal`` parameter and
+            the mean of the plane's points is used for the ``origin`` parameter.
+
+            .. versionadded:: 0.47
 
         Returns
         -------
@@ -3357,15 +3371,13 @@ class PolyDataFilters(DataSetFilters):
         >>> projected.plot(show_edges=True, line_width=3)
 
         """
-        if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
-            msg = 'Normal must be a length three vector'
-            raise TypeError(msg)
+        origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
         if origin is None:
-            origin = np.array(self.center) - np.array(normal) * self.length / 2.0  # type: ignore[attr-defined]
-        # choose what mesh to use
-        mesh = self.copy() if not inplace else self  # type: ignore[attr-defined]
+            origin_ = np.array(origin_) - np.array(normal_) * self.length / 2.0
         # Make plane
-        plane = generate_plane(normal, origin)
+        plane = generate_plane(normal_, origin_)
+        # choose what mesh to use
+        mesh = self.copy() if not inplace else self
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
         np.apply_along_axis(f, 1, mesh.points)

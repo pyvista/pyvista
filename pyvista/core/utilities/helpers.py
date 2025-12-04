@@ -299,7 +299,7 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal_ = _validation.validate_array3(normal, dtype_out=float)
+    normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
     normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
@@ -311,7 +311,7 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     origin: VectorLike[float] | None,
     normal: VectorLike[float] | _NormalsLiteral | None,
     plane: PolyData | None,
-) -> tuple[VectorLike[float], VectorLike[float]]:
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
     def _get_origin_and_normal_from_plane(
         plane_: PolyData,
     ) -> tuple[NumpyArray[float], NumpyArray[float]]:
@@ -327,8 +327,8 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         normal = plane_.point_normals.mean(axis=0)
         return origin, normal
 
-    origin_: VectorLike[float]
-    normal_: VectorLike[float]
+    # origin_: VectorLike[float]
+    # normal_: VectorLike[float]
     if plane is not None:
         if normal is not None or origin is not None:
             msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
@@ -336,9 +336,12 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         origin_, normal_ = _get_origin_and_normal_from_plane(plane)
     else:
         normal = 'x' if normal is None else normal
-        normal_ = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        normal = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
+
         # find center of data if origin not specified
-        origin_ = mesh.center if origin is None else origin
+        origin = mesh.center if origin is None else origin
+        origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
     return origin_, normal_
 
 
