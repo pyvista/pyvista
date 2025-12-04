@@ -157,7 +157,7 @@ def test_clip_filter_composite(multiblock_all):
         pv.PolyDataFilters.project_points_to_plane,
     ],
 )
-def test_filters_with_plane_arg(filt, ant):
+def test_filters_with_plane_keyword(filt, ant):
     origin = (1, 2, 3)
     normal = (4, 5, 6)
     plane = pv.Plane(center=origin, direction=normal)

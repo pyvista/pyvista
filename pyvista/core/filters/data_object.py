@@ -22,8 +22,8 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import _NormalsLiteral
+from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _reciprocal
@@ -35,10 +35,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import ClassVar
 
-    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
@@ -1404,7 +1402,9 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='x'
+        )
         # create the plane for clipping
         function = generate_plane(normal_, origin_)
         # run the clip
@@ -1640,11 +1640,12 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['normal'])
     def slice(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        normal: VectorLike[float] | _NormalsLiteral = 'x',
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
         origin: VectorLike[float] | None = None,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         contour: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        plane: PolyData | None = None,
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
@@ -1652,14 +1653,15 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        normal : sequence[float] | str, default: 'x'
-            Length 3 tuple for the normal vector direction. Can also be
-            specified as a string conventional direction such as ``'x'`` for
-            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+        normal : VectorLike[float] | str, optional
+            Length-3 vector for the normal vector direction. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+            The ``'x'`` direction is used by default.
 
         origin : sequence[float], optional
             The center ``(x, y, z)`` coordinate of the plane on which
-            the slice occurs.
+            the slice occurs. The default is the center of the dataset.
 
         generate_triangles : bool, default: False
             If this is enabled (``False`` by default), the output will
@@ -1671,6 +1673,14 @@ class DataObjectFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to use for slicing. Use this as an
+            alternative to setting ``origin`` and ``normal``. The mean of the
+            plane's normal vectors is used for the ``normal`` parameter and
+            the mean of the plane's points is used for the ``origin`` parameter.
+
+            .. versionadded:: 0.47
 
         Returns
         -------
@@ -1700,16 +1710,13 @@ class DataObjectFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        normal_: VectorLike[float] = (
-            _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='x'
         )
-        # find center of data if origin not specified
-        origin_ = self.center if origin is None else origin
-
         # create the plane for clipping
-        plane = generate_plane(normal_, origin_)
+        implicit_function = generate_plane(normal_, origin_)
         return self.slice_implicit(
-            plane,
+            implicit_function,
             generate_triangles=generate_triangles,
             contour=contour,
             progress_bar=progress_bar,
@@ -3148,39 +3155,3 @@ class _Crinkler:
                 block.n_cells, dtype=_Crinkler.INT_DTYPE
             )
         return active_scalars_info
-
-
-def _validate_plane_origin_and_normal(  # noqa: PLR0917
-    mesh: DataObject,
-    origin: VectorLike[float] | None,
-    normal: VectorLike[float] | _NormalsLiteral | None,
-    plane: PolyData | None,
-) -> tuple[VectorLike[float], VectorLike[float]]:
-    def _get_origin_and_normal_from_plane(
-        plane_: PolyData,
-    ) -> tuple[NumpyArray[float], NumpyArray[float]]:
-        _validation.check_instance(plane_, pv.PolyData, name='plane')
-
-        if (dimensionality := plane_.dimensionality) != 2:
-            msg = (
-                f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
-                f'{dimensionality}.'
-            )
-            raise ValueError(msg)
-        origin = plane_.points.mean(axis=0)
-        normal = plane_.point_normals.mean(axis=0)
-        return origin, normal
-
-    origin_: VectorLike[float]
-    normal_: VectorLike[float]
-    if plane is not None:
-        if normal is not None or origin is not None:
-            msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
-            raise ValueError(msg)
-        origin_, normal_ = _get_origin_and_normal_from_plane(plane)
-    else:
-        normal = 'x' if normal is None else normal
-        normal_ = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
-        # find center of data if origin not specified
-        origin_ = mesh.center if origin is None else origin
-    return origin_, normal_

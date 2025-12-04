@@ -40,7 +40,6 @@ MissingDataError, <class 'pyvista.errors.MissingDataError'>
 MultiBlockPlot3DReader, <class 'pyvista.utilities.reader.MultiBlockPlot3DReader'>
 MultipleLines, <function MultipleLines at 0x7f72f5d21ee0>
 NIFTIReader, <class 'pyvista.utilities.reader.NIFTIReader'>
-NORMALS, {'x': [1, 0, 0], 'y': [0, 1, 0], 'z': [0, 0, 1], '-x': [-1, 0, 0], '-y': [0, -1, 0], '-z': [0, 0, -1]}
 NRRDReader, <class 'pyvista.utilities.reader.NRRDReader'>
 OBJReader, <class 'pyvista.utilities.reader.OBJReader'>
 Observer, <class 'pyvista.utilities.errors.Observer'>

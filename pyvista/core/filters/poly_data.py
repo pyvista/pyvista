@@ -3333,20 +3333,23 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : sequence[float], optional
+        origin : VectorLike[float], optional
             Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
-        normal : sequence[float], default: (0.0, 0.0, 1.0)
-            Plane normal.  Defaults to +Z.
+        normal : VectorLike[float] | str, optional
+            Length-3 vector for the plane's normal. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+            The ``'z'`` direction is used by default.
 
         inplace : bool, default: False
             Whether to overwrite the original mesh with the projected
             points.
 
         plane : PolyData, optional
-            :func:`~pyvista.Plane` mesh to use for clipping. Use this as an
+            :func:`~pyvista.Plane` mesh project to. Use this as an
             alternative to setting ``origin`` and ``normal``. The mean of the
             plane's normal vectors is used for the ``normal`` parameter and
             the mean of the plane's points is used for the ``origin`` parameter.
