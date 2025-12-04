@@ -22,13 +22,13 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities import Transform
-from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.geometric_objects import NormalsLiteral
+from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -1313,7 +1313,7 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['normal'])
     def clip(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        normal: VectorLike[float] | NormalsLiteral | None = None,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
         origin: VectorLike[float] | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
         value: float = 0.0,
@@ -1366,10 +1366,10 @@ class DataObjectFilters:
             dataset.
 
         plane : PolyData, optional
-            Plane mesh to use for clipping. Use this as an alternative to
-            setting ``origin`` and ``normal``. The mean of the plane's normal
-            vectors is used for the ``normal`` parameter and the mean of the
-            plane's points is used for the ``origin`` parameter.
+            :func:`~pyvista.Plane` mesh to use for clipping. Use this as an
+            alternative to setting ``origin`` and ``normal``. The mean of the
+            plane's normal vectors is used for the ``normal`` parameter and
+            the mean of the plane's points is used for the ``origin`` parameter.
 
             .. versionadded:: 0.47
 
@@ -1404,16 +1404,7 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        origin_: VectorLike[float]
-        normal_: VectorLike[float]
-        if plane is not None:
-            origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
-        else:
-            normal = 'x' if normal is None else normal
-            normal_ = NORMALS[normal.lower()] if isinstance(normal, str) else normal
-            # find center of data if origin not specified
-            origin_ = self.center if origin is None else origin
-
+        origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
         # create the plane for clipping
         function = generate_plane(normal_, origin_)
         # run the clip
@@ -1452,7 +1443,7 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['bounds'])
     def clip_box(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        bounds: float | VectorLike[float] | pv.PolyData | None = None,
+        bounds: float | VectorLike[float] | PolyData | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
         factor: float = 0.35,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -1540,7 +1531,10 @@ class DataObjectFilters:
                 bounds.append(normal)
                 bounds.append(cell.center)
         bounds_ = _validation.validate_array(
-            bounds, dtype_out=float, must_have_length=[3, 6, 12], name='bounds'
+            bounds,  # type: ignore[arg-type]
+            dtype_out=float,
+            must_have_length=[3, 6, 12],
+            name='bounds',
         )
         if len(bounds_) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
@@ -1646,7 +1640,7 @@ class DataObjectFilters:
     @_deprecate_positional_args(allowed=['normal'])
     def slice(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
-        normal: VectorLike[float] | NormalsLiteral = 'x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         contour: bool = False,  # noqa: FBT001, FBT002
@@ -1706,7 +1700,9 @@ class DataObjectFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        normal_: VectorLike[float] = NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        normal_: VectorLike[float] = (
+            _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        )
         # find center of data if origin not specified
         origin_ = self.center if origin is None else origin
 
@@ -3157,7 +3153,7 @@ class _Crinkler:
 def _validate_plane_origin_and_normal(  # noqa: PLR0917
     mesh: DataObject,
     origin: VectorLike[float] | None,
-    normal: VectorLike[float] | NormalsLiteral | None,
+    normal: VectorLike[float] | _NormalsLiteral | None,
     plane: PolyData | None,
 ) -> tuple[VectorLike[float], VectorLike[float]]:
     def _get_origin_and_normal_from_plane(
@@ -3184,7 +3180,7 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         origin_, normal_ = _get_origin_and_normal_from_plane(plane)
     else:
         normal = 'x' if normal is None else normal
-        normal_ = NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        normal_ = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
         # find center of data if origin not specified
         origin_ = mesh.center if origin is None else origin
     return origin_, normal_

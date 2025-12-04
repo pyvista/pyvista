@@ -25,7 +25,8 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
-from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import _NormalsLiteral
+from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -76,7 +77,7 @@ class PolyDataFilters(DataSetFilters):
         """
         poly_data = self
         if not isinstance(poly_data, pv.PolyData):  # pragma: no cover
-            poly_data = pv.PolyData(poly_data)  # type: ignore[arg-type]
+            poly_data = pv.PolyData(poly_data)
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -1387,7 +1388,7 @@ class PolyDataFilters(DataSetFilters):
         """
         poly_data = self
         if not isinstance(poly_data, pv.PolyData):
-            poly_data = pv.PolyData(poly_data)  # type: ignore[arg-type]
+            poly_data = pv.PolyData(poly_data)
         n_sides = max(n_sides, 3)
         tube = _vtk.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
@@ -2026,13 +2027,14 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     @_deprecate_positional_args(allowed=['normal'])
-    def clip_closed_surface(  # noqa: PLR0917
-        self,
-        normal='x',
-        origin=None,
+    def clip_closed_surface(  # type: ignore[misc]  # noqa: PLR0917
+        self: PolyData,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        origin: VectorLike[float] | None = None,
         tolerance=1e-06,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        plane: PolyData | None = None,
     ):
         """Clip a closed polydata surface with a plane.
 
@@ -2051,16 +2053,15 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        normal : str, list, optional
-            Plane normal to clip with.  Plane is centered at
-            ``origin``.  Normal can be either a 3 member list
-            (e.g. ``[0, 0, 1]``) or one of the following strings:
-            ``'x'``, ``'y'``, ``'z'``, ``'-x'``, ``'-y'``, or
-            ``'-z'``.
+        normal : VectorLike[float] | str, optional
+            Length-3 vector for the normal vector direction. Can also
+            be specified as a string conventional direction such as
+            ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+            The ``'x'`` direction is used by default.
 
-        origin : list, optional
-            Coordinate of the origin (e.g. ``[1, 0, 0]``).  Defaults
-            to the center of the mesh.
+        origin : VectorLike[float], optional
+            The center ``(x, y, z)`` coordinate of the plane on which the clip
+            occurs. The default is the center of the dataset.
 
         tolerance : float, optional
             The tolerance for creating new points while clipping.  If
@@ -2072,6 +2073,14 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to use for clipping. Use this as an
+            alternative to setting ``origin`` and ``normal``. The mean of the
+            plane's normal vectors is used for the ``normal`` parameter and
+            the mean of the plane's points is used for the ``origin`` parameter.
+
+            .. versionadded:: 0.47
 
         Returns
         -------
@@ -2097,19 +2106,14 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # verify it is manifold
-        if self.n_open_edges > 0:  # type: ignore[attr-defined]
+        if self.n_open_edges > 0:
             msg = 'This surface appears to be non-manifold.'
             raise ValueError(msg)
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
-        # find center of data if origin not specified
-        if origin is None:
-            origin = self.center  # type: ignore[attr-defined]
-
+        origin_, normal_ = _validate_plane_origin_and_normal(self, origin, normal, plane)
         # create the plane for clipping
-        plane = generate_plane(normal, origin)
+        vtk_plane = generate_plane(normal_, origin_)
         collection = _vtk.vtkPlaneCollection()
-        collection.AddItem(plane)
+        collection.AddItem(vtk_plane)
 
         alg = _vtk.vtkClipClosedSurface()
         alg.SetGenerateFaces(True)
@@ -2120,7 +2124,7 @@ class PolyDataFilters(DataSetFilters):
         result = _get_output(alg)
 
         if inplace:
-            self.copy_from(result, deep=False)  # type: ignore[attr-defined]
+            self.copy_from(result, deep=False)
             return self
         else:
             return result
