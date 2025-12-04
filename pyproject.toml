@@ -115,7 +115,7 @@ docs-trame-vtk = [
 ]
 
 docs = [
-  'atsphinx-mini18n==0.5.0',
+  'atsphinx-mini18n==0.5.1',
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
