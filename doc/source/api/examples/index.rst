@@ -1,6 +1,9 @@
 Examples
 ========
 
+.. automodule:: pyvista.examples
+   :noindex:
+
 .. currentmodule:: pyvista
 
 PyVista contains a variety of built-in demos and downloadable example
