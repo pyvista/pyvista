@@ -7669,7 +7669,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     _ = pl.add_mesh(voxel_cells, color='blue')
         ...     _ = pl.add_mesh(poly, color='lime')
         ...     pl.camera_position = 'xy'
-        ...     return plot
+        ...     return pl
 
         >>> pl = mask_and_polydata_plotter(mask, poly)
         >>> pl.show()
