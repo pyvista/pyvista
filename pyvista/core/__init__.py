@@ -23,8 +23,8 @@ from .errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning
 from .errors import PyVistaFutureWarning as PyVistaFutureWarning
 from .errors import PyVistaPipelineError as PyVistaPipelineError
-from .errors import VTKOutputMessageError as VTKOutputMessageError
-from .errors import VTKOutputMessageWarning as VTKOutputMessageWarning
+from .errors import VTKExecutionError as VTKExecutionError
+from .errors import VTKExecutionWarning as VTKExecutionWarning
 from .errors import VTKVersionError as VTKVersionError
 from .filters import CompositeFilters as CompositeFilters
 from .filters import DataObjectFilters as DataObjectFilters

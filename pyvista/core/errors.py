@@ -203,7 +203,7 @@ class PyVistaAttributeError(AttributeError):
         super().__init__(message)
 
 
-class VTKOutputMessageError(RuntimeError):
+class VTKExecutionError(RuntimeError):
     """Exception when a VTK output message is detected.
 
     .. versionadded:: 0.47
@@ -235,7 +235,7 @@ class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
 
 
-class VTKOutputMessageWarning(RuntimeWarning):
+class VTKExecutionWarning(RuntimeWarning):
     """Warning when a VTK output message is detected.
 
     .. versionadded:: 0.47
