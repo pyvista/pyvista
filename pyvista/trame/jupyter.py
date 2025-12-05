@@ -104,6 +104,7 @@ class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
             'src': src,
             'class': 'pyvista',
             'style': f'width: {width}; height: {height}; {border}',
+            'scrolling': 'no',
         }
 
         iframe_attrs_str = ' '.join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
