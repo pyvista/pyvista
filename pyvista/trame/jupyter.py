@@ -382,7 +382,7 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if plotter._window_size_unset:
-        dw, dh = '99%', '600px'
+        dw, dh = '100%', '600px'
     else:
         width, height = plotter.window_size
         dw = f'{width}px'
