@@ -8701,3 +8701,47 @@ def download_yinyang(*, load=True):
 
 
 _dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
+
+
+def download_warping_spheres(*, load=True):
+    """Download warping spheres dataset.
+
+    .. versionadded:: 0.47.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : PartitionedDataSet | str
+        Data object or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the warping spheres and plot them.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> partitioned = examples.download_warping_spheres()
+    >>> cpos = pv.CameraPosition(
+    ...     position=(70.0, -70.0, 0.0),
+    ...     focal_point=(7.0, 7.0, 7.0),
+    ...     viewup=(0.0, 0.0, 1.0),
+    ... )
+    >>> partitioned.plot(cpos=cpos)
+
+    .. seealso::
+
+        :ref:`Warping Spheres Dataset <warping_spheres_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_warping_spheres, load=load)
+
+
+_dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
+    'warping_spheres/warping_spheres.vtkhdf'
+)

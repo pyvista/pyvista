@@ -24,6 +24,7 @@ from .renderer import CameraPosition
 if TYPE_CHECKING:
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
+    from pyvista.core.partitioned import PartitionedDataSet
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -36,7 +37,9 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = Union[VectorLike[float], 'DataSet', 'MultiBlock', str, Path]
+PlottableType: TypeAlias = Union[
+    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
+]
 
 
 NamedColormaps = Union[

@@ -3695,8 +3695,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 mesh, algo = algorithm_to_mesh_handler(algo)
             else:
                 mesh = mesh.cast_to_polydata(deep=False)
-        elif isinstance(mesh, pv.MultiBlock):  # type: ignore[unreachable]
-            if algo is not None:  # type: ignore[unreachable]
+        elif isinstance(mesh, (pv.MultiBlock, pv.PartitionedDataSet)):  # type: ignore[unreachable]
+            if not isinstance(mesh, pv.MultiBlock):  # type: ignore[unreachable]
+                mesh = mesh.cast_to_multiblock()
+            if algo is not None:
                 msg = (
                     'Algorithms with `MultiBlock` output type are not supported by '
                     '`add_mesh` at this time.'
