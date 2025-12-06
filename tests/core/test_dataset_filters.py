@@ -4350,3 +4350,33 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
+
+
+@pytest.mark.parametrize(
+    ('field_association', 'error_type', 'error_match'),
+    [
+        ('invalid', ValueError, "field_association must be either 'point' or 'cell'"),
+        ('vertex', ValueError, "field_association must be either 'point' or 'cell'"),
+        ('edge', ValueError, "field_association must be either 'point' or 'cell'"),
+    ],
+)
+def test_infer_scalars_with_onnx(field_association, error_type, error_match):
+    """Test infer_scalars_with_onnx method."""
+    mesh = pv.Sphere()
+    params = np.array([0.3, 200e9, 1000.0])
+
+    # Test that VTKVersionError is raised when ONNX Runtime is not available
+    if not hasattr(_vtk, 'vtkONNXInference'):
+        with pytest.raises(pv.VTKVersionError, match='ONNX Runtime support is not available'):
+            mesh.infer_scalars_with_onnx(
+                model_path='dummy_model.onnx',
+                input_parameters=params,
+            )
+    else:
+        # Test invalid field_association values
+        with pytest.raises(error_type, match=error_match):
+            mesh.infer_scalars_with_onnx(
+                model_path='dummy_model.onnx',
+                input_parameters=params,
+                field_association=field_association,  # type: ignore[arg-type]
+            )
