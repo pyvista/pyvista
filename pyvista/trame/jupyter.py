@@ -104,6 +104,7 @@ class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
             'src': src,
             'class': 'pyvista',
             'style': f'width: {width}; height: {height}; {border}',
+            'scrolling': 'no',
         }
 
         iframe_attrs_str = ' '.join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
@@ -381,7 +382,7 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if plotter._window_size_unset:
-        dw, dh = '99%', '600px'
+        dw, dh = '100%', '600px'
     else:
         width, height = plotter.window_size
         dw = f'{width}px'
