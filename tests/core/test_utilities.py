@@ -722,19 +722,27 @@ def test_convert_id_list():
 
 def test_progress_monitor():
     mesh = pv.Sphere()
-    ugrid = mesh.delaunay_3d(progress_bar=True)
-    assert isinstance(ugrid, pv.UnstructuredGrid)
+    ugrid = mesh.warp_by_vector(progress_bar=True)
+    assert isinstance(ugrid, pv.PolyData)
 
 
 def test_observer():
-    msg = 'KIND: In PATH, line 0\nfoo (ADDRESS): ALERT'
+    msg = 'KIND: In PATH, line 0\nfoo (0x000000): ALERT'
     obs = Observer()
     ret = obs.parse_message('foo')
     assert ret[3] == 'foo'
     ret = obs.parse_message(msg)
-    assert ret[3] == 'ALERT'
+    assert ret[0] == 'KIND' == ret.kind
+    assert ret[1] == 'PATH' == ret.path
+    assert ret[2] == '0x000000' == ret.address
+    assert ret[4] == '0' == ret.line
+    assert ret[5] == 'foo' == ret.name
+    assert ret[3] == 'ALERT' == ret.alert
+    assert str(ret) == msg
+
     for kind in ['WARNING', 'ERROR']:
         obs.log_message(kind, 'foo')
+
     # Pass positionally as that's what VTK will do
     obs(None, None, msg)
     assert obs.has_event_occurred()
@@ -746,6 +754,20 @@ def test_observer():
     obs.observe(alg)
     with pytest.raises(RuntimeError, match='algorithm'):
         obs.observe(alg)
+
+
+def test_observer_default_event():
+    msg = 'This message does not match parsing regex!'
+    obs = Observer()
+    ret = obs.parse_message(msg)
+    assert ret.kind == ''
+    assert ret.path == ''
+    assert ret.address == ''
+    assert ret.line == ''
+    assert ret.name == ''
+    assert ret.alert == msg
+
+    assert str(ret) == msg
 
 
 @pytest.mark.parametrize('point', [1, object(), None])
@@ -820,19 +842,21 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(
-        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
-    )
-    mesh = pv.StructuredGrid(x, y, z)
-    x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
-    mesh2 = pv.StructuredGrid(x2, y2, z2)
+    from vtkmodules.vtkIOLegacy import vtkDataWriter
 
-    alg = _vtk.vtkStreamTracer()
-    obs = pv.Observer()
-    obs.observe(alg)
-    alg.SetInputDataObject(mesh)
-    alg.SetSourceData(mesh2)
-    alg.Update()
+    # vtkWriter.cxx:55     ERR| vtkDataWriter (0x141efbd10): No input provided!
+    writer = vtkDataWriter()
+    writer.Write()
+
+
+def _generate_vtk_warn():
+    """Simple operation which generates a VTK warning."""
+    from vtkmodules.vtkFiltersCore import vtkMergeFilter
+
+    # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
+    merge = vtkMergeFilter()
+    merge.AddInputData(_vtk.vtkPolyData())
+    merge.Update()
 
 
 def test_vtk_error_catcher():
@@ -841,7 +865,11 @@ def test_vtk_error_catcher():
     with error_catcher:
         _generate_vtk_err()
         _generate_vtk_err()
-    assert len(error_catcher.events) == 2
+        _generate_vtk_warn()
+        _generate_vtk_warn()
+    assert len(error_catcher.events) == 4
+    assert len(error_catcher.error_events) == 2
+    assert len(error_catcher.warning_events) == 2
 
     # raise_errors: False, no error
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
@@ -850,13 +878,48 @@ def test_vtk_error_catcher():
 
     # raise_errors: True
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
-    with pytest.raises(RuntimeError):
+    error_match = re.compile(
+        r'ERROR: In vtkWriter\.cxx, line \d+\n'
+        r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!\n*'
+    )
+    with pytest.raises(RuntimeError, match=re.compile(error_match)):  # noqa: PT012
         with error_catcher:
             _generate_vtk_err()
-    assert len(error_catcher.events) == 1
+            _generate_vtk_warn()
+    assert len(error_catcher.events) == 2
+    assert len(error_catcher.error_events) == 1
+    assert len(error_catcher.warning_events) == 1
 
-    # raise_errors: True, no error
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
+    # Raise two VTK errors as a single RuntimeError
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
+    error_match2 = re.compile(f'{error_match.pattern}\n{error_match.pattern}')
+    with pytest.raises(pv.VTKExecutionError, match=error_match2):  # noqa: PT012
+        with error_catcher:
+            _generate_vtk_err()
+            _generate_vtk_err()
+
+    # Warn and raise error. The order emitted by VTK is not guaranteed to be the same
+    # since warn and err events are logged independently.
+    # Here we generate VTK err then warn, but expect warning then error
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
+    warning_match = re.compile(
+        r'Warning: In vtkMergeFilter\.cxx, line \d+\n'
+        r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
+    )
+    with pytest.warns(pv.VTKExecutionWarning, match=warning_match):  # noqa: PT031
+        with pytest.raises(pv.VTKExecutionError, match=error_match):  # noqa: PT012
+            with error_catcher:
+                _generate_vtk_err()
+                _generate_vtk_warn()
+
+    # Test raise/emit with no errors/warnings generated
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
     with error_catcher:
         pass
 
