@@ -4680,16 +4680,16 @@ class ImageDataFilters(DataSetFilters):
         Plot the two images together as wireframe to visualize them. The original is in
         red, and the resampled image is in black.
 
-        >>> plt = pv.Plotter()
-        >>> _ = plt.add_mesh(
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
         ...     image_as_cells, style='wireframe', color='red', line_width=10
         ... )
-        >>> _ = plt.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     upsampled_as_cells, style='wireframe', color='black', line_width=2
         ... )
-        >>> plt.view_xy()
-        >>> plt.camera.tight()
-        >>> plt.show()
+        >>> pl.view_xy()
+        >>> pl.camera.tight()
+        >>> pl.show()
 
         Disable ``extend_border`` to force the input and output bounds of the points
         to be the same instead.
@@ -4803,17 +4803,17 @@ class ImageDataFilters(DataSetFilters):
         Compare the downsampled image to the original and zoom in to show detail.
 
         >>> def compare_images_plotter(image1, image2):
-        ...     plt = pv.Plotter(shape=(1, 2))
-        ...     _ = plt.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
-        ...     plt.subplot(0, 1)
-        ...     _ = plt.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
-        ...     plt.link_views()
-        ...     plt.view_xy()
-        ...     plt.camera.zoom(3.0)
-        ...     return plt
+        ...     pl = pv.Plotter(shape=(1, 2))
+        ...     _ = pl.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
+        ...     pl.subplot(0, 1)
+        ...     _ = pl.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
+        ...     pl.link_views()
+        ...     pl.view_xy()
+        ...     pl.camera.zoom(3.0)
+        ...     return pl
 
-        >>> plt = compare_images_plotter(gourds, downsampled)
-        >>> plt.show()
+        >>> pl = compare_images_plotter(gourds, downsampled)
+        >>> pl.show()
 
         Note that downsampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
@@ -4822,8 +4822,8 @@ class ImageDataFilters(DataSetFilters):
 
         Compare down-sampling with aliasing (left) to without aliasing (right).
 
-        >>> plt = compare_images_plotter(downsampled, downsampled2)
-        >>> plt.show()
+        >>> pl = compare_images_plotter(downsampled, downsampled2)
+        >>> pl.show()
 
         Load an MRI of a knee and downsample it.
 
@@ -4836,27 +4836,27 @@ class ImageDataFilters(DataSetFilters):
         >>> knee = knee.crop(normalized_bounds=[0.2, 0.8, 0.2, 0.8, 0.0, 1.0])
         >>> vmin = knee.active_scalars.min()
         >>> vmax = knee.active_scalars.max()
-        >>> plt = image_plotter(knee, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(knee, clim=[vmin, vmax])
+        >>> pl.show()
 
         Upsample it with B-spline interpolation. The interpolation is very smooth.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
-        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> pl.show()
 
         Use the ``'wrap'`` border mode. Note how points at the border are brighter than previously,
         since the bright pixels from the opposite edge are now included in the interpolation.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
-        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> pl.show()
 
         Compare B-spline interpolation to ``'hamming'``.
 
         >>> upsampled = knee.resample(2.0, 'hamming')
-        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> pl.show()
 
         """
 
