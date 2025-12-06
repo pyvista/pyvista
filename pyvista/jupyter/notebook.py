@@ -12,9 +12,10 @@ Includes:
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
+
+from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
     import io
@@ -53,8 +54,8 @@ def handle_plotter(
             return show_trame(plotter, mode=backend, **kwargs)
 
     except ImportError as e:
-        warnings.warn(
-            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.',
+        warn_external(
+            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
         )
 
     return show_static_image(plotter, screenshot)

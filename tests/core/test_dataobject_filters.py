@@ -15,13 +15,12 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
-from pyvista.core import _vtk_core
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -209,7 +208,7 @@ def test_clip_empty(crinkle):
     out = pv.PolyData().clip(crinkle=crinkle, return_clipped=False)
     assert out.is_empty
 
-    out1, out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
+    out1, _out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
     assert out1.is_empty
 
     out = pv.PolyData().clip_box(crinkle=crinkle)
@@ -303,7 +302,14 @@ def test_extract_all_edges(datasets):
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
-    edges = datasets[0].extract_all_edges(use_all_points=True)
+    # Test that use_all_points parameter raises a deprecation warning
+    with pytest.warns(PyVistaDeprecationWarning, match='use_all_points.*deprecated'):
+        edges = datasets[0].extract_all_edges(use_all_points=True)
+    assert edges.n_lines
+
+    # Test that use_all_points=False also raises a deprecation warning
+    with pytest.warns(PyVistaDeprecationWarning, match='use_all_points.*deprecated'):
+        edges = datasets[0].extract_all_edges(use_all_points=False)
     assert edges.n_lines
 
 
@@ -469,7 +475,7 @@ def test_sample():
     sample_test(tolerance=1.0)
     sample_test(progress_bar=True)
     sample_test(categorical=True)
-    sample_test(locator=_vtk_core.vtkStaticCellLocator())
+    sample_test(locator=_vtk.vtkStaticCellLocator())
     for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
         sample_test(locator=locator)
     with pytest.raises(ValueError):  # noqa: PT011
@@ -649,7 +655,7 @@ def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
     iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
     qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
     iter_out = qual.recursive_iterator()
-    for block_in, block_out in zip(iter_in, iter_out):
+    for block_in, block_out in zip(iter_in, iter_out, strict=True):
         assert type(block_in) is type(block_out)
 
 
@@ -995,7 +1001,7 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
 
     # Apply transform with vtk filter
     grid_b = hexbeam.copy()
-    f = vtk.vtkTransformFilter()
+    f = _vtk.vtkTransformFilter()
     f.SetInputDataObject(grid_b)
     f.SetTransform(trans)
     f.Update()
@@ -1071,11 +1077,11 @@ def test_translate_should_translate_grid(hexbeam, axis_amounts):
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
 def test_rotate_should_match_vtk_rotation(angle, axis, hexbeam):
-    trans = vtk.vtkTransform()
+    trans = _vtk.vtkTransform()
     getattr(trans, f'Rotate{axis.upper()}')(angle)
     trans.Update()
 
-    trans_filter = vtk.vtkTransformFilter()
+    trans_filter = _vtk.vtkTransformFilter()
     trans_filter.SetTransform(trans)
     trans_filter.SetInputData(hexbeam)
     trans_filter.Update()
@@ -1207,7 +1213,7 @@ def test_transform_integers():
         [0, 1, 0],
     ]
     # build vtkPolyData from scratch to enforce int data
-    poly = vtk.vtkPolyData()
+    poly = _vtk.vtkPolyData()
     poly.SetPoints(pv.vtk_points(points))
     poly = pv.wrap(poly)
     poly.verts = [1, 0, 1, 1, 1, 2]
@@ -1250,15 +1256,15 @@ def test_transform_integers_vtkbug_present():
         [0, 1, 0],
     ]
     # build vtkPolyData from scratch to enforce int data
-    poly = vtk.vtkPolyData()
+    poly = _vtk.vtkPolyData()
     poly.SetPoints(pv.vtk_points(points))
 
     # manually put together a rotate_x(10) transform
     trans_arr = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
     trans_mat = pv.vtkmatrix_from_array(trans_arr)
-    trans = vtk.vtkTransform()
+    trans = _vtk.vtkTransform()
     trans.SetMatrix(trans_mat)
-    trans_filt = vtk.vtkTransformFilter()
+    trans_filt = _vtk.vtkTransformFilter()
     trans_filt.SetInputDataObject(poly)
     trans_filt.SetTransform(trans)
     trans_filt.Update()

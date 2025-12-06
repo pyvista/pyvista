@@ -13,6 +13,8 @@ from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
+from .utilities.writer import HDFWriter
+from .utilities.writer import XMLPartitionedDataSetWriter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
 
     from .dataset import DataSet
     from .utilities.arrays import FieldAssociation
-    from .utilities.fileio import _VTKWriterAlias
+    from .utilities.writer import BaseWriter
 
 
 class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
@@ -44,12 +46,10 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {
-        '.vtpd': _vtk.vtkXMLPartitionedDataSetWriter
-    }
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {'.vtpd': XMLPartitionedDataSetWriter}
 
     if _vtk.vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
+        _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
@@ -110,7 +110,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     ):
         """Set a partition with a VTK data object."""
         if isinstance(index, slice):
-            for i, d in zip(range(self.n_partitions)[index], data):
+            for i, d in zip(range(self.n_partitions)[index], data, strict=True):
                 self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:

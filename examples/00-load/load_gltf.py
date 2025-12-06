@@ -15,7 +15,7 @@ based rendering and VTK v9 supports high dynamic range textures.
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 helmet_file = examples.gltf.download_damaged_helmet()
@@ -30,7 +30,7 @@ texture = examples.download_dikhololo_night()
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
-pl = pyvista.Plotter()
+pl = pv.Plotter()
 pl.import_gltf(helmet_file)
 pl.set_environment_texture(texture)
 pl.camera.zoom(1.7)
@@ -41,7 +41,7 @@ pl.show()
 # You can also directly read in gltf files and extract the underlying
 # mesh.
 
-block = pyvista.read(helmet_file)
+block = pv.read(helmet_file)
 mesh = block[0][0][0]
 mesh.plot(color='lightblue', show_edges=True, cpos='xy')
 # %%

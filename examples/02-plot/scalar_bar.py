@@ -31,11 +31,11 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 mesh = examples.download_st_helens().warp_by_scalar()
 
 # First a default plot with jet colormap
-p = pv.Plotter()
+pl = pv.Plotter()
 # Add the data, use active scalar for coloring, and show the scalar bar
-p.add_mesh(mesh)
+pl.add_mesh(mesh)
 # Display the scene
-p.show()
+pl.show()
 
 # %%
 # We could also plot the scene with an interactive scalar bar to move around
@@ -47,9 +47,9 @@ p.show()
 # create dictionary of parameters to control scalar bar
 sargs = dict(interactive=True)  # Simply make the bar interactive
 
-p = pv.Plotter(notebook=False)  # If in IPython, be sure to show the scene
-p.add_mesh(mesh, scalar_bar_args=sargs)
-p.show()
+pl = pv.Plotter(notebook=False)  # If in IPython, be sure to show the scene
+pl.add_mesh(mesh, scalar_bar_args=sargs)
+pl.show()
 # Remove from plotters so output is not produced in docs
 pv.plotting.plotter._ALL_PLOTTERS.clear()
 
@@ -62,9 +62,9 @@ pv.plotting.plotter._ALL_PLOTTERS.clear()
 # Set a custom position and size
 sargs = dict(height=0.25, vertical=True, position_x=0.05, position_y=0.05)
 
-p = pv.Plotter()
-p.add_mesh(mesh, scalar_bar_args=sargs)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, scalar_bar_args=sargs)
+pl.show()
 
 # %%
 # The text properties of the scalar bar can also be controlled:
@@ -76,20 +76,20 @@ sargs = dict(
     shadow=True,
     n_labels=3,
     italic=True,
-    fmt='%.1f',
+    fmt='{0:.1f}',
     font_family='arial',
 )
 
-p = pv.Plotter()
-p.add_mesh(mesh, scalar_bar_args=sargs)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, scalar_bar_args=sargs)
+pl.show()
 
 
 # %%
 # Labelling values outside of the scalar range
-p = pv.Plotter()
-p.add_mesh(mesh, clim=[1000, 2000], below_color='blue', above_color='red', scalar_bar_args=sargs)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, clim=[1000, 2000], below_color='blue', above_color='red', scalar_bar_args=sargs)
+pl.show()
 
 
 # %%
@@ -102,8 +102,8 @@ annotations = {
     805.3: 'Cutoff value',
 }
 
-p = pv.Plotter()
-p.add_mesh(mesh, scalars='Elevation', annotations=annotations)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, scalars='Elevation', annotations=annotations)
+pl.show()
 # %%
 # .. tags:: plot

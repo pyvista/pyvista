@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import cast
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
@@ -45,16 +45,16 @@ def _get_output(
     active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = cast('pyvista.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
-    data = cast('pyvista.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
-    if not isinstance(data, pyvista.MultiBlock):
+    ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
+    data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
+    if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:
             data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
-    if isinstance(ido, pyvista.PointSet):
+    if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
 

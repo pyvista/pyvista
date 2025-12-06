@@ -12,9 +12,9 @@ KEY = 'Data'
 def scalar_bars(sphere):
     sphere[KEY] = sphere.points[:, 2]
 
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere, show_scalar_bar=False)
-    plotter.add_scalar_bar(
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    pl.add_scalar_bar(
         KEY,
         interactive=True,
         vertical=False,
@@ -24,7 +24,7 @@ def scalar_bars(sphere):
         fill=True,
         background_color='k',
     )
-    return plotter.scalar_bars
+    return pl.scalar_bars
 
 
 def test_repr(scalar_bars):

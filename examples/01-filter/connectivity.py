@@ -30,11 +30,15 @@ from pyvista import examples
 pine_roots = examples.download_pine_roots()
 
 # Plot the raw data
-cpos = [(40.6018, -280.533, 47.0172), (40.6018, 37.2813, 50.1953), (0.0, 0.0, 1.0)]
-p = pv.Plotter()
-p.add_mesh(pine_roots, color='#965434')
-p.add_mesh(pine_roots.outline())
-p.show(cpos=cpos)
+cpos = pv.CameraPosition(
+    position=(40.6018, -280.533, 47.0172),
+    focal_point=(40.6018, 37.2813, 50.1953),
+    viewup=(0.0, 0.0, 1.0),
+)
+pl = pv.Plotter()
+pl.add_mesh(pine_roots, color='#965434')
+pl.add_mesh(pine_roots.outline())
+pl.show(cpos=cpos)
 
 # %%
 # The plotted mesh is very noisy. We can extract the largest connected
@@ -46,11 +50,11 @@ p.show(cpos=cpos)
 largest = pine_roots.connectivity('largest')
 # or: largest = mesh.extract_largest()
 
-p = pv.Plotter()
-p.add_mesh(largest, color='#965434')
-p.add_mesh(pine_roots.outline())
-p.camera_position = cpos
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(largest, color='#965434')
+pl.add_mesh(pine_roots.outline())
+pl.camera_position = cpos
+pl.show()
 
 
 # %%
@@ -74,12 +78,12 @@ noise = pine_roots.connectivity('specified', noise_region_ids)
 
 # %%
 # Plot the noisy regions. For context, also plot the largest region.
-p = pv.Plotter()
-p.add_mesh(noise, cmap='glasbey', categories=True)
-p.add_mesh(largest, color='lightgray', opacity=0.1)
-p.add_mesh(pine_roots.outline())
-p.camera_position = cpos
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(noise, cmap='glasbey', categories=True)
+pl.add_mesh(largest, color='lightgray', opacity=0.1)
+pl.add_mesh(pine_roots.outline())
+pl.camera_position = cpos
+pl.show()
 
 
 # %%
@@ -102,10 +106,12 @@ conn = mesh.connectivity('all')
 
 # Format scalar bar text for integer values.
 scalar_bar_args = dict(
-    fmt='%.f',
+    fmt='{0:.1f}',
 )
 
-cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+cpos = pv.CameraPosition(
+    position=(10.5, 12.2, 18.3), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+)
 
 conn.plot(
     categories=True,
@@ -164,11 +170,11 @@ valley_mesh = mesh.connectivity('closest', peak_point, scalar_range=valley_range
 
 # %%
 # Plot extracted regions.
-p = pv.Plotter()
-_ = p.add_mesh(mesh, style='wireframe', color='lightgray')
-_ = p.add_mesh(peak_mesh, color='red', label='Steepest Peak')
-_ = p.add_mesh(valley_mesh, color='blue', label='Closest Valley')
-_ = p.add_legend()
-p.show()
+pl = pv.Plotter()
+_ = pl.add_mesh(mesh, style='wireframe', color='lightgray')
+_ = pl.add_mesh(peak_mesh, color='red', label='Steepest Peak')
+_ = pl.add_mesh(valley_mesh, color='blue', label='Closest Valley')
+_ = pl.add_legend()
+pl.show()
 # %%
 # .. tags:: filter

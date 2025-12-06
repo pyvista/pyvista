@@ -33,11 +33,11 @@ glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.003, geom=geom)
 # plot using the plotting class
 pl = pv.Plotter()
 pl.add_mesh(glyphs, show_scalar_bar=False, lighting=False, cmap='coolwarm')
-pl.camera_position = [
-    (146.53, 91.28, 21.70),
-    (125.00, 94.45, 19.81),
-    (-0.086, 0.007, 0.996),
-]  # view only part of the vector field
+pl.camera_position = pv.CameraPosition(
+    position=(146.53, 91.28, 21.70),
+    focal_point=(125.00, 94.45, 19.81),
+    viewup=(-0.086, 0.007, 0.996),
+)  # view only part of the vector field
 cpos = pl.show(return_cpos=True)
 
 
@@ -66,10 +66,10 @@ sphere.arrows.plot()
 # %%
 # Plot the arrows and the sphere.
 
-p = pv.Plotter()
-p.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': 'Vector Magnitude'})
-p.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': 'Vector Magnitude'})
+pl.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
+pl.show()
 
 
 # %%
@@ -87,9 +87,9 @@ mesh = examples.load_random_hills()
 # create a subset of arrows using the glyph filter
 arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 
-p = pv.Plotter()
-p.add_mesh(arrows, color='black')
-p.add_mesh(mesh, scalars='Elevation', cmap='terrain', smooth_shading=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(arrows, color='black')
+pl.add_mesh(mesh, scalars='Elevation', cmap='terrain', smooth_shading=True)
+pl.show()
 # %%
 # .. tags:: filter

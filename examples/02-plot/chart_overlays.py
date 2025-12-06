@@ -48,10 +48,10 @@ _ = ax.set_ylabel('Height (m)')
 # Define plotter, add the created matplotlib figure as the first (left) chart
 # to the scene, and define a second (right) chart.
 
-p = pv.Plotter()
+pl = pv.Plotter()
 h_chart = pv.ChartMPL(f, size=(0.46, 0.25), loc=(0.02, 0.06))
 h_chart.background_color = (1.0, 1.0, 1.0, 0.4)
-p.add_chart(h_chart)
+pl.add_chart(h_chart)
 v_chart = pv.Chart2D(
     size=(0.46, 0.25),
     loc=(0.52, 0.06),
@@ -61,9 +61,9 @@ v_chart = pv.Chart2D(
 v_line = v_chart.line(t[:1], v[:1])
 v_chart.y_range = (-1, 1)
 v_chart.background_color = (1.0, 1.0, 1.0, 0.4)
-p.add_chart(v_chart)
-p.add_mesh(pv.Sphere(radius=1), name='sphere', render=False)
-p.show(auto_close=False, interactive=True, interactive_update=True)
+pl.add_chart(v_chart)
+pl.add_mesh(pv.Sphere(radius=1), name='sphere', render=False)
+pl.show(auto_close=False, interactive=True, interactive_update=True)
 
 
 # Method and slider to update all visuals based on the time selection
@@ -72,11 +72,11 @@ def update_time(time):
     h_line.set_xdata(t[: k + 1])
     h_line.set_ydata(h[: k + 1])
     v_line.update(t[: k + 1], v[: k + 1])
-    p.add_mesh(pv.Sphere(radius=1, center=(0, 0, h[k])), name='sphere', render=False)
-    p.update()
+    pl.add_mesh(pv.Sphere(radius=1, center=(0, 0, h[k])), name='sphere', render=False)
+    pl.update()
 
 
-time_slider = p.add_slider_widget(
+time_slider = pl.add_slider_widget(
     update_time,
     rng=[np.min(t), np.max(t)],
     value=0,
@@ -92,6 +92,6 @@ for i in range(1, 50):
     time_slider.GetSliderRepresentation().SetValue(t[i])
     update_time(t[i])
 
-p.show()  # Keep plotter open to let user play with time slider
+pl.show()  # Keep plotter open to let user play with time slider
 # %%
 # .. tags:: plot

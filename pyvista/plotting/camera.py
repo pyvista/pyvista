@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.state_manager import _update_alg
@@ -51,7 +51,7 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self._focus = None  # Used by BackgroundRenderer
 
         if renderer:
-            if not isinstance(renderer, pyvista.Renderer):
+            if not isinstance(renderer, pv.Renderer):
                 msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 raise TypeError(msg)
             self._renderer = proxy(renderer)
@@ -592,11 +592,11 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> plotter.camera.view_angle
+        >>> pl = pv.Plotter()
+        >>> pl.camera.view_angle
         30.0
-        >>> plotter.camera.view_angle = 60.0
-        >>> plotter.camera.view_angle
+        >>> pl.camera.view_angle = 60.0
+        >>> pl.camera.view_angle
         60.0
 
         """
@@ -636,8 +636,8 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> frustum = plotter.camera.view_frustum(1.0)
+        >>> pl = pv.Plotter()
+        >>> frustum = pl.camera.view_frustum(1.0)
         >>> frustum.n_points
         8
         >>> frustum.n_cells
@@ -654,7 +654,7 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         _update_alg(frustum_source)
 
-        return pyvista.wrap(frustum_source.GetOutput())
+        return pv.wrap(frustum_source.GetOutput())
 
     @property
     def roll(self):  # numpydoc ignore=RT01
@@ -841,20 +841,20 @@ class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         Examples
         --------
-        Display the puppy image with a tight view.
+        Display the bird image with a tight view.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> puppy = examples.download_puppy()
+        >>> bird = examples.download_bird()
         >>> pl = pv.Plotter(border=True, border_width=5)
-        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> _ = pl.add_mesh(bird, rgb=True)
         >>> pl.camera.tight()
         >>> pl.show()
 
         Set the background to blue use a 5% padding around the image.
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> _ = pl.add_mesh(bird, rgb=True)
         >>> pl.background_color = 'b'
         >>> pl.camera.tight(padding=0.05)
         >>> pl.show()

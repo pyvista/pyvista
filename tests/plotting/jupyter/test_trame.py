@@ -43,6 +43,11 @@ pytestmark = [
         r'ignore:It is recommended to use web\.AppKey instances for '
         r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
     ),
+    pytest.mark.filterwarnings(
+        r'ignore:Call to deprecated method GetData\. '
+        r'\(Use ExportLegacyFormat, or GetOffsetsArray/GetConnectivityArray instead\.\)'
+        ':DeprecationWarning:trame_vtk'
+    ),
 ]
 
 
@@ -294,17 +299,17 @@ def test_trame_views():
 
 def test_trame_jupyter_custom_size():
     w, h = 200, 150
-    plotter = pv.Plotter(notebook=True, window_size=(w, h))
-    _ = plotter.add_mesh(pv.Cone())
-    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+    pl = pv.Plotter(notebook=True, window_size=(w, h))
+    _ = pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='trame', return_viewer=True)
     html = widget.value
     assert f'width: {w}px' in html
     assert f'height: {h}px' in html
 
-    plotter = pv.Plotter(notebook=True)
-    plotter.window_size = (w, h)
-    _ = plotter.add_mesh(pv.Cone())
-    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+    pl = pv.Plotter(notebook=True)
+    pl.window_size = (w, h)
+    _ = pl.add_mesh(pv.Cone())
+    widget = pl.show(jupyter_backend='trame', return_viewer=True)
     html = widget.value
     assert f'width: {w}px' in html
     assert f'height: {h}px' in html
@@ -313,9 +318,9 @@ def test_trame_jupyter_custom_size():
     previous_size = pv.global_theme.window_size
     pv.global_theme.window_size = pv.themes.Theme().window_size
     try:
-        plotter = pv.Plotter(notebook=True)
-        _ = plotter.add_mesh(pv.Cone())
-        widget = plotter.show(jupyter_backend='trame', return_viewer=True)
+        pl = pv.Plotter(notebook=True)
+        _ = pl.add_mesh(pv.Cone())
+        widget = pl.show(jupyter_backend='trame', return_viewer=True)
         html = widget.value
         assert 'width: 99%' in html
         assert 'height: 600px' in html
@@ -327,9 +332,9 @@ def test_trame_jupyter_custom_handler():
     def handler(viewer, src, **kwargs):  # noqa: ARG001
         return IFrame(src, '75%', '500px')
 
-    plotter = pv.Plotter(notebook=True)
-    _ = plotter.add_mesh(pv.Cone())
-    iframe = plotter.show(
+    pl = pv.Plotter(notebook=True)
+    _ = pl.add_mesh(pv.Cone())
+    iframe = pl.show(
         jupyter_backend='trame',
         jupyter_kwargs=dict(handler=handler),
         return_viewer=True,
@@ -341,9 +346,9 @@ def test_trame_int64():
     mesh = pv.Sphere()
     mesh['int64'] = np.arange(mesh.n_cells, dtype=np.int64)
 
-    plotter = pv.Plotter(notebook=True)
-    _ = plotter.add_mesh(mesh, scalars='int64')
-    widget = plotter.show(
+    pl = pv.Plotter(notebook=True)
+    _ = pl.add_mesh(mesh, scalars='int64')
+    widget = pl.show(
         jupyter_backend='trame',
         return_viewer=True,
     )
@@ -354,9 +359,9 @@ def test_trame_int64():
 @pytest.mark.skip_plotting
 def test_trame_export_html(tmpdir):
     filename = str(tmpdir.join('tmp.html'))
-    plotter = pv.Plotter()
-    plotter.add_mesh(pv.Wavelet())
-    plotter.export_html(filename)
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Wavelet())
+    pl.export_html(filename)
     assert Path(filename).is_file()
 
 
@@ -364,9 +369,9 @@ def test_export_single(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-single'))
     data = examples.load_airplane()
     # Create the scene
-    plotter = pv.Plotter()
-    plotter.add_mesh(data)
-    plotter.export_vtksz(filename)
+    pl = pv.Plotter()
+    pl.add_mesh(data)
+    pl.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
@@ -381,9 +386,9 @@ def test_export_multi(tmpdir):
     multi.append(examples.load_airplane())
     multi.append(examples.load_rectilinear())
     # Create the scene
-    plotter = pv.Plotter()
-    plotter.add_mesh(multi)
-    plotter.export_vtksz(filename)
+    pl = pv.Plotter()
+    pl.add_mesh(multi)
+    pl.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
@@ -393,9 +398,9 @@ def test_export_texture(tmpdir):
     data = examples.load_globe()
     texture = examples.load_globe_texture()
     # Create the scene
-    plotter = pv.Plotter()
-    plotter.add_mesh(data, texture=texture)
-    plotter.export_vtksz(filename)
+    pl = pv.Plotter()
+    pl.add_mesh(data, texture=texture)
+    pl.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
@@ -404,9 +409,9 @@ def test_export_verts(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-verts'))
     data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
-    plotter = pv.Plotter()
-    plotter.add_mesh(data)
-    plotter.export_vtksz(filename)
+    pl = pv.Plotter()
+    pl.add_mesh(data)
+    pl.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
@@ -415,17 +420,17 @@ def test_export_color(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-color'))
     data = examples.load_airplane()
     # Create the scene
-    plotter = pv.Plotter()
-    plotter.add_mesh(data, color='yellow')
-    plotter.export_vtksz(filename)
+    pl = pv.Plotter()
+    pl.add_mesh(data, color='yellow')
+    pl.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
 
 def test_embeddable_widget():
-    plotter = pv.Plotter(notebook=True)
-    plotter.add_mesh(pv.Sphere())
-    widget = plotter.show(jupyter_backend='html', return_viewer=True)
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(pv.Sphere())
+    widget = pl.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
 
@@ -434,8 +439,8 @@ def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
     from pyvista.trame import jupyter
 
     monkeypatch.setattr(jupyter, 'HTML', object)
-    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+    with pytest.raises(ImportError, match=r'Please install `ipywidgets`.'):
         jupyter.Widget(viewer=None, src=None)
 
-    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+    with pytest.raises(ImportError, match=r'Please install `ipywidgets`.'):
         jupyter.EmbeddableWidget(plotter=None, width=None, height=None)

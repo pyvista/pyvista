@@ -11,7 +11,7 @@ from subprocess import TimeoutExpired
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.state_manager import _update_alg
 
@@ -115,7 +115,7 @@ def system_supports_plotting() -> bool:
 
 def _update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internal helper)."""
-    color = Color(color, default_color=pyvista.global_theme.font.color)
+    color = Color(color, default_color=pv.global_theme.font.color)
     if isinstance(axes_actor, _vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
@@ -225,9 +225,9 @@ def create_axes_marker(  # noqa: PLR0917
     >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
+    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
     axes_actor = _vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXAxisTipProperty().SetColor(x_color.float_rgb)
@@ -376,10 +376,10 @@ def create_axes_orientation_box(  # noqa: PLR0917
     >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
-    edge_color = Color(edge_color, default_color=pyvista.global_theme.edge_color)
+    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
+    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
+    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
+    edge_color = Color(edge_color, default_color=pv.global_theme.edge_color)
     x_face_color = Color(x_face_color)
     y_face_color = Color(y_face_color)
     z_face_color = Color(z_face_color)
@@ -419,7 +419,7 @@ def create_axes_orientation_box(  # noqa: PLR0917
         axes_actor.GetCubeProperty().SetOpacity(0)
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
-        cube = pyvista.Cube()
+        cube = pv.Cube()
         cube.clear_data()  # remove normals
         face_colors = np.array(
             [
@@ -439,7 +439,7 @@ def create_axes_orientation_box(  # noqa: PLR0917
         cube_mapper.SetColorModeToDirectScalars()
         _update_alg(cube_mapper)
 
-        cube_actor = pyvista.Actor(mapper=cube_mapper)
+        cube_actor = pv.Actor(mapper=cube_mapper)
         cube_actor.prop.culling = 'back'
         cube_actor.prop.opacity = opacity
 
@@ -512,7 +512,7 @@ def create_north_arrow():
             5,
         ],
     )
-    return pyvista.PolyData(points, faces)
+    return pv.PolyData(points, faces)
 
 
 def normalize(x, minimum=None, maximum=None):

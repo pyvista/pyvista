@@ -12,10 +12,13 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
-import warnings
 
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import VTKExecutionError
+from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
@@ -52,23 +55,38 @@ class VtkErrorCatcher:
     Parameters
     ----------
     raise_errors : bool, default: False
-        Raise a ``RuntimeError`` when a VTK error is encountered.
+        Raise a ``pyvista.VTKExecutionError`` (a runtime error) when a VTK error
+        is observed.
+
+        .. versionchanged:: 0.47
+
+            A ``pyvista.VTKExecutionError`` is now raised instead of a generic
+            ``RuntimeError``.
 
     send_to_logging : bool, default: True
         Determine whether VTK errors raised within the context should
         also be sent to logging.
 
     emit_warnings : bool, default: False
-        Emit a ``RuntimeWarning`` when a VTK warning is encountered.
+        Emit a ``pyvista.VTKExecutionWarning`` (a runtime warning) when a VTK warning
+        is observed.
 
-        .. versionadded:: 0.46
+        .. versionadded:: 0.47
 
     Examples
     --------
-    Catch VTK errors using the context manager.
+    Catch VTK errors using the context manager. This only sends to
+    logging by default.
 
     >>> import pyvista as pv
     >>> with pv.VtkErrorCatcher() as error_catcher:
+    ...     sphere = pv.Sphere()
+
+    Raise VTK errors as Python errors and emit VTK warnings as Python warnings.
+
+    >>> with pv.VtkErrorCatcher(
+    ...     raise_errors=True, emit_warnings=True
+    ... ) as error_catcher:
     ...     sphere = pv.Sphere()
 
     """
@@ -121,17 +139,29 @@ class VtkErrorCatcher:
 
     @property
     def events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed."""
+        """List of all VTK warning and error events observed.
+
+        .. versionadded:: 0.47
+
+        """
         return [*self._warning_observer.event_history, *self._error_observer.event_history]
 
     @property
     def error_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed."""
+        """List of VTK error events observed.
+
+        .. versionadded:: 0.47
+
+        """
         return self._error_observer.event_history
 
     @property
     def warning_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed."""
+        """List of VTK error events observed.
+
+        .. versionadded:: 0.47
+
+        """
         return self._warning_observer.event_history
 
     @property
@@ -145,10 +175,10 @@ class VtkErrorCatcher:
         return '\n'.join([str(e) for e in self.warning_events])
 
     def _raise_error(self, message: str):
-        raise pyvista.VTKOutputMessageError(message)
+        raise VTKExecutionError(message)
 
     def _emit_warning(self, message: str):
-        warnings.warn(message, pyvista.VTKOutputMessageWarning)
+        warn_external(message, VTKExecutionWarning)
 
 
 class VtkEvent(NamedTuple):
@@ -229,7 +259,7 @@ class Observer(_NoNewAttrMixin):
         On an event occurrence, this function executes.
 
         """
-        verbosity = pyvista.vtk_verbosity()
+        verbosity = pv.vtk_verbosity()
         if verbosity == 'off' or (verbosity == 'error' and self.event_type == 'WarningEvent'):
             # Ignore callback
             return

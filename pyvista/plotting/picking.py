@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
-import warnings
 import weakref
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -75,13 +75,13 @@ class RectangleSelection(_NoNewAttrMixin):
         return self._frustum
 
     @property
-    def frustum_mesh(self) -> pyvista.PolyData:  # numpydoc ignore=RT01
+    def frustum_mesh(self) -> pv.PolyData:  # numpydoc ignore=RT01
         """Get the frustum as a PyVista mesh."""
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
         _update_alg(frustum_source)
-        return pyvista.wrap(frustum_source.GetOutput())
+        return pv.wrap(frustum_source.GetOutput())
 
     @property
     def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
@@ -131,7 +131,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         """
         ds = self.picker.GetDataSet()
         if ds is not None:
-            return pyvista.wrap(ds)
+            return pv.wrap(ds)
         return None
 
     def get_cell(self, picked_point):
@@ -233,7 +233,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         """
         mesh = self.get_mesh()
         pid = mesh.find_closest_point(picked_point)
-        picked = pyvista.PolyData(mesh.points[pid])
+        picked = pv.PolyData(mesh.points[pid])
         picked.point_data['vtkOriginalPointIds'] = np.array([pid])
         return picked
 
@@ -286,7 +286,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         Returns
         -------
-        numpy.ndarray or None
+        output : numpy.ndarray | None
             Picked point if available.
 
         """
@@ -483,9 +483,8 @@ class PickingInterface:  # numpydoc ignore=PR01
         """
         self._validate_picker_not_in_use()
         if 'use_mesh' in kwargs:
-            warnings.warn(
-                '`use_mesh` is deprecated. See `use_picker` instead.',
-                PyVistaDeprecationWarning,
+            warn_external(
+                '`use_mesh` is deprecated. See `use_picker` instead.', PyVistaDeprecationWarning
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -592,7 +591,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -680,7 +679,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         super().__init__(*args, **kwargs)
         self._picked_actor = None
         self._picked_mesh = None
-        self._picked_cell = None
+        self._picked_cell: None | pv.MultiBlock | pv.UnstructuredGrid = None
         self._picking_text = None
         self._picked_block_index = None
 
@@ -694,7 +693,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pyvista.Actor or None
+        output : pyvista.Actor | None
             Picked actor if available.
 
         """
@@ -710,38 +709,74 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        pyvista.DataSet or None
+        output : pyvista.DataSet | None
             Picked mesh if available.
 
         """
         return self._picked_mesh
 
     @property
-    def picked_cell(self):  # numpydoc ignore=RT01
-        """Return the picked cell.
+    def picked_cell(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
+        r"""Return the cell-picked object.
 
-        This returns the picked cell after selecting a cell.
+        This returns the object containing cells that were interactively picked with
+        :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
+        :func:`enable_rectangle_through_picking <pyvista.Plotter.enable_rectangle_through_picking>`
+        or
+        :func:`enable_rectangle_visible_picking <pyvista.Plotter.enable_rectangle_visible_picking>`.
+
+        Its value depends on the picking result:
+
+        * if no cells have been picked, returns :py:data:`None`
+        * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
+        * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
+          containing ``n`` ``pyvista.UnstructuredGrid``\s, with ``n`` being the number of picked actors.
+
+        Note that a cell data ``original_cell_ids`` is added to help identifying
+        cell ids picked from the original dataset.
+
+        .. deprecated:: 0.47
+            Use the :attr:`picked_cells <pyvista.Plotter.picked_cells>` attribute instead.
 
         Returns
         -------
-        pyvista.Cell or None
-            Picked cell if available.
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Picked object if available.
 
-        """
+        """  # noqa: E501
+        # deprecated in 0.47, error in 0.48, remove in 0.49
+        warn_external(
+            category=PyVistaDeprecationWarning, message='Use the `picked_cells` attribute instead.'
+        )
         return self._picked_cell
 
     @property
-    def picked_cells(self):  # numpydoc ignore=RT01
-        """Return the picked cells.
+    def picked_cells(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
+        r"""Return the cell-picked object.
 
-        This returns the picked cells after selecting cells.
+        This returns the object containing cells that were interactively picked with
+        :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
+        :func:`enable_rectangle_through_picking <pyvista.Plotter.enable_rectangle_through_picking>`
+        or
+        :func:`enable_rectangle_visible_picking <pyvista.Plotter.enable_rectangle_visible_picking>`.
+
+        Its value depends on the picking result:
+
+        * if no cells have been picked, returns :py:data:`None`
+        * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
+        * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
+          containing ``n`` ``pyvista.UnstructuredGrid``\s, with ``n`` being the number of picked actors.
+
+        Note that a cell data ``original_cell_ids`` is added to help identifying
+        cell ids picked from the original dataset.
+
 
         Returns
         -------
-        pyvista.Cell or None
-            Picked cell if available.
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Picked object if available.
 
-        """
+        """  # noqa: E501
         return self._picked_cell
 
     @property
@@ -753,7 +788,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        int or None
+        output : int | None
             Picked block if available. If ``-1``, then a non-composite dataset
             was selected.
 
@@ -1053,7 +1088,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # noqa: BLE001  # pragma: no cover
-                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[call-overload]
+                    warn_external('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[arg-type]
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)  # type: ignore[union-attr]
@@ -1121,7 +1156,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1161,8 +1196,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, self_().picked_cells)  # type: ignore[union-attr]
 
-        def through_pick_callback(selection):
-            picked = pyvista.MultiBlock()
+        def through_pick_callback(selection: RectangleSelection):
+            picked = pv.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
                 if (
@@ -1170,13 +1205,26 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     and _mapper_has_data_set_input(mapper)
                     and actor.GetPickable()
                 ):
-                    input_mesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
-                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
+                    input_mesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
+                    old_name, new_name = 'orig_extract_id', 'original_cell_ids'
+
+                    #  deprecated in 0.47, rename in v0.49
+                    warn_external(
+                        category=PyVistaDeprecationWarning,
+                        message=(
+                            f'The `{old_name}` cell data has been deprecated and will be renamed'
+                            f' to `{new_name} in a future version of PyVista.'
+                        ),
+                    )
+                    input_mesh.cell_data[old_name] = (ids := np.arange(input_mesh.n_cells))
+                    input_mesh.cell_data[new_name] = ids
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
                     _update_alg(extract)
-                    picked.append(pyvista.wrap(extract.GetOutput()))
+
+                    if (wrapped := pv.wrap(extract.GetOutput())).n_cells > 0:
+                        picked.append(wrapped)
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None  # type: ignore[union-attr]
@@ -1240,7 +1288,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1279,7 +1327,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 _poked_context_callback(self_(), callback, picked)
 
         def visible_pick_callback(selection):
-            picked = pyvista.MultiBlock()
+            picked = pv.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             x0, y0, x1, y1 = renderer.get_pick_position()
             # x0, y0, x1, y1 = selection.viewport
@@ -1295,7 +1343,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     if selection_node is None:  # pragma: no cover
                         # No selection
                         continue
-                    cids = pyvista.convert_array(selection_node.GetSelectionList())
+                    cids = pv.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
 
                     # TODO: this is too hacky - find better way to avoid non-dataset actors
@@ -1307,13 +1355,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
-                        warnings.warn(
+                        warn_external(
                             'Display representations other than `surface` will result '
                             'in incorrect results.',
                         )
-                    smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
+                    smesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
-                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)
+                    smesh.cell_data['original_cell_ids'] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
@@ -1360,16 +1408,15 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Press ``"r"`` to enable rectangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
-        ``self.picked_cells``.
+        :attr:`picked_cells <pyvista.Plotter.picked_cells>` as:
+
+        * a :class:`MultiBlock` when multiple meshes have been picked,
+        * an :class:`UnstructuredGrid` if a single mesh have been picked.
 
         All meshes in the scene are available for picking by default.
         If you would like to only pick a single mesh in the scene,
         use the ``pickable=False`` argument when adding the other
         meshes to the scene.
-
-        When multiple meshes are being picked, the picked cells
-        in ``self.picked_cells`` will be a :class:`MultiBlock`
-        dataset for each mesh's selection.
 
         Uses last input mesh for input by default.
 
@@ -1382,8 +1429,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made.
-            The picked_cells are input as the first parameter to this
-            callable.
+            The :attr:`picked_cells <pyvista.Plotter.picked_cells>` is given
+            as the first parameter to this callable.
 
         through : bool, default: True
             When ``True`` the picker will select all cells
@@ -1411,7 +1458,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         font_size : int, default: 18
             Sets the font size of the message.
 
-        start : bool, default: True
+        start : bool, default: False
             Automatically start the cell selection tool.
 
         show_frustum : bool, default: False
@@ -1771,7 +1818,7 @@ class PickingHelper(PickingMethods):
             if picker.GetDataSet() is None:
                 return
             the_points.append(picked_point)
-            self.picked_path = pyvista.PolyData(np.array(the_points))
+            self.picked_path = pv.PolyData(np.array(the_points))
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
                 with self.iren.poked_subplot():  # type: ignore[attr-defined]
@@ -1885,16 +1932,16 @@ class PickingHelper(PickingMethods):
 
         kwargs.setdefault('pickable', False)
 
-        self.picked_geodesic = pyvista.PolyData()
+        self.picked_geodesic = pv.PolyData()
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:
                 return
-            mesh = pyvista.wrap(picker.GetDataSet())
+            mesh = pv.wrap(picker.GetDataSet())
             idx = mesh.find_closest_point(picked_point)
             point = mesh.points[idx]
             if self._last_picked_idx is None:
-                self.picked_geodesic = pyvista.PolyData(point)
+                self.picked_geodesic = pv.PolyData(point)
                 self.picked_geodesic['vtkOriginalPointIds'] = [idx]
             else:
                 surface = mesh.extract_surface().triangulate()
@@ -1931,7 +1978,7 @@ class PickingHelper(PickingMethods):
                 _poked_context_callback(self_(), callback, self.picked_geodesic)
 
         def _clear_g_path_event_watcher():
-            self.picked_geodesic = pyvista.PolyData()
+            self.picked_geodesic = pv.PolyData()
             with self.iren.poked_subplot():  # type: ignore[attr-defined]
                 self._clear_picking_representations()
             self._last_picked_idx = None
@@ -2022,7 +2069,7 @@ class PickingHelper(PickingMethods):
         self_ = weakref.ref(self)
 
         def _clear_horizon_event_watcher():
-            self.picked_horizon = pyvista.PolyData()
+            self.picked_horizon = pv.PolyData()
             with self.iren.poked_subplot():  # type: ignore[attr-defined]
                 self._clear_picking_representations()
 

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Sequence
+import importlib
 import itertools
 from pathlib import Path
 import pickle
@@ -10,17 +13,17 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TextIO
-from typing import TypeVar
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.state_manager import _update_alg
 
 from .observers import Observer
@@ -30,6 +33,7 @@ if TYPE_CHECKING:
 
     import imageio
     import meshio
+    from vtk import vtkWriter
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
@@ -40,18 +44,79 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
+_CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
-
-if TYPE_CHECKING:
-    _VTKWriterAlias = (
-        _vtk.vtkXMLPartitionedDataSetWriter
-        | _vtk.vtkXMLWriter
-        | _vtk.vtkDataWriter
-        | _vtk.vtkHDFWriter
-    )
-    _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
-
 PICKLE_EXT = ('.pkl', '.pickle')
+
+
+def _lazy_vtk_import(module_name: str, class_name: str) -> type:
+    """Lazy import of a class from vtkmodules."""
+    module = importlib.import_module(f'vtkmodules.{module_name}')
+    return getattr(module, class_name)
+
+
+class _FileIOBase(ABC, _NoNewAttrMixin):
+    _vtk_module_name: str = ''
+    _vtk_class_name: str = ''
+
+    def __repr__(self) -> str:
+        """Representation of a FileIO object."""
+        return f'{self.__class__.__name__}({self.path!r})'
+
+    @property
+    @abstractmethod
+    def path(self) -> str:
+        """Get the path."""
+
+    @path.setter
+    @abstractmethod
+    def path(self, path: str | Path) -> None:
+        """Set the path."""
+
+    @_classproperty
+    def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
+        if cls._vtk_module_name and cls._vtk_class_name:
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
+        return None
+
+    @classmethod
+    @abstractmethod
+    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+
+    @_classproperty
+    def extensions(cls) -> tuple[str, ...]:  # noqa: N805
+        """Return the file extension(s) associated with this class.
+
+        These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
+        to determine which reader and/or writer is used for reading and/or saving files.
+
+        """
+        extensions = set()
+        for mapping in cls._get_extension_mappings():
+            for ext, typ in mapping.items():
+                if typ is cls:  # type: ignore[comparison-overlap]
+                    extensions.add(ext)
+        return tuple(sorted(extensions))
+
+
+def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+    if not isinstance(mesh, pv.MultiBlock):
+        return
+    iterator = mesh.recursive_iterator('all', node_type='parent')
+    for index, name, nested_multiblock in iterator:
+        if len(nested_multiblock.field_data.keys()) > 0:
+            # Avoid circular import
+            from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
+
+            index_fmt = _format_nested_index(index)
+            msg = (
+                f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                f'has field data which will not be saved.\n'
+                'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                'Use `move_nested_field_data_to_root` to store the field data '
+                'with the root MultiBlock before saving.'
+            )
+            warn_external(msg)
 
 
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
@@ -90,11 +155,11 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
         raise ValueError(msg)
-    if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
+    if format_ == 'vtk' and pv.vtk_version_info < (9, 3):
         msg = "'vtk' pickle format requires VTK >= 9.3"
         raise ValueError(msg)
 
-    pyvista.PICKLE_FORMAT = format_
+    pv.PICKLE_FORMAT = format_
 
 
 def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
@@ -133,42 +198,6 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
-@_deprecate_positional_args(allowed=['vtk_writer'])
-def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001, FBT002
-    """Set any vtk writer to write as binary or ascii.
-
-    Parameters
-    ----------
-    vtk_writer
-        The vtk writer instance to be configured. Must be one of :vtk:`vtkDataWriter`,
-        :vtk:`vtkPLYWriter`, :vtk:`vtkSTLWriter`, :vtk:`vtkXMLWriter`.
-    use_binary : bool, default: True
-        If ``True``, the writer is set to write files in binary format. If
-        ``False``, the writer is set to write files in ASCII format.
-
-    Returns
-    -------
-    :vtk:`vtkDataWriter` | :vtk:`vtkPLYWriter` | :vtk:`vtkSTLWriter` | :vtk:`vtkXMLWriter`
-        The configured vtk writer instance.
-
-    """
-    from vtkmodules.vtkIOGeometry import vtkSTLWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOLegacy import vtkDataWriter  # noqa: PLC0415
-    from vtkmodules.vtkIOPLY import vtkPLYWriter  # noqa: PLC0415
-
-    if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
-        if use_binary:
-            vtk_writer.SetFileTypeToBinary()
-        else:
-            vtk_writer.SetFileTypeToASCII()
-    elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
-        if use_binary:
-            vtk_writer.SetDataModeToBinary()
-        else:
-            vtk_writer.SetDataModeToAscii()
-    return vtk_writer
-
-
 @_deprecate_positional_args(allowed=['filename'])
 def read(  # noqa: PLR0911, PLR0917
     filename: PathStrSeq,
@@ -184,6 +213,8 @@ def read(  # noqa: PLR0911, PLR0917
     meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
     See :func:`pyvista.get_reader` for list of vtk formats supported.
+
+    .. include:: /api/utilities/mesh_io.rst
 
     .. note::
        See https://github.com/nschloe/meshio for formats supported by
@@ -255,7 +286,7 @@ def read(  # noqa: PLR0911, PLR0917
         raise ValueError(msg)
 
     if isinstance(filename, Sequence) and not isinstance(filename, str):
-        multi = pyvista.MultiBlock()
+        multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
             multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
@@ -285,7 +316,7 @@ def read(  # noqa: PLR0911, PLR0917
         return read_pickle(filename)
 
     try:
-        reader = pyvista.get_reader(filename, force_ext)
+        reader = pv.get_reader(filename, force_ext)
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
@@ -305,7 +336,7 @@ def read(  # noqa: PLR0911, PLR0917
             reader.show_progress()
         mesh = reader.read()
         if observer.has_event_occurred():
-            warnings.warn(
+            warn_external(
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'
                 f'\t"{observer.get_message()}"',
@@ -327,7 +358,7 @@ def _apply_attrs_to_reader(
         Mapping of methods to call on reader.
 
     """
-    warnings.warn(
+    warn_external(
         'attrs use is deprecated.  Use a Reader class for more flexible control',
         PyVistaDeprecationWarning,
     )
@@ -383,12 +414,12 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         if image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pyvista.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -480,7 +511,7 @@ def read_exodus(  # noqa: PLR0917
         reader.SetSideSetArrayStatus(name, 1)
 
     _update_alg(reader)
-    return cast('pyvista.DataSet', wrap(reader.GetOutput()))
+    return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -565,7 +596,7 @@ def read_grdecl(
 
         Returns
         -------
-        list | str
+        output : list | str
             A list or a string.
 
         """
@@ -735,15 +766,15 @@ def read_grdecl(
                 cond1 = grid_unit.startswith(keywords['MAPUNITS'].lower())
 
                 if not cond1:
-                    warnings.warn(
+                    warn_external(
                         'Unable to convert relative coordinates with different '
-                        'grid and map units. Skipping conversion.'
+                        'grid and map units. Skipping conversion.',
                     )
 
             except KeyError:
-                warnings.warn(
+                warn_external(
                     "Unable to convert relative coordinates without keyword 'MAPUNITS'. "
-                    'Skipping conversion.'
+                    'Skipping conversion.',
                 )
                 cond1 = False
 
@@ -751,9 +782,9 @@ def read_grdecl(
                 origin = keywords['MAPAXES'][2:4]
 
             except KeyError:
-                warnings.warn(
+                warn_external(
                     "Unable to convert relative coordinates without keyword 'MAPAXES'. "
-                    'Skipping conversion.'
+                    'Skipping conversion.',
                 )
                 origin = None
 
@@ -793,7 +824,7 @@ def read_grdecl(
             zcorners.ravel(order='F'),
         )
     )
-    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+    grid = pv.ExplicitStructuredGrid(dims, corners)
 
     # Add property data
     for key in property_keywords:
@@ -866,9 +897,9 @@ def read_pickle(filename: str | Path) -> DataObject:
         with open(filename_str, 'rb') as f:  # noqa: PTH123
             mesh = pickle.load(f)
 
-        if not isinstance(mesh, pyvista.DataObject):
+        if not isinstance(mesh, pv.DataObject):
             msg = (
-                f'Pickled object must be an instance of {pyvista.DataObject}. '
+                f'Pickled object must be an instance of {pv.DataObject}. '
                 f'Got {mesh.__class__} instead.'
             )
             raise TypeError(msg)
@@ -920,12 +951,12 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     filename_str = str(filename)
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
-    if not isinstance(mesh, pyvista.DataObject):
+    if not isinstance(mesh, pv.DataObject):
         msg = (  # type: ignore[unreachable]
-            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+            f'Only {pv.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
         raise TypeError(msg)
-
+    _warn_multiblock_nested_field_data(mesh)
     with open(filename_str, 'wb') as f:  # noqa: PTH123
         pickle.dump(mesh, f)
 
@@ -980,7 +1011,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
     if len(mesh.cells) == 0:
         # Empty mesh
-        grid = pyvista.UnstructuredGrid()
+        grid = pv.UnstructuredGrid()
         if mesh.points.size > 0:
             grid.points = mesh.points
         return grid
@@ -1027,7 +1058,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
-    grid = pyvista.UnstructuredGrid(
+    grid = pv.UnstructuredGrid(
         np.concatenate(cells).astype(np.int64, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
@@ -1127,17 +1158,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
-        pyvista.CellType.POLYGON,
-        pyvista.CellType.POLYHEDRON,
+        pv.CellType.POLYGON,
+        pv.CellType.POLYHEDRON,
     }:
         vtk_celltype = vtk_celltypes[0]
         cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
-        if vtk_celltype == pyvista.CellType.PIXEL:
+        if vtk_celltype == pv.CellType.PIXEL:
             cells = cells[:, [0, 1, 3, 2]]
             celltype = 'quad'
 
-        elif vtk_celltype == pyvista.CellType.VOXEL:
+        elif vtk_celltype == pv.CellType.VOXEL:
             cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
@@ -1151,27 +1182,29 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         cells = []
         offset = mesh.offset
 
-        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
+        for i, (i1, i2, vtk_celltype) in enumerate(
+            zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
+        ):
             cell = connectivity[i1:i2]
 
-            if vtk_celltype == pyvista.CellType.POLYHEDRON:
+            if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
                 cell = polyhedral_cell_faces[i]
 
             # Handle the missing voxel key (11) in vtk_to_meshio_type
-            elif vtk_celltype == pyvista.CellType.VOXEL:
+            elif vtk_celltype == pv.CellType.VOXEL:
                 celltype = 'hexahedron'
                 cell = cell[[0, 1, 3, 2, 4, 5, 7, 6]]
 
             # Handle the missing "pixel" key in meshio._mesh.topological_dimension
-            elif vtk_celltype == pyvista.CellType.PIXEL:
+            elif vtk_celltype == pv.CellType.PIXEL:
                 celltype = 'quad'
                 cell = cell[[0, 1, 3, 2]]
 
             else:
                 celltype = (
                     f'polygon{len(cell)}'
-                    if vtk_celltype == pyvista.CellType.POLYGON
+                    if vtk_celltype == pv.CellType.POLYGON
                     else vtk_to_meshio_type[vtk_celltype]
                 )
 

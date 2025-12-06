@@ -66,7 +66,7 @@ to provide live interaction windows.  Follow directions
 `Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
 to use the live interaction.
 
-Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+Alternatively, an offscreen version using OSMesa libraries with VTK 9.5+ is available.
 
 Questions
 ---------
@@ -325,10 +325,13 @@ Note the following:
   ``numpydoc``'s documentation where there are no empty lines between parameter
   docstrings.
 * This docstring also contains a returns section and an examples section.
-* The returns section does not include the parameter name if the function has
-  a single return value. Multiple return values (not shown) should have
-  descriptive parameter names for each returned value, in the same format as
-  the input parameters.
+* The returns section structure depends on the number of return values and types:
+    * for a single return value with a single return type, the parameter name
+      can be omitted (as shown above),
+    * for a single return value with multiple types (ie. ``str | int``), the parameter
+      must be specified (not shown),
+    * for multiple return values (not shown), descriptive parameter names for each returned value
+      must be specified in the same format as the input parameters.
 * The examples section references the "full example" in the gallery if it
   exists.
 
@@ -385,13 +388,13 @@ versions of backwards compatibility to give users the ability to update their
 software and scripts.
 
 Here's an example of a soft deprecation of a function. Note the usage of both
-the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
-directive.
+the ``PyVistaDeprecationWarning`` warning, the ``.. deprecated`` Sphinx
+directive and the ``warn_external`` helper function.
 
 .. code-block:: python
 
-    import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista._warn_external import warn_external  # available from 0.47
 
 
     def addition(a, b):
@@ -415,7 +418,7 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        warnings.warn(
+        warn_external(
             '`addition` has been deprecated. Use pyvista.add instead',
             PyVistaDeprecationWarning,
         )
@@ -500,31 +503,135 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install PyVista with all
-test dependencies:
-
-.. code-block:: bash
-
-   pip install -e . --group test
-
-Then, if you have everything installed, you can run the various test
-suites.
+To run our comprehensive suite of unit tests, please refer to the `Unit Testing`_
+section.
 
 Unit Testing
 ~~~~~~~~~~~~
-Run the primary test suite and generate coverage report:
+Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
+or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pip install -e . --group=test # installing testing dependencies
+            pytest # alternatively: python -m pytest
+
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            pip install tox
+            tox run -e py3.11 # change to the python version targeted
+
+        .. admonition:: tox usage
+            :class: hint dropdown
+
+            When using ``tox``, specific test environments can be used to test against various
+            dependencies versions (mostly ``numpy`` and ``vtk``). The full list is available by running:
+
+            .. code-block:: bash
+
+                tox list
+
+            For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
+            on the main branch, simply run:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-vtk_dev
+
+            Note that several dependencies versions are already predefined in the ``tox.ini`` configuration
+            and can be specified with ``tox`` factors such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+
+            If you need to tests dependencies that are not predefined in the configuration, you can always override them such
+            that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
+                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+
+            By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
+            To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-core # run core tests (no need for graphics library)
+                tox run -e py3.11-plotting # run plotting tests (requires graphics library)
+                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+
+            To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
+            ``tox`` arguments from ``pytest`` ones such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11 -- -k "filters" # run all tests whose name match `filters`
+                tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
+
+            For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
 leverage multiple processes. Example usage:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -n <NUMCORE> --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest -n <NUMCORE>
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- -n <NUMCORE>
+
+Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
+such that:
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest --cov pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11-cov
+
+        .. note::
+
+            The ``-cov`` factor can be added to any existing environment to enable test coverage, such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
+                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
@@ -596,9 +703,22 @@ Docstring Testing
 ~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --doctest-modules pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest -v --doctest-modules pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e doctest-modules
 
 .. note::
 
@@ -676,9 +796,22 @@ There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
 example:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-       pytest tests/plotting --reset_image_cache
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/plotting --reset_image_cache
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/plotting --reset_image_cache
 
 Running ``--reset_image_cache`` creates a new image for each test in
 ``tests/plotting/test_plotting.py`` and is not recommended except for
@@ -696,9 +829,9 @@ the ``verify_image_cache`` fixture can be utilized:
 
     def test_add_background_image_not_global(verify_image_cache):
         verify_image_cache.skip = True  # Turn off caching
-        plotter = pyvista.Plotter()
-        plotter.add_mesh(sphere)
-        plotter.show()
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.show()
         # Turn on caching for further plotting
         verify_image_cache.skip = False
         ...
@@ -722,9 +855,22 @@ For example, the following writes all images generated by ``pytest`` to
 ``debug_images/`` for any tests in ``tests/plotting`` whose function name has
 ``volume`` in it.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/plotting/ -k volume --generated_image_dir debug_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/plotting/ -k volume --generated_image_dir debug_images
 
 See `pytest-pyvista`_ for more details.
 
@@ -792,9 +938,23 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-    pytest tests/core/typing
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/core/typing
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/core/typing
+
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
@@ -810,25 +970,49 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Install documentation dependencies with:
+Documentation can be build either directly (i.e. using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
 
-.. code-block:: shell
+.. tab-set::
+    :sync-group: category
 
-   python -m pip install -e . --group docs
+    .. tab-item:: python
+        :sync: pytest
 
-Build the documentation on Linux or Mac OS with:
+        .. code-block:: bash
 
-.. code-block:: bash
+            python -m pip install -e . --group docs
 
-   make -C doc html
+        .. tab-set::
 
-Build the documentation on Windows with:
+            .. tab-item:: Mac OS / Linux
 
-.. code-block:: winbatch
+                .. code-block:: bash
 
-   cd doc
-   python -msphinx -M html source _build
-   python -msphinx -M html . _build
+                    make -C doc html
+
+            .. tab-item:: Windows
+
+                .. code-block:: bash
+
+                    cd doc
+                    python -msphinx -M html source _build
+                    python -msphinx -M html . _build
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e docs-build
+
+        .. note::
+            By default, the ``html`` builder of sphinx is specified when running the ``docs-build``
+            environment.
+            You can customize it as a separate positional argument such that:
+
+            .. code-block:: bash
+
+                tox run -e docs-build -- mini18n-html # for translated languages
 
 The generated documentation can be found in the ``doc/_build/html``
 directory.
@@ -886,11 +1070,26 @@ The regression testing compares these generated images to those stored in
 
     Doc Image Cache: ``./tests/doc/doc_image_cache``
 
-To test all the images, run ``pytest`` with:
+To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_static_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/doc/tst_doc_build.py::test_static_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
+            tox run -e docs-test -- -k test_static_images
+
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -980,9 +1179,24 @@ To ensure that the interactive plots do not unnecessarily inflate the size
 of the documentation build, a limit is placed on the size of ``.vtksz`` files.
 To test that interactive plots do not exceed this limit, run:
 
-.. code:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+            tox run -e docs-test -- -k test_interactive_plot_file_size
+
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
@@ -1025,21 +1239,6 @@ modified, e.g.:
 
     See `Documentation Image Regression Testing`_. for testing performed on
     the static images generated by the plot directive.
-
-Controlling Cache for CI Documentation Build
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To reduce build times of the documentation for PRs, cached sphinx gallery, example data, and sphinx build directories
-are used in the CI on GitHub.  In some cases, the caching action can cause problems for a specific
-PR.  To invalidate a cache for a specific PR, one of the following labels can be applied to the PR.
-
-- ``no-example-data-cache``
-- ``no-gallery-cache``
-- ``no-sphinx-build-cache``
-
-The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
-rerun the CI with the labels applied.
-
 
 Contributing to the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1329,16 +1528,15 @@ created the following will occur:
 #.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-#.  Locally test and build the documentation with link checking to make
-    sure no links are outdated. Be sure to run ``make clean`` to ensure
-    no results are cached.
+#.  Locally test and build the documentation. Be sure to run ``make clean``
+    to ensure no results are cached.
 
     .. code-block:: bash
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
-       make doctest-modules
-       make html -b linkcheck
+       tox run -e doctest-modules
+       tox run -e docs-build
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -1494,8 +1692,8 @@ applicable) to ensure the runner restarts should it be interrupted.
 PyVista Hosts and Runners
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Apple 2024 Mac mini M4
-^^^^^^^^^^^^^^^^^^^^^^
+Apple Silicon - 2024 Mac mini M4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - CPU: 10-core CPU ARM64 (Apple Silicon)
 - GPU: 10-core GPU
 - Storage: 256 GB SSD
@@ -1514,3 +1712,14 @@ Testing showed peak memory usage of ~2GB per runner for the
 ``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
 the OS, there's room to spare. Should we encounter memory issues we can disable
 runners.
+
+
+Linux Runners
+^^^^^^^^^^^^^
+PyVista uses a high availability Linux cluster running [k3s](https://k3s.io/) and deployed
+using [Ansible](https://docs.ansible.com/). See
+[pyvista/arc-runners](https://github.com/pyvista/arc-runners) for more details.
+
+GPU enabled runs should use the ``ubuntu-24.04-self-hosted-gpu`` labels. Runners
+using this label will receive a minimum of 2 CPUs and at maximum 8 CPUs along
+with access to either an NVIDIA Quadro P2000 or a NVIDIA T400 (4GB VRAM).

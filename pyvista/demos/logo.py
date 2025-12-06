@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
@@ -98,7 +98,7 @@ def text_3d(string, depth=0.5):
     tri_filter = _vtk.vtkTriangleFilter()
     tri_filter.SetInputConnection(extrude.GetOutputPort())
     _update_alg(tri_filter)
-    return pyvista.wrap(tri_filter.GetOutput())
+    return pv.wrap(tri_filter.GetOutput())
 
 
 @_deprecate_positional_args
@@ -116,13 +116,13 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData or dict[str, pyvista.PolyData]
+    output : pyvista.PolyData or dict[str, pyvista.PolyData]
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
+    mesh_letters = pv.PolyData() if merge else {}
 
     # spacing between letters
     space_factor = 0.9
@@ -135,7 +135,7 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
         if merge:
             mesh_letters += mesh_letter
         else:
-            mesh_letters[letter] = mesh_letter
+            mesh_letters[letter] = mesh_letter  # type: ignore[index]
 
     return mesh_letters
 
@@ -218,7 +218,7 @@ def plot_logo(  # noqa: PLR0917
 
     Returns
     -------
-    Plotter or camera position
+    output : Plotter or camera position
         Returns the plotter instance if ``just_return_plotter`` is ``True``,
         otherwise returns the camera position if ``screenshot`` is specified,
         otherwise shows the plot.
@@ -232,17 +232,17 @@ def plot_logo(  # noqa: PLR0917
     # initialize plotter
     if window_size is None:
         window_size = [960, 400]
-    plotter = pyvista.Plotter(window_size=window_size, off_screen=off_screen)
+    pl = pv.Plotter(window_size=window_size, off_screen=off_screen)
 
     mesh_letters = logo_letters()
 
     # letter 'P'
     p_mesh = mesh_letters['P'].compute_normals(split_vertices=True)
-    plotter.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
+    pl.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
 
     # letter 'y'
     y_mesh = mesh_letters['y'].compute_normals(split_vertices=True)
-    plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
+    pl.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'
     v_grid = _voxelize_legacy(mesh_letters['V'], density=0.08)
@@ -252,7 +252,7 @@ def plot_logo(  # noqa: PLR0917
     faces = v_grid_atom_surf.faces.reshape(-1, 5).copy()
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
-    plotter.add_mesh(
+    pl.add_mesh(
         v_grid_atom_surf,
         scalars='scalars',
         show_edges=True,
@@ -263,19 +263,19 @@ def plot_logo(  # noqa: PLR0917
     # letter 'i'
     i_grid = _voxelize_legacy(mesh_letters['i'], density=0.1)
 
-    plotter.add_mesh(
+    pl.add_mesh(
         i_grid.extract_surface(),
         style='points',
         color='r',
         render_points_as_spheres=True,
         point_size=14,
     )
-    plotter.add_mesh(i_grid, style='wireframe', color='k', line_width=4)
+    pl.add_mesh(i_grid, style='wireframe', color='k', line_width=4)
 
     # letter 's'
     mesh = mesh_letters['s']
     mesh['scalars'] = mesh.points[:, 0]
-    plotter.add_mesh(
+    pl.add_mesh(
         mesh,
         scalars='scalars',
         style='wireframe',
@@ -289,7 +289,7 @@ def plot_logo(  # noqa: PLR0917
     # letter 't'
     mesh = mesh_letters['t'].clean().compute_normals()
     scalars = mesh.points[:, 0]
-    plotter.add_mesh(mesh, scalars=scalars, show_edges=True, cmap='autumn', show_scalar_bar=False)
+    pl.add_mesh(mesh, scalars=scalars, show_edges=True, cmap='autumn', show_scalar_bar=False)
 
     # letter 'a'
     grid = examples.download_letter_a()
@@ -304,36 +304,34 @@ def plot_logo(  # noqa: PLR0917
 
     cells = a_part.cells.reshape(-1, 5)
     scalars = grid.points[cells[:, 1], 1]
-    plotter.add_mesh(
-        a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False
-    )
+    pl.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
         text = text_3d('You can move me!', depth=0.1)
         text.points *= 0.1
         text.translate([4.0, -0.3, 0], inplace=True)
-        plotter.add_mesh(text, color='black')
+        pl.add_mesh(text, color='black')
 
     # finalize plot and show it
-    plotter.set_background(kwargs.pop('background', 'white'))
-    plotter.camera_position = 'xy'
+    pl.set_background(kwargs.pop('background', 'white'))
+    pl.camera_position = 'xy'
     if 'zoom' in kwargs:
-        plotter.camera.zoom(kwargs.pop('zoom'))
+        pl.camera.zoom(kwargs.pop('zoom'))
 
-    # plotter.remove_scalar_bar()
-    plotter.enable_anti_aliasing()
+    # pl.remove_scalar_bar()
+    pl.enable_anti_aliasing()
 
     if just_return_plotter:
-        return plotter
+        return pl
 
     if screenshot:  # pragma: no cover
-        plotter.show(cpos=cpos, auto_close=False)
-        plotter.screenshot(screenshot, True)
-        cpos_final = plotter.camera_position
-        plotter.close()
+        pl.show(cpos=cpos, auto_close=False)
+        pl.screenshot(screenshot, True)
+        cpos_final = pl.camera_position
+        pl.close()
         return cpos_final
     else:
-        return plotter.show(cpos=cpos, **kwargs)
+        return pl.show(cpos=cpos, **kwargs)
 
 
 def logo_atomized(density=0.05, scale=0.6, depth=0.05):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 
 
 def not_called():
@@ -10,4 +10,4 @@ def not_called():
 
 def plot_poly():
     """The function that should be executed."""
-    pyvista.Polygon().plot()
+    pv.Polygon().plot()

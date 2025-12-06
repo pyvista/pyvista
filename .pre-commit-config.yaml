@@ -2,12 +2,13 @@
 # See https://pre-commit.ci/
 ci:
   autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
   autofix_prs: true
   autoupdate_schedule: monthly
 
 repos:
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.4.1
+    rev: v0.4.6
     hooks:
       - id: blackdoc
         args: ["--skip-string-normalization"]
@@ -39,7 +40,7 @@ repos:
         files: ^pyvista/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-merge-conflict
       - id: debug-statements
@@ -47,7 +48,7 @@ repos:
         args: [--branch, main]
       - id: requirements-txt-fixer
       - id: trailing-whitespace
-        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
+        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv|tests/test_cli\.py)
       - id: check-docstring-first
       - id: end-of-file-fixer
         exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
@@ -57,28 +58,37 @@ repos:
         files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.05.02
+    rev: 2025.11.21
     hooks:
       - id: sp-repo-review
         args: ["--show=errskip"]
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.2
+    rev: 0.35.0
     hooks:
       - id: check-github-workflows
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.7
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix, --show-fixes]
-        exclude: tests/core/typing
+      - id: warn_external
+        name: Convert warnings to warn_external
+        language: python
+        entry: python -m libcst.tool codemod -x hooks.warnings.ConvertWarningsToExternal --no-format
+        additional_dependencies: [libcst]
+        files: ^pyvista/
+        types: [file, python]
+        exclude: pyvista/_warn_external.py
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.7
+    hooks:
       - id: ruff-format
-        exclude: tests/core/typing
+      - id: ruff-check
+        args: [--fix, --show-fixes]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.6.2
+    rev: v3.7.3
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -111,11 +121,11 @@ repos:
           ]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.11.0
+    rev: v1.18.0
     hooks:
       - id: zizmor
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
-    rev: v1.0.0
+    rev: v1.0.2
     hooks:
       - id: sphinx-lint

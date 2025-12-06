@@ -71,6 +71,7 @@ Pytorch
 Resampling
 SSH
 STL
+SciPy
 Setuptools
 Sphinx
 TetGen
