@@ -78,6 +78,7 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           command: xvfb-run -a tox run -e integration-${{matrix.project}}
+          retry_on: error
 
       - uses: actions/cache@v4
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
