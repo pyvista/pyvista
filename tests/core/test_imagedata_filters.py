@@ -1231,7 +1231,7 @@ def test_validate_dim_operation(
             4,
             operator.add,
             TypeError,
-            "Array has incorrect dtype of 'int64'. The dtype must be a subtype of <class 'bool'>.",
+            "The dtype must be a subtype of <class 'bool'>.",
         ),
         (
             (2, 2, 2),
