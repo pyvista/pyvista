@@ -1,0 +1,16 @@
+{
+  "projectName": "pyvista",
+  "projectOwner": "pyvista"
+  "files": [
+    "CONTRIBUTORS.md"
+  ],
+  "commit": true,
+  "commitConvention": "none",
+  "contributorsPerLine": 7,
+  "contributorsSortAlphabetically": true,
+  "imageSize": 100,
+  "linkToUsage": true,
+  "contributors": [
+  ],
+  "commitType": "docs",
+}
