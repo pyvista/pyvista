@@ -50,7 +50,6 @@ from .fileio import save_meshio as save_meshio
 from .fileio import save_pickle as save_pickle
 from .fileio import set_pickle_format as set_pickle_format
 from .fileio import to_meshio as to_meshio
-from .geometric_objects import NORMALS as NORMALS
 from .geometric_objects import Arrow as Arrow
 from .geometric_objects import Box as Box
 from .geometric_objects import Capsule as Capsule

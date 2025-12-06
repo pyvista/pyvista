@@ -48,16 +48,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
-NORMALS = {
-    'x': [1, 0, 0],
-    'y': [0, 1, 0],
-    'z': [0, 0, 1],
-    '-x': [-1, 0, 0],
-    '-y': [0, -1, 0],
-    '-z': [0, 0, -1],
-}
-NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
-
 
 @_deprecate_positional_args
 def Capsule(  # noqa: PLR0917
