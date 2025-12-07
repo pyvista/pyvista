@@ -57,6 +57,18 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
 
+_CELL_VALIDATOR_BIT_FIELD = dict(
+    wrong_number_of_points=0,
+    intersecting_edges=1,
+    intersecting_faces=2,
+    non_contiguous_edges=3,
+    non_convex=4,
+    incorrectly_oriented_faces=5,
+    non_planar_faces=6,
+    degenerate_faces=7,
+    coincident_points=8,
+)
+
 
 @abstract_class
 class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
@@ -8298,18 +8310,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Dataset with field data of cell validity.
 
         """
-        bit_field = dict(
-            wrong_number_of_points=0,
-            intersecting_edges=1,
-            intersecting_faces=2,
-            non_continuous_edges=3,
-            non_convex=4,
-            faces_are_oriented_incorrectly=5,
-            non_planar_faces=6,
-            degenerate_faces=7,
-            coincident_points=8,
-        )
-
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
         cell_validator.Update()
@@ -8317,7 +8317,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         output = _get_output(cell_validator)
         validity_state = output.cell_data['ValidityState']
 
-        for name, value in bit_field.items():
+        for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
             output.field_data[name] = np.where(validity_state & 2**value)[0]
 
         del output.cell_data['ValidityState']

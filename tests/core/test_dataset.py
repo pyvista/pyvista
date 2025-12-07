@@ -15,6 +15,7 @@ from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters.data_set import _CELL_VALIDATOR_BIT_FIELD
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -1616,3 +1617,64 @@ def test_validate_cell_arrays(sphere_with_invalid_arrays):
     report = sphere_with_invalid_arrays.validate_array_lengths('report')
     assert report.wrong_cell_array_lengths == ['ham']
     assert report.wrong_point_array_lengths == []
+
+
+def test_cell_validator():
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    sphere = pv.Sphere()
+    validated = sphere.cell_validator()
+    assert isinstance(validated, pv.PolyData)
+    assert validated.field_data.keys() == validator_array_names
+    assert validated.array_names == [*validator_array_names, 'Normals']
+    for name in validator_array_names:
+        array = validated.field_data[name]
+        assert array.shape == (0,)
+
+
+def test_cell_validator_wrong_number_of_points():
+    # Define tetra with one point missing
+    cells = [3, 0, 1, 2]
+    celltypes = [pv.CellType.TETRA]
+    points = [
+        [-1.0, 1.0, -1.0],
+        [1.0, 1.0, 1.0],
+        [-1.0, 1.0, -1.0],
+    ]
+    grid = pv.UnstructuredGrid(cells, celltypes, points)
+    validated = grid.cell_validator()
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    for name in validator_array_names:
+        if name == 'wrong_number_of_points':
+            assert validated[name].tolist() == [0]
+        else:
+            array = validated.field_data[name]
+            assert array.shape == (0,)
+
+
+def test_cell_intersecting_edges_nonconvex():
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+    ]
+
+    # Swap first two points
+    cells = [8, 1, 0, 2, 3, 4, 5, 6, 7]
+    celltypes = [pv.CellType.HEXAHEDRON]
+
+    grid = pv.UnstructuredGrid(cells, celltypes, points)
+
+    validated = grid.cell_validator()
+    grid.plot(off_screen=False)
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    for name in validator_array_names:
+        if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
+            assert validated[name].tolist() == [0]
+        else:
+            array = validated.field_data[name]
+            assert array.shape == (0,)
