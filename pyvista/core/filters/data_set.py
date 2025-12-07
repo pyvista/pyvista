@@ -578,7 +578,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             _validation.check_instance(value[0], float)
             _validation.check_instance(value[1], float)
             if not invert:
-                raise ValueError("Cannot have invert=False on a range clip")
+                msg = "Cannot have invert=False on a range clip"
+                raise ValueError(msg)
             alg.SetValue(value[1])
         else:
             alg.SetValue(value)
