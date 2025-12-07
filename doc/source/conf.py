@@ -289,6 +289,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
     (r'py:.*', 'Rotation'),
+    (r'py:.*', '.*VtkEvent'),
     (r'py:.*', 'vtk.*'),
     (r'py:.*', '_vtk.*'),
     (r'py:.*', 'VTK'),
