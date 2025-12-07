@@ -502,7 +502,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         self: _DataSetType,
         scalars: str | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
-        value: float = 0.0,
+        value: float | tuple[float, float] = 0.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         both: bool = False,  # noqa: FBT001, FBT002
@@ -573,7 +573,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg = _vtk.vtkTableBasedClipDataSet()
 
         alg.SetInputDataObject(self)
-        alg.SetValue(value)
+        if isinstance(value, tuple):
+            _validation.check_length(value, exact_length=2)
+            _validation.check_instance(value[0], float)
+            _validation.check_instance(value[1], float)
+            if not invert:
+                raise ValueError("Cannot have invert=False on a range clip")
+            alg.SetValue(value[1])
+        else:
+            alg.SetValue(value)
         if scalars is None:
             set_default_active_scalars(self)
         else:
@@ -584,7 +592,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = _get_output(alg)
-
+        if isinstance(value, tuple):
+            return result0.clip_scalar(scalars=scalars, invert=False, value=value[0])
         if inplace:
             self.copy_from(result0, deep=False)
             result0 = self
