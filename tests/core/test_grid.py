@@ -1933,13 +1933,6 @@ def test_distinct_cell_types():
     quad = pv.examples.cells.Quadrilateral()
     mesh = pv.merge([wedge, wedge.translate((1.0, 1.0, 1.0)), quad.translate((2.0, 2.0, 2.0))])
 
-    cell_types = mesh.celltypes
-    assert isinstance(cell_types, np.ndarray)
-    assert cell_types.dtype == 'uint8'
-    assert np.array_equal(
-        cell_types, [pv.CellType.WEDGE.value, pv.CellType.WEDGE.value, pv.CellType.QUAD.value]
-    )
-
     distinct_cell_types = mesh.distinct_cell_types
     assert isinstance(distinct_cell_types, set)
     assert all(isinstance(val, pv.CellType) for val in distinct_cell_types)

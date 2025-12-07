@@ -2406,7 +2406,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
-        cell_types = convert_array(self.GetDistinctCellTypesArray())
+        cell_types = (
+            convert_array(self.GetDistinctCellTypesArray())
+            if pv.vtk_version_info >= (9, 5, 0)
+            else np.unique(self.celltypes)
+        )
         return {pv.CellType(cell_num) for cell_num in cell_types}
 
     @property
