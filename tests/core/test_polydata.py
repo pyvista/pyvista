@@ -685,12 +685,11 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points == sphere_shifted.n_points
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
     func = functools.partial(sphere.curvature, curv_type)
     if curv_type in ['maximum', 'minimum']:
-        with pytest.warns(pv.VTKOutputMessageWarning, match='large computation error'):
+        with pytest.warns(pv.VTKExecutionWarning, match='large computation error'):
             curv = func()
     else:
         curv = func()
