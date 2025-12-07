@@ -690,10 +690,11 @@ class DisableVtkSnakeCase:
 def with_vtk_error_check(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        import pyvista as pv  # noqa: PLC0415
-
         out = func(*args, **kwargs)
-        pv.vtk_message_policy._error_catcher._emit_warnings_and_raise_errors()
+        if sys.meta_path is not None:
+            import pyvista as pv  # noqa: PLC0415
+
+            pv.vtk_message_policy._error_catcher._emit_warnings_and_raise_errors()
         return out
 
     return wrapper

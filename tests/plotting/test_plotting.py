@@ -1982,7 +1982,8 @@ def test_image_properties() -> None:
     mesh = pv.PolyData(rr, tris)
     pl = pv.Plotter()
     pl.add_mesh(mesh, color=True)
-    pl.renderer.camera_position = (0.0, 0.0, 1.0)
+    with pytest.warns(pv.VTKExecutionWarning):
+        pl.renderer.camera_position = 0.0, 0.0, 1.0
     pl.renderer.ResetCamera()
     pl.enable_parallel_projection()
     assert pl.renderer.camera_set

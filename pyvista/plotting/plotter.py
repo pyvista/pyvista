@@ -2186,7 +2186,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ):
             log.debug('Rendering')
             self.renderers.on_plotter_render()
-            self.render_window.Render()
+            pv.vtk_message_policy._call_function(self.render_window.Render)
             self._rendered = True
         for callback in self._on_render_callbacks:
             callback(self)
@@ -6712,7 +6712,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
+                    renderer._reset_camera()
             self._first_time = False
 
     def reset_camera_clipping_range(self) -> None:

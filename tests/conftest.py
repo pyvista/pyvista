@@ -112,7 +112,7 @@ def catch_vtk_errors(request):
 
     events = catcher.events
     if events:
-        messages = [repr(e) for e in events]
+        messages = [str(e) for e in events]
 
         # Remove any globally filtered events
         messages = filter_vtk_message(messages)

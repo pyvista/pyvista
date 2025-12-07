@@ -3094,15 +3094,18 @@ class Renderer(
 
         """
         if bounds is not None:
-            self.ResetCamera(*bounds)
+            self._reset_camera(*bounds)
         else:
-            self.ResetCamera()
+            self._reset_camera()
 
         self.reset_camera_clipping_range()
 
         if render:
             self.parent.render()
         self.Modified()
+
+    def _reset_camera(self, *args, **kwargs):
+        return pv.vtk_message_policy._call_function(self.ResetCamera, *args, **kwargs)
 
     def isometric_view(self) -> None:
         """Reset the camera to a default isometric view.

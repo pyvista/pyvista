@@ -5907,7 +5907,8 @@ def download_can_crushed_vtu(load=True):  # noqa: FBT002
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
 
     """
-    return _download_dataset(_dataset_can_crushed_vtu, load=load)
+    with pv.vtk_verbosity('off'):
+        return _download_dataset(_dataset_can_crushed_vtu, load=load)
 
 
 _dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
