@@ -1928,6 +1928,24 @@ def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
     assert connectivity.dtype == hexbeam.cell_connectivity.dtype
 
 
+def test_distinct_cell_types():
+    wedge = pv.examples.cells.Wedge()
+    quad = pv.examples.cells.Quadrilateral()
+    mesh = pv.merge([wedge, wedge.translate((1.0, 1.0, 1.0)), quad.translate((2.0, 2.0, 2.0))])
+
+    cell_types = mesh.celltypes
+    assert isinstance(cell_types, np.ndarray)
+    assert cell_types.dtype == 'uint8'
+    assert np.array_equal(
+        cell_types, [pv.CellType.WEDGE.value, pv.CellType.WEDGE.value, pv.CellType.QUAD.value]
+    )
+
+    distinct_cell_types = mesh.distinct_cell_types
+    assert isinstance(distinct_cell_types, set)
+    assert all(isinstance(val, pv.CellType) for val in distinct_cell_types)
+    assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
+
+
 @pytest.fixture
 def appended_images():
     def create_slice(ind: 0):
