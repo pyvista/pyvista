@@ -1939,27 +1939,27 @@ class Theme(_ThemeConfig):
 
         >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
-        >>> p = pv.Plotter(shape=(1, 2))
-        >>> _ = p.add_mesh(
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
         ...     **dargs,
         ... )
-        >>> p.subplot(0, 1)
-        >>> _ = p.add_mesh(
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
         ...     **dargs,
         ... )
-        >>> p.link_views()
-        >>> p.camera_position = pv.CameraPosition(
+        >>> pl.link_views()
+        >>> pl.camera_position = pv.CameraPosition(
         ...     position=(-1.67, -5.10, 2.06),
         ...     focal_point=(0.0, 0.0, 0.0),
         ...     viewup=(0.00, 0.37, 0.93),
         ... )
-        >>> p.show()  # doctest: +SKIP
+        >>> pl.show()  # doctest: +SKIP
 
         """
         return self._interpolate_before_map

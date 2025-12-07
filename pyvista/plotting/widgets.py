@@ -2642,12 +2642,12 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> p = pv.Plotter()
-        >>> actor = p.add_mesh(mesh)
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
-        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
-        >>> p.show()
+        >>> _ = pl.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> pl.show()
 
         Download the interactive example at :ref:`checkbox_widget_example`.
 
@@ -2773,32 +2773,32 @@ class WidgetHelper:
         The following example creates a background color switcher.
 
         >>> import pyvista as pv
-        >>> p = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def set_bg(color):
         ...     def wrapped_callback():
-        ...         p.background_color = color
+        ...         pl.background_color = color
         ...
         ...     return wrapped_callback
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('white'),
         ...     'bgcolor',
         ...     position=(10.0, 200.0),
         ...     title='White',
         ...     value=True,
         ... )
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('lightblue'),
         ...     'bgcolor',
         ...     position=(10.0, 140.0),
         ...     title='Light Blue',
         ... )
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('pink'),
         ...     'bgcolor',
         ...     position=(10.0, 80.0),
         ...     title='Pink',
         ... )
-        >>> p.show()
+        >>> pl.show()
 
         """
         msg = 'Cannot add a widget to a closed plotter.'
