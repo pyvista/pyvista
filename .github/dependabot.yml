@@ -2,10 +2,10 @@ version: 2
 updates:
   - package-ecosystem: "pip" # See documentation for possible values
     directory: "/" # Location of package manifests
-    insecure-external-code-execution: allow
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 100
+      day: "monday"
+    open-pull-requests-limit: 10
     ignore:
       - dependency-name: "pydata-sphinx-theme" # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
         versions: [">0.15.4"]
@@ -29,12 +29,15 @@ updates:
       - "maintenance"
       - "dependencies"
     rebase-strategy: "disabled"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 100
+      day: "monday"
+    open-pull-requests-limit: 10
     groups:
       gha:
         patterns:
@@ -43,13 +46,18 @@ updates:
       - "maintenance"
       - "dependencies"
     rebase-strategy: "disabled"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 100
+      day: "monday"
+    open-pull-requests-limit: 10
     labels:
       - "maintenance"
       - "dependencies"
     rebase-strategy: "disabled"
+    cooldown:
+      default-days: 7
