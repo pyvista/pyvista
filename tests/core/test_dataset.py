@@ -1580,13 +1580,12 @@ def sphere_with_invalid_arrays(sphere):
         else:  # association == "cell":
             dataset.GetCellData().AddArray(arr)
 
-    # Invalid point arrays
+    # Invalid point arrays (multiple)
     add_vtk_array(sphere, 'foo', range(10), association='point')
     add_vtk_array(sphere, 'bar', range(15), association='point')
 
-    # Invalid cell arrays
+    # Invalid cell array (single)
     add_vtk_array(sphere, 'ham', range(11), association='cell')
-    add_vtk_array(sphere, 'eggs', range(16), association='cell')
 
     return sphere
 
@@ -1608,12 +1607,12 @@ def test_validate_point_arrays(sphere_with_invalid_arrays):
 def test_validate_cell_arrays(sphere_with_invalid_arrays):
     sphere_with_invalid_arrays.point_data.clear()
     match = (
-        'Cell array lengths do not match the number\n'
-        "of cells in the mesh (840). Invalid arrays: 'ham' (11), 'eggs' (16)"
+        'Cell array length does not match the number\n'
+        "of cells in the mesh (840). Invalid array: 'ham' (11)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
         sphere_with_invalid_arrays.validate_array_lengths('warn')
 
     report = sphere_with_invalid_arrays.validate_array_lengths('report')
-    assert report.wrong_cell_array_lengths == ['ham', 'eggs']
+    assert report.wrong_cell_array_lengths == ['ham']
     assert report.wrong_point_array_lengths == []

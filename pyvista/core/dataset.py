@@ -3066,35 +3066,39 @@ class _MeshValidator:
     ) -> None:
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
-        if (name := 'wrong_point_array_lengths') in validation_fields:
-            invalid_arrays: dict[str, int] = _MeshValidator._validate_arrays(
-                mesh.point_data, mesh.n_points
-            )
-            message = _MeshValidator._invalid_array_length_msg(
-                invalid_arrays=invalid_arrays, kind='Point', expected=mesh.n_points
-            )
-            issue = _MeshValidator._ValidationIssue(
-                name=name, message=message, values=list(invalid_arrays.keys())
-            )
-            self._validation_issues[name] = issue
-
-        if (name := 'wrong_cell_array_lengths') in validation_fields:
-            invalid_arrays = _MeshValidator._validate_arrays(mesh.cell_data, mesh.n_cells)
-            message = _MeshValidator._invalid_array_length_msg(
-                invalid_arrays=invalid_arrays, kind='Cell', expected=mesh.n_cells
-            )
-            issue = _MeshValidator._ValidationIssue(
-                name=name, message=message, values=list(invalid_arrays.keys())
-            )
-            self._validation_issues[name] = issue
+        # Validate arrays
+        for (
+            name,
+            kind,
+            data,
+            expected_n,
+        ) in [
+            ('wrong_point_array_lengths', 'Point', mesh.point_data, mesh.n_points),
+            ('wrong_cell_array_lengths', 'Cell', mesh.cell_data, mesh.n_cells),
+        ]:
+            if name in validation_fields:
+                invalid_arrays: dict[str, int] = _MeshValidator._validate_arrays(data, expected_n)
+                message = _MeshValidator._invalid_array_length_msg(
+                    invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
+                )
+                issue = _MeshValidator._ValidationIssue(
+                    name=name, message=message, values=list(invalid_arrays.keys())
+                )
+                self._validation_issues[name] = issue
 
     @staticmethod
     def _invalid_array_length_msg(
         invalid_arrays: dict[str, int], kind: Literal['Point', 'Cell'], expected: int
     ) -> str:
-        s = 's' if len(invalid_arrays) > 1 else ''
+        if len(invalid_arrays) > 1:
+            s = 's'
+            do = 'do'
+        else:
+            s = ''
+            do = 'does'
+
         msg_template = (
-            '{kind} array length{s} do not match the number\nof {kind_lower} in the mesh '
+            '{kind} array length{s} {do} not match the number\nof {kind_lower} in the mesh '
             '({expected}). Invalid array{s}: {details}'
         )
         details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
@@ -3104,6 +3108,7 @@ class _MeshValidator:
             expected=expected,
             details=details,
             s=s,
+            do=do,
         )
 
     @staticmethod
