@@ -520,8 +520,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ``False``, only values above ``value`` will be kept.
 
         value : float | VectorLike[float], default: 0.0
-            Set the clipping value. Can also be set as a range of values. 
-            The range produces an output similar to an isovolume filter of Paraview. 
+            Set the clipping value. Can also be set as a range of values.
+            The range produces an output similar to an isovolume filter of Paraview.
 
         inplace : bool, default: False
             Update mesh in-place.

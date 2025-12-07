@@ -187,35 +187,28 @@ def test_clip_scalar_no_active(sphere):
     assert sphere.active_scalars_name is None
     clp = sphere.clip_scalar()
     assert clp.n_points < sphere.n_points
-    
+
+
 def test_clip_scalar_ranges_imagedata():
     mesh = pv.examples.download_whole_body_ct_male()['ct']
     vol = mesh.clip_scalar(
-        value=(150, 3000), 
+        value=(150, 3000),
     )
     assert vol.n_points < mesh.n_points
     vol2 = mesh.clip_scalar(
-        value=150, 
+        value=150,
     )
     assert vol.n_points < vol2.n_points
+
 
 def test_clip_scalar_errors():
     mesh = pv.examples.download_whole_body_ct_male()['ct']
     with pytest.raises(TypeError):
-        vol = mesh.clip_scalar(
-            value=(150, 3000),
-            inplace = True
-        )
+        vol = mesh.clip_scalar(value=(150, 3000), inplace=True)
     with pytest.raises(ValueError):
-        vol = mesh.clip_scalar(
-            value=(150, 3000),
-            invert = False
-        )
+        vol = mesh.clip_scalar(value=(150, 3000), invert=False)
     with pytest.raises(ValueError):
-        vol = mesh.clip_scalar(
-            value=(150, 3000),
-            both = True
-        )
+        vol = mesh.clip_scalar(value=(150, 3000), both=True)
 
 
 def test_clip_scalar_multiple():
