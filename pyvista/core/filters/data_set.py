@@ -602,7 +602,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             self.copy_from(result0, deep=False)
             result0 = self
         if not is_single_value:
-            return result0.clip_scalar(scalars=scalars, invert=False, value=lower)
+            return result0.clip_scalar(scalars=scalars, invert=False, value=lower, inplace=inplace)
         if both:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):

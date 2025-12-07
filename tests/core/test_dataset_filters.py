@@ -202,17 +202,17 @@ def test_clip_scalar_ranges_imagedata():
 def test_clip_scalar_errors():
     mesh = pv.examples.download_whole_body_ct_male()['ct']
     with pytest.raises(TypeError):
-        vol = mesh.clip_scalar(
+        mesh.clip_scalar(
             value=(150, 3000),
             inplace = True
         )
-    with pytest.raises(ValueError):
-        vol = mesh.clip_scalar(
+    with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
+        mesh.clip_scalar(
             value=(150, 3000),
             invert = False
         )
-    with pytest.raises(ValueError):
-        vol = mesh.clip_scalar(
+    with pytest.raises(ValueError, match='Cannot have both=True for a range clip'):
+        mesh.clip_scalar(
             value=(150, 3000),
             both = True
         )
