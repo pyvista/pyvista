@@ -7663,15 +7663,15 @@ def download_reservoir(load=True):  # noqa: FBT002
       N Arrays:   6
 
 
-    >>> plot = pv.Plotter()
-    >>> _ = plot.add_mesh(dataset, show_edges=True)
-    >>> camera = plot.camera
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(dataset, show_edges=True)
+    >>> camera = pl.camera
     >>> camera.position = (312452, 7474760, 3507)
     >>> camera.focal_point = (314388, 7481520, -2287)
     >>> camera.up = (0.09, 0.63, 0.77)
     >>> camera.distance = 9112
     >>> camera.clipping_range = (595, 19595)
-    >>> plot.show()
+    >>> pl.show()
 
     .. seealso::
 
