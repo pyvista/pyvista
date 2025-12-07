@@ -10,6 +10,8 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+import functools
+import inspect
 import sys
 from typing import NamedTuple
 
@@ -606,6 +608,7 @@ class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__()
         if vtk_version_info >= (9, 4):
             # Check for VTK base classes and call the override method
             for base in cls.__bases__:
@@ -655,7 +658,46 @@ class DisableVtkSnakeCase:
 
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)
-        return object.__getattribute__(self, item)
+        value = object.__getattribute__(self, item)
+
+        # Emit VTK warnings or errors after the access
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is not None:
+            import pyvista as pv  # noqa: PLC0415
+
+            pv.vtk_message_policy._error_catcher._emit_warnings_and_raise_errors()
+
+        return value
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        # Automatically decorate all public instance methods
+        for name, attr in cls.__dict__.items():
+            if isinstance(attr, property):
+                # Only wrap the setter
+                setter = attr.fset
+                if setter is not None and not name.startswith('_'):
+                    wrapped_setter = with_vtk_error_check(setter)
+                    # Explicitly retain the original docstring (needed if using @doc_subs)
+                    new_prop = property(attr.fget, wrapped_setter, attr.fdel, doc=attr.__doc__)
+                    setattr(cls, name, new_prop)
+
+            elif inspect.isfunction(attr) and not name.startswith('_'):
+                # Only wrap plain functions (not types, enums, methods, etc.)
+                setattr(cls, name, with_vtk_error_check(attr))
+
+
+def with_vtk_error_check(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        out = func(*args, **kwargs)
+        if sys.meta_path is not None:
+            import pyvista as pv  # noqa: PLC0415
+
+            pv.vtk_message_policy._error_catcher._emit_warnings_and_raise_errors()
+        return out
+
+    return wrapper
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01

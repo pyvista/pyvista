@@ -607,8 +607,15 @@ def test_set_active_vectors_fail(hexbeam):
 
     hexbeam.point_data['scalar_arr'] = np.zeros([hexbeam.n_points])
 
-    with pytest.raises(ValueError):  # noqa: PT011
-        hexbeam.set_active_vectors('scalar_arr')
+    with pv.vtk_verbosity('error'):
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                'Data field (scalar_arr) with type (FieldAssociation.POINT) '
+                'could not be set as the active vectors'
+            ),
+        ):
+            hexbeam.set_active_vectors('scalar_arr')
 
     assert hexbeam.active_vectors_name == 'vector_arr'
     active_component_consistency_check(hexbeam, 'vectors', 'point')
@@ -627,11 +634,13 @@ def test_set_active_tensors_fail(hexbeam):
     hexbeam.point_data['scalar_arr'] = np.zeros([hexbeam.n_points])
     hexbeam.point_data['vector_arr'] = np.zeros([hexbeam.n_points, 3])
 
-    with pytest.raises(ValueError):  # noqa: PT011
-        hexbeam.set_active_tensors('scalar_arr')
+    with pv.vtk_verbosity('off'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            hexbeam.set_active_tensors('scalar_arr')
 
-    with pytest.raises(ValueError):  # noqa: PT011
-        hexbeam.set_active_tensors('vector_arr')
+    with pv.vtk_verbosity('off'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            hexbeam.set_active_tensors('vector_arr')
 
     assert hexbeam.active_tensors_name == 'tensor_arr'
     active_component_consistency_check(hexbeam, 'tensors', 'point')
