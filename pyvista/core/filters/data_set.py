@@ -502,7 +502,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         self: _DataSetType,
         scalars: str | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
-        value: float | tuple[float, float] = 0.0,
+        value: float | VectorLike[float] = 0.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         both: bool = False,  # noqa: FBT001, FBT002
@@ -519,8 +519,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             only the mesh below ``value`` will be kept.  When
             ``False``, only values above ``value`` will be kept.
 
-        value : float, default: 0.0
-            Set the clipping value.
+        value : float | VectorLike[float], default: 0.0
+            Set the clipping value. Can also be set as a range of values. 
+            The range produces an output similar to an isovolume filter of Paraview. 
 
         inplace : bool, default: False
             Update mesh in-place.
@@ -571,18 +572,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
-
-        alg.SetInputDataObject(self)
-        if isinstance(value, tuple):
-            _validation.check_length(value, exact_length=2)
-            _validation.check_instance(value[0], float)
-            _validation.check_instance(value[1], float)
-            if not invert:
-                msg = 'Cannot have invert=False on a range clip'
-                raise ValueError(msg)
-            alg.SetValue(value[1])
-        else:
+        is_single_value = isinstance(value, (float, int))
+        if is_single_value:
             alg.SetValue(value)
+        else:
+            lower, upper = _validation.validate_data_range(value)
+            alg.SetValue(upper)
+            if not invert:
+                msg = 'Cannot have invert=False for a range clip'
+                raise ValueError(msg)
+            if both:
+                msg = 'Cannot have both=True for a range clip'
+                raise ValueError(msg)
+        alg.SetInputDataObject(self)
         if scalars is None:
             set_default_active_scalars(self)
         else:
@@ -593,12 +595,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = _get_output(alg)
-        if isinstance(value, tuple):
-            return result0.clip_scalar(scalars=scalars, invert=False, value=value[0])
         if inplace:
+            if isinstance(self, pv.core.grid.ImageData):
+                msg = 'Cannot use inplace argument for ImageData type input.'
+                raise TypeError(msg)
             self.copy_from(result0, deep=False)
             result0 = self
-
+        if not is_single_value:
+            return result0.clip_scalar(scalars=scalars, invert=False, value=lower)
         if both:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):
