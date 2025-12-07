@@ -1594,24 +1594,26 @@ def sphere_with_invalid_arrays(sphere):
 def test_validate_point_arrays(sphere_with_invalid_arrays):
     sphere_with_invalid_arrays.cell_data.clear()
     match = (
-        'Point array length(s) do not match the number\n'
-        'of points in the mesh. This can lead to a segmentation fault with some filters.\n'
-        "Expected length: 422. Invalid array(s): 'foo' (10), 'bar' (15)"
+        'Point array lengths do not match the number\n'
+        "of points in the mesh (422). Invalid arrays: 'foo' (10), 'bar' (15)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
-        report = sphere_with_invalid_arrays.validate_array_lengths()
-    assert report.invalid_point_arrays == ['foo', 'bar']
-    assert report.invalid_cell_arrays is None
+        sphere_with_invalid_arrays.validate_array_lengths('warn')
+
+    report = sphere_with_invalid_arrays.validate_array_lengths('report')
+    assert report.wrong_point_array_lengths == ['foo', 'bar']
+    assert report.wrong_cell_array_lengths == []
 
 
 def test_validate_cell_arrays(sphere_with_invalid_arrays):
     sphere_with_invalid_arrays.point_data.clear()
     match = (
-        'Cell array length(s) do not match the number\n'
-        'of cells in the mesh. This can lead to a segmentation fault with some filters.\n'
-        "Expected length: 840. Invalid array(s): 'ham' (11), 'eggs' (16)"
+        'Cell array lengths do not match the number\n'
+        "of cells in the mesh (840). Invalid arrays: 'ham' (11), 'eggs' (16)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
-        report = sphere_with_invalid_arrays.validate_array_lengths()
-    assert report.invalid_cell_arrays == ['ham', 'eggs']
-    assert report.invalid_point_arrays is None
+        sphere_with_invalid_arrays.validate_array_lengths('warn')
+
+    report = sphere_with_invalid_arrays.validate_array_lengths('report')
+    assert report.wrong_cell_array_lengths == ['ham', 'eggs']
+    assert report.wrong_point_array_lengths == []

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
+from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
@@ -3020,80 +3021,81 @@ class DataSet(DataSetFilters, DataObject):
             return int(3 - (dims == 1).sum())  # type: ignore[return-value]
         return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
 
-    def validate_array_lengths(self) -> _MeshValidationReport:
+    def validate_array_lengths(
+        self, action: Literal['warn', 'report'] = 'warn'
+    ) -> ValidationReport | None:
         """Validate point and cell data arrays match n_points and n_cells, respectively.
 
         Returns
         -------
-        _MeshValidationReport
+        _MeshValidator
             Report.
 
         """
-        report = _MeshValidationReport(self)
-        report.warn()
-        return report
+        validator = _MeshValidator(self)
+        if action == 'warn':
+            validator.warn()
+        else:  # action == 'report'
+            return validator.report
+        return None
 
 
-_MeshValidationOptions = Literal['invalid_point_arrays', 'invalid_cell_arrays']
+_MeshValidationOptions = Literal['wrong_point_array_lengths', 'wrong_cell_array_lengths']
 _DEFAULT_VALIDATION_ARGS: tuple[_MeshValidationOptions, ...] = get_args(_MeshValidationOptions)
 
 
-class _MeshValidationReport:
+@dataclass
+class ValidationReport:
+    """Dataclass to report mesh validation results."""
+
+    wrong_point_array_lengths: list[str] | None = None
+    wrong_cell_array_lengths: list[str] | None = None
+
+
+class _MeshValidator:
+    @dataclass
+    class _ValidationIssue:
+        name: str
+        message: str
+        values: object | None
+
     def __init__(
         self,
         mesh: DataSet,
         validation_fields: tuple[_MeshValidationOptions, ...] = _DEFAULT_VALIDATION_ARGS,
     ) -> None:
-        self._n_points = mesh.n_points
-        self._n_cells = mesh.n_cells
+        self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
-        self._invalid_point_arrays: dict[str, int] | None = None
-        if 'invalid_point_arrays' in validation_fields:
-            self._invalid_point_arrays = _MeshValidationReport._validate_arrays(
+        if (name := 'wrong_point_array_lengths') in validation_fields:
+            invalid_arrays: dict[str, int] = _MeshValidator._validate_arrays(
                 mesh.point_data, mesh.n_points
             )
-        self._invalid_cell_arrays: dict[str, int] | None = None
-        if 'invalid_cell_arrays' in validation_fields:
-            self._invalid_cell_arrays = _MeshValidationReport._validate_arrays(
-                mesh.cell_data, mesh.n_cells
+            message = _MeshValidator._invalid_array_length_msg(
+                invalid_arrays=invalid_arrays, kind='Point', expected=mesh.n_points
             )
-
-    @property
-    def invalid_point_arrays(self) -> list[str] | None:
-        if invalid_point_arrays := self._invalid_point_arrays:
-            return list(invalid_point_arrays.keys())
-        return None
-
-    @property
-    def invalid_cell_arrays(self) -> list[str] | None:
-        if invalid_point_arrays := self._invalid_cell_arrays:
-            return list(invalid_point_arrays.keys())
-        return None
-
-    @property
-    def _invalid_point_arrays_msg(self) -> str:
-        if invalid_point_arrays := self._invalid_point_arrays:
-            return _MeshValidationReport._invalid_array_length_msg(
-                invalid_arrays=invalid_point_arrays, kind='Point', expected=self._n_points
+            issue = _MeshValidator._ValidationIssue(
+                name=name, message=message, values=list(invalid_arrays.keys())
             )
-        return ''
+            self._validation_issues[name] = issue
 
-    @property
-    def _invalid_cell_arrays_msg(self) -> str:
-        if invalid_cell_arrays := self._invalid_cell_arrays:
-            return _MeshValidationReport._invalid_array_length_msg(
-                invalid_arrays=invalid_cell_arrays, kind='Cell', expected=self._n_cells
+        if (name := 'wrong_cell_array_lengths') in validation_fields:
+            invalid_arrays = _MeshValidator._validate_arrays(mesh.cell_data, mesh.n_cells)
+            message = _MeshValidator._invalid_array_length_msg(
+                invalid_arrays=invalid_arrays, kind='Cell', expected=mesh.n_cells
             )
-        return ''
+            issue = _MeshValidator._ValidationIssue(
+                name=name, message=message, values=list(invalid_arrays.keys())
+            )
+            self._validation_issues[name] = issue
 
     @staticmethod
     def _invalid_array_length_msg(
         invalid_arrays: dict[str, int], kind: Literal['Point', 'Cell'], expected: int
     ) -> str:
+        s = 's' if len(invalid_arrays) > 1 else ''
         msg_template = (
-            '{kind} array length(s) do not match the number\nof {kind_lower} in the mesh. '
-            'This can lead to a segmentation fault with some filters.\n'
-            'Expected length: {expected}. Invalid array(s): {details}'
+            '{kind} array length{s} do not match the number\nof {kind_lower} in the mesh '
+            '({expected}). Invalid array{s}: {details}'
         )
         details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
         return msg_template.format(
@@ -3101,6 +3103,7 @@ class _MeshValidationReport:
             kind_lower=kind.lower() + 's',
             expected=expected,
             details=details,
+            s=s,
         )
 
     @staticmethod
@@ -3108,7 +3111,12 @@ class _MeshValidationReport:
         return {name: len(arrays[name]) for name in arrays if len(arrays[name]) != expected}
 
     def warn(self) -> None:
-        if msg := self._invalid_point_arrays_msg:
-            warn_external(msg, pv.PyVistaInvalidMeshWarning)
-        if msg := self._invalid_cell_arrays_msg:
-            warn_external(msg, pv.PyVistaInvalidMeshWarning)
+        for issue in self._validation_issues.values():
+            if issue.values:
+                warn_external(issue.message, pv.PyVistaInvalidMeshWarning)
+
+    @property
+    def report(self) -> ValidationReport:
+        issues = self._validation_issues
+        kwargs = {name: issue.values for name, issue in issues.items()}
+        return ValidationReport(**kwargs)
