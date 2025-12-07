@@ -771,11 +771,11 @@ def principal_axes(
 
     Plot the mesh and highlight its points in black.
 
-    >>> p = pv.Plotter()
-    >>> _ = p.add_mesh(mesh)
-    >>> _ = p.add_points(mesh, color='black')
-    >>> _ = p.show_grid()
-    >>> p.show()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh)
+    >>> _ = pl.add_points(mesh, color='black')
+    >>> _ = pl.show_grid()
+    >>> pl.show()
 
     Compute its principal axes and return the standard deviations.
 

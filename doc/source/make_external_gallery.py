@@ -33,7 +33,7 @@ class Example:  # noqa: D101
 articles = dict(
     omf=Example(
         title='3D visualization for the Open Mining Format (omf)',
-        link='https://opengeovis.github.io/omfvista/examples/index.html',
+        link='https://omf.pyvista.org',
         image='omfvista.png',
     ),
     discretize=Example(

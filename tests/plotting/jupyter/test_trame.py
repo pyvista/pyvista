@@ -322,7 +322,7 @@ def test_trame_jupyter_custom_size():
         _ = pl.add_mesh(pv.Cone())
         widget = pl.show(jupyter_backend='trame', return_viewer=True)
         html = widget.value
-        assert 'width: 99%' in html
+        assert 'width: 100%' in html
         assert 'height: 600px' in html
     finally:
         pv.global_theme.window_size = previous_size
