@@ -3020,7 +3020,9 @@ class DataSet(DataSetFilters, DataObject):
         elif hasattr(self, 'dimensions'):
             dims = np.asarray(self.dimensions)
             return int(3 - (dims == 1).sum())  # type: ignore[return-value]
-        return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
+        # Align points first to make rank computation more robust
+        aligned_points = self.align_xyz().points
+        return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
 
     def validate(self, action: Literal['warn', 'report'] = 'warn') -> ValidationReport | None:
         """Validate point and cell data arrays match n_points and n_cells, respectively.

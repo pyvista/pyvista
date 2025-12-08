@@ -6,6 +6,7 @@ from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 from typing import cast
 from typing import overload
 
@@ -41,6 +42,16 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.wrappers import _WrappableVTKDataObjectType
+
+_NORMALS = {
+    'x': [1, 0, 0],
+    'y': [0, 1, 0],
+    'z': [0, 0, 1],
+    '-x': [-1, 0, 0],
+    '-y': [0, -1, 0],
+    '-z': [0, 0, -1],
+}
+_NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
 # vtkDataSet overloads
@@ -252,7 +263,7 @@ def wrap(  # noqa: PLR0911
     raise NotImplementedError(msg)
 
 
-def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock]:
+def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDataSet]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -266,7 +277,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock]:
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pv.DataSet, pv.MultiBlock))
+    return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
@@ -288,11 +299,49 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal_ = _validation.validate_array3(normal, dtype_out=float)
+    normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
     normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane
+
+
+def _validate_plane_origin_and_normal(  # noqa: PLR0917
+    mesh: DataObject,
+    origin: VectorLike[float] | None,
+    normal: VectorLike[float] | _NormalsLiteral | None,
+    plane: PolyData | None,
+    default_normal: _NormalsLiteral,
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    def _get_origin_and_normal_from_plane(
+        plane_: PolyData,
+    ) -> tuple[NumpyArray[float], NumpyArray[float]]:
+        _validation.check_instance(plane_, pv.PolyData, name='plane')
+
+        if (dimensionality := plane_.dimensionality) != 2:
+            msg = (
+                f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
+                f'{dimensionality}.'
+            )
+            raise ValueError(msg)
+        origin = plane_.points.mean(axis=0)
+        normal = plane_.point_normals.mean(axis=0)
+        return origin, normal
+
+    if plane is not None:
+        if normal is not None or origin is not None:
+            msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+            raise ValueError(msg)
+        origin_, normal_ = _get_origin_and_normal_from_plane(plane)
+    else:
+        normal = default_normal if normal is None else normal
+        normal = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
+
+        # find center of data if origin not specified
+        origin = mesh.center if origin is None else origin
+        origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
+    return origin_, normal_
 
 
 @_deprecate_positional_args(allowed=['points', 'angle'])

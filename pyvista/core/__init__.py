@@ -24,6 +24,8 @@ from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning
 from .errors import PyVistaFutureWarning as PyVistaFutureWarning
 from .errors import PyVistaInvalidMeshWarning as PyVistaInvalidMeshWarning
 from .errors import PyVistaPipelineError as PyVistaPipelineError
+from .errors import VTKExecutionError as VTKExecutionError
+from .errors import VTKExecutionWarning as VTKExecutionWarning
 from .errors import VTKVersionError as VTKVersionError
 from .filters import CompositeFilters as CompositeFilters
 from .filters import DataObjectFilters as DataObjectFilters
