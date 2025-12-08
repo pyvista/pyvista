@@ -572,8 +572,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
-        is_single_value = isinstance(value, (float, int))
-        if is_single_value:
+
+        if (is_single_value := isinstance(value, (float, int))):
             alg.SetValue(value)
         else:
             lower, upper = _validation.validate_data_range(value)
