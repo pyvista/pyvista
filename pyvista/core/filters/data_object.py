@@ -1449,6 +1449,7 @@ class DataObjectFilters:
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         merge_points: bool = True,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
+        return_clipped: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -1486,10 +1487,14 @@ class DataObjectFilters:
             attribute that tracks the original cell IDs of the original
             dataset.
 
+        return_clipped : bool, default: False
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Clipped dataset.
+        pyvista.UnstructuredGrid | tuple[pyvista.UnstructuredGrid, pyvista.UnstructuredGrid]
+            Clipped dataset when ``return_clipped=False`` or a tuple containing
+            the unclipped and clipped datasets when ``return_clipped=True``.
 
         Examples
         --------
@@ -1556,16 +1561,37 @@ class DataObjectFilters:
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
         alg.SetBoxClip(*bounds_)
-        port = 0
-        if invert:
-            # invert the clip if needed
-            port = 1
+
+        if return_clipped or invert:
             alg.GenerateClippedOutputOn()
+
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
-        clipped = _get_output(alg, oport=port)
-        if crinkle:
-            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
-        return _remove_unused_points_post_clip(clipped, self.bounds)
+
+        if return_clipped:
+            # Return both outputs
+            result0 = _get_output(alg, oport=0)
+            result1 = _get_output(alg, oport=1)
+            if crinkle:
+                result0, result1 = _Crinkler.extract_crinkle_cells(
+                    self, result0, result1, active_scalars_info
+                )
+            result0 = _remove_unused_points_post_clip(result0, self.bounds)
+            result1 = _remove_unused_points_post_clip(result1, self.bounds)
+            if invert:
+                # When invert=True, we want to return (clipped, unclipped)
+                return result1, result0
+            else:
+                # When invert=False, we want to return (unclipped, clipped)
+                return result0, result1
+        else:
+            # Return single output
+            port = 0
+            if invert:
+                port = 1
+            clipped = _get_output(alg, oport=port)
+            if crinkle:
+                clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            return _remove_unused_points_post_clip(clipped, self.bounds)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917

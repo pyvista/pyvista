@@ -2035,6 +2035,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         plane: PolyData | None = None,
+        return_clipped: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a closed polydata surface with a plane.
 
@@ -2088,10 +2089,14 @@ class PolyDataFilters(DataSetFilters):
 
             .. versionadded:: 0.47
 
+        return_clipped : bool, default: False
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
-        pyvista.PolyData
-            The clipped mesh.
+        pyvista.PolyData | tuple[pyvista.PolyData, pyvista.PolyData]
+            The clipped mesh when ``return_clipped=False`` or a tuple containing
+            the unclipped and clipped meshes when ``return_clipped=True``.
 
         Examples
         --------
@@ -2130,6 +2135,27 @@ class PolyDataFilters(DataSetFilters):
         alg.SetClippingPlanes(collection)
         _update_alg(alg, progress_bar=progress_bar, message='Clipping Closed Surface')
         result = _get_output(alg)
+
+        if return_clipped:
+            # To get the clipped part, run the algorithm again with inverted normal
+            vtk_plane_inv = generate_plane(-normal_, origin_)
+            collection_inv = _vtk.vtkPlaneCollection()
+            collection_inv.AddItem(vtk_plane_inv)
+
+            alg_inv = _vtk.vtkClipClosedSurface()
+            alg_inv.SetGenerateFaces(True)
+            alg_inv.SetInputDataObject(self)
+            alg_inv.SetTolerance(tolerance)
+            alg_inv.SetClippingPlanes(collection_inv)
+            _update_alg(
+                alg_inv, progress_bar=progress_bar, message='Clipping Closed Surface (inverted)'
+            )
+            result_clipped = _get_output(alg_inv)
+
+            if inplace:
+                self.copy_from(result, deep=False)
+                return self, result_clipped
+            return result, result_clipped
 
         if inplace:
             self.copy_from(result, deep=False)
