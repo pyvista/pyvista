@@ -532,7 +532,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         both : bool, default: False
             If ``True``, also returns the complementary clipped mesh.
 
-            .. deprecated:: 0.48.0
+            .. deprecated:: 0.47.0
                 Use ``return_clipped`` instead.
 
         return_clipped : bool, default: False
