@@ -579,6 +579,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if both and return_clipped:
             msg = "Cannot specify both 'both' and 'return_clipped'. Use 'return_clipped' only."
             raise ValueError(msg)
+        if both:
+            warn_external(
+                "Use of 'both' is deprecated. Use 'return_clipped' instead.",
+                PyVistaDeprecationWarning,
+            )
         _return_both = both or return_clipped
 
         if isinstance(self, _vtk.vtkPolyData):
