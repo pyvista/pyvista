@@ -1592,31 +1592,43 @@ def sphere_with_invalid_arrays(sphere):
 
 
 def test_validate_point_arrays(sphere_with_invalid_arrays):
+    # Dataset had invalid point AND cell arrays, but we validate point arrays only
+    report = sphere_with_invalid_arrays.validate(['wrong_point_array_lengths'], action='report')
+    assert report.wrong_point_array_lengths == ['foo', 'bar']
+    assert report.wrong_cell_array_lengths is None
+
+    # Clear cell arrays and validate ALL arrays
     sphere_with_invalid_arrays.cell_data.clear()
+    report = sphere_with_invalid_arrays.validate('arrays', action='report')
+    assert report.wrong_point_array_lengths == ['foo', 'bar']
+    assert report.wrong_cell_array_lengths is None
+
     match = (
         'Point array lengths do not match the number\n'
         "of points in the mesh (422). Invalid arrays: 'foo' (10), 'bar' (15)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
-        sphere_with_invalid_arrays.validate('warn')
-
-    report = sphere_with_invalid_arrays.validate('report')
-    assert report.wrong_point_array_lengths == ['foo', 'bar']
-    assert report.wrong_cell_array_lengths is None
+        sphere_with_invalid_arrays.validate(action='warn')
 
 
 def test_validate_cell_arrays(sphere_with_invalid_arrays):
+    # Dataset had invalid point AND cell arrays, but we validate cell arrays only
+    report = sphere_with_invalid_arrays.validate('wrong_cell_array_lengths', action='report')
+    assert report.wrong_cell_array_lengths == ['ham']
+    assert report.wrong_point_array_lengths is None
+
+    # Clear point arrays and validate ALL arrays
     sphere_with_invalid_arrays.point_data.clear()
+    report = sphere_with_invalid_arrays.validate('arrays', action='report')
+    assert report.wrong_cell_array_lengths == ['ham']
+    assert report.wrong_point_array_lengths is None
+
     match = (
         'Cell array length does not match the number\n'
         "of cells in the mesh (840). Invalid array: 'ham' (11)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
-        sphere_with_invalid_arrays.validate('warn')
-
-    report = sphere_with_invalid_arrays.validate('report')
-    assert report.wrong_cell_array_lengths == ['ham']
-    assert report.wrong_point_array_lengths is None
+        sphere_with_invalid_arrays.validate(action='warn')
 
 
 def test_cell_validator():
@@ -1642,13 +1654,13 @@ def test_cell_validator_wrong_number_of_points():
     ]
     grid = pv.UnstructuredGrid(cells, celltypes, points)
     validated = grid.cell_validator()
-    report = grid.validate('report')
+    report = grid.validate(action='report')
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name == 'wrong_number_of_points':
             expected_cell_ids = [0]
             assert validated[name].tolist() == expected_cell_ids
-            assert report.wrong_number_of_points == expected_cell_ids
+            assert getattr(report, name) == expected_cell_ids
         else:
             array = validated.field_data[name]
             assert array.shape == (0,)
@@ -1667,17 +1679,32 @@ def test_cell_intersecting_edges_nonconvex():
         [0.0, 1.0, 1.0],
     ]
 
-    # Swap first two points
+    # Swap first two points to create a bad cell
     cells = [8, 1, 0, 2, 3, 4, 5, 6, 7]
     celltypes = [pv.CellType.HEXAHEDRON]
 
     grid = pv.UnstructuredGrid(cells, celltypes, points)
 
     validated = grid.cell_validator()
+    report = grid.validate(action='report')
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
-            assert validated[name].tolist() == [0]
+            expected_cell_ids = [0]
+            assert validated[name].tolist() == expected_cell_ids
+            assert getattr(report, name) == expected_cell_ids
         else:
             array = validated.field_data[name]
             assert array.shape == (0,)
+            assert getattr(report, name) is None
+
+    # Test validating specific fields
+    report = grid.validate('cells', action='report')
+    assert report.intersecting_edges is not None
+    assert report.non_convex is not None
+    assert report.incorrectly_oriented_faces is not None
+
+    report = grid.validate('non_convex', action='report')
+    assert report.intersecting_edges is None
+    assert report.non_convex is not None
+    assert report.incorrectly_oriented_faces is None
