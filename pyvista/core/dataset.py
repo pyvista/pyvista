@@ -125,6 +125,7 @@ class _MeshValidator:
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
     ) -> None:
+        # Validate inputs
         allowed_array_fields = get_args(_ArrayValidationOptions)
         allowed_cell_fields = get_args(_CellValidationOptions)
         allowed_fields = (
@@ -140,6 +141,7 @@ class _MeshValidator:
                     allowed_fields, must_contain=field, name='validation_fields'
                 )
 
+        self._mesh_class_name = mesh.__class__.__name__
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
         store_all_array_fields = 'arrays' in validation_fields
@@ -228,7 +230,8 @@ class _MeshValidator:
         ]
         bullet = ' - '
         body = bullet + f'\n{bullet}'.join(messages)
-        message = f'Mesh is not valid due to the following problems:\n{body}'
+        header = f'{self._mesh_class_name} mesh is not valid due to the following problems:'
+        message = f'{header}\n{body}'
         warn_external(message, pv.PyVistaInvalidMeshWarning)
 
     @property

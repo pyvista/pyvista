@@ -1606,7 +1606,7 @@ def test_validate_point_arrays(sphere_with_invalid_arrays):
     assert report.wrong_cell_array_lengths is None
 
     match = (
-        'Mesh is not valid due to the following problems:\n'
+        'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh point array lengths do not match the number of points in the mesh (422). '
         "Invalid arrays: 'foo' (10), 'bar' (15)"
     )
@@ -1627,7 +1627,7 @@ def test_validate_cell_arrays(sphere_with_invalid_arrays):
     assert report.wrong_point_array_lengths is None
 
     match = (
-        'Mesh is not valid due to the following problems:\n'
+        'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh cell array length does not match the number of cells in the mesh (840). '
         "Invalid array: 'ham' (11)"
     )
@@ -1714,7 +1714,7 @@ def test_cell_intersecting_edges_nonconvex():
     assert report.incorrectly_oriented_faces is None
 
     match = (
-        'Mesh is not valid due to the following problems:\n'
+        'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 cells with intersecting edges. Invalid cell ids: [0]\n'
         ' - Mesh has 1 non convex cells. Invalid cell ids: [0]\n'
         ' - Mesh has 1 cells with incorrectly oriented faces. Invalid cell ids: [0]'
