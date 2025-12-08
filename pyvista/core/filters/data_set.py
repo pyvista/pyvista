@@ -566,7 +566,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     scalars='sample_point_scalars', value=100, invert=False
         ... )
         >>> clipped.plot()
-        
+
         Clip the part of the mesh with "sample_point_scalars" between 200 and 250.
 
         >>> import pyvista as pv
