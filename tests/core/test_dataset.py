@@ -1602,7 +1602,7 @@ def test_validate_point_arrays(sphere_with_invalid_arrays):
 
     report = sphere_with_invalid_arrays.validate('report')
     assert report.wrong_point_array_lengths == ['foo', 'bar']
-    assert report.wrong_cell_array_lengths == []
+    assert report.wrong_cell_array_lengths is None
 
 
 def test_validate_cell_arrays(sphere_with_invalid_arrays):
@@ -1616,7 +1616,7 @@ def test_validate_cell_arrays(sphere_with_invalid_arrays):
 
     report = sphere_with_invalid_arrays.validate('report')
     assert report.wrong_cell_array_lengths == ['ham']
-    assert report.wrong_point_array_lengths == []
+    assert report.wrong_point_array_lengths is None
 
 
 def test_cell_validator():

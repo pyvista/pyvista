@@ -3064,7 +3064,7 @@ _DEFAULT_VALIDATION_ARGS: tuple[_MeshValidationOptions, ...] = (
 
 
 @dataclass
-class ValidationReport:
+class ValidationReport(_NoNewAttrMixin):
     """Dataclass to report mesh validation results."""
 
     wrong_point_array_lengths: list[str] | None = None
