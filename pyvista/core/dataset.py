@@ -87,28 +87,6 @@ _MeshValidationOptions = (
 _DEFAULT_MESH_VALIDATION_ARGS = get_args(_MeshValidationGroupOptions)
 
 
-@dataclass(frozen=True)
-class ValidationReport(_NoNewAttrMixin):
-    """Dataclass to report mesh validation results."""
-
-    wrong_point_array_lengths: list[str] | None = None
-    wrong_cell_array_lengths: list[str] | None = None
-    wrong_number_of_points: NumpyArray[int] | None = None
-    intersecting_edges: NumpyArray[int] | None = None
-    intersecting_faces: NumpyArray[int] | None = None
-    non_contiguous_edges: NumpyArray[int] | None = None
-    non_convex: NumpyArray[int] | None = None
-    incorrectly_oriented_faces: NumpyArray[int] | None = None
-    non_planar_faces: NumpyArray[int] | None = None
-    degenerate_faces: NumpyArray[int] | None = None
-    coincident_points: NumpyArray[int] | None = None
-
-    @property
-    def is_valid(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the mesh is valid."""
-        return all(getattr(self, f.name) is None for f in fields(self))
-
-
 class _MeshValidator:
     @dataclass
     class _ValidationIssue:
@@ -244,12 +222,12 @@ class _MeshValidator:
         return f'{header}\n{body}'
 
     @property
-    def report(self) -> ValidationReport:
+    def report(self) -> DataSet.ValidationReport:
         issues = self._validation_issues
         kwargs = {
             name: issue.values if issue._has_values else None for name, issue in issues.items()
         }
-        return ValidationReport(**kwargs)  # type: ignore[arg-type]
+        return DataSet.ValidationReport(**kwargs)  # type: ignore[arg-type]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -3213,12 +3191,33 @@ class DataSet(DataSetFilters, DataObject):
         aligned_points = self.align_xyz().points
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
 
+    @dataclass(frozen=True)
+    class ValidationReport(_NoNewAttrMixin):
+        """Dataclass to report mesh validation results."""
+
+        wrong_point_array_lengths: list[str] | None = None
+        wrong_cell_array_lengths: list[str] | None = None
+        wrong_number_of_points: NumpyArray[int] | None = None
+        intersecting_edges: NumpyArray[int] | None = None
+        intersecting_faces: NumpyArray[int] | None = None
+        non_contiguous_edges: NumpyArray[int] | None = None
+        non_convex: NumpyArray[int] | None = None
+        incorrectly_oriented_faces: NumpyArray[int] | None = None
+        non_planar_faces: NumpyArray[int] | None = None
+        degenerate_faces: NumpyArray[int] | None = None
+        coincident_points: NumpyArray[int] | None = None
+
+        @property
+        def is_valid(self) -> bool:  # numpydoc ignore=RT01
+            """Return ``True`` if the mesh is valid."""
+            return all(getattr(self, f.name) is None for f in fields(self))
+
     def validate_mesh(
         self,
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
-    ) -> ValidationReport:
+    ) -> DataSet.ValidationReport:
         """Validate point and cell data arrays match n_points and n_cells, respectively.
 
         Returns
