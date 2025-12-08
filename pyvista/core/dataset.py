@@ -63,6 +63,7 @@ if TYPE_CHECKING:
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
+_MeshValidationActionOptions = Literal['warn', 'error']
 _ArrayValidationOptions = Literal[
     'wrong_point_array_lengths',
     'wrong_cell_array_lengths',
@@ -3208,19 +3209,21 @@ class DataSet(DataSetFilters, DataObject):
         self,
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
-        action: Literal['warn', 'report'] = 'warn',
-    ) -> ValidationReport | None:
+        action: _MeshValidationActionOptions | None = None,
+    ) -> ValidationReport:
         """Validate point and cell data arrays match n_points and n_cells, respectively.
 
         Returns
         -------
-        _MeshValidator
+        ValidationReport
             Report.
 
         """
+        if action is not None:
+            allowed = get_args(_MeshValidationActionOptions)
+            _validation.check_contains(allowed, must_contain=action, name='action')
+
         validator = _MeshValidator(self, validation_fields)
         if action == 'warn':
             validator.warn()
-        else:  # action == 'report'
-            return validator.report
-        return None
+        return validator.report

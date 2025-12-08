@@ -1593,15 +1593,13 @@ def sphere_with_invalid_arrays(sphere):
 
 def test_validate_point_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate point arrays only
-    report = sphere_with_invalid_arrays.validate_mesh(
-        ['wrong_point_array_lengths'], action='report'
-    )
+    report = sphere_with_invalid_arrays.validate_mesh(['wrong_point_array_lengths'])
     assert report.wrong_point_array_lengths == ['foo', 'bar']
     assert report.wrong_cell_array_lengths is None
 
     # Clear cell arrays and validate ALL arrays
     sphere_with_invalid_arrays.cell_data.clear()
-    report = sphere_with_invalid_arrays.validate_mesh('arrays', action='report')
+    report = sphere_with_invalid_arrays.validate_mesh('arrays')
     assert report.wrong_point_array_lengths == ['foo', 'bar']
     assert report.wrong_cell_array_lengths is None
 
@@ -1616,13 +1614,13 @@ def test_validate_point_arrays(sphere_with_invalid_arrays):
 
 def test_validate_cell_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate cell arrays only
-    report = sphere_with_invalid_arrays.validate_mesh('wrong_cell_array_lengths', action='report')
+    report = sphere_with_invalid_arrays.validate_mesh('wrong_cell_array_lengths')
     assert report.wrong_cell_array_lengths == ['ham']
     assert report.wrong_point_array_lengths is None
 
     # Clear point arrays and validate ALL arrays
     sphere_with_invalid_arrays.point_data.clear()
-    report = sphere_with_invalid_arrays.validate_mesh('arrays', action='report')
+    report = sphere_with_invalid_arrays.validate_mesh('arrays')
     assert report.wrong_cell_array_lengths == ['ham']
     assert report.wrong_point_array_lengths is None
 
@@ -1658,7 +1656,7 @@ def test_cell_validator_wrong_number_of_points():
     ]
     grid = pv.UnstructuredGrid(cells, celltypes, points)
     validated = grid.cell_validator()
-    report = grid.validate_mesh(action='report')
+    report = grid.validate_mesh()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name == 'wrong_number_of_points':
@@ -1690,7 +1688,7 @@ def test_cell_intersecting_edges_nonconvex():
     grid = pv.UnstructuredGrid(cells, celltypes, points)
 
     validated = grid.cell_validator()
-    report = grid.validate_mesh(action='report')
+    report = grid.validate_mesh()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
@@ -1703,12 +1701,12 @@ def test_cell_intersecting_edges_nonconvex():
             assert getattr(report, name) is None
 
     # Test validating specific fields
-    report = grid.validate_mesh('cells', action='report')
+    report = grid.validate_mesh('cells')
     assert report.intersecting_edges is not None
     assert report.non_convex is not None
     assert report.incorrectly_oriented_faces is not None
 
-    report = grid.validate_mesh('non_convex', action='report')
+    report = grid.validate_mesh('non_convex')
     assert report.intersecting_edges is None
     assert report.non_convex is not None
     assert report.incorrectly_oriented_faces is None
