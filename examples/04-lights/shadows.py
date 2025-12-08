@@ -8,6 +8,14 @@ Demonstrate the usage of lights and shadows in PyVista with :class:`~pyvista.Lig
 objects and the :meth:`~pyvista.Plotter.enable_shadows` plotting method.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

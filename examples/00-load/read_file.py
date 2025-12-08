@@ -8,6 +8,13 @@ Read a dataset from a known file type.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # Loading a mesh is trivial - if your data is in one of the many supported
 # file formats, simply use :func:`pyvista.read` to load your spatially

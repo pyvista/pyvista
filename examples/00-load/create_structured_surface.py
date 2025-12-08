@@ -8,6 +8,15 @@ Create a StructuredGrid surface from NumPy arrays
 using :class:`pyvista.StructuredGrid`.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

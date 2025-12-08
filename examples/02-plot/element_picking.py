@@ -19,6 +19,13 @@ These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum 
 """
 
 # sphinx_gallery_thumbnail_number = 1
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

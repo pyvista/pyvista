@@ -9,6 +9,15 @@ A more complex example, showing how to combine multiple charts as overlays
 in the same renderer, is given in :ref:`chart_overlays_example`.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

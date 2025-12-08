@@ -9,6 +9,14 @@ PyVista wraps the :vtk:`vtkPlatonicSolidSource` filter as
 """
 
 # sphinx_gallery_start_ignore
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True

@@ -11,6 +11,13 @@ methods are compared in :ref:`interpolate_sample_example`.
 Resample one mesh's point/cell arrays onto another mesh's nodes.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # This example will resample a volumetric mesh's scalar data onto the surface
 # of a sphere contained in that volume.

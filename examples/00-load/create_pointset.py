@@ -14,6 +14,13 @@ This example shows the performance improvement when clipping using the
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import time

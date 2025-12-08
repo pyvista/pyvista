@@ -7,6 +7,15 @@ Slicing
 Extract thin planar slices from a volume.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt

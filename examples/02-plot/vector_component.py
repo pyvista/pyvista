@@ -10,6 +10,13 @@ We can plot individual components of multi-component arrays with the
 ``component`` argument  of the :meth:`~pyvista.Plotter.add_mesh` method.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

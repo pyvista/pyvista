@@ -18,6 +18,14 @@ that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

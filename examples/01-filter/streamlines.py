@@ -7,6 +7,14 @@ Streamlines
 Integrate a vector field to generate streamlines.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # This example generates streamlines of blood velocity. An isosurface of speed
 # provides context. The starting positions for the streamtubes were determined

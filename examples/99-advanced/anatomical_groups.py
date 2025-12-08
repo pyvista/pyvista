@@ -14,6 +14,13 @@ labels with the recommended RGB values used by the 3DSlicer
 `TotalSegmentator Extension <https://github.com/lassoan/SlicerTotalSegmentator>`_.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

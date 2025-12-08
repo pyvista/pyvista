@@ -24,6 +24,14 @@ and :ref:`resampling_example`.
 """
 
 # sphinx_gallery_thumbnail_number = 7
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

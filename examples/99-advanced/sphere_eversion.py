@@ -23,6 +23,14 @@ smooth; this was proved in the paper by Bednorz and Bednorz.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

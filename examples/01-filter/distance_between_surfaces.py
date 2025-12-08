@@ -33,6 +33,15 @@ to the top surface, unlike the first two examples.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+#   "scipy",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np
