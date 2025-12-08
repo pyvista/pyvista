@@ -13,6 +13,8 @@ from .dataset import DataSet as DataSet
 from .datasetattributes import DataSetAttributes as DataSetAttributes
 from .errors import AmbiguousDataError as AmbiguousDataError
 from .errors import DeprecationError as DeprecationError
+from .errors import InvalidMeshError as InvalidMeshError
+from .errors import InvalidMeshWarning as InvalidMeshWarning
 from .errors import MissingDataError as MissingDataError
 from .errors import NotAllTrianglesError as NotAllTrianglesError
 from .errors import PointSetCellOperationError as PointSetCellOperationError
@@ -22,7 +24,6 @@ from .errors import PyVistaAttributeError as PyVistaAttributeError
 from .errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning
 from .errors import PyVistaFutureWarning as PyVistaFutureWarning
-from .errors import PyVistaInvalidMeshWarning as PyVistaInvalidMeshWarning
 from .errors import PyVistaPipelineError as PyVistaPipelineError
 from .errors import VTKExecutionError as VTKExecutionError
 from .errors import VTKExecutionWarning as VTKExecutionWarning

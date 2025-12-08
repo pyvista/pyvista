@@ -203,6 +203,20 @@ class PyVistaAttributeError(AttributeError):
         super().__init__(message)
 
 
+class InvalidMeshError(ValueError):
+    """Error for invalid mesh properties.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(self, message='Invalid mesh.') -> None:
+        super().__init__(message)
+
+
 class VTKExecutionError(RuntimeError):
     """Exception when a VTK output message is detected.
 
@@ -243,5 +257,5 @@ class VTKExecutionWarning(RuntimeWarning):
     """
 
 
-class PyVistaInvalidMeshWarning(Warning):
+class InvalidMeshWarning(Warning):
     """Warning for invalid mesh properties."""

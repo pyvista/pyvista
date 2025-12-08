@@ -1591,7 +1591,7 @@ def sphere_with_invalid_arrays(sphere):
     return sphere
 
 
-def test_validate_point_arrays(sphere_with_invalid_arrays):
+def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate point arrays only
     report = sphere_with_invalid_arrays.validate_mesh(['wrong_point_array_lengths'])
     assert report.wrong_point_array_lengths == ['foo', 'bar']
@@ -1608,11 +1608,11 @@ def test_validate_point_arrays(sphere_with_invalid_arrays):
         ' - Mesh point array lengths do not match the number of points in the mesh (422). '
         "Invalid arrays: 'foo' (10), 'bar' (15)"
     )
-    with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         sphere_with_invalid_arrays.validate_mesh(action='warn')
 
 
-def test_validate_cell_arrays(sphere_with_invalid_arrays):
+def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate cell arrays only
     report = sphere_with_invalid_arrays.validate_mesh('wrong_cell_array_lengths')
     assert report.wrong_cell_array_lengths == ['ham']
@@ -1629,8 +1629,20 @@ def test_validate_cell_arrays(sphere_with_invalid_arrays):
         ' - Mesh cell array length does not match the number of cells in the mesh (840). '
         "Invalid array: 'ham' (11)"
     )
-    with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         sphere_with_invalid_arrays.validate_mesh(action='warn')
+
+
+def test_validate_mesh_raises(sphere_with_invalid_arrays):
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh point array lengths do not match the number of points in the mesh (422). '
+        "Invalid arrays: 'foo' (10), 'bar' (15)\n"
+        ' - Mesh cell array length does not match the number of cells in the mesh (840). '
+        "Invalid array: 'ham' (11)"
+    )
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
 def test_cell_validator():
@@ -1717,5 +1729,5 @@ def test_cell_intersecting_edges_nonconvex():
         ' - Mesh has 1 non convex cells. Invalid cell ids: [0]\n'
         ' - Mesh has 1 cells with incorrectly oriented faces. Invalid cell ids: [0]'
     )
-    with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         grid.validate_mesh(action='warn')

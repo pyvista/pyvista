@@ -224,7 +224,8 @@ class _MeshValidator:
             issues.append(issue)
         return issues
 
-    def warn(self) -> None:
+    @property
+    def error_message(self) -> str:
         messages: list[str] = []
         messages += [
             issue.message for issue in self._validation_issues.values() if issue._has_values
@@ -232,8 +233,7 @@ class _MeshValidator:
         bullet = ' - '
         body = bullet + f'\n{bullet}'.join(messages)
         header = f'{self._mesh_class_name} mesh is not valid due to the following problems:'
-        message = f'{header}\n{body}'
-        warn_external(message, pv.PyVistaInvalidMeshWarning)
+        return f'{header}\n{body}'
 
     @property
     def report(self) -> ValidationReport:
@@ -3225,5 +3225,7 @@ class DataSet(DataSetFilters, DataObject):
 
         validator = _MeshValidator(self, validation_fields)
         if action == 'warn':
-            validator.warn()
+            warn_external(validator.error_message, pv.InvalidMeshWarning)
+        elif action == 'error':
+            raise pv.InvalidMeshError(validator.error_message)
         return validator.report
