@@ -12,7 +12,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
-from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -531,7 +531,7 @@ class WidgetHelper:
             bounds = self.bounds  # type: ignore[attr-defined]
 
         if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
+            normal = _NORMALS[normal.lower()]
 
         color = Color(color, default_color=pv.global_theme.font.color)
 
@@ -613,13 +613,13 @@ class WidgetHelper:
             # Note that normal_rotation was forced to False
             if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS['x'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['x'])  # type: ignore[arg-type]
             elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS['y'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['y'])  # type: ignore[arg-type]
             elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS['z'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['z'])  # type: ignore[arg-type]
             else:
                 msg = 'assign_to_axis not understood'
                 raise RuntimeError(msg)
