@@ -1095,7 +1095,8 @@ def test_project_points_to_plane():
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
-    with pytest.raises(TypeError):
+    match = 'normal has shape (4,) which is not allowed.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         poly.project_points_to_plane(normal=(0, 0, 1, 1))
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):

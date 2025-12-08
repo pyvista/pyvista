@@ -12,7 +12,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
-from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -531,7 +531,7 @@ class WidgetHelper:
             bounds = self.bounds  # type: ignore[attr-defined]
 
         if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
+            normal = _NORMALS[normal.lower()]
 
         color = Color(color, default_color=pv.global_theme.font.color)
 
@@ -613,13 +613,13 @@ class WidgetHelper:
             # Note that normal_rotation was forced to False
             if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS['x'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['x'])  # type: ignore[arg-type]
             elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS['y'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['y'])  # type: ignore[arg-type]
             elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS['z'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(_NORMALS['z'])  # type: ignore[arg-type]
             else:
                 msg = 'assign_to_axis not understood'
                 raise RuntimeError(msg)
@@ -2641,12 +2641,12 @@ class WidgetHelper:
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> p = pv.Plotter()
-        >>> actor = p.add_mesh(mesh)
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
-        >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
-        >>> p.show()
+        >>> _ = pl.add_checkbox_button_widget(toggle_vis, value=True)
+        >>> pl.show()
 
         Download the interactive example at :ref:`checkbox_widget_example`.
 
@@ -2772,32 +2772,32 @@ class WidgetHelper:
         The following example creates a background color switcher.
 
         >>> import pyvista as pv
-        >>> p = pv.Plotter()
+        >>> pl = pv.Plotter()
         >>> def set_bg(color):
         ...     def wrapped_callback():
-        ...         p.background_color = color
+        ...         pl.background_color = color
         ...
         ...     return wrapped_callback
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('white'),
         ...     'bgcolor',
         ...     position=(10.0, 200.0),
         ...     title='White',
         ...     value=True,
         ... )
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('lightblue'),
         ...     'bgcolor',
         ...     position=(10.0, 140.0),
         ...     title='Light Blue',
         ... )
-        >>> _ = p.add_radio_button_widget(
+        >>> _ = pl.add_radio_button_widget(
         ...     set_bg('pink'),
         ...     'bgcolor',
         ...     position=(10.0, 80.0),
         ...     title='Pink',
         ... )
-        >>> p.show()
+        >>> pl.show()
 
         """
         msg = 'Cannot add a widget to a closed plotter.'
