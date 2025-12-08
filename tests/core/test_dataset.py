@@ -1598,9 +1598,9 @@ def test_validate_point_arrays(sphere_with_invalid_arrays):
         "of points in the mesh (422). Invalid arrays: 'foo' (10), 'bar' (15)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
-        sphere_with_invalid_arrays.validate_array_lengths('warn')
+        sphere_with_invalid_arrays.validate('warn')
 
-    report = sphere_with_invalid_arrays.validate_array_lengths('report')
+    report = sphere_with_invalid_arrays.validate('report')
     assert report.wrong_point_array_lengths == ['foo', 'bar']
     assert report.wrong_cell_array_lengths == []
 
@@ -1612,9 +1612,9 @@ def test_validate_cell_arrays(sphere_with_invalid_arrays):
         "of cells in the mesh (840). Invalid array: 'ham' (11)"
     )
     with pytest.warns(pv.PyVistaInvalidMeshWarning, match=re.escape(match)):
-        sphere_with_invalid_arrays.validate_array_lengths('warn')
+        sphere_with_invalid_arrays.validate('warn')
 
-    report = sphere_with_invalid_arrays.validate_array_lengths('report')
+    report = sphere_with_invalid_arrays.validate('report')
     assert report.wrong_cell_array_lengths == ['ham']
     assert report.wrong_point_array_lengths == []
 
@@ -1670,7 +1670,6 @@ def test_cell_intersecting_edges_nonconvex():
     grid = pv.UnstructuredGrid(cells, celltypes, points)
 
     validated = grid.cell_validator()
-    grid.plot(off_screen=False)
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
