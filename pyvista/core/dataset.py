@@ -188,7 +188,7 @@ class _MeshValidator:
                 do = 'does'
 
             msg_template = (
-                'Mesh {kind} array length{s} {do} not match the number of {kind_lower} in the '
+                '{kind} array length{s} {do} not match the number of {kind_lower} in the '
                 'mesh ({expected}). Invalid array{s}: {details}'
             )
             details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
@@ -211,8 +211,8 @@ class _MeshValidator:
             data,
             expected_n,
         ) in [
-            ('wrong_point_array_lengths', 'point', mesh.point_data, mesh.n_points),
-            ('wrong_cell_array_lengths', 'cell', mesh.cell_data, mesh.n_cells),
+            ('wrong_point_array_lengths', 'Point', mesh.point_data, mesh.n_points),
+            ('wrong_cell_array_lengths', 'Cell', mesh.cell_data, mesh.n_cells),
         ]:
             invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
             message = _invalid_array_length_msg(

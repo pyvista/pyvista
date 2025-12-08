@@ -1605,7 +1605,7 @@ def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
 
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh point array lengths do not match the number of points in the mesh (422). '
+        ' - Point array lengths do not match the number of points in the mesh (422). '
         "Invalid arrays: 'foo' (10), 'bar' (15)"
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
@@ -1626,7 +1626,7 @@ def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
 
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh cell array length does not match the number of cells in the mesh (840). '
+        ' - Cell array length does not match the number of cells in the mesh (840). '
         "Invalid array: 'ham' (11)"
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
@@ -1636,9 +1636,9 @@ def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
 def test_validate_mesh_raises(sphere_with_invalid_arrays):
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh point array lengths do not match the number of points in the mesh (422). '
+        ' - Point array lengths do not match the number of points in the mesh (422). '
         "Invalid arrays: 'foo' (10), 'bar' (15)\n"
-        ' - Mesh cell array length does not match the number of cells in the mesh (840). '
+        ' - Cell array length does not match the number of cells in the mesh (840). '
         "Invalid array: 'ham' (11)"
     )
     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
