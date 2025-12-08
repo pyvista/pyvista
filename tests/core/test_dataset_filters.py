@@ -203,6 +203,63 @@ def test_clip_scalar_multiple():
     assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_scalar_return_clipped(sphere, invert):
+    """Test clip_scalar with return_clipped parameter."""
+    sphere.point_data['data'] = sphere.points[:, 2]
+    clip_value = 0.0
+
+    # Test return_clipped=True returns tuple
+    result = sphere.clip_scalar(
+        scalars='data', value=clip_value, invert=invert, return_clipped=True
+    )
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    unclipped, clipped = result
+
+    # Verify both parts are PolyData (since input is PolyData)
+    assert isinstance(unclipped, pv.PolyData)
+    assert isinstance(clipped, pv.PolyData)
+
+    # Verify both parts have cells
+    assert unclipped.n_cells > 0
+    assert clipped.n_cells > 0
+
+    # Verify scalar data is preserved
+    assert 'data' in unclipped.point_data
+    assert 'data' in clipped.point_data
+
+
+def test_clip_scalar_both_and_return_clipped_error(sphere):
+    """Test that using both 'both' and 'return_clipped' raises an error."""
+    sphere.point_data['data'] = sphere.points[:, 2]
+
+    with pytest.raises(ValueError, match="Cannot specify both 'both' and 'return_clipped'"):
+        sphere.clip_scalar(scalars='data', value=0.0, both=True, return_clipped=True)
+
+
+def test_clip_scalar_return_clipped_deprecation(sphere):
+    """Test that 'both' parameter still works but return_clipped is preferred."""
+    sphere.point_data['data'] = sphere.points[:, 2]
+    clip_value = 0.0
+
+    # Test both parameter still works
+    result_both = sphere.clip_scalar(scalars='data', value=clip_value, both=True)
+    assert isinstance(result_both, tuple)
+    assert len(result_both) == 2
+
+    # Test return_clipped parameter works the same way
+    result_return_clipped = sphere.clip_scalar(
+        scalars='data', value=clip_value, return_clipped=True
+    )
+    assert isinstance(result_return_clipped, tuple)
+    assert len(result_return_clipped) == 2
+
+    # Both should produce similar results (cell counts may differ slightly due to clipping)
+    assert result_both[0].n_cells == result_return_clipped[0].n_cells
+    assert result_both[1].n_cells == result_return_clipped[1].n_cells
+
+
 def test_clip_surface():
     surface = pv.Cone(
         direction=(0, 0, -1),
@@ -240,6 +297,34 @@ def test_clip_surface_output_type(datasets, crinkle):
             assert isinstance(clp, pv.UnstructuredGrid)
 
 
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_surface_return_clipped(invert, crinkle):
+    """Test clip_surface with return_clipped parameter."""
+    surface = pv.Cone(
+        direction=(0, 0, -1),
+        height=3.0,
+        radius=1,
+        resolution=50,
+    )
+    xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
+    dataset = pv.RectilinearGrid(xx, yy, zz)
+
+    # Test return_clipped=True returns tuple
+    result = dataset.clip_surface(surface, invert=invert, crinkle=crinkle, return_clipped=True)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    unclipped, clipped = result
+
+    # Verify both parts are UnstructuredGrid
+    assert isinstance(unclipped, pv.UnstructuredGrid)
+    assert isinstance(clipped, pv.UnstructuredGrid)
+
+    # Verify both parts have cells
+    assert unclipped.n_cells > 0
+    assert clipped.n_cells > 0
+
+
 def test_clip_closed_surface():
     closed_surface = pv.Sphere()
     clipped = closed_surface.clip_closed_surface(progress_bar=True)
@@ -247,6 +332,46 @@ def test_clip_closed_surface():
     open_surface = closed_surface.clip(progress_bar=True)
     with pytest.raises(ValueError):  # noqa: PT011
         _ = open_surface.clip_closed_surface()
+
+
+def test_clip_closed_surface_return_clipped():
+    """Test clip_closed_surface with return_clipped parameter."""
+    closed_surface = pv.Sphere()
+
+    # Test return_clipped=True returns tuple
+    result = closed_surface.clip_closed_surface(return_clipped=True)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    unclipped, clipped = result
+
+    # Verify both parts are PolyData
+    assert isinstance(unclipped, pv.PolyData)
+    assert isinstance(clipped, pv.PolyData)
+
+    # Verify both parts have cells
+    assert unclipped.n_cells > 0
+    assert clipped.n_cells > 0
+
+    # Verify both parts are closed (no open edges)
+    assert unclipped.n_open_edges == 0
+    assert clipped.n_open_edges == 0
+
+    # Verify the two parts together cover approximately the whole sphere
+    total_cells = unclipped.n_cells + clipped.n_cells
+    original_cells = closed_surface.n_cells
+    # Should have more cells due to clipping creating new faces
+    assert total_cells >= original_cells
+
+    # Test with custom normal (clip through center at an angle)
+    normal = [1, 1, 0]
+    origin = [0, 0, 0]  # Use center of sphere
+    result = closed_surface.clip_closed_surface(normal=normal, origin=origin, return_clipped=True)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert result[0].n_cells > 0
+    assert result[1].n_cells > 0
+    assert result[0].n_open_edges == 0
+    assert result[1].n_open_edges == 0
 
 
 def test_implicit_distance():

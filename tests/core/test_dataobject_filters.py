@@ -231,6 +231,42 @@ def test_clip_box():
     assert clp is not None
 
 
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_box_return_clipped(invert, crinkle):
+    """Test clip_box with return_clipped parameter."""
+    dataset = examples.load_uniform()
+    bounds = 0.5
+
+    # Test return_clipped=True returns tuple
+    result = dataset.clip_box(bounds=bounds, invert=invert, crinkle=crinkle, return_clipped=True)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    unclipped, clipped = result
+
+    # Verify both parts are UnstructuredGrid
+    assert isinstance(unclipped, pv.UnstructuredGrid)
+    assert isinstance(clipped, pv.UnstructuredGrid)
+
+    # Verify both parts have cells
+    assert unclipped.n_cells > 0
+    assert clipped.n_cells > 0
+
+    # Verify that combined cell count is reasonable
+    # (may not equal original due to cells being cut)
+    assert unclipped.n_cells + clipped.n_cells >= dataset.n_cells * 0.8
+
+    # Test with PolyData box
+    mesh = examples.load_airplane()
+    box = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
+    box.rotate_z(33, inplace=True)
+    result = mesh.clip_box(box, invert=invert, crinkle=crinkle, return_clipped=True)
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert result[0].n_cells > 0
+    assert result[1].n_cells > 0
+
+
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_empty(crinkle):
     out = pv.PolyData().clip(crinkle=crinkle, return_clipped=False)
