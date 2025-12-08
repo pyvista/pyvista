@@ -122,7 +122,7 @@ class _MeshValidator:
     def __init__(
         self,
         mesh: DataSet,
-        validation_fields: Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _MeshValidationOptions | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
     ) -> None:
         allowed_array_fields = get_args(_ArrayValidationOptions)
         allowed_cell_fields = get_args(_CellValidationOptions)
@@ -3197,7 +3197,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def validate(
         self,
-        validation_fields: Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _MeshValidationOptions | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: Literal['warn', 'report'] = 'warn',
     ) -> ValidationReport | None:
         """Validate point and cell data arrays match n_points and n_cells, respectively.
