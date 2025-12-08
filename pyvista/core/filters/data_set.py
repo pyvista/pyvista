@@ -573,7 +573,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
 
-        if (is_single_value := isinstance(value, (float, int))):
+        if is_single_value := isinstance(value, (float, int)):
             alg.SetValue(value)
         else:
             lower, upper = _validation.validate_data_range(value)
