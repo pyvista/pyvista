@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
+from dataclasses import fields
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
@@ -102,6 +103,11 @@ class ValidationReport(_NoNewAttrMixin):
     degenerate_faces: NumpyArray[int] | None = None
     coincident_points: NumpyArray[int] | None = None
 
+    @property
+    def is_valid(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the mesh is valid."""
+        return all(getattr(self, f.name) is None for f in fields(self))
+
 
 class _MeshValidator:
     @dataclass
@@ -145,12 +151,14 @@ class _MeshValidator:
         self._mesh_class_name = mesh.__class__.__name__
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
+        # Validate arrays
         store_all_array_fields = 'arrays' in validation_fields
         if store_all_array_fields or any(arg in validation_fields for arg in allowed_array_fields):
             for issue in _MeshValidator._validate_arrays(mesh):
                 if store_all_array_fields or issue.name in validation_fields:
                     self._validation_issues[issue.name] = issue
 
+        # Validate cells
         store_all_cell_fields = 'cells' in validation_fields
         if store_all_cell_fields or any(arg in validation_fields for arg in allowed_cell_fields):
             for issue in _MeshValidator._validate_cells(mesh):

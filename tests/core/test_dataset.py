@@ -1591,6 +1591,11 @@ def sphere_with_invalid_arrays(sphere):
     return sphere
 
 
+def test_validate_mesh_is_valid(sphere_with_invalid_arrays):
+    assert pv.PolyData().validate_mesh().is_valid
+    assert not sphere_with_invalid_arrays.validate_mesh().is_valid
+
+
 def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate point arrays only
     report = sphere_with_invalid_arrays.validate_mesh(['wrong_point_array_lengths'])
@@ -1731,3 +1736,5 @@ def test_cell_intersecting_edges_nonconvex():
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         grid.validate_mesh(action='warn')
+
+    assert not report.is_valid
