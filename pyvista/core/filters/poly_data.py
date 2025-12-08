@@ -2141,15 +2141,17 @@ class PolyDataFilters(DataSetFilters):
             vtk_plane_inv = generate_plane(-normal_, origin_)
             collection_inv = _vtk.vtkPlaneCollection()
             collection_inv.AddItem(vtk_plane_inv)
-            
+
             alg_inv = _vtk.vtkClipClosedSurface()
             alg_inv.SetGenerateFaces(True)
             alg_inv.SetInputDataObject(self)
             alg_inv.SetTolerance(tolerance)
             alg_inv.SetClippingPlanes(collection_inv)
-            _update_alg(alg_inv, progress_bar=progress_bar, message='Clipping Closed Surface (inverted)')
+            _update_alg(
+                alg_inv, progress_bar=progress_bar, message='Clipping Closed Surface (inverted)'
+            )
             result_clipped = _get_output(alg_inv)
-            
+
             if inplace:
                 self.copy_from(result, deep=False)
                 return self, result_clipped

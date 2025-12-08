@@ -580,7 +580,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             msg = "Cannot specify both 'both' and 'return_clipped'. Use 'return_clipped' only."
             raise ValueError(msg)
         _return_both = both or return_clipped
-        
+
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
         else:

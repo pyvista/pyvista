@@ -1561,18 +1561,20 @@ class DataObjectFilters:
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
         alg.SetBoxClip(*bounds_)
-        
+
         if return_clipped or invert:
             alg.GenerateClippedOutputOn()
-        
+
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
-        
+
         if return_clipped:
             # Return both outputs
             result0 = _get_output(alg, oport=0)
             result1 = _get_output(alg, oport=1)
             if crinkle:
-                result0, result1 = _Crinkler.extract_crinkle_cells(self, result0, result1, active_scalars_info)
+                result0, result1 = _Crinkler.extract_crinkle_cells(
+                    self, result0, result1, active_scalars_info
+                )
             result0 = _remove_unused_points_post_clip(result0, self.bounds)
             result1 = _remove_unused_points_post_clip(result1, self.bounds)
             if invert:
