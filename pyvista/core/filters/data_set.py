@@ -506,6 +506,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         both: bool = False,  # noqa: FBT001, FBT002
+        return_clipped: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a scalar.
 
@@ -531,11 +532,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         both : bool, default: False
             If ``True``, also returns the complementary clipped mesh.
 
+            .. deprecated:: 0.45.0
+                Use ``return_clipped`` instead.
+
+        return_clipped : bool, default: False
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
         output : pyvista.PolyData | tuple
-            Clipped dataset if ``both=False``.  If ``both=True`` then
-            returns a tuple of both clipped datasets.
+            Clipped dataset if ``return_clipped=False`` (or ``both=False``).
+            If ``return_clipped=True`` (or ``both=True``), returns a tuple of
+            both clipped datasets.
 
         Examples
         --------
@@ -567,6 +575,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> clipped.plot()
 
         """
+        # Handle both parameters (both is deprecated in favor of return_clipped)
+        if both and return_clipped:
+            msg = "Cannot specify both 'both' and 'return_clipped'. Use 'return_clipped' only."
+            raise ValueError(msg)
+        _return_both = both or return_clipped
+        
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
         else:
@@ -580,7 +594,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             self.set_active_scalars(scalars)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
-        alg.SetGenerateClippedOutput(both)
+        alg.SetGenerateClippedOutput(_return_both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = _get_output(alg)
@@ -589,7 +603,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             self.copy_from(result0, deep=False)
             result0 = self
 
-        if both:
+        if _return_both:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):
                 # For some reason vtkClipPolyData with SetGenerateClippedOutput on
@@ -607,6 +621,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         compute_distance: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
+        return_clipped: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
@@ -645,13 +660,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             attribute that tracks the original cell IDs of the original
             dataset.
 
+        return_clipped : bool, default: False
+            Return both unclipped and clipped parts of the dataset.
+
         Returns
         -------
-        DataSet
-            Clipped mesh. Output type matches input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+        DataSet | tuple[DataSet, DataSet]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing
+            the unclipped and clipped meshes when ``return_clipped=True``.
+            Output type matches input type for :class:`~pyvista.PointSet`,
+            :class:`~pyvista.PolyData`, and :class:`~pyvista.MultiBlock`;
+            otherwise the output type is :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -677,15 +696,21 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pv.convert_array(dists)
         # run the clip
-        clipped = DataSetFilters._clip_with_function(
+        result = DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
             value=value,
+            return_clipped=return_clipped,
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
-        return _cast_output_to_match_input_type(clipped, self)
+        if return_clipped:
+            return (
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
+        return _cast_output_to_match_input_type(result, self)
 
     @_deprecate_positional_args(allowed=['value'])
     def threshold(  # type: ignore[misc]  # noqa: PLR0917
