@@ -163,11 +163,11 @@ class _MeshValidator:
             name_norm = name.replace('_', ' ')
             if name == 'non_convex':
                 before = f' {name_norm} '
-                after = ' '
+                after = ''
             else:
                 before = ' '
-                after = f' with {name_norm} '
-            msg = f'{mesh.__class__.__name__!r} has {len(array)}{before}cells{after}.'
+                after = f' with {name_norm}'
+            msg = f'Mesh has {len(array)}{before}cells{after}. Invalid cell ids: {np.sort(array)}'
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
             issues.append(issue)
         return issues
@@ -185,8 +185,8 @@ class _MeshValidator:
                 do = 'does'
 
             msg_template = (
-                '{kind} array length{s} {do} not match the number\nof {kind_lower} in the mesh '
-                '({expected}). Invalid array{s}: {details}'
+                'Mesh {kind} array length{s} {do} not match the number of {kind_lower} in the '
+                'mesh ({expected}). Invalid array{s}: {details}'
             )
             details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
             return msg_template.format(
@@ -208,8 +208,8 @@ class _MeshValidator:
             data,
             expected_n,
         ) in [
-            ('wrong_point_array_lengths', 'Point', mesh.point_data, mesh.n_points),
-            ('wrong_cell_array_lengths', 'Cell', mesh.cell_data, mesh.n_cells),
+            ('wrong_point_array_lengths', 'point', mesh.point_data, mesh.n_points),
+            ('wrong_cell_array_lengths', 'cell', mesh.cell_data, mesh.n_cells),
         ]:
             invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
             message = _invalid_array_length_msg(
@@ -222,9 +222,14 @@ class _MeshValidator:
         return issues
 
     def warn(self) -> None:
-        for issue in self._validation_issues.values():
-            if issue._has_values:
-                warn_external(issue.message, pv.PyVistaInvalidMeshWarning)
+        messages: list[str] = []
+        messages += [
+            issue.message for issue in self._validation_issues.values() if issue._has_values
+        ]
+        bullet = ' - '
+        body = bullet + f'\n{bullet}'.join(messages)
+        message = f'Mesh is not valid due to the following problems:\n{body}'
+        warn_external(message, pv.PyVistaInvalidMeshWarning)
 
     @property
     def report(self) -> ValidationReport:
