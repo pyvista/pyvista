@@ -3085,7 +3085,7 @@ class _MeshValidator:
     class _ValidationIssue:
         name: str
         message: str
-        values: object | None
+        values: list[str] | NumpyArray[int] | None
 
         @property
         def _has_values(self) -> bool:
@@ -3131,7 +3131,7 @@ class _MeshValidator:
     @staticmethod
     def _validate_arrays(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
         def _invalid_array_length_msg(
-            invalid_arrays: dict[str, int], kind: Literal['Point', 'Cell'], expected: int
+            invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
             if len(invalid_arrays) > 1:
                 s = 's'
@@ -3188,4 +3188,4 @@ class _MeshValidator:
         kwargs = {
             name: issue.values if issue._has_values else None for name, issue in issues.items()
         }
-        return ValidationReport(**kwargs)
+        return ValidationReport(**kwargs)  # type: ignore[arg-type]
