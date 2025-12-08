@@ -3201,7 +3201,7 @@ class DataSet(DataSetFilters, DataObject):
         aligned_points = self.align_xyz().points
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
 
-    def validate(
+    def validate_mesh(
         self,
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
