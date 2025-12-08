@@ -1642,13 +1642,17 @@ def test_cell_validator_wrong_number_of_points():
     ]
     grid = pv.UnstructuredGrid(cells, celltypes, points)
     validated = grid.cell_validator()
+    report = grid.validate('report')
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name == 'wrong_number_of_points':
-            assert validated[name].tolist() == [0]
+            expected_cell_ids = [0]
+            assert validated[name].tolist() == expected_cell_ids
+            assert report.wrong_number_of_points == expected_cell_ids
         else:
             array = validated.field_data[name]
             assert array.shape == (0,)
+            assert getattr(report, name) is None
 
 
 def test_cell_intersecting_edges_nonconvex():

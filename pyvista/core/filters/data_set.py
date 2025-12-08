@@ -8304,6 +8304,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Use :vtk:`vtkCellValidator`.
 
+        - ``wrong_number_of_points``
+        - ``intersecting_edges``
+        - ``intersecting_faces``
+        - ``non_contiguous_edges``
+        - ``non_convex``
+        - ``incorrectly_oriented_faces``
+        - ``non_planar_faces``
+        - ``degenerate_faces``
+        - ``coincident_points``
+
         Returns
         -------
         DataSet

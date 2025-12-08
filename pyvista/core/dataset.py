@@ -29,6 +29,7 @@ from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters.data_set import _CELL_VALIDATOR_BIT_FIELD
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -3038,8 +3039,26 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
 
-_MeshValidationOptions = Literal['wrong_point_array_lengths', 'wrong_cell_array_lengths']
-_DEFAULT_VALIDATION_ARGS: tuple[_MeshValidationOptions, ...] = get_args(_MeshValidationOptions)
+_ArrayValidationOptions = Literal[
+    'wrong_point_array_lengths',
+    'wrong_cell_array_lengths',
+]
+_CellValidationOptions = Literal[
+    'wrong_number_of_points',
+    'intersecting_edges',
+    'intersecting_faces',
+    'non_contiguous_edges',
+    'non_convex',
+    'incorrectly_oriented_faces',
+    'non_planar_faces',
+    'degenerate_faces',
+    'coincident_points',
+]
+_MeshValidationOptions = _ArrayValidationOptions | _CellValidationOptions
+_DEFAULT_VALIDATION_ARGS: tuple[_MeshValidationOptions, ...] = (
+    *get_args(_ArrayValidationOptions),
+    *get_args(_CellValidationOptions),
+)
 
 
 @dataclass
@@ -3048,6 +3067,15 @@ class ValidationReport:
 
     wrong_point_array_lengths: list[str] | None = None
     wrong_cell_array_lengths: list[str] | None = None
+    wrong_number_of_points: NumpyArray[int] | None = None
+    intersecting_edges: NumpyArray[int] | None = None
+    intersecting_faces: NumpyArray[int] | None = None
+    non_contiguous_edges: NumpyArray[int] | None = None
+    non_convex: NumpyArray[int] | None = None
+    incorrectly_oriented_faces: NumpyArray[int] | None = None
+    non_planar_faces: NumpyArray[int] | None = None
+    degenerate_faces: NumpyArray[int] | None = None
+    coincident_points: NumpyArray[int] | None = None
 
 
 class _MeshValidator:
@@ -3057,15 +3085,46 @@ class _MeshValidator:
         message: str
         values: object | None
 
+        @property
+        def _has_values(self) -> bool:
+            values = self.values
+            if isinstance(values, np.ndarray):
+                if values.size > 0:
+                    return True
+            elif values:
+                return True
+            return False
+
     def __init__(
         self,
         mesh: DataSet,
         validation_fields: tuple[_MeshValidationOptions, ...] = _DEFAULT_VALIDATION_ARGS,
     ) -> None:
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
-        if any('array' in field for field in validation_fields):
+        if any(arg in validation_fields for arg in get_args(_ArrayValidationOptions)):
             for issue in _MeshValidator._validate_arrays(mesh):
                 self._validation_issues[issue.name] = issue
+        if any(arg in validation_fields for arg in get_args(_CellValidationOptions)):
+            for issue in _MeshValidator._validate_cells(mesh):
+                self._validation_issues[issue.name] = issue
+
+    @staticmethod
+    def _validate_cells(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+        issues: list[_MeshValidator._ValidationIssue] = []
+        validated = mesh.cell_validator()
+        for name in _CELL_VALIDATOR_BIT_FIELD.keys():
+            array = validated.field_data[name]
+            name_norm = name.replace('_', ' ')
+            if name == 'non_convex':
+                before = f' {name_norm} '
+                after = ' '
+            else:
+                before = ' '
+                after = f' with {name_norm} '
+            msg = f'{mesh.__class__.__name__!r} has {len(array)}{before}cells{after}.'
+            issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+            issues.append(issue)
+        return issues
 
     @staticmethod
     def _validate_arrays(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
@@ -3118,11 +3177,13 @@ class _MeshValidator:
 
     def warn(self) -> None:
         for issue in self._validation_issues.values():
-            if issue.values:
+            if issue._has_values:
                 warn_external(issue.message, pv.PyVistaInvalidMeshWarning)
 
     @property
     def report(self) -> ValidationReport:
         issues = self._validation_issues
-        kwargs = {name: issue.values for name, issue in issues.items()}
+        kwargs = {
+            name: issue.values if issue._has_values else None for name, issue in issues.items()
+        }
         return ValidationReport(**kwargs)
