@@ -3232,7 +3232,7 @@ class DataSet(DataSetFilters, DataObject):
         - ``cell_data_wrong_length``: If any cell data arrays do not match the number of
           cells, the array names are stored here.
 
-        as well as cell-related fields (from :meth:`cell_validator`):
+        as well as cell-related fields (from :meth:`~pyvista.DataSetFilters.cell_validator`):
 
         - ``wrong_number_of_points``
         - ``intersecting_edges``
@@ -3272,7 +3272,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        cell_validator
+        :meth:`~pyvista.DataSetFilters.cell_validator`
 
         Examples
         --------

@@ -8371,7 +8371,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> validated.field_data['invalid']
         pyvista_ndarray([1013, 1532, 3250])
 
-        Plot the cell states using :meth:`~pyvista.DataSetFilter.color_labels`.
+        Plot the cell states using :meth:`~pyvista.DataSetFilters.color_labels`.
 
         >>> colored, color_map = validated.color_labels(
         ...     scalars='validity_state', return_dict=True
