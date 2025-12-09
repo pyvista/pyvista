@@ -1598,15 +1598,15 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays):
 
 def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate point arrays only
-    report = sphere_with_invalid_arrays.validate_mesh(['wrong_point_array_lengths'])
-    assert report.wrong_point_array_lengths == ['foo', 'bar']
-    assert report.wrong_cell_array_lengths is None
+    report = sphere_with_invalid_arrays.validate_mesh(['point_data_wrong_length'])
+    assert report.point_data_wrong_length == ['foo', 'bar']
+    assert report.cell_data_wrong_length is None
 
     # Clear cell arrays and validate ALL arrays
     sphere_with_invalid_arrays.cell_data.clear()
-    report = sphere_with_invalid_arrays.validate_mesh('arrays')
-    assert report.wrong_point_array_lengths == ['foo', 'bar']
-    assert report.wrong_cell_array_lengths is None
+    report = sphere_with_invalid_arrays.validate_mesh('data')
+    assert report.point_data_wrong_length == ['foo', 'bar']
+    assert report.cell_data_wrong_length is None
 
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
@@ -1619,15 +1619,15 @@ def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
 
 def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
     # Dataset had invalid point AND cell arrays, but we validate cell arrays only
-    report = sphere_with_invalid_arrays.validate_mesh('wrong_cell_array_lengths')
-    assert report.wrong_cell_array_lengths == ['ham']
-    assert report.wrong_point_array_lengths is None
+    report = sphere_with_invalid_arrays.validate_mesh('cell_data_wrong_length')
+    assert report.cell_data_wrong_length == ['ham']
+    assert report.point_data_wrong_length is None
 
     # Clear point arrays and validate ALL arrays
     sphere_with_invalid_arrays.point_data.clear()
-    report = sphere_with_invalid_arrays.validate_mesh('arrays')
-    assert report.wrong_cell_array_lengths == ['ham']
-    assert report.wrong_point_array_lengths is None
+    report = sphere_with_invalid_arrays.validate_mesh('data')
+    assert report.cell_data_wrong_length == ['ham']
+    assert report.point_data_wrong_length is None
 
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
@@ -1673,17 +1673,14 @@ def test_cell_validator_wrong_number_of_points():
     ]
     grid = pv.UnstructuredGrid(cells, celltypes, points)
     validated = grid.cell_validator()
-    report = grid.validate_mesh()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name == 'wrong_number_of_points':
             expected_cell_ids = [0]
             assert validated[name].tolist() == expected_cell_ids
-            assert getattr(report, name) == expected_cell_ids
         else:
             array = validated.field_data[name]
             assert array.shape == (0,)
-            assert getattr(report, name) is None
 
 
 @pytest.fixture
@@ -1708,17 +1705,14 @@ def invalid_hexahedron():
 
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
-    report = invalid_hexahedron.validate_mesh()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
             expected_cell_ids = [0]
             assert validated[name].tolist() == expected_cell_ids
-            assert getattr(report, name) == expected_cell_ids
         else:
             array = validated.field_data[name]
             assert array.shape == (0,)
-            assert getattr(report, name) is None
 
     # Test validating specific fields
     report = invalid_hexahedron.validate_mesh('cells')

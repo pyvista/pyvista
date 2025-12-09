@@ -65,8 +65,8 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 _MeshValidationActionOptions = Literal['warn', 'error']
 _ArrayValidationOptions = Literal[
-    'wrong_point_array_lengths',
-    'wrong_cell_array_lengths',
+    'point_data_wrong_length',
+    'cell_data_wrong_length',
 ]
 _CellValidationOptions = Literal[
     'wrong_number_of_points',
@@ -79,7 +79,7 @@ _CellValidationOptions = Literal[
     'degenerate_faces',
     'coincident_points',
 ]
-_MeshValidationGroupOptions = Literal['cells', 'arrays']
+_MeshValidationGroupOptions = Literal['cells', 'data']
 _MeshValidationOptions = (
     _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
 )
@@ -129,7 +129,7 @@ class _MeshValidator:
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
         # Validate arrays
-        store_all_array_fields = 'arrays' in validation_fields
+        store_all_array_fields = 'data' in validation_fields
         if store_all_array_fields or any(arg in validation_fields for arg in allowed_array_fields):
             for issue in _MeshValidator._validate_arrays(mesh):
                 if store_all_array_fields or issue.name in validation_fields:
@@ -201,8 +201,8 @@ class _MeshValidator:
             data,
             expected_n,
         ) in [
-            ('wrong_point_array_lengths', 'Point', mesh.point_data, mesh.n_points),
-            ('wrong_cell_array_lengths', 'Cell', mesh.cell_data, mesh.n_cells),
+            ('point_data_wrong_length', 'Point', mesh.point_data, mesh.n_points),
+            ('cell_data_wrong_length', 'Cell', mesh.cell_data, mesh.n_cells),
         ]:
             invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
             message = _invalid_array_length_msg(
@@ -3199,8 +3199,8 @@ class DataSet(DataSetFilters, DataObject):
     class ValidationReport(_NoNewAttrMixin):
         """Dataclass to report mesh validation results."""
 
-        wrong_point_array_lengths: list[str] | None = None
-        wrong_cell_array_lengths: list[str] | None = None
+        point_data_wrong_length: list[str] | None = None
+        cell_data_wrong_length: list[str] | None = None
         wrong_number_of_points: NumpyArray[int] | None = None
         intersecting_edges: NumpyArray[int] | None = None
         intersecting_faces: NumpyArray[int] | None = None
