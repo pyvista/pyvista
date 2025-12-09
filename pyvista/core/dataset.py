@@ -80,8 +80,13 @@ _CellValidationOptions = Literal[
     'coincident_points',
     'invalid_point_references',
 ]
-_PointValidationOptions = Literal['unused_points', 'insufficient_precision']
-_MeshValidationGroupOptions = Literal['data', 'cells', 'points']
+_PointValidationOptions = Literal['unused_points', 'non_finite_points']
+_CriticalValidationOptions = Literal[
+    'invalid_point_references',
+    'point_data_wrong_length',
+    'cell_data_wrong_length',
+]
+_MeshValidationGroupOptions = Literal['data', 'cells', 'points', 'critical']
 _MeshValidationOptions = (
     _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
 )
@@ -131,14 +136,9 @@ class _MeshValidator:
                 )
 
             if 'critical' in validation_fields:
-                critical_fields = (
-                    'invalid_point_references',
-                    'point_data_wrong_length',
-                    'cell_data_wrong_length',
-                )
                 validation_fields = list(validation_fields)
                 validation_fields.remove('critical')
-                validation_fields.extend(critical_fields)
+                validation_fields.extend(get_args(_CriticalValidationOptions))
 
         self._mesh_class_name = mesh.__class__.__name__
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
@@ -240,24 +240,36 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_points(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
-        grid = mesh.cast_to_unstructured_grid()
-        all_points = np.arange(grid.n_points)
-        used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
-        unused_points = np.setdiff1d(all_points, used_points, assume_unique=True)
-        if len(unused_points) > 1:
-            s = 's'
-            an = ' '
-        else:
-            s = ''
-            an = ' an '
-        msg = (
-            f'Mesh has{an}unused point{s} not referenced by any cell(s). '
-            f'Unused point id{s}: {np.sort(unused_points)}'
-        )
-        issue = _MeshValidator._ValidationIssue(
-            name='unused_points', message=msg, values=unused_points
-        )
-        issues: list[_MeshValidator._ValidationIssue] = [issue]
+        def get_unused_point_ids() -> NumpyArray[int]:
+            grid = mesh.cast_to_unstructured_grid()
+            all_points = np.arange(grid.n_points)
+            # Note: This may not include points used by Polyhedron cells
+            used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
+            return np.setdiff1d(all_points, used_points, assume_unique=True)
+
+        def get_non_finite_point_ids() -> NumpyArray[int]:
+            mask = ~np.isfinite(mesh.points).all(axis=1)
+            return np.where(mask)[0]
+
+        issues: list[_MeshValidator._ValidationIssue] = []
+        for name, point_ids, info in [
+            ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
+            ('non_finite_points', get_non_finite_point_ids(), ''),
+        ]:
+            name_norm = name.replace('_', ' ')
+            name_norm = name_norm.removesuffix('s')
+            if len(point_ids) > 1:
+                s = 's'
+                a = ' '
+            else:
+                s = ''
+                a = ' a '
+                if name_norm.startswith(('a', 'e', 'i', 'o', 'u')):
+                    a = a.replace('a', 'an')
+
+            msg = f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: {np.sort(point_ids)}'
+            issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
+            issues.append(issue)
         return issues
 
     @property
@@ -3263,7 +3275,7 @@ class DataSet(DataSetFilters, DataObject):
 
         # Points
         unused_points: NumpyArray[int] | None = None
-        insufficient_precision: NumpyArray[int] | None = None
+        non_finite_points: NumpyArray[int] | None = None
 
         @property
         def is_valid(self) -> bool:  # numpydoc ignore=RT01
@@ -3305,7 +3317,7 @@ class DataSet(DataSetFilters, DataObject):
         Point-related fields:
 
         - ``unused_points``
-        - ``insufficient_precision``
+        - ``non_finite_points``
 
         For each field, its value is ``None`` if there is no issue. Otherwise, any invalid items
         are stored in each field (e.g. invalid array names or cell/point ids).
@@ -3341,7 +3353,7 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         ValidationReport
-            Report dataclass with information about mesh validity..
+            Report dataclass with information about mesh validity.
 
         See Also
         --------

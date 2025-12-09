@@ -1737,13 +1737,13 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
 
 
 @pytest.fixture
-def poly_with_unused_point():
+def poly_with_invalid_point():
     poly = pv.PolyData()
-    poly.points = [0.0, 0.0, 0.0]
+    poly.points = [[np.nan, 0.0, 0.0]]
     return poly
 
 
-def test_validate_mesh_error_message(invalid_hexahedron, poly_with_unused_point):
+def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
     # Test single cell
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
@@ -1774,21 +1774,18 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_unused_point)
     # Test points
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has an unused point not referenced by any cell(s). Unused point id: [0]'
+        ' - Mesh has an unused point not referenced by any cell(s). Invalid point id: [0]\n'
+        ' - Mesh has a non finite point. Invalid point id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        poly_with_unused_point.validate_mesh(action='warn')
+        poly_with_invalid_point.validate_mesh(action='warn')
 
-    poly_with_unused_point.points = [[0.0, 0.0, 0.0]] * 2
+    poly_with_invalid_point.points = poly_with_invalid_point.points.tolist() * 2
     # Test multiple points
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has unused points not referenced by any cell(s). Unused point ids: [0 1]'
+        ' - Mesh has unused points not referenced by any cell(s). Invalid point ids: [0 1]\n'
+        ' - Mesh has non finite points. Invalid point ids: [0 1]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        poly_with_unused_point.validate_mesh(action='warn')
-
-
-def test_validate_mesh_unused_points(poly_with_unused_point):
-    report = poly_with_unused_point.validate_mesh()
-    assert report.unused_points.tolist() == [0]
+        poly_with_invalid_point.validate_mesh(action='warn')
