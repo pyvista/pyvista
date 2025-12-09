@@ -68,6 +68,7 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     non_planar_faces=0x40,
     degenerate_faces=0x80,
     coincident_points=0x100,
+    invalid_point_references=0x200,
 )
 
 
@@ -8316,6 +8317,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         - ``'non_planar_faces'`` (``0x40``)
         - ``'degenerate_faces'`` (``0x80``)
         - ``'coincident_points'`` (``0x100``)
+        - ``'invalid_point_references'`` (``0x200``)
 
         For convenience, a field data array for each state is also appended. The array names match
         the state names above, except an array with ``'invalid'`` cells is stored instead of valid
@@ -8351,16 +8353,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
          'incorrectly_oriented_faces',
          'non_planar_faces',
          'degenerate_faces',
-         'coincident_points']
+         'coincident_points',
+         'invalid_point_references']
 
         Show unique scalar values.
 
         >>> np.unique(validated.cell_data['validity_state'])
         pyvista_ndarray([ 0, 16], dtype=int16)
 
-        The ``0`` cells are valid, and the cells with value ``16`` have a nonconvex state.
-        We confirm this by showing the ``'non_convex'`` array, which shows there are three
-        invalid cells.
+        The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
+        nonconvex state. We confirm this by printing the ``'non_convex'`` array, which shows there
+        are three invalid cells.
 
         >>> validated.field_data['non_convex']
         pyvista_ndarray([1013, 1532, 3250])
@@ -8371,7 +8374,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> validated.field_data['invalid']
         pyvista_ndarray([1013, 1532, 3250])
 
-        Plot the cell states using :meth:`~pyvista.DataSetFilters.color_labels`.
+        Plot the cell states using :meth:`~pyvista.DataSetFilters.color_labels`. Orient the
+        camera to show the underside of the cow where two of the invalid cells are located.
 
         >>> colored, color_map = validated.color_labels(
         ...     scalars='validity_state', return_dict=True
@@ -8384,8 +8388,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         Extract the invalid cells and plot them along with the original mesh as wireframe for
-        context. Two of the three invalid cells were shown under the cow's belly. The third
-        invalid cell is around the cow's left eye.
+        context. Orient the camera to focus on the cow's left eye where the third invalid cell is
+        located.
 
         >>> invalid_cells = mesh.extract_cells(validated['invalid'])
 
@@ -8403,13 +8407,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
         cell_validator.Update()
-
         output = _get_output(cell_validator)
+
+        # PENDING: Modify the state array to add a custom state for invalid_point_references
         validity_state = output.cell_data['ValidityState']
+
+        # Rename output scalars and make them active
         output.cell_data['validity_state'] = validity_state
         del output.cell_data['ValidityState']
         output.set_active_scalars('validity_state', preference='cell')
 
+        # Extract indices of invalid cells and store as field data
         output.field_data['invalid'] = np.where(validity_state != 0)[0]
         for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
             output.field_data[name] = np.where(validity_state & value)[0]

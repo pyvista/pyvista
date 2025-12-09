@@ -1736,7 +1736,14 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     assert report.incorrectly_oriented_faces is None
 
 
-def test_validate_mesh_error_message(invalid_hexahedron):
+@pytest.fixture
+def poly_with_unused_point():
+    poly = pv.PolyData()
+    poly.points = [0.0, 0.0, 0.0]
+    return poly
+
+
+def test_validate_mesh_error_message(invalid_hexahedron, poly_with_unused_point):
     # Test single cell
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
@@ -1748,6 +1755,7 @@ def test_validate_mesh_error_message(invalid_hexahedron):
         invalid_hexahedron.validate_mesh(action='warn')
 
     # Test multiple cells
+    # Likely VTK bug: we have two nonconvex cells, but on macOS only one is reported as such
     nonconvex = (
         ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
         if platform.system() == 'Darwin'
@@ -1762,3 +1770,25 @@ def test_validate_mesh_error_message(invalid_hexahedron):
     invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         invalid_hexahedrons.validate_mesh(action='warn')
+
+    # Test points
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has an unused point not referenced by any cell(s). Unused point id: [0]'
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        poly_with_unused_point.validate_mesh(action='warn')
+
+    poly_with_unused_point.points = [[0.0, 0.0, 0.0]] * 2
+    # Test multiple points
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has unused points not referenced by any cell(s). Unused point ids: [0 1]'
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        poly_with_unused_point.validate_mesh(action='warn')
+
+
+def test_validate_mesh_unused_points(poly_with_unused_point):
+    report = poly_with_unused_point.validate_mesh()
+    assert report.unused_points.tolist() == [0]

@@ -78,8 +78,10 @@ _CellValidationOptions = Literal[
     'non_planar_faces',
     'degenerate_faces',
     'coincident_points',
+    'invalid_point_references',
 ]
-_MeshValidationGroupOptions = Literal['cells', 'data']
+_PointValidationOptions = Literal['unused_points', 'insufficient_precision']
+_MeshValidationGroupOptions = Literal['data', 'cells', 'points']
 _MeshValidationOptions = (
     _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
 )
@@ -112,10 +114,13 @@ class _MeshValidator:
         # Validate inputs
         allowed_array_fields = get_args(_ArrayValidationOptions)
         allowed_cell_fields = get_args(_CellValidationOptions)
+        allowed_point_fields = get_args(_PointValidationOptions)
         allowed_fields = (
             *_DEFAULT_MESH_VALIDATION_ARGS,
             *allowed_array_fields,
             *allowed_cell_fields,
+            *allowed_cell_fields,
+            'critical',
         )
         if validation_fields != _DEFAULT_MESH_VALIDATION_ARGS:
             if isinstance(validation_fields, str):
@@ -124,6 +129,16 @@ class _MeshValidator:
                 _validation.check_contains(
                     allowed_fields, must_contain=field, name='validation_fields'
                 )
+
+            if 'critical' in validation_fields:
+                critical_fields = (
+                    'invalid_point_references',
+                    'point_data_wrong_length',
+                    'cell_data_wrong_length',
+                )
+                validation_fields = list(validation_fields)
+                validation_fields.remove('critical')
+                validation_fields.extend(critical_fields)
 
         self._mesh_class_name = mesh.__class__.__name__
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
@@ -139,6 +154,15 @@ class _MeshValidator:
         store_all_cell_fields = 'cells' in validation_fields
         if store_all_cell_fields or any(arg in validation_fields for arg in allowed_cell_fields):
             for issue in _MeshValidator._validate_cells(mesh):
+                if store_all_cell_fields or issue.name in validation_fields:
+                    self._validation_issues[issue.name] = issue
+
+        # Validate points
+        store_all_points_fields = 'points' in validation_fields
+        if store_all_points_fields or any(
+            arg in validation_fields for arg in allowed_point_fields
+        ):
+            for issue in _MeshValidator._validate_points(mesh):
                 if store_all_cell_fields or issue.name in validation_fields:
                     self._validation_issues[issue.name] = issue
 
@@ -212,6 +236,28 @@ class _MeshValidator:
                 name=name, message=message, values=list(invalid_arrays.keys())
             )
             issues.append(issue)
+        return issues
+
+    @staticmethod
+    def _validate_points(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+        grid = mesh.cast_to_unstructured_grid()
+        all_points = np.arange(grid.n_points)
+        used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
+        unused_points = np.setdiff1d(all_points, used_points, assume_unique=True)
+        if len(unused_points) > 1:
+            s = 's'
+            an = ' '
+        else:
+            s = ''
+            an = ' an '
+        msg = (
+            f'Mesh has{an}unused point{s} not referenced by any cell(s). '
+            f'Unused point id{s}: {np.sort(unused_points)}'
+        )
+        issue = _MeshValidator._ValidationIssue(
+            name='unused_points', message=msg, values=unused_points
+        )
+        issues: list[_MeshValidator._ValidationIssue] = [issue]
         return issues
 
     @property
@@ -3199,8 +3245,11 @@ class DataSet(DataSetFilters, DataObject):
     class ValidationReport(_NoNewAttrMixin):
         """Dataclass to report mesh validation results."""
 
+        # Data
         point_data_wrong_length: list[str] | None = None
         cell_data_wrong_length: list[str] | None = None
+
+        # Cells
         wrong_number_of_points: NumpyArray[int] | None = None
         intersecting_edges: NumpyArray[int] | None = None
         intersecting_faces: NumpyArray[int] | None = None
@@ -3210,6 +3259,11 @@ class DataSet(DataSetFilters, DataObject):
         non_planar_faces: NumpyArray[int] | None = None
         degenerate_faces: NumpyArray[int] | None = None
         coincident_points: NumpyArray[int] | None = None
+        invalid_point_references: NumpyArray[int] | None = None
+
+        # Points
+        unused_points: NumpyArray[int] | None = None
+        insufficient_precision: NumpyArray[int] | None = None
 
         @property
         def is_valid(self) -> bool:  # numpydoc ignore=RT01
@@ -3222,17 +3276,20 @@ class DataSet(DataSetFilters, DataObject):
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
     ) -> DataSet.ValidationReport:
-        """Validate this mesh's array data and its cells.
+        """Validate this mesh's array data, cells, and points.
 
         This method returns a ``ValidationReport`` dataclass with information about the validity
-        of a mesh. The dataclass has array data-related fields:
+        of a mesh. The dataclass contains validation fields which are specific to issues with the
+        data, cells, and points.
+
+        Data-related fields:
 
         - ``point_data_wrong_length``: If any point data arrays do not match the number of
           points, the array names are stored here.
         - ``cell_data_wrong_length``: If any cell data arrays do not match the number of
           cells, the array names are stored here.
 
-        as well as cell-related fields (from :meth:`~pyvista.DataSetFilters.cell_validator`):
+        Cell-related fields (from :meth:`~pyvista.DataSetFilters.cell_validator`):
 
         - ``wrong_number_of_points``
         - ``intersecting_edges``
@@ -3243,9 +3300,15 @@ class DataSet(DataSetFilters, DataObject):
         - ``non_planar_faces``
         - ``degenerate_faces``
         - ``coincident_points``
+        - ``invalid_point_references``
 
-        For each field, its value is ``None`` if there is no issue. Otherwise, the invalid array
-        name(s) and/or cell id(s) are reported.
+        Point-related fields:
+
+        - ``unused_points``
+        - ``insufficient_precision``
+
+        For each field, its value is ``None`` if there is no issue. Otherwise, any invalid items
+        are stored in each field (e.g. invalid array names or cell/point ids).
 
         By default, the validity of all fields is included in the report. Optionally, only a
         subset of fields may be requested.
@@ -3255,10 +3318,20 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        validation_fields : str | sequence[str], default: ('cells', 'data')
-            Select which fields to include in the validation report. All cell and data fields
-            are included by default. Specify individual fields by name, or use ``'cells'`` to
-            include all cell fields, and ``'data'`` to include all data fields.
+        validation_fields : str | sequence[str], default: ('data', 'cells', 'points')
+            Select which field(s) to include in the validation report. All data, cell, and point
+            fields are included by default. Specify individual fields by name, or use group name(s)
+            to include multiple related validation fields:
+            - ``'data'`` to include all data fields
+            - ``'cells'`` to include all cell fields
+            - ``'points'`` to include all point fields
+            - ``'critical'`` to include all critical fields that, if invalid, may cause a
+              segmentation fault and crash Python. This option includes:
+
+              - ``point_data_wrong_length``
+              - ``cell_data_wrong_length``
+              - ``invalid_point_references``
+
             Fields that are excluded from the report will have a value of ``None``.
 
         action : 'warn' | 'error', optional
