@@ -128,7 +128,7 @@ class _MeshValidator:
         self._mesh_class_name = mesh.__class__.__name__
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
-        # Validate arrays
+        # Validate data arrays
         store_all_array_fields = 'data' in validation_fields
         if store_all_array_fields or any(arg in validation_fields for arg in allowed_array_fields):
             for issue in _MeshValidator._validate_arrays(mesh):

@@ -57,9 +57,8 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
 
-# https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
+# Matches https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
 _CELL_VALIDATOR_BIT_FIELD = dict(
-    valid=0x00,
     wrong_number_of_points=0x01,
     intersecting_edges=0x02,
     intersecting_faces=0x04,
@@ -8304,23 +8303,101 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     def cell_validator(self):
         """Check the validity of each cell in this dataset.
 
-        Use :vtk:`vtkCellValidator`.
+        Use :vtk:`vtkCellValidator` to determine the status of each cell. The status is encoded
+        as a bit field cell data array ``'validity_state'``. The cell states are:
 
-        - ``valid``
-        - ``wrong_number_of_points``
-        - ``intersecting_edges``
-        - ``intersecting_faces``
-        - ``non_contiguous_edges``
-        - ``non_convex``
-        - ``incorrectly_oriented_faces``
-        - ``non_planar_faces``
-        - ``degenerate_faces``
-        - ``coincident_points``
+        - ``'valid'`` (``0x00``)
+        - ``'wrong_number_of_points'`` (``0x01``)
+        - ``'intersecting_edges'`` (``0x02``)
+        - ``'intersecting_faces'`` (``0x04``)
+        - ``'non_contiguous_edges'`` (``0x08``)
+        - ``'non_convex'`` (``0x10``)
+        - ``'incorrectly_oriented_faces'`` (``0x20``)
+        - ``'non_planar_faces'`` (``0x40``)
+        - ``'degenerate_faces'`` (``0x80``)
+        - ``'coincident_points'`` (``0x100``)
+
+        For convenience, a field data array for each state is also appended. The array names match
+        the state names above, except an array with ``'invalid'`` cells is stored instead of valid
+        ones. Each field data array contains the indices of cells with the specified state.
+
+        Refer to :vtk:`vtkCellValidator` for more details about each state.
 
         Returns
         -------
         DataSet
             Dataset with field data of cell validity.
+
+        Examples
+        --------
+        Load a mesh with invalid cells.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cow()
+
+        Validate the cells and show the included arrays.
+
+        >>> validated = mesh.cell_validator()
+        >>> validated.array_names  # doctest: +NORMALIZE_WHITESPACE
+        ['validity_state',
+         'invalid',
+         'wrong_number_of_points',
+         'intersecting_edges',
+         'intersecting_faces',
+         'non_contiguous_edges',
+         'non_convex',
+         'incorrectly_oriented_faces',
+         'non_planar_faces',
+         'degenerate_faces',
+         'coincident_points']
+
+        Show unique scalar values.
+
+        >>> np.unique(validated.cell_data['validity_state'])
+        pyvista_ndarray([ 0, 16], dtype=int16)
+
+        The ``0`` cells are valid, and the cells with value ``16`` have a nonconvex state.
+        We confirm this by showing the ``'non_convex'`` array, which shows there are three
+        invalid cells.
+
+        >>> validated.field_data['non_convex']
+        pyvista_ndarray([1013, 1532, 3250])
+
+        We can also show all invalid cells. This matches the nonconvex ids, which confirms
+        these are the only invalid cells.
+
+        >>> validated.field_data['invalid']
+        pyvista_ndarray([1013, 1532, 3250])
+
+        Plot the cell states using :meth:`~pyvista.DataSetFilter.color_labels`.
+
+        >>> colored, color_map = validated.color_labels(
+        ...     scalars='validity_state', return_dict=True
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(colored)
+        >>> _ = pl.add_legend(color_map)
+        >>> pl.view_xz()
+        >>> pl.camera.zoom(2.5)
+        >>> pl.show()
+
+        Extract the invalid cells and plot them along with the original mesh as wireframe for
+        context. Two of the three invalid cells were shown under the cow's belly. The third
+        invalid cell is around the cow's left eye.
+
+        >>> invalid_cells = mesh.extract_cells(validated['invalid'])
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, style='wireframe', color='light gray')
+        >>> _ = pl.add_mesh(invalid_cells, color='lime')
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(5.1, 1.8, -4.9),
+        ...     focal_point=(4.7, 1.8, 0.38),
+        ...     viewup=(0.0, 1.0, 0.0),
+        ... )
+        >>> pl.show(return_cpos=True)
 
         """
         cell_validator = _vtk.vtkCellValidator()
@@ -8329,11 +8406,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         output = _get_output(cell_validator)
         validity_state = output.cell_data['ValidityState']
+        output.cell_data['validity_state'] = validity_state
+        del output.cell_data['ValidityState']
+        output.set_active_scalars('validity_state', preference='cell')
 
+        output.field_data['invalid'] = np.where(validity_state != 0)[0]
         for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
             output.field_data[name] = np.where(validity_state & value)[0]
-
-        del output.cell_data['ValidityState']
         return output
 
 

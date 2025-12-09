@@ -1653,10 +1653,18 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
 def test_cell_validator():
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     sphere = pv.Sphere()
+    sphere.cell_data['data'] = range(sphere.n_cells)
     validated = sphere.cell_validator()
+    assert validated.active_scalars_name == 'validity_state'
     assert isinstance(validated, pv.PolyData)
-    assert validated.field_data.keys() == validator_array_names
-    assert validated.array_names == [*validator_array_names, 'Normals']
+    assert validated.field_data.keys() == ['invalid', *validator_array_names]
+    assert validated.array_names == [
+        'validity_state',
+        'invalid',
+        *validator_array_names,
+        'Normals',
+        'data',
+    ]
     for name in validator_array_names:
         array = validated.field_data[name]
         assert array.shape == (0,)
@@ -1706,13 +1714,14 @@ def invalid_hexahedron():
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    expected_cell_ids = [0]
     for name in validator_array_names:
         if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
-            expected_cell_ids = [0]
             assert validated[name].tolist() == expected_cell_ids
         else:
             array = validated.field_data[name]
             assert array.shape == (0,)
+    assert validated['invalid'].tolist() == expected_cell_ids
 
     # Test validating specific fields
     report = invalid_hexahedron.validate_mesh('cells')
