@@ -31,7 +31,6 @@ from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
-from .filters.data_set import _CELL_VALIDATOR_BIT_FIELD
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -147,7 +146,7 @@ class _MeshValidator:
     def _validate_cells(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
         issues: list[_MeshValidator._ValidationIssue] = []
         validated = mesh.cell_validator()
-        for name in _CELL_VALIDATOR_BIT_FIELD.keys():
+        for name in get_args(_CellValidationOptions):
             array = validated.field_data[name]
             name_norm = name.replace('_', ' ')
             # Need to write name either before of after the word "cell"

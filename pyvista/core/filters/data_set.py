@@ -57,16 +57,18 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
 
+# https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
 _CELL_VALIDATOR_BIT_FIELD = dict(
-    wrong_number_of_points=0,
-    intersecting_edges=1,
-    intersecting_faces=2,
-    non_contiguous_edges=3,
-    non_convex=4,
-    incorrectly_oriented_faces=5,
-    non_planar_faces=6,
-    degenerate_faces=7,
-    coincident_points=8,
+    valid=0x00,
+    wrong_number_of_points=0x01,
+    intersecting_edges=0x02,
+    intersecting_faces=0x04,
+    non_contiguous_edges=0x08,
+    non_convex=0x10,
+    incorrectly_oriented_faces=0x20,
+    non_planar_faces=0x40,
+    degenerate_faces=0x80,
+    coincident_points=0x100,
 )
 
 
@@ -8304,6 +8306,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Use :vtk:`vtkCellValidator`.
 
+        - ``valid``
         - ``wrong_number_of_points``
         - ``intersecting_edges``
         - ``intersecting_faces``
@@ -8328,7 +8331,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         validity_state = output.cell_data['ValidityState']
 
         for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
-            output.field_data[name] = np.where(validity_state & 2**value)[0]
+            output.field_data[name] = np.where(validity_state & value)[0]
 
         del output.cell_data['ValidityState']
         return output
