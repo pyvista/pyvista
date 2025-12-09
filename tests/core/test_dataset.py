@@ -1692,6 +1692,9 @@ def test_cell_validator_wrong_number_of_points():
             assert array.shape == (0,)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 5, 0) and platform.system() == 'Linux', reason='seg fault'
+)
 def test_cell_validator_invalid_point_references():
     # Cell has point indices > n_points
     grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
