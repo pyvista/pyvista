@@ -284,12 +284,12 @@ class _MeshValidator:
         return f'{header}\n{body}'
 
     @property
-    def report(self) -> DataSet.ValidationReport:
+    def report(self) -> DataSet._ValidationReport:
         issues = self._validation_issues
         kwargs = {
             name: issue.values if issue._has_values else None for name, issue in issues.items()
         }
-        return DataSet.ValidationReport(**kwargs)  # type: ignore[arg-type]
+        return DataSet._ValidationReport(**kwargs)  # type: ignore[arg-type]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -3254,7 +3254,7 @@ class DataSet(DataSetFilters, DataObject):
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
 
     @dataclass(frozen=True)
-    class ValidationReport(_NoNewAttrMixin):
+    class _ValidationReport(_NoNewAttrMixin):
         """Dataclass to report mesh validation results."""
 
         # Data
@@ -3287,7 +3287,7 @@ class DataSet(DataSetFilters, DataObject):
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
-    ) -> DataSet.ValidationReport:
+    ) -> DataSet._ValidationReport:
         """Validate this mesh's array data, cells, and points.
 
         This method returns a ``ValidationReport`` dataclass with information about the validity

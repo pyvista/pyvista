@@ -8301,7 +8301,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         del ugrid.cell_data['mask']
         return ugrid
 
-    def cell_validator(self):
+    def cell_validator(self: DataSet):  # type:ignore[misc]
         """Check the validity of each cell in this dataset.
 
         Use :vtk:`vtkCellValidator` to determine the status of each cell. The status is encoded
