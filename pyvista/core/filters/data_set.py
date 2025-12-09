@@ -8397,7 +8397,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     focal_point=(4.7, 1.8, 0.38),
         ...     viewup=(0.0, 1.0, 0.0),
         ... )
-        >>> pl.show(return_cpos=True)
+        >>> pl.show()
 
         """
         cell_validator = _vtk.vtkCellValidator()

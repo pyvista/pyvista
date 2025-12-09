@@ -3222,14 +3222,73 @@ class DataSet(DataSetFilters, DataObject):
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
     ) -> DataSet.ValidationReport:
-        """Validate this mesh's cells and array data.
+        """Validate this mesh's array data and its cells.
 
-        point and cell data arrays match n_points and n_cells, respectively.
+        This method returns a ``ValidationReport`` dataclass with information about the validity
+        of a mesh. The dataclass has array data-related fields:
+
+        - ``point_data_wrong_length``: If any point data arrays do not match the number of
+          points, the array names are stored here.
+        - ``cell_data_wrong_length``: If any cell data arrays do not match the number of
+          cells, the array names are stored here.
+
+        as well as cell-related fields (from :meth:`cell_validator`):
+
+        - ``wrong_number_of_points``
+        - ``intersecting_edges``
+        - ``intersecting_faces``
+        - ``non_contiguous_edges``
+        - ``non_convex``
+        - ``incorrectly_oriented_faces``
+        - ``non_planar_faces``
+        - ``degenerate_faces``
+        - ``coincident_points``
+
+        For each field, its value is ``None`` if there is no issue. Otherwise, the invalid array
+        name(s) and/or cell id(s) are reported.
+
+        By default, the validity of all fields is included in the report. Optionally, only a
+        subset of fields may be requested.
+
+        The report includes an additional ``is_valid`` property, which evaluates to ``True`` when
+        all fields are ``None``.
+
+        Parameters
+        ----------
+        validation_fields : str | sequence[str], default: ('cells', 'data')
+            Select which fields to include in the validation report. All cell and data fields
+            are included by default. Specify individual fields by name, or use ``'cells'`` to
+            include all cell fields, and ``'data'`` to include all data fields.
+            Fields that are excluded from the report will have a value of ``None``.
+
+        action : 'warn' | 'error', optional
+            Issue a warning or raise an error if the mesh is not valid for the specified fields.
+            By default, no action is taken.
 
         Returns
         -------
         ValidationReport
-            Report.
+            Report dataclass with information about mesh validity..
+
+        See Also
+        --------
+        cell_validator
+
+        Examples
+        --------
+        Check if a mesh has no cells with intersecting edges.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> report = mesh.validate_mesh()
+        >>> has_intersecting_edges = report.intersecting_edges is not None
+        >>> has_intersecting_edges
+        False
+
+        Check that the mesh is valid without issues.
+
+        >>> report.is_valid
+        True
 
         """
         if action is not None:
