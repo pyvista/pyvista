@@ -1686,7 +1686,8 @@ def test_cell_validator_wrong_number_of_points():
             assert getattr(report, name) is None
 
 
-def test_cell_intersecting_edges_nonconvex():
+@pytest.fixture
+def invalid_hexahedron():
     points = [
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
@@ -1702,10 +1703,12 @@ def test_cell_intersecting_edges_nonconvex():
     cells = [8, 1, 0, 2, 3, 4, 5, 6, 7]
     celltypes = [pv.CellType.HEXAHEDRON]
 
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
+    return pv.UnstructuredGrid(cells, celltypes, points)
 
-    validated = grid.cell_validator()
-    report = grid.validate_mesh()
+
+def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
+    validated = invalid_hexahedron.cell_validator()
+    report = invalid_hexahedron.validate_mesh()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
@@ -1718,23 +1721,35 @@ def test_cell_intersecting_edges_nonconvex():
             assert getattr(report, name) is None
 
     # Test validating specific fields
-    report = grid.validate_mesh('cells')
+    report = invalid_hexahedron.validate_mesh('cells')
     assert report.intersecting_edges is not None
     assert report.non_convex is not None
     assert report.incorrectly_oriented_faces is not None
 
-    report = grid.validate_mesh('non_convex')
+    report = invalid_hexahedron.validate_mesh('non_convex')
     assert report.intersecting_edges is None
     assert report.non_convex is not None
     assert report.incorrectly_oriented_faces is None
 
+
+def test_validate_mesh_error_message(invalid_hexahedron):
+    # Test single cell
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 cells with intersecting edges. Invalid cell ids: [0]\n'
-        ' - Mesh has 1 non convex cells. Invalid cell ids: [0]\n'
-        ' - Mesh has 1 cells with incorrectly oriented faces. Invalid cell ids: [0]'
+        ' - Mesh has 1 cell with intersecting edges. Invalid cell id: [0]\n'
+        ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
+        ' - Mesh has 1 cell with incorrectly oriented faces. Invalid cell id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        grid.validate_mesh(action='warn')
+        invalid_hexahedron.validate_mesh(action='warn')
 
-    assert not report.is_valid
+    # Test multiple cells
+    match = (
+        'UnstructuredGrid mesh is not valid due to the following problems:\n'
+        ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0 1]\n'
+        ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
+        ' - Mesh has 2 cells with incorrectly oriented faces. Invalid cell ids: [0 1]'
+    )
+    invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        invalid_hexahedrons.validate_mesh(action='warn')

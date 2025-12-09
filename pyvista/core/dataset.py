@@ -150,13 +150,18 @@ class _MeshValidator:
         for name in _CELL_VALIDATOR_BIT_FIELD.keys():
             array = validated.field_data[name]
             name_norm = name.replace('_', ' ')
+            # Need to write name either before of after the word "cell"
             if name == 'non_convex':
                 before = f' {name_norm} '
                 after = ''
             else:
                 before = ' '
                 after = f' with {name_norm}'
-            msg = f'Mesh has {len(array)}{before}cells{after}. Invalid cell ids: {np.sort(array)}'
+            s = 's' if len(array) > 1 else ''
+            msg = (
+                f'Mesh has {len(array)}{before}cell{s}{after}. '
+                f'Invalid cell id{s}: {np.sort(array)}'
+            )
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
             issues.append(issue)
         return issues
