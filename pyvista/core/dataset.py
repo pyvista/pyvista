@@ -3338,11 +3338,9 @@ class DataSet(DataSetFilters, DataObject):
             - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields
             - ``'critical'`` to include all critical fields that, if invalid, may cause a
-              segmentation fault and crash Python. This option includes:
-
-              - ``point_data_wrong_length``
-              - ``cell_data_wrong_length``
-              - ``invalid_point_references``
+              segmentation fault and crash Python. This option includes
+              ``point_data_wrong_length``, ``cell_data_wrong_length``, and
+              ``invalid_point_references``.
 
             Fields that are excluded from the report will have a value of ``None``.
 

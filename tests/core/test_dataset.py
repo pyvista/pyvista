@@ -1692,6 +1692,20 @@ def test_cell_validator_wrong_number_of_points():
             assert array.shape == (0,)
 
 
+def test_cell_validator_invalid_point_references():
+    # Cell has point indices > n_points
+    grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
+    validated = grid.cell_validator()
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    for name in validator_array_names:
+        if name == 'invalid_point_references':
+            expected_cell_ids = [0]
+            assert validated[name].tolist() == expected_cell_ids
+        else:
+            array = validated.field_data[name]
+            assert array.shape == (0,)
+
+
 @pytest.fixture
 def invalid_hexahedron():
     points = [
