@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import platform
 import re
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -1747,10 +1748,15 @@ def test_validate_mesh_error_message(invalid_hexahedron):
         invalid_hexahedron.validate_mesh(action='warn')
 
     # Test multiple cells
+    nonconvex = (
+        ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
+        if platform.system() == 'Darwin'
+        else ' - Mesh has 2 non convex cells. Invalid cell ids: [0 1]\n'
+    )
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0 1]\n'
-        ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
+        f'{nonconvex}'
         ' - Mesh has 2 cells with incorrectly oriented faces. Invalid cell ids: [0 1]'
     )
     invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])

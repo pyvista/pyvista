@@ -3222,7 +3222,9 @@ class DataSet(DataSetFilters, DataObject):
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
     ) -> DataSet.ValidationReport:
-        """Validate point and cell data arrays match n_points and n_cells, respectively.
+        """Validate this mesh's cells and array data.
+
+        point and cell data arrays match n_points and n_cells, respectively.
 
         Returns
         -------
