@@ -1671,6 +1671,21 @@ def test_cell_validator():
         assert array.shape == (0,)
 
 
+@pytest.mark.needs_vtk_version(9, 5, 99)
+def test_cell_validator_bitfield_values():
+    from vtkmodules.vtkCommonDataModel import vtkCellStatus
+
+    bitfield = _CELL_VALIDATOR_BIT_FIELD
+    assert bitfield['wrong_number_of_points'] == vtkCellStatus.WrongNumberOfPoints
+    assert bitfield['intersecting_edges'] == vtkCellStatus.IntersectingEdges
+    assert bitfield['intersecting_faces'] == vtkCellStatus.IntersectingFaces
+    assert bitfield['non_contiguous_edges'] == vtkCellStatus.NoncontiguousEdges
+    assert bitfield['non_convex'] == vtkCellStatus.Nonconvex
+    assert bitfield['incorrectly_oriented_faces'] == vtkCellStatus.FacesAreOrientedIncorrectly
+    assert bitfield['non_planar_faces'] == vtkCellStatus.NonPlanarFaces
+    assert bitfield['coincident_points'] == vtkCellStatus.CoincidentPoints
+
+
 def test_cell_validator_wrong_number_of_points():
     # Define tetra with one point missing
     cells = [3, 0, 1, 2]
