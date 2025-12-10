@@ -8351,7 +8351,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
          'incorrectly_oriented_faces',
          'non_planar_faces',
          'degenerate_faces',
-         'coincident_points]
+         'coincident_points']
 
         Show unique scalar values.
 
