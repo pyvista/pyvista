@@ -396,7 +396,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @wraps(PolyDataFilters.threshold)  # type: ignore[has-type]
+    @wraps(PolyDataFilters.threshold)
     def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -404,7 +404,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.threshold_percent)  # type:ignore[has-type]
+    @wraps(PolyDataFilters.threshold_percent)
     def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -423,7 +423,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.delaunay_3d)  # type: ignore[has-type]
+    @wraps(PolyDataFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
@@ -2349,13 +2349,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         This mesh contains only linear hexahedral cells, type
         :attr:`pyvista.CellType.HEXAHEDRON`, which evaluates to 12.
 
-        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> hex_beam = examples.load_hexbeam()
         >>> hex_beam.celltypes
         array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12], dtype=uint8)
+
+        Compare this to :attr:`distinct_cell_types`.
+
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
 
         """
         return _vtk.vtk_to_numpy(self._get_cell_types_array())
@@ -2370,6 +2374,44 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
         return array
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        Compare this to :attr:`celltypes`.
+
+        >>> hex_beam.celltypes
+        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12], dtype=uint8)
+
+        """
+        cell_types = (
+            convert_array(self.GetDistinctCellTypesArray())
+            if pv.vtk_version_info >= (9, 5, 0)
+            else np.unique(self.celltypes)
+        )
+        return {pv.CellType(cell_num) for cell_num in cell_types}
 
     @property
     def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
