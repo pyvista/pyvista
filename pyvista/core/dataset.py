@@ -151,9 +151,20 @@ class _MeshValidator:
                     self._validation_issues[issue.name] = issue
 
         # Validate cells
+        # We do this with cell_validator plus a separate method for point references
+        invalid_point_references: Literal['invalid_point_references'] = 'invalid_point_references'
+        fields_for_cell_validator: list[_CellValidationOptions] = list(allowed_cell_fields)
+        fields_for_cell_validator.remove(invalid_point_references)
         store_all_cell_fields = 'cells' in validation_fields
-        if store_all_cell_fields or any(arg in validation_fields for arg in allowed_cell_fields):
-            for issue in _MeshValidator._validate_cells(mesh):
+        if store_all_cell_fields or invalid_point_references in validation_fields:
+            issue = _MeshValidator._validate_invalid_point_references(mesh)
+            self._validation_issues[issue.name] = issue
+
+        # Validate with cell_validator
+        if store_all_cell_fields or any(
+            arg in validation_fields for arg in fields_for_cell_validator
+        ):
+            for issue in _MeshValidator._validate_cells(mesh, fields_for_cell_validator):
                 if store_all_cell_fields or issue.name in validation_fields:
                     self._validation_issues[issue.name] = issue
 
@@ -167,27 +178,54 @@ class _MeshValidator:
                     self._validation_issues[issue.name] = issue
 
     @staticmethod
-    def _validate_cells(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+    def _validate_cells(
+        mesh: DataSet, validation_fields: list[_CellValidationOptions]
+    ) -> list[_MeshValidator._ValidationIssue]:
         issues: list[_MeshValidator._ValidationIssue] = []
         validated = mesh.cell_validator()
-        for name in get_args(_CellValidationOptions):
+        for name in validation_fields:
             array = validated.field_data[name]
-            name_norm = name.replace('_', ' ')
-            # Need to write name either before of after the word "cell"
-            if name == 'non_convex':
-                before = f' {name_norm} '
-                after = ''
-            else:
-                before = ' '
-                after = f' with {name_norm}'
-            s = 's' if len(array) > 1 else ''
-            msg = (
-                f'Mesh has {len(array)}{before}cell{s}{after}. '
-                f'Invalid cell id{s}: {np.sort(array)}'
-            )
+            msg = _MeshValidator._invalid_cell_msg(name, array)
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
             issues.append(issue)
         return issues
+
+    @staticmethod
+    def _validate_invalid_point_references(mesh: DataSet) -> _MeshValidator._ValidationIssue:
+        def _find_cells_with_invalid_point_refs() -> NumpyArray[int]:
+            """Return cell IDs that reference points that do not exist."""
+            grid = (
+                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+            )
+
+            # Find indices in the connectivity array that are invalid
+            conn = grid.cell_connectivity
+            invalid_indices = np.where((conn < 0) | (conn >= grid.n_points))[0]
+            if len(invalid_indices) == 0:
+                return np.array([], dtype=int)
+
+            # Map invalid connectivity indices back to cell IDs using offsets
+            # Each invalid index belongs to the cell whose start offset <= index < next offset
+            cell_ids = np.searchsorted(grid.offset, invalid_indices, side='right') - 1
+            return np.unique(cell_ids)
+
+        name = 'invalid_point_references'
+        array = _find_cells_with_invalid_point_refs()
+        msg = _MeshValidator._invalid_cell_msg(name, array)
+        return _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+
+    @staticmethod
+    def _invalid_cell_msg(name: str, array: NumpyArray[int]) -> str:
+        name_norm = name.replace('_', ' ')
+        # Need to write name either before of after the word "cell"
+        if name == 'non_convex':
+            before = f' {name_norm} '
+            after = ''
+        else:
+            before = ' '
+            after = f' with {name_norm}'
+        s = 's' if len(array) > 1 else ''
+        return f'Mesh has {len(array)}{before}cell{s}{after}. Invalid cell id{s}: {np.sort(array)}'
 
     @staticmethod
     def _validate_arrays(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
@@ -3294,14 +3332,17 @@ class DataSet(DataSetFilters, DataObject):
         of a mesh. The dataclass contains validation fields which are specific to issues with the
         data, cells, and points.
 
-        Data-related fields:
+        **Data-related fields**
 
         - ``point_data_wrong_length``: If any point data arrays do not match the number of
           points, the array names are stored here.
         - ``cell_data_wrong_length``: If any cell data arrays do not match the number of
           cells, the array names are stored here.
 
-        Cell-related fields (from :meth:`~pyvista.DataSetFilters.cell_validator`):
+        **Cell-related fields**
+
+        Other than ``invalid_point_references``, these are all computed using
+        :meth:`~pyvista.DataSetFilters.cell_validator`.
 
         - ``wrong_number_of_points``
         - ``intersecting_edges``
@@ -3314,7 +3355,7 @@ class DataSet(DataSetFilters, DataObject):
         - ``coincident_points``
         - ``invalid_point_references``
 
-        Point-related fields:
+        **Point-related fields**
 
         - ``unused_points``
         - ``non_finite_points``
@@ -3334,6 +3375,7 @@ class DataSet(DataSetFilters, DataObject):
             Select which field(s) to include in the validation report. All data, cell, and point
             fields are included by default. Specify individual fields by name, or use group name(s)
             to include multiple related validation fields:
+
             - ``'data'`` to include all data fields
             - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields

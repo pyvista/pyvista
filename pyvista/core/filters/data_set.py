@@ -68,7 +68,6 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     non_planar_faces=0x40,
     degenerate_faces=0x80,
     coincident_points=0x100,
-    invalid_point_references=0x200,  # Custom field not defined by VTK
 )
 
 
@@ -8317,7 +8316,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         - ``'non_planar_faces'`` (``0x40``)
         - ``'degenerate_faces'`` (``0x80``)
         - ``'coincident_points'`` (``0x100``)
-        - ``'invalid_point_references'`` (``0x200``)
 
         For convenience, a field data array for each state is also appended. The array names match
         the state names above, except an array with ``'invalid'`` cells is stored instead of valid
@@ -8353,8 +8351,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
          'incorrectly_oriented_faces',
          'non_planar_faces',
          'degenerate_faces',
-         'coincident_points',
-         'invalid_point_references']
+         'coincident_points]
 
         Show unique scalar values.
 
@@ -8404,37 +8401,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-
-        def _find_cells_with_invalid_point_refs() -> NumpyArray[int]:
-            """Return cell IDs that reference points that do not exist."""
-            grid = (
-                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
-            )
-
-            # Find indices in the connectivity array that are invalid
-            conn = grid.cell_connectivity
-            invalid_indices = np.where((conn < 0) | (conn >= grid.n_points))[0]
-            if len(invalid_indices) == 0:
-                return np.array([], dtype=int)
-
-            # Map invalid connectivity indices back to cell IDs using offsets
-            # Each invalid index belongs to the cell whose start offset <= index < next offset
-            cell_ids = np.searchsorted(grid.offset, invalid_indices, side='right') - 1
-            return np.unique(cell_ids)
-
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
         cell_validator.Update()
         output = _get_output(cell_validator)
 
-        # Modify the state array to add a custom state for invalid_point_references
-        validity_state = output.cell_data['ValidityState']
-        cells_with_invalid_refs = _find_cells_with_invalid_point_refs()
-        validity_state[cells_with_invalid_refs] |= _CELL_VALIDATOR_BIT_FIELD[
-            'invalid_point_references'
-        ]
-
         # Rename output scalars and make them active
+        validity_state = output.cell_data['ValidityState']
         output.cell_data['validity_state'] = validity_state
         del output.cell_data['ValidityState']
         output.set_active_scalars('validity_state', preference='cell')
