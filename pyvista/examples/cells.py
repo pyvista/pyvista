@@ -28,6 +28,7 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
 
     show_normals : bool, optional
         Show the face normals of the cell. Only applies to 2D or 3D cells.
+        Cell faces with correct orientation should have the normal pointing outward.
 
         .. versionadded:: 0.47
 
