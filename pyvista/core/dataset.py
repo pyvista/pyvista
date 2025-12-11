@@ -3318,7 +3318,12 @@ class DataSet(DataSetFilters, DataObject):
         @property
         def is_valid(self) -> bool:  # numpydoc ignore=RT01
             """Return ``True`` if the mesh is valid."""
-            return all(getattr(self, f.name) is None for f in fields(self))
+            return self.issues == ()
+
+        @property
+        def issues(self) -> tuple[str]:  # numpydoc ignore=RT01
+            """Return ``True`` if the mesh is valid."""
+            return tuple(f.name for f in fields(self) if getattr(self, f.name) is not None)
 
     def validate_mesh(
         self,

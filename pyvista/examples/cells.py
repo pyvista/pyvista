@@ -7,6 +7,8 @@ be used to learn about VTK :class:`cell types <pyvista.CellType>`.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista as pv
@@ -14,14 +16,24 @@ from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
+if TYPE_CHECKING:
+    from pyvista import PolyData
 
-def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
+
+def plot_cell(
+    grid: PolyData | UnstructuredGrid, cpos=None, *, show_normals: bool = False, **kwargs
+):
     """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
 
     Parameters
     ----------
-    grid : pyvista.UnstructuredGrid
-        Unstructured grid (ideally) containing a single cell.
+    grid : PolyData | UnstructuredGrid
+        Dataset containing a single cell (ideally). Plotting a mesh with multiple cells `is`
+        allowed, but the plot may not be entirely correct since it's assumed that all cells have
+        the same :class:`~pyvista CellType` as the first cell in the mesh.
+
+        .. versionchanged:: 0.47
+            Plotting :class:`~pyvista.PolyData` is now supported.
 
     cpos : str, optional
         Camera position.
@@ -44,6 +56,8 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     >>> examples.plot_cell(grid)
 
     """
+    grid = grid if isinstance(grid, UnstructuredGrid) else grid.cast_to_unstructured_grid()
+
     pl = pv.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
