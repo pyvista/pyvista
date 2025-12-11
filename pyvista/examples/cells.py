@@ -17,13 +17,14 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from pyvista import MultiBlock
     from pyvista import PolyData
 
 
 def plot_cell(
     grid: PolyData | UnstructuredGrid, cpos=None, *, show_normals: bool = False, **kwargs
 ):
-    """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
+    """Plot a mesh while displaying cell indices.
 
     Parameters
     ----------
@@ -56,8 +57,27 @@ def plot_cell(
     >>> examples.plot_cell(grid)
 
     """
-    grid = grid if isinstance(grid, UnstructuredGrid) else grid.cast_to_unstructured_grid()
 
+    def _cell_faces_as_multiblock() -> MultiBlock:
+        """Convert a 3D vtkCell into a MultiBlock of PolyData faces."""
+        # Implementation note: we don't use ``extract_geometry`` because that may alter the face
+        # orientation, so we iterate over each face directly to convert to PolyData
+        grid_points = grid.points
+        face_blocks = pv.MultiBlock()
+
+        for i in range(cell.n_faces):
+            face = cell.GetFace(i)
+            npts = face.GetNumberOfPoints()
+            point_ids = [face.GetPointId(i) for i in range(npts)]
+
+            poly_points = grid_points[point_ids]
+            poly_face = [npts, *tuple(range(npts))]
+            poly = pv.PolyData(poly_points, poly_face)
+            face_blocks.append(poly)
+
+        return face_blocks
+
+    grid = grid if isinstance(grid, UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
@@ -81,16 +101,18 @@ def plot_cell(
     )
 
     if show_normals and cell.dimension >= 2:
-        surf = grid.extract_geometry()
-        if cell.type is CellType.TRIANGLE_STRIP:
-            surf = surf.triangulate()
-        pl.add_arrows(
-            surf.cell_centers().points,
-            surf.cell_normals,
-            mag=surf.length / 4,
-            color='yellow',
-            show_scalar_bar=False,
-        )
+        # Plot arrows for each face separately
+        face_blocks = _cell_faces_as_multiblock()
+        magnitude = face_blocks.length / 4
+        for block in face_blocks:
+            surf = block.triangulate() if cell.type is CellType.TRIANGLE_STRIP else block
+            pl.add_arrows(
+                surf.cell_centers().points,
+                surf.cell_normals,
+                mag=magnitude,
+                color='yellow',
+                show_scalar_bar=False,
+            )
 
     pl.enable_anti_aliasing()
     if cpos is None:
@@ -433,7 +455,7 @@ def Polygon() -> UnstructuredGrid:
     array([7], dtype=uint8)
 
     """
-    points = [[0, 0, 0], [1, -0.1, 0], [0.8, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
+    points = [[0, 0, 0], [1, -0.1, 0], [1.4, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.POLYGON], points)
 
@@ -469,7 +491,7 @@ def Polyhedron() -> UnstructuredGrid:
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
-    cells = [4, 3, 0, 2, 1, 3, 0, 3, 1, 3, 0, 3, 2, 3, 1, 3, 2]
+    cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     cells = [len(cells), *cells]
     return UnstructuredGrid(cells, [CellType.POLYHEDRON], points)
 

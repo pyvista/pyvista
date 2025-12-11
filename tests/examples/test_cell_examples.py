@@ -46,6 +46,13 @@ def test_area_and_volume(cell_example):
         assert np.isclose(volume, 0.0)
 
 
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_valid(cell_example):
+    mesh = cell_example()
+    report = mesh.validate_mesh()
+    assert not report.issues
+
+
 def test_empty():
     grid = cells.Empty()
     assert grid.celltypes[0] == CellType.EMPTY_CELL
