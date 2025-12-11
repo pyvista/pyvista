@@ -28,6 +28,7 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
 
     show_normals : bool, optional
         Show the face normals of the cell. Only applies to 2D or 3D cells.
+        Cell faces with correct orientation should have the normal pointing outward.
 
         .. versionadded:: 0.47
 
@@ -66,15 +67,13 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     )
 
     if show_normals and cell.dimension >= 2:
-        # blocks = cell_faces_to_multiblock(grid)
-        # for block in blocks:
-        block = grid.extract_geometry()
+        surf = grid.extract_geometry()
         if cell.type is CellType.TRIANGLE_STRIP:
-            block = block.triangulate()
+            surf = surf.triangulate()
         pl.add_arrows(
-            block.cell_centers().points,
-            block.cell_normals,
-            mag=block.length / 5,
+            surf.cell_centers().points,
+            surf.cell_normals,
+            mag=surf.length / 4,
             color='yellow',
             show_scalar_bar=False,
         )
