@@ -5292,6 +5292,12 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
     cell = next(grid.cell)
     if cell.type == pv.CellType.EMPTY_CELL:
         pytest.skip('nothing to plot')
+    if cell.type in [
+        pv.CellType.BIQUADRATIC_QUADRATIC_WEDGE,
+        pv.CellType.QUADRATIC_LINEAR_WEDGE,
+        pv.CellType.QUADRATIC_WEDGE,
+    ] and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('point ordering changed in newer VTK')
     if cell.dimension == 2:
         # Ensure normals of 2D cells point in z-direction for consistency
         normal = grid.extract_geometry().cell_normals.mean(axis=0)
