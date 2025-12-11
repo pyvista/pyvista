@@ -36,10 +36,10 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
-import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
+from tests.examples.test_cell_examples import cell_example_functions
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -5280,3 +5280,8 @@ def test_box():
 def test_partitioned_dataset(sphere):
     mesh = pv.PartitionedDataSet([sphere])
     mesh.plot()
+
+
+@pytest.mark.parametrize('cell_example', cell_example_functions)
+def test_cell_examples_normals(cell_example):
+    examples.plot_cell(cell_example(), show_normals=True)
