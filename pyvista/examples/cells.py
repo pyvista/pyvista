@@ -44,61 +44,49 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     >>> examples.plot_cell(grid)
 
     """
-
-    def _cell_faces_as_multiblock():
-        """Convert a 3D vtkCell into a MultiBlock of PolyData faces."""
-        # Implementation note: we don't use ``extract_geometry`` because that may alter the face
-        # orientation, so we iterate over each face directly to convert to PolyData
-        grid_points = grid.points
-        face_blocks = pv.MultiBlock()
-
-        for i in range(cell.n_faces):
-            face = cell.GetFace(i)
-            npts = face.GetNumberOfPoints()
-            point_ids = [face.GetPointId(i) for i in range(npts)]
-
-            poly_points = grid_points[point_ids]
-            poly_face = [npts, *tuple(range(npts))]
-            poly = pv.PolyData(poly_points, poly_face)
-            face_blocks.append(poly)
-
-        return face_blocks
-
     pl = pv.Plotter()
-    pl.add_mesh(grid, opacity=0.5)
-    edges = grid.extract_all_edges()
-    cell = next(grid.cell)
-    if edges.n_cells or cell.type in [
-        CellType.LINE,
-        CellType.POLY_LINE,
-        CellType.QUADRATIC_EDGE,
-        CellType.CUBIC_LINE,
-    ]:
-        pl.add_mesh(grid, style='wireframe', line_width=10, color='k', render_lines_as_tubes=True)
-    pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
-    pl.add_point_labels(
-        grid.points,
-        list(range(grid.n_points)),
-        always_visible=True,
-        fill_shape=False,
-        margin=0,
-        shape_opacity=0.0,
-        font_size=50,
-    )
-
-    if show_normals and cell.dimension >= 2:
-        # Plot arrows for each face separately
-        face_blocks = _cell_faces_as_multiblock()
-        magnitude = face_blocks.length / 4
-        for block in face_blocks:
-            surf = block.triangulate() if cell.type is CellType.TRIANGLE_STRIP else block
-            pl.add_arrows(
-                surf.cell_centers().points,
-                surf.cell_normals,
-                mag=magnitude,
-                color='yellow',
-                show_scalar_bar=False,
+    for cell in grid.cell:
+        # Use existing grid if it's already a grid with one cell
+        cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
+        pl.add_mesh(cell_as_grid, opacity=0.5)
+        edges = cell_as_grid.extract_all_edges()
+        if edges.n_cells or cell.type in [
+            CellType.LINE,
+            CellType.POLY_LINE,
+            CellType.QUADRATIC_EDGE,
+            CellType.CUBIC_LINE,
+        ]:
+            pl.add_mesh(
+                cell_as_grid,
+                style='wireframe',
+                line_width=10,
+                color='k',
+                render_lines_as_tubes=True,
             )
+        pl.add_points(cell.points, render_points_as_spheres=True, point_size=80, color='r')
+        pl.add_point_labels(
+            cell.points,
+            cell.point_ids,
+            always_visible=True,
+            fill_shape=False,
+            margin=0,
+            shape_opacity=0.0,
+            font_size=50,
+        )
+
+        if show_normals and cell.dimension >= 2:
+            # Plot arrows for each face separately
+            face_blocks = cell._cast_as_multiblock_with_polydata_faces()
+            magnitude = grid.length / 4
+            for block in face_blocks:
+                surf = block.triangulate() if cell.type is CellType.TRIANGLE_STRIP else block
+                pl.add_arrows(
+                    surf.cell_centers().points,
+                    surf.cell_normals,
+                    mag=magnitude,
+                    color='yellow',
+                    show_scalar_bar=False,
+                )
 
     pl.enable_anti_aliasing()
     if cpos is None:

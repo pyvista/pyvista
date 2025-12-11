@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
 
@@ -615,6 +616,38 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
         """
         return type(self)(self, deep=deep)
+
+    def _cast_as_multiblock_with_polydata_faces(self) -> MultiBlock:
+        """Convert cell into a MultiBlock of PolyData faces.
+
+        Primarily intended for 3D cells to get each face as a separate PolyData block.
+        Lower dimension cells are returns as MultiBlock with a single PolyData block.
+
+        """
+        face_blocks = pv.MultiBlock()
+
+        if self.dimension == 3:
+            if self.type == pv.CellType.POLYHEDRON:
+                # note: we don't use ``extract_geometry`` because that may alter the face
+                # orientation, so we iterate over each face directly to convert to PolyData
+                for i in range(self.n_faces):
+                    face = self.GetFace(i)
+                    face_n_points = face.GetNumberOfPoints()
+                    point_ids = [face.GetPointId(i) for i in range(face_n_points)]
+
+                    poly_points = self.points[point_ids]
+                    poly_face = [face_n_points, *tuple(range(face_n_points))]
+                    poly = pv.PolyData(poly_points, poly_face)
+                    face_blocks.append(poly)
+            else:
+                grid_with_2d_cells = (
+                    self.cast_to_unstructured_grid().extract_geometry().cast_to_unstructured_grid()
+                )
+                for cell in grid_with_2d_cells.cell:
+                    face_blocks.append(cell.cast_to_polydata())
+        else:
+            face_blocks.append(self.cast_to_polydata())
+        return face_blocks
 
 
 class CellArray(

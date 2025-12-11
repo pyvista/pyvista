@@ -3506,8 +3506,14 @@ def test_tight_square(noise_2d):
 
 
 @skip_windows_mesa  # due to opacity
+def test_plot_cell():
+    grid = examples.cells.Tetrahedron()
+    examples.plot_cell(grid)
+
+
+@skip_windows_mesa  # due to opacity
 @pytest.mark.parametrize('wrong_orientation', [True, False])
-def test_plot_cell(wrong_orientation):
+def test_plot_cell_polyhedron(wrong_orientation):
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
     cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     if wrong_orientation:
