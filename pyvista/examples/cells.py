@@ -15,7 +15,7 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 
-def plot_cell(grid, cpos=None, **kwargs):
+def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
 
     Parameters
@@ -25,6 +25,11 @@ def plot_cell(grid, cpos=None, **kwargs):
 
     cpos : str, optional
         Camera position.
+
+    show_normals : bool, optional
+        Show the face normals of the cell. Only applies to 2D or 3D cells.
+
+        .. versionadded:: 0.47
 
     **kwargs : dict, optional
         Additional keyword arguments when showing. See :func:`pyvista.Plotter.show`.
@@ -41,7 +46,8 @@ def plot_cell(grid, cpos=None, **kwargs):
     pl = pv.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
-    if edges.n_cells or next(grid.cell).type in [
+    cell = next(grid.cell)
+    if edges.n_cells or cell.type in [
         CellType.LINE,
         CellType.POLY_LINE,
         CellType.QUADRATIC_EDGE,
@@ -58,6 +64,21 @@ def plot_cell(grid, cpos=None, **kwargs):
         shape_opacity=0.0,
         font_size=50,
     )
+
+    if show_normals and cell.dimension >= 2:
+        # blocks = cell_faces_to_multiblock(grid)
+        # for block in blocks:
+        block = grid.extract_geometry()
+        if cell.type is CellType.TRIANGLE_STRIP:
+            block = block.triangulate()
+        pl.add_arrows(
+            block.cell_centers().points,
+            block.cell_normals,
+            mag=block.length / 5,
+            color='yellow',
+            show_scalar_bar=False,
+        )
+
     pl.enable_anti_aliasing()
     if cpos is None:
         pl.camera.azimuth = 20
@@ -295,15 +316,15 @@ def Triangle() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[ 0.5       , -0.28867513,  0.        ],
-                     [-0.5       , -0.28867513,  0.        ],
-                     [ 0.        ,  0.57735027,  0.        ]])
+                     [ 0.        ,  0.57735027,  0.        ],
+                     [-0.5       , -0.28867513,  0.        ]])
 
     >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE
     array([5], dtype=uint8)
 
     """
     R33 = np.sqrt(3) / 3
-    points = [[0.5, -0.5 * R33, 0.0], [-0.5, -0.5 * R33, 0.0], [0.0, R33, 0.0]]
+    points = [[0.5, -0.5 * R33, 0.0], [0.0, R33, 0.0], [-0.5, -0.5 * R33, 0.0]]
 
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.TRIANGLE], points)
@@ -349,14 +370,14 @@ def TriangleStrip() -> UnstructuredGrid:
 
     """
     points = [
-        [1.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
-        [1.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0],
         [0.0, 1.0, 0.0],
-        [1.0, 2.0, 0.0],
+        [1.0, 1.0, 0.0],
         [0.0, 2.0, 0.0],
-        [1.0, 3.0, 0.0],
+        [1.0, 2.0, 0.0],
         [0.0, 3.0, 0.0],
+        [1.0, 3.0, 0.0],
     ]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.TRIANGLE_STRIP], points)
@@ -435,7 +456,7 @@ def Polyhedron() -> UnstructuredGrid:
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
-    cells = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+    cells = [4, 3, 0, 2, 1, 3, 0, 3, 1, 3, 0, 3, 2, 3, 1, 3, 2]
     cells = [len(cells), *cells]
     return UnstructuredGrid(cells, [CellType.POLYHEDRON], points)
 
@@ -1187,32 +1208,26 @@ def QuadraticWedge() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[0. , 0. , 0. ],
-                     [0. , 1. , 0. ],
                      [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
                      [0. , 0. , 1. ],
-                     [0. , 1. , 1. ],
                      [1. , 0. , 1. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0.5, 0. ],
+                     [0. , 1. , 1. ],
                      [0.5, 0. , 0. ],
-                     [0. , 0.5, 1. ],
-                     [0.5, 0.5, 1. ],
+                     [0.5, 0.5, 0. ],
+                     [0. , 0.5, 0. ],
                      [0.5, 0. , 1. ],
+                     [0.5, 0.5, 1. ],
+                     [0. , 0.5, 1. ],
                      [0. , 0. , 0.5],
-                     [0. , 1. , 0.5],
-                     [1. , 0. , 0.5]])
+                     [1. , 0. , 0.5],
+                     [0. , 1. , 0.5]])
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
     array([26], dtype=uint8)
 
     """
-    grid = _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
-    # This generates a cell with negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-    # Fix this by swapping the first three points to reverse the base triangle's
-    # orientation and swap the other points to keep the structure intact
-    new_ordering = [0, 2, 1, 3, 5, 4, 8, 7, 6, 11, 10, 9, 12, 14, 13]
-    grid.points = grid.points[new_ordering]
-    return grid
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
 
 
 def QuadraticPyramid() -> UnstructuredGrid:
