@@ -5283,7 +5283,11 @@ def test_partitioned_dataset(sphere):
 
 
 @pytest.mark.parametrize('cell_example', cell_example_functions)
-def test_cell_examples_normals(cell_example):
+def test_cell_examples_normals(cell_example, verify_image_cache):
+    # Skip since variance is too high
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.windows_skip_image_cache = True
+
     grid = cell_example()
     cell = next(grid.cell)
     if cell.type == pv.CellType.EMPTY_CELL:
