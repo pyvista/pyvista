@@ -5284,4 +5284,12 @@ def test_partitioned_dataset(sphere):
 
 @pytest.mark.parametrize('cell_example', cell_example_functions)
 def test_cell_examples_normals(cell_example):
-    examples.plot_cell(cell_example(), show_normals=True)
+    grid = cell_example()
+    cell = next(grid.cell)
+    if cell.type == pv.CellType.EMPTY_CELL:
+        pytest.skip('nothing to plot')
+    if cell.dimension == 2:
+        # Ensure normals of 2D cells point in z-direction for consistency
+        normal = grid.extract_geometry().cell_normals.mean(axis=0)
+        assert np.allclose(normal, (0.0, 0.0, 1.0))
+    examples.plot_cell(grid, show_normals=True)
