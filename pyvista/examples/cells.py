@@ -44,6 +44,26 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     >>> examples.plot_cell(grid)
 
     """
+
+    def _cell_faces_as_multiblock():
+        """Convert a 3D vtkCell into a MultiBlock of PolyData faces."""
+        # Implementation note: we don't use ``extract_geometry`` because that may alter the face
+        # orientation, so we iterate over each face directly to convert to PolyData
+        grid_points = grid.points
+        face_blocks = pv.MultiBlock()
+
+        for i in range(cell.n_faces):
+            face = cell.GetFace(i)
+            npts = face.GetNumberOfPoints()
+            point_ids = [face.GetPointId(i) for i in range(npts)]
+
+            poly_points = grid_points[point_ids]
+            poly_face = [npts, *tuple(range(npts))]
+            poly = pv.PolyData(poly_points, poly_face)
+            face_blocks.append(poly)
+
+        return face_blocks
+
     pl = pv.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
@@ -67,16 +87,18 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     )
 
     if show_normals and cell.dimension >= 2:
-        surf = grid.extract_geometry()
-        if cell.type is CellType.TRIANGLE_STRIP:
-            surf = surf.triangulate()
-        pl.add_arrows(
-            surf.cell_centers().points,
-            surf.cell_normals,
-            mag=surf.length / 4,
-            color='yellow',
-            show_scalar_bar=False,
-        )
+        # Plot arrows for each face separately
+        face_blocks = _cell_faces_as_multiblock()
+        magnitude = face_blocks.length / 4
+        for block in face_blocks:
+            surf = block.triangulate() if cell.type is CellType.TRIANGLE_STRIP else block
+            pl.add_arrows(
+                surf.cell_centers().points,
+                surf.cell_normals,
+                mag=magnitude,
+                color='yellow',
+                show_scalar_bar=False,
+            )
 
     pl.enable_anti_aliasing()
     if cpos is None:
@@ -455,7 +477,7 @@ def Polyhedron() -> UnstructuredGrid:
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
-    cells = [4, 3, 0, 2, 1, 3, 0, 3, 1, 3, 0, 3, 2, 3, 1, 3, 2]
+    cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     cells = [len(cells), *cells]
     return UnstructuredGrid(cells, [CellType.POLYHEDRON], points)
 
