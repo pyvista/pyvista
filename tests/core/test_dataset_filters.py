@@ -189,6 +189,28 @@ def test_clip_scalar_no_active(sphere):
     assert clp.n_points < sphere.n_points
 
 
+def test_clip_scalar_ranges_imagedata():
+    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    vol = mesh.clip_scalar(
+        value=(150, 3000),
+    )
+    assert vol.n_points < mesh.n_points
+    vol2 = mesh.clip_scalar(
+        value=150,
+    )
+    assert vol.n_points < vol2.n_points
+
+
+def test_clip_scalar_errors():
+    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    with pytest.raises(TypeError):
+        mesh.clip_scalar(value=(150, 3000), inplace=True)
+    with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
+        mesh.clip_scalar(value=(150, 3000), invert=False)
+    with pytest.raises(ValueError, match='Cannot have both=True for a range clip'):
+        mesh.clip_scalar(value=(150, 3000), both=True)
+
+
 def test_clip_scalar_multiple():
     mesh = pv.Plane()
     mesh['x'] = mesh.points[:, 0].copy()
