@@ -15,7 +15,7 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 
-def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
+def plot_cell(grid, cpos=None, *, show_normals: bool = True, **kwargs):
     """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
 
     Parameters
@@ -72,7 +72,7 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
         pl.add_arrows(
             surf.cell_centers().points,
             surf.cell_normals,
-            mag=surf.length / 5,
+            mag=surf.length / 4,
             color='yellow',
             show_scalar_bar=False,
         )
