@@ -15,7 +15,7 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 
-def plot_cell(grid, cpos=None, *, show_normals: bool = True, **kwargs):
+def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
 
     Parameters
@@ -55,7 +55,7 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = True, **kwargs):
                 face_n_points = face.GetNumberOfPoints()
                 point_ids = [face.GetPointId(i) for i in range(face_n_points)]
                 faces.extend([face_n_points, *point_ids])
-            return pv.PolyData(cell_.points, faces)
+            return pv.PolyData(cell_.points.copy(), faces)
         return cell_.cast_to_unstructured_grid().extract_geometry()
 
     pl = pv.Plotter()
