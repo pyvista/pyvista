@@ -4,7 +4,7 @@
 Mesh Validation
 ~~~~~~~~~~~~~~~
 This example demonstrates how to evaluate the validity of a mesh for use with VTK using
-:meth:`~pyvista.DataSet.cell_validator` and :meth:`~pyvista.DataSetFilters.validate_mesh`.
+:meth:`~pyvista.DataSetFilters.cell_validator` and :meth:`~pyvista.DataSet.validate_mesh`.
 
 """
 
@@ -30,7 +30,7 @@ faces = [4, 0, 1, 2, 3]
 quad = pv.PolyData(points, faces)
 
 # %%
-# Use :meth:`~pyvista.DataSetFilters.validate_mesh` to show that the cell is not convex.
+# Use :meth:`~pyvista.DataSet.validate_mesh` to show that the cell is not convex.
 report = quad.validate_mesh()
 print(report.is_valid)
 print(report.issues)
