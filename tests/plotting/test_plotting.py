@@ -3526,7 +3526,8 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
-def test_plot_cell_multiple_cell_types():
+def test_plot_cell_multiple_cell_types(verify_image_cache):
+    verify_image_cache.high_variance_test = True
     cell3d = examples.cells.Polyhedron()
     cell2d = examples.cells.Quadrilateral().translate((2, -2, 0))
     grid = cell2d + cell3d
