@@ -17,7 +17,6 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
-    from pyvista import MultiBlock
     from pyvista import PolyData
 
 
@@ -58,58 +57,59 @@ def plot_cell(
 
     """
 
-    def _cell_faces_as_multiblock() -> MultiBlock:
-        """Convert a 3D vtkCell into a MultiBlock of PolyData faces."""
-        # Implementation note: we don't use ``extract_geometry`` because that may alter the face
-        # orientation, so we iterate over each face directly to convert to PolyData
-        grid_points = grid.points
-        face_blocks = pv.MultiBlock()
+    def _extract_geometry(cell_):
+        if cell_.type == pv.CellType.POLYHEDRON:
+            # For Polyhedron, we don't use ``extract_geometry`` directly because that may alter
+            # the face orientation, so we iterate over each face directly to create separate
+            # PolyData faces instead.
+            faces = pv.MultiBlock()
+            for i in range(cell_.n_faces):
+                face = cell_.GetFace(i)
+                face_n_points = face.GetNumberOfPoints()
+                point_ids = [face.GetPointId(i) for i in range(face_n_points)]
+                poly = pv.PolyData(grid.points, [face_n_points, *point_ids])
+                faces.append(poly)
+            return faces.extract_geometry()
+        return cell_.cast_to_unstructured_grid().extract_geometry()
 
-        for i in range(cell.n_faces):
-            face = cell.GetFace(i)
-            npts = face.GetNumberOfPoints()
-            point_ids = [face.GetPointId(i) for i in range(npts)]
-
-            poly_points = grid_points[point_ids]
-            poly_face = [npts, *tuple(range(npts))]
-            poly = pv.PolyData(poly_points, poly_face)
-            face_blocks.append(poly)
-
-        return face_blocks
-
-    grid = grid if isinstance(grid, UnstructuredGrid) else grid.cast_to_unstructured_grid()
+    grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()
-    pl.add_mesh(grid, opacity=0.5)
-    edges = grid.extract_all_edges()
-    cell = next(grid.cell)
-    if edges.n_cells or cell.type in [
-        CellType.LINE,
-        CellType.POLY_LINE,
-        CellType.QUADRATIC_EDGE,
-        CellType.CUBIC_LINE,
-    ]:
-        pl.add_mesh(grid, style='wireframe', line_width=10, color='k', render_lines_as_tubes=True)
-    pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
-    pl.add_point_labels(
-        grid.points,
-        list(range(grid.n_points)),
-        always_visible=True,
-        fill_shape=False,
-        margin=0,
-        shape_opacity=0.0,
-        font_size=50,
-    )
+    for cell in grid.cell:
+        # Use existing grid if it's already a grid with one cell
+        cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
+        pl.add_mesh(cell_as_grid, opacity=0.5)
+        edges = cell_as_grid.extract_all_edges()
+        if edges.n_cells or cell.type in [
+            CellType.LINE,
+            CellType.POLY_LINE,
+            CellType.QUADRATIC_EDGE,
+            CellType.CUBIC_LINE,
+        ]:
+            pl.add_mesh(
+                cell_as_grid,
+                style='wireframe',
+                line_width=10,
+                color='k',
+                render_lines_as_tubes=True,
+            )
+        pl.add_points(cell.points, render_points_as_spheres=True, point_size=80, color='r')
+        pl.add_point_labels(
+            cell.points,
+            cell.point_ids,
+            always_visible=True,
+            fill_shape=False,
+            margin=0,
+            shape_opacity=0.0,
+            font_size=50,
+        )
 
-    if show_normals and cell.dimension >= 2:
-        # Plot arrows for each face separately
-        face_blocks = _cell_faces_as_multiblock()
-        magnitude = face_blocks.length / 4
-        for block in face_blocks:
-            surf = block.triangulate() if cell.type is CellType.TRIANGLE_STRIP else block
+        if show_normals and cell.dimension >= 2:
+            surface = _extract_geometry(cell)
+            surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
             pl.add_arrows(
-                surf.cell_centers().points,
-                surf.cell_normals,
-                mag=magnitude,
+                surface.cell_centers().points,
+                surface.cell_normals,
+                mag=grid.length / 4,
                 color='yellow',
                 show_scalar_bar=False,
             )
