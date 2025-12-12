@@ -91,7 +91,7 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = True, **kwargs):
         )
 
         if show_normals and cell.dimension >= 2:
-            surface = _extract_geometry(cell).copy()
+            surface = _extract_geometry(cell)
             surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
             pl.add_arrows(
                 surface.cell_centers().points,
