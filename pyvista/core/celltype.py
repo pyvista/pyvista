@@ -88,7 +88,7 @@ def _generate_faces_badge(num_faces: int) -> str:
 class _CellTypeTuple(NamedTuple):
     value: int
     cell_class: type[_vtk.vtkCell] | None = None
-    short_doc: str = ''
+    doc: str = ''
     example: str | None = None
     points_override: Literal['variable', 'n/a'] | None = None
     edges_override: Literal['variable', 'n/a'] | None = None
@@ -101,13 +101,13 @@ _CELL_TYPE_INFO = dict(
     EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
         cell_class=_vtk.vtkEmptyCell,
-        short_doc="""Used as a place-holder during processing.""",
+        doc="""Used as a place-holder during processing.""",
     ),
     VERTEX=_CellTypeTuple(
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
         example='Vertex',
-        short_doc="""
+        doc="""
         Represents a point in 3D space.
 
         The vertex is a primary zero-dimensional cell. It is defined by a single point.
@@ -118,7 +118,7 @@ _CELL_TYPE_INFO = dict(
         cell_class=_vtk.vtkPolyVertex,
         example='PolyVertex',
         points_override='variable',
-        short_doc="""
+        doc="""
         Represents a set of points in 3D space.
 
         The polyvertex is a composite zero-dimensional cell. It is defined by an
@@ -129,7 +129,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
         example='Line',
-        short_doc="""
+        doc="""
         Represents a 1D line.
 
         The line is a primary one-dimensional cell. It is defined by two points.
@@ -141,7 +141,7 @@ _CELL_TYPE_INFO = dict(
         cell_class=_vtk.vtkPolyLine,
         example='PolyLine',
         points_override='variable',
-        short_doc="""
+        doc="""
         Represents a set of 1D lines.
 
         The polyline is a composite one-dimensional cell consisting of one or more
@@ -152,7 +152,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
         example='Triangle',
-        short_doc="""
+        doc="""
         Represents a 2D triangle.
 
         The triangle is a primary two-dimensional cell. The triangle is defined by a
@@ -165,7 +165,7 @@ _CELL_TYPE_INFO = dict(
         example='TriangleStrip',
         points_override='variable',
         edges_override='variable',
-        short_doc="""
+        doc="""
         Represents a 2D triangle strip.
 
         The triangle strip is a composite two-dimensional cell consisting of one or more
@@ -178,7 +178,7 @@ _CELL_TYPE_INFO = dict(
         example='Polygon',
         points_override='variable',
         edges_override='variable',
-        short_doc="""
+        doc="""
         Represents a 2D n-sided polygon.
 
         The polygon is a primary two-dimensional cell. It is defined by an ordered list
@@ -189,7 +189,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_PIXEL,
         cell_class=_vtk.vtkPixel,
         example='Pixel',
-        short_doc="""
+        doc="""
         Represents a 2D orthogonal quadrilateral.
 
         The pixel is a primary two-dimensional cell defined by an ordered list of four
@@ -206,7 +206,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUAD,
         cell_class=_vtk.vtkQuad,
         example='Quadrilateral',
-        short_doc="""
+        doc="""
         Represents a 2D quadrilateral.
 
         The quadrilateral is a primary two-dimensional cell. It is defined by an ordered
@@ -217,7 +217,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_TETRA,
         cell_class=_vtk.vtkTetra,
         example='Tetrahedron',
-        short_doc="""
+        doc="""
         Represents a 3D tetrahedron.
 
         The tetrahedron is a primary three-dimensional cell. The tetrahedron is defined
@@ -228,7 +228,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_VOXEL,
         cell_class=_vtk.vtkVoxel,
         example='Voxel',
-        short_doc="""
+        doc="""
         Represents a 3D orthogonal parallelepiped.
 
         The voxel is a primary three-dimensional cell defined by an ordered list of
@@ -245,7 +245,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
         example='Hexahedron',
-        short_doc="""
+        doc="""
         Represents a 3D rectangular hexahedron.
 
         The hexahedron is a primary three-dimensional cell consisting of six
@@ -256,7 +256,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_WEDGE,
         cell_class=_vtk.vtkWedge,
         example='Wedge',
-        short_doc="""
+        doc="""
         Represents a linear 3D wedge.
 
         The wedge is a primary three-dimensional cell consisting of two triangular
@@ -267,7 +267,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_PYRAMID,
         cell_class=_vtk.vtkPyramid,
         example='Pyramid',
-        short_doc="""
+        doc="""
         Represents a 3D pyramid.
 
         The pyramid is a primary three-dimensional cell consisting of a rectangular base
@@ -278,7 +278,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
         example='PentagonalPrism',
-        short_doc="""
+        doc="""
         Represents a convex 3D prism with a pentagonal base and five quadrilateral faces.
 
         The pentagonal prism is a primary three-dimensional cell defined by an ordered
@@ -289,7 +289,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
         example='HexagonalPrism',
-        short_doc="""
+        doc="""
         Represents a 3D prism with hexagonal base and six quadrilateral faces.
 
         The hexagonal prism is a primary three-dimensional cell defined by an ordered
@@ -302,7 +302,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_EDGE,
         cell_class=_vtk.vtkQuadraticEdge,
         example='QuadraticEdge',
-        short_doc="""
+        doc="""
         Represents a 1D, 3-node, iso-parametric parabolic line.
 
         The cell includes a mid-edge node.
@@ -312,7 +312,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkQuadraticTriangle,
         example='QuadraticTriangle',
-        short_doc="""
+        doc="""
         Represents a 2D, 6-node, iso-parametric parabolic triangle.
 
         The cell includes a mid-edge node for each of the three edges of the cell.
@@ -322,7 +322,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_QUAD,
         cell_class=_vtk.vtkQuadraticQuad,
         example='QuadraticQuadrilateral',
-        short_doc="""
+        doc="""
         Represents a 2D, 8-node iso-parametric parabolic quadrilateral element.
 
         The cell includes a mid-edge node for each of the four edges of the cell.
@@ -334,7 +334,7 @@ _CELL_TYPE_INFO = dict(
         example='QuadraticPolygon',
         points_override='variable',
         edges_override='variable',
-        short_doc="""
+        doc="""
         Represents a 2D n-sided (2*n nodes) parabolic polygon.
 
         The polygon cannot have any internal holes, and cannot self-intersect.
@@ -345,7 +345,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_TETRA,
         cell_class=_vtk.vtkQuadraticTetra,
         example='QuadraticTetrahedron',
-        short_doc="""
+        doc="""
         Represents a 3D, 10-node, iso-parametric parabolic tetrahedron.
 
         The cell includes a mid-edge node on each of the side edges of the tetrahedron.
@@ -355,7 +355,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkQuadraticHexahedron,
         example='QuadraticHexahedron',
-        short_doc="""
+        doc="""
         Represents a 3D, 20-node iso-parametric parabolic hexahedron.
 
         The cell includes a mid-edge node.
@@ -365,7 +365,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkQuadraticWedge,
         example='QuadraticWedge',
-        short_doc="""
+        doc="""
         Represents a 3D, 15-node iso-parametric parabolic wedge.
 
         The cell includes a mid-edge node.
@@ -375,7 +375,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_PYRAMID,
         cell_class=_vtk.vtkQuadraticPyramid,
         example='QuadraticPyramid',
-        short_doc="""
+        doc="""
         Represents a 3D, 13-node iso-parametric parabolic pyramid.
 
         The cell includes a mid-edge node.
@@ -385,7 +385,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BIQUADRATIC_QUAD,
         cell_class=_vtk.vtkBiQuadraticQuad,
         example='BiQuadraticQuadrilateral',
-        short_doc="""
+        doc="""
         Represents a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
 
         The cell includes a mid-edge node for each of the four edges of the cell and
@@ -396,7 +396,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkTriQuadraticHexahedron,
         example='TriQuadraticHexahedron',
-        short_doc="""
+        doc="""
         Represents a 3D, 27-node iso-parametric triquadratic hexahedron.
 
         The cell includes 8 edge nodes, 12 mid-edge nodes, 6 mid-face nodes and one
@@ -407,7 +407,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
         cell_class=_vtk.vtkTriQuadraticPyramid,
         example='TriQuadraticPyramid',
-        short_doc="""
+        doc="""
         Represents a second order 3D iso-parametric 19-node pyramid.
 
         The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
@@ -418,7 +418,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
         example='QuadraticLinearQuadrilateral',
-        short_doc="""
+        doc="""
         Represents a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
 
         The cell includes a mid-edge node for two of the four edges.
@@ -428,7 +428,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
         cell_class=_vtk.vtkQuadraticLinearWedge,
         example='QuadraticLinearWedge',
-        short_doc="""
+        doc="""
         Represents a 3D, 12-node iso-parametric linear quadratic wedge.
 
         The cell includes mid-edge node in the triangle edges.
@@ -438,7 +438,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
         example='BiQuadraticQuadraticWedge',
-        short_doc="""
+        doc="""
         Represents a 3D, 18-node iso-parametric bi-quadratic wedge.
 
         The cell includes a mid-edge node.
@@ -448,7 +448,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
         example='BiQuadraticQuadraticHexahedron',
-        short_doc="""
+        doc="""
         Represents a 3D, 24-node iso-parametric biquadratic hexahedron.
 
         The cell includes mid-edge and center-face nodes.
@@ -458,7 +458,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkBiQuadraticTriangle,
         example='BiQuadraticTriangle',
-        short_doc="""
+        doc="""
         Represents a 2D, 7-node, iso-parametric parabolic triangle.
 
         The cell includes three mid-edge nodes besides the three triangle vertices
@@ -471,7 +471,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_CUBIC_LINE,
         cell_class=_vtk.vtkCubicLine,
         example='CubicLine',
-        short_doc="""
+        doc="""
         Represents a 1D iso-parametric cubic line.
 
         The cell includes two mid-edge nodes.
@@ -490,7 +490,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_POLYHEDRON,
         cell_class=_vtk.vtkPolyhedron,
         example='Polyhedron',
-        short_doc="""
+        doc="""
         Represents a 3D cell defined by a set of polygonal faces.
 
         """,
