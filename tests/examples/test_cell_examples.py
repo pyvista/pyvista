@@ -46,11 +46,12 @@ def test_area_and_volume(cell_example):
         assert np.isclose(volume, 0.0)
 
 
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='vtkCellValidator output differs')
 @parametrize('cell_example', cell_example_functions)
 def test_cell_is_valid(cell_example):
     mesh = cell_example()
-    report = mesh.validate_mesh()
-    assert not report.issues
+    issues = mesh.validate_mesh().issues
+    assert not issues
 
 
 def test_empty():
