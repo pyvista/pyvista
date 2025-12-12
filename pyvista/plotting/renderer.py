@@ -2151,13 +2151,16 @@ class Renderer(
             prop.SetFontFamily(font_family)
             prop.SetBold(bold)
 
-            # this merely makes the font sharper
             if use_3d_text:
+                # this merely makes the font sharper
                 prop.SetFontSize(scaled_font_size)
+            else:
+                prop.SetFontSize(font_size)
 
-        cube_axes_actor.SetScreenSize(
-            font_size / default_font_size / font_size_factor * default_screen_size
-        )
+        if use_3d_text:
+            cube_axes_actor.SetScreenSize(
+                font_size / default_font_size / font_size_factor * default_screen_size
+            )
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)

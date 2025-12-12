@@ -671,6 +671,15 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.parametrize('use_3d_text', [True, False])
+@pytest.mark.parametrize('font_size', [12, 24])
+def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show_grid(use_3d_text=use_3d_text, font_size=font_size)
+    pl.show()
+
+
 cpos_param = [
     [(2.0, 5.0, 13.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
     [-1, 2, -5],  # trigger view vector
