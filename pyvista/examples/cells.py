@@ -15,7 +15,7 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 
-def plot_cell(grid, cpos=None, *, show_normals: bool = True, **kwargs):
+def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
 
     Parameters
