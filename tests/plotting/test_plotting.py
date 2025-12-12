@@ -3526,6 +3526,13 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
+def test_plot_cell_multiple_cell_types():
+    cell3d = examples.cells.Polyhedron()
+    cell2d = examples.cells.Quadrilateral().translate((2, -2, 0))
+    grid = cell2d + cell3d
+    examples.plot_cell(grid, show_normals=True)
+
+
 def test_tight_square_padding():
     grid = pv.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
@@ -5299,21 +5306,21 @@ def test_partitioned_dataset(sphere):
 
 @pytest.mark.parametrize('cell_example', cell_example_functions)
 def test_cell_examples_normals(cell_example, verify_image_cache):
+    if cell_example is examples.cells.Empty:
+        pytest.skip('nothing to plot')
+    if cell_example in [
+        examples.cells.BiQuadraticQuadraticWedge,
+        examples.cells.QuadraticLinearWedge,
+        examples.cells.QuadraticWedge,
+    ] and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('point ordering changed in newer VTK')
+
     # Skip since variance is too high
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
 
     grid = cell_example()
-    cell = next(grid.cell)
-    if cell.type == pv.CellType.EMPTY_CELL:
-        pytest.skip('nothing to plot')
-    if cell.type in [
-        pv.CellType.BIQUADRATIC_QUADRATIC_WEDGE,
-        pv.CellType.QUADRATIC_LINEAR_WEDGE,
-        pv.CellType.QUADRATIC_WEDGE,
-    ] and pv.vtk_version_info < (9, 4, 0):
-        pytest.xfail('point ordering changed in newer VTK')
-    if cell.dimension == 2:
+    if next(grid.cell).dimension == 2:
         # Ensure normals of 2D cells point in z-direction for consistency
         normal = grid.extract_geometry().cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
