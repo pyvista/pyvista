@@ -5,12 +5,15 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
+from dataclasses import dataclass
+from dataclasses import fields
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
+from typing import get_args
 from typing import overload
 
 import numpy as np
@@ -18,6 +21,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -58,6 +62,272 @@ if TYPE_CHECKING:
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+
+_MeshValidationActionOptions = Literal['warn', 'error']
+_ArrayValidationOptions = Literal[
+    'point_data_wrong_length',
+    'cell_data_wrong_length',
+]
+_CellValidationOptions = Literal[
+    'wrong_number_of_points',
+    'intersecting_edges',
+    'intersecting_faces',
+    'non_contiguous_edges',
+    'non_convex',
+    'incorrectly_oriented_faces',
+    'non_planar_faces',
+    'degenerate_faces',
+    'coincident_points',
+    'invalid_point_references',
+]
+_PointValidationOptions = Literal['unused_points', 'non_finite_points']
+_CriticalValidationOptions = Literal[
+    'invalid_point_references',
+    'point_data_wrong_length',
+    'cell_data_wrong_length',
+]
+_MeshValidationGroupOptions = Literal['data', 'cells', 'points', 'critical']
+_MeshValidationOptions = (
+    _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
+)
+_DEFAULT_MESH_VALIDATION_ARGS = get_args(_MeshValidationGroupOptions)
+
+
+class _MeshValidator:
+    @dataclass
+    class _ValidationIssue:
+        name: str
+        message: str
+        values: list[str] | NumpyArray[int] | None
+
+        @property
+        def _has_values(self) -> bool:
+            values = self.values
+            if isinstance(values, np.ndarray):
+                if values.size > 0:
+                    return True
+            elif values:
+                return True
+            return False
+
+    def __init__(
+        self,
+        mesh: DataSet,
+        validation_fields: _MeshValidationOptions
+        | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+    ) -> None:
+        # Validate inputs
+        allowed_array_fields = get_args(_ArrayValidationOptions)
+        allowed_cell_fields = get_args(_CellValidationOptions)
+        allowed_point_fields = get_args(_PointValidationOptions)
+        allowed_fields = (
+            *_DEFAULT_MESH_VALIDATION_ARGS,
+            *allowed_array_fields,
+            *allowed_cell_fields,
+            *allowed_cell_fields,
+            'critical',
+        )
+        if validation_fields != _DEFAULT_MESH_VALIDATION_ARGS:
+            if isinstance(validation_fields, str):
+                validation_fields = (validation_fields,)
+            for field in validation_fields:
+                _validation.check_contains(
+                    allowed_fields, must_contain=field, name='validation_fields'
+                )
+
+            if 'critical' in validation_fields:
+                validation_fields = list(validation_fields)
+                validation_fields.remove('critical')
+                validation_fields.extend(get_args(_CriticalValidationOptions))
+
+        self._mesh_class_name = mesh.__class__.__name__
+        self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
+
+        # Validate data arrays
+        store_all_array_fields = 'data' in validation_fields
+        if store_all_array_fields or any(arg in validation_fields for arg in allowed_array_fields):
+            for issue in _MeshValidator._validate_arrays(mesh):
+                if store_all_array_fields or issue.name in validation_fields:
+                    self._validation_issues[issue.name] = issue
+
+        # Validate cells
+        # We do this with cell_validator plus a separate method for point references
+        invalid_point_references: Literal['invalid_point_references'] = 'invalid_point_references'
+        fields_for_cell_validator: list[_CellValidationOptions] = list(allowed_cell_fields)
+        fields_for_cell_validator.remove(invalid_point_references)
+        store_all_cell_fields = 'cells' in validation_fields
+        if store_all_cell_fields or invalid_point_references in validation_fields:
+            issue = _MeshValidator._validate_invalid_point_references(mesh)
+            self._validation_issues[issue.name] = issue
+
+        # Validate with cell_validator
+        if store_all_cell_fields or any(
+            arg in validation_fields for arg in fields_for_cell_validator
+        ):
+            for issue in _MeshValidator._validate_cells(mesh, fields_for_cell_validator):
+                if store_all_cell_fields or issue.name in validation_fields:
+                    self._validation_issues[issue.name] = issue
+
+        # Validate points
+        store_all_points_fields = 'points' in validation_fields
+        if store_all_points_fields or any(
+            arg in validation_fields for arg in allowed_point_fields
+        ):
+            for issue in _MeshValidator._validate_points(mesh):
+                if store_all_cell_fields or issue.name in validation_fields:
+                    self._validation_issues[issue.name] = issue
+
+    @staticmethod
+    def _validate_cells(
+        mesh: DataSet, validation_fields: list[_CellValidationOptions]
+    ) -> list[_MeshValidator._ValidationIssue]:
+        issues: list[_MeshValidator._ValidationIssue] = []
+        validated = mesh.cell_validator()
+        for name in validation_fields:
+            array = validated.field_data[name]
+            msg = _MeshValidator._invalid_cell_msg(name, array)
+            issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+            issues.append(issue)
+        return issues
+
+    @staticmethod
+    def _validate_invalid_point_references(mesh: DataSet) -> _MeshValidator._ValidationIssue:
+        def _find_cells_with_invalid_point_refs() -> NumpyArray[int]:
+            """Return cell IDs that reference points that do not exist."""
+            grid = (
+                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+            )
+
+            # Find indices in the connectivity array that are invalid
+            conn = grid.cell_connectivity
+            invalid_indices = np.where((conn < 0) | (conn >= grid.n_points))[0]
+            if len(invalid_indices) == 0:
+                return np.array([], dtype=int)
+
+            # Map invalid connectivity indices back to cell IDs using offsets
+            # Each invalid index belongs to the cell whose start offset <= index < next offset
+            cell_ids = np.searchsorted(grid.offset, invalid_indices, side='right') - 1
+            return np.unique(cell_ids)
+
+        name = 'invalid_point_references'
+        array = _find_cells_with_invalid_point_refs()
+        msg = _MeshValidator._invalid_cell_msg(name, array)
+        return _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+
+    @staticmethod
+    def _invalid_cell_msg(name: str, array: NumpyArray[int]) -> str:
+        name_norm = name.replace('_', ' ')
+        # Need to write name either before of after the word "cell"
+        if name == 'non_convex':
+            before = f' {name_norm} '
+            after = ''
+        else:
+            before = ' '
+            after = f' with {name_norm}'
+        s = 's' if len(array) > 1 else ''
+        return f'Mesh has {len(array)}{before}cell{s}{after}. Invalid cell id{s}: {np.sort(array)}'
+
+    @staticmethod
+    def _validate_arrays(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+        def _invalid_array_length_msg(
+            invalid_arrays: dict[str, int], kind: str, expected: int
+        ) -> str:
+            if len(invalid_arrays) > 1:
+                s = 's'
+                do = 'do'
+            else:
+                s = ''
+                do = 'does'
+
+            msg_template = (
+                '{kind} array length{s} {do} not match the number of {kind_lower} in the '
+                'mesh ({expected}). Invalid array{s}: {details}'
+            )
+            details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
+            return msg_template.format(
+                kind=kind,
+                kind_lower=kind.lower() + 's',
+                expected=expected,
+                details=details,
+                s=s,
+                do=do,
+            )
+
+        def _validate_array_lengths(arrays: DataSetAttributes, expected: int) -> dict[str, int]:
+            return {name: len(arrays[name]) for name in arrays if len(arrays[name]) != expected}
+
+        issues: list[_MeshValidator._ValidationIssue] = []
+        for (
+            name,
+            kind,
+            data,
+            expected_n,
+        ) in [
+            ('point_data_wrong_length', 'Point', mesh.point_data, mesh.n_points),
+            ('cell_data_wrong_length', 'Cell', mesh.cell_data, mesh.n_cells),
+        ]:
+            invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
+            message = _invalid_array_length_msg(
+                invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
+            )
+            issue = _MeshValidator._ValidationIssue(
+                name=name, message=message, values=list(invalid_arrays.keys())
+            )
+            issues.append(issue)
+        return issues
+
+    @staticmethod
+    def _validate_points(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+        def get_unused_point_ids() -> NumpyArray[int]:
+            grid = mesh.cast_to_unstructured_grid()
+            all_points = np.arange(grid.n_points)
+            # Note: This may not include points used by Polyhedron cells
+            used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
+            return np.setdiff1d(all_points, used_points, assume_unique=True)
+
+        def get_non_finite_point_ids() -> NumpyArray[int]:
+            mask = ~np.isfinite(mesh.points).all(axis=1)
+            return np.where(mask)[0]
+
+        issues: list[_MeshValidator._ValidationIssue] = []
+        for name, point_ids, info in [
+            ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
+            ('non_finite_points', get_non_finite_point_ids(), ''),
+        ]:
+            name_norm = name.replace('_', ' ')
+            name_norm = name_norm.removesuffix('s')
+            if len(point_ids) > 1:
+                s = 's'
+                a = ' '
+            else:
+                s = ''
+                a = ' a '
+                if name_norm.startswith(('a', 'e', 'i', 'o', 'u')):
+                    a = a.replace('a', 'an')
+
+            msg = f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: {np.sort(point_ids)}'
+            issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
+            issues.append(issue)
+        return issues
+
+    @property
+    def error_message(self) -> str:
+        messages: list[str] = []
+        messages += [
+            issue.message for issue in self._validation_issues.values() if issue._has_values
+        ]
+        bullet = ' - '
+        body = bullet + f'\n{bullet}'.join(messages)
+        header = f'{self._mesh_class_name} mesh is not valid due to the following problems:'
+        return f'{header}\n{body}'
+
+    @property
+    def report(self) -> DataSet._ValidationReport:
+        issues = self._validation_issues
+        kwargs = {
+            name: issue.values if issue._has_values else None for name, issue in issues.items()
+        }
+        return DataSet._ValidationReport(**kwargs)  # type: ignore[arg-type]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -3020,3 +3290,145 @@ class DataSet(DataSetFilters, DataObject):
         # Align points first to make rank computation more robust
         aligned_points = self.align_xyz().points
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
+
+    @dataclass(frozen=True)
+    class _ValidationReport(_NoNewAttrMixin):
+        """Dataclass to report mesh validation results."""
+
+        # Data
+        point_data_wrong_length: list[str] | None = None
+        cell_data_wrong_length: list[str] | None = None
+
+        # Cells
+        wrong_number_of_points: NumpyArray[int] | None = None
+        intersecting_edges: NumpyArray[int] | None = None
+        intersecting_faces: NumpyArray[int] | None = None
+        non_contiguous_edges: NumpyArray[int] | None = None
+        non_convex: NumpyArray[int] | None = None
+        incorrectly_oriented_faces: NumpyArray[int] | None = None
+        non_planar_faces: NumpyArray[int] | None = None
+        degenerate_faces: NumpyArray[int] | None = None
+        coincident_points: NumpyArray[int] | None = None
+        invalid_point_references: NumpyArray[int] | None = None
+
+        # Points
+        unused_points: NumpyArray[int] | None = None
+        non_finite_points: NumpyArray[int] | None = None
+
+        @property
+        def is_valid(self) -> bool:  # numpydoc ignore=RT01
+            """Return ``True`` if the mesh is valid."""
+            return not self.issues
+
+        @property
+        def issues(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
+            """Return ``True`` if the mesh is valid."""
+            return tuple(f.name for f in fields(self) if getattr(self, f.name) is not None)
+
+    def validate_mesh(
+        self,
+        validation_fields: _MeshValidationOptions
+        | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        action: _MeshValidationActionOptions | None = None,
+    ) -> DataSet._ValidationReport:
+        """Validate this mesh's array data, cells, and points.
+
+        This method returns a ``ValidationReport`` dataclass with information about the validity
+        of a mesh. The dataclass contains validation fields which are specific to issues with the
+        data, cells, and points.
+
+        **Data-related fields**
+
+        - ``point_data_wrong_length``: If any point data arrays do not match the number of
+          points, the array names are stored here.
+        - ``cell_data_wrong_length``: If any cell data arrays do not match the number of
+          cells, the array names are stored here.
+
+        **Cell-related fields**
+
+        Other than ``invalid_point_references``, these are all computed using
+        :meth:`~pyvista.DataSetFilters.cell_validator`.
+
+        - ``wrong_number_of_points``
+        - ``intersecting_edges``
+        - ``intersecting_faces``
+        - ``non_contiguous_edges``
+        - ``non_convex``
+        - ``incorrectly_oriented_faces``
+        - ``non_planar_faces``
+        - ``degenerate_faces``
+        - ``coincident_points``
+        - ``invalid_point_references``
+
+        **Point-related fields**
+
+        - ``unused_points``
+        - ``non_finite_points``
+
+        For each field, its value is ``None`` if there is no issue. Otherwise, any invalid items
+        are stored in each field (e.g. invalid array names or cell/point ids).
+
+        By default, the validity of all fields is included in the report. Optionally, only a
+        subset of fields may be requested.
+
+        The report includes an additional ``is_valid`` property, which evaluates to ``True`` when
+        all fields are ``None``.
+
+        Parameters
+        ----------
+        validation_fields : str | sequence[str], default: ('data', 'cells', 'points')
+            Select which field(s) to include in the validation report. All data, cell, and point
+            fields are included by default. Specify individual fields by name, or use group name(s)
+            to include multiple related validation fields:
+
+            - ``'data'`` to include all data fields
+            - ``'cells'`` to include all cell fields
+            - ``'points'`` to include all point fields
+            - ``'critical'`` to include all critical fields that, if invalid, may cause a
+              segmentation fault and crash Python. This option includes
+              ``point_data_wrong_length``, ``cell_data_wrong_length``, and
+              ``invalid_point_references``.
+
+            Fields that are excluded from the report will have a value of ``None``.
+
+        action : 'warn' | 'error', optional
+            Issue a warning or raise an error if the mesh is not valid for the specified fields.
+            By default, no action is taken.
+
+        Returns
+        -------
+        ValidationReport
+            Report dataclass with information about mesh validity.
+
+        See Also
+        --------
+        :meth:`~pyvista.DataSetFilters.cell_validator`
+        :ref:`mesh_validation_example`
+
+        Examples
+        --------
+        Check if a mesh has no cells with intersecting edges.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> report = mesh.validate_mesh()
+        >>> has_intersecting_edges = report.intersecting_edges is not None
+        >>> has_intersecting_edges
+        False
+
+        Check that the mesh is valid without issues.
+
+        >>> report.is_valid
+        True
+
+        """
+        if action is not None:
+            allowed = get_args(_MeshValidationActionOptions)
+            _validation.check_contains(allowed, must_contain=action, name='action')
+
+        validator = _MeshValidator(self, validation_fields)
+        if action == 'warn':
+            warn_external(validator.error_message, pv.InvalidMeshWarning)
+        elif action == 'error':
+            raise pv.InvalidMeshError(validator.error_message)
+        return validator.report

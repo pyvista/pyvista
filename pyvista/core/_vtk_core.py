@@ -344,6 +344,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkBooleanOperationPolyDataFilter as vtkBooleanOperationPolyDataFilter,
 )
 from vtkmodules.vtkFiltersGeneral import vtkBoxClipDataSet as vtkBoxClipDataSet
+from vtkmodules.vtkFiltersGeneral import vtkCellValidator as vtkCellValidator
 from vtkmodules.vtkFiltersGeneral import vtkClipClosedSurface as vtkClipClosedSurface
 from vtkmodules.vtkFiltersGeneral import vtkContourTriangulator as vtkContourTriangulator
 from vtkmodules.vtkFiltersGeneral import vtkCursor3D as vtkCursor3D
