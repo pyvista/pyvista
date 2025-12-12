@@ -28,9 +28,8 @@ def plot_cell(
     Parameters
     ----------
     grid : PolyData | UnstructuredGrid
-        Dataset containing a single cell (ideally). Plotting a mesh with multiple cells `is`
-        allowed, but the plot may not be entirely correct since it's assumed that all cells have
-        the same :class:`~pyvista CellType` as the first cell in the mesh.
+        Dataset containing one single cell (ideally), though plotting a mesh with multiple cells
+        is supported.
 
         .. versionchanged:: 0.47
             Plotting :class:`~pyvista.PolyData` is now supported.
