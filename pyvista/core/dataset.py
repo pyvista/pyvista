@@ -3403,6 +3403,7 @@ class DataSet(DataSetFilters, DataObject):
         See Also
         --------
         :meth:`~pyvista.DataSetFilters.cell_validator`
+        :ref:`mesh_validation_example`
 
         Examples
         --------
