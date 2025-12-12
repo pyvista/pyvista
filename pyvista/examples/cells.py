@@ -15,7 +15,7 @@ from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
 
-def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
+def plot_cell(grid, cpos=None, *, show_normals: bool = True, **kwargs):
     """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
 
     Parameters
@@ -44,6 +44,20 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
     >>> examples.plot_cell(grid)
 
     """
+
+    def _extract_geometry(cell_):
+        if cell_.type == pv.CellType.POLYHEDRON:
+            # For Polyhedron, we don't use ``extract_geometry`` because that may alter the face
+            # orientation, so we iterate over each face directly instead
+            faces = []
+            for i in range(cell_.n_faces):
+                face = cell_.GetFace(i)
+                face_n_points = face.GetNumberOfPoints()
+                point_ids = [face.GetPointId(i) for i in range(face_n_points)]
+                faces.extend([face_n_points, *point_ids])
+            return pv.PolyData(cell_.points, faces)
+        return cell_.cast_to_unstructured_grid().extract_geometry()
+
     pl = pv.Plotter()
     for cell in grid.cell:
         # Use existing grid if it's already a grid with one cell
@@ -75,18 +89,15 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
         )
 
         if show_normals and cell.dimension >= 2:
-            # Plot arrows for each face separately
-            face_blocks = cell._cast_as_multiblock_with_polydata_faces()
-            magnitude = grid.length / 4
-            for block in face_blocks:
-                surf = block.triangulate() if cell.type is CellType.TRIANGLE_STRIP else block
-                pl.add_arrows(
-                    surf.cell_centers().points,
-                    surf.cell_normals,
-                    mag=magnitude,
-                    color='yellow',
-                    show_scalar_bar=False,
-                )
+            surface = _extract_geometry(cell)
+            surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
+            pl.add_arrows(
+                surface.cell_centers().points,
+                surface.cell_normals,
+                mag=grid.length / 4,
+                color='yellow',
+                show_scalar_bar=False,
+            )
 
     pl.enable_anti_aliasing()
     if cpos is None:
