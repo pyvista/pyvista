@@ -4,7 +4,7 @@
 Mesh Validation
 ~~~~~~~~~~~~~~~
 This example demonstrates how to evaluate the validity of a mesh for use with VTK using
-:meth:`~pyvista.DataSetFilters.cell_validator` and :meth:`~pyvista.DataSet.validate_mesh`.
+:meth:`~pyvista.DataSet.cell_validator` and :meth:`~pyvista.DataSetFilters.validate_mesh`.
 
 """
 
