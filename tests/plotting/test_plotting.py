@@ -3526,6 +3526,7 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
 def test_plot_cell_multiple_cell_types(verify_image_cache):
     verify_image_cache.high_variance_test = True
     cell3d = examples.cells.Polyhedron()
