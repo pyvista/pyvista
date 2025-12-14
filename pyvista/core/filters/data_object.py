@@ -854,6 +854,7 @@ class DataObjectFilters:
         *,
         bounds: VectorLike[float] | None = None,
         bounds_size: float | VectorLike[float] | None = None,
+        length: float | None = None,
         center: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -863,8 +864,14 @@ class DataObjectFilters:
         This filter rescales and translates the mesh to fit specified bounds. This is useful for
         normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
 
-        Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
-        ``bounds_size`` and ``center`` to implicitly set the new bounds.
+        It has three independent use cases:
+
+        #. Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly
+        #. Use ``bounds_size`` to set the mesh's ``bounds_size`` directly.
+        #. Use ``length`` to set the mesh's diagonal ``length`` directly.
+
+        By default, the ``bounds_size`` and ``length`` options resize the mesh so that its
+        ``center`` is unchanged. Optionally, ``center`` may be set explicitly for these cases.
 
         .. versionadded:: 0.46
 
@@ -879,12 +886,18 @@ class DataObjectFilters:
             Target :attr:`~pyvista.DataSet.bounds` for the resized dataset in the format
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``. If provided, the dataset is scaled and
             translated to fit exactly within these bounds. Cannot be used together with
-            ``bounds_size`` or ``center``.
+            ``bounds_size``, ``length``, or ``center``.
 
         bounds_size : float | VectorLike[float], optional
             Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
             single float to specify the size of all three axes, or a 3-element vector to set the
             size of each axis independently. Cannot be used together with ``bounds``.
+
+        length : float, optional
+            Target length of the :attr:`~pyvista.DataSet.bounds` for the resized dataset.
+            Cannot be used together with ``bounds`` or ``bounds_size``.
+
+            .. versionadded:: 0.47
 
         center : VectorLike[float], optional
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
@@ -929,11 +942,21 @@ class DataObjectFilters:
                     z_min = -5.0,
                     z_max =  6.0)
 
-        Resize the mesh so its size is ``4.0``.
+        Resize the mesh so its diagonal length is ``4.0``. The mesh's center is unchanged.
+
+        >>> resized = mesh.resize(length=4.0)
+        >>> resized.length
+        4.0
+        >>> resized.center
+        (1.0, 2.0, 3.0)
+
+        Resize the mesh so its size is ``4.0``. The mesh's center is again unchanged.
 
         >>> resized = mesh.resize(bounds_size=4.0)
         >>> resized.bounds_size
         (4.0, 4.0, 4.0)
+        >>> resized.center
+        (1.0, 2.0, 3.0)
         >>> resized.bounds
         BoundsTuple(x_min = -1.0,
                     x_max =  3.0,
@@ -962,15 +985,28 @@ class DataObjectFilters:
                     z_max =  0.5)
 
         """
+        if self.is_empty:
+            return self.copy()
+        bounds_set = bounds is not None
+        length_set = length is not None
+        bounds_size_set = bounds_size is not None
+        n_set = np.count_nonzero((bounds_set, length_set, bounds_size_set))
+        if n_set == 0:
+            msg = (
+                '`bounds`, `bounds_size`, and `length` cannot all be None. '
+                'Choose one resizing method.'
+            )
+            raise ValueError(msg)
+        elif n_set > 1:
+            msg = (
+                'Cannot specify more than one resizing method. Choose either `bounds`, '
+                '`bounds_size`, or `length` independently.'
+            )
+            raise ValueError(msg)
+
         if bounds is not None:
-            if bounds_size is not None:
-                msg = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
-                raise ValueError(msg)
             if center is not None:
-                msg = (
-                    "Cannot specify both 'bounds' and 'center'. 'center' can only be used with "
-                    "the 'bounds_size' parameter."
-                )
+                msg = '`center` can only be used with the `bounds_size` and `length` parameters.'
                 raise ValueError(msg)
 
             target_bounds3x2 = _validation.validate_array(
@@ -981,11 +1017,16 @@ class DataObjectFilters:
             target_center = np.mean(target_bounds3x2, axis=1)
 
         else:
-            if bounds_size is None:
-                msg = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
-                raise ValueError(msg)
-
-            target_size = bounds_size
+            ensure_positive = dict(must_be_in_range=[0, np.inf], strict_lower_bound=True)
+            if bounds_size is not None:
+                target_size = _validation.validate_array3(
+                    bounds_size, broadcast=True, name='bounds_size', **ensure_positive
+                )
+            else:
+                valid_length = _validation.validate_number(
+                    length, name='length', **ensure_positive
+                )
+                target_size = np.array(self.bounds_size) * valid_length / self.length
             current_center = np.array(self.center)
             target_center = (
                 current_center
