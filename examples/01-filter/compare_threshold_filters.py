@@ -15,17 +15,19 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-values = (155, 580)
 
 # %%
 # Volume Data to Volume Data
 # ++++++++++++++++++++++++++
 # There are a few filters like :func:`pyvista.DataSetFilters.clip_scalar`
+method_map = {'threshold': 0, 'image_threshold': 1}
+step = -80
+values = (155, 580)
 volume = pv.examples.download_carotid()
 thresholded_vol = volume.threshold(values)
-thresholded_vol = thresholded_vol.translate([-80, 0, 0]) #.ORIGIN[:, 0] += 80
+thresholded_vol = thresholded_vol.translate([step, 0, 0]) #.ORIGIN[:, 0] += 80
 image_thresholded_vol = volume.image_threshold(values, in_value=580)
-image_thresholded_vol = image_thresholded_vol.translate([-160, 0, 0]) #.ORIGIN[:, 0] += 80
+image_thresholded_vol = image_thresholded_vol.translate([2 * step, 0, 0]) #.ORIGIN[:, 0] += 80
 
 pl = pv.Plotter()
 pl.add_volume(volume)
@@ -39,19 +41,48 @@ print(pl.camera_position)
 # Volume Data to Unstructured Grid
 # ++++++++++++++++++++++++++++++++
 # There are a few filters like :func:`pyvista.DataSetFilters.clip_scalar`
+method_map = {'threshold': 0, 'extract_values': 1, "clip_scalar": 2}
+
 volume = pv.examples.download_carotid()
 step = -80
-mesh = pv.PolyData()
+values = (155, 580)
+mesh = pv.UnstructuredGrid()
+print(mesh)
 pl = pv.Plotter()
-thresholded_vol = volume.threshold(values)
 clipped_vol = volume.clip_scalar(value=values)
+clipped_vol.cell_data["method"] = np.full(
+    (clipped_vol.number_of_cells), 
+    method_map["clip_scalar"]
+)
+mesh += clipped_vol
+print(mesh)
+
 extracted_values_vol = volume.extract_values(values)
+extracted_values_vol.cell_data["method"] = np.full(
+    (extracted_values_vol.number_of_cells), 
+    method_map["extract_values"]
+)
 extracted_values_vol.points[:, 0] += step
+mesh += extracted_values_vol
+print(mesh)
+
+thresholded_vol = volume.threshold(values)
+thresholded_vol.cell_data["method"] = np.full(
+    (thresholded_vol.number_of_cells), 
+    method_map["threshold"]
+)
 thresholded_vol.points[:, 0] += step * 2
-print(type(clipped_vol), type(extracted_values_vol), type(thresholded_vol))
-pl.add_mesh(clipped_vol, color = "r", style='wireframe')
-pl.add_mesh(thresholded_vol,  color = "g", style='wireframe')
-pl.add_mesh(extracted_values_vol,  color = "b", style='wireframe')
+mesh += thresholded_vol
+print(mesh)
+mesh.set_active_scalars("method")
+colored_mesh, color_map = mesh.color_labels(output_scalars='method', return_dict=True)
+legend_map = dict(zip(method_map.keys(), color_map.values(), strict=True))
+
+pl.add_mesh(colored_mesh, style='wireframe', rgb=True)
+pl.add_legend(legend_map)
+
+# pl.add_mesh(thresholded_vol,  color = "g", style='wireframe')
+# pl.add_mesh(extracted_values_vol,  color = "b", style='wireframe')
 pl.show()
 print(pl.camera_position)
 pl.close()
@@ -70,3 +101,6 @@ clipped_surf.points[:, 2] += step
 pl.add_mesh(thresholded_surf, color = "r", style='wireframe')
 pl.add_mesh(clipped_surf,  color = "g", style='wireframe')
 pl.show()
+
+# %%
+# .. tags:: load
