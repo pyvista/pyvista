@@ -1020,11 +1020,16 @@ class DataObjectFilters:
             ensure_positive = dict(must_be_in_range=[0, np.inf], strict_lower_bound=True)
             if bounds_size is not None:
                 target_size = _validation.validate_array3(
-                    bounds_size, broadcast=True, name='bounds_size', **ensure_positive
+                    bounds_size,
+                    broadcast=True,
+                    name='bounds_size',
+                    **ensure_positive,  # type: ignore[arg-type]
                 )
             else:
                 valid_length = _validation.validate_number(
-                    length, name='length', **ensure_positive
+                    cast('float', length),
+                    name='length',
+                    **ensure_positive,  # type: ignore[arg-type]
                 )
                 target_size = np.array(self.bounds_size) * valid_length / self.length
             current_center = np.array(self.center)
