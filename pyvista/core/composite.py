@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyvista import PolyData
+    from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
     from .utilities.writer import BaseWriter
@@ -1299,7 +1300,10 @@ class MultiBlock(
 
     @property
     def center(self: MultiBlock) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or eturn the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1320,6 +1324,11 @@ class MultiBlock(
 
         """
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def length(self: MultiBlock) -> float:
