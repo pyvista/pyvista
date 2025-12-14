@@ -510,3 +510,14 @@ def test_cast_to_multiblock(multiblock_all):
     for block in [*multiblock_all, partitioned, multiblock, pointset]:
         multi = block.cast_to_multiblock()
         assert isinstance(multi, pv.MultiBlock)
+
+
+def test_center(multiblock_all_with_nested_and_none):
+    for block in multiblock_all_with_nested_and_none.recursive_iterator(skip_none=True):
+        original_length = block.length
+        new_center = (1.1, 2.2, 3.3)
+        block.center = new_center
+        actual_center = block.center
+        assert np.allclose(actual_center, new_center)
+        actual_length = block.length
+        assert np.isclose(actual_length, original_length)
