@@ -120,7 +120,7 @@ def wrap(  # noqa: PLR0911
 
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
-    * 3D :class:`trimesh.Trimesh` mesh using:func:`~pyvista.from_trimesh`.
+    * 3D :class:`trimesh.Trimesh` mesh using :func:`~pyvista.from_trimesh`.
     * 3D :class:`meshio.Mesh` mesh using :func:`~pyvista.from_meshio`.
 
     .. versionchanged:: 0.38.0
