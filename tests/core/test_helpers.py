@@ -148,6 +148,15 @@ def test_to_trimesh_triangulate():
     assert isinstance(out, trimesh.Trimesh)
 
 
+def test_to_from_trimesh_empty_mesh():
+    mesh = pv.ImageData()
+    tmesh = pv.to_trimesh(mesh)
+    assert isinstance(tmesh, trimesh.Trimesh)
+
+    pvmesh = pv.from_trimesh(tmesh)
+    assert isinstance(pvmesh, pv.PolyData)
+
+
 def test_to_trimesh_from_trimesh_texture_coordinates(ant):
     texture_coordinates_name = 'uv coordinates'
     texture_coordinates_array = np.random.default_rng().random((ant.n_points, 2))

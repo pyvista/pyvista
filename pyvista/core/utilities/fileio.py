@@ -1367,11 +1367,12 @@ def from_trimesh(mesh: trimesh.Trimesh) -> PolyData:  # numpydoc ignore=RT01
         Trimesh object to convert.
 
     """
+    # Handle case with no faces
+    faces = mesh.faces
+    if faces.size == 0:
+        faces = faces.reshape((0, 3))
     # Trimesh doesn't pad faces
-    polydata = pv.PolyData.from_regular_faces(
-        mesh.vertices,
-        faces=mesh.faces,
-    )
+    polydata = pv.PolyData.from_regular_faces(mesh.vertices, faces=faces, deep=False)
 
     # Set texture coordinates
     if (
@@ -1446,6 +1447,8 @@ def to_trimesh(  # numpydoc ignore=RT01
         is_all_triangles = mesh.is_all_triangles
     elif isinstance(mesh, pv.UnstructuredGrid):
         is_all_triangles = mesh.distinct_cell_types == {pv.CellType.TRIANGLE}
+    elif mesh.is_empty:
+        is_all_triangles = True
     else:
         is_all_triangles = False
 
