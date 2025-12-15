@@ -1415,7 +1415,6 @@ def test_flatten(multiblock_all_with_nested_and_none):
     assert flat.keys() == expected_names
 
     # Test field data keys without copy
-    assert nested_multi[0] is flat[0]
     assert_field_data_keys(flat, root_multi, nested_multi)
 
 

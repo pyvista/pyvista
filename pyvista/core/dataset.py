@@ -20,6 +20,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
+from . import _validation
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
@@ -1250,7 +1251,10 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def center(self: Self) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or return the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1268,6 +1272,11 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCenter()
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def volume(
