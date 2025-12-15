@@ -164,7 +164,10 @@ def test_to_trimesh_raises(sphere):
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.to_trimesh(tmesh)
 
-    match = "Mesh must be a Trimesh object. Got <class 'pyvista.core.pointset.PolyData'> instead."
+    match = (
+        "mesh must be an instance of <class 'trimesh.base.Trimesh'>. "
+        "Got <class 'pyvista.core.pointset.PolyData'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.from_trimesh(sphere)
 

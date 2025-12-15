@@ -1412,17 +1412,24 @@ def from_trimesh(
     to_trimesh, from_meshio, :func:`~pyvista.wrap`
 
     """
-    trimesh_attrs = {
-        'vertices',
-        'faces',
-        'vertex_attributes',
-        'face_attributes',
-        'metadata',
-    }
+    try:
+        import trimesh  # noqa: PLC0415
 
-    if not all(hasattr(mesh, attr) for attr in trimesh_attrs):
-        msg = f'Mesh must be a Trimesh object. Got {type(mesh)} instead.'
-        raise TypeError(msg)
+    except ImportError:  # pragma: no cover
+        # Duck-typing check for attributes used by this function
+        trimesh_attrs = {
+            'vertices',
+            'faces',
+            'vertex_attributes',
+            'face_attributes',
+            'metadata',
+        }
+        if not all(hasattr(mesh, attr) for attr in trimesh_attrs):
+            msg = f'Mesh must be a Trimesh-like object. Got {type(mesh)} instead.'
+            raise TypeError(msg)
+
+    else:
+        _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
     # Handle case with no faces
     faces: NumpyArray[int] = mesh.faces
