@@ -5,8 +5,8 @@ Wrapping Other Objects
 ~~~~~~~~~~~~~~~~~~~~~~
 You can :func:`~pyvista.wrap` several other object types using pyvista including:
 
-- `numpy` arrays
-- `trimesh.Trimesh` meshes
+- ``numpy`` arrays
+- :class:`trimesh.Trimesh` meshes
 - VTK objects
 
 This allows for the "best of both worlds" programming special to
@@ -90,10 +90,16 @@ print(tmesh.metadata)
 # This is the same as using :func:`~pyvista.wrap`.
 pvmesh = pv.from_trimesh(tmesh)
 
-# The trimesh data is recovered as point data, cell data, and field data, including field data
-# stored in the :attr:`~pyvista.DataObject.user_dict`.
+# %%
+# The data contained in the ``trimesh`` object is recovered as point data:
 print(pvmesh.point_data.keys())
+
+# %%
+# Cell data:
 print(pvmesh.cell_data.keys())
+
+# %%
+# And field data, including field data stored in the :attr:`~pyvista.DataObject.user_dict`:
 print(pvmesh.field_data.keys())
 print(pvmesh.user_dict)
 
