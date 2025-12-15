@@ -174,6 +174,12 @@ def test_to_from_trimesh_texture_coordinates(ant):
     ant.point_data[texture_coordinates_name] = texture_coordinates_array
     ant.point_data.active_texture_coordinates_name = texture_coordinates_name
 
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert not isinstance(tmesh.visual, trimesh.visual.TextureVisuals)
+
+    tmesh = pv.to_trimesh(ant, pass_data='cell')
+    assert not isinstance(tmesh.visual, trimesh.visual.TextureVisuals)
+
     tmesh = pv.to_trimesh(ant)
 
     actual_array = tmesh.visual.uv
@@ -231,6 +237,12 @@ def test_to_from_trimesh_point_data(ant):
     point_data_array = np.arange(ant.n_points)
     ant.point_data[point_data_name] = point_data_array
 
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.vertex_attributes == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data='cell')
+    assert tmesh.vertex_attributes == {}
+
     tmesh = pv.to_trimesh(ant)
 
     actual_attributes = tmesh.vertex_attributes
@@ -250,6 +262,12 @@ def test_to_from_trimesh_cell_data(ant):
     cell_data_name = 'cell data'
     cell_data_array = np.arange(ant.n_cells)
     ant.cell_data[cell_data_name] = cell_data_array
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.face_attributes == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data='point')
+    assert tmesh.face_attributes == {}
 
     tmesh = pv.to_trimesh(ant)
 
@@ -271,6 +289,12 @@ def test_to_from_trimesh_field_data(ant):
     field_data_array = np.array([42, 67])
     ant.field_data[field_data_name] = field_data_array
 
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.metadata == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data=['point', 'cell'])
+    assert tmesh.metadata == {}
+
     tmesh = pv.to_trimesh(ant)
 
     metadata = tmesh.metadata
@@ -289,6 +313,12 @@ def test_to_from_trimesh_field_data(ant):
 def test_to_from_trimesh_user_dict(ant):
     user_dict = {'ham': 'eggs'}
     ant.user_dict = user_dict
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.metadata == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data=['point', 'cell'])
+    assert tmesh.metadata == {}
 
     tmesh = pv.to_trimesh(ant)
 

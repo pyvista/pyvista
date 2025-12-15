@@ -22,6 +22,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -1357,7 +1358,7 @@ def from_trimesh(mesh: trimesh.Trimesh) -> PolyData:  # numpydoc ignore=RT01
 
     .. note::
 
-        No copies of point, cell, or data arrays are made. Use :meth`~pyvista.DataObject.copy`
+        No copies of point, cell, or data arrays are made. Use :meth:`~pyvista.DataObject.copy`
         after converting to avoid any side effects.
 
     .. versionadded:: 0.47
@@ -1411,6 +1412,9 @@ def to_trimesh(  # numpydoc ignore=RT01
     mesh: DataSet,
     *,
     triangulate: bool = False,
+    pass_data: bool
+    | Literal['point', 'cell', 'field']
+    | Sequence[Literal['point', 'cell', 'field']] = True,
 ) -> trimesh.Trimesh:
     """Convert a PyVista mesh to a Trimesh mesh.
 
@@ -1421,7 +1425,7 @@ def to_trimesh(  # numpydoc ignore=RT01
 
     .. note::
 
-        No copies of point, cell, or data arrays are made. Use :meth`~pyvista.DataObject.copy`
+        No copies of point, cell, or data arrays are made. Use :meth:`~pyvista.DataObject.copy`
         before converting to avoid any side effects.
 
     .. versionadded:: 0.47
@@ -1435,6 +1439,11 @@ def to_trimesh(  # numpydoc ignore=RT01
         Triangulate the mesh before conversion. If the mesh has 3D cells, the mesh's surface
         is extracted. All 2D polygonal cells are triangulated as required, and all 0D and 1D
         cells or any unused points are ignored.
+
+    pass_data : bool | str | sequence[str], default: True
+        Pass point, cell, and/or field data to the Trimesh object. All data is passed by default.
+        Set this to ``'point'``, ``'cell'``, ``'field'`` or any combination thereof to only pass
+        specific fields.
 
     See Also
     --------
@@ -1471,22 +1480,60 @@ def to_trimesh(  # numpydoc ignore=RT01
     surf = mesh if isinstance(mesh, pv.PolyData) else mesh.extract_geometry()
     surf = surf if is_all_triangles else surf.triangulate()
 
-    # Point data
-    vertex_attributes = dict((point_data := mesh.point_data).items())
-    vertex_normals = vertex_attributes.pop(point_data.active_normals_name, None)  # type: ignore[arg-type]
-    # Store texture coordinates
-    texture_coordinates = vertex_attributes.pop(point_data.active_texture_coordinates_name, None)  # type: ignore[arg-type]
-    visual = TextureVisuals(uv=texture_coordinates) if texture_coordinates is not None else None
+    allowed = ['point', 'cell', 'field']
+    pass_point_data = pass_cell_data = pass_field_data = False
+    if pass_data is True:
+        pass_point_data = pass_cell_data = pass_field_data = True
+    elif pass_data:
+        if isinstance(pass_data, str):
+            if pass_data == 'point':
+                pass_point_data = True
+            elif pass_data == 'cell':
+                pass_cell_data = True
+            elif pass_data == 'field':
+                pass_field_data = True
+        elif isinstance(pass_data, Sequence):
+            if 'point' in pass_data:
+                pass_point_data = True
+            if 'cell' in pass_data:
+                pass_cell_data = True
+            if 'field' in pass_data:
+                pass_field_data = True
 
-    # Cell data
-    face_attributes = dict((cell_data := mesh.cell_data).items())
-    face_normals = face_attributes.pop(cell_data.active_normals_name, None)  # type: ignore[arg-type]
+    if not (pass_point_data or pass_cell_data or pass_field_data) and pass_data is not False:
+        # Input is not valid
+        _validation.check_contains(allowed, must_contain=pass_data, name='pass_data')
 
-    # Field data
-    metadata = dict(mesh.field_data.items())
-    if USER_DICT_KEY in metadata.keys():
-        metadata.pop(USER_DICT_KEY)
-        metadata.update(mesh.user_dict)
+    if pass_point_data:
+        vertex_attributes = dict((point_data := mesh.point_data).items())
+        vertex_normals = vertex_attributes.pop(point_data.active_normals_name, None)  # type: ignore[arg-type]
+        # Store texture coordinates
+        texture_coordinates = vertex_attributes.pop(
+            point_data.active_texture_coordinates_name,# type: ignore[arg-type]
+            None,
+        )
+        visual = (
+            TextureVisuals(uv=texture_coordinates) if texture_coordinates is not None else None
+        )
+    else:
+        vertex_attributes = None
+        vertex_normals = None
+        visual = None
+
+    if pass_cell_data:
+        face_attributes = dict((cell_data := mesh.cell_data).items())
+        face_normals = face_attributes.pop(cell_data.active_normals_name, None)  # type: ignore[arg-type]
+    else:
+        face_attributes = None
+        face_normals = None
+
+    if pass_field_data:
+        metadata = dict(mesh.field_data.items())
+        if USER_DICT_KEY in metadata.keys():
+            metadata.pop(USER_DICT_KEY)
+            metadata.update(mesh.user_dict)
+    else:
+        metadata = None
 
     return trimesh.Trimesh(
         vertices=surf.points,
