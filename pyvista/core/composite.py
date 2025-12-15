@@ -1300,7 +1300,7 @@ class MultiBlock(
 
     @property
     def center(self: MultiBlock) -> tuple[float, float, float]:
-        """Set or eturn the center of the bounding box.
+        """Set or return the center of the bounding box.
 
         .. versionchanged:: 0.47
             Center can now be set.
