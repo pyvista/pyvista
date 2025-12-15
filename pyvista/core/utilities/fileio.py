@@ -19,6 +19,7 @@ from typing import overload
 
 import numpy as np
 
+import pyvista
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -51,6 +52,9 @@ if TYPE_CHECKING:
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 PICKLE_EXT = ('.pkl', '.pickle')
+_PassDataOptions = (
+    bool | Literal['point', 'cell', 'field'] | Sequence[Literal['point', 'cell', 'field']]
+)
 
 
 def _lazy_vtk_import(module_name: str, class_name: str) -> type:
@@ -1347,7 +1351,37 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
     return imread(filename)
 
 
-def from_trimesh(mesh: trimesh.Trimesh) -> PolyData:  # numpydoc ignore=RT01
+def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
+    pass_point_data = pass_cell_data = pass_field_data = False
+    if pass_data is True:
+        pass_point_data = pass_cell_data = pass_field_data = True
+    elif pass_data:
+        if isinstance(pass_data, str):
+            if pass_data == 'point':
+                pass_point_data = True
+            elif pass_data == 'cell':
+                pass_cell_data = True
+            elif pass_data == 'field':
+                pass_field_data = True
+        elif isinstance(pass_data, Sequence):
+            if 'point' in pass_data:
+                pass_point_data = True
+            if 'cell' in pass_data:
+                pass_cell_data = True
+            if 'field' in pass_data:
+                pass_field_data = True
+
+    if not (pass_point_data or pass_cell_data or pass_field_data) and pass_data is not False:
+        # Input is not valid
+        allowed = [True, False, 'point', 'cell', 'field']
+        _validation.check_contains(allowed, must_contain=pass_data, name='pass_data')
+
+    return pass_point_data, pass_cell_data, pass_field_data
+
+
+def from_trimesh(
+    mesh: trimesh.Trimesh, *, pass_data: _PassDataOptions = True
+) -> PolyData:  # numpydoc ignore=RT01
     """Convert a Trimesh mesh to a PyVista mesh.
 
     - ``vertex_attributes`` are stored as point data.
@@ -1368,11 +1402,28 @@ def from_trimesh(mesh: trimesh.Trimesh) -> PolyData:  # numpydoc ignore=RT01
     mesh : trimesh.Trimesh
         Trimesh object to convert.
 
+    pass_data : bool | str | sequence[str], default: True
+        Pass point, cell, and/or field data from the Trimesh object. All data is passed by default.
+        Set this to ``'point'``, ``'cell'``, ``'field'`` or any combination thereof to only pass
+        specific fields.
+
     See Also
     --------
     to_trimesh, from_meshio, :func:`~pyvista.wrap`
 
     """
+    trimesh_attrs = {
+        'vertices',
+        'faces',
+        'vertex_attributes',
+        'face_attributes',
+        'metadata',
+    }
+
+    if not all(hasattr(mesh, attr) for attr in trimesh_attrs):
+        msg = f'Mesh must be a Trimesh object. Got {type(mesh)} instead.'
+        raise TypeError(msg)
+
     # Handle case with no faces
     faces: NumpyArray[int] = mesh.faces
     if faces.size == 0:
@@ -1380,30 +1431,36 @@ def from_trimesh(mesh: trimesh.Trimesh) -> PolyData:  # numpydoc ignore=RT01
     # Trimesh doesn't pad faces
     polydata = pv.PolyData.from_regular_faces(mesh.vertices, faces=faces, deep=False)
 
-    # Set texture coordinates
-    if (
-        hasattr(visual := mesh.visual, 'uv')
-        and visual is not None
-        and (uv := visual.uv) is not None
-    ):
-        polydata.active_texture_coordinates = uv
+    pass_point_data, pass_cell_data, pass_field_data = _validate_pass_data(pass_data)
 
-    polydata.point_data.update(mesh.vertex_attributes, copy=False)
-    polydata.cell_data.update(mesh.face_attributes, copy=False)
-    for key, val in mesh.metadata.items():
-        if isinstance(val, np.ndarray):
-            polydata.field_data[key] = val
-        else:
-            try:
-                json.dumps(val)
-            except TypeError:
-                msg = (
-                    f'Unable to store metadata key {key!r} with value type {type(val)}.\n'
-                    f'Only NumPy arrays or JSON-serializable values are supported.'
-                )
-                warn_external(msg)
+    if pass_point_data:
+        # Set texture coordinates
+        if (
+            hasattr(visual := mesh.visual, 'uv')
+            and visual is not None
+            and (uv := visual.uv) is not None
+        ):
+            polydata.active_texture_coordinates = uv
+        polydata.point_data.update(mesh.vertex_attributes, copy=False)
+
+    if pass_cell_data:
+        polydata.cell_data.update(mesh.face_attributes, copy=False)
+
+    if pass_field_data:
+        for key, val in mesh.metadata.items():
+            if isinstance(val, np.ndarray):
+                polydata.field_data[key] = val
             else:
-                polydata.user_dict[key] = val
+                try:
+                    json.dumps(val)
+                except TypeError:
+                    msg = (
+                        f'Unable to store metadata key {key!r} with value type {type(val)}.\n'
+                        f'Only NumPy arrays or JSON-serializable values are supported.'
+                    )
+                    warn_external(msg)
+                else:
+                    polydata.user_dict[key] = val
 
     return polydata
 
@@ -1412,9 +1469,7 @@ def to_trimesh(  # numpydoc ignore=RT01
     mesh: DataSet,
     *,
     triangulate: bool = False,
-    pass_data: bool
-    | Literal['point', 'cell', 'field']
-    | Sequence[Literal['point', 'cell', 'field']] = True,
+    pass_data: _PassDataOptions = True,
 ) -> trimesh.Trimesh:
     """Convert a PyVista mesh to a Trimesh mesh.
 
@@ -1461,6 +1516,8 @@ def to_trimesh(  # numpydoc ignore=RT01
     # Avoid circular import
     from pyvista.core.dataobject import USER_DICT_KEY  # noqa: PLC0415
 
+    _validation.check_instance(mesh, pyvista.DataSet, name='mesh')
+
     if isinstance(mesh, pv.PolyData):
         is_all_triangles = mesh.is_all_triangles
     elif isinstance(mesh, pv.UnstructuredGrid):
@@ -1480,36 +1537,14 @@ def to_trimesh(  # numpydoc ignore=RT01
     surf = mesh if isinstance(mesh, pv.PolyData) else mesh.extract_geometry()
     surf = surf if is_all_triangles else surf.triangulate()
 
-    allowed = ['point', 'cell', 'field']
-    pass_point_data = pass_cell_data = pass_field_data = False
-    if pass_data is True:
-        pass_point_data = pass_cell_data = pass_field_data = True
-    elif pass_data:
-        if isinstance(pass_data, str):
-            if pass_data == 'point':
-                pass_point_data = True
-            elif pass_data == 'cell':
-                pass_cell_data = True
-            elif pass_data == 'field':
-                pass_field_data = True
-        elif isinstance(pass_data, Sequence):
-            if 'point' in pass_data:
-                pass_point_data = True
-            if 'cell' in pass_data:
-                pass_cell_data = True
-            if 'field' in pass_data:
-                pass_field_data = True
-
-    if not (pass_point_data or pass_cell_data or pass_field_data) and pass_data is not False:
-        # Input is not valid
-        _validation.check_contains(allowed, must_contain=pass_data, name='pass_data')
+    pass_point_data, pass_cell_data, pass_field_data = _validate_pass_data(pass_data)
 
     if pass_point_data:
         vertex_attributes = dict((point_data := mesh.point_data).items())
         vertex_normals = vertex_attributes.pop(point_data.active_normals_name, None)  # type: ignore[arg-type]
         # Store texture coordinates
         texture_coordinates = vertex_attributes.pop(
-            point_data.active_texture_coordinates_name,# type: ignore[arg-type]
+            point_data.active_texture_coordinates_name,  # type: ignore[arg-type]
             None,
         )
         visual = (

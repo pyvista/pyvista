@@ -148,6 +148,27 @@ def test_to_trimesh_triangulate():
     assert isinstance(out, trimesh.Trimesh)
 
 
+def test_to_trimesh_raises(sphere):
+    match = "pass_data must be one of: \n\t[True, False, 'point', 'cell', 'field']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.to_trimesh(sphere, pass_data='foo')
+
+    tmesh = pv.to_trimesh(sphere)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.from_trimesh(tmesh, pass_data=dict)
+
+    match = (
+        "mesh must be an instance of <class 'pyvista.core.dataset.DataSet'>. "
+        "Got <class 'trimesh.base.Trimesh'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.to_trimesh(tmesh)
+
+    match = "Mesh must be a Trimesh object. Got <class 'pyvista.core.pointset.PolyData'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.from_trimesh(sphere)
+
+
 def test_to_from_trimesh_empty_mesh():
     mesh = pv.ImageData()
     tmesh = pv.to_trimesh(mesh)
@@ -192,6 +213,12 @@ def test_to_from_trimesh_texture_coordinates(ant):
     actual_array = pvmesh.active_texture_coordinates
     assert np.allclose(actual_array, texture_coordinates_array)
     assert np.shares_memory(actual_array, texture_coordinates_array)
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.active_texture_coordinates is None
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data='cell')
+    assert pvmesh.active_texture_coordinates is None
 
 
 def test_to_from_trimesh_point_normals(ant):
@@ -257,6 +284,12 @@ def test_to_from_trimesh_point_data(ant):
     assert np.allclose(actual_array, point_data_array)
     assert np.shares_memory(actual_array, point_data_array)
 
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.point_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data='cell')
+    assert pvmesh.point_data.items() == []
+
 
 def test_to_from_trimesh_cell_data(ant):
     cell_data_name = 'cell data'
@@ -282,6 +315,12 @@ def test_to_from_trimesh_cell_data(ant):
     actual_array = pvmesh.cell_data[cell_data_name]
     assert np.allclose(actual_array, cell_data_array)
     assert np.shares_memory(actual_array, cell_data_array)
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.cell_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data='point')
+    assert pvmesh.cell_data.items() == []
 
 
 def test_to_from_trimesh_field_data(ant):
@@ -309,6 +348,12 @@ def test_to_from_trimesh_field_data(ant):
     assert np.allclose(actual_array, field_data_array)
     assert np.shares_memory(actual_array, field_data_array)
 
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.field_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=['point', 'cell'])
+    assert pvmesh.field_data.items() == []
+
 
 def test_to_from_trimesh_user_dict(ant):
     user_dict = {'ham': 'eggs'}
@@ -329,6 +374,12 @@ def test_to_from_trimesh_user_dict(ant):
     pvmesh = pv.from_trimesh(tmesh)
     round_trip_dict = pvmesh.user_dict
     assert round_trip_dict == user_dict
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.field_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=['point', 'cell'])
+    assert pvmesh.field_data.items() == []
 
     tmesh.metadata['bad_value'] = object
     match = (
