@@ -987,9 +987,13 @@ class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArr
         if data_str != self._string:
             self._string = data_str
 
-    def __repr__(self: _SerializedDictArray) -> str:
+    def __str__(self: _SerializedDictArray) -> str:
         """Return JSON-formatted dict representation."""
         return self._string
+
+    def __repr__(self: _SerializedDictArray) -> str:
+        """Return class name with JSON-formatted dict representation."""
+        return f'{self.__class__.__name__}({self!s})'
 
     def __init__(
         self: _SerializedDictArray,

@@ -587,7 +587,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         >>> mesh.user_dict['name'] = 'ant'
         >>> mesh.user_dict
-        {"name": "ant"}
+        _SerializedDictArray({"name": "ant"})
 
         Alternatively, set the user dict from an existing dict.
 
@@ -601,8 +601,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         ...         'body_parts': ['head', 'thorax', 'abdomen'],
         ...     }
         ... )
-        >>> mesh.user_dict
-        {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
+        >>> str(mesh.user_dict)
+        '{"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}'
 
         Data in the user dict is stored as field data.
 
@@ -617,8 +617,8 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         >>> mesh.save('ant.vtk')
         >>> mesh_from_file = pv.read('ant.vtk')
-        >>> mesh_from_file.user_dict
-        {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
+        >>> str(mesh_from_file.user_dict)
+        '{"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}'
 
         """
         self._config_user_dict()
