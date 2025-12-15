@@ -283,10 +283,11 @@ def test_to_from_trimesh_point_data(ant):
     assert np.shares_memory(actual_array, point_data_array)
 
     # Test we have the same array round-trip
-    pvmesh = pv.from_trimesh(tmesh)
-    actual_array = pvmesh.point_data[point_data_name]
-    assert np.allclose(actual_array, point_data_array)
-    assert np.shares_memory(actual_array, point_data_array)
+    for pass_data in [True, 'point', ['point']]:
+        pvmesh = pv.from_trimesh(tmesh, pass_data=pass_data)
+        actual_array = pvmesh.point_data[point_data_name]
+        assert np.allclose(actual_array, point_data_array)
+        assert np.shares_memory(actual_array, point_data_array)
 
     pvmesh = pv.from_trimesh(tmesh, pass_data=False)
     assert pvmesh.point_data.items() == []
@@ -315,10 +316,11 @@ def test_to_from_trimesh_cell_data(ant):
     assert np.shares_memory(actual_array, cell_data_array)
 
     # Test we have the same array round-trip
-    pvmesh = pv.from_trimesh(tmesh)
-    actual_array = pvmesh.cell_data[cell_data_name]
-    assert np.allclose(actual_array, cell_data_array)
-    assert np.shares_memory(actual_array, cell_data_array)
+    for pass_data in [True, 'cell', ['cell']]:
+        pvmesh = pv.from_trimesh(tmesh, pass_data=pass_data)
+        actual_array = pvmesh.cell_data[cell_data_name]
+        assert np.allclose(actual_array, cell_data_array)
+        assert np.shares_memory(actual_array, cell_data_array)
 
     pvmesh = pv.from_trimesh(tmesh, pass_data=False)
     assert pvmesh.cell_data.items() == []
@@ -347,10 +349,11 @@ def test_to_from_trimesh_field_data(ant):
     assert np.shares_memory(actual_array, field_data_array)
 
     # Test we have the same array round-trip
-    pvmesh = pv.from_trimesh(tmesh)
-    actual_array = pvmesh.field_data[field_data_name]
-    assert np.allclose(actual_array, field_data_array)
-    assert np.shares_memory(actual_array, field_data_array)
+    for pass_data in [True, 'field', ['field']]:
+        pvmesh = pv.from_trimesh(tmesh, pass_data=pass_data)
+        actual_array = pvmesh.field_data[field_data_name]
+        assert np.allclose(actual_array, field_data_array)
+        assert np.shares_memory(actual_array, field_data_array)
 
     pvmesh = pv.from_trimesh(tmesh, pass_data=False)
     assert pvmesh.field_data.items() == []
