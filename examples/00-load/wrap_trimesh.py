@@ -91,15 +91,15 @@ print(tmesh.metadata)
 pvmesh = pv.from_trimesh(tmesh)
 
 # %%
-# The data contained in the ``trimesh`` object is recovered as point data:
+# The data contained in the ``trimesh`` object is recovered as point data,
 print(pvmesh.point_data.keys())
 
 # %%
-# Cell data:
+# cell data,
 print(pvmesh.cell_data.keys())
 
 # %%
-# And field data, including field data stored in the :attr:`~pyvista.DataObject.user_dict`:
+# and field data, including field data stored in the :attr:`~pyvista.DataObject.user_dict`:
 print(pvmesh.field_data.keys())
 print(pvmesh.user_dict)
 
