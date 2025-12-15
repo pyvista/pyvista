@@ -23,11 +23,12 @@ def test_area_and_volume(cell_example):
     assert mesh.n_cells == 1
 
     if mesh.celltypes[0] in [
+        CellType.QUADRATIC_WEDGE,
         CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         CellType.TRIQUADRATIC_HEXAHEDRON,
     ]:
         pytest.xfail(
-            'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
+            'Volume should be positive but returns zero or negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
         )
 
     # Test area and volume
