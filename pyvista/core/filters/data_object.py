@@ -866,7 +866,7 @@ class DataObjectFilters:
 
         It has three independent use cases:
 
-        #. Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly
+        #. Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly.
         #. Use ``bounds_size`` to set the mesh's ``bounds_size`` directly.
         #. Use ``length`` to set the mesh's diagonal ``length`` directly.
 
