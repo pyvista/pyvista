@@ -43,7 +43,7 @@ pv.plot(
 )
 
 # %%
-# Wrap Trimesh objects
+# Wrap Trimesh Objects
 # --------------------
 # Create a simple :class:`trimesh.Trimesh` and wrap it.
 
@@ -84,7 +84,7 @@ print(tmesh.face_attributes.keys())
 print(tmesh.metadata)
 
 # %%
-# Use :func:`~pyvista.from_trimesh` to convert it back to a :class:`trimesh.Trimesh` mesh.
+# Use :func:`~pyvista.from_trimesh` to convert it back to a :class:`~pyvista.PolyData` mesh.
 # This is the same as using :func:`~pyvista.wrap`.
 pvmesh = pv.from_trimesh(tmesh)
 

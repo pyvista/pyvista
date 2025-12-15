@@ -990,7 +990,7 @@ def is_meshio_mesh(obj: object) -> bool:
 
 
 def is_trimesh_mesh(obj: object) -> bool:
-    """Test if passed object is instance of :class:`trimesh.Trimesh`.
+    """Test if passed object is an instance of :class:`trimesh.Trimesh`.
 
     .. versionadded:: 0.47
 

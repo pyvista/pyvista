@@ -992,7 +992,7 @@ class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArr
         return self._string
 
     def __repr__(self: _SerializedDictArray) -> str:
-        """Return JSON-formatted dict representation."""
+        """Return class name with JSON-formatted dict representation."""
         return f'{self.__class__.__name__}({self!s})'
 
     def __init__(
