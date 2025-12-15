@@ -990,7 +990,7 @@ class DataObjectFilters:
         bounds_set = bounds is not None
         length_set = length is not None
         bounds_size_set = bounds_size is not None
-        n_set = np.count_nonzero((bounds_set, length_set, bounds_size_set))
+        n_set = bounds_set + length_set + bounds_size_set
         if n_set == 0:
             msg = (
                 '`bounds`, `bounds_size`, and `length` cannot all be None. '
