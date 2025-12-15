@@ -51,9 +51,8 @@ if TYPE_CHECKING:
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 PICKLE_EXT = ('.pkl', '.pickle')
-_PassDataOptions = (
-    bool | Literal['point', 'cell', 'field'] | Sequence[Literal['point', 'cell', 'field']]
-)
+_PointCellField = Literal['point', 'cell', 'field']
+_PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
 
 
 def _lazy_vtk_import(module_name: str, class_name: str) -> type:
