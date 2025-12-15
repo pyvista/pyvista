@@ -16,9 +16,15 @@ of more than one module.
 
 """
 
-# sphinx_gallery_start_ignore
 from __future__ import annotations
 
+import numpy as np
+import trimesh
+import vtk
+
+import pyvista as pv
+
+# sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -26,9 +32,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # Wrap Point Arrays
 # -----------------
 # Wrap a point cloud composed of random points from numpy.
-import numpy as np
 
-import pyvista as pv
 
 rng = np.random.default_rng(seed=0)
 points = rng.random((30, 3))
@@ -46,8 +50,6 @@ pv.plot(
 # Wrap Trimesh Objects
 # --------------------
 # Create a simple :class:`trimesh.Trimesh` and wrap it.
-
-import trimesh
 
 points = [[0, 0, 0], [0, 0, 1], [0, 1, 0]]
 faces = [[0, 1, 2]]
@@ -99,8 +101,6 @@ print(pvmesh.user_dict)
 # Wrap VTK Meshes
 # ---------------
 # Wrap an instance of :vtk:`vtkPolyData`
-
-import vtk
 
 points = vtk.vtkPoints()
 p = [1.0, 2.0, 3.0]
