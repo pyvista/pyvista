@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid
     from pyvista import MultiBlock
+    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista import UnstructuredGrid
@@ -1366,9 +1367,13 @@ def from_trimesh(mesh: trimesh.Trimesh) -> PolyData:  # numpydoc ignore=RT01
     mesh : trimesh.Trimesh
         Trimesh object to convert.
 
+    See Also
+    --------
+    to_trimesh, from_meshio, :func:`~pyvista.wrap`
+
     """
     # Handle case with no faces
-    faces = mesh.faces
+    faces: NumpyArray[int] = mesh.faces
     if faces.size == 0:
         faces = faces.reshape((0, 3))
     # Trimesh doesn't pad faces
@@ -1430,6 +1435,10 @@ def to_trimesh(  # numpydoc ignore=RT01
         Triangulate the mesh before conversion. If the mesh has 3D cells, the mesh's surface
         is extracted. All 2D polygonal cells are triangulated as required, and all 0D and 1D
         cells or any unused points are ignored.
+
+    See Also
+    --------
+    from_trimesh, to_meshio, :func:`~pyvista.wrap`
 
     """
     try:
