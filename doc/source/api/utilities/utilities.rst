@@ -51,6 +51,7 @@ File IO
    :toctree: _autosummary
 
    from_meshio
+   from_trimesh
    get_ext
    is_meshio_mesh
    read
@@ -61,6 +62,7 @@ File IO
    save_meshio
    set_pickle_format
    to_meshio
+   to_trimesh
 
 
 Mesh Creation
