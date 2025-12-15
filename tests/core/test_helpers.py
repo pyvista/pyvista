@@ -216,6 +216,7 @@ def test_to_from_trimesh_texture_coordinates(ant):
     actual_array = pvmesh.active_texture_coordinates
     assert np.allclose(actual_array, texture_coordinates_array)
     assert np.shares_memory(actual_array, texture_coordinates_array)
+    assert 'uv' not in pvmesh.point_data
 
     pvmesh = pv.from_trimesh(tmesh, pass_data=False)
     assert pvmesh.active_texture_coordinates is None
