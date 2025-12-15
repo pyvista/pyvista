@@ -281,21 +281,21 @@ class DataObjectFilters:
 
             if not np.allclose(K, np.eye(3)):
                 msg = (
-                    'The transformation has a shear component which has been removed. Shear is '
-                    'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
-                    'shear transformations.'
+                    'The transformation has a shear component which is not supported by '
+                    'RectilinearGrid.\nCast to StructuredGrid first to support shear '
+                    'transformations.'
                 )
-                warn_external(msg)
+                raise ValueError(msg)
 
             # Lump scale and reflection together
             scale = S * N
             if not np.allclose(np.abs(R), np.eye(3)):
                 msg = (
-                    'The transformation has a non-diagonal rotation component which has been '
-                    'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
-                    'StructuredGrid first to fully support rotations.'
+                    'The transformation has a non-diagonal rotation component which is not '
+                    'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
+                    'support rotations.'
                 )
-                warn_external(msg)
+                raise ValueError(msg)
             else:
                 # Lump any reflections from the rotation into the scale
                 scale *= np.diagonal(R)

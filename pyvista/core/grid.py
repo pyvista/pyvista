@@ -1187,10 +1187,11 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     ) -> None:  # numpydoc ignore=GL08
         T, R, N, S, K = pv.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
-            warn_external(
-                'The transformation matrix has a shear component which has been removed. \n'
-                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+            msg = (
+                'The transformation has a shear component which is not supported by ImageData.\n'
+                'Cast to StructuredGrid first to fully support shear transformations.'
             )
+            raise ValueError(msg)
 
         self.origin = T
         self.direction_matrix = R * N
