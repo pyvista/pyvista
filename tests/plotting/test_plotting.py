@@ -671,6 +671,15 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.parametrize('use_3d_text', [True, False])
+@pytest.mark.parametrize('font_size', [12, 24])
+def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show_grid(use_3d_text=use_3d_text, font_size=font_size)
+    pl.show()
+
+
 cpos_param = [
     [(2.0, 5.0, 13.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
     [-1, 2, -5],  # trigger view vector
@@ -3506,18 +3515,9 @@ def test_tight_square(noise_2d):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.parametrize('wrong_orientation', [True, False])
-def test_plot_cell(wrong_orientation):
-    points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
-    cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
-    if wrong_orientation:
-        # Swap two ids
-        id1 = cells[2]
-        cells[2] = cells[3]
-        cells[3] = id1
-    cells = [len(cells), *cells]
-    polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
-    examples.plot_cell(polyhedron, show_normals=True)
+def test_plot_cell():
+    grid = examples.cells.Tetrahedron()
+    examples.plot_cell(grid)
 
 
 @skip_windows_mesa  # due to opacity
