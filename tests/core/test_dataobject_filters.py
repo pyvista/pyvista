@@ -1412,23 +1412,53 @@ def test_resize_bounds_size(sphere, bounds_size, center):
     assert np.allclose(resized.center, expected_center)
 
 
+@pytest.mark.parametrize('length', [42, 5.0])
+@pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
+def test_resize_length(sphere, length, center):
+    """Test resize method with length parameter."""
+    expected_center = sphere.center if center is None else center
+
+    resized = sphere.resize(length=length, center=center)
+    new_length = resized.length
+    assert np.isclose(new_length, length)
+    assert np.allclose(resized.center, expected_center)
+
+
+@pytest.mark.parametrize('mesh', [pv.MultiBlock(), pv.PolyData()])
+def test_resize_empty(mesh):
+    resized = mesh.resize()
+    assert resized.is_empty
+    assert isinstance(resized, type(mesh))
+    assert resized is not mesh
+
+
 def test_resize_raises(sphere):
     """Test resize method error handling."""
 
-    match = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
-    with pytest.raises(ValueError, match=match):
+    match = (
+        'Cannot specify more than one resizing method. '
+        'Choose either `bounds`, `bounds_size`, or `length` independently.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(length=5, bounds_size=2.0)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], length=5)
 
-    match = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
-    with pytest.raises(ValueError, match=match):
+    match = '`bounds`, `bounds_size`, and `length` cannot all be None. Choose one resizing method.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize()
 
-    match = (
-        "Cannot specify both 'bounds' and 'center'. "
-        "'center' can only be used with the 'bounds_size' parameter."
-    )
-    with pytest.raises(ValueError, match=match):
+    match = '`center` can only be used with the `bounds_size` and `length` parameters.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
+
+    match = '{name} values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=match.format(name='length')):
+        sphere.resize(length=0)
+    with pytest.raises(ValueError, match=match.format(name='bounds_size')):
+        sphere.resize(bounds_size=[-1, 2, 3])
 
 
 def test_resize_zero_extent(plane):
