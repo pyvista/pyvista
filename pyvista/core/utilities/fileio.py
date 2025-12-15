@@ -19,7 +19,6 @@ from typing import overload
 
 import numpy as np
 
-import pyvista
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -1523,7 +1522,7 @@ def to_trimesh(  # numpydoc ignore=RT01
     # Avoid circular import
     from pyvista.core.dataobject import USER_DICT_KEY  # noqa: PLC0415
 
-    _validation.check_instance(mesh, pyvista.DataSet, name='mesh')
+    _validation.check_instance(mesh, pv.DataSet, name='mesh')
 
     if isinstance(mesh, pv.PolyData):
         is_all_triangles = mesh.is_all_triangles
