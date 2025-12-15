@@ -204,7 +204,7 @@ class CompositeFilters(DataObjectFilters):
             )
 
         # Apply filter in-place
-        inplace = kwargs.get('inplace')
+        inplace = 'inplace' in kwargs
         if inplace:
             for ids, name, block in get_iterator(self, skip_none, skip_empty):
                 apply_filter(function, ids, name, block)
