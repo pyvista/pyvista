@@ -41,6 +41,7 @@ from .fileio import from_meshio as from_meshio
 from .fileio import from_trimesh as from_trimesh
 from .fileio import get_ext as get_ext
 from .fileio import is_meshio_mesh as is_meshio_mesh
+from .fileio import is_trimesh_mesh as is_trimesh_mesh
 from .fileio import read as read
 from .fileio import read_exodus as read_exodus
 from .fileio import read_grdecl as read_grdecl

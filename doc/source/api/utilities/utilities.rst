@@ -23,6 +23,7 @@ Object Conversions or Wrapping
    from_trimesh
    image_to_texture
    is_meshio_mesh
+   is_trimesh_mesh
    is_pyvista_dataset
    numpy_to_texture
    pyvista_ndarray

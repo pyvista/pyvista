@@ -968,7 +968,7 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
 
 
 def is_meshio_mesh(obj: object) -> bool:
-    """Test if passed object is instance of ``meshio.Mesh``.
+    """Test if passed object is an instance of :class:`meshio.Mesh`.
 
     Parameters
     ----------
@@ -978,13 +978,37 @@ def is_meshio_mesh(obj: object) -> bool:
     Returns
     -------
     bool
-        ``True`` if ``obj`` is a ``meshio.Mesh``.
+        ``True`` if ``obj`` is a :class:`meshio.Mesh`.
 
     """
     try:
         import meshio  # noqa: PLC0415
 
         return isinstance(obj, meshio.Mesh)
+    except ImportError:
+        return False
+
+
+def is_trimesh_mesh(obj: object) -> bool:
+    """Test if passed object is instance of :class:`trimesh.Trimesh`.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    obj : object
+        Any object.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``obj`` is a :class:`trimesh.Trimesh`.
+
+    """
+    try:
+        import trimesh  # noqa: PLC0415
+
+        return isinstance(obj, trimesh.Trimesh)
     except ImportError:
         return False
 
@@ -1416,20 +1440,9 @@ def from_trimesh(
     """
     try:
         import trimesh  # noqa: PLC0415
-
     except ImportError:  # pragma: no cover
-        # Duck-typing check for attributes used by this function
-        trimesh_attrs = {
-            'vertices',
-            'faces',
-            'vertex_attributes',
-            'face_attributes',
-            'metadata',
-        }
-        if not all(hasattr(mesh, attr) for attr in trimesh_attrs):
-            msg = f'Mesh must be a Trimesh-like object. Got {type(mesh)} instead.'
-            raise TypeError(msg)
-
+        msg = 'To use this feature install trimesh with:\n\npip install trimesh'
+        raise ImportError(msg)
     else:
         _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
@@ -1521,7 +1534,6 @@ def to_trimesh(  # numpydoc ignore=RT01
     try:
         import trimesh  # noqa: PLC0415
         from trimesh.visual import TextureVisuals  # noqa: PLC0415
-
     except ImportError:  # pragma: no cover
         msg = 'To use this feature install trimesh with:\n\npip install trimesh'
         raise ImportError(msg)

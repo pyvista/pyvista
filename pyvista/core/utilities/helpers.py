@@ -22,6 +22,7 @@ from . import transformations
 from .fileio import from_meshio
 from .fileio import from_trimesh
 from .fileio import is_meshio_mesh
+from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
     from meshio import Mesh
@@ -252,7 +253,7 @@ def wrap(  # noqa: PLR0911
         return from_meshio(dataset)
 
     # wrap trimesh
-    if dataset.__class__.__name__ == 'Trimesh':
+    if is_trimesh_mesh(dataset):
         return from_trimesh(dataset)
 
     # otherwise, flag tell the user we can't wrap this object
