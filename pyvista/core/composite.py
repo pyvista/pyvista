@@ -872,7 +872,7 @@ class MultiBlock(
         dict is updated with the nested dict.
 
         >>> root.user_dict
-        {"foo": "bar"}
+        _SerializedDictArray({"foo": "bar"})
 
         Clear the field data and re-add data to the nested user-dict.
 
@@ -884,7 +884,7 @@ class MultiBlock(
 
         >>> root.move_nested_field_data_to_root(user_dict_mode='flat')
         >>> root.user_dict
-        {"Block-00": {"foo": "bar"}}
+        _SerializedDictArray({"Block-00": {"foo": "bar"}})
 
         """
         _validation.check_contains(

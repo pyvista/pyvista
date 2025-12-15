@@ -1521,24 +1521,24 @@ def test_serial_dict_init():
     # empty init
     serial_dict = _SerializedDictArray()
     assert serial_dict == {}
-    assert repr(serial_dict) == '{}'
+    assert str(serial_dict) == '{}'
 
     # init from dict
     new_dict = dict(ham='eggs')
     serial_dict = _SerializedDictArray(new_dict)
     assert serial_dict['ham'] == 'eggs'
-    assert repr(serial_dict) == '{"ham": "eggs"}'
+    assert str(serial_dict) == '{"ham": "eggs"}'
 
     # init from UserDict
     serial_dict = _SerializedDictArray(serial_dict)
     assert serial_dict['ham'] == 'eggs'
-    assert repr(serial_dict) == '{"ham": "eggs"}'
+    assert str(serial_dict) == '{"ham": "eggs"}'
 
     # init from JSON string
     json_dict = json.dumps(new_dict)
     serial_dict = _SerializedDictArray(json_dict)
     assert serial_dict['ham'] == 'eggs'
-    assert repr(serial_dict) == '{"ham": "eggs"}'
+    assert str(serial_dict) == '{"ham": "eggs"}'
 
 
 def test_serial_dict_as_dict(serial_dict_with_foobar):
@@ -1550,47 +1550,47 @@ def test_serial_dict_as_dict(serial_dict_with_foobar):
 
 def test_serial_dict_overrides__setitem__(serial_dict_empty):
     serial_dict_empty['foo'] = 'bar'
-    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+    assert str(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides__delitem__(serial_dict_with_foobar):
     del serial_dict_with_foobar['foo']
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert str(serial_dict_with_foobar) == '{}'
 
 
 def test_serial_dict_overrides__setattr__(serial_dict_empty):
     serial_dict_empty.data = dict(foo='bar')
-    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+    assert str(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides_popitem(serial_dict_with_foobar):
     serial_dict_with_foobar['ham'] = 'eggs'
     item = serial_dict_with_foobar.popitem()
     assert item == ('foo', 'bar')
-    assert repr(serial_dict_with_foobar) == '{"ham": "eggs"}'
+    assert str(serial_dict_with_foobar) == '{"ham": "eggs"}'
 
 
 def test_serial_dict_overrides_pop(serial_dict_with_foobar):
     item = serial_dict_with_foobar.pop('foo')
     assert item == 'bar'
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert str(serial_dict_with_foobar) == '{}'
 
 
 def test_serial_dict_overrides_update(serial_dict_empty):
     serial_dict_empty.update(dict(foo='bar'))
-    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+    assert str(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides_clear(serial_dict_with_foobar):
     serial_dict_with_foobar.clear()
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert str(serial_dict_with_foobar) == '{}'
 
 
 def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_foobar):
     serial_dict_empty.setdefault('foo', 42)
-    assert repr(serial_dict_empty) == '{"foo": 42}'
+    assert str(serial_dict_empty) == '{"foo": 42}'
     serial_dict_with_foobar.setdefault('foo', 42)
-    assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'
+    assert str(serial_dict_with_foobar) == '{"foo": "bar"}'
 
 
 SCALE = 2
