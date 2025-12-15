@@ -19,10 +19,15 @@ Object Conversions or Wrapping
    array_from_vtkmatrix
    cubemap
    cubemap_from_filenames
+   from_meshio
+   from_trimesh
    image_to_texture
+   is_meshio_mesh
    is_pyvista_dataset
    numpy_to_texture
    pyvista_ndarray
+   to_meshio
+   to_trimesh
    vtkmatrix_from_array
    wrap
 
@@ -50,10 +55,7 @@ File IO
 .. autosummary::
    :toctree: _autosummary
 
-   from_meshio
-   from_trimesh
    get_ext
-   is_meshio_mesh
    read
    read_exodus
    read_grdecl
@@ -61,9 +63,6 @@ File IO
    read_texture
    save_meshio
    set_pickle_format
-   to_meshio
-   to_trimesh
-
 
 Mesh Creation
 ~~~~~~~~~~~~~
