@@ -157,7 +157,18 @@ def test_to_from_trimesh_empty_mesh():
     assert isinstance(pvmesh, pv.PolyData)
 
 
-def test_to_trimesh_from_trimesh_texture_coordinates(ant):
+def test_to_from_trimesh_points_faces(ant):
+    ant.points_to_double()
+    tmesh = pv.to_trimesh(ant)
+    assert np.shares_memory(tmesh.vertices, ant.points)
+    assert np.shares_memory(tmesh.faces, ant.regular_faces)
+
+    pvmesh = pv.from_trimesh(tmesh)
+    assert np.shares_memory(pvmesh.points, ant.points)
+    assert np.shares_memory(pvmesh.regular_faces, ant.regular_faces)
+
+
+def test_to_from_trimesh_texture_coordinates(ant):
     texture_coordinates_name = 'uv coordinates'
     texture_coordinates_array = np.random.default_rng().random((ant.n_points, 2))
     ant.point_data[texture_coordinates_name] = texture_coordinates_array
@@ -177,7 +188,7 @@ def test_to_trimesh_from_trimesh_texture_coordinates(ant):
     assert np.shares_memory(actual_array, texture_coordinates_array)
 
 
-def test_to_trimesh_from_trimesh_point_normals(ant):
+def test_to_from_trimesh_point_normals(ant):
     point_normals_name = 'point normals'
     point_normals_array = np.random.default_rng().random((ant.n_points, 3))
     ant.point_data[point_normals_name] = point_normals_array
@@ -196,7 +207,7 @@ def test_to_trimesh_from_trimesh_point_normals(ant):
     assert pvmesh.array_names == []
 
 
-def test_to_trimesh_from_trimesh_cell_normals(ant):
+def test_to_from_trimesh_cell_normals(ant):
     cell_normals_name = 'cells normals'
     cell_normals_array = ant.copy().compute_normals().cell_data['Normals'].astype(float)
     ant.cell_data[cell_normals_name] = cell_normals_array
@@ -215,7 +226,7 @@ def test_to_trimesh_from_trimesh_cell_normals(ant):
     assert pvmesh.array_names == []
 
 
-def test_to_trimesh_from_trimesh_point_data(ant):
+def test_to_from_trimesh_point_data(ant):
     point_data_name = 'point data'
     point_data_array = np.arange(ant.n_points)
     ant.point_data[point_data_name] = point_data_array
@@ -235,7 +246,7 @@ def test_to_trimesh_from_trimesh_point_data(ant):
     assert np.shares_memory(actual_array, point_data_array)
 
 
-def test_to_trimesh_from_trimesh_cell_data(ant):
+def test_to_from_trimesh_cell_data(ant):
     cell_data_name = 'cell data'
     cell_data_array = np.arange(ant.n_cells)
     ant.cell_data[cell_data_name] = cell_data_array
@@ -255,7 +266,7 @@ def test_to_trimesh_from_trimesh_cell_data(ant):
     assert np.shares_memory(actual_array, cell_data_array)
 
 
-def test_to_trimesh_from_trimesh_field_data(ant):
+def test_to_from_trimesh_field_data(ant):
     field_data_name = 'field data'
     field_data_array = np.array([42, 67])
     ant.field_data[field_data_name] = field_data_array
@@ -275,7 +286,7 @@ def test_to_trimesh_from_trimesh_field_data(ant):
     assert np.shares_memory(actual_array, field_data_array)
 
 
-def test_to_trimesh_from_trimesh_user_dict(ant):
+def test_to_from_trimesh_user_dict(ant):
     user_dict = {'ham': 'eggs'}
     ant.user_dict = user_dict
 
