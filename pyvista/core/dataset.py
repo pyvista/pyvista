@@ -8,6 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from dataclasses import fields
 from functools import partial
+import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -3329,9 +3330,93 @@ class DataSet(DataSetFilters, DataObject):
             return not self.issues
 
         @property
-        def issues(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
-            """Return ``True`` if the mesh is valid."""
-            return tuple(f.name for f in fields(self) if getattr(self, f.name) is not None)
+        def issues(self) -> tuple[str, ...] | None:  # numpydoc ignore=RT01
+            """Return any field names which have values."""
+            issues = tuple(f.name for f in fields(self) if getattr(self, f.name) is not None)
+            return issues if issues else None
+
+        def __str__(self) -> str:
+            """Include all validation results in a printable string."""
+
+            def compute_label_width() -> int:
+                max_width = 0
+                for f in fields(self):
+                    width = len(f.name)
+                    if (value := getattr(self, f.name)) is not None:
+                        num_digits = len(str(len(value)))
+                        len_space_plus_brackets = 3  # Value will be printed inside two brackets
+                        width += num_digits + len_space_plus_brackets
+                    max_width = max(max_width, width)
+                return max_width
+
+            indent = ' ' * 4
+            label_width = compute_label_width()
+
+            def format_value(value: object) -> str:
+                if value is None:
+                    return 'None'
+                return reprlib.repr(value.tolist() if isinstance(value, np.ndarray) else value)
+
+            lines: list[str] = []
+
+            title = 'Mesh Validation Report'
+            lines.append(title)
+            lines.append('-' * len(title))
+
+            def emit_group(name: str, field_names: list[str]) -> None:
+                lines.append(f'{name}:')
+                for field in field_names:
+                    value = getattr(self, field)
+                    label = field.replace('_', ' ').capitalize()
+                    try:
+                        n_values = f' ({len(value)!s})'
+                    except TypeError:
+                        n_values = ''
+                    lines.append(
+                        f'{indent}{label + n_values:<{label_width}} : {format_value(value)}'
+                    )
+
+            emit_group(
+                'Summary',
+                [
+                    'is_valid',
+                    'issues',
+                ],
+            )
+
+            emit_group(
+                'Invalid data arrays',
+                [
+                    'point_data_wrong_length',
+                    'cell_data_wrong_length',
+                ],
+            )
+
+            emit_group(
+                'Invalid cell ids',
+                [
+                    'wrong_number_of_points',
+                    'intersecting_edges',
+                    'intersecting_faces',
+                    'non_contiguous_edges',
+                    'non_convex',
+                    'incorrectly_oriented_faces',
+                    'non_planar_faces',
+                    'degenerate_faces',
+                    'coincident_points',
+                    'invalid_point_references',
+                ],
+            )
+
+            emit_group(
+                'Invalid point ids',
+                [
+                    'unused_points',
+                    'non_finite_points',
+                ],
+            )
+
+            return '\n'.join(lines)
 
     def validate_mesh(
         self,
@@ -3415,19 +3500,84 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Check if a mesh has no cells with intersecting edges.
+        Create a :func:`~pyvista.Sphere` and check if it's a valid mesh.
 
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> mesh = pv.Sphere()
         >>> report = mesh.validate_mesh()
-        >>> has_intersecting_edges = report.intersecting_edges is not None
-        >>> has_intersecting_edges
-        False
-
-        Check that the mesh is valid without issues.
-
         >>> report.is_valid
         True
+
+        Print the full report.
+
+        >>> print(report)
+        Mesh Validation Report
+        ----------------------
+        Summary:
+            Is valid                   : True
+            Issues                     : None
+        Invalid data arrays:
+            Point data wrong length    : None
+            Cell data wrong length     : None
+        Invalid cell ids:
+            Wrong number of points     : None
+            Intersecting edges         : None
+            Intersecting faces         : None
+            Non contiguous edges       : None
+            Non convex                 : None
+            Incorrectly oriented faces : None
+            Non planar faces           : None
+            Degenerate faces           : None
+            Coincident points          : None
+            Invalid point references   : None
+        Invalid point ids:
+            Unused points              : None
+            Non finite points          : None
+
+        Load an invalid mesh, e.g. :func:`~pyuvista.examples.downloads.download_cow()`
+        and use :meth:`validate_mesh` to confirm this.
+
+        >>> mesh = examples.download_cow()
+        >>> report = mesh.validate_mesh()
+        >>> report.is_valid
+        False
+
+        Show what the issue(s) are.
+
+        >>> report.issues
+        ('non_convex',)
+
+        Show the cell ids of the non-convex cells.
+
+        >>> report.non_convex
+        pyvista_ndarray([1013, 1532, 3250])
+
+        Print the full report.
+
+        >>> print(report)
+        Mesh Validation Report
+        ----------------------
+        Summary:
+            Is valid                   : False
+            Issues (1)                 : ('non_convex',)
+        Invalid data arrays:
+            Point data wrong length    : None
+            Cell data wrong length     : None
+        Invalid cell ids:
+            Wrong number of points     : None
+            Intersecting edges         : None
+            Intersecting faces         : None
+            Non contiguous edges       : None
+            Non convex (3)             : [1013, 1532, 3250]
+            Incorrectly oriented faces : None
+            Non planar faces           : None
+            Degenerate faces           : None
+            Coincident points          : None
+            Invalid point references   : None
+        Invalid point ids:
+            Unused points              : None
+            Non finite points          : None
 
         """
         if action is not None:

@@ -1651,6 +1651,88 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+@pytest.fixture
+def invalid_random_polydata():
+    n = 20
+    rng = np.random.default_rng(seed=103)
+    points = rng.random(n * 3).reshape(-1, 3)
+
+    faces = [[0, 1, n + 1]]
+    faces = np.column_stack(
+        (
+            np.ones(
+                len(faces),
+            )
+            * 3,
+            faces,
+        )
+    ).astype(int)
+    points = np.append(points, [[np.nan, 0, 0]], axis=0)
+    return pv.PolyData(points, faces=faces)
+
+
+def test_validate_mesh_report_str():
+    report = pv.Sphere().validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Summary:\n'
+        '    Is valid                   : True\n'
+        '    Issues                     : None\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length    : None\n'
+        '    Cell data wrong length     : None\n'
+        'Invalid cell ids:\n'
+        '    Wrong number of points     : None\n'
+        '    Intersecting edges         : None\n'
+        '    Intersecting faces         : None\n'
+        '    Non contiguous edges       : None\n'
+        '    Non convex                 : None\n'
+        '    Incorrectly oriented faces : None\n'
+        '    Non planar faces           : None\n'
+        '    Degenerate faces           : None\n'
+        '    Coincident points          : None\n'
+        '    Invalid point references   : None\n'
+        'Invalid point ids:\n'
+        '    Unused points              : None\n'
+        '    Non finite points          : None'
+    )
+    assert actual == expected
+
+
+def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
+    report = invalid_random_polydata.validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Summary:\n'
+        '    Is valid                     : False\n'
+        '    Issues (3)                   : '
+        "('invalid_point_references', 'unused_points', 'non_finite_points')\n"
+        'Invalid data arrays:\n'
+        '    Point data wrong length      : None\n'
+        '    Cell data wrong length       : None\n'
+        'Invalid cell ids:\n'
+        '    Wrong number of points       : None\n'
+        '    Intersecting edges           : None\n'
+        '    Intersecting faces           : None\n'
+        '    Non contiguous edges         : None\n'
+        '    Non convex                   : None\n'
+        '    Incorrectly oriented faces   : None\n'
+        '    Non planar faces             : None\n'
+        '    Degenerate faces             : None\n'
+        '    Coincident points            : None\n'
+        '    Invalid point references (1) : [0]\n'
+        'Invalid point ids:\n'
+        '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
+        '    Non finite points (1)        : [20]'
+    )
+
+    assert actual == expected
+
+
 def test_cell_validator():
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     sphere = pv.Sphere()
