@@ -88,10 +88,10 @@ plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
 # If we review the issues, we see that `two` issues are reported instead of only one.
-assert report.issues == ('non_convex', 'incorrectly_oriented_faces')
+assert report.issues == ('non_convex', 'inverted_faces')
 
 # %%
-# The ``'incorrectly_oriented_faces'`` issue is accurate, but the ``'non_convex'`` issue
+# The ``'inverted_faces'`` issue is accurate, but the ``'non_convex'`` issue
 # is a false-positive, since the only real problem is with the face orientation. But since the face
 # orientation is wrong, it's no longer possible for the mesh validation to accurately determine the
 # cell convexity. This can sometimes make identifying the core issue with a cell challenging.

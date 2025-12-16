@@ -1678,25 +1678,25 @@ def test_validate_mesh_report_str():
         'Mesh Validation Report\n'
         '----------------------\n'
         'Summary:\n'
-        '    Is valid                   : True\n'
-        '    Issues                     : None\n'
+        '    Is valid                 : True\n'
+        '    Issues                   : None\n'
         'Invalid data arrays:\n'
-        '    Point data wrong length    : None\n'
-        '    Cell data wrong length     : None\n'
+        '    Point data wrong length  : None\n'
+        '    Cell data wrong length   : None\n'
         'Invalid cell ids:\n'
-        '    Wrong number of points     : None\n'
-        '    Intersecting edges         : None\n'
-        '    Intersecting faces         : None\n'
-        '    Non contiguous edges       : None\n'
-        '    Non convex                 : None\n'
-        '    Incorrectly oriented faces : None\n'
-        '    Non planar faces           : None\n'
-        '    Degenerate faces           : None\n'
-        '    Coincident points          : None\n'
-        '    Invalid point references   : None\n'
+        '    Wrong number of points   : None\n'
+        '    Intersecting edges       : None\n'
+        '    Intersecting faces       : None\n'
+        '    Non contiguous edges     : None\n'
+        '    Non convex               : None\n'
+        '    Inverted faces           : None\n'
+        '    Non planar faces         : None\n'
+        '    Degenerate faces         : None\n'
+        '    Coincident points        : None\n'
+        '    Invalid point references : None\n'
         'Invalid point ids:\n'
-        '    Unused points              : None\n'
-        '    Non finite points          : None'
+        '    Unused points            : None\n'
+        '    Non finite points        : None'
     )
     assert actual == expected
 
@@ -1720,7 +1720,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Intersecting faces           : None\n'
         '    Non contiguous edges         : None\n'
         '    Non convex                   : None\n'
-        '    Incorrectly oriented faces   : None\n'
+        '    Inverted faces               : None\n'
         '    Non planar faces             : None\n'
         '    Degenerate faces             : None\n'
         '    Coincident points            : None\n'
@@ -1763,7 +1763,7 @@ def test_cell_validator_bitfield_values():
     assert bitfield['intersecting_faces'] == vtkCellStatus.IntersectingFaces
     assert bitfield['non_contiguous_edges'] == vtkCellStatus.NoncontiguousEdges
     assert bitfield['non_convex'] == vtkCellStatus.Nonconvex
-    assert bitfield['incorrectly_oriented_faces'] == vtkCellStatus.FacesAreOrientedIncorrectly
+    assert bitfield['inverted_faces'] == vtkCellStatus.FacesAreOrientedIncorrectly
     assert bitfield['non_planar_faces'] == vtkCellStatus.NonPlanarFaces
     assert bitfield['coincident_points'] == vtkCellStatus.CoincidentPoints
 
@@ -1822,7 +1822,7 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     expected_cell_ids = [0]
     for name in validator_array_names:
-        if name in ['intersecting_edges', 'non_convex', 'incorrectly_oriented_faces']:
+        if name in ['intersecting_edges', 'non_convex', 'inverted_faces']:
             assert validated[name].tolist() == expected_cell_ids
         else:
             array = validated.field_data[name]
@@ -1833,12 +1833,12 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     report = invalid_hexahedron.validate_mesh('cells')
     assert report.intersecting_edges is not None
     assert report.non_convex is not None
-    assert report.incorrectly_oriented_faces is not None
+    assert report.inverted_faces is not None
 
     report = invalid_hexahedron.validate_mesh('non_convex')
     assert report.intersecting_edges is None
     assert report.non_convex is not None
-    assert report.incorrectly_oriented_faces is None
+    assert report.inverted_faces is None
 
 
 @pytest.fixture
@@ -1854,7 +1854,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 cell with intersecting edges. Invalid cell id: [0]\n'
         ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
-        ' - Mesh has 1 cell with incorrectly oriented faces. Invalid cell id: [0]'
+        ' - Mesh has 1 cell with inverted faces. Invalid cell id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         invalid_hexahedron.validate_mesh(action='warn')
@@ -1870,7 +1870,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0 1]\n'
         f'{nonconvex}'
-        ' - Mesh has 2 cells with incorrectly oriented faces. Invalid cell ids: [0 1]'
+        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0 1]'
     )
     invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):

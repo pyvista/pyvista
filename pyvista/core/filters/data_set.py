@@ -64,7 +64,7 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     intersecting_faces=0x04,
     non_contiguous_edges=0x08,
     non_convex=0x10,
-    incorrectly_oriented_faces=0x20,
+    inverted_faces=0x20,
     non_planar_faces=0x40,
     degenerate_faces=0x80,
     coincident_points=0x100,
@@ -8339,7 +8339,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         - ``'intersecting_faces'`` (``0x04``)
         - ``'non_contiguous_edges'`` (``0x08``)
         - ``'non_convex'`` (``0x10``)
-        - ``'incorrectly_oriented_faces'`` (``0x20``)
+        - ``'inverted_faces'`` (``0x20``)
         - ``'non_planar_faces'`` (``0x40``)
         - ``'degenerate_faces'`` (``0x80``)
         - ``'coincident_points'`` (``0x100``)
@@ -8375,7 +8375,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
          'intersecting_faces',
          'non_contiguous_edges',
          'non_convex',
-         'incorrectly_oriented_faces',
+         'inverted_faces',
          'non_planar_faces',
          'degenerate_faces',
          'coincident_points']

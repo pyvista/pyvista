@@ -75,7 +75,7 @@ _CellValidationOptions = Literal[
     'intersecting_faces',
     'non_contiguous_edges',
     'non_convex',
-    'incorrectly_oriented_faces',
+    'inverted_faces',
     'non_planar_faces',
     'degenerate_faces',
     'coincident_points',
@@ -3317,7 +3317,7 @@ class DataSet(DataSetFilters, DataObject):
         intersecting_faces: NumpyArray[int] | None = None
         non_contiguous_edges: NumpyArray[int] | None = None
         non_convex: NumpyArray[int] | None = None
-        incorrectly_oriented_faces: NumpyArray[int] | None = None
+        inverted_faces: NumpyArray[int] | None = None
         non_planar_faces: NumpyArray[int] | None = None
         degenerate_faces: NumpyArray[int] | None = None
         coincident_points: NumpyArray[int] | None = None
@@ -3403,7 +3403,7 @@ class DataSet(DataSetFilters, DataObject):
                     'intersecting_faces',
                     'non_contiguous_edges',
                     'non_convex',
-                    'incorrectly_oriented_faces',
+                    'inverted_faces',
                     'non_planar_faces',
                     'degenerate_faces',
                     'coincident_points',
@@ -3450,7 +3450,7 @@ class DataSet(DataSetFilters, DataObject):
         - ``intersecting_faces``
         - ``non_contiguous_edges``
         - ``non_convex``
-        - ``incorrectly_oriented_faces``
+        - ``inverted_faces``
         - ``non_planar_faces``
         - ``degenerate_faces``
         - ``coincident_points``
@@ -3518,25 +3518,25 @@ class DataSet(DataSetFilters, DataObject):
         Mesh Validation Report
         ----------------------
         Summary:
-            Is valid                   : True
-            Issues                     : None
+            Is valid                 : True
+            Issues                   : None
         Invalid data arrays:
-            Point data wrong length    : None
-            Cell data wrong length     : None
+            Point data wrong length  : None
+            Cell data wrong length   : None
         Invalid cell ids:
-            Wrong number of points     : None
-            Intersecting edges         : None
-            Intersecting faces         : None
-            Non contiguous edges       : None
-            Non convex                 : None
-            Incorrectly oriented faces : None
-            Non planar faces           : None
-            Degenerate faces           : None
-            Coincident points          : None
-            Invalid point references   : None
+            Wrong number of points   : None
+            Intersecting edges       : None
+            Intersecting faces       : None
+            Non contiguous edges     : None
+            Non convex               : None
+            Inverted faces           : None
+            Non planar faces         : None
+            Degenerate faces         : None
+            Coincident points        : None
+            Invalid point references : None
         Invalid point ids:
-            Unused points              : None
-            Non finite points          : None
+            Unused points            : None
+            Non finite points        : None
 
         Load an invalid mesh, e.g. :func:`~pyvista.examples.downloads.download_cow`
         and use :meth:`validate_mesh` to confirm this.
@@ -3562,25 +3562,25 @@ class DataSet(DataSetFilters, DataObject):
         Mesh Validation Report
         ----------------------
         Summary:
-            Is valid                   : False
-            Issues (1)                 : ('non_convex',)
+            Is valid                 : False
+            Issues (1)               : ('non_convex',)
         Invalid data arrays:
-            Point data wrong length    : None
-            Cell data wrong length     : None
+            Point data wrong length  : None
+            Cell data wrong length   : None
         Invalid cell ids:
-            Wrong number of points     : None
-            Intersecting edges         : None
-            Intersecting faces         : None
-            Non contiguous edges       : None
-            Non convex (3)             : [1013, 1532, 3250]
-            Incorrectly oriented faces : None
-            Non planar faces           : None
-            Degenerate faces           : None
-            Coincident points          : None
-            Invalid point references   : None
+            Wrong number of points   : None
+            Intersecting edges       : None
+            Intersecting faces       : None
+            Non contiguous edges     : None
+            Non convex (3)           : [1013, 1532, 3250]
+            Inverted faces           : None
+            Non planar faces         : None
+            Degenerate faces         : None
+            Coincident points        : None
+            Invalid point references : None
         Invalid point ids:
-            Unused points              : None
-            Non finite points          : None
+            Unused points            : None
+            Non finite points        : None
 
         """
         if action is not None:
