@@ -88,7 +88,7 @@ class DataObjectFilters:
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
             :class:`~pyvista.RectilinearGrid`, and rotations are not supported for
             :class:`~pyvista.RectilinearGrid`. If present, a ``ValueError`` is raised.
-            The input should be cast to :class:`~pyvista.StructuredGrid` `before` 
+            The input should be cast to :class:`~pyvista.StructuredGrid` `before`
             applying this filter.
 
         .. note::
@@ -108,7 +108,7 @@ class DataObjectFilters:
         .. versionchanged:: 0.46.0
             Transforming :class:`~pyvista.RectilinearGrid` now returns ``RectilinearGrid``.
             Previously, :class:`~pyvista.StructuredGrid` was returned.
-            
+
         .. versionchanged:: 0.47.0
             An error is now raised instead of a warning if a transformation cannot be
             applied.
