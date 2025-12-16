@@ -3538,7 +3538,7 @@ class DataSet(DataSetFilters, DataObject):
             Unused points              : None
             Non finite points          : None
 
-        Load an invalid mesh, e.g. :func:`~pyuvista.examples.downloads.download_cow()`
+        Load an invalid mesh, e.g. :func:`~pyvista.examples.downloads.download_cow`
         and use :meth:`validate_mesh` to confirm this.
 
         >>> mesh = examples.download_cow()
