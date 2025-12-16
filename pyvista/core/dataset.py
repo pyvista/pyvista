@@ -306,7 +306,10 @@ class _MeshValidator:
                 if name_norm.startswith(('a', 'e', 'i', 'o', 'u')):
                     a = a.replace('a', 'an')
 
-            msg = f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: {np.sort(point_ids)}'
+            msg = (
+                f'Mesh has{a}{name_norm}{s}{info}. '
+                f'Invalid point id{s}: {reprlib.repr(point_ids.tolist())}'
+            )
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
             issues.append(issue)
         return issues

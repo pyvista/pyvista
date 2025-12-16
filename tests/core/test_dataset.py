@@ -1885,12 +1885,13 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         poly_with_invalid_point.validate_mesh(action='warn')
 
-    poly_with_invalid_point.points = poly_with_invalid_point.points.tolist() * 2
+    poly_with_invalid_point.points = poly_with_invalid_point.points.tolist() * 100
     # Test multiple points
+    ids = '[0, 1, 2, 3, 4, 5, ...]'
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has unused points not referenced by any cell(s). Invalid point ids: [0 1]\n'
-        ' - Mesh has non finite points. Invalid point ids: [0 1]'
+        f' - Mesh has unused points not referenced by any cell(s). Invalid point ids: {ids}\n'
+        f' - Mesh has non finite points. Invalid point ids: {ids}'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         poly_with_invalid_point.validate_mesh(action='warn')
