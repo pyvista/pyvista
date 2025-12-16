@@ -845,10 +845,11 @@ def test_transform_rectilinear_raises(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
         'The transformation has a non-diagonal rotation component which is not supported by\n'
-        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations.'
+        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations, or use\n'
+        '`Transform.decompose()` to remove this component.'
     )
 
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=re.escape(match)):
         rectilinear.transform(tf, inplace=False)
 
     matrix = np.eye(4)
@@ -918,10 +919,11 @@ def test_transform_imagedata_raises_with_shear(uniform):
 
     match = (
         'The transformation has a shear component which is not supported by ImageData.\n'
-        'Cast to StructuredGrid first to fully support shear transformations.'
+        'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+        '`Transform.decompose()` to remove this component.'
     )
 
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.transform(shear, inplace=True)
 
 

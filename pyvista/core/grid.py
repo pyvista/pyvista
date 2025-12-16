@@ -1189,7 +1189,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         if not np.allclose(K, np.eye(3)):
             msg = (
                 'The transformation has a shear component which is not supported by ImageData.\n'
-                'Cast to StructuredGrid first to fully support shear transformations.'
+                'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+                '`Transform.decompose()` to remove this component.'
             )
             raise ValueError(msg)
 

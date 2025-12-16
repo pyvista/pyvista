@@ -287,7 +287,7 @@ class DataObjectFilters:
                 msg = (
                     'The transformation has a shear component which is not supported by '
                     'RectilinearGrid.\nCast to StructuredGrid first to support shear '
-                    'transformations.'
+                    'transformations, or use `Transform.decompose()`\nto remove this component.'
                 )
                 raise ValueError(msg)
 
@@ -297,7 +297,7 @@ class DataObjectFilters:
                 msg = (
                     'The transformation has a non-diagonal rotation component which is not '
                     'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
-                    'support rotations.'
+                    'support rotations, or use\n`Transform.decompose()` to remove this component.'
                 )
                 raise ValueError(msg)
             else:
