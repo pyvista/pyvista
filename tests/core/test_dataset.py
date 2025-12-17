@@ -1607,7 +1607,7 @@ def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
     sphere_with_invalid_arrays.cell_data.clear()
     report = sphere_with_invalid_arrays.validate_mesh('data')
     assert report.point_data_wrong_length == ['foo', 'bar']
-    assert report.cell_data_wrong_length is None
+    assert report.cell_data_wrong_length == []
 
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
@@ -1628,7 +1628,7 @@ def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
     sphere_with_invalid_arrays.point_data.clear()
     report = sphere_with_invalid_arrays.validate_mesh('data')
     assert report.cell_data_wrong_length == ['ham']
-    assert report.point_data_wrong_length is None
+    assert report.point_data_wrong_length == []
 
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
@@ -1729,7 +1729,6 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
         '    Non finite points (1)        : [20]'
     )
-
     assert actual == expected
 
 
