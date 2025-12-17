@@ -99,7 +99,7 @@ class _MeshValidator:
     class _ValidationIssue:
         name: str
         message: str
-        values: list[str] | NumpyArray[int] | None
+        values: list[str, int] | None
 
         @property
         def _has_values(self) -> bool:
@@ -175,7 +175,7 @@ class _MeshValidator:
             arg in validation_fields for arg in allowed_point_fields
         ):
             for issue in _MeshValidator._validate_points(mesh):
-                if store_all_cell_fields or issue.name in validation_fields:
+                if store_all_points_fields or issue.name in validation_fields:
                     self._validation_issues[issue.name] = issue
 
     @staticmethod
@@ -185,7 +185,7 @@ class _MeshValidator:
         issues: list[_MeshValidator._ValidationIssue] = []
         validated = mesh.cell_validator()
         for name in validation_fields:
-            array = validated.field_data[name]
+            array = validated.field_data[name].tolist()
             msg = _MeshValidator._invalid_cell_msg(name, array)
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
             issues.append(issue)
@@ -193,7 +193,7 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_invalid_point_references(mesh: DataSet) -> _MeshValidator._ValidationIssue:
-        def _find_cells_with_invalid_point_refs() -> NumpyArray[int]:
+        def _find_cells_with_invalid_point_refs() -> list[int]:
             """Return cell IDs that reference points that do not exist."""
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
@@ -208,7 +208,7 @@ class _MeshValidator:
             # Map invalid connectivity indices back to cell IDs using offsets
             # Each invalid index belongs to the cell whose start offset <= index < next offset
             cell_ids = np.searchsorted(grid.offset, invalid_indices, side='right') - 1
-            return np.unique(cell_ids)
+            return np.unique(cell_ids).tolist()
 
         name = 'invalid_point_references'
         array = _find_cells_with_invalid_point_refs()
@@ -216,7 +216,7 @@ class _MeshValidator:
         return _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
 
     @staticmethod
-    def _invalid_cell_msg(name: str, array: NumpyArray[int]) -> str:
+    def _invalid_cell_msg(name: str, array: list[int]) -> str:
         name_norm = name.replace('_', ' ')
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -226,7 +226,10 @@ class _MeshValidator:
             before = ' '
             after = f' with {name_norm}'
         s = 's' if len(array) > 1 else ''
-        return f'Mesh has {len(array)}{before}cell{s}{after}. Invalid cell id{s}: {np.sort(array)}'
+        return (
+            f'Mesh has {len(array)}{before}cell{s}{after}. '
+            f'Invalid cell id{s}: {reprlib.repr(array)}'
+        )
 
     @staticmethod
     def _validate_arrays(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
@@ -279,16 +282,16 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_points(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
-        def get_unused_point_ids() -> NumpyArray[int]:
+        def get_unused_point_ids() -> list[int]:
             grid = mesh.cast_to_unstructured_grid()
             all_points = np.arange(grid.n_points)
             # Note: This may not include points used by Polyhedron cells
             used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
-            return np.setdiff1d(all_points, used_points, assume_unique=True)
+            return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
-        def get_non_finite_point_ids() -> NumpyArray[int]:
+        def get_non_finite_point_ids() -> list[int]:
             mask = ~np.isfinite(mesh.points).all(axis=1)
-            return np.where(mask)[0]
+            return np.where(mask)[0].tolist()
 
         issues: list[_MeshValidator._ValidationIssue] = []
         for name, point_ids, info in [
@@ -307,8 +310,7 @@ class _MeshValidator:
                     a = a.replace('a', 'an')
 
             msg = (
-                f'Mesh has{a}{name_norm}{s}{info}. '
-                f'Invalid point id{s}: {reprlib.repr(point_ids.tolist())}'
+                f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: {reprlib.repr(point_ids)}'
             )
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
             issues.append(issue)
@@ -3433,14 +3435,14 @@ class DataSet(DataSetFilters, DataObject):
         of a mesh. The dataclass contains validation fields which are specific to issues with the
         data, cells, and points.
 
-        **Data-related fields**
+        **Data validation fields**
 
         - ``point_data_wrong_length``: If any point data arrays do not match the number of
           points, the array names are stored here.
         - ``cell_data_wrong_length``: If any cell data arrays do not match the number of
           cells, the array names are stored here.
 
-        **Cell-related fields**
+        **Cell validation fields**
 
         Other than ``invalid_point_references``, these are all computed using
         :meth:`~pyvista.DataSetFilters.cell_validator`.
@@ -3456,7 +3458,7 @@ class DataSet(DataSetFilters, DataObject):
         - ``coincident_points``
         - ``invalid_point_references``
 
-        **Point-related fields**
+        **Point validation fields**
 
         - ``unused_points``
         - ``non_finite_points``
@@ -3538,8 +3540,8 @@ class DataSet(DataSetFilters, DataObject):
             Unused points            : None
             Non finite points        : None
 
-        Load an invalid mesh, e.g. :func:`~pyvista.examples.downloads.download_cow`
-        and use :meth:`validate_mesh` to confirm this.
+        Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.downloads.download_cow`
+        and validate it.
 
         >>> mesh = examples.download_cow()
         >>> report = mesh.validate_mesh()
@@ -3554,7 +3556,7 @@ class DataSet(DataSetFilters, DataObject):
         Show the cell ids of the non-convex cells.
 
         >>> report.non_convex
-        pyvista_ndarray([1013, 1532, 3250])
+        [1013, 1532, 3250]
 
         Print the full report.
 

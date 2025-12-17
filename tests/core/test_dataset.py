@@ -1794,7 +1794,7 @@ def test_validate_mesh_invalid_point_references():
     grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
     report = grid.validate_mesh('invalid_point_references')
     expected_cell_ids = [0]
-    assert report.invalid_point_references.tolist() == expected_cell_ids
+    assert report.invalid_point_references == expected_cell_ids
 
 
 @pytest.fixture
@@ -1864,13 +1864,13 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     nonconvex = (
         ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
         if platform.system() == 'Darwin'
-        else ' - Mesh has 2 non convex cells. Invalid cell ids: [0 1]\n'
+        else ' - Mesh has 2 non convex cells. Invalid cell ids: [0, 1]\n'
     )
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
-        ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0 1]\n'
+        ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0, 1]\n'
         f'{nonconvex}'
-        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0 1]'
+        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0, 1]'
     )
     invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
