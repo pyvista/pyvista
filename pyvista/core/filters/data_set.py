@@ -2766,7 +2766,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         .. deprecated:: 0.47
             This filter may be unreliable as it can erroneously mark outside points as inside.
-            Use :meth:`select_inside_points` instead.
+            Use :meth:`select_points_inside` instead.
 
         Parameters
         ----------
@@ -2903,7 +2903,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         See Also
         --------
-        implicit_distance
+        compute_implicit_distance
         :ref:`extract_cells_inside_surface_example`
 
         Examples
