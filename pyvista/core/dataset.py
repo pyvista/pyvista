@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
+from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
 from functools import partial
@@ -131,7 +132,7 @@ class _MeshValidator:
                 validation_fields.remove('critical')
                 validation_fields.extend(get_args(_CriticalValidationOptions))
 
-        self._mesh_class_name = mesh.__class__.__name__
+        self._mesh = mesh
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
         # Validate data arrays
@@ -307,19 +308,21 @@ class _MeshValidator:
         return issues
 
     @property
-    def error_message(self) -> str:
+    def _message(self) -> str:
         messages: list[str] = []
         messages += [issue.message for issue in self._validation_issues.values() if issue.values]
         bullet = ' - '
         body = bullet + f'\n{bullet}'.join(messages)
-        header = f'{self._mesh_class_name} mesh is not valid due to the following problems:'
+        header = (
+            f'{self._mesh.__class__.__name__} mesh is not valid due to the following problems:'
+        )
         return f'{header}\n{body}'
 
     @property
-    def report(self) -> DataSet._ValidationReport:
+    def validation_report(self) -> DataSet._ValidationReport:
         issues = self._validation_issues
         kwargs = {issue.name: issue.values for issue in issues.values()}
-        return DataSet._ValidationReport(**kwargs)  # type: ignore[arg-type]
+        return DataSet._ValidationReport(mesh=self._mesh, message=self._message, **kwargs)  # type: ignore[arg-type]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -3295,11 +3298,15 @@ class DataSet(DataSetFilters, DataObject):
     class _ValidationReport(_NoNewAttrMixin):
         """Dataclass to report mesh validation results."""
 
-        # Data
+        # Non-fields
+        mesh: InitVar[DataSet]
+        message: InitVar[str | None]
+
+        # Data fields
         point_data_wrong_length: list[str] | None = None
         cell_data_wrong_length: list[str] | None = None
 
-        # Cells
+        # Cell fields
         wrong_number_of_points: list[int] | None = None
         intersecting_edges: list[int] | None = None
         intersecting_faces: list[int] | None = None
@@ -3311,9 +3318,21 @@ class DataSet(DataSetFilters, DataObject):
         coincident_points: list[int] | None = None
         invalid_point_references: list[int] | None = None
 
-        # Points
+        # Point fields
         unused_points: list[int] | None = None
         non_finite_points: list[int] | None = None
+
+        def __post_init__(self, mesh: DataSet, message: str | None) -> None:
+            object.__setattr__(self, '_mesh', mesh)
+            object.__setattr__(self, '_message', message)
+
+        @property  # type: ignore[no-redef]
+        def mesh(self) -> str | None:
+            return self._mesh  # type: ignore[attr-defined]
+
+        @property  # type: ignore[no-redef]
+        def message(self) -> str | None:
+            return None if self.is_valid else self._message  # type: ignore[attr-defined]
 
         @property
         def is_valid(self) -> bool:  # numpydoc ignore=RT01
@@ -3577,9 +3596,11 @@ class DataSet(DataSetFilters, DataObject):
             allowed = get_args(_MeshValidationActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
 
-        validator = _MeshValidator(self, validation_fields)
-        if action == 'warn':
-            warn_external(validator.error_message, pv.InvalidMeshWarning)
-        elif action == 'error':
-            raise pv.InvalidMeshError(validator.error_message)
-        return validator.report
+        report = _MeshValidator(self, validation_fields).validation_report
+        if action and not report.is_valid:
+            message = report.message   # type: ignore[attr-defined]
+            if action == 'warn':
+                warn_external(message, pv.InvalidMeshWarning)
+            else:  # action == 'error':
+                raise pv.InvalidMeshError(message)
+        return report

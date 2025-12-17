@@ -1593,8 +1593,16 @@ def sphere_with_invalid_arrays(sphere):
 
 
 def test_validate_mesh_is_valid(sphere_with_invalid_arrays):
-    assert pv.PolyData().validate_mesh().is_valid
+    mesh = pv.PolyData()
+    report = mesh.validate_mesh()
+    assert report.is_valid
+    assert report.mesh is mesh
     assert not sphere_with_invalid_arrays.validate_mesh().is_valid
+
+
+def test_validate_mesh_message(sphere_with_invalid_arrays):
+    assert pv.PolyData().validate_mesh().message is None
+    assert sphere_with_invalid_arrays.validate_mesh().message
 
 
 def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
@@ -1615,7 +1623,8 @@ def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
         "Invalid arrays: 'foo' (10), 'bar' (15)"
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        sphere_with_invalid_arrays.validate_mesh(action='warn')
+        report = sphere_with_invalid_arrays.validate_mesh(action='warn')
+    assert report.message == match
 
 
 def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
@@ -1636,7 +1645,8 @@ def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
         "Invalid array: 'ham' (11)"
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        sphere_with_invalid_arrays.validate_mesh(action='warn')
+        report = sphere_with_invalid_arrays.validate_mesh(action='warn')
+    assert report.message == match
 
 
 def test_validate_mesh_raises(sphere_with_invalid_arrays):
