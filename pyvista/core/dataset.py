@@ -101,16 +101,6 @@ class _MeshValidator:
         message: str
         values: list[str, int] | None
 
-        @property
-        def _has_values(self) -> bool:
-            values = self.values
-            if isinstance(values, np.ndarray):
-                if values.size > 0:
-                    return True
-            elif values:
-                return True
-            return False
-
     def __init__(
         self,
         mesh: DataSet,
@@ -203,7 +193,7 @@ class _MeshValidator:
             conn = grid.cell_connectivity
             invalid_indices = np.where((conn < 0) | (conn >= grid.n_points))[0]
             if len(invalid_indices) == 0:
-                return np.array([], dtype=int)
+                return []
 
             # Map invalid connectivity indices back to cell IDs using offsets
             # Each invalid index belongs to the cell whose start offset <= index < next offset
@@ -319,9 +309,7 @@ class _MeshValidator:
     @property
     def error_message(self) -> str:
         messages: list[str] = []
-        messages += [
-            issue.message for issue in self._validation_issues.values() if issue._has_values
-        ]
+        messages += [issue.message for issue in self._validation_issues.values() if issue.values]
         bullet = ' - '
         body = bullet + f'\n{bullet}'.join(messages)
         header = f'{self._mesh_class_name} mesh is not valid due to the following problems:'
@@ -330,9 +318,7 @@ class _MeshValidator:
     @property
     def report(self) -> DataSet._ValidationReport:
         issues = self._validation_issues
-        kwargs = {
-            name: issue.values if issue._has_values else None for name, issue in issues.items()
-        }
+        kwargs = {issue.name: issue.values for issue in issues.values()}
         return DataSet._ValidationReport(**kwargs)  # type: ignore[arg-type]
 
 
@@ -3337,7 +3323,7 @@ class DataSet(DataSetFilters, DataObject):
         @property
         def issues(self) -> tuple[str, ...] | None:  # numpydoc ignore=RT01
             """Return any field names which have values."""
-            issues = tuple(f.name for f in fields(self) if getattr(self, f.name) is not None)
+            issues = tuple(f.name for f in fields(self) if getattr(self, f.name))
             return issues if issues else None
 
         def __str__(self) -> str:
@@ -3347,7 +3333,7 @@ class DataSet(DataSetFilters, DataObject):
                 max_width = 0
                 for f in fields(self):
                     width = len(f.name)
-                    if (value := getattr(self, f.name)) is not None:
+                    if value := getattr(self, f.name):
                         num_digits = len(str(len(value)))
                         len_space_plus_brackets = 3  # Value will be printed inside two brackets
                         width += num_digits + len_space_plus_brackets
@@ -3356,12 +3342,6 @@ class DataSet(DataSetFilters, DataObject):
 
             indent = ' ' * 4
             label_width = compute_label_width()
-
-            def format_value(value: object) -> str:
-                if value is None:
-                    return 'None'
-                return reprlib.repr(value.tolist() if isinstance(value, np.ndarray) else value)
-
             lines: list[str] = []
 
             title = 'Mesh Validation Report'
@@ -3369,18 +3349,26 @@ class DataSet(DataSetFilters, DataObject):
             lines.append('-' * len(title))
 
             def emit_group(name: str, field_names: list[str]) -> None:
+                if all(getattr(self, field) is None for field in field_names):
+                    return
                 lines.append(f'{name}:')
                 for field in field_names:
                     value = getattr(self, field)
-                    label = field.replace('_', ' ').capitalize()
-                    try:
-                        n_values = f' ({len(value)!s})'
-                    except TypeError:
+                    if field in always_show or value is not None:
+                        label = field.replace('_', ' ').capitalize()
                         n_values = ''
-                    lines.append(
-                        f'{indent}{label + n_values:<{label_width}} : {format_value(value)}'
-                    )
+                        try:
+                            length = len(value)
+                            if length:
+                                n_values = f' ({length!s})'
+                        except TypeError:
+                            pass
 
+                        lines.append(
+                            f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
+                        )
+
+            always_show: list[str] = ['issues']
             emit_group(
                 'Summary',
                 [
