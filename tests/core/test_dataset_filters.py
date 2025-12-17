@@ -2623,7 +2623,8 @@ def test_interpolate():
 
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
-    result = uniform.select_enclosed_points(surf, progress_bar=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        result = uniform.select_enclosed_points(surf, progress_bar=True)
     assert isinstance(result, type(uniform))
     assert 'SelectedPoints' in result.array_names
     assert result['SelectedPoints'].any()
@@ -2632,14 +2633,17 @@ def test_select_enclosed_points(uniform, hexbeam):
     # Now check non-closed surface
     mesh = pv.Sphere(end_theta=270)
     surf = mesh.rotate_x(90, inplace=False)
-    result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
-        result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=True)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=True)
     with pytest.raises(TypeError):
-        result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
 
 
 def test_select_points_inside(uniform, hexbeam):
@@ -2658,7 +2662,11 @@ def test_select_points_inside(uniform, hexbeam):
     assert 'selected_points' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
 
-    with pytest.raises(RuntimeError):
+    match = (
+        'Surface is not closed. Please read the warning in the documentation for\n'
+        'this function and either pass `check_surface=False` or repair the surface.'
+    )
+    with pytest.raises(RuntimeError, match=match):
         mesh.select_points_inside(surf, check_surface=True)
     with pytest.raises(TypeError):
         mesh.select_points_inside(hexbeam, check_surface=True)

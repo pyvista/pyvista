@@ -2760,6 +2760,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
            first check whether this is true. If ``False`` and not manifold,
            an error will be raised.
 
+        .. deprecated:: 0.47
+            This filter may be unreliable as it can erroneously mark outside points as inside.
+            Use :meth:`select_inside_points` instead.
+
         Parameters
         ----------
         surface : pyvista.PolyData
@@ -2813,6 +2817,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 51):  # pragma: no cover
+            msg = 'Remove this filter.'
+            raise RuntimeError(msg)
+
+        msg = 'This filter is deprecated. Use `select_points_inside` instead.'
+        warn_external(msg, PyVistaDeprecationWarning)
         if not isinstance(surface, pv.PolyData):
             msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -2837,7 +2850,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         out['SelectedPoints'] = bools
         return out
 
-    def select_points_inside(
+    def select_points_inside(  # type:ignore[misc]
         self: _DataSetType,
         surface: pv.PolyData,
         *,
@@ -2861,6 +2874,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
            manifold. A boolean flag can be set to force the filter to
            first check whether this is true. If ``False`` and not manifold,
            an error will be raised.
+
+        .. versionadded:: 0.47
 
         Parameters
         ----------
@@ -2911,7 +2926,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if check_surface and surface.n_open_edges > 0:
             msg = (
                 'Surface is not closed. Please read the warning in the '
-                'documentation for this function and either pass '
+                'documentation for\nthis function and either pass '
                 '`check_surface=False` or repair the surface.'
             )
             raise RuntimeError(msg)
