@@ -132,7 +132,7 @@ class _MeshValidator:
                 validation_fields.remove('critical')
                 validation_fields.extend(get_args(_CriticalValidationOptions))
 
-        self._mesh = mesh
+        self._mesh = mesh.copy(deep=False)
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
         # Validate data arrays
@@ -156,7 +156,9 @@ class _MeshValidator:
         if store_all_cell_fields or any(
             arg in validation_fields for arg in fields_for_cell_validator
         ):
-            for issue in _MeshValidator._validate_cells(mesh, fields_for_cell_validator):
+            issues, validated = _MeshValidator._validate_cells(mesh, fields_for_cell_validator)
+            self._mesh = validated
+            for issue in issues:
                 if store_all_cell_fields or issue.name in validation_fields:
                     self._validation_issues[issue.name] = issue
 
@@ -172,7 +174,7 @@ class _MeshValidator:
     @staticmethod
     def _validate_cells(
         mesh: DataSet, validation_fields: list[_CellValidationOptions]
-    ) -> list[_MeshValidator._ValidationIssue]:
+    ) -> tuple[list[_MeshValidator._ValidationIssue], DataSet]:
         issues: list[_MeshValidator._ValidationIssue] = []
         validated = mesh.cell_validator()
         for name in validation_fields:
@@ -180,7 +182,7 @@ class _MeshValidator:
             msg = _MeshValidator._invalid_cell_msg(name, array)
             issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
             issues.append(issue)
-        return issues
+        return issues, validated
 
     @staticmethod
     def _validate_invalid_point_references(mesh: DataSet) -> _MeshValidator._ValidationIssue:
@@ -3327,7 +3329,7 @@ class DataSet(DataSetFilters, DataObject):
             object.__setattr__(self, '_message', message)
 
         @property  # type: ignore[no-redef]
-        def mesh(self) -> str | None:
+        def mesh(self) -> DataSet:
             return self._mesh  # type: ignore[attr-defined]
 
         @property  # type: ignore[no-redef]
@@ -3598,7 +3600,7 @@ class DataSet(DataSetFilters, DataObject):
 
         report = _MeshValidator(self, validation_fields).validation_report
         if action and not report.is_valid:
-            message = report.message   # type: ignore[attr-defined]
+            message = report.message  # type: ignore[attr-defined]
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':

@@ -1596,7 +1596,9 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays):
     mesh = pv.PolyData()
     report = mesh.validate_mesh()
     assert report.is_valid
-    assert report.mesh is mesh
+    assert isinstance(report.mesh, pv.PolyData)
+    assert report.mesh is not mesh
+    assert 'validity_state' in report.mesh.array_names
     assert not sphere_with_invalid_arrays.validate_mesh().is_valid
 
 
