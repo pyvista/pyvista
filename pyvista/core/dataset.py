@@ -99,7 +99,7 @@ class _MeshValidator:
     class _ValidationIssue:
         name: str
         message: str
-        values: list[str, int] | None
+        values: Sequence[str | int] | None
 
     def __init__(
         self,
@@ -3300,20 +3300,20 @@ class DataSet(DataSetFilters, DataObject):
         cell_data_wrong_length: list[str] | None = None
 
         # Cells
-        wrong_number_of_points: NumpyArray[int] | None = None
-        intersecting_edges: NumpyArray[int] | None = None
-        intersecting_faces: NumpyArray[int] | None = None
-        non_contiguous_edges: NumpyArray[int] | None = None
-        non_convex: NumpyArray[int] | None = None
-        inverted_faces: NumpyArray[int] | None = None
-        non_planar_faces: NumpyArray[int] | None = None
-        degenerate_faces: NumpyArray[int] | None = None
-        coincident_points: NumpyArray[int] | None = None
-        invalid_point_references: NumpyArray[int] | None = None
+        wrong_number_of_points: list[int] | None = None
+        intersecting_edges: list[int] | None = None
+        intersecting_faces: list[int] | None = None
+        non_contiguous_edges: list[int] | None = None
+        non_convex: list[int] | None = None
+        inverted_faces: list[int] | None = None
+        non_planar_faces: list[int] | None = None
+        degenerate_faces: list[int] | None = None
+        coincident_points: list[int] | None = None
+        invalid_point_references: list[int] | None = None
 
         # Points
-        unused_points: NumpyArray[int] | None = None
-        non_finite_points: NumpyArray[int] | None = None
+        unused_points: list[int] | None = None
+        non_finite_points: list[int] | None = None
 
         @property
         def is_valid(self) -> bool:  # numpydoc ignore=RT01
