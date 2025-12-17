@@ -60,7 +60,7 @@ pl.show()
 
 contours = dataset.contour()
 slices = dataset.slice_orthogonal()
-glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere())
+glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
 
 pl = pv.Plotter(shape=(2, 2))
 # Show the threshold

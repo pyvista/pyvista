@@ -86,7 +86,7 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
 # %%
 
 # Create a basic triangle within pyvista
-points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]])
+points = np.array([[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
 faces = np.array([3, 0, 1, 2])
 tri = pv.PolyData(points, faces)
 
