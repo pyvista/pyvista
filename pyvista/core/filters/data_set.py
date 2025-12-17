@@ -444,6 +444,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Dataset containing the ``'implicit_distance'`` array in
             ``point_data``.
 
+        See Also
+        --------
+        select_points_inside
+
         Examples
         --------
         Compute the distance between all the points on a sphere and a
