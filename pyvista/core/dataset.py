@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
+from collections.abc import Sized
 from copy import deepcopy
 from dataclasses import InitVar
 from dataclasses import dataclass
@@ -172,6 +173,10 @@ class _MeshValidator:
                     self._validation_issues[issue.name] = issue
 
     @staticmethod
+    def _normalize_field_name(name: str) -> str:
+        return name.replace('_', ' ').replace('non ', 'non-')
+
+    @staticmethod
     def _validate_cells(
         mesh: DataSet, validation_fields: list[_CellValidationOptions]
     ) -> tuple[list[_MeshValidator._ValidationIssue], DataSet]:
@@ -210,7 +215,7 @@ class _MeshValidator:
 
     @staticmethod
     def _invalid_cell_msg(name: str, array: list[int]) -> str:
-        name_norm = name.replace('_', ' ')
+        name_norm = _MeshValidator._normalize_field_name(name)
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
             before = f' {name_norm} '
@@ -291,7 +296,7 @@ class _MeshValidator:
             ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
             ('non_finite_points', get_non_finite_point_ids(), ''),
         ]:
-            name_norm = name.replace('_', ' ')
+            name_norm = _MeshValidator._normalize_field_name(name)
             name_norm = name_norm.removesuffix('s')
             if len(point_ids) > 1:
                 s = 's'
@@ -3349,16 +3354,22 @@ class DataSet(DataSetFilters, DataObject):
 
         def __str__(self) -> str:
             """Include all validation results in a printable string."""
+            rendered_attrs: tuple[str, ...] = (
+                'is_valid',
+                'issues',
+                *[f.name for f in fields(self)],
+            )
 
             def compute_label_width() -> int:
                 max_width = 0
-                for f in fields(self):
-                    width = len(f.name)
-                    if value := getattr(self, f.name):
+                for name in rendered_attrs:
+                    width = len(name)
+                    if (value := getattr(self, name)) and isinstance(value, Sized):
                         num_digits = len(str(len(value)))
                         len_space_plus_brackets = 3  # Value will be printed inside two brackets
                         width += num_digits + len_space_plus_brackets
                     max_width = max(max_width, width)
+
                 return max_width
 
             indent = ' ' * 4
@@ -3376,7 +3387,7 @@ class DataSet(DataSetFilters, DataObject):
                 for field in field_names:
                     value = getattr(self, field)
                     if field in always_show or value is not None:
-                        label = field.replace('_', ' ').capitalize()
+                        label = _MeshValidator._normalize_field_name(field).capitalize()
                         n_values = ''
                         try:
                             length = len(value)
@@ -3472,14 +3483,17 @@ class DataSet(DataSetFilters, DataObject):
         - ``unused_points``
         - ``non_finite_points``
 
-        For each field, its value is ``None`` if there is no issue. Otherwise, any invalid items
-        are stored in each field (e.g. invalid array names or cell/point ids).
+        For each field, its value is:
+
+        - ``None`` if the field is omitted from the report,
+        - an empty list ``[]`` if the field is included but there is no issue to report for it, or
+        - a list of invalid items (e.g. invalid array names or cell/point ids).
 
         By default, the validity of all fields is included in the report. Optionally, only a
         subset of fields may be requested.
 
         The report includes an additional ``is_valid`` property, which evaluates to ``True`` when
-        all fields are ``None``.
+        all fields are ``None`` or empty.
 
         Parameters
         ----------
@@ -3538,22 +3552,43 @@ class DataSet(DataSetFilters, DataObject):
             Wrong number of points   : []
             Intersecting edges       : []
             Intersecting faces       : []
-            Non contiguous edges     : []
-            Non convex               : []
+            Non-contiguous edges     : []
+            Non-convex               : []
             Inverted faces           : []
-            Non planar faces         : []
+            Non-planar faces         : []
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
         Invalid point ids:
             Unused points            : []
-            Non finite points        : []
+            Non-finite points        : []
 
         Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.downloads.download_cow`
-        and validate it.
+        and validate it. Use ``'cells'`` to only validate the cells specifically.
 
         >>> mesh = examples.download_cow()
-        >>> report = mesh.validate_mesh()
+        >>> report = mesh.validate_mesh('cells')
+
+        Show the report. Note that array and point validation info is omitted.
+
+        >>> print(report)
+        Mesh Validation Report
+        ----------------------
+        Summary:
+            Is valid                 : False
+            Issues (1)               : ('non_convex',)
+        Invalid cell ids:
+            Wrong number of points   : []
+            Intersecting edges       : []
+            Intersecting faces       : []
+            Non-contiguous edges     : []
+            Non-convex (3)           : [1013, 1532, 3250]
+            Inverted faces           : []
+            Non-planar faces         : []
+            Degenerate faces         : []
+            Coincident points        : []
+            Invalid point references : []
+
         >>> report.is_valid
         False
 
@@ -3567,31 +3602,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> report.non_convex
         [1013, 1532, 3250]
 
-        Print the full report.
+        Print the message generated by the report. This is the message used when the
+        ``action`` keyword is set.
 
-        >>> print(report)
-        Mesh Validation Report
-        ----------------------
-        Summary:
-            Is valid                 : False
-            Issues (1)               : ('non_convex',)
-        Invalid data arrays:
-            Point data wrong length  : []
-            Cell data wrong length   : []
-        Invalid cell ids:
-            Wrong number of points   : []
-            Intersecting edges       : []
-            Intersecting faces       : []
-            Non contiguous edges     : []
-            Non convex (3)           : [1013, 1532, 3250]
-            Inverted faces           : []
-            Non planar faces         : []
-            Degenerate faces         : []
-            Coincident points        : []
-            Invalid point references : []
-        Invalid point ids:
-            Unused points            : []
-            Non finite points        : []
+        >>> print(report.message)
+        PolyData mesh is not valid due to the following problems:
+         - Mesh has 3 non-convex cells. Invalid cell ids: [1013, 1532, 3250]
 
         """
         if action is not None:

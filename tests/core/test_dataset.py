@@ -1699,16 +1699,16 @@ def test_validate_mesh_report_str():
         '    Wrong number of points   : []\n'
         '    Intersecting edges       : []\n'
         '    Intersecting faces       : []\n'
-        '    Non contiguous edges     : []\n'
-        '    Non convex               : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
         '    Inverted faces           : []\n'
-        '    Non planar faces         : []\n'
+        '    Non-planar faces         : []\n'
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
         'Invalid point ids:\n'
         '    Unused points            : []\n'
-        '    Non finite points        : []'
+        '    Non-finite points        : []'
     )
     assert actual == expected
 
@@ -1730,16 +1730,16 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Wrong number of points       : []\n'
         '    Intersecting edges           : []\n'
         '    Intersecting faces           : []\n'
-        '    Non contiguous edges         : []\n'
-        '    Non convex                   : []\n'
+        '    Non-contiguous edges         : []\n'
+        '    Non-convex                   : []\n'
         '    Inverted faces               : []\n'
-        '    Non planar faces             : []\n'
+        '    Non-planar faces             : []\n'
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (1) : [0]\n'
         'Invalid point ids:\n'
         '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
-        '    Non finite points (1)        : [20]'
+        '    Non-finite points (1)        : [20]'
     )
     assert actual == expected
 
@@ -1864,7 +1864,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 cell with intersecting edges. Invalid cell id: [0]\n'
-        ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
+        ' - Mesh has 1 non-convex cell. Invalid cell id: [0]\n'
         ' - Mesh has 1 cell with inverted faces. Invalid cell id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
@@ -1873,9 +1873,9 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     # Test multiple cells
     # Likely VTK bug: we have two nonconvex cells, but on macOS only one is reported as such
     nonconvex = (
-        ' - Mesh has 1 non convex cell. Invalid cell id: [0]\n'
+        ' - Mesh has 1 non-convex cell. Invalid cell id: [0]\n'
         if platform.system() == 'Darwin'
-        else ' - Mesh has 2 non convex cells. Invalid cell ids: [0, 1]\n'
+        else ' - Mesh has 2 non-convex cells. Invalid cell ids: [0, 1]\n'
     )
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
@@ -1891,7 +1891,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has an unused point not referenced by any cell(s). Invalid point id: [0]\n'
-        ' - Mesh has a non finite point. Invalid point id: [0]'
+        ' - Mesh has a non-finite point. Invalid point id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         poly_with_invalid_point.validate_mesh(action='warn')
@@ -1902,7 +1902,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     match = (
         'PolyData mesh is not valid due to the following problems:\n'
         f' - Mesh has unused points not referenced by any cell(s). Invalid point ids: {ids}\n'
-        f' - Mesh has non finite points. Invalid point ids: {ids}'
+        f' - Mesh has non-finite points. Invalid point ids: {ids}'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         poly_with_invalid_point.validate_mesh(action='warn')
