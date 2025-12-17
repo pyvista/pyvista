@@ -2917,8 +2917,24 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     adjacent_cells=False,
         ... )
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, style='wireframe')
-        >>> _ = pl.add_points(pts, color='r')
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        Select the outside points instead.
+
+        >>> selected = plane.select_points_inside(sphere, inside_out=True)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'],
+        ...     adjacent_cells=False,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
         >>> pl.show()
 
         """
