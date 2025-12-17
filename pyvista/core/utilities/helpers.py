@@ -20,7 +20,9 @@ from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
 from .fileio import from_meshio
+from .fileio import from_trimesh
 from .fileio import is_meshio_mesh
+from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
     from meshio import Mesh
@@ -118,13 +120,18 @@ def wrap(  # noqa: PLR0911
 
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
-    * 3D :class:`trimesh.Trimesh` mesh.
-    * 3D :class:`meshio.Mesh` mesh.
+    * 3D :class:`trimesh.Trimesh` mesh using :func:`~pyvista.from_trimesh`.
+    * 3D :class:`meshio.Mesh` mesh using :func:`~pyvista.from_meshio`.
 
     .. versionchanged:: 0.38.0
         If the passed object is already a wrapped PyVista object, then
         this is no-op and will return that object directly. In previous
         versions of PyVista, this would perform a shallow copy.
+
+    .. versionchanged:: 0.47
+
+        If wrapping a ``Trimesh`` object, any arrays are now wrapped directly
+        (no copies).
 
     Parameters
     ----------
@@ -246,17 +253,8 @@ def wrap(  # noqa: PLR0911
         return from_meshio(dataset)
 
     # wrap trimesh
-    if dataset.__class__.__name__ == 'Trimesh':
-        # trimesh doesn't pad faces
-        dataset = cast('Trimesh', dataset)
-        polydata = pv.PolyData.from_regular_faces(
-            np.asarray(dataset.vertices),
-            faces=dataset.faces,
-        )
-        # If the Trimesh object has uv, pass them to the PolyData
-        if hasattr(dataset.visual, 'uv') and dataset.visual.uv is not None:  # type: ignore[union-attr]
-            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)  # type: ignore[union-attr]
-        return polydata
+    if is_trimesh_mesh(dataset):
+        return from_trimesh(dataset)
 
     # otherwise, flag tell the user we can't wrap this object
     msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'
