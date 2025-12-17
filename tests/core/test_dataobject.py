@@ -282,9 +282,8 @@ def test_user_dict_values(ant, value):
 
 def test_user_dict_repr(ant):
     ant.user_dict['foo'] = 'bar'
-    user_dict_repr = repr(ant.user_dict)
-    expected = '_SerializedDictArray({"foo": "bar"})'
-    assert user_dict_repr == expected
+    user_dict = ant.user_dict
+    assert repr(user_dict) == str(user_dict)
 
 
 @pytest.mark.parametrize(
