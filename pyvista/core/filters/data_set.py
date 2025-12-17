@@ -8355,6 +8355,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         DataSet
             Dataset with field data of cell validity.
 
+        See Also
+        --------
+        :meth:`~pyvista.DataSet.validate_mesh`
+        :ref:`mesh_validation_example`
+
         Examples
         --------
         Load a mesh with invalid cells.
