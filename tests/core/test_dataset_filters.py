@@ -2642,6 +2642,28 @@ def test_select_enclosed_points(uniform, hexbeam):
         result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
 
 
+def test_select_points_inside(uniform, hexbeam):
+    surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
+    result = uniform.select_points_inside(surf)
+    assert isinstance(result, type(uniform))
+    assert 'selected_points' in result.array_names
+    assert result['selected_points'].any()
+    assert result.n_arrays == uniform.n_arrays + 1
+
+    # Now check non-closed surface
+    mesh = pv.Sphere(end_theta=270)
+    surf = mesh.rotate_x(90, inplace=False)
+    result = mesh.select_points_inside(surf, check_surface=False)
+    assert isinstance(result, type(mesh))
+    assert 'selected_points' in result.array_names
+    assert result.n_arrays == mesh.n_arrays + 1
+
+    with pytest.raises(RuntimeError):
+        mesh.select_points_inside(surf, check_surface=True)
+    with pytest.raises(TypeError):
+        mesh.select_points_inside(hexbeam, check_surface=True)
+
+
 def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary(progress_bar=True)

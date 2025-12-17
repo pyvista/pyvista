@@ -8,6 +8,7 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
+import operator
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -2750,7 +2751,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         (The name of the output :vtk:`vtkDataArray` is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
-        input dataset. If you wish to extract cells or poinrs, various
+        input dataset. If you wish to extract cells or points, various
         threshold filters are available (i.e., threshold the output array).
 
         .. warning::
@@ -2834,6 +2835,93 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if len(bools) < 1:
             bools = np.zeros(out.n_points, dtype=np.uint8)
         out['SelectedPoints'] = bools
+        return out
+
+    def select_points_inside(
+        self: _DataSetType,
+        surface: pv.PolyData,
+        *,
+        inside_out: bool = False,
+        check_surface: bool = True,
+    ) -> _DataSetType:
+        """Mark points from this mesh as inside or outside relative to a closed surface.
+
+        This evaluates all the input points to determine whether they are in an
+        enclosed surface. The filter produces a boolean ``(True, False)`` point array named
+        ``'selected_points'`` that indicates whether points are outside (mask value ``False``)
+        or inside (mask value ``True``) a provided surface.
+
+        .. note::
+            This filter generates a data array, but does not modify the
+            input dataset. If you wish to extract cells or points, various
+            threshold filters are available (i.e., threshold the output array).
+
+        .. warning::
+           The filter assumes that the surface is closed and
+           manifold. A boolean flag can be set to force the filter to
+           first check whether this is true. If ``False`` and not manifold,
+           an error will be raised.
+
+        Parameters
+        ----------
+        surface : PolyData
+           Surface used to test for containment.
+
+        inside_out : bool, default: False
+            By default, points inside the surface have value ``True``, and points outside
+            have value ``False``. Set ``inside_out=True`` to invert this.
+
+        check_surface : bool, default: True
+            Specify whether to check the surface for closure. When ``True``, the
+            algorithm first checks to see if the surface is closed and
+            manifold. If the surface is not closed and manifold, a runtime
+            error is raised.
+
+        Returns
+        -------
+        PolyData
+            Mesh containing the ``point_data['selected_points']`` array.
+
+        See Also
+        --------
+        implicit_distance
+        :ref:`extract_cells_inside_surface_example`
+
+        Examples
+        --------
+        Determine which points on a plane are inside a manifold sphere
+        surface mesh.  Extract these points using the
+        :func:`DataSetFilters.extract_points` filter and then plot them.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plane = pv.Plane()
+        >>> selected = plane.select_points_inside(sphere)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'],
+        ...     adjacent_cells=False,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe')
+        >>> _ = pl.add_points(pts, color='r')
+        >>> pl.show()
+
+        """
+        _validation.check_instance(surface, pv.PolyData, name='surface')
+        if check_surface and surface.n_open_edges > 0:
+            msg = (
+                'Surface is not closed. Please read the warning in the '
+                'documentation for this function and either pass '
+                '`check_surface=False` or repair the surface.'
+            )
+            raise RuntimeError(msg)
+
+        out = self.copy()
+        distance = self.compute_implicit_distance(surface)
+        # Negative distance means inside
+        operation = operator.ge if inside_out else operator.le
+        bools = operation(distance['implicit_distance'], 0)
+        out['selected_points'] = bools
         return out
 
     @_deprecate_positional_args(allowed=['target'])
