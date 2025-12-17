@@ -61,7 +61,9 @@ rng_int = np.array(
 mesh.point_data['scalars'] = rng_int
 
 # construct the glyphs on top of the mesh; don't scale by scalars now
-glyphs = mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, N - 1))
+glyphs = mesh.glyph(
+    geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, N - 1), orient=False
+)
 
 # create plotter and add our glyphs with some nontrivial lighting
 pl = pv.Plotter()
