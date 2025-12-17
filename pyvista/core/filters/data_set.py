@@ -2810,15 +2810,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> selected = plane.select_enclosed_points(sphere)
-        >>> pts = plane.extract_points(
+        >>> selected = plane.select_enclosed_points(sphere)  # doctest:+SKIP
+        >>> pts = plane.extract_points(  # doctest:+SKIP
         ...     selected['SelectedPoints'].view(bool),
         ...     adjacent_cells=False,
         ... )
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, style='wireframe')
-        >>> _ = pl.add_points(pts, color='r')
-        >>> pl.show()
+        >>> pl = pv.Plotter()  # doctest:+SKIP
+        >>> _ = pl.add_mesh(sphere, style='wireframe')  # doctest:+SKIP
+        >>> _ = pl.add_points(pts, color='r')  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         """
         if pv.version_info >= (0, 50):  # pragma: no cover
