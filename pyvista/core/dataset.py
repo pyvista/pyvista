@@ -332,7 +332,7 @@ class _MeshValidator:
     def validation_report(self) -> DataSet._ValidationReport:
         issues = self._validation_issues
         kwargs = {issue.name: issue.values for issue in issues.values()}
-        return DataSet._ValidationReport(mesh=self._mesh, message=self._message, **kwargs)  # type: ignore[arg-type]
+        return DataSet._ValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -3309,8 +3309,8 @@ class DataSet(DataSetFilters, DataObject):
         """Dataclass to report mesh validation results."""
 
         # Non-fields
-        mesh: InitVar[DataSet]
-        message: InitVar[str | None]
+        _mesh: InitVar[DataSet]
+        _message: InitVar[str | None]
 
         # Data fields
         point_data_wrong_length: list[str] | None = None
@@ -3332,15 +3332,15 @@ class DataSet(DataSetFilters, DataObject):
         unused_points: list[int] | None = None
         non_finite_points: list[int] | None = None
 
-        def __post_init__(self, mesh: DataSet, message: str | None) -> None:
-            object.__setattr__(self, '_mesh', mesh)
-            object.__setattr__(self, '_message', message)
+        def __post_init__(self, _mesh: DataSet, _message: str | None) -> None:
+            object.__setattr__(self, '_mesh', _mesh)
+            object.__setattr__(self, '_message', _message)
 
-        @property  # type: ignore[no-redef]
+        @property
         def mesh(self) -> DataSet:
             return self._mesh  # type: ignore[attr-defined]
 
-        @property  # type: ignore[no-redef]
+        @property
         def message(self) -> str | None:
             return None if self.is_valid else self._message  # type: ignore[attr-defined]
 
@@ -3400,7 +3400,19 @@ class DataSet(DataSetFilters, DataObject):
                             f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
                         )
 
-            emit_group('Summary', summary_fields)
+            def emit_mesh_info() -> None:
+                mesh = self.mesh
+                lines.append('Mesh:')
+                mesh_items = {
+                    'Type': mesh.__class__.__name__,
+                    'N Points': mesh.n_points,
+                    'N Cells': mesh.n_cells,
+                }
+                for key, value in mesh_items.items():
+                    lines.append(f'{indent}{key:<{label_width}} : {value}')
+
+            emit_mesh_info()
+            emit_group('Report summary', summary_fields)
             emit_group('Invalid data arrays', _MeshValidator._allowed_array_fields)
             emit_group('Invalid cell ids', _MeshValidator._allowed_cell_fields)
             emit_group('Invalid point ids', _MeshValidator._allowed_point_fields)
@@ -3506,7 +3518,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Summary:
+        Mesh:
+            Type                     : PolyData
+            N Points                 : 842
+            N Cells                  : 1680
+        Report summary:
             Is valid                 : True
             Issues                   : None
         Invalid data arrays:
@@ -3538,7 +3554,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Summary:
+        Mesh:
+            Type                     : PolyData
+            N Points                 : 2903
+            N Cells                  : 3263
+        Report summary:
             Is valid                 : False
             Issues (1)               : ('non_convex',)
         Invalid cell ids:
@@ -3579,8 +3599,7 @@ class DataSet(DataSetFilters, DataObject):
             _validation.check_contains(allowed, must_contain=action, name='action')
 
         report = _MeshValidator(self, validation_fields).validation_report
-        if action and not report.is_valid:
-            message = report.message  # type: ignore[attr-defined]
+        if action and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':
