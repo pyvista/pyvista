@@ -97,6 +97,10 @@ _DEFAULT_MESH_VALIDATION_ARGS = get_args(_MeshValidationGroupOptions)
 
 
 class _MeshValidator:
+    _allowed_array_fields = get_args(_ArrayValidationOptions)
+    _allowed_cell_fields = get_args(_CellValidationOptions)
+    _allowed_point_fields = get_args(_PointValidationOptions)
+
     @dataclass
     class _ValidationIssue:
         name: str
@@ -110,14 +114,11 @@ class _MeshValidator:
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
     ) -> None:
         # Validate inputs
-        allowed_array_fields = get_args(_ArrayValidationOptions)
-        allowed_cell_fields = get_args(_CellValidationOptions)
-        allowed_point_fields = get_args(_PointValidationOptions)
         allowed_fields = (
             *_DEFAULT_MESH_VALIDATION_ARGS,
-            *allowed_array_fields,
-            *allowed_cell_fields,
-            *allowed_cell_fields,
+            *self._allowed_array_fields,
+            *self._allowed_cell_fields,
+            *self._allowed_cell_fields,
             'critical',
         )
         if validation_fields != _DEFAULT_MESH_VALIDATION_ARGS:
@@ -138,7 +139,9 @@ class _MeshValidator:
 
         # Validate data arrays
         store_all_array_fields = 'data' in validation_fields
-        if store_all_array_fields or any(arg in validation_fields for arg in allowed_array_fields):
+        if store_all_array_fields or any(
+            arg in validation_fields for arg in self._allowed_array_fields
+        ):
             for issue in _MeshValidator._validate_arrays(mesh):
                 if store_all_array_fields or issue.name in validation_fields:
                     self._validation_issues[issue.name] = issue
@@ -146,7 +149,7 @@ class _MeshValidator:
         # Validate cells
         # We do this with cell_validator plus a separate method for point references
         invalid_point_references: Literal['invalid_point_references'] = 'invalid_point_references'
-        fields_for_cell_validator: list[_CellValidationOptions] = list(allowed_cell_fields)
+        fields_for_cell_validator: list[_CellValidationOptions] = list(self._allowed_cell_fields)
         fields_for_cell_validator.remove(invalid_point_references)
         store_all_cell_fields = 'cells' in validation_fields
         if store_all_cell_fields or invalid_point_references in validation_fields:
@@ -166,7 +169,7 @@ class _MeshValidator:
         # Validate points
         store_all_points_fields = 'points' in validation_fields
         if store_all_points_fields or any(
-            arg in validation_fields for arg in allowed_point_fields
+            arg in validation_fields for arg in self._allowed_point_fields
         ):
             for issue in _MeshValidator._validate_points(mesh):
                 if store_all_points_fields or issue.name in validation_fields:
@@ -3354,15 +3357,12 @@ class DataSet(DataSetFilters, DataObject):
 
         def __str__(self) -> str:
             """Include all validation results in a printable string."""
-            rendered_attrs: tuple[str, ...] = (
-                'is_valid',
-                'issues',
-                *[f.name for f in fields(self)],
-            )
+            summary_fields = ['is_valid', 'issues']
+            dataset_fields = [f.name for f in fields(self)]
 
             def compute_label_width() -> int:
                 max_width = 0
-                for name in rendered_attrs:
+                for name in [*summary_fields, *dataset_fields]:
                     width = len(name)
                     if (value := getattr(self, name)) and isinstance(value, Sized):
                         num_digits = len(str(len(value)))
@@ -3380,13 +3380,13 @@ class DataSet(DataSetFilters, DataObject):
             lines.append(title)
             lines.append('-' * len(title))
 
-            def emit_group(name: str, field_names: list[str]) -> None:
+            def emit_group(name: str, field_names: Sequence[str]) -> None:
                 if all(getattr(self, field) is None for field in field_names):
                     return
                 lines.append(f'{name}:')
                 for field in field_names:
                     value = getattr(self, field)
-                    if field in always_show or value is not None:
+                    if value is not None or field in summary_fields:
                         label = _MeshValidator._normalize_field_name(field).capitalize()
                         n_values = ''
                         try:
@@ -3400,46 +3400,10 @@ class DataSet(DataSetFilters, DataObject):
                             f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
                         )
 
-            always_show: list[str] = ['issues']
-            emit_group(
-                'Summary',
-                [
-                    'is_valid',
-                    'issues',
-                ],
-            )
-
-            emit_group(
-                'Invalid data arrays',
-                [
-                    'point_data_wrong_length',
-                    'cell_data_wrong_length',
-                ],
-            )
-
-            emit_group(
-                'Invalid cell ids',
-                [
-                    'wrong_number_of_points',
-                    'intersecting_edges',
-                    'intersecting_faces',
-                    'non_contiguous_edges',
-                    'non_convex',
-                    'inverted_faces',
-                    'non_planar_faces',
-                    'degenerate_faces',
-                    'coincident_points',
-                    'invalid_point_references',
-                ],
-            )
-
-            emit_group(
-                'Invalid point ids',
-                [
-                    'unused_points',
-                    'non_finite_points',
-                ],
-            )
+            emit_group('Summary', summary_fields)
+            emit_group('Invalid data arrays', _MeshValidator._allowed_array_fields)
+            emit_group('Invalid cell ids', _MeshValidator._allowed_cell_fields)
+            emit_group('Invalid point ids', _MeshValidator._allowed_point_fields)
 
             return '\n'.join(lines)
 
