@@ -206,6 +206,8 @@ class PyVistaAttributeError(AttributeError):
 class InvalidMeshError(ValueError):
     """Error for invalid mesh properties.
 
+    .. versionadded:: 0.47
+
     Parameters
     ----------
     message : str
@@ -258,4 +260,8 @@ class VTKExecutionWarning(RuntimeWarning):
 
 
 class InvalidMeshWarning(Warning):
-    """Warning for invalid mesh properties."""
+    """Warning for invalid mesh properties.
+
+    .. versionadded:: 0.47
+
+    """
