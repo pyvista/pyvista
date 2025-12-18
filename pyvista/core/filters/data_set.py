@@ -2880,21 +2880,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ) -> _DataSetType:
         """Mark points from this mesh as inside or outside relative to a closed surface.
 
-        This evaluates all of this mesh's points to determine whether they are inside an enclosed
-        surface. The filter produces a boolean point array named ``'selected_points'`` that
-        indicates whether points are inside (mask value ``True``) or outside (mask value
-        ``False``) a provided surface.
+        Evaluate all of this mesh's points to determine if they are inside an enclosed surface.
+        The filter produces a boolean point array named ``'selected_points'`` with ``True``
+        values indicating points are inside, and ``False`` values indicating points are outside the
+        provided surface.
+
+        By default, the input surface is checked to ensure it is closed. Optionally, this check may
+        be disabled.
 
         .. note::
             This filter generates a data array, but does not modify the
             input dataset. If you wish to extract cells or points, various
             threshold filters are available (i.e., threshold the output array).
-
-        .. warning::
-           The filter assumes that the surface is closed and
-           manifold. A boolean flag can be set to force the filter to
-           first check whether this is true. If ``False`` and not manifold,
-           an error will be raised.
 
         .. versionadded:: 0.47
 
