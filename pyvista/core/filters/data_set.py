@@ -450,7 +450,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         See Also
         --------
-        select_points_inside
+        select_interior_points
 
         Examples
         --------
@@ -2770,7 +2770,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         .. deprecated:: 0.47
             This filter may be unreliable as it can erroneously mark outside points as inside.
-            Use :meth:`select_points_inside` instead.
+            Use :meth:`select_interior_points` instead.
 
         Parameters
         ----------
@@ -2832,7 +2832,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             msg = 'Remove this filter.'
             raise RuntimeError(msg)
 
-        msg = 'This filter is deprecated. Use `select_points_inside` instead.'
+        msg = 'This filter is deprecated. Use `select_interior_points` instead.'
         warn_external(msg, PyVistaDeprecationWarning)
 
         if not isinstance(surface, pv.PolyData):
@@ -2869,7 +2869,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
         return _get_output(alg)['SelectedPoints']
 
-    def select_points_inside(  # type:ignore[misc]
+    def select_interior_points(  # type:ignore[misc]
         self: _DataSetType,
         surface: pv.PolyData,
         *,
@@ -2953,7 +2953,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> selected = plane.select_points_inside(sphere)
+        >>> selected = plane.select_interior_points(sphere)
         >>> pts = plane.extract_points(
         ...     selected['selected_points'], include_cells=False
         ... )
@@ -2966,7 +2966,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Select the outside points instead.
 
-        >>> selected = plane.select_points_inside(sphere, inside_out=True)
+        >>> selected = plane.select_interior_points(sphere, inside_out=True)
         >>> pts = plane.extract_points(
         ...     selected['selected_points'], include_cells=False
         ... )

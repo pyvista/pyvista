@@ -5,7 +5,7 @@ Extract Cells Inside Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extract the cells inside or outside a closed surface using
-:meth:`~pyvista.DataSetFilters.select_points_inside`.
+:meth:`~pyvista.DataSetFilters.select_interior_points`.
 
 """
 
@@ -35,7 +35,7 @@ pl.show()
 
 # %%
 # Mark points inside with 1 and outside with a 0
-select = mesh.select_points_inside(rot)
+select = mesh.select_interior_points(rot)
 
 select
 # %%
