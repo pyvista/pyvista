@@ -2683,6 +2683,14 @@ def test_select_points_inside_method(sphere, plane, inside_out):
     assert pts_locator == pts_distance
 
 
+def test_select_points_inside_raises(sphere, plane):
+    match = 'locator_tolerance cannot be used with the signed_distance method.'
+    with pytest.raises(ValueError, match=match):
+        plane.select_points_inside(sphere, locator_tolerance=0.1)
+
+    plane.select_points_inside(sphere, method='cell_locator', locator_tolerance=0.1)
+
+
 def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary(progress_bar=True)
