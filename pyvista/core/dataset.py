@@ -3399,6 +3399,8 @@ class DataSet(DataSetFilters, DataObject):
                         lines.append(
                             f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
                         )
+                    else:
+                        ...
 
             def emit_mesh_info() -> None:
                 mesh = self.mesh

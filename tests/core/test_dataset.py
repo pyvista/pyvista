@@ -1752,6 +1752,48 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
     assert actual == expected
 
 
+def test_validate_mesh_str_filtered():
+    report = pv.PolyData().validate_mesh(['data', 'unused_points'])
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 0\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Issues                   : None\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid point ids:\n'
+        '    Unused points            : []'
+    )
+    assert actual == expected
+
+    report = pv.PolyData().validate_mesh(['critical'])
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 0\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Issues                   : None\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid cell ids:\n'
+        '    Invalid point references : []'
+    )
+    assert actual == expected
+
+
 def test_cell_validator():
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     sphere = pv.Sphere()
