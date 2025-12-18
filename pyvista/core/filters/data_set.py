@@ -2866,11 +2866,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
         _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
-        result = _get_output(alg)
-        bools = result['SelectedPoints']
-        if len(bools) < 1:
-            bools = np.zeros(self.n_points, dtype=bools.dtype)
-        return bools
+        return _get_output(alg)['SelectedPoints']
 
     def select_points_inside(  # type:ignore[misc]
         self: _DataSetType,

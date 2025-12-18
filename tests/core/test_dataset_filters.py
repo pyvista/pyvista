@@ -2691,6 +2691,14 @@ def test_select_points_inside_raises(sphere, plane):
     plane.select_points_inside(sphere, method='cell_locator', locator_tolerance=0.1)
 
 
+@pytest.mark.parametrize('method', ['cell_locator', 'signed_distance'])
+def test_select_points_inside_empty_mesh(method):
+    out = pv.PolyData().select_points_inside(pv.PolyData(), method=method)
+    assert isinstance(out, pv.PolyData)
+    assert out.array_names == ['selected_points']
+    assert out['selected_points'].size == 0
+
+
 def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary(progress_bar=True)
