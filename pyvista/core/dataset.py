@@ -3525,7 +3525,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        ValidationReport
+        MeshValidationReport
             Report dataclass with information about mesh validity.
 
         See Also
