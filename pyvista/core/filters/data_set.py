@@ -2880,7 +2880,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ) -> _DataSetType:
         """Mark points from this mesh as inside or outside relative to a closed surface.
 
-        This evaluates all the input points to determine whether they are in an enclosed
+        This evaluates all of this mesh's points to determine whether they are inside an enclosed
         surface. The filter produces a boolean point array named ``'selected_points'`` that
         indicates whether points are inside (mask value ``True``) or outside (mask value
         ``False``) a provided surface.
@@ -2928,8 +2928,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         check_surface : bool, default: True
             Specify whether to check the surface for closure. When ``True``, the
             algorithm first checks to see if the surface is closed and
-            manifold. If the surface is not closed and manifold, a runtime
-            error is raised.
+            manifold. If the surface is not closed, a runtime error is raised.
 
         locator_tolerance : float, default: 0.001
             The tolerance on the intersection when using the ``'cell_locator'`` method. The
@@ -2982,7 +2981,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _validation.check_instance(surface, pv.PolyData, name='surface')
         allowed_methods = get_args(_SelectPointsInsideOptions)
         _validation.check_contains(allowed_methods, must_contain=method, name='method')
-        if check_surface and surface.n_open_edges > 0:
+        if check_surface and not _vtk.vtkSelectEnclosedPoints.IsSurfaceClosed(surface):
             msg = (
                 'Surface is not closed. Please read the warning in the '
                 'documentation for\nthis function and either pass '
