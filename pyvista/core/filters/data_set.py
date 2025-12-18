@@ -8,10 +8,12 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
+import operator
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import get_args
 
 import numpy as np
 
@@ -69,6 +71,9 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     degenerate_faces=0x80,
     coincident_points=0x100,
 )
+
+
+_SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
 @abstract_class
@@ -455,6 +460,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.DataSet
             Dataset containing the ``'implicit_distance'`` array in
             ``point_data``.
+
+        See Also
+        --------
+        select_interior_points
 
         Examples
         --------
@@ -2763,7 +2772,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         (The name of the output :vtk:`vtkDataArray` is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
-        input dataset. If you wish to extract cells or poinrs, various
+        input dataset. If you wish to extract cells or points, various
         threshold filters are available (i.e., threshold the output array).
 
         .. warning::
@@ -2771,6 +2780,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
            manifold. A boolean flag can be set to force the filter to
            first check whether this is true. If ``False`` and not manifold,
            an error will be raised.
+
+        .. deprecated:: 0.47
+            This filter may be unreliable as it can erroneously mark outside points as inside.
+            Use :meth:`select_interior_points` instead.
 
         Parameters
         ----------
@@ -2814,17 +2827,27 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> selected = plane.select_enclosed_points(sphere)
-        >>> pts = plane.extract_points(
+        >>> selected = plane.select_enclosed_points(sphere)  # doctest:+SKIP
+        >>> pts = plane.extract_points(  # doctest:+SKIP
         ...     selected['SelectedPoints'].view(bool),
         ...     adjacent_cells=False,
         ... )
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, style='wireframe')
-        >>> _ = pl.add_points(pts, color='r')
-        >>> pl.show()
+        >>> pl = pv.Plotter()  # doctest:+SKIP
+        >>> _ = pl.add_mesh(sphere, style='wireframe')  # doctest:+SKIP
+        >>> _ = pl.add_points(pts, color='r')  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         """
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 51):  # pragma: no cover
+            msg = 'Remove this filter.'
+            raise RuntimeError(msg)
+
+        msg = 'This filter is deprecated. Use `select_interior_points` instead.'
+        warn_external(msg, PyVistaDeprecationWarning)
+
         if not isinstance(surface, pv.PolyData):
             msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -2835,18 +2858,165 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 '`check_surface=False` or repair the surface.'
             )
             raise RuntimeError(msg)
+
+        bools = self._select_enclosed_points(
+            surface, inside_out=inside_out, tolerance=tolerance, progress_bar=progress_bar
+        )
+        out = self.copy()
+        out['SelectedPoints'] = bools
+        return out
+
+    def _select_enclosed_points(  # type: ignore[misc]
+        self: _DataSetType,
+        surface: PolyData,
+        *,
+        inside_out: bool,
+        tolerance: float,
+        progress_bar: bool,
+    ) -> NumpyArray[np.uint8]:
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
         _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
-        result = _get_output(alg)
-        out = self.copy()
-        bools = result['SelectedPoints'].astype(np.uint8)
-        if len(bools) < 1:
-            bools = np.zeros(out.n_points, dtype=np.uint8)
-        out['SelectedPoints'] = bools
+        return _get_output(alg)['SelectedPoints']
+
+    def select_interior_points(  # type:ignore[misc]
+        self: _DataSetType,
+        surface: pv.PolyData,
+        *,
+        method: _SelectInteriorPointsOptions = 'signed_distance',
+        inside_out: bool = False,
+        check_surface: bool = True,
+        locator_tolerance: float | None = None,
+    ) -> _DataSetType:
+        """Mark points from this mesh as inside or outside relative to a closed surface.
+
+        Evaluate all of this mesh's points to determine if they are inside an enclosed surface.
+        The filter produces a boolean point array named ``'selected_points'`` with ``True``
+        values indicating points are inside, and ``False`` values indicating points are outside the
+        provided surface.
+
+        By default, the input surface is checked to ensure it is closed. Optionally, this check may
+        be disabled.
+
+        .. note::
+            This filter generates a data array, but does not modify the
+            input dataset. If you wish to extract cells or points, various
+            threshold filters are available (i.e., threshold the output array).
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        surface : PolyData
+           Surface used to test for containment. It should be a closed surface such that it has
+           a defined "inside" and "outside".
+
+        method : 'signed_distance' | 'cell_locator', default: 'signed_distance'
+            Underlying method used to select points.
+
+            - ``'signed_distance'``: Use :meth:`compute_implicit_distance` and select points based
+              on the distance. Points with negative distance are inside, points with positive
+              distance are outside.
+            - ``'cell_locator'``: Use :vtk:`vtkSelectEnclosedPoints` to select points. This uses
+              :vtk:`vtkStaticCellLocator` internally to spatially search for interior points. Use
+              the ``locator_tolerance`` to control the search tolerance.
+
+            .. note::
+                The ``'signed_distance'`` method is generally slower, but is also more reliable
+                for correctly identifying interior points.
+
+            .. warning::
+                The ``'cell_locator'`` option can erroneously mark outside points as inside.
+
+        inside_out : bool, default: False
+            By default, points inside the surface have value ``True``, and points outside
+            have value ``False``. Set ``inside_out=True`` to invert this.
+
+        check_surface : bool, default: True
+            Specify whether to check the surface for closure. When ``True``, the
+            algorithm first checks to see if the surface is closed and
+            manifold. If the surface is not closed, a runtime error is raised.
+
+        locator_tolerance : float, default: 0.001
+            The tolerance on the intersection when using the ``'cell_locator'`` method. The
+            tolerance is expressed as a fraction of the bounding box of the enclosing surface.
+
+        Returns
+        -------
+        PolyData
+            Mesh with a new ``'selected_points'`` :attr:`~pyvista.DataSet.point_data` array.
+
+        See Also
+        --------
+        compute_implicit_distance, extract_points, extract_cells
+        :ref:`extract_cells_inside_surface_example`
+
+        Examples
+        --------
+        Determine which points on a plane are inside a manifold sphere surface mesh.
+        Extract these points using the :func:`~DataSetFilters.extract_points` filter
+        and then plot them.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plane = pv.Plane()
+        >>> selected = plane.select_interior_points(sphere)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'], include_cells=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        Select the outside points instead.
+
+        >>> selected = plane.select_interior_points(sphere, inside_out=True)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'], include_cells=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        """
+        _validation.check_instance(surface, pv.PolyData, name='surface')
+        allowed_methods = get_args(_SelectInteriorPointsOptions)
+        _validation.check_contains(allowed_methods, must_contain=method, name='method')
+        if check_surface and not _vtk.vtkSelectEnclosedPoints.IsSurfaceClosed(surface):
+            msg = (
+                'Surface is not closed. Please read the warning in the '
+                'documentation for\nthis function and either pass '
+                '`check_surface=False` or repair the surface.'
+            )
+            raise RuntimeError(msg)
+
+        out = self.copy(deep=False)
+        if method == 'signed_distance':
+            if locator_tolerance is not None:
+                msg = 'locator_tolerance cannot be used with the signed_distance method.'
+                raise ValueError(msg)
+            distance = self.compute_implicit_distance(surface)
+            # Negative distance means inside
+            operation = operator.ge if inside_out else operator.le
+            bools = operation(distance['implicit_distance'], 0)
+        else:
+            bools = self._select_enclosed_points(
+                surface,
+                inside_out=inside_out,
+                tolerance=0.001 if locator_tolerance is None else locator_tolerance,
+                progress_bar=False,
+            ).astype(bool)
+        out['selected_points'] = bools
+        out.set_active_scalars('selected_points')
         return out
 
     @_deprecate_positional_args(allowed=['target'])
@@ -7929,7 +8099,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars  # type: ignore[type-var]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
