@@ -54,8 +54,10 @@ if TYPE_CHECKING:
     from pyvista import PointSet
 
     from ._typing_core import MatrixLike
+    from ._typing_core import NumberType
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+    from ._typing_core import _ArrayLikeOrScalar
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1495,7 +1497,7 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: NumpyArray[float] | Sequence[float] | float,
+        scalars: _ArrayLikeOrScalar[NumberType],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 

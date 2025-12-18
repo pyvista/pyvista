@@ -7915,7 +7915,7 @@ class _WholeBodyCTUtilities:
         # Add scalars to a new image
         label_map_image = pv.ImageData()
         label_map_image.copy_structure(cast('pv.ImageData', masks[0]))
-        label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
+        label_map_image['label_map'] = label_map_array
         return label_map_image
 
     @staticmethod
