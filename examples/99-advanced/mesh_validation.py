@@ -131,7 +131,7 @@ plot_cell(hexahedron)
 
 # %%
 # Let's review the reported issues.
-assert report.issues == ('intersecting_edges', 'inverted_faces')
+assert report.issues == ('intersecting_edges', 'non_convex', 'inverted_faces')
 
 # %%
 # Similar to the cell from :ref:`cells-with-inverted-faces`, multiple issues are reported. From
