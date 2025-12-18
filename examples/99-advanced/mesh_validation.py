@@ -195,25 +195,3 @@ assert poly.n_cells == 1
 report = grid.validate_mesh()
 assert report.is_valid
 assert not report.issues
-
-# %%
-# Cells with degenerate faces
-# ---------------------------
-# Create a mesh with a single :attr:`~pyvista.CellType.TRIANGLE` cell.
-points = [[0.0, 0.5, 0.0], [0.0, 0.0, 0.0], [0.5, 0.0, 0.0]]
-faces = [[3, 0, 1, 2]]
-poly = pv.PolyData(points, faces)
-
-# %%
-# Since the faces array correctly defines the connectivity of the cell as having 3 points and 3
-# unique point ids, the cell is valid.
-report = poly.validate_mesh()
-assert report.is_valid
-plot_cell(poly, 'xy')
-
-# %%
-# But, if we specify that the triangle has ``4`` points instead of ``3``, we
-poly.faces = [3, 0, 0, 2]
-report = poly.validate_mesh()
-assert not report.is_valid
-assert report.issues == (), report.issues
