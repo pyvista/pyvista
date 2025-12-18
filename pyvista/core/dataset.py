@@ -3485,11 +3485,11 @@ class DataSet(DataSetFilters, DataObject):
         - an empty list ``[]`` if the field is included but there is no issue to report for it, or
         - a list of invalid items (e.g. invalid array names or cell/point ids).
 
-        In addition to the validation fields above, the report includes additional properties for
+        In addition to the validation fields above, the report includes properties for
         convenience:
 
         - ``is_valid``: evaluates to ``True`` when all fields are ``None`` or empty.
-        - ``issues``: sequence of validation fields where issues were detected.
+        - ``issues``: tuple of validation field names where issues were detected.
         - ``mesh``: a shallow copy of the validated mesh. If any cell fields are included which
           are computed by :meth:`~pyvista.DataSetFilters.cell_validator`, this mesh includes the
           output from that filter.
@@ -3510,7 +3510,7 @@ class DataSet(DataSetFilters, DataObject):
             - ``'data'`` to include all data fields
             - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields
-            - ``'unsafe'`` to include all critical fields that, if invalid, may cause a
+            - ``'unsafe'`` to include all fields that, if invalid, may cause a
               segmentation fault and crash Python. This option includes
               ``point_data_wrong_length``, ``cell_data_wrong_length``, and
               ``invalid_point_references``.

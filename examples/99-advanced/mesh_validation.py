@@ -3,8 +3,8 @@
 
 Mesh Validation
 ~~~~~~~~~~~~~~~
-This example demonstrates how to evaluate the validity of a mesh for use with VTK using
-:meth:`~pyvista.DataSet.validate_mesh`.
+This example explores different cases where a mesh may not be considered valid as defined by the
+:meth:`~pyvista.DataSet.validate_mesh` method.
 
 """
 
@@ -19,7 +19,6 @@ from pyvista.examples import plot_cell
 # Many VTK algorithms assume that cells are convex. This can result in incorrect outputs
 # and may also affect rendering. For example, let's create :class:`~pyvista.PolyData`
 # with a concave :attr:`~pyvista.CellType.QUAD` cell.
-
 points = [
     [-0.5, -1.0, 0.0],
     [0.0, -0.3, 0.0],
@@ -55,7 +54,6 @@ plot_cell(triangles, 'xy')
 # cell volume or centroid. To demonstrate this, we first create a valid
 # :attr:`~pyvista.CellType.POLYHEDRON` cell similar to the
 # :func:`~pyvista.examples.cells.Polyhedron` example cell.
-
 points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
 cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
 cells = [len(cells), *cells.copy()]
@@ -105,6 +103,52 @@ invalid_centroid = invalid_polyhedron.cell_centers().points[0].tolist()
 print(invalid_centroid)
 assert valid_centroid != invalid_centroid
 
+# %%
+# Self-intersecting cells
+# -----------------------
+# Most :class:`cell types <pyvista.CellType>` have a defined point order which must be respected.
+# For example, let's try to create a :attr:`~pyvista.CellType.HEXAHEDRON` cell with eight points:
+points = [
+    [0.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0],
+    [1.0, 1.0, 0.0],
+    [1.0, 0.0, 1.0],
+    [0.0, 1.0, 1.0],
+    [1.0, 1.0, 1.0],
+]
+cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+celltype = [pv.CellType.HEXAHEDRON]
+hexahedron = pv.UnstructuredGrid(cells, celltype, points)
+
+# %%
+# At a quick glance, the cell may `appear` to be valid, but it is not, since the point ordering
+# is incorrect.
+report = hexahedron.validate_mesh()
+assert not report.is_valid
+plot_cell(hexahedron)
+
+# %%
+# Let's review the reported issues.
+assert report.issues == ('intersecting_edges', 'inverted_faces')
+
+# %%
+# Similar to the cell from :ref:`cells-with-inverted-faces`, multiple issues are reported. From
+# the plot above, we can see the ``'intersecting_edges'`` issue appears to be correct, but to
+# investigate the ``'inverted_faces'`` problem further, let's plot the cell again with normals.
+
+plot_cell(hexahedron, show_normals=True)
+
+# %%
+# Since we can see some of the normals are indeed pointing inward, this confirms that both issues
+# reported are correct. To rectify this problem, we need to re-order the cell connectivity.
+cells = [8, 0, 1, 4, 2, 3, 5, 7, 6]  # instead of [8, 0, 1, 2, 3, 4, 5, 6, 7]
+celltype = [pv.CellType.HEXAHEDRON]
+hexahedron = pv.UnstructuredGrid(cells, celltype, points)
+report = hexahedron.validate_mesh()
+assert report.is_valid
+plot_cell(hexahedron)
 
 # %%
 # Meshes with unused points
