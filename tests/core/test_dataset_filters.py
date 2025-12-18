@@ -2672,6 +2672,19 @@ def test_select_points_inside(uniform, hexbeam):
         mesh.select_points_inside(hexbeam, check_surface=True)
 
 
+@pytest.mark.parametrize('inside_out', [True, False])
+def test_select_points_inside_method(sphere, plane, inside_out):
+    def _extract_points(method):
+        selected_locator = plane.select_points_inside(
+            sphere, method=method, inside_out=inside_out, progress_bar=True
+        )
+        return plane.extract_points(selected_locator['selected_points'], include_cells=False)
+
+    pts_locator = _extract_points('cell_locator')
+    pts_distance = _extract_points('signed_distance')
+    assert pts_locator == pts_distance
+
+
 def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary(progress_bar=True)
