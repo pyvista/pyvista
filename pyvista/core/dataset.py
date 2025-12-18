@@ -329,10 +329,128 @@ class _MeshValidator:
         return f'{header}\n{body}'
 
     @property
-    def validation_report(self) -> DataSet._ValidationReport:
+    def validation_report(self) -> _ValidationReport:
         issues = self._validation_issues
         kwargs = {issue.name: issue.values for issue in issues.values()}
-        return DataSet._ValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
+        return _ValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True)
+class _ValidationReport(_NoNewAttrMixin):
+    """Dataclass to report mesh validation results."""
+
+    # Non-fields
+    _mesh: InitVar[DataSet]
+    _message: InitVar[str | None]
+
+    # Data fields
+    point_data_wrong_length: list[str] | None = None
+    cell_data_wrong_length: list[str] | None = None
+
+    # Cell fields
+    wrong_number_of_points: list[int] | None = None
+    intersecting_edges: list[int] | None = None
+    intersecting_faces: list[int] | None = None
+    non_contiguous_edges: list[int] | None = None
+    non_convex: list[int] | None = None
+    inverted_faces: list[int] | None = None
+    non_planar_faces: list[int] | None = None
+    degenerate_faces: list[int] | None = None
+    coincident_points: list[int] | None = None
+    invalid_point_references: list[int] | None = None
+
+    # Point fields
+    unused_points: list[int] | None = None
+    non_finite_points: list[int] | None = None
+
+    def __post_init__(self, _mesh: DataSet, _message: str | None) -> None:
+        object.__setattr__(self, '_mesh', _mesh)
+        object.__setattr__(self, '_message', _message)
+
+    @property
+    def mesh(self) -> DataSet:
+        return self._mesh  # type: ignore[attr-defined]
+
+    @property
+    def message(self) -> str | None:
+        return None if self.is_valid else self._message  # type: ignore[attr-defined]
+
+    @property
+    def is_valid(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the mesh is valid."""
+        return not self.issues
+
+    @property
+    def issues(self) -> tuple[str, ...] | None:  # numpydoc ignore=RT01
+        """Return any field names which have values."""
+        issues = tuple(f.name for f in fields(self) if getattr(self, f.name))
+        return issues if issues else None
+
+    def __str__(self) -> str:
+        """Include all validation results in a printable string."""
+        summary_fields = ['is_valid', 'issues']
+        dataset_fields = [f.name for f in fields(self)]
+
+        def compute_label_width() -> int:
+            max_width = 0
+            for name in [*summary_fields, *dataset_fields]:
+                width = len(name)
+                if (value := getattr(self, name)) and isinstance(value, Sized):
+                    num_digits = len(str(len(value)))
+                    len_space_plus_brackets = 3  # Value will be printed inside two brackets
+                    width += num_digits + len_space_plus_brackets
+                max_width = max(max_width, width)
+
+            return max_width
+
+        indent = ' ' * 4
+        label_width = compute_label_width()
+        lines: list[str] = []
+
+        title = 'Mesh Validation Report'
+        lines.append(title)
+        lines.append('-' * len(title))
+
+        def emit_group(name: str, field_names: Sequence[str]) -> None:
+            if all(getattr(self, field) is None for field in field_names):
+                return
+            lines.append(f'{name}:')
+            for field in field_names:
+                value = getattr(self, field)
+                if value is not None or field in summary_fields:
+                    label = _MeshValidator._normalize_field_name(field).capitalize()
+                    n_values = ''
+                    try:
+                        length = len(value)
+                        if length:
+                            n_values = f' ({length!s})'
+                    except TypeError:
+                        pass
+
+                    lines.append(
+                        f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
+                    )
+                else:
+                    ...
+
+        def emit_mesh_info() -> None:
+            mesh = self.mesh
+            lines.append('Mesh:')
+            mesh_items = {
+                'Type': mesh.__class__.__name__,
+                'N Points': mesh.n_points,
+                'N Cells': mesh.n_cells,
+            }
+            for key, value in mesh_items.items():
+                lines.append(f'{indent}{key:<{label_width}} : {value}')
+
+        emit_mesh_info()
+        emit_group('Report summary', summary_fields)
+        emit_group('Invalid data arrays', _MeshValidator._allowed_array_fields)
+        emit_group('Invalid cell ids', _MeshValidator._allowed_cell_fields)
+        emit_group('Invalid point ids', _MeshValidator._allowed_point_fields)
+
+        return '\n'.join(lines)
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -3304,129 +3422,12 @@ class DataSet(DataSetFilters, DataObject):
         aligned_points = self.align_xyz().points
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
 
-    @dataclass(frozen=True)
-    class _ValidationReport(_NoNewAttrMixin):
-        """Dataclass to report mesh validation results."""
-
-        # Non-fields
-        _mesh: InitVar[DataSet]
-        _message: InitVar[str | None]
-
-        # Data fields
-        point_data_wrong_length: list[str] | None = None
-        cell_data_wrong_length: list[str] | None = None
-
-        # Cell fields
-        wrong_number_of_points: list[int] | None = None
-        intersecting_edges: list[int] | None = None
-        intersecting_faces: list[int] | None = None
-        non_contiguous_edges: list[int] | None = None
-        non_convex: list[int] | None = None
-        inverted_faces: list[int] | None = None
-        non_planar_faces: list[int] | None = None
-        degenerate_faces: list[int] | None = None
-        coincident_points: list[int] | None = None
-        invalid_point_references: list[int] | None = None
-
-        # Point fields
-        unused_points: list[int] | None = None
-        non_finite_points: list[int] | None = None
-
-        def __post_init__(self, _mesh: DataSet, _message: str | None) -> None:
-            object.__setattr__(self, '_mesh', _mesh)
-            object.__setattr__(self, '_message', _message)
-
-        @property
-        def mesh(self) -> DataSet:
-            return self._mesh  # type: ignore[attr-defined]
-
-        @property
-        def message(self) -> str | None:
-            return None if self.is_valid else self._message  # type: ignore[attr-defined]
-
-        @property
-        def is_valid(self) -> bool:  # numpydoc ignore=RT01
-            """Return ``True`` if the mesh is valid."""
-            return not self.issues
-
-        @property
-        def issues(self) -> tuple[str, ...] | None:  # numpydoc ignore=RT01
-            """Return any field names which have values."""
-            issues = tuple(f.name for f in fields(self) if getattr(self, f.name))
-            return issues if issues else None
-
-        def __str__(self) -> str:
-            """Include all validation results in a printable string."""
-            summary_fields = ['is_valid', 'issues']
-            dataset_fields = [f.name for f in fields(self)]
-
-            def compute_label_width() -> int:
-                max_width = 0
-                for name in [*summary_fields, *dataset_fields]:
-                    width = len(name)
-                    if (value := getattr(self, name)) and isinstance(value, Sized):
-                        num_digits = len(str(len(value)))
-                        len_space_plus_brackets = 3  # Value will be printed inside two brackets
-                        width += num_digits + len_space_plus_brackets
-                    max_width = max(max_width, width)
-
-                return max_width
-
-            indent = ' ' * 4
-            label_width = compute_label_width()
-            lines: list[str] = []
-
-            title = 'Mesh Validation Report'
-            lines.append(title)
-            lines.append('-' * len(title))
-
-            def emit_group(name: str, field_names: Sequence[str]) -> None:
-                if all(getattr(self, field) is None for field in field_names):
-                    return
-                lines.append(f'{name}:')
-                for field in field_names:
-                    value = getattr(self, field)
-                    if value is not None or field in summary_fields:
-                        label = _MeshValidator._normalize_field_name(field).capitalize()
-                        n_values = ''
-                        try:
-                            length = len(value)
-                            if length:
-                                n_values = f' ({length!s})'
-                        except TypeError:
-                            pass
-
-                        lines.append(
-                            f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
-                        )
-                    else:
-                        ...
-
-            def emit_mesh_info() -> None:
-                mesh = self.mesh
-                lines.append('Mesh:')
-                mesh_items = {
-                    'Type': mesh.__class__.__name__,
-                    'N Points': mesh.n_points,
-                    'N Cells': mesh.n_cells,
-                }
-                for key, value in mesh_items.items():
-                    lines.append(f'{indent}{key:<{label_width}} : {value}')
-
-            emit_mesh_info()
-            emit_group('Report summary', summary_fields)
-            emit_group('Invalid data arrays', _MeshValidator._allowed_array_fields)
-            emit_group('Invalid cell ids', _MeshValidator._allowed_cell_fields)
-            emit_group('Invalid point ids', _MeshValidator._allowed_point_fields)
-
-            return '\n'.join(lines)
-
     def validate_mesh(
         self,
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
-    ) -> DataSet._ValidationReport:
+    ) -> _ValidationReport:
         """Validate this mesh's array data, cells, and points.
 
         This method returns a ``ValidationReport`` dataclass with information about the validity
