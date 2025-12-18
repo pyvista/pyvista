@@ -3497,6 +3497,8 @@ class DataSet(DataSetFilters, DataObject):
           message used when the ``action`` keyword is set for emitting warnings or raising errors.
           This value is ``None`` if the mesh is valid.
 
+        .. versionadded:: 0.47
+
         Parameters
         ----------
         validation_fields : str | sequence[str], default: ('data', 'cells', 'points')

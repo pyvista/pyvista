@@ -8355,6 +8355,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Refer to :vtk:`vtkCellValidator` for more details about each state.
 
+        .. versionadded:: 0.47
+
         Returns
         -------
         DataSet
