@@ -8,6 +8,7 @@ This example explores different cases where a mesh may not be considered valid a
 
 """
 
+# sphinx_gallery_thumbnail_number = 5
 from __future__ import annotations
 
 import pyvista as pv
