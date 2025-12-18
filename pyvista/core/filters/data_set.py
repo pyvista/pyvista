@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import get_args
 
 import numpy as np
 
@@ -2979,6 +2980,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         _validation.check_instance(surface, pv.PolyData, name='surface')
+        allowed_methods = get_args(_SelectPointsInsideOptions)
+        _validation.check_contains(allowed_methods, must_contain=method, name='method')
         if check_surface and surface.n_open_edges > 0:
             msg = (
                 'Surface is not closed. Please read the warning in the '
