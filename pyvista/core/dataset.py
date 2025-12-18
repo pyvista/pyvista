@@ -3656,6 +3656,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> report.is_valid
         True
 
+        Do minimal validation to ensure there are no "unsafe" mesh properties. This helps to avoid
+        a segmentation fault which may be caused by invalid memory accesses by VTK. In this case,
+        we use ``'action'`` to raise an error if the mesh is not valid.
+
+        >>> _ = mesh.validate_mesh('unsafe', action='error')
+
         """
         if action is not None:
             allowed = get_args(_MeshValidationActionOptions)

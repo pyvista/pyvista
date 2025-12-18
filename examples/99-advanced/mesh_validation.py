@@ -137,7 +137,6 @@ assert report.issues == ('intersecting_edges', 'inverted_faces')
 # Similar to the cell from :ref:`cells-with-inverted-faces`, multiple issues are reported. From
 # the plot above, we can see the ``'intersecting_edges'`` issue appears to be correct, but to
 # investigate the ``'inverted_faces'`` problem further, let's plot the cell again with normals.
-
 plot_cell(hexahedron, show_normals=True)
 
 # %%
