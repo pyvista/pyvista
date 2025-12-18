@@ -1773,7 +1773,7 @@ def test_validate_mesh_str_filtered():
     )
     assert actual == expected
 
-    report = pv.PolyData().validate_mesh(['critical'])
+    report = pv.PolyData().validate_mesh(['unsafe'])
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'

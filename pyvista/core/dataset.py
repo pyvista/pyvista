@@ -84,13 +84,13 @@ _CellValidationOptions = Literal[
     'invalid_point_references',
 ]
 _PointValidationOptions = Literal['unused_points', 'non_finite_points']
-_CriticalValidationOptions = Literal[
+_UnsafeValidationOptions = Literal[
     'invalid_point_references',
     'point_data_wrong_length',
     'cell_data_wrong_length',
 ]
 _MeshValidationDefaultGroupOptions = Literal['data', 'cells', 'points']
-_MeshValidationGroupOptions = _MeshValidationDefaultGroupOptions | Literal['critical']
+_MeshValidationGroupOptions = _MeshValidationDefaultGroupOptions | Literal['unsafe']
 _MeshValidationOptions = (
     _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
 )
@@ -120,7 +120,7 @@ class _MeshValidator:
             *self._allowed_array_fields,
             *self._allowed_cell_fields,
             *self._allowed_point_fields,
-            'critical',
+            'unsafe',
         )
         if validation_fields != _DEFAULT_MESH_VALIDATION_ARGS:
             if isinstance(validation_fields, str):
@@ -130,10 +130,10 @@ class _MeshValidator:
                     allowed_fields, must_contain=field, name='validation_fields'
                 )
 
-            if 'critical' in validation_fields:
+            if 'unsafe' in validation_fields:
                 validation_fields = list(validation_fields)
-                validation_fields.remove('critical')
-                validation_fields.extend(get_args(_CriticalValidationOptions))
+                validation_fields.remove('unsafe')
+                validation_fields.extend(get_args(_UnsafeValidationOptions))
 
         self._mesh = mesh.copy(deep=False)
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
@@ -3510,7 +3510,7 @@ class DataSet(DataSetFilters, DataObject):
             - ``'data'`` to include all data fields
             - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields
-            - ``'critical'`` to include all critical fields that, if invalid, may cause a
+            - ``'unsafe'`` to include all critical fields that, if invalid, may cause a
               segmentation fault and crash Python. This option includes
               ``point_data_wrong_length``, ``cell_data_wrong_length``, and
               ``invalid_point_references``.
