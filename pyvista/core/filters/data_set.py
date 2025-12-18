@@ -2941,7 +2941,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         See Also
         --------
-        compute_implicit_distance
+        compute_implicit_distance, extract_points, extract_cells
         :ref:`extract_cells_inside_surface_example`
 
         Examples
