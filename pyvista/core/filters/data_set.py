@@ -3006,6 +3006,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 progress_bar=False,
             ).astype(bool)
         out['selected_points'] = bools
+        out.set_active_scalars('selected_points')
         return out
 
     @_deprecate_positional_args(allowed=['target'])

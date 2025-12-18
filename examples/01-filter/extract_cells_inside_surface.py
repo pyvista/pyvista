@@ -37,6 +37,7 @@ pl.show()
 # Mark points inside with 1 and outside with a 0
 select = mesh.select_points_inside(rot)
 
+select
 # %%
 # Extract two meshes, one completely inside and one completely outside the
 # enclosing surface.

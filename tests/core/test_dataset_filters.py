@@ -2648,11 +2648,13 @@ def test_select_enclosed_points(uniform, hexbeam):
 
 def test_select_points_inside(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
+    assert uniform.active_scalars_name is not None
     result = uniform.select_points_inside(surf)
     assert isinstance(result, type(uniform))
     assert 'selected_points' in result.array_names
     assert result['selected_points'].any()
     assert result.n_arrays == uniform.n_arrays + 1
+    assert result.active_scalars_name == 'selected_points'
 
     # Now check non-closed surface
     mesh = pv.Sphere(end_theta=270)
