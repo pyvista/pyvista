@@ -8333,20 +8333,25 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Use :vtk:`vtkCellValidator` to determine the status of each cell. The status is encoded
         as a bit field cell data array ``'validity_state'``. The cell states are:
 
-        - ``'valid'`` (``0x00``)
-        - ``'wrong_number_of_points'`` (``0x01``)
-        - ``'intersecting_edges'`` (``0x02``)
-        - ``'intersecting_faces'`` (``0x04``)
-        - ``'non_contiguous_edges'`` (``0x08``)
-        - ``'non_convex'`` (``0x10``)
-        - ``'inverted_faces'`` (``0x20``)
-        - ``'non_planar_faces'`` (``0x40``)
-        - ``'degenerate_faces'`` (``0x80``)
-        - ``'coincident_points'`` (``0x100``)
+        - ``valid`` (``0x00``): Cell is valid and has no issues.
+        - ``wrong_number_of_points`` (``0x01``): Cell does not have the minimum number of points
+          needed to describe it.
+        - ``intersecting_edges`` (``0x02``): 2D cell has two edges that intersect.
+        - ``intersecting_faces`` (``0x04``): 3D cell has two faces that intersect.
+        - ``non_contiguous_edges`` (``0x08``): 2D cell's perimeter edges are not contiguous.
+        - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
+        - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
+          its :class:`~pyvista.CellType`.
+        - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
+        - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
+          collocated vertices.
+        - ``coincident_points`` (``0x100``): Cell has duplicate coordinates or repeated use of
+          the same connectivity entry.
 
         For convenience, a field data array for each state is also appended. The array names match
-        the state names above, except an array with ``'invalid'`` cells is stored instead of valid
-        ones. Each field data array contains the indices of cells with the specified state.
+        the state names above, except for the ``'valid'`` state; instead, an array with
+        ``'invalid'`` cells is stored. Each field data array contains the indices of cells with
+        the specified state.
 
         Refer to :vtk:`vtkCellValidator` for more details about each state.
 
