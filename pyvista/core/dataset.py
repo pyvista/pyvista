@@ -3443,7 +3443,7 @@ class DataSet(DataSetFilters, DataObject):
         - ``cell_data_wrong_length``: Ensure the length of each cell data array matches
           :attr:`~pyvista.DataSet.n_cells`.
 
-        .. Note:
+        .. note:
             When setting new arrays using PyVista's API, similar array validation checks are
             _already_ implicitly performed. As such, these checks may be redundant in many cases.
             They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
@@ -3524,6 +3524,8 @@ class DataSet(DataSetFilters, DataObject):
         See Also
         --------
         :meth:`~pyvista.DataSetFilters.cell_validator`
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points`
         :ref:`mesh_validation_example`
 
         Examples

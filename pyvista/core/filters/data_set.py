@@ -8363,6 +8363,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See Also
         --------
         :meth:`~pyvista.DataSet.validate_mesh`
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
         :ref:`mesh_validation_example`
 
         Examples
