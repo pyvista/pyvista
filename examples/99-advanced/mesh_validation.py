@@ -150,4 +150,4 @@ assert poly.n_cells == 1
 # This mesh is also now considered valid.
 report = grid.validate_mesh()
 assert report.is_valid
-assert report.issues is None
+assert not report.issues

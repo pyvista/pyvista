@@ -382,10 +382,9 @@ class _ValidationReport(_NoNewAttrMixin):
         return not self.issues
 
     @property
-    def issues(self) -> tuple[str, ...] | None:  # numpydoc ignore=RT01
+    def issues(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
         """Return any field names which have values."""
-        issues = tuple(f.name for f in fields(self) if getattr(self, f.name))
-        return issues if issues else None
+        return tuple(f.name for f in fields(self) if getattr(self, f.name))
 
     def __str__(self) -> str:
         """Include all validation results in a printable string."""
@@ -3477,8 +3476,8 @@ class DataSet(DataSetFilters, DataObject):
 
         **Point validation fields**
 
-        - ``unused_points``
-        - ``non_finite_points``
+        - ``unused_points``: Ensure all points are referenced by at least one cell.
+        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN` or ``Inf``).
 
         For each field, its value is:
 
@@ -3556,7 +3555,7 @@ class DataSet(DataSetFilters, DataObject):
             N Cells                  : 1680
         Report summary:
             Is valid                 : True
-            Issues                   : None
+            Issues                   : ()
         Invalid data arrays:
             Point data wrong length  : []
             Cell data wrong length   : []
@@ -3645,7 +3644,7 @@ class DataSet(DataSetFilters, DataObject):
             N Cells                  : 3263
         Report summary:
             Is valid                 : True
-            Issues                   : None
+            Issues                   : ()
         Invalid cell ids:
             Intersecting edges       : []
         Invalid point ids:
