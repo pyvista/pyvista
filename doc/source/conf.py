@@ -396,6 +396,12 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
+def _filter_sphinx_gallery_warnings():
+    import warnings
+
+    warnings.simplefilter('error')
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
@@ -404,6 +410,7 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
+        _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
         # clear all mpl figures, force non-interactive backend, and reset defaults

@@ -87,8 +87,8 @@ class DataObjectFilters:
         .. warning::
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
             :class:`~pyvista.RectilinearGrid`, and rotations are not supported for
-            :class:`~pyvista.RectilinearGrid`. If present, these component(s) are removed by the
-            filter. To fully support these transformations, the input should be cast to
+            :class:`~pyvista.RectilinearGrid`. If present, a ``ValueError`` is raised.
+            To fully support these transformations, the input should be cast to
             :class:`~pyvista.StructuredGrid` `before` applying this filter.
 
         .. note::
@@ -108,6 +108,10 @@ class DataObjectFilters:
         .. versionchanged:: 0.46.0
             Transforming :class:`~pyvista.RectilinearGrid` now returns ``RectilinearGrid``.
             Previously, :class:`~pyvista.StructuredGrid` was returned.
+
+        .. versionchanged:: 0.47.0
+            An error is now raised instead of a warning if a transformation cannot be
+            applied.
 
         Parameters
         ----------
@@ -281,21 +285,21 @@ class DataObjectFilters:
 
             if not np.allclose(K, np.eye(3)):
                 msg = (
-                    'The transformation has a shear component which has been removed. Shear is '
-                    'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
-                    'shear transformations.'
+                    'The transformation has a shear component which is not supported by '
+                    'RectilinearGrid.\nCast to StructuredGrid first to support shear '
+                    'transformations, or use `Transform.decompose()`\nto remove this component.'
                 )
-                warn_external(msg)
+                raise ValueError(msg)
 
             # Lump scale and reflection together
             scale = S * N
             if not np.allclose(np.abs(R), np.eye(3)):
                 msg = (
-                    'The transformation has a non-diagonal rotation component which has been '
-                    'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
-                    'StructuredGrid first to fully support rotations.'
+                    'The transformation has a non-diagonal rotation component which is not '
+                    'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
+                    'support rotations, or use\n`Transform.decompose()` to remove this component.'
                 )
-                warn_external(msg)
+                raise ValueError(msg)
             else:
                 # Lump any reflections from the rotation into the scale
                 scale *= np.diagonal(R)
