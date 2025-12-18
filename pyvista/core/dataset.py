@@ -68,41 +68,42 @@ if TYPE_CHECKING:
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
-_MeshValidationActionOptions = Literal['warn', 'error']
-_ArrayValidationOptions = Literal[
-    'point_data_wrong_length',
-    'cell_data_wrong_length',
-]
-_CellValidationOptions = Literal[
-    'wrong_number_of_points',
-    'intersecting_edges',
-    'intersecting_faces',
-    'non_contiguous_edges',
-    'non_convex',
-    'inverted_faces',
-    'non_planar_faces',
-    'degenerate_faces',
-    'coincident_points',
-    'invalid_point_references',
-]
-_PointValidationOptions = Literal['unused_points', 'non_finite_points']
-_UnsafeValidationOptions = Literal[
-    'invalid_point_references',
-    'point_data_wrong_length',
-    'cell_data_wrong_length',
-]
-_MeshValidationDefaultGroupOptions = Literal['data', 'cells', 'points']
-_MeshValidationGroupOptions = _MeshValidationDefaultGroupOptions | Literal['unsafe']
-_MeshValidationOptions = (
-    _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
-)
-_DEFAULT_MESH_VALIDATION_ARGS = get_args(_MeshValidationDefaultGroupOptions)
-
 
 class _MeshValidator:
-    _allowed_array_fields = get_args(_ArrayValidationOptions)
-    _allowed_cell_fields = get_args(_CellValidationOptions)
-    _allowed_point_fields = get_args(_PointValidationOptions)
+    _ActionOptions = Literal['warn', 'error']
+    _DataFields = Literal[
+        'point_data_wrong_length',
+        'cell_data_wrong_length',
+    ]
+    _CellFields = Literal[
+        'wrong_number_of_points',
+        'intersecting_edges',
+        'intersecting_faces',
+        'non_contiguous_edges',
+        'non_convex',
+        'inverted_faces',
+        'non_planar_faces',
+        'degenerate_faces',
+        'coincident_points',
+        'invalid_point_references',
+    ]
+    _PointFields = Literal['unused_points', 'non_finite_points']
+    _UnsafeFields = Literal[
+        'invalid_point_references',
+        'point_data_wrong_length',
+        'cell_data_wrong_length',
+    ]
+    _DefaultFieldGroups = Literal['data', 'cells', 'points']
+    _OtherFieldGroups = Literal['unsafe']
+    _AllValidationOptions = (
+        _DataFields | _CellFields | _PointFields | _DefaultFieldGroups | _OtherFieldGroups
+    )
+    _DEFAULT_MESH_VALIDATION_ARGS = get_args(_DefaultFieldGroups)
+
+    _allowed_data_fields = get_args(_DataFields)
+    _allowed_cell_fields = get_args(_CellFields)
+    _allowed_point_fields = get_args(_PointFields)
+    _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
 
     @dataclass
     class _ValidationIssue:
@@ -113,70 +114,83 @@ class _MeshValidator:
     def __init__(
         self,
         mesh: DataSet,
-        validation_fields: _MeshValidationOptions
-        | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _AllValidationOptions
+        | Sequence[_AllValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
     ) -> None:
         # Validate inputs
-        allowed_fields = (
-            *_DEFAULT_MESH_VALIDATION_ARGS,
-            *self._allowed_array_fields,
-            *self._allowed_cell_fields,
-            *self._allowed_point_fields,
-            'unsafe',
-        )
-        if validation_fields != _DEFAULT_MESH_VALIDATION_ARGS:
+        allowed_data_fields = self._allowed_data_fields
+        allowed_cell_fields = self._allowed_cell_fields
+        allowed_point_fields = self._allowed_point_fields
+        data_fields_to_validate: list[_MeshValidator._DataFields] = []
+        cell_fields_to_validate: list[_MeshValidator._CellFields] = []
+        point_fields_to_validate: list[_MeshValidator._PointFields] = []
+
+        if validation_fields == _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS:
+            # Default values, no need to validate
+            data_fields_to_validate.extend(allowed_data_fields)
+            cell_fields_to_validate.extend(allowed_cell_fields)
+            point_fields_to_validate.extend(allowed_point_fields)
+        else:
+            allowed_fields_or_groups = (
+                *allowed_data_fields,
+                *allowed_cell_fields,
+                *allowed_point_fields,
+                *self._allowed_field_groups,
+            )
             if isinstance(validation_fields, str):
                 validation_fields = (validation_fields,)
-            for field in validation_fields:
+            for field_or_group in validation_fields:
                 _validation.check_contains(
-                    allowed_fields, must_contain=field, name='validation_fields'
+                    allowed_fields_or_groups, must_contain=field_or_group, name='validation_fields'
                 )
 
+            # Inputs are valid, but we need to categorize them
+            input_fields = list(validation_fields)
             if 'unsafe' in validation_fields:
-                validation_fields = list(validation_fields)
-                validation_fields.remove('unsafe')
-                validation_fields.extend(get_args(_UnsafeValidationOptions))
+                # Replace unsafe group with the actual field names used
+                input_fields.remove('unsafe')
+                unsafe_fields = (
+                    field
+                    for field in get_args(self._UnsafeFields)
+                    if field not in validation_fields
+                )
+                input_fields.extend(unsafe_fields)
+
+            for field_or_group in input_fields:
+                if field_or_group == 'data':
+                    data_fields_to_validate.extend(allowed_data_fields)
+                elif field_or_group == 'cells':
+                    cell_fields_to_validate.extend(allowed_cell_fields)
+                elif field_or_group == 'points':
+                    point_fields_to_validate.extend(allowed_point_fields)
+                elif field_or_group in allowed_data_fields:
+                    data_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+                elif field_or_group in allowed_cell_fields:
+                    cell_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+                elif field_or_group in allowed_point_fields:
+                    point_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+
 
         self._mesh = mesh.copy(deep=False)
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
         # Validate data arrays
-        store_all_array_fields = 'data' in validation_fields
-        if store_all_array_fields or any(
-            arg in validation_fields for arg in self._allowed_array_fields
-        ):
-            for issue in _MeshValidator._validate_arrays(mesh):
-                if store_all_array_fields or issue.name in validation_fields:
-                    self._validation_issues[issue.name] = issue
+        if data_fields_to_validate:
+            for issue in _MeshValidator._validate_data(mesh, data_fields_to_validate):
+                self._validation_issues[issue.name] = issue
 
         # Validate cells
-        # We do this with cell_validator plus a separate method for point references
-        invalid_point_references: Literal['invalid_point_references'] = 'invalid_point_references'
-        fields_for_cell_validator: list[_CellValidationOptions] = list(self._allowed_cell_fields)
-        fields_for_cell_validator.remove(invalid_point_references)
-        store_all_cell_fields = 'cells' in validation_fields
-        if store_all_cell_fields or invalid_point_references in validation_fields:
-            issue = _MeshValidator._validate_invalid_point_references(mesh)
-            self._validation_issues[issue.name] = issue
-
-        # Validate with cell_validator
-        if store_all_cell_fields or any(
-            arg in validation_fields for arg in fields_for_cell_validator
-        ):
-            issues, validated = _MeshValidator._validate_cells(mesh, fields_for_cell_validator)
-            self._mesh = validated
+        if cell_fields_to_validate:
+            issues, validated = _MeshValidator._validate_cells(mesh, cell_fields_to_validate)
+            if validated:
+                self._mesh = validated  # Store the output from cell_validator
             for issue in issues:
-                if store_all_cell_fields or issue.name in validation_fields:
-                    self._validation_issues[issue.name] = issue
+                self._validation_issues[issue.name] = issue
 
         # Validate points
-        store_all_points_fields = 'points' in validation_fields
-        if store_all_points_fields or any(
-            arg in validation_fields for arg in self._allowed_point_fields
-        ):
-            for issue in _MeshValidator._validate_points(mesh):
-                if store_all_points_fields or issue.name in validation_fields:
-                    self._validation_issues[issue.name] = issue
+        if point_fields_to_validate:
+            for issue in _MeshValidator._validate_points(mesh, point_fields_to_validate):
+                self._validation_issues[issue.name] = issue
 
     @staticmethod
     def _normalize_field_name(name: str) -> str:
@@ -184,15 +198,22 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_cells(
-        mesh: DataSet, validation_fields: list[_CellValidationOptions]
-    ) -> tuple[list[_MeshValidator._ValidationIssue], DataSet]:
+        mesh: DataSet, validation_fields: list[_CellFields]
+    ) -> tuple[list[_MeshValidator._ValidationIssue], DataSet | None]:
+        # Validate cells and only return ValidationIssue objects for the requested fields
         issues: list[_MeshValidator._ValidationIssue] = []
-        validated = mesh.cell_validator()
-        for name in validation_fields:
-            array = validated.field_data[name].tolist()
-            msg = _MeshValidator._invalid_cell_msg(name, array)
-            issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+        validated = None
+        if 'invalid_point_references' in validation_fields:
+            validation_fields.remove('invalid_point_references')
+            issue = _MeshValidator._validate_invalid_point_references(mesh)
             issues.append(issue)
+        if validation_fields:
+            validated = mesh.cell_validator()
+            for name in validation_fields:
+                array = validated.field_data[name].tolist()
+                msg = _MeshValidator._invalid_cell_msg(name, array)
+                issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+                issues.append(issue)
         return issues, validated
 
     @staticmethod
@@ -236,7 +257,10 @@ class _MeshValidator:
         )
 
     @staticmethod
-    def _validate_arrays(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+    def _validate_data(
+        mesh: DataSet, validation_fields: list[_DataFields]
+    ) -> list[_MeshValidator._ValidationIssue]:
+        # Validate data arrays and only return ValidationIssue objects for the requested fields
         def _invalid_array_length_msg(
             invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
@@ -274,18 +298,22 @@ class _MeshValidator:
             ('point_data_wrong_length', 'Point', mesh.point_data, mesh.n_points),
             ('cell_data_wrong_length', 'Cell', mesh.cell_data, mesh.n_cells),
         ]:
-            invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
-            message = _invalid_array_length_msg(
-                invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
-            )
-            issue = _MeshValidator._ValidationIssue(
-                name=name, message=message, values=list(invalid_arrays.keys())
-            )
-            issues.append(issue)
+            if name in validation_fields:
+                invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
+                message = _invalid_array_length_msg(
+                    invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
+                )
+                issue = _MeshValidator._ValidationIssue(
+                    name=name, message=message, values=list(invalid_arrays.keys())
+                )
+                issues.append(issue)
         return issues
 
     @staticmethod
-    def _validate_points(mesh: DataSet) -> list[_MeshValidator._ValidationIssue]:
+    def _validate_points(
+        mesh: DataSet, validation_fields: list[_PointFields]
+    ) -> list[_MeshValidator._ValidationIssue]:
+        # Validate points and only return ValidationIssue objects for the requested fields
         def get_unused_point_ids() -> list[int]:
             grid = mesh.cast_to_unstructured_grid()
             all_points = np.arange(grid.n_points)
@@ -302,22 +330,24 @@ class _MeshValidator:
             ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
             ('non_finite_points', get_non_finite_point_ids(), ''),
         ]:
-            name_norm = _MeshValidator._normalize_field_name(name)
-            name_norm = name_norm.removesuffix('s')
-            if len(point_ids) > 1:
-                s = 's'
-                a = ' '
-            else:
-                s = ''
-                a = ' a '
-                if name_norm.startswith(('a', 'e', 'i', 'o', 'u')):
-                    a = a.replace('a', 'an')
+            if name in validation_fields:
+                name_norm = _MeshValidator._normalize_field_name(name)
+                name_norm = name_norm.removesuffix('s')
+                if len(point_ids) > 1:
+                    s = 's'
+                    a = ' '
+                else:
+                    s = ''
+                    a = ' a '
+                    if name_norm.startswith(('a', 'e', 'i', 'o', 'u')):
+                        a = a.replace('a', 'an')
 
-            msg = (
-                f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: {reprlib.repr(point_ids)}'
-            )
-            issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
-            issues.append(issue)
+                msg = (
+                    f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: '
+                    f'{reprlib.repr(point_ids)}'
+                )
+                issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
+                issues.append(issue)
         return issues
 
     @property
@@ -448,7 +478,7 @@ class _MeshValidationReport(_NoNewAttrMixin):
 
         emit_mesh_info()
         emit_group('Report summary', summary_fields)
-        emit_group('Invalid data arrays', _MeshValidator._allowed_array_fields)
+        emit_group('Invalid data arrays', _MeshValidator._allowed_data_fields)
         emit_group('Invalid cell ids', _MeshValidator._allowed_cell_fields)
         emit_group('Invalid point ids', _MeshValidator._allowed_point_fields)
 
@@ -3426,9 +3456,11 @@ class DataSet(DataSetFilters, DataObject):
 
     def validate_mesh(
         self,
-        validation_fields: _MeshValidationOptions
-        | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
-        action: _MeshValidationActionOptions | None = None,
+        validation_fields: _MeshValidator._AllValidationOptions
+        | Sequence[
+            _MeshValidator._AllValidationOptions
+        ] = _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS,
+        action: _MeshValidator._ActionOptions | None = None,
     ) -> _MeshValidationReport:
         """Validate this mesh's array data, cells, and points.
 
@@ -3666,7 +3698,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if action is not None:
-            allowed = get_args(_MeshValidationActionOptions)
+            allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
 
         report = _MeshValidator(self, validation_fields).validation_report
