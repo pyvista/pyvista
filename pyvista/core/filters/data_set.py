@@ -60,7 +60,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ColormapOptions
 
 
-_SelectPointsInsideOptions = Literal['signed_distance', 'cell_locator']
+_SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
 @abstract_class
@@ -2873,7 +2873,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         self: _DataSetType,
         surface: pv.PolyData,
         *,
-        method: _SelectPointsInsideOptions = 'signed_distance',
+        method: _SelectInteriorPointsOptions = 'signed_distance',
         inside_out: bool = False,
         check_surface: bool = True,
         locator_tolerance: float | None = None,
@@ -2976,7 +2976,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         _validation.check_instance(surface, pv.PolyData, name='surface')
-        allowed_methods = get_args(_SelectPointsInsideOptions)
+        allowed_methods = get_args(_SelectInteriorPointsOptions)
         _validation.check_contains(allowed_methods, must_contain=method, name='method')
         if check_surface and not _vtk.vtkSelectEnclosedPoints.IsSurfaceClosed(surface):
             msg = (
