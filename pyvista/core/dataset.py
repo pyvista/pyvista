@@ -3432,11 +3432,11 @@ class DataSet(DataSetFilters, DataObject):
     ) -> _MeshValidationReport:
         """Validate this mesh's array data, cells, and points.
 
-        This method returns a ``MeshValidationReport`` dataclass with information about the validity
-        of a mesh. The dataclass contains validation fields which are specific to issues with the
-        mesh's data, cells, and points. By default, all validation fields below are checked and
-        included in the report. Optionally, only a subset of fields may be requested, and a
-        warning or error may be raised if the mesh is not valid.
+        This method returns a ``MeshValidationReport`` dataclass with information about the
+        validity of a mesh. The dataclass contains validation fields which are specific to issues
+        with the mesh's data, cells, and points. By default, all validation fields below are
+        checked and included in the report. Optionally, only a subset of fields may be requested,
+        and a warning or error may be raised if the mesh is not valid.
 
         **Data validation fields**
 
