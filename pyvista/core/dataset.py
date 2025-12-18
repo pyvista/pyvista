@@ -89,11 +89,12 @@ _CriticalValidationOptions = Literal[
     'point_data_wrong_length',
     'cell_data_wrong_length',
 ]
-_MeshValidationGroupOptions = Literal['data', 'cells', 'points', 'critical']
+_MeshValidationDefaultGroupOptions = Literal['data', 'cells', 'points']
+_MeshValidationGroupOptions = _MeshValidationDefaultGroupOptions | Literal['critical']
 _MeshValidationOptions = (
     _ArrayValidationOptions | _CellValidationOptions | _MeshValidationGroupOptions
 )
-_DEFAULT_MESH_VALIDATION_ARGS = get_args(_MeshValidationGroupOptions)
+_DEFAULT_MESH_VALIDATION_ARGS = get_args(_MeshValidationDefaultGroupOptions)
 
 
 class _MeshValidator:
