@@ -243,7 +243,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', '.*colors.Colormap'),
     (r'py:.*', 'colors.ListedColormap'),
-    (r'py:.*', '.*ValidationReport'),
+    (r'py:.*', '.*MeshValidationReport'),
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),

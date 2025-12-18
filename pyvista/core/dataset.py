@@ -332,14 +332,14 @@ class _MeshValidator:
         return f'{header}\n{body}'
 
     @property
-    def validation_report(self) -> _ValidationReport:
+    def validation_report(self) -> _MeshValidationReport:
         issues = self._validation_issues
         kwargs = {issue.name: issue.values for issue in issues.values()}
-        return _ValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
+        return _MeshValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
 
 
 @dataclass(frozen=True)
-class _ValidationReport(_NoNewAttrMixin):
+class _MeshValidationReport(_NoNewAttrMixin):
     """Dataclass to report mesh validation results."""
 
     # Non-fields
@@ -3429,10 +3429,10 @@ class DataSet(DataSetFilters, DataObject):
         validation_fields: _MeshValidationOptions
         | Sequence[_MeshValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
         action: _MeshValidationActionOptions | None = None,
-    ) -> _ValidationReport:
+    ) -> _MeshValidationReport:
         """Validate this mesh's array data, cells, and points.
 
-        This method returns a ``ValidationReport`` dataclass with information about the validity
+        This method returns a ``MeshValidationReport`` dataclass with information about the validity
         of a mesh. The dataclass contains validation fields which are specific to issues with the
         mesh's data, cells, and points. By default, all validation fields below are checked and
         included in the report. Optionally, only a subset of fields may be requested, and a
