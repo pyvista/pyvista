@@ -118,6 +118,12 @@ assert grid.n_points == 1
 assert grid.n_cells == 0
 
 # %%
+# This mesh is not considered valid.
+report = grid.validate_mesh()
+assert not report.is_valid
+assert report.issues == ('unused_points',)
+
+# %%
 # Use :meth:`~pyvista.DataSetFilters.extract_geometry` on the grid and observe that the
 # unused point is removed.
 poly = grid.extract_geometry()
@@ -139,3 +145,9 @@ assert grid.n_cells == 1
 poly = grid.extract_geometry()
 assert poly.n_points == 1
 assert poly.n_cells == 1
+
+# %%
+# This mesh is also now considered valid.
+report = grid.validate_mesh()
+assert report.is_valid
+assert report.issues is None
