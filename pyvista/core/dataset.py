@@ -3477,7 +3477,7 @@ class DataSet(DataSetFilters, DataObject):
         **Point validation fields**
 
         - ``unused_points``: Ensure all points are referenced by at least one cell.
-        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN` or ``Inf``).
+        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
 
         For each field, its value is:
 
