@@ -2675,9 +2675,7 @@ def test_select_points_inside(uniform, hexbeam):
 @pytest.mark.parametrize('inside_out', [True, False])
 def test_select_points_inside_method(sphere, plane, inside_out):
     def _extract_points(method):
-        selected_locator = plane.select_points_inside(
-            sphere, method=method, inside_out=inside_out, progress_bar=True
-        )
+        selected_locator = plane.select_points_inside(sphere, method=method, inside_out=inside_out)
         return plane.extract_points(selected_locator['selected_points'], include_cells=False)
 
     pts_locator = _extract_points('cell_locator')

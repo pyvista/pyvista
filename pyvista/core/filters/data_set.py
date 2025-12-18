@@ -2880,7 +2880,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         inside_out: bool = False,
         check_surface: bool = True,
         locator_tolerance: float | None = None,
-        progress_bar: bool = False,
     ) -> _DataSetType:
         """Mark points from this mesh as inside or outside relative to a closed surface.
 
@@ -2915,7 +2914,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
               on the distance. Points with negative distance are inside, points with positive
               distance are outside.
             - ``'cell_locator'``: Use :vtk:`vtkSelectEnclosedPoints` to select points. This uses
-              :vtk:`vtkStaticCellLocator` internally to spatially search for interior points.
+              :vtk:`vtkStaticCellLocator` internally to spatially search for interior points. Use
+              the ``locator_tolerance`` to control the search tolerance.
+
+            .. note::
+                The ``'signed_distance'`` method is generally slower, but is also more reliable
+                for correctly identifying interior points.
+
+            .. warning::
+                The ``'cell_locator'`` option can erroneously mark outside points as inside.
 
         inside_out : bool, default: False
             By default, points inside the surface have value ``True``, and points outside
@@ -2931,9 +2938,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             The tolerance on the intersection when using the ``'cell_locator'`` method. The
             tolerance is expressed as a fraction of the bounding box of the enclosing surface.
 
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
         Returns
         -------
         PolyData
@@ -2946,9 +2950,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        Determine which points on a plane are inside a manifold sphere
-        surface mesh. Extract these points using the
-        :func:`DataSetFilters.extract_points` filter and then plot them.
+        Determine which points on a plane are inside a manifold sphere surface mesh.
+        Extract these points using the :func:`~DataSetFilters.extract_points` filter
+        and then plot them.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
@@ -3001,7 +3005,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 surface,
                 inside_out=inside_out,
                 tolerance=0.001 if locator_tolerance is None else locator_tolerance,
-                progress_bar=progress_bar,
+                progress_bar=False,
             ).astype(bool)
         out['selected_points'] = bools
         return out
