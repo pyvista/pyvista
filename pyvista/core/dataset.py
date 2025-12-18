@@ -3448,7 +3448,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. note:
             When setting new arrays using PyVista's API, similar array validation checks are
-            _already_ implicitly performed. As such, these checks may be redundant in many cases.
+            `already` implicitly performed. As such, these checks may be redundant in many cases.
             They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
             meshes.
 

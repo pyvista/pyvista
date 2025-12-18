@@ -14,7 +14,7 @@ import pyvista as pv
 from pyvista.examples import plot_cell
 
 # %%
-# Non-Convex Cells
+# Non-convex cells
 # ----------------
 # Many VTK algorithms assume that cells are convex. This can result in incorrect outputs
 # and may also affect rendering. For example, let's create :class:`~pyvista.PolyData`
@@ -49,9 +49,9 @@ assert report.is_valid
 plot_cell(triangles, 'xy')
 
 # %%
-# Incorrectly Oriented Faces
-# --------------------------
-# Cells with incorrectly oriented faces can result in incorrect geometric computations such as
+# Cells with inverted faces
+# -------------------------
+# Cells with inverted faces can result in incorrect geometric computations such as
 # cell volume or centroid. To demonstrate this, we first create a valid
 # :attr:`~pyvista.CellType.POLYHEDRON` cell similar to the
 # :func:`~pyvista.examples.cells.Polyhedron` example cell.
@@ -104,3 +104,38 @@ print(valid_centroid)
 invalid_centroid = invalid_polyhedron.cell_centers().points[0].tolist()
 print(invalid_centroid)
 assert valid_centroid != invalid_centroid
+
+
+# %%
+# Meshes with unused points
+# -------------------------
+# Unused points are points not associated with any cells. These points are not processed
+# consistently by filters and are often ignored or removed. To demonstrate this, create an
+# :class:`~pyvista.UnstructuredGrid` with a single unused point.
+grid = pv.UnstructuredGrid()
+grid.points = [[0.0, 0.0, 0.0]]
+assert grid.n_points == 1
+assert grid.n_cells == 0
+
+# %%
+# Use :meth:`~pyvista.DataSetFilters.extract_geometry` on the grid and observe that the
+# unused point is removed.
+poly = grid.extract_geometry()
+assert poly.n_points == 0
+assert poly.n_cells == 0
+
+# %%
+# To remedy this, it is recommended to always associate individual points with a
+# :attr:`~pyvista.CellType.VERTEX` cell. E.g.:
+points = [[0.0, 0.0, 0.0]]
+cells = [1, 0]
+celltypes = [pv.CellType.VERTEX]
+grid = pv.UnstructuredGrid(cells, celltypes, points)
+assert grid.n_points == 1
+assert grid.n_cells == 1
+
+# %%
+# This time, the point is properly processed by the filter and is retained.
+poly = grid.extract_geometry()
+assert poly.n_points == 1
+assert poly.n_cells == 1
