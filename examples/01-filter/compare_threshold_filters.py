@@ -29,8 +29,7 @@ from pyvista import examples
 # of the image for the voxels above the value
 # while image_threshold produces an all-or-nothing result.
 # Note the little specks for the `select_values`.
-# It is because it only gets the value (or values)
-# select_values only selects the value (or values) that is specified.
+# It is because it only selects the value (or values) that is (are) specified.
 method_map = {'default': 0, 'threshold': 1, 'image_threshold': 2, 'select_values': 3}
 step = -80
 value = 155
