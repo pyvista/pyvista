@@ -580,6 +580,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> clipped.plot()
 
+        .. seealso::
+
+            :ref:`compare_threshold_filters_example`
+                This example showcases this filter and
+                other similar ones.
+
         """
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
@@ -820,6 +826,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Threshold-like filter for ``ImageData`` to keep some values and replace others.
+        :ref:`compare_threshold_filters_example`
+            This example showcases this filter and
+            other similar ones.
+
 
         Returns
         -------
@@ -4751,6 +4761,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar filter for thresholding a mesh by value.
         partition
             Split a mesh into a number of sub-parts.
+        :ref:`compare_threshold_filters_example`
+            This example showcases this filter and
+            other similar ones.
 
         Returns
         -------
