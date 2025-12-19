@@ -94,7 +94,7 @@ class _MeshValidator:
         'cell_data_wrong_length',
     ]
     _DefaultFieldGroups = Literal['data', 'cells', 'points']
-    _OtherFieldGroups = Literal['unsafe']
+    _OtherFieldGroups = Literal['memory_safe']
     _AllValidationOptions = (
         _DataFields | _CellFields | _PointFields | _DefaultFieldGroups | _OtherFieldGroups
     )
@@ -146,9 +146,9 @@ class _MeshValidator:
 
             # Inputs are valid, but we need to categorize them
             input_fields = list(validation_fields)
-            if 'unsafe' in validation_fields:
+            if 'memory_safe' in validation_fields:
                 # Replace unsafe group with the actual field names used
-                input_fields.remove('unsafe')
+                input_fields.remove('memory_safe')
                 unsafe_fields = (
                     field
                     for field in get_args(self._UnsafeFields)
@@ -3551,10 +3551,9 @@ class DataSet(DataSetFilters, DataObject):
             - ``'data'`` to include all data fields
             - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields
-            - ``'unsafe'`` to include all fields that, if invalid, may cause a
-              segmentation fault and crash Python. This option includes
-              ``point_data_wrong_length``, ``cell_data_wrong_length``, and
-              ``invalid_point_references``.
+            - ``'memory_safe'`` to include all fields that, if invalid, may cause a segmentation
+              fault and crash Python. This option includes ``point_data_wrong_length``,
+              ``cell_data_wrong_length``, and ``invalid_point_references``.
 
             Fields that are excluded from the report will have a value of ``None``.
 
@@ -3697,11 +3696,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> report.is_valid
         True
 
-        Do minimal validation to ensure there are no "unsafe" mesh properties. This helps to avoid
+        Do minimal validation to ensure the mesh properties are "memory_safe". This helps to avoid
         a segmentation fault which may be caused by invalid memory accesses by VTK. In this case,
         we use ``action`` to raise an error if the mesh is not valid.
 
-        >>> _ = mesh.validate_mesh('unsafe', action='error')
+        >>> _ = mesh.validate_mesh('memory_safe', action='error')
 
         """
         if action is not None:
