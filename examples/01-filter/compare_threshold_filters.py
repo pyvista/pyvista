@@ -28,13 +28,14 @@ from pyvista import examples
 # Note how `pyvista.DataSetFilters.threshold` keeps the dynamic
 # of the image for the voxels above the value
 # while image_threshold produces an all-or-nothing result.
+# Note the little specks for the `select_values`.
+# It is because it only gets the value (or values)
 # select_values only selects the value (or values) that is specified.
 method_map = {'default': 0, 'threshold': 1, 'image_threshold': 2, 'select_values': 3}
 step = -80
 value = 155
 outlines_mesh = pv.PolyData()
 volume = pv.examples.download_carotid()
-print(volume.array_names)
 volume_outline = pv.Box(volume.bounds)
 volume_outline.cell_data["method"] = np.full(
     (volume_outline.n_cells), 
@@ -84,16 +85,23 @@ pl.show()
 # %%
 # Volume Data to Unstructured Grid
 # ++++++++++++++++++++++++++++++++
-# Some filters generate `pyvista.UnstructuredGrid` out of `pyvista.Volume`.
+# Some filters generate a `pyvista.UnstructuredGrid` 
+# out of a`pyvista.Volume`.
 # We will explore 3:
 # :func:`pyvista.DataSetFilters.threshold`
-# :func:`pyvista.DataSetFilters.image_threshold`
+# :func:`pyvista.DataSetFilters.extract_values`
+# :func:`pyvista.DataSetFilters.clip_scalar`
+# Note the shape of the produced meshes.
+# `clip_scalar` produces `pyvista.CellType.WEDGE` 
+# and `pyvista.CellType.TETRA`
+# while `extract_values` and `threshold` 
+# produces `pyvista.CellType.VOXEL`.
+
 method_map = {'threshold': 0, 'extract_values': 1, "clip_scalar": 2}
 volume = pv.examples.download_carotid()
 step = -80
 values = (155, 580)
 mesh = pv.UnstructuredGrid()
-print(mesh)
 pl = pv.Plotter()
 clipped_vol = volume.clip_scalar(value=values)
 clipped_vol.cell_data["method"] = np.full(
@@ -119,7 +127,6 @@ mesh += thresholded_vol
 mesh.set_active_scalars("method")
 colored_mesh, color_map = mesh.color_labels(output_scalars='method', return_dict=True)
 legend_map = dict(zip(method_map.keys(), color_map.values(), strict=True))
-
 pl.add_mesh(colored_mesh, style='wireframe', rgb=True)
 pl.add_legend(legend_map)
 cpos = pv.CameraPosition(
@@ -128,32 +135,52 @@ cpos = pv.CameraPosition(
 )
 pl.camera_position = cpos
 pl.show()
-print(pl.camera_position)
 # %%
 # Unstructured Grid to Unstructured Grid
 # ++++++++++++++++++++++++++++++++++++++
-# There are a few filters like :func:`pyvista.DataSetFilters.clip_scalar`
-values = (1,6)
-step = -5
-surface = examples.download_foot_bones().connectivity()
-print(surface.array_names)
+# Some filters generate a `pyvista.UnstructuredGrid` 
+# out of a`pyvista.UnstructuredGrid`.
+# We will explore 2:
+# :func:`pyvista.DataSetFilters.threshold`
+# :func:`pyvista.DataSetFilters.clip_scalar`
+# Notice how threshold keeps the cells which correspond
+# to the specified value range while `clip_scalar` generates
+# a "clean" cut, which modifies the cells at the boundaries of 
+# the clip.
+values = (1,2)
+step = 5
+surface = examples.download_foot_bones()
+method_map = {'threshold': 1, 'clip_scalar': 2}
+all_filtered_meshes = pv.UnstructuredGrid()
 surface.point_data["x"] = surface.points[:, 0]
 surface.set_active_scalars("x")
 thresholded_surf = surface.threshold(values)
 thresholded_surf.points[:, 2] += step
+thresholded_surf.cell_data["method"] = np.full(
+    (thresholded_surf.number_of_cells),
+    method_map["threshold"]
+)
+all_filtered_meshes += thresholded_surf
 clipped_surf = surface.clip_scalar(value=values)
 clipped_surf.points[:, 2] += 2 * step
+clipped_surf.cell_data["method"] = np.full(
+    (clipped_surf.number_of_cells),
+    method_map["clip_scalar"]
+)
+all_filtered_meshes += clipped_surf
+all_filtered_meshes.set_active_scalars("method")
+colored_mesh, color_map = all_filtered_meshes.color_labels(output_scalars='method', return_dict=True)
+legend_map = dict(zip(method_map.keys(), color_map.values(), strict=True))
 pl = pv.Plotter()
-pl.add_mesh(surface)
-pl.add_mesh(thresholded_surf, color = "r")
-pl.add_mesh(clipped_surf,  color = "g")
+pl.add_mesh(surface, show_edges=True)
+pl.add_mesh(colored_mesh, rgb=True, show_edges=True)
+pl.add_legend(legend_map)
 cpos = pv.CameraPosition(
-    position=(8.9, 33.4, 2.4),
-    focal_point=(0, 0, -4.8), viewup=(0.94,-0.28,0.14)
+    position=(6.5, 29.4, 14.9),
+    focal_point=(-1.1, -3.9, 6.0),
+    viewup=(0.96, -0.3, 0.1)
 )
 pl.camera_position = cpos
 pl.show()
-print(pl.camera_position)
-
 # %%
 # .. tags:: load
