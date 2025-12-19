@@ -41,7 +41,7 @@ assert report.invalid_fields == ('non_convex',)
 plot_cell(quad, 'xy')
 
 # %%
-# To address the convexity issue, we can :meth:`~pyvista.PolyDataFilters.triangulate` the mesh.
+# To address the convexity problem, we can :meth:`~pyvista.PolyDataFilters.triangulate` the mesh.
 # The mesh is now valid and renders correctly.
 triangles = quad.triangulate()
 report = triangles.validate_mesh()
@@ -86,7 +86,7 @@ assert not report.is_valid
 plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
-# If we review the issues, we see that `two` issues are reported instead of only one.
+# If we review the invalid fields, we see that `two` are reported instead of only one.
 assert report.invalid_fields == ('non_convex', 'inverted_faces')
 
 # %%
@@ -131,17 +131,17 @@ assert not report.is_valid
 plot_cell(hexahedron)
 
 # %%
-# Let's review the reported issues.
+# Let's review the invalid fields reported.
 assert report.invalid_fields == ('intersecting_edges', 'non_convex', 'inverted_faces')
 
 # %%
-# Similar to the cell from `Cells with inverted faces`_, multiple issues are reported. From
+# Similar to the cell from `Cells with inverted faces`_, multiple invalid fields are reported. From
 # the plot above, we can see the ``'intersecting_edges'`` issue appears to be correct, but to
 # investigate the ``'inverted_faces'`` problem further, let's plot the cell again with normals.
 plot_cell(hexahedron, show_normals=True)
 
 # %%
-# Since we can see some of the normals are indeed pointing inward, this confirms that both issues
+# Since we can see some of the normals are indeed pointing inward, this confirms that both invalid
 # reported are correct. To rectify this problem, we need to re-order the cell connectivity based
 # on the required ordering stated in the documentation for :vtk:`vtkHexahedron`.
 cells = [8, 0, 1, 4, 2, 3, 5, 7, 6]  # instead of [8, 0, 1, 2, 3, 4, 5, 6, 7]
