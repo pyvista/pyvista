@@ -169,6 +169,12 @@ class _MeshValidator:
                     cell_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
                 elif field_or_group in allowed_point_fields:
                     point_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+                else:  # pragma: no cover
+                    msg = (
+                        f'Something went wrong! Invalid field or group {field_or_group}. '
+                        'This code should not be reachable.'
+                    )
+                    raise RuntimeError(msg)
 
         self._mesh = mesh.copy(deep=False)
         self._field_summaries: dict[str, _MeshValidator._FieldSummary] = {}

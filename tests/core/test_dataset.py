@@ -1602,6 +1602,13 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays):
     assert not sphere_with_invalid_arrays.validate_mesh().is_valid
 
 
+def test_validate_mesh_default_fields():
+    mesh = pv.PolyData()
+    report1 = str(mesh.validate_mesh())
+    report2 = str(mesh.validate_mesh(['data', 'cells', 'points']))
+    assert report1 == report2
+
+
 def test_validate_mesh_message(sphere_with_invalid_arrays):
     assert pv.PolyData().validate_mesh().message is None
     assert sphere_with_invalid_arrays.validate_mesh().message
