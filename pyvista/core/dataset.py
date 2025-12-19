@@ -170,7 +170,6 @@ class _MeshValidator:
                 elif field_or_group in allowed_point_fields:
                     point_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
 
-
         self._mesh = mesh.copy(deep=False)
         self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
 
