@@ -50,7 +50,7 @@ def test_area_and_volume(cell_example):
 @parametrize('cell_example', cell_example_functions)
 def test_cell_is_valid(cell_example):
     mesh = cell_example()
-    issues = mesh.validate_mesh().issues
+    issues = mesh.validate_mesh().invalid_fields
     assert not issues
 
 

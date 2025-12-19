@@ -106,7 +106,7 @@ class _MeshValidator:
     _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
 
     @dataclass
-    class _ValidationIssue:
+    class _FieldSummary:
         name: str
         message: str
         values: Sequence[str | int] | None
@@ -171,25 +171,25 @@ class _MeshValidator:
                     point_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
 
         self._mesh = mesh.copy(deep=False)
-        self._validation_issues: dict[str, _MeshValidator._ValidationIssue] = {}
+        self._field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
 
         # Validate data arrays
         if data_fields_to_validate:
-            for issue in _MeshValidator._validate_data(mesh, data_fields_to_validate):
-                self._validation_issues[issue.name] = issue
+            for summary in _MeshValidator._validate_data(mesh, data_fields_to_validate):
+                self._field_summaries[summary.name] = summary
 
         # Validate cells
         if cell_fields_to_validate:
-            issues, validated = _MeshValidator._validate_cells(mesh, cell_fields_to_validate)
+            summaries, validated = _MeshValidator._validate_cells(mesh, cell_fields_to_validate)
             if validated:
                 self._mesh = validated  # Store the output from cell_validator
-            for issue in issues:
-                self._validation_issues[issue.name] = issue
+            for summary in summaries:
+                self._field_summaries[summary.name] = summary
 
         # Validate points
         if point_fields_to_validate:
-            for issue in _MeshValidator._validate_points(mesh, point_fields_to_validate):
-                self._validation_issues[issue.name] = issue
+            for summary in _MeshValidator._validate_points(mesh, point_fields_to_validate):
+                self._field_summaries[summary.name] = summary
 
     @staticmethod
     def _normalize_field_name(name: str) -> str:
@@ -198,25 +198,25 @@ class _MeshValidator:
     @staticmethod
     def _validate_cells(
         mesh: DataSet, validation_fields: list[_CellFields]
-    ) -> tuple[list[_MeshValidator._ValidationIssue], DataSet | None]:
-        # Validate cells and only return ValidationIssue objects for the requested fields
-        issues: list[_MeshValidator._ValidationIssue] = []
-        validated = None
+    ) -> tuple[list[_MeshValidator._FieldSummary], DataSet | None]:
+        """Validate cells and only return summary objects for the requested fields."""
+        summaries: list[_MeshValidator._FieldSummary] = []
+        validated_mesh = None
         if 'invalid_point_references' in validation_fields:
             validation_fields.remove('invalid_point_references')
             issue = _MeshValidator._validate_invalid_point_references(mesh)
-            issues.append(issue)
+            summaries.append(issue)
         if validation_fields:
-            validated = mesh.cell_validator()
+            validated_mesh = mesh.cell_validator()
             for name in validation_fields:
-                array = validated.field_data[name].tolist()
+                array = validated_mesh.field_data[name].tolist()
                 msg = _MeshValidator._invalid_cell_msg(name, array)
-                issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
-                issues.append(issue)
-        return issues, validated
+                issue = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
+                summaries.append(issue)
+        return summaries, validated_mesh
 
     @staticmethod
-    def _validate_invalid_point_references(mesh: DataSet) -> _MeshValidator._ValidationIssue:
+    def _validate_invalid_point_references(mesh: DataSet) -> _MeshValidator._FieldSummary:
         def _find_cells_with_invalid_point_refs() -> list[int]:
             """Return cell IDs that reference points that do not exist."""
             grid = (
@@ -237,7 +237,7 @@ class _MeshValidator:
         name = 'invalid_point_references'
         array = _find_cells_with_invalid_point_refs()
         msg = _MeshValidator._invalid_cell_msg(name, array)
-        return _MeshValidator._ValidationIssue(name=name, message=msg, values=array)
+        return _MeshValidator._FieldSummary(name=name, message=msg, values=array)
 
     @staticmethod
     def _invalid_cell_msg(name: str, array: list[int]) -> str:
@@ -258,8 +258,9 @@ class _MeshValidator:
     @staticmethod
     def _validate_data(
         mesh: DataSet, validation_fields: list[_DataFields]
-    ) -> list[_MeshValidator._ValidationIssue]:
-        # Validate data arrays and only return ValidationIssue objects for the requested fields
+    ) -> list[_MeshValidator._FieldSummary]:
+        """Validate data arrays and only return summary objects for the requested fields."""
+
         def _invalid_array_length_msg(
             invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
@@ -287,7 +288,7 @@ class _MeshValidator:
         def _validate_array_lengths(arrays: DataSetAttributes, expected: int) -> dict[str, int]:
             return {name: len(arrays[name]) for name in arrays if len(arrays[name]) != expected}
 
-        issues: list[_MeshValidator._ValidationIssue] = []
+        summaries: list[_MeshValidator._FieldSummary] = []
         for (
             name,
             kind,
@@ -302,17 +303,18 @@ class _MeshValidator:
                 message = _invalid_array_length_msg(
                     invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
                 )
-                issue = _MeshValidator._ValidationIssue(
+                issue = _MeshValidator._FieldSummary(
                     name=name, message=message, values=list(invalid_arrays.keys())
                 )
-                issues.append(issue)
-        return issues
+                summaries.append(issue)
+        return summaries
 
     @staticmethod
     def _validate_points(
         mesh: DataSet, validation_fields: list[_PointFields]
-    ) -> list[_MeshValidator._ValidationIssue]:
-        # Validate points and only return ValidationIssue objects for the requested fields
+    ) -> list[_MeshValidator._FieldSummary]:
+        """Validate points and only return summary objects for the requested fields."""
+
         def get_unused_point_ids() -> list[int]:
             grid = mesh.cast_to_unstructured_grid()
             all_points = np.arange(grid.n_points)
@@ -324,7 +326,7 @@ class _MeshValidator:
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
-        issues: list[_MeshValidator._ValidationIssue] = []
+        summaries: list[_MeshValidator._FieldSummary] = []
         for name, point_ids, info in [
             ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
             ('non_finite_points', get_non_finite_point_ids(), ''),
@@ -345,14 +347,14 @@ class _MeshValidator:
                     f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: '
                     f'{reprlib.repr(point_ids)}'
                 )
-                issue = _MeshValidator._ValidationIssue(name=name, message=msg, values=point_ids)
-                issues.append(issue)
-        return issues
+                issue = _MeshValidator._FieldSummary(name=name, message=msg, values=point_ids)
+                summaries.append(issue)
+        return summaries
 
     @property
     def _message(self) -> str:
         messages: list[str] = []
-        messages += [issue.message for issue in self._validation_issues.values() if issue.values]
+        messages += [issue.message for issue in self._field_summaries.values() if issue.values]
         bullet = ' - '
         body = bullet + f'\n{bullet}'.join(messages)
         header = (
@@ -362,8 +364,8 @@ class _MeshValidator:
 
     @property
     def validation_report(self) -> _MeshValidationReport:
-        issues = self._validation_issues
-        kwargs = {issue.name: issue.values for issue in issues.values()}
+        summaries = self._field_summaries
+        kwargs = {issue.name: issue.values for issue in summaries.values()}
         return _MeshValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
 
 
@@ -410,16 +412,16 @@ class _MeshValidationReport(_NoNewAttrMixin):
     @property
     def is_valid(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if the mesh is valid."""
-        return not self.issues
+        return not self.invalid_fields
 
     @property
-    def issues(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
+    def invalid_fields(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
         """Return any field names which have values."""
         return tuple(f.name for f in fields(self) if getattr(self, f.name))
 
     def __str__(self) -> str:
         """Include all validation results in a printable string."""
-        summary_fields = ['is_valid', 'issues']
+        summary_fields = ['is_valid', 'invalid_fields']
         dataset_fields = [f.name for f in fields(self)]
 
         def compute_label_width() -> int:
@@ -3464,10 +3466,10 @@ class DataSet(DataSetFilters, DataObject):
         """Validate this mesh's array data, cells, and points.
 
         This method returns a ``MeshValidationReport`` dataclass with information about the
-        validity of a mesh. The dataclass contains validation fields which are specific to issues
-        with the mesh's data, cells, and points. By default, all validation fields below are
-        checked and included in the report. Optionally, only a subset of fields may be requested,
-        and a warning or error may be raised if the mesh is not valid.
+        validity of a mesh. The dataclass contains validation fields which are specific to the
+        mesh's data, cells, and points. By default, all validation fields below are checked and
+        included in the report. Optionally, only a subset of fields may be requested, and a
+        warning or error may be raised if the mesh is not valid.
 
         **Data validation fields**
 
@@ -3522,12 +3524,12 @@ class DataSet(DataSetFilters, DataObject):
         convenience:
 
         - ``is_valid``: evaluates to ``True`` when all fields are ``None`` or empty.
-        - ``issues``: tuple of validation field names where issues were detected.
+        - ``invalid_fields``: tuple of validation field names where problems were detected.
         - ``mesh``: a shallow copy of the validated mesh. If any cell fields are included which
           are computed by :meth:`~pyvista.DataSetFilters.cell_validator`, this mesh includes the
           output from that filter.
         - ``message``: message string generated by the report. The message contains a compact
-          summary of any issues detected, and is formatted for printing to console. This is the
+          summary of any problems detected, and is formatted for printing to console. This is the
           message used when the ``action`` keyword is set for emitting warnings or raising errors.
           This value is ``None`` if the mesh is valid.
 
@@ -3588,7 +3590,7 @@ class DataSet(DataSetFilters, DataObject):
             N Cells                  : 1680
         Report summary:
             Is valid                 : True
-            Issues                   : ()
+            Invalid fields           : ()
         Invalid data arrays:
             Point data wrong length  : []
             Cell data wrong length   : []
@@ -3625,7 +3627,7 @@ class DataSet(DataSetFilters, DataObject):
             N Cells                  : 3263
         Report summary:
             Is valid                 : False
-            Issues (1)               : ('non_convex',)
+            Invalid fields (1)       : ('non_convex',)
         Invalid cell ids:
             Wrong number of points   : []
             Intersecting edges       : []
@@ -3643,7 +3645,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Show what the issue(s) are.
 
-        >>> report.issues
+        >>> report.invalid_fields
         ('non_convex',)
 
         Show the cell ids of the non-convex cells.
@@ -3677,7 +3679,7 @@ class DataSet(DataSetFilters, DataObject):
             N Cells                  : 3263
         Report summary:
             Is valid                 : True
-            Issues                   : ()
+            Invalid fields           : ()
         Invalid cell ids:
             Intersecting edges       : []
         Invalid point ids:

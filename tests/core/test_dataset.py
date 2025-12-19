@@ -1695,7 +1695,7 @@ def test_validate_mesh_report_str():
         '    N Cells                  : 1680\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
-        '    Issues                   : ()\n'
+        '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
         '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
@@ -1729,7 +1729,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    N Cells                      : 1\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
-        "    Issues (3)                   : ('invalid_point_references', "
+        "    Invalid fields (3)           : ('invalid_point_references', "
         "'unused_points', 'non_finite_points')\n"
         'Invalid data arrays:\n'
         '    Point data wrong length      : []\n'
@@ -1764,7 +1764,7 @@ def test_validate_mesh_str_filtered():
         '    N Cells                  : 0\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
-        '    Issues                   : ()\n'
+        '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
         '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
@@ -1784,7 +1784,7 @@ def test_validate_mesh_str_filtered():
         '    N Cells                  : 0\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
-        '    Issues                   : ()\n'
+        '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
         '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'

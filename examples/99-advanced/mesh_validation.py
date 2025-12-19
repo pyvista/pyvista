@@ -33,7 +33,7 @@ quad = pv.PolyData(points, faces)
 # Use :meth:`~pyvista.DataSet.validate_mesh` to show that the cell is not convex.
 report = quad.validate_mesh()
 assert not report.is_valid
-assert report.issues == ('non_convex',)
+assert report.invalid_fields == ('non_convex',)
 
 # %%
 # If we plot the cell, we can see that the concave cell is incorrectly rendered as though it's
@@ -87,7 +87,7 @@ plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
 # If we review the issues, we see that `two` issues are reported instead of only one.
-assert report.issues == ('non_convex', 'inverted_faces')
+assert report.invalid_fields == ('non_convex', 'inverted_faces')
 
 # %%
 # The ``'inverted_faces'`` issue is accurate, but the ``'non_convex'`` issue
@@ -132,7 +132,7 @@ plot_cell(hexahedron)
 
 # %%
 # Let's review the reported issues.
-assert report.issues == ('intersecting_edges', 'non_convex', 'inverted_faces')
+assert report.invalid_fields == ('intersecting_edges', 'non_convex', 'inverted_faces')
 
 # %%
 # Similar to the cell from `Cells with inverted faces`_, multiple issues are reported. From
@@ -166,7 +166,7 @@ assert grid.n_cells == 0
 # This mesh is not considered valid.
 report = grid.validate_mesh()
 assert not report.is_valid
-assert report.issues == ('unused_points',)
+assert report.invalid_fields == ('unused_points',)
 
 # %%
 # Use :meth:`~pyvista.DataSetFilters.extract_geometry` on the grid and observe that the
@@ -195,4 +195,4 @@ assert poly.n_cells == 1
 # This mesh is also now considered valid.
 report = grid.validate_mesh()
 assert report.is_valid
-assert not report.issues
+assert not report.invalid_fields
