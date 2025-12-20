@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import logging
 import os
+import threading
 from typing import TYPE_CHECKING
 from typing import Concatenate
 from typing import Literal
@@ -59,6 +61,8 @@ Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when u
 If this issue persists, please open an issue in PyVista: https://github.com/pyvista/pyvista/issues
 
 """
+
+_elegantly_launch_lock = threading.RLock()
 
 logger = logging.getLogger(__name__)
 
@@ -479,9 +483,23 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
         raise ImportError(msg)
 
     async def launch_it():
-        await launch_server(*args, **kwargs).ready
+        trame_server = launch_server(*args, **kwargs)
+        await trame_server.ready
+        return trame_server
 
-    # Basically monkey patches asyncio to support this
-    nest_asyncio2.apply()
+    def run_launch_it():
+        return asyncio.run(launch_it())
 
-    return asyncio.run(launch_it())
+    def _get_running_loop():
+        try:
+            return asyncio.get_running_loop()
+        except RuntimeError:
+            return None
+    
+    running_loop = _get_running_loop()
+
+    if running_loop is None:
+        return run_launch_it()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(run_launch_it).result()
