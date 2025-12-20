@@ -495,7 +495,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
             return asyncio.get_running_loop()
         except RuntimeError:
             return None
-    
+
     running_loop = _get_running_loop()
 
     if running_loop is None:
