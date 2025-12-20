@@ -7,6 +7,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 from functools import wraps
+import json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -3678,6 +3679,142 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         return status_method(name)
 
 
+@dataclass(order=True)
+class SeriesDataSet(_NoNewAttrMixin):
+    """Class for storing dataset info from PVD file."""
+
+    name: str
+    time: float
+
+
+class _SeriesReader(BaseVTKReader):
+    """Simulate a VTK reader for series file."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._directory: str | None = None
+        self._datasets: list[SeriesDataSet] | None = None
+        self._active_datasets: list[SeriesDataSet] | None = None
+        self._time_values: list[float] | None = None
+
+    def SetFileName(self, filename) -> None:
+        """Set filename and update reader."""
+        self._filename = str(filename)
+        self._directory = str(Path(filename).parent)
+
+    def UpdateInformation(self):
+        """Parse PVD file."""
+        if self._filename is None:
+            msg = 'Filename must be set'
+            raise ValueError(msg)
+
+        with Path(self._filename).open() as fr:
+            content = json.load(fr)
+        datasets = [
+            SeriesDataSet(element['name'], element['time']) for element in content['files']
+        ]
+
+        self._datasets = sorted(datasets)
+        self._time_values = sorted({dataset.time for dataset in self._datasets})
+        self._time_mapping: dict[float, list[SeriesDataSet]] = {
+            time: [] for time in self._time_values
+        }
+        for dataset in self._datasets:
+            self._time_mapping[dataset.time].append(dataset)
+        self._SetActiveTime(self._time_values[0])
+
+    def Update(self) -> None:
+        """Read data and store it."""
+        self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
+
+    def _SetActiveTime(self, time_value) -> None:
+        """Set active time."""
+        self._active_datasets = self._time_mapping[time_value]
+        self._active_readers = [
+            get_reader(Path(self._directory) / dataset.name) for dataset in self._active_datasets
+        ]
+
+
+class SeriesReader(BaseReader, TimeReader):
+    """Series Reader for .series file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> from pathlib import Path
+    >>> filename = examples.download_wavy_series(load=False)
+    >>> Path(filename).name
+    'wavy.vtk.series'
+    >>> reader = pv.get_reader(filename)
+    >>> reader.time_values
+    [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
+    >>> reader.set_active_time_point(5)
+    >>> reader.active_time_value
+    5.0
+    >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
+    >>> mesh.plot(scalars='z')
+
+    """
+
+    _class_reader = _SeriesReader
+
+    @property
+    def active_readers(self):
+        """Return the active readers.
+
+        Returns
+        -------
+        list[pyvista.BaseReader]
+
+        """
+        return self.reader._active_readers
+
+    @property
+    def datasets(self):
+        """Return all datasets.
+
+        Returns
+        -------
+        list[pyvista.PVDDataSet]
+
+        """
+        return self.reader._datasets
+
+    @property
+    def active_datasets(self):
+        """Return all active datasets.
+
+        Returns
+        -------
+        list[pyvista.PVDDataSet]
+
+        """
+        return self.reader._active_datasets
+
+    @property
+    def time_values(self):  # noqa: D102
+        return self.reader._time_values
+
+    @property
+    def number_time_points(self):  # noqa: D102
+        return len(self.reader._time_values)
+
+    def time_point_value(self, time_point):  # noqa: D102
+        return self.reader._time_values[time_point]
+
+    @property
+    def active_time_value(self):  # noqa: D102
+        # all active datasets have the same time
+        return self.reader._active_datasets[0].time
+
+    def set_active_time_value(self, time_value) -> None:  # noqa: D102
+        self.reader._SetActiveTime(time_value)
+
+    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+        self.set_active_time_value(self.time_values[time_point])
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -3738,7 +3875,9 @@ CLASS_READERS = {
     '.tri': BinaryMarchingCubesReader,
     '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
+    '.vti.series': SeriesReader,
     '.vtk': VTKDataSetReader,
+    '.vtk.series': SeriesReader,
     '.vtkhdf': HDFReader,
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
@@ -3747,6 +3886,7 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
+    '.vtu.series': SeriesReader,
     '.xdmf': XdmfReader,
 }
 

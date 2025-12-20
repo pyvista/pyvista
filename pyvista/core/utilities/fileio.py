@@ -197,7 +197,7 @@ def get_ext(filename: str | Path) -> str:
     base = str(path.parent / path.stem)
     ext = path.suffix
     ext = ext.lower()
-    if ext == '.gz':
+    if ext in ('.gz', '.series'):
         path = Path(base)
         ext_pre = path.suffix.lower()
         ext = f'{ext_pre}{ext}'
