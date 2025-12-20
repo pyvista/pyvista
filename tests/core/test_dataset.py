@@ -1562,3 +1562,12 @@ def test_dimensionality():
 
     mesh = pv.Cube()
     assert mesh.dimensionality == 3
+
+
+@pytest.mark.parametrize('empty', [True, False])
+def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
+    for mesh in datasets_plus_pointset:
+        test_mesh = type(mesh)() if empty else mesh
+        min_dimensionality = test_mesh.min_cell_dimensionality
+        max_dimensionality = test_mesh.max_cell_dimensionality
+        assert min_dimensionality <= max_dimensionality, type(test_mesh)

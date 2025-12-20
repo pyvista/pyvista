@@ -3031,3 +3031,17 @@ class DataSet(DataSetFilters, DataObject):
         # Align points first to make rank computation more robust
         aligned_points = self.align_xyz().points
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
+
+    @property
+    def max_cell_dimensionality(self) -> Literal[0, 1, 2, 3]:  # numpydoc ignore=RT01
+        """Get the maximum spatial dimensionality of all cells in this mesh."""
+        return self.GetMaxSpatialDimension()
+
+    @property
+    def min_cell_dimensionality(self) -> Literal[0, 1, 2, 3]:  # numpydoc ignore=RT01
+        """Get the minimum spatial dimensionality of all cells in this mesh."""
+        if self.n_cells == 0:
+            # VTK returns 3 by default for meshes with no cells, which is odd because
+            # then we have min > max
+            return 0
+        return self.GetMinSpatialDimension()
