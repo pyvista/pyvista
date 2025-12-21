@@ -23,8 +23,8 @@ from pyvista import examples
 # ++++++++++++++++++++++++++
 # Some filters generate `pyvista.Volume` out of `pyvista.Volume`. We will explore 3:
 # :func:`pyvista.DataSetFilters.threshold`
-# :func:`pyvista.DataSetFilters.image_threshold`
-# :func:`pyvista.DataSetFilters.select_values`
+# :func:`pyvista.ImageDataFilters.image_threshold`
+# :func:`pyvista.ImageDataFilters.select_values`
 # Note how `pyvista.DataSetFilters.threshold` keeps the dynamic
 # of the image for the voxels above the value
 # while image_threshold produces an all-or-nothing result.
