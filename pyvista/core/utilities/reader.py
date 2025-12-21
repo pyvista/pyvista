@@ -12,7 +12,9 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Generic
 from typing import Literal
+from typing import TypeVar
 from typing import get_args
 import weakref
 from xml.etree import ElementTree as ET
@@ -3681,7 +3683,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
 @dataclass(order=True)
 class SeriesDataSet(_NoNewAttrMixin):
-    """Class for storing dataset info from PVD file."""
+    """Class for storing dataset info from series file."""
 
     name: str
     time: float
@@ -3735,7 +3737,10 @@ class _SeriesReader(BaseVTKReader):
         ]
 
 
-class SeriesReader(BaseReader, TimeReader):
+_SeriesEachReader = TypeVar('_SeriesEachReader')
+
+
+class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
     """Series Reader for .series file.
 
     Examples
@@ -3875,9 +3880,7 @@ CLASS_READERS = {
     '.tri': BinaryMarchingCubesReader,
     '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
-    '.vti.series': SeriesReader,
     '.vtk': VTKDataSetReader,
-    '.vtk.series': SeriesReader,
     '.vtkhdf': HDFReader,
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
@@ -3886,7 +3889,7 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
-    '.vtu.series': SeriesReader,
+    '.vtu.series': SeriesReader[XMLUnstructuredGridReader],
     '.xdmf': XdmfReader,
 }
 
@@ -3965,4 +3968,5 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     XMLStructuredGridReader: 'StructuredGrid',
     XMLUnstructuredGridReader: 'UnstructuredGrid',
     XMLPImageDataReader: 'ImageData',
+    SeriesReader[XMLUnstructuredGridReader]: ('UnstructuredGrid', 'MultiBlock'),
 }

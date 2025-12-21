@@ -257,6 +257,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pv.Nek5000Reader,
             pv.XdmfReader,
             pv.PVDReader,
+            pv.SeriesReader,
             pv.CGNSReader,
             pv.ExodusIIBlockSet,
             pv.DEMReader,
@@ -265,7 +266,11 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pytest.skip('Test fails without proper dataset files.')
         elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
             pytest.skip('Deprecated.')
-        elif pyvista_class in (pv.PVDDataSet, pv.core.utilities.cell_quality.CellQualityInfo):
+        elif pyvista_class in (
+            pv.SeriesDataSet,
+            pv.PVDDataSet,
+            pv.core.utilities.cell_quality.CellQualityInfo,
+        ):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Dataclass, no test required.')
         elif pyvista_class in (
