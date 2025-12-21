@@ -2921,6 +2921,7 @@ class DataObjectFilters:
         --------
         :func:`~pyvista.cell_quality_info`
             Return information about a cell's quality measure, e.g. acceptable range.
+        :meth:`~pyvista.DataSetFilters.cell_validator`, :meth:`~pyvista.DataSet.validate_mesh`
 
         Examples
         --------
