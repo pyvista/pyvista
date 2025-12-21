@@ -1266,6 +1266,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'grayCS'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'okabe_ito'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2'),
