@@ -279,10 +279,10 @@ def reset_matplotlib_cmaps():
 
 
 def maybe_xfail_mpl():
-    missing_colormaps = {'berlin', 'vanimo', 'managua', 'okabe_ito'}
+    missing_colormaps = {'berlin', 'vanimo', 'managua'}
     if not missing_colormaps.issubset(mpl.colormaps):
         pytest.xfail(
-            reason='Older Matplotlib is missing colormaps: berlin, vanimo, managua, okabe_ito.',
+            reason='Older Matplotlib is missing colormaps: berlin, vanimo, managua.',
         )
 
 
