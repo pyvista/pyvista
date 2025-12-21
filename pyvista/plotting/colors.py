@@ -1247,6 +1247,8 @@ _MATPLOTLIB_CMAPS_LITERAL = Literal[
     'Greens_r',
     'Greys',
     'Greys_r',
+    'okabe_ito',
+    'okabe_ito_r',
     'OrRd',
     'OrRd_r',
     'Oranges',
