@@ -1369,6 +1369,8 @@ _MATPLOTLIB_CMAPS_LITERAL = Literal[
     'nipy_spectral_r',
     'ocean',
     'ocean_r',
+    'okabe_ito',
+    'okabe_ito_r',
     'pink',
     'pink_r',
     'plasma',
