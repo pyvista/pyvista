@@ -8,10 +8,12 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
+import operator
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import get_args
 
 import numpy as np
 
@@ -56,6 +58,22 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
+
+# Matches https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
+_CELL_VALIDATOR_BIT_FIELD = dict(
+    wrong_number_of_points=0x01,
+    intersecting_edges=0x02,
+    intersecting_faces=0x04,
+    non_contiguous_edges=0x08,
+    non_convex=0x10,
+    inverted_faces=0x20,
+    non_planar_faces=0x40,
+    degenerate_faces=0x80,
+    coincident_points=0x100,
+)
+
+
+_SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
 @abstract_class
@@ -442,6 +460,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pyvista.DataSet
             Dataset containing the ``'implicit_distance'`` array in
             ``point_data``.
+
+        See Also
+        --------
+        select_interior_points
 
         Examples
         --------
@@ -2760,7 +2782,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         (The name of the output :vtk:`vtkDataArray` is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
-        input dataset. If you wish to extract cells or poinrs, various
+        input dataset. If you wish to extract cells or points, various
         threshold filters are available (i.e., threshold the output array).
 
         .. warning::
@@ -2768,6 +2790,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
            manifold. A boolean flag can be set to force the filter to
            first check whether this is true. If ``False`` and not manifold,
            an error will be raised.
+
+        .. deprecated:: 0.47
+            This filter may be unreliable as it can erroneously mark outside points as inside.
+            Use :meth:`select_interior_points` instead.
 
         Parameters
         ----------
@@ -2811,17 +2837,27 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> selected = plane.select_enclosed_points(sphere)
-        >>> pts = plane.extract_points(
+        >>> selected = plane.select_enclosed_points(sphere)  # doctest:+SKIP
+        >>> pts = plane.extract_points(  # doctest:+SKIP
         ...     selected['SelectedPoints'].view(bool),
         ...     adjacent_cells=False,
         ... )
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, style='wireframe')
-        >>> _ = pl.add_points(pts, color='r')
-        >>> pl.show()
+        >>> pl = pv.Plotter()  # doctest:+SKIP
+        >>> _ = pl.add_mesh(sphere, style='wireframe')  # doctest:+SKIP
+        >>> _ = pl.add_points(pts, color='r')  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         """
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 51):  # pragma: no cover
+            msg = 'Remove this filter.'
+            raise RuntimeError(msg)
+
+        msg = 'This filter is deprecated. Use `select_interior_points` instead.'
+        warn_external(msg, PyVistaDeprecationWarning)
+
         if not isinstance(surface, pv.PolyData):
             msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -2832,18 +2868,165 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 '`check_surface=False` or repair the surface.'
             )
             raise RuntimeError(msg)
+
+        bools = self._select_enclosed_points(
+            surface, inside_out=inside_out, tolerance=tolerance, progress_bar=progress_bar
+        )
+        out = self.copy()
+        out['SelectedPoints'] = bools
+        return out
+
+    def _select_enclosed_points(  # type: ignore[misc]
+        self: _DataSetType,
+        surface: PolyData,
+        *,
+        inside_out: bool,
+        tolerance: float,
+        progress_bar: bool,
+    ) -> NumpyArray[np.uint8]:
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
         _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
-        result = _get_output(alg)
-        out = self.copy()
-        bools = result['SelectedPoints'].astype(np.uint8)
-        if len(bools) < 1:
-            bools = np.zeros(out.n_points, dtype=np.uint8)
-        out['SelectedPoints'] = bools
+        return _get_output(alg)['SelectedPoints']
+
+    def select_interior_points(  # type:ignore[misc]
+        self: _DataSetType,
+        surface: pv.PolyData,
+        *,
+        method: _SelectInteriorPointsOptions = 'signed_distance',
+        inside_out: bool = False,
+        check_surface: bool = True,
+        locator_tolerance: float | None = None,
+    ) -> _DataSetType:
+        """Mark points from this mesh as inside or outside relative to a closed surface.
+
+        Evaluate all of this mesh's points to determine if they are inside an enclosed surface.
+        The filter produces a boolean point array named ``'selected_points'`` with ``True``
+        values indicating points are inside, and ``False`` values indicating points are outside the
+        provided surface.
+
+        By default, the input surface is checked to ensure it is closed. Optionally, this check may
+        be disabled.
+
+        .. note::
+            This filter generates a data array, but does not modify the
+            input dataset. If you wish to extract cells or points, various
+            threshold filters are available (i.e., threshold the output array).
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        surface : PolyData
+           Surface used to test for containment. It should be a closed surface such that it has
+           a defined "inside" and "outside".
+
+        method : 'signed_distance' | 'cell_locator', default: 'signed_distance'
+            Underlying method used to select points.
+
+            - ``'signed_distance'``: Use :meth:`compute_implicit_distance` and select points based
+              on the distance. Points with negative distance are inside, points with positive
+              distance are outside.
+            - ``'cell_locator'``: Use :vtk:`vtkSelectEnclosedPoints` to select points. This uses
+              :vtk:`vtkStaticCellLocator` internally to spatially search for interior points. Use
+              the ``locator_tolerance`` to control the search tolerance.
+
+            .. note::
+                The ``'signed_distance'`` method is generally slower, but is also more reliable
+                for correctly identifying interior points.
+
+            .. warning::
+                The ``'cell_locator'`` option can erroneously mark outside points as inside.
+
+        inside_out : bool, default: False
+            By default, points inside the surface have value ``True``, and points outside
+            have value ``False``. Set ``inside_out=True`` to invert this.
+
+        check_surface : bool, default: True
+            Specify whether to check the surface for closure. When ``True``, the
+            algorithm first checks to see if the surface is closed and
+            manifold. If the surface is not closed, a runtime error is raised.
+
+        locator_tolerance : float, default: 0.001
+            The tolerance on the intersection when using the ``'cell_locator'`` method. The
+            tolerance is expressed as a fraction of the bounding box of the enclosing surface.
+
+        Returns
+        -------
+        PolyData
+            Mesh with a new ``'selected_points'`` :attr:`~pyvista.DataSet.point_data` array.
+
+        See Also
+        --------
+        compute_implicit_distance, extract_points, extract_cells
+        :ref:`extract_cells_inside_surface_example`
+
+        Examples
+        --------
+        Determine which points on a plane are inside a manifold sphere surface mesh.
+        Extract these points using the :func:`~DataSetFilters.extract_points` filter
+        and then plot them.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plane = pv.Plane()
+        >>> selected = plane.select_interior_points(sphere)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'], include_cells=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        Select the outside points instead.
+
+        >>> selected = plane.select_interior_points(sphere, inside_out=True)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'], include_cells=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        """
+        _validation.check_instance(surface, pv.PolyData, name='surface')
+        allowed_methods = get_args(_SelectInteriorPointsOptions)
+        _validation.check_contains(allowed_methods, must_contain=method, name='method')
+        if check_surface and not _vtk.vtkSelectEnclosedPoints.IsSurfaceClosed(surface):
+            msg = (
+                'Surface is not closed. Please read the warning in the '
+                'documentation for\nthis function and either pass '
+                '`check_surface=False` or repair the surface.'
+            )
+            raise RuntimeError(msg)
+
+        out = self.copy(deep=False)
+        if method == 'signed_distance':
+            if locator_tolerance is not None:
+                msg = 'locator_tolerance cannot be used with the signed_distance method.'
+                raise ValueError(msg)
+            distance = self.compute_implicit_distance(surface)
+            # Negative distance means inside
+            operation = operator.ge if inside_out else operator.le
+            bools = operation(distance['implicit_distance'], 0)
+        else:
+            bools = self._select_enclosed_points(
+                surface,
+                inside_out=inside_out,
+                tolerance=0.001 if locator_tolerance is None else locator_tolerance,
+                progress_bar=False,
+            ).astype(bool)
+        out['selected_points'] = bools
+        out.set_active_scalars('selected_points')
         return out
 
     @_deprecate_positional_args(allowed=['target'])
@@ -7929,7 +8112,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars  # type: ignore[type-var]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
@@ -8326,6 +8509,137 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
+
+    def cell_validator(self: DataSet):  # type:ignore[misc]
+        """Check the validity of each cell in this dataset.
+
+        Use :vtk:`vtkCellValidator` to determine the status of each cell. The status is encoded
+        as a bit field cell data array ``'validity_state'``. The cell states are:
+
+        - ``valid`` (``0x00``): Cell is valid and has no issues.
+        - ``wrong_number_of_points`` (``0x01``): Cell does not have the minimum number of points
+          needed to describe it.
+        - ``intersecting_edges`` (``0x02``): 2D cell has two edges that intersect.
+        - ``intersecting_faces`` (``0x04``): 3D cell has two faces that intersect.
+        - ``non_contiguous_edges`` (``0x08``): 2D cell's perimeter edges are not contiguous.
+        - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
+        - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
+          its :class:`~pyvista.CellType`.
+        - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
+        - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
+          collocated vertices.
+        - ``coincident_points`` (``0x100``): Cell has duplicate coordinates or repeated use of
+          the same connectivity entry.
+
+        For convenience, a field data array for each state is also appended. The array names match
+        the state names above, except for the ``'valid'`` state; instead, an array with
+        ``'invalid'`` cells is stored. Each field data array contains the indices of cells with
+        the specified state.
+
+        Refer to :vtk:`vtkCellValidator` for more details about each state.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        DataSet
+            Dataset with field data of cell validity.
+
+        See Also
+        --------
+        :meth:`~pyvista.DataSet.validate_mesh`
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :ref:`mesh_validation_example`
+
+        Examples
+        --------
+        Load a mesh with invalid cells.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cow()
+
+        Validate the cells and show the included arrays.
+
+        >>> validated = mesh.cell_validator()
+        >>> validated.array_names  # doctest: +NORMALIZE_WHITESPACE
+        ['validity_state',
+         'invalid',
+         'wrong_number_of_points',
+         'intersecting_edges',
+         'intersecting_faces',
+         'non_contiguous_edges',
+         'non_convex',
+         'inverted_faces',
+         'non_planar_faces',
+         'degenerate_faces',
+         'coincident_points']
+
+        Show unique scalar values.
+
+        >>> np.unique(validated.cell_data['validity_state'])
+        pyvista_ndarray([ 0, 16], dtype=int16)
+
+        The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
+        nonconvex state. We confirm this by printing the ``'non_convex'`` array, which shows there
+        are three invalid cells.
+
+        >>> validated.field_data['non_convex']
+        pyvista_ndarray([1013, 1532, 3250])
+
+        We can also show all invalid cells. This matches the nonconvex ids, which confirms
+        these are the only invalid cells.
+
+        >>> validated.field_data['invalid']
+        pyvista_ndarray([1013, 1532, 3250])
+
+        Plot the cell states using :meth:`~pyvista.DataSetFilters.color_labels`. Orient the
+        camera to show the underside of the cow where two of the invalid cells are located.
+
+        >>> colored, color_map = validated.color_labels(
+        ...     scalars='validity_state', return_dict=True
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(colored)
+        >>> _ = pl.add_legend(color_map)
+        >>> pl.view_xz()
+        >>> pl.camera.zoom(2.5)
+        >>> pl.show()
+
+        Extract the invalid cells and plot them along with the original mesh as wireframe for
+        context. Orient the camera to focus on the cow's left eye where the third invalid cell is
+        located.
+
+        >>> invalid_cells = mesh.extract_cells(validated['invalid'])
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, style='wireframe', color='light gray')
+        >>> _ = pl.add_mesh(invalid_cells, color='lime')
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(5.1, 1.8, -4.9),
+        ...     focal_point=(4.7, 1.8, 0.38),
+        ...     viewup=(0.0, 1.0, 0.0),
+        ... )
+        >>> pl.show()
+
+        """
+        cell_validator = _vtk.vtkCellValidator()
+        cell_validator.SetInputData(self)
+        cell_validator.Update()
+        output = _get_output(cell_validator)
+
+        # Rename output scalars and make them active
+        validity_state = output.cell_data['ValidityState']
+        output.cell_data['validity_state'] = validity_state
+        del output.cell_data['ValidityState']
+        output.set_active_scalars('validity_state', preference='cell')
+
+        # Extract indices of invalid cells and store as field data
+        output.field_data['invalid'] = np.where(validity_state != 0)[0]
+        for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
+            output.field_data[name] = np.where(validity_state & value)[0]
+        return output
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):

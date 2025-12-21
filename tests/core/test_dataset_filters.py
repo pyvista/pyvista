@@ -2623,7 +2623,8 @@ def test_interpolate():
 
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
-    result = uniform.select_enclosed_points(surf, progress_bar=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        result = uniform.select_enclosed_points(surf, progress_bar=True)
     assert isinstance(result, type(uniform))
     assert 'SelectedPoints' in result.array_names
     assert result['SelectedPoints'].any()
@@ -2632,14 +2633,74 @@ def test_select_enclosed_points(uniform, hexbeam):
     # Now check non-closed surface
     mesh = pv.Sphere(end_theta=270)
     surf = mesh.rotate_x(90, inplace=False)
-    result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
-        result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=True)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=True)
     with pytest.raises(TypeError):
-        result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
+
+
+def test_select_interior_points(uniform, hexbeam):
+    surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
+    assert uniform.active_scalars_name is not None
+    result = uniform.select_interior_points(surf)
+    assert isinstance(result, type(uniform))
+    assert 'selected_points' in result.array_names
+    assert result['selected_points'].any()
+    assert result.n_arrays == uniform.n_arrays + 1
+    assert result.active_scalars_name == 'selected_points'
+
+    # Now check non-closed surface
+    mesh = pv.Sphere(end_theta=270)
+    surf = mesh.rotate_x(90, inplace=False)
+    result = mesh.select_interior_points(surf, check_surface=False)
+    assert isinstance(result, type(mesh))
+    assert 'selected_points' in result.array_names
+    assert result.n_arrays == mesh.n_arrays + 1
+
+    match = (
+        'Surface is not closed. Please read the warning in the documentation for\n'
+        'this function and either pass `check_surface=False` or repair the surface.'
+    )
+    with pytest.raises(RuntimeError, match=match):
+        mesh.select_interior_points(surf, check_surface=True)
+    with pytest.raises(TypeError):
+        mesh.select_interior_points(hexbeam, check_surface=True)
+
+
+@pytest.mark.parametrize('inside_out', [True, False])
+def test_select_interior_points_method(sphere, plane, inside_out):
+    def _extract_points(method):
+        selected_locator = plane.select_interior_points(
+            sphere, method=method, inside_out=inside_out
+        )
+        return plane.extract_points(selected_locator['selected_points'], include_cells=False)
+
+    pts_locator = _extract_points('cell_locator')
+    pts_distance = _extract_points('signed_distance')
+    assert pts_locator == pts_distance
+
+
+def test_select_interior_points_raises(sphere, plane):
+    match = 'locator_tolerance cannot be used with the signed_distance method.'
+    with pytest.raises(ValueError, match=match):
+        plane.select_interior_points(sphere, locator_tolerance=0.1)
+
+    plane.select_interior_points(sphere, method='cell_locator', locator_tolerance=0.1)
+
+
+@pytest.mark.parametrize('method', ['cell_locator', 'signed_distance'])
+def test_select_interior_points_empty_mesh(method):
+    out = pv.PolyData().select_interior_points(pv.PolyData(), method=method)
+    assert isinstance(out, pv.PolyData)
+    assert out.array_names == ['selected_points']
+    assert out['selected_points'].size == 0
 
 
 def test_decimate_boundary():

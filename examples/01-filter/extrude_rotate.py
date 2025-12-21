@@ -24,7 +24,7 @@ import pyvista as pv
 # create a line and rotate it about the Z-axis
 resolution = 10
 line = pv.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
-poly = line.extrude_rotate(resolution=resolution)
+poly = line.extrude_rotate(resolution=resolution, capping=False)
 poly
 
 # %%
@@ -81,7 +81,9 @@ faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
 profile = pv.PolyData(vertices, faces)
 
 # Extrude the profile to make a spring.
-spring = profile.extrude_rotate(resolution=360, translation=6.0, dradius=1.0, angle=2160.0)
+spring = profile.extrude_rotate(
+    resolution=360, translation=6.0, dradius=1.0, angle=2160.0, capping=False
+)
 pl.add_text('Spring', font_size=24)
 pl.add_mesh(spring, color='lightblue', show_edges=True)
 

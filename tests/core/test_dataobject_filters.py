@@ -841,25 +841,26 @@ def test_transform_inplace(datasets):
         assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
 
 
-def test_transform_rectilinear_warns(rectilinear):
+def test_transform_rectilinear_raises(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
-        'The transformation has a non-diagonal rotation component which has been removed. '
-        'Rotation is\nnot supported by RectilinearGrid; cast to StructuredGrid first to fully '
-        'support rotations.'
+        'The transformation has a non-diagonal rotation component which is not supported by\n'
+        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations, or use\n'
+        '`Transform.decompose()` to remove this component.'
     )
-    with pytest.warns(UserWarning, match=match):
+
+    with pytest.raises(ValueError, match=re.escape(match)):
         rectilinear.transform(tf, inplace=False)
 
     matrix = np.eye(4)
     matrix[0, 1] = 0.1
     matrix[1, 0] = 0.1
     match = (
-        'The transformation has a shear component which has been removed. Shear is not '
-        'supported\nby RectilinearGrid; cast to StructuredGrid first to support shear '
-        'transformations.'
+        'The transformation has a shear component which is not supported by RectilinearGrid.\n'
+        'Cast to StructuredGrid first to support shear transformations.'
     )
-    with pytest.warns(UserWarning, match=match):
+
+    with pytest.raises(ValueError, match=match):
         rectilinear.transform(matrix, inplace=False)
 
 
@@ -912,15 +913,17 @@ def test_transform_imagedata(uniform, spacing):
     assert np.allclose(translated.center, uniform.origin)
 
 
-def test_transform_imagedata_warns_with_shear(uniform):
+def test_transform_imagedata_raises_with_shear(uniform):
     shear = np.eye(4)
     shear[0, 1] = 0.1
 
-    with pytest.warns(
-        Warning,
-        match=r'The transformation matrix has a shear component which has been removed\. \n'
-        r'Shear is not supported when setting `ImageData` `index_to_physical_matrix`\.',
-    ):
+    match = (
+        'The transformation has a shear component which is not supported by ImageData.\n'
+        'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+        '`Transform.decompose()` to remove this component.'
+    )
+
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.transform(shear, inplace=True)
 
 
@@ -1412,23 +1415,53 @@ def test_resize_bounds_size(sphere, bounds_size, center):
     assert np.allclose(resized.center, expected_center)
 
 
+@pytest.mark.parametrize('length', [42, 5.0])
+@pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
+def test_resize_length(sphere, length, center):
+    """Test resize method with length parameter."""
+    expected_center = sphere.center if center is None else center
+
+    resized = sphere.resize(length=length, center=center)
+    new_length = resized.length
+    assert np.isclose(new_length, length)
+    assert np.allclose(resized.center, expected_center)
+
+
+@pytest.mark.parametrize('mesh', [pv.MultiBlock(), pv.PolyData()])
+def test_resize_empty(mesh):
+    resized = mesh.resize()
+    assert resized.is_empty
+    assert isinstance(resized, type(mesh))
+    assert resized is not mesh
+
+
 def test_resize_raises(sphere):
     """Test resize method error handling."""
 
-    match = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
-    with pytest.raises(ValueError, match=match):
+    match = (
+        'Cannot specify more than one resizing method. '
+        'Choose either `bounds`, `bounds_size`, or `length` independently.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(length=5, bounds_size=2.0)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], length=5)
 
-    match = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
-    with pytest.raises(ValueError, match=match):
+    match = '`bounds`, `bounds_size`, and `length` cannot all be None. Choose one resizing method.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize()
 
-    match = (
-        "Cannot specify both 'bounds' and 'center'. "
-        "'center' can only be used with the 'bounds_size' parameter."
-    )
-    with pytest.raises(ValueError, match=match):
+    match = '`center` can only be used with the `bounds_size` and `length` parameters.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
+
+    match = '{name} values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=match.format(name='length')):
+        sphere.resize(length=0)
+    with pytest.raises(ValueError, match=match.format(name='bounds_size')):
+        sphere.resize(bounds_size=[-1, 2, 3])
 
 
 def test_resize_zero_extent(plane):

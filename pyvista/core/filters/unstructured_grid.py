@@ -123,6 +123,9 @@ class UnstructuredGridFilters(DataSetFilters):
         --------
         remove_unused_points
             Strictly remove unused points `without` merging points.
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :meth:`~pyvista.DataSetFilters.cell_validator`
+        :meth:`~pyvista.DataSet.validate_mesh`
 
         Examples
         --------
