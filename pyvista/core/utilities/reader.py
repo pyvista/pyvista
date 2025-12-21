@@ -3748,9 +3748,9 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.download_wavy_series(load=False)
+    >>> filename = examples.download_file('Data/vtu_series/wavy.vtu.series')
     >>> Path(filename).name
-    'wavy.vtk.series'
+    'wavy.vtu.series'
     >>> reader = pv.get_reader(filename)
     >>> reader.time_values
     [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
