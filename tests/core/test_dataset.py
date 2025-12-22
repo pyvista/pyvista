@@ -1823,6 +1823,24 @@ def test_validate_mesh_pointset(ant):
     )
     assert actual == expected
 
+    report = pset.validate_mesh('data')
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PointSet\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []'
+    )
+    assert actual == expected
+
 
 def test_cell_validator_pointset_raises():
     match = 'Cell operations are not supported'
