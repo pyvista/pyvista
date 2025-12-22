@@ -1567,6 +1567,10 @@ def download_foot_bones(load=True):  # noqa: FBT002
         :ref:`voxelize_example`
             Example using this dataset.
 
+        :ref:`compare_threshold_filters_example`
+            Example using this dataset.
+
+
     """
     return _download_dataset(_dataset_foot_bones, load=load)
 
@@ -3242,6 +3246,7 @@ def download_carotid(load=True):  # noqa: FBT002
         * :ref:`gradients_example`
         * :ref:`streamlines_example`
         * :ref:`plane_widget_example`
+        * :ref:`compare_threshold_filters_example`
 
     """
     return _download_dataset(_dataset_carotid, load=load)
