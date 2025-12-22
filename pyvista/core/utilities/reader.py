@@ -3690,7 +3690,10 @@ class SeriesDataSet(_NoNewAttrMixin):
     time: float
 
 
-class _SeriesReader(BaseVTKReader):
+_SeriesEachReader = TypeVar('_SeriesEachReader', bound=BaseReader)
+
+
+class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
     """Simulate a VTK reader for series file."""
 
     def __init__(self) -> None:
@@ -3700,15 +3703,15 @@ class _SeriesReader(BaseVTKReader):
         self._datasets: list[SeriesDataSet] | None = None
         self._active_datasets: list[SeriesDataSet] | None = None
         self._time_values: list[float] | None = None
-        self._reader_type: type[BaseReader] | None = None
-        self._active_readers: list[BaseReader] | None = None
+        self._reader_type: type[_SeriesEachReader] | None = None
+        self._active_readers: list[_SeriesEachReader] | None = None
 
     def SetFileName(self, filename) -> None:
         """Set filename and update reader."""
         self._filename = str(filename)
         self._directory = str(Path(filename).parent)
 
-    def _deterimine_reader_type(self) -> type[BaseReader]:
+    def _deterimine_reader_type(self) -> type[_SeriesEachReader]:
         """Determine reader type from first dataset in series."""
         if self._datasets is None or len(self._datasets) == 0:
             msg = 'No datasets found in series file to determine reader type.'
@@ -3730,7 +3733,7 @@ class _SeriesReader(BaseVTKReader):
             )
             raise ValueError(msg)
 
-        return CLASS_READERS[child_ext]
+        return cast('type[_SeriesEachReader]', CLASS_READERS[child_ext])
 
     def UpdateInformation(self):
         """Parse series file."""
@@ -3761,7 +3764,7 @@ class _SeriesReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read data and store it."""
-        self._active_readers = cast('list[BaseReader]', self._active_readers)
+        assert self._active_readers is not None
         self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
@@ -3772,9 +3775,6 @@ class _SeriesReader(BaseVTKReader):
             self._reader_type(Path(self._directory) / dataset.name)  # type: ignore[arg-type]
             for dataset in self._active_datasets
         ]
-
-
-_SeriesEachReader = TypeVar('_SeriesEachReader')
 
 
 class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
@@ -3799,7 +3799,7 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
 
     """
 
-    _class_reader = _SeriesReader
+    _class_reader: type[_SeriesReader[_SeriesEachReader]] = _SeriesReader[_SeriesEachReader]
 
     @property
     def active_readers(self):
