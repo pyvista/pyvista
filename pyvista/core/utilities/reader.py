@@ -3778,7 +3778,9 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
 
 
 class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
-    """Series Reader for .series file.
+    """Class for reading .series file supported by Paraview.
+
+    .. versionadded:: 0.47.0
 
     Examples
     --------
@@ -3787,7 +3789,7 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
     >>> from pathlib import Path
     >>> filename = examples.download_file('vtu_series/wavy.zip')
     >>> Path(filename[0]).name
-    'wavy.vtu.series'
+    'mesh.vtu.series'
     >>> reader = pv.get_reader(filename[0])
     >>> reader.time_values
     [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
