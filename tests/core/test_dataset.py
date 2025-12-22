@@ -1801,6 +1801,53 @@ def test_validate_mesh_str_filtered():
     assert actual == expected
 
 
+def test_validate_mesh_pointset(ant):
+    pset = ant.cast_to_pointset()
+    report = pset.validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PointSet\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []'
+    )
+    assert actual == expected
+
+    report = pset.validate_mesh('data')
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PointSet\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []'
+    )
+    assert actual == expected
+
+
+def test_cell_validator_pointset_raises():
+    match = 'Cell operations are not supported'
+    with pytest.raises(pv.PointSetCellOperationError, match=match):
+        pv.PointSet().cell_validator()
+
+
 def test_cell_validator():
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     sphere = pv.Sphere()
