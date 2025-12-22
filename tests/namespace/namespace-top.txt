@@ -143,7 +143,7 @@ SLCReader, <class 'pyvista.utilities.reader.SLCReader'>
 STLReader, <class 'pyvista.utilities.reader.STLReader'>
 Scraper, <class 'pyvista.utilities.sphinx_gallery.Scraper'>
 SegYReader, <class 'pyvista.utilities.reader.SegYReader'>
-Seriesreader, <class 'pyvista.utilities.reader.SeriesReader'>
+SeriesReader, <class 'pyvista.utilities.reader.SeriesReader'>
 Sphere, <function Sphere at 0x1641c0280>
 Spline, <function Spline at 0x1641c18b0>
 StructuredGrid, <class 'pyvista.core.pointset.StructuredGrid'>
