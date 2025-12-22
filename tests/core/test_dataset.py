@@ -16,7 +16,7 @@ from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.filters.data_set import _CELL_VALIDATOR_BIT_FIELD
+from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
