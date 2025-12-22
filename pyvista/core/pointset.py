@@ -529,11 +529,11 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     ):
         """Wrap validate_mesh with cell-related fields removed."""
         if validation_fields is None:
-            validation_fields = [
+            fields = [
                 *_MeshValidator._allowed_data_fields,
                 *_MeshValidator._allowed_point_fields,
             ]
-            validation_fields.remove('unused_points')
+            fields.remove('unused_points')
         else:
             fields = validation_fields
         return DataSet.validate_mesh(self, fields, *args, **kwargs)
