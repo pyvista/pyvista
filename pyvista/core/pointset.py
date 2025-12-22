@@ -27,6 +27,7 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
+from .dataset import _MeshValidator
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
@@ -512,6 +513,27 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
         """Raise extract geometry are not supported."""
         raise PointSetCellOperationError
+
+    def cell_validator(self, *args, **kwargs):  # noqa: ARG002
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    @wraps(DataSet.validate_mesh)
+    def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
+        self,
+        validation_fields: _MeshValidator._AllValidationOptions
+        | Sequence[_MeshValidator._AllValidationOptions]
+        | None = None,
+        *args,
+        **kwargs,
+    ):
+        """Wrap validate_mesh with cell-related fields removed."""
+        if validation_fields is None:
+            validation_fields = ['data', *_MeshValidator._allowed_point_fields]
+            validation_fields.remove('unused_points')
+        else:
+            fields = validation_fields
+        return DataSet.validate_mesh(self, fields, *args, **kwargs)
 
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
