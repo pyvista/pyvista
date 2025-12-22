@@ -15,6 +15,7 @@ from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
+from typing import cast
 from typing import get_args
 import weakref
 from xml.etree import ElementTree as ET
@@ -3694,29 +3695,62 @@ class _SeriesReader(BaseVTKReader):
 
     def __init__(self) -> None:
         super().__init__()
+        self._filename: str | None = None
         self._directory: str | None = None
         self._datasets: list[SeriesDataSet] | None = None
         self._active_datasets: list[SeriesDataSet] | None = None
         self._time_values: list[float] | None = None
+        self._reader_type: type[BaseReader] | None = None
+        self._active_readers: list[BaseReader] | None = None
 
     def SetFileName(self, filename) -> None:
         """Set filename and update reader."""
         self._filename = str(filename)
         self._directory = str(Path(filename).parent)
 
+    def _deterimine_reader_type(self) -> type[BaseReader]:
+        """Determine reader type from first dataset in series."""
+        if self._datasets is None or len(self._datasets) == 0:
+            msg = 'No datasets found in series file to determine reader type.'
+            raise ValueError(msg)
+
+        assert self._filename is not None
+        parent_ext = Path(self._filename.removesuffix('.series')).suffix
+
+        child_exts = {Path(dataset.name).suffix for dataset in self._datasets}
+        if len(child_exts) != 1:
+            msg = 'Datasets in series file have multiple extensions, cannot determine reader type.'
+            raise ValueError(msg)
+
+        child_ext = child_exts.pop()
+        if parent_ext != child_ext:
+            msg = (
+                f'Dataset extension {child_ext} does not match series file parent extension '
+                f'{parent_ext}, cannot determine reader type.'
+            )
+            raise ValueError(msg)
+
+        return CLASS_READERS[child_ext]
+
     def UpdateInformation(self):
-        """Parse PVD file."""
+        """Parse series file."""
         if self._filename is None:
             msg = 'Filename must be set'
             raise ValueError(msg)
 
         with Path(self._filename).open() as fr:
             content = json.load(fr)
+
+        if 'files' not in content:
+            msg = 'Invalid series file: missing "files" entry'
+            raise ValueError(msg)
+
         datasets = [
             SeriesDataSet(element['name'], element['time']) for element in content['files']
         ]
 
         self._datasets = sorted(datasets)
+        self._reader_type = self._deterimine_reader_type()
         self._time_values = sorted({dataset.time for dataset in self._datasets})
         self._time_mapping: dict[float, list[SeriesDataSet]] = {
             time: [] for time in self._time_values
@@ -3727,13 +3761,16 @@ class _SeriesReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read data and store it."""
+        self._active_readers = cast('list[BaseReader]', self._active_readers)
         self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
+        assert self._reader_type is not None
         self._active_readers = [
-            get_reader(Path(self._directory) / dataset.name) for dataset in self._active_datasets
+            self._reader_type(Path(self._directory) / dataset.name)  # type: ignore[arg-type]
+            for dataset in self._active_datasets
         ]
 
 
@@ -3748,10 +3785,10 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.download_file('Data/vtu_series/wavy.vtu.series')
-    >>> Path(filename).name
+    >>> filename = examples.download_file('vtu_series/wavy.zip')
+    >>> Path(filename[0]).name
     'wavy.vtu.series'
-    >>> reader = pv.get_reader(filename)
+    >>> reader = pv.get_reader(filename[0])
     >>> reader.time_values
     [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
     >>> reader.set_active_time_point(5)
