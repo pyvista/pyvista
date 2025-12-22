@@ -27,6 +27,7 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
+from .dataset import _MeshValidationReport
 from .dataset import _MeshValidator
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
@@ -526,17 +527,16 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         | None = None,
         *args,
         **kwargs,
-    ):
+    ) -> _MeshValidationReport:
         """Wrap validate_mesh with cell-related fields removed."""
         if validation_fields is None:
-            fields = [
+            fields: list[_MeshValidator._AllValidationOptions] = [
                 *_MeshValidator._allowed_data_fields,
                 *_MeshValidator._allowed_point_fields,
             ]
             fields.remove('unused_points')
-        else:
-            fields = validation_fields
-        return DataSet.validate_mesh(self, fields, *args, **kwargs)
+            return DataSet.validate_mesh(self, fields, *args, **kwargs)
+        return DataSet.validate_mesh(self, validation_fields, *args, **kwargs)
 
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
