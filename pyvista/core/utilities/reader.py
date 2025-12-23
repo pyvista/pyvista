@@ -3817,7 +3817,7 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
 
         Returns
         -------
-        list[pyvista.SeriesDataset]
+        list[pyvista.SeriesDataSet]
 
         """
         return self.reader._datasets
