@@ -3924,7 +3924,7 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
-    '.vtu.series': SeriesReader[XMLUnstructuredGridReader],
+    '.series': SeriesReader,
     '.xdmf': XdmfReader,
 }
 
@@ -4003,5 +4003,5 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     XMLStructuredGridReader: 'StructuredGrid',
     XMLUnstructuredGridReader: 'UnstructuredGrid',
     XMLPImageDataReader: 'ImageData',
-    SeriesReader[XMLUnstructuredGridReader]: 'UnstructuredGrid',
+    SeriesReader: 'UnstructuredGrid',
 }
