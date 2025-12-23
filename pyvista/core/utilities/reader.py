@@ -3701,10 +3701,10 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         self._filename: str | None = None
         self._directory: str | None = None
         self._datasets: list[SeriesDataSet] | None = None
-        self._active_datasets: list[SeriesDataSet] | None = None
+        self._active_dataset: SeriesDataSet | None = None
         self._time_values: list[float] | None = None
         self._reader_type: type[_SeriesEachReader] | None = None
-        self._active_readers: list[_SeriesEachReader] | None = None
+        self._active_reader: _SeriesEachReader | None = None
 
     def SetFileName(self, filename) -> None:
         """Set filename and update reader."""
@@ -3755,26 +3755,23 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         self._datasets = sorted(datasets)
         self._reader_type = self._deterimine_reader_type()
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-        self._time_mapping: dict[float, list[SeriesDataSet]] = {
-            time: [] for time in self._time_values
+        self._time_mapping: dict[float, SeriesDataSet] = {
+            dataset.time: dataset for dataset in self._datasets
         }
-        for dataset in self._datasets:
-            self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
 
     def Update(self) -> None:
         """Read data and store it."""
-        assert self._active_readers is not None
-        self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
+        assert self._active_reader is not None
+        self._data_object = self._active_reader.read()
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
-        self._active_datasets = self._time_mapping[time_value]
+        self._active_dataset = self._time_mapping[time_value]
         assert self._reader_type is not None
-        self._active_readers = [
-            self._reader_type(Path(self._directory) / dataset.name)  # type: ignore[arg-type]
-            for dataset in self._active_datasets
-        ]
+        self._active_reader = (
+            self._reader_type(Path(self._directory) / self._active_dataset.name)  # type: ignore[arg-type]
+        )
 
 
 class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
@@ -3796,7 +3793,7 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
     >>> reader.set_active_time_point(5)
     >>> reader.active_time_value
     5.0
-    >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
+    >>> mesh = reader.read()
     >>> mesh.plot(scalars='z')
 
     """
@@ -3804,15 +3801,15 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
     _class_reader: type[_SeriesReader[_SeriesEachReader]] = _SeriesReader[_SeriesEachReader]
 
     @property
-    def active_readers(self):
-        """Return the active readers.
+    def active_reader(self):
+        """Return the active reader.
 
         Returns
         -------
-        list[pyvista.BaseReader]
+        pyvista.BaseReader
 
         """
-        return self.reader._active_readers
+        return self.reader._active_reader
 
     @property
     def datasets(self):
@@ -3820,21 +3817,21 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
 
         Returns
         -------
-        list[pyvista.PVDDataSet]
+        list[pyvista.SeriesDataset]
 
         """
         return self.reader._datasets
 
     @property
-    def active_datasets(self):
+    def active_dataset(self):
         """Return all active datasets.
 
         Returns
         -------
-        list[pyvista.PVDDataSet]
+        pyvista.SeriesDataSet
 
         """
-        return self.reader._active_datasets
+        return self.reader._active_dataset
 
     @property
     def time_values(self):  # noqa: D102
@@ -3849,8 +3846,7 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
 
     @property
     def active_time_value(self):  # noqa: D102
-        # all active datasets have the same time
-        return self.reader._active_datasets[0].time
+        return self.reader._active_dataset.time
 
     def set_active_time_value(self, time_value) -> None:  # noqa: D102
         self.reader._SetActiveTime(time_value)
@@ -4007,5 +4003,5 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     XMLStructuredGridReader: 'StructuredGrid',
     XMLUnstructuredGridReader: 'UnstructuredGrid',
     XMLPImageDataReader: 'ImageData',
-    SeriesReader[XMLUnstructuredGridReader]: ('UnstructuredGrid', 'MultiBlock'),
+    SeriesReader[XMLUnstructuredGridReader]: 'UnstructuredGrid',
 }

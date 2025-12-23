@@ -1716,18 +1716,13 @@ def test_vtu_series_reader():
 
     assert reader.active_time_value == reader.time_values[0]
 
-    active_datasets = reader.active_datasets
-    assert len(active_datasets) == 1
-    active_dataset0 = active_datasets[0]
-    assert active_dataset0.time == 0.0
-    assert active_dataset0.name == 'ts/mesh_0.vtu'
+    active_dataset = reader.active_dataset
+    assert active_dataset.time == 0.0
+    assert active_dataset.name == 'ts/mesh_0.vtu'
 
     assert len(reader.datasets) == len(reader.time_values)
 
-    active_readers = reader.active_readers
-    assert len(active_readers) == 1
-    active_reader = active_readers[0]
-    assert isinstance(active_reader, pv.XMLUnstructuredGridReader)
+    assert isinstance(reader.active_reader, pv.XMLUnstructuredGridReader)
 
     reader.set_active_time_value(1.0)
     assert reader.active_time_value == 1.0
@@ -1736,8 +1731,7 @@ def test_vtu_series_reader():
     assert reader.active_time_value == 2.0
 
     mesh = reader.read()
-    assert len(mesh) == 1
-    assert isinstance(mesh[0], pv.UnstructuredGrid)
+    assert isinstance(mesh, pv.UnstructuredGrid)
 
 
 def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
