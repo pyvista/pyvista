@@ -61,6 +61,7 @@ if TYPE_CHECKING:
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+_Dimensionality = Literal[0, 1, 2, 3]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -2974,72 +2975,207 @@ class DataSet(DataSetFilters, DataObject):
         return self.n_points == 0
 
     @property
-    def dimensionality(self: Self) -> Literal[0, 1, 2, 3]:
-        """Return the spatial dimensions spanned by this dataset.
+    def dimensionality(self: Self) -> _Dimensionality:
+        """Return the maximum spatial dimensionality of all cells in this mesh.
+
+        Notes
+        -----
+        :attr:`dimensionality`:
+
+        - is always ``0`` for :class:`~pyvista.PointSet`
+        - is always ``2`` or less for :class:`~pyvista.PolyData`.
+        - ranges from ``0`` to ``3`` for all other mesh types.
+        - is equivalent to :attr:`dimentionality_rank` for gridded data types
+          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
 
         .. versionchanged:: 0.47
 
             This property is now generalized for all datasets. Previously, it was only available
             for datasets with a ``dimensions`` property.
 
+        See Also
+        --------
+        dimensionality_rank, min_cell_dimensionality
+
         Returns
         -------
         int
-            The dimensionality of the dataset.
+            The maximum dimensionality of the dataset's cells.
 
         Examples
         --------
-        A single point has ``0`` dimensionality.
+        :class:`~pyvista.PointSet` has no cells, so its :attr:`dimensionality` is always ``0``.
 
         >>> import pyvista as pv
-        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+        >>> from pyvista import examples
+        >>> mesh = pv.Sphere().cast_to_pointset()
         >>> mesh.dimensionality
         0
 
-        With two points, the dimensionality is ``1``.
+        A :class:`~pyvista.PolyData` surface mesh with 2D polygonal cells such as
+        :func:`~pyvista.Sphere` has dimensionality of ``2``.
 
-        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> mesh = pv.Sphere()
+        >>> mesh.dimensionality
+        2
+
+        A :class:`~pyvista.UnstructuredGrid` with 3D cells such as :func:`~pyvista.SolidSphere`
+        has dimensionality of ``3``.
+
+        >>> mesh = pv.SolidSphere()
+        >>> mesh.dimensionality
+        3
+
+        A :func:`~pyvista.Line` or :func:`~pyvista.Spline` with 1D cells has dimensionality of
+        ``1``.
+
+        >>> mesh = pv.Line([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
         >>> mesh.dimensionality
         1
 
-        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
-        a dimensionality of ``2``.
+        A curvilinear :class:`~pyvista.StructuredGrid` such as the one from
+        :func:`~pyvista.examples.downloads.download_wavy` has 2D cells
 
-        >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
+        >>> mesh = examples.download_wavy()[0]
         >>> mesh.dimensionality
         2
 
-        A :func:`~pyvista.Plane` also has dimensionality of ``2``, even if it's arbitrarily
-        rotated in space.
+        But it has a :attr:`dimensionality_rank` of ``3`` since its points span three dimensions.
 
-        >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
-        >>> mesh.dimensionality
-        2
+        >>> mesh.dimensionality_rank
+        3
 
-        A :func:`~pyvista.Cube` has a dimensionality of 3.
+        If there are mixed cell types, the :attr:`dimensionality` is the maximum cell
+        dimensionality. E.g. load :func:`~pyvista.examples.downloads.download_prostar`.
 
-        >>> mesh = pv.Cube()
+        >>> mesh = examples.download_prostar()
+        >>> sorted(mesh.distinct_cell_types)  # doctest:+NORMALIZE_WHITESPACE
+        [<CellType.VERTEX: 1>, <CellType.LINE: 3>, <CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>,
+         <CellType.QUAD: 9>, <CellType.TETRA: 10>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>, <CellType.POLYHEDRON: 42>]
+
         >>> mesh.dimensionality
         3
+
+        Since there is a :attr:`~pyvista.CellType.VERTEX` cell, however, its
+        :attr:`min_cell_dimensionality` is ``0``.
+
+        >>> mesh.min_cell_dimensionality
+        0
+
+        """
+        return self.GetMaxSpatialDimension()
+
+    @property
+    def dimensionality_rank(self) -> _Dimensionality:
+        """Return the number of spatial dimensions spanned by this dataset's points.
+
+        This is equivalent to computing the matrix rank of the points.
+
+        Notes
+        -----
+        :attr:`dimensionality_rank`:
+        - ranges from ``0`` to ``3`` for all mesh types.
+        - is equivalent to :attr:`dimentionality_rank` for gridded data types
+          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        int
+            The dimensionality rank of the dataset's points.
+
+        See Also
+        --------
+        dimensionality, min_cell_dimensionality
+
+        Examples
+        --------
+        A single point has ``0`` dimensionality rank.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+        >>> mesh.dimensionality_rank
+        0
+
+        With two points, the rank is ``1``.
+
+        >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        >>> mesh.dimensionality_rank
+        1
+
+        Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
+        a rank of ``2``.
+
+        >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
+        >>> mesh.dimensionality_rank
+        2
+
+        A :func:`~pyvista.Plane` also has rank ``2``, even if it's arbitrarily rotated in space.
+
+        >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+        >>> mesh.dimensionality_rank
+        2
+
+        A :func:`~pyvista.Cube` has a dimensionality rank of 3.
+
+        >>> mesh = pv.Cube()
+        >>> mesh.dimensionality_rank
+        3
+
+        But the dimensionality of its cells is ``2`` since it's a surface mesh:
+        >>> mesh.dimensionality
+        2
 
         """
         if self.n_points == 0:
             return 0
-        elif hasattr(self, 'dimensions'):
-            dims = np.asarray(self.dimensions)
-            return int(3 - (dims == 1).sum())  # type: ignore[return-value]
+        elif isinstance(self, pv.Grid):
+            # Fast path for gridded types
+            return self.dimensionality
+
         # Align points first to make rank computation more robust
         aligned_points = self.align_xyz().points
         return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
 
     @property
-    def max_cell_dimensionality(self) -> Literal[0, 1, 2, 3]:  # numpydoc ignore=RT01
-        """Get the maximum spatial dimensionality of all cells in this mesh."""
-        return self.GetMaxSpatialDimension()
+    def min_cell_dimensionality(self) -> _Dimensionality:  # numpydoc ignore=RT01
+        """Get the minimum spatial dimensionality of all cells in this mesh.
 
-    @property
-    def min_cell_dimensionality(self) -> Literal[0, 1, 2, 3]:  # numpydoc ignore=RT01
-        """Get the minimum spatial dimensionality of all cells in this mesh."""
+        .. versionadded:: 0.47
+
+        See Also
+        --------
+        dimensionality, dimensionality_rank
+
+        Examples
+        --------
+        Show the dimensionality of a :attr:`~pyvista.CellType.LINE` cell and
+        :attr:`~pyvista.CellType.TRIANGLE` cell.
+
+        >>> from pyvista.examples import cells
+        >>> line = cells.Line()
+        >>> line.dimensionality
+        1
+        >>> line.min_cell_dimensionality
+        1
+
+        >>> tri = cells.Triangle()
+        >>> tri.dimensionality
+        2
+        >>> tri.min_cell_dimensionality
+        2
+
+        Merge the two cells and show the dimensionality.
+
+        >>> merged = line + tri
+        >>> merged.dimensionality
+        2
+        >>> merged.min_cell_dimensionality
+        1
+
+        """
         if self.n_cells == 0:
             # VTK returns 3 by default for meshes with no cells, which is odd because
             # then we have min > max
