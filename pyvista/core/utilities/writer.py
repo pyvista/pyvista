@@ -11,7 +11,7 @@ from typing import get_args
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -556,7 +556,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         ):
             msg = (
                 'Setting file version requires VTK 9.3 or later. '
-                f'Current VTK version is {pyvista.vtk_version_info}.'
+                f'Current VTK version is {pv.vtk_version_info}.'
             )
             raise AttributeError(msg)
 
