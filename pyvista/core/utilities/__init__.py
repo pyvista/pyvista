@@ -252,6 +252,7 @@ from .writer import RectilinearGridWriter as RectilinearGridWriter
 from .writer import SimplePointsWriter as SimplePointsWriter
 from .writer import STLWriter as STLWriter
 from .writer import StructuredGridWriter as StructuredGridWriter
+from .writer import StructuredPointsWriter as StructuredPointsWriter
 from .writer import TIFFWriter as TIFFWriter
 from .writer import UnstructuredGridWriter as UnstructuredGridWriter
 from .writer import XMLImageDataWriter as XMLImageDataWriter

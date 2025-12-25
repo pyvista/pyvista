@@ -446,6 +446,19 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
     _vtk_class_name = 'vtkStructuredGridWriter'
 
 
+class StructuredPointsWriter(BaseWriter, _DataFormatMixin):
+    """StructuredPointsWriter for legacy VTK structured points ``.vtk`` files.
+
+    Wraps :vtk:`vtkStructuredPointsWriter`.
+
+    .. versionadded:: 0.47.0
+
+    """
+
+    _vtk_module_name = 'vtkIOLegacy'
+    _vtk_class_name = 'vtkStructuredPointsWriter'
+
+
 class TIFFWriter(BaseWriter):
     """TIFFWriter for ``.tif`` and ``.tiff`` files.
 
