@@ -505,7 +505,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         The file version determines the VTK XML file format version.
         Different versions may support different features or compression methods.
 
-        .. versionadded:: 0.48.0
+        .. versionadded:: 0.47.0
 
         .. note::
             This feature requires VTK 9.3 or later. If the VTK version is older,
