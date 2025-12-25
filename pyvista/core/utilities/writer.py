@@ -498,6 +498,67 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         else:
             self.writer.SetCompressorTypeToLZMA()
 
+    @property
+    def file_version(self) -> tuple[int, int]:
+        """Get or set the file version for VTK XML files.
+
+        The file version determines the VTK XML file format version.
+        Different versions may support different features or compression methods.
+
+        .. versionadded:: 0.48.0
+
+        .. note::
+            This feature requires VTK 9.3 or later. If the VTK version is older,
+            getting the version will return (None, None) and setting it will
+            raise an AttributeError.
+
+        Returns
+        -------
+        tuple[int, int] | tuple[None, None]
+            The major and minor version numbers as a tuple (major, minor).
+            Returns (None, None) if the methods are not available in the VTK version.
+
+        Examples
+        --------
+        Set the file version for an XML writer.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> writer = pv.XMLPolyDataWriter('sphere.vtp', mesh)
+        >>> writer.file_version = (2, 2)  # doctest:+SKIP
+        >>> writer.file_version  # doctest:+SKIP
+        (2, 2)
+
+        """
+        if not (hasattr(self.writer, 'GetDataSetMajorVersion') and
+                hasattr(self.writer, 'GetDataSetMinorVersion')):
+            return (None, None)
+        major = self.writer.GetDataSetMajorVersion()
+        minor = self.writer.GetDataSetMinorVersion()
+        return (major, minor)
+
+    @file_version.setter
+    def file_version(self, version: tuple[int, int]) -> None:
+        _validation.check_instance(version, tuple, name='file_version')
+        if len(version) != 2:
+            msg = 'file_version must be a tuple of two integers (major, minor)'
+            raise ValueError(msg)
+        major, minor = version
+        _validation.check_instance(major, int, name='major version')
+        _validation.check_instance(minor, int, name='minor version')
+        
+        if not (hasattr(self.writer, 'SetDataSetMajorVersion') and
+                hasattr(self.writer, 'SetDataSetMinorVersion')):
+            import pyvista as pv
+            msg = (
+                'Setting file version requires VTK 9.3 or later. '
+                f'Current VTK version is {pv.vtk_version_info}.'
+            )
+            raise AttributeError(msg)
+        
+        self.writer.SetDataSetMajorVersion(major)
+        self.writer.SetDataSetMinorVersion(minor)
+
 
 class XMLImageDataWriter(_XMLWriter):
     """XMLImageDataWriter for VTK XML image data ``.vti`` files.
