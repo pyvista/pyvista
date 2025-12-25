@@ -3099,11 +3099,13 @@ def test_ply_writer(sphere, tmp_path):
         ((2, '2'), TypeError, 'must be an instance of int'),
     ],
 )
-def test_xml_writer_file_version_validation(sphere, tmp_path, invalid_value, error_type, error_match):
+def test_xml_writer_file_version_validation(
+    sphere, tmp_path, invalid_value, error_type, error_match
+):
     """Test validation of file_version setter."""
     path = tmp_path / 'sphere.vtp'
     writer = pv.XMLPolyDataWriter(path, sphere)
-    
+
     # Test normal case: setting valid file_version values
     try:
         writer.file_version = (2, 2)
@@ -3112,8 +3114,8 @@ def test_xml_writer_file_version_validation(sphere, tmp_path, invalid_value, err
         assert writer.file_version == (1, 0)
     except AttributeError:
         # Skip if VTK version doesn't support file_version setter
-        pytest.skip("VTK version does not support file_version setter")
-    
+        pytest.skip('VTK version does not support file_version setter')
+
     # Test validation of file_version setter
     with pytest.raises(error_type, match=error_match):
         writer.file_version = invalid_value

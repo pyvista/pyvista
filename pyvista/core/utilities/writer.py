@@ -530,8 +530,10 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         (2, 2)
 
         """
-        if not (hasattr(self.writer, 'GetDataSetMajorVersion') and
-                hasattr(self.writer, 'GetDataSetMinorVersion')):
+        if not (
+            hasattr(self.writer, 'GetDataSetMajorVersion')
+            and hasattr(self.writer, 'GetDataSetMinorVersion')
+        ):
             return (None, None)
         major = self.writer.GetDataSetMajorVersion()
         minor = self.writer.GetDataSetMinorVersion()
@@ -546,16 +548,19 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         major, minor = version
         _validation.check_instance(major, int, name='major version')
         _validation.check_instance(minor, int, name='minor version')
-        
-        if not (hasattr(self.writer, 'SetDataSetMajorVersion') and
-                hasattr(self.writer, 'SetDataSetMinorVersion')):
+
+        if not (
+            hasattr(self.writer, 'SetDataSetMajorVersion')
+            and hasattr(self.writer, 'SetDataSetMinorVersion')
+        ):
             import pyvista as pv
+
             msg = (
                 'Setting file version requires VTK 9.3 or later. '
                 f'Current VTK version is {pv.vtk_version_info}.'
             )
             raise AttributeError(msg)
-        
+
         self.writer.SetDataSetMajorVersion(major)
         self.writer.SetDataSetMinorVersion(minor)
 
