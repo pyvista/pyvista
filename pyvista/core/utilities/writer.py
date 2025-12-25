@@ -499,7 +499,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
             self.writer.SetCompressorTypeToLZMA()
 
     @property
-    def file_version(self) -> tuple[int, int]:
+    def file_version(self) -> tuple[int, int] | tuple[None, None]:
         """Get or set the file version for VTK XML files.
 
         The file version determines the VTK XML file format version.
