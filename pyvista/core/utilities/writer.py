@@ -11,6 +11,7 @@ from typing import get_args
 
 import numpy as np
 
+import pyvista
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -540,7 +541,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         return (major, minor)
 
     @file_version.setter
-    def file_version(self, version: tuple[int, int]) -> None:
+    def file_version(self, version: tuple[int, ...]) -> None:
         _validation.check_instance(version, tuple, name='file_version')
         if len(version) != 2:
             msg = 'file_version must be a tuple of two integers (major, minor)'
@@ -553,11 +554,9 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
             hasattr(self.writer, 'SetDataSetMajorVersion')
             and hasattr(self.writer, 'SetDataSetMinorVersion')
         ):
-            import pyvista as pv
-
             msg = (
                 'Setting file version requires VTK 9.3 or later. '
-                f'Current VTK version is {pv.vtk_version_info}.'
+                f'Current VTK version is {pyvista.vtk_version_info}.'
             )
             raise AttributeError(msg)
 

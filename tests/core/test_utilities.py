@@ -3090,7 +3090,7 @@ def test_ply_writer(sphere, tmp_path):
 
 
 @pytest.mark.parametrize(
-    'invalid_value,error_type,error_match',
+    ('invalid_value', 'error_type', 'error_match'),
     [
         ([2, 2], TypeError, 'must be an instance of tuple'),
         ((2,), ValueError, 'must be a tuple of two integers'),
