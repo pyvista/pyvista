@@ -1017,7 +1017,7 @@ class ImageDataFilters(DataSetFilters):
             pad_value=fill,
             pad_size=padding,
             pad_all_scalars=True,
-            dimensionality=self.dimensionality,
+            dimensionality=self.max_cell_dimensionality,
             progress_bar=progress_bar,
         )
 
@@ -4908,7 +4908,7 @@ class ImageDataFilters(DataSetFilters):
             if extend_border:
                 msg = '`extend_border` cannot be set when resampling cell data.'
                 raise ValueError(msg)
-            dimensionality = input_image.dimensionality
+            dimensionality = input_image.max_cell_dimensionality
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
 
         # Set default extend_border value

@@ -1544,27 +1544,27 @@ def test_active_array_info_deprecated():
 def test_dimensionality():
     mesh = pv.PointSet([[0.0, 0.0, 0.0]])
     assert mesh.dimensionality == 0
-    assert mesh.dimensionality_rank == 0
+    assert mesh.max_cell_dimensionality == 0
     assert mesh.min_cell_dimensionality == 0
 
     mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-    assert mesh.dimensionality == 0
-    assert mesh.dimensionality_rank == 1
+    assert mesh.dimensionality == 1
+    assert mesh.max_cell_dimensionality == 0
     assert mesh.min_cell_dimensionality == 0
 
     mesh = pv.ImageData(dimensions=(100, 100, 1))
     assert mesh.dimensionality == 2
-    assert mesh.dimensionality_rank == 2
+    assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
     mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
     assert mesh.dimensionality == 2
-    assert mesh.dimensionality_rank == 2
+    assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
     mesh = pv.Cube()
-    assert mesh.dimensionality == 2
-    assert mesh.dimensionality_rank == 3
+    assert mesh.dimensionality == 3
+    assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
 
@@ -1573,8 +1573,8 @@ def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
     for mesh in datasets_plus_pointset:
         test_mesh = type(mesh)() if empty else mesh
         min_dimensionality = test_mesh.min_cell_dimensionality
-        max_dimensionality = test_mesh.dimensionality
+        max_dimensionality = test_mesh.max_cell_dimensionality
         assert min_dimensionality <= max_dimensionality, type(test_mesh)
 
         expected_rank = 0 if empty else 3
-        assert test_mesh.dimensionality_rank == expected_rank, type(test_mesh)
+        assert test_mesh.dimensionality == expected_rank, type(test_mesh)
