@@ -3660,7 +3660,7 @@ class DataSet(DataSetFilters, DataObject):
             return {0}
         elif hasattr(self, 'dimensions'):
             dims = np.array(self.dimensions)
-            return {int(3 - (dims == 1).sum())}  # type: ignore[return-value]
+            return {int(3 - (dims == 1).sum())}  # type: ignore[arg-type]
         elif isinstance(self, pv.PolyData):
             distinct_dimensions = set()
             if self.n_faces_strict > 0 or self.n_strips > 0:
@@ -3669,12 +3669,14 @@ class DataSet(DataSetFilters, DataObject):
                 distinct_dimensions.add(1)
             if self.n_verts > 0:
                 distinct_dimensions.add(0)
-            return distinct_dimensions
+            return distinct_dimensions  # type: ignore[return-value]
         elif isinstance(self, pv.UnstructuredGrid):
-            return {
-                _CELL_TYPE_INFO[cell_type.name].cell_class().GetCellDimension()
-                for cell_type in self.distinct_cell_types
-            }
+            distinct_dimensions = set()
+            for cell_type in self.distinct_cell_types:
+                cell_class = _CELL_TYPE_INFO[cell_type.name].cell_class
+                if cell_class is not None:
+                    distinct_dimensions.add(cell_class().GetCellDimension())
+            return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
 
