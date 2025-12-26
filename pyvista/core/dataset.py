@@ -3576,7 +3576,7 @@ class DataSet(DataSetFilters, DataObject):
          <CellType.QUAD: 9>, <CellType.TETRA: 10>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
          <CellType.PYRAMID: 14>, <CellType.POLYHEDRON: 42>]
 
-        There are 3D volumentric cells, so the max dimensionality is ``3``.
+        There are 3D volumetric cells, so the max dimensionality is ``3``.
 
         >>> mesh.max_cell_dimensionality
         3

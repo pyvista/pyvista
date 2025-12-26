@@ -395,8 +395,8 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
         )
         grid = grid_class(x, y, z)
 
-    assert grid.max_cell_dimensionality == dimensionality
-    assert grid.max_cell_dimensionality == grid.get_cell(0).GetCellDimension()
+    assert grid.dimensionality == dimensionality
+    assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
 
 
 @pytest.mark.parametrize(

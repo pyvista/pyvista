@@ -1860,8 +1860,8 @@ def test_grid_dimensionality(grid_class, dimensionality, dimensions):
     elif grid_class == pv.RectilinearGrid:
         grid = grid_class(range(dimensions[0]), range(dimensions[1]), range(dimensions[2]))
 
-    assert grid.max_cell_dimensionality == dimensionality
-    assert grid.max_cell_dimensionality == grid.get_cell(0).GetCellDimension()
+    assert grid.dimensionality == dimensionality
+    assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
 
 
 @pytest.mark.parametrize('arg', [1, True, object()])
