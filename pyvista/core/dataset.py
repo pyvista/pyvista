@@ -3418,54 +3418,59 @@ class DataSet(DataSetFilters, DataObject):
         -----
         :attr:`dimensionality`:
         - ranges from ``0`` to ``3`` for all mesh types.
-        - is equivalent to :attr:`dimentionality_rank` for gridded data types
-          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+        - is equivalent to :attr:`max_cell_dimentionality` and :attr:`min_cell_dimentionality`
+          for gridded data types :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
 
         Returns
         -------
         int
-            The dimensionality rank of the dataset's points.
+            The dimensionality of the dataset.
 
         See Also
         --------
-        dimensionality, min_cell_dimensionality
+        max_cell_dimensionality, min_cell_dimensionality
 
         Examples
         --------
-        A single point has ``0`` dimensionality rank.
+        A single point has ``0`` dimensionality.
 
         >>> import pyvista as pv
         >>> mesh = pv.PointSet([[0.0, 0.0, 0.0]])
         >>> mesh.dimensionality
         0
 
-        With two points, the rank is ``1``.
+        With two points, the dimensionality is ``1``.
 
         >>> mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
         >>> mesh.dimensionality
         1
 
         Two-dimensional :class:`~pyvista.ImageData` (i.e. where one of its dimensions is one) has
-        a rank of ``2``.
+        a dimensionality of ``2``.
 
         >>> mesh = pv.ImageData(dimensions=(100, 100, 1))
         >>> mesh.dimensionality
         2
 
-        A :func:`~pyvista.Plane` also has rank ``2``, even if it's arbitrarily rotated in space.
+        A :func:`~pyvista.Plane` also has dimensionality of ``2``, even if it's arbitrarily
+        rotated in space.
 
         >>> mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
         >>> mesh.dimensionality
         2
 
-        A :func:`~pyvista.Cube` has a dimensionality rank of 3.
+        A :func:`~pyvista.Cube` has a dimensionality of 3.
 
         >>> mesh = pv.Cube()
         >>> mesh.dimensionality
         3
 
-        But the dimensionality of its cells is ``2`` since it's a surface mesh:
+        But the max and min cell dimensionality is ``2`` since it's a surface mesh
+        comprised of 2D polygons.
+
         >>> mesh.max_cell_dimensionality
+        2
+        >>> mesh.min_cell_dimensionality
         2
 
         """

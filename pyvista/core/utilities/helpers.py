@@ -316,7 +316,7 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     ) -> tuple[NumpyArray[float], NumpyArray[float]]:
         _validation.check_instance(plane_, pv.PolyData, name='plane')
 
-        if (dimensionality := plane_.max_cell_dimensionality) != 2:
+        if (dimensionality := plane_.dimensionality) != 2:
             msg = (
                 f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
                 f'{dimensionality}.'
