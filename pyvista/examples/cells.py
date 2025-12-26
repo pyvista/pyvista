@@ -7,6 +7,8 @@ be used to learn about VTK :class:`cell types <pyvista.CellType>`.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista as pv
@@ -14,14 +16,23 @@ from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista.core import _vtk_core as _vtk
 
+if TYPE_CHECKING:
+    from pyvista import PolyData
 
-def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
-    """Plot a :class:`pyvista.UnstructuredGrid` while displaying cell indices.
+
+def plot_cell(
+    grid: PolyData | UnstructuredGrid, cpos=None, *, show_normals: bool = False, **kwargs
+):
+    """Plot a mesh while displaying cell indices.
 
     Parameters
     ----------
-    grid : pyvista.UnstructuredGrid
-        Unstructured grid (ideally) containing a single cell.
+    grid : PolyData | UnstructuredGrid
+        Dataset containing one single cell (ideally), though plotting a mesh with multiple cells
+        is supported.
+
+        .. versionchanged:: 0.47
+            Plotting :class:`~pyvista.PolyData` is now supported.
 
     cpos : str, optional
         Camera position.
@@ -60,6 +71,7 @@ def plot_cell(grid, cpos=None, *, show_normals: bool = False, **kwargs):
             return faces.extract_geometry()
         return cell_.cast_to_unstructured_grid().extract_geometry()
 
+    grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()
     for cell in grid.cell:
         # Use existing grid if it's already a grid with one cell
@@ -433,7 +445,7 @@ def Polygon() -> UnstructuredGrid:
     >>> grid.points
     pyvista_ndarray([[ 0. ,  0. ,  0. ],
                      [ 1. , -0.1,  0. ],
-                     [ 0.8,  0.5,  0. ],
+                     [ 1.4,  0.5,  0. ],
                      [ 1. ,  1. ,  0. ],
                      [ 0.6,  1.2,  0. ],
                      [ 0. ,  0.8,  0. ]])
@@ -442,7 +454,7 @@ def Polygon() -> UnstructuredGrid:
     array([7], dtype=uint8)
 
     """
-    points = [[0, 0, 0], [1, -0.1, 0], [0.8, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
+    points = [[0, 0, 0], [1, -0.1, 0], [1.4, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.POLYGON], points)
 
