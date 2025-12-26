@@ -209,6 +209,11 @@ def datasets():
 
 
 @pytest.fixture
+def datasets_plus_pointset(datasets, ant):
+    return [*datasets, ant.cast_to_pointset()]
+
+
+@pytest.fixture
 def multiblock_poly():
     # format and order of data (including missing) is intentional
     mesh_a = pv.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
