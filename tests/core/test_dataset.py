@@ -1570,6 +1570,33 @@ def test_dimensionality():
     assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
+    strip = examples.cells.TriangleStrip().extract_geometry()
+    assert strip.dimensionality == 2
+    assert strip.max_cell_dimensionality == 2
+    assert strip.min_cell_dimensionality == 2
+
+    line = examples.cells.Line().extract_geometry()
+    assert line.dimensionality == 1
+    assert line.max_cell_dimensionality == 1
+    assert line.min_cell_dimensionality == 1
+
+    vertex = examples.cells.Vertex().extract_geometry()
+    assert vertex.dimensionality == 0
+    assert vertex.max_cell_dimensionality == 0
+    assert vertex.min_cell_dimensionality == 0
+
+    mixed = strip + line + vertex
+    assert isinstance(mixed, pv.PolyData)
+    assert mixed.dimensionality == 2
+    assert mixed.max_cell_dimensionality == 2
+    assert mixed.min_cell_dimensionality == 0
+
+    mixed_grid = mixed.cast_to_unstructured_grid()
+    assert isinstance(mixed_grid, pv.UnstructuredGrid)
+    assert mixed_grid.dimensionality == 2
+    assert mixed_grid.max_cell_dimensionality == 2
+    assert mixed_grid.min_cell_dimensionality == 0
+
 
 @pytest.mark.parametrize('empty', [True, False])
 def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
