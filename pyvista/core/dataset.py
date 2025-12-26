@@ -29,6 +29,7 @@ from pyvista.typing.mypy_plugin import promote_type
 from . import _validation
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
+from .celltype import _CELL_TYPE_INFO
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -3588,6 +3589,8 @@ class DataSet(DataSetFilters, DataObject):
         0
 
         """
+        if pv.vtk_version_info < (9, 4, 0):
+            return max(self._distinct_cell_dimensions)
         return self.GetMaxSpatialDimension()
 
     @property
@@ -3646,7 +3649,34 @@ class DataSet(DataSetFilters, DataObject):
             # GetMinSpatialDimension returns 3 by default for meshes with no cells, which is odd
             # because then we have min_cell_dimensionality > max_cell_dimensionality
             return 0
+        if pv.vtk_version_info < (9, 5, 0):
+            return min(self._distinct_cell_dimensions)
         return self.GetMinSpatialDimension()
+
+    @property
+    def _distinct_cell_dimensions(self) -> set[_Dimensionality]:
+        """Compute distinct dimensions of cells. Only needed for legacy vtk < 9.5."""
+        if self.n_cells == 0:
+            return {0}
+        elif hasattr(self, 'dimensions'):
+            dims = np.array(self.dimensions)
+            return {int(3 - (dims == 1).sum())}  # type: ignore[return-value]
+        elif isinstance(self, pv.PolyData):
+            distinct_dimensions = set()
+            if self.n_faces_strict > 0 or self.n_strips > 0:
+                distinct_dimensions.add(2)
+            if self.n_lines > 0:
+                distinct_dimensions.add(1)
+            if self.n_verts > 0:
+                distinct_dimensions.add(0)
+            return distinct_dimensions
+        elif isinstance(self, pv.UnstructuredGrid):
+            return {
+                _CELL_TYPE_INFO[cell_type.name].cell_class().GetCellDimension()
+                for cell_type in self.distinct_cell_types
+            }
+        msg = f'Unexpected mesh type {type(self)}'
+        raise RuntimeError(msg)
 
     def validate_mesh(
         self,
