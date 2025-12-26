@@ -3419,7 +3419,7 @@ class DataSet(DataSetFilters, DataObject):
         -----
         :attr:`dimensionality`:
         - ranges from ``0`` to ``3`` for all mesh types.
-        - is equivalent to :attr:`max_cell_dimentionality` and :attr:`min_cell_dimentionality`
+        - is equivalent to :attr:`max_cell_dimensionality` and :attr:`min_cell_dimensionality`
           for gridded data types :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
 
         Returns
