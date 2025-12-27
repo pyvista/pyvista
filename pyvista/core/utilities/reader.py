@@ -4003,5 +4003,5 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     XMLStructuredGridReader: 'StructuredGrid',
     XMLUnstructuredGridReader: 'UnstructuredGrid',
     XMLPImageDataReader: 'ImageData',
-    SeriesReader: 'UnstructuredGrid',
+    SeriesReader: get_args(_mesh_types),
 }
