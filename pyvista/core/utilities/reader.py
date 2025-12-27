@@ -7,11 +7,15 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 from functools import wraps
+import json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Generic
 from typing import Literal
+from typing import TypeVar
+from typing import cast
 from typing import get_args
 import weakref
 from xml.etree import ElementTree as ET
@@ -3678,6 +3682,179 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         return status_method(name)
 
 
+@dataclass(order=True)
+class SeriesDataSet(_NoNewAttrMixin):
+    """Class for storing dataset info from series file."""
+
+    name: str
+    time: float
+
+
+_SeriesEachReader = TypeVar('_SeriesEachReader', bound=BaseReader)
+
+
+class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
+    """Simulate a VTK reader for series file."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._filename: str | None = None
+        self._directory: str | None = None
+        self._datasets: list[SeriesDataSet] | None = None
+        self._active_dataset: SeriesDataSet | None = None
+        self._time_values: list[float] | None = None
+        self._reader_type: type[_SeriesEachReader] | None = None
+        self._active_reader: _SeriesEachReader | None = None
+
+    def SetFileName(self, filename) -> None:
+        """Set filename and update reader."""
+        self._filename = str(filename)
+        self._directory = str(Path(filename).parent)
+
+    def _deterimine_reader_type(self) -> type[_SeriesEachReader]:
+        """Determine reader type from first dataset in series."""
+        if self._datasets is None or len(self._datasets) == 0:
+            msg = 'No datasets found in series file to determine reader type.'
+            raise ValueError(msg)
+
+        self._filename = cast('str', self._filename)
+        parent_ext = Path(self._filename.removesuffix('.series')).suffix
+
+        child_exts = {Path(dataset.name).suffix for dataset in self._datasets}
+        if len(child_exts) != 1:
+            msg = 'Datasets in series file have multiple extensions, cannot determine reader type.'
+            raise ValueError(msg)
+
+        child_ext = child_exts.pop()
+        if parent_ext != child_ext:
+            msg = (
+                f'Dataset extension {child_ext} does not match series file parent extension '
+                f'{parent_ext}, cannot determine reader type.'
+            )
+            raise ValueError(msg)
+
+        return cast('type[_SeriesEachReader]', CLASS_READERS[child_ext])
+
+    def UpdateInformation(self):
+        """Parse series file."""
+        if self._filename is None:
+            msg = 'Filename must be set'
+            raise ValueError(msg)
+
+        with Path(self._filename).open() as fr:
+            content = json.load(fr)
+
+        if 'files' not in content:
+            msg = 'Invalid series file: missing "files" entry'
+            raise ValueError(msg)
+
+        datasets = [
+            SeriesDataSet(element['name'], element['time']) for element in content['files']
+        ]
+
+        self._datasets = sorted(datasets)
+        self._reader_type = self._deterimine_reader_type()
+        self._time_values = sorted({dataset.time for dataset in self._datasets})
+        self._time_mapping: dict[float, SeriesDataSet] = {
+            dataset.time: dataset for dataset in self._datasets
+        }
+        self._SetActiveTime(self._time_values[0])
+
+    def Update(self) -> None:
+        """Read data and store it."""
+        self._active_reader = cast('_SeriesEachReader', self._active_reader)
+        self._data_object = self._active_reader.read()
+
+    def _SetActiveTime(self, time_value) -> None:
+        """Set active time."""
+        self._active_dataset = self._time_mapping[time_value]
+        self._reader_type = cast('type[_SeriesEachReader]', self._reader_type)
+        self._active_reader = (
+            self._reader_type(Path(self._directory) / self._active_dataset.name)  # type: ignore[arg-type]
+        )
+
+
+class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
+    """Class for reading .series file supported by Paraview.
+
+    .. versionadded:: 0.47.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> from pathlib import Path
+    >>> filename = examples.download_file('vtu_series/wavy.zip')
+    >>> Path(filename[0]).name
+    'mesh.vtu.series'
+    >>> reader = pv.get_reader(filename[0])
+    >>> reader.time_values
+    [0.0, 1.0, 2.0, 3.0, ... 12.0, 13.0, 14.0]
+    >>> reader.set_active_time_point(5)
+    >>> reader.active_time_value
+    5.0
+    >>> mesh = reader.read()
+    >>> mesh.plot(scalars='z')
+
+    """
+
+    _class_reader: type[_SeriesReader[_SeriesEachReader]] = _SeriesReader[_SeriesEachReader]
+
+    @property
+    def active_reader(self):
+        """Return the active reader.
+
+        Returns
+        -------
+        pyvista.BaseReader
+
+        """
+        return self.reader._active_reader
+
+    @property
+    def datasets(self):
+        """Return all datasets.
+
+        Returns
+        -------
+        list[pyvista.SeriesDataSet]
+
+        """
+        return self.reader._datasets
+
+    @property
+    def active_dataset(self):
+        """Return all active datasets.
+
+        Returns
+        -------
+        pyvista.SeriesDataSet
+
+        """
+        return self.reader._active_dataset
+
+    @property
+    def time_values(self):  # noqa: D102
+        return self.reader._time_values
+
+    @property
+    def number_time_points(self):  # noqa: D102
+        return len(self.reader._time_values)
+
+    def time_point_value(self, time_point):  # noqa: D102
+        return self.reader._time_values[time_point]
+
+    @property
+    def active_time_value(self):  # noqa: D102
+        return self.reader._active_dataset.time
+
+    def set_active_time_value(self, time_value) -> None:  # noqa: D102
+        self.reader._SetActiveTime(time_value)
+
+    def set_active_time_point(self, time_point) -> None:  # noqa: D102
+        self.set_active_time_value(self.time_values[time_point])
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -3747,6 +3924,7 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
+    '.series': SeriesReader,
     '.xdmf': XdmfReader,
 }
 
@@ -3825,4 +4003,5 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     XMLStructuredGridReader: 'StructuredGrid',
     XMLUnstructuredGridReader: 'UnstructuredGrid',
     XMLPImageDataReader: 'ImageData',
+    SeriesReader: get_args(_mesh_types),
 }

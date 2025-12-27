@@ -212,6 +212,8 @@ from .reader import PTSReader as PTSReader
 from .reader import PVDDataSet as PVDDataSet
 from .reader import PVDReader as PVDReader
 from .reader import SegYReader as SegYReader
+from .reader import SeriesDataSet as SeriesDataSet
+from .reader import SeriesReader as SeriesReader
 from .reader import SLCReader as SLCReader
 from .reader import STLReader as STLReader
 from .reader import TecplotReader as TecplotReader
