@@ -4462,7 +4462,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
             volume = volume.cell_data_to_point_data()
-        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))
+        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))  # noqa: S101
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
