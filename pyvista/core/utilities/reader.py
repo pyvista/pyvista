@@ -3717,7 +3717,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
             msg = 'No datasets found in series file to determine reader type.'
             raise ValueError(msg)
 
-        assert self._filename is not None
+        self._filename = cast('str', self._filename)
         parent_ext = Path(self._filename.removesuffix('.series')).suffix
 
         child_exts = {Path(dataset.name).suffix for dataset in self._datasets}
@@ -3762,13 +3762,13 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
 
     def Update(self) -> None:
         """Read data and store it."""
-        assert self._active_reader is not None
+        self._active_reader = cast('_SeriesEachReader', self._active_reader)
         self._data_object = self._active_reader.read()
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
         self._active_dataset = self._time_mapping[time_value]
-        assert self._reader_type is not None
+        self._reader_type = cast('type[_SeriesEachReader]', self._reader_type)
         self._active_reader = (
             self._reader_type(Path(self._directory) / self._active_dataset.name)  # type: ignore[arg-type]
         )
