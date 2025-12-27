@@ -115,14 +115,23 @@ class _MeshValidator:
 
     def __init__(
         self,
-        mesh: _DataSetOrMultiBlockType,
+        mesh: DataSet | MultiBlock,
         validation_fields: _AllValidationOptions
         | Sequence[_AllValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
     ) -> None:
+        data_fields, cell_fields, point_fields = _MeshValidator._validate_fields(validation_fields)
+        self._validation_report = _MeshValidator._generate_report(
+            mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
+        )
+
+    @staticmethod
+    def _validate_fields(
+        validation_fields,
+    ) -> tuple[tuple[_DataFields, ...], tuple[_CellFields, ...], tuple[_PointFields, ...]]:
         # Validate inputs
-        allowed_data_fields = self._allowed_data_fields
-        allowed_cell_fields = self._allowed_cell_fields
-        allowed_point_fields = self._allowed_point_fields
+        allowed_data_fields = _MeshValidator._allowed_data_fields
+        allowed_cell_fields = _MeshValidator._allowed_cell_fields
+        allowed_point_fields = _MeshValidator._allowed_point_fields
         data_fields_to_validate: list[_MeshValidator._DataFields] = []
         cell_fields_to_validate: list[_MeshValidator._CellFields] = []
         point_fields_to_validate: list[_MeshValidator._PointFields] = []
@@ -137,7 +146,7 @@ class _MeshValidator:
                 *allowed_data_fields,
                 *allowed_cell_fields,
                 *allowed_point_fields,
-                *self._allowed_field_groups,
+                *_MeshValidator._allowed_field_groups,
             )
             if isinstance(validation_fields, str):
                 validation_fields = (validation_fields,)
@@ -153,7 +162,7 @@ class _MeshValidator:
                 input_fields.remove('memory_safe')
                 memory_safe_fields = (
                     field
-                    for field in get_args(self._MemorySafeFields)
+                    for field in get_args(_MeshValidator._MemorySafeFields)
                     if field not in validation_fields
                 )
                 input_fields.extend(memory_safe_fields)
@@ -166,11 +175,11 @@ class _MeshValidator:
                 elif field_or_group == 'points':
                     point_fields_to_validate.extend(allowed_point_fields)
                 elif field_or_group in allowed_data_fields:
-                    data_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+                    data_fields_to_validate.append(field_or_group)
                 elif field_or_group in allowed_cell_fields:
-                    cell_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+                    cell_fields_to_validate.append(field_or_group)
                 elif field_or_group in allowed_point_fields:
-                    point_fields_to_validate.append(field_or_group)  # type:ignore[arg-type]
+                    point_fields_to_validate.append(field_or_group)
                 else:  # pragma: no cover
                     msg = (
                         f'Something went wrong! Invalid field or group {field_or_group}. '
@@ -178,26 +187,126 @@ class _MeshValidator:
                     )
                     raise RuntimeError(msg)
 
-        self._mesh = mesh.copy(deep=False)
-        self._field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
+        return (
+            tuple(data_fields_to_validate),
+            tuple(cell_fields_to_validate),
+            tuple(point_fields_to_validate),
+        )
 
+    @staticmethod
+    def _generate_report(
+        mesh: DataSet | MultiBlock,
+        *,
+        data_fields: tuple[_DataFields, ...],
+        cell_fields: tuple[_CellFields, ...],
+        point_fields: tuple[_PointFields, ...],
+    ) -> _MeshValidationReport:
+        if isinstance(mesh, pv.DataSet):
+            return _MeshValidator._validate_dataset(
+                mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
+            )
+        else:
+            return _MeshValidator._validate_multiblock(
+                mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
+            )
+
+    @staticmethod
+    def _validate_dataset(
+        mesh: DataSet,
+        *,
+        data_fields: tuple[_DataFields, ...],
+        cell_fields: tuple[_CellFields, ...],
+        point_fields: tuple[_PointFields, ...],
+    ) -> _MeshValidationReport:
+        validated_mesh = mesh.copy(deep=False)
+        field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
         # Validate data arrays
-        if data_fields_to_validate:
-            for summary in _MeshValidator._validate_data(mesh, data_fields_to_validate):
-                self._field_summaries[summary.name] = summary
+        if data_fields:
+            for summary in _MeshValidator._validate_data(mesh, data_fields):
+                field_summaries[summary.name] = summary
 
         # Validate cells
-        if cell_fields_to_validate:
-            summaries, validated = _MeshValidator._validate_cells(mesh, cell_fields_to_validate)
+        if cell_fields:
+            summaries, validated = _MeshValidator._validate_cells(mesh, cell_fields)
             if validated:
-                self._mesh = validated  # Store the output from cell_validator
+                validated_mesh = validated  # Store the output from cell_validator
             for summary in summaries:
-                self._field_summaries[summary.name] = summary
+                field_summaries[summary.name] = summary
 
         # Validate points
-        if point_fields_to_validate:
-            for summary in _MeshValidator._validate_points(mesh, point_fields_to_validate):
-                self._field_summaries[summary.name] = summary
+        if point_fields:
+            for summary in _MeshValidator._validate_points(mesh, point_fields):
+                field_summaries[summary.name] = summary
+
+        message_body: list[str] = [
+            summary.message for summary in field_summaries.values() if summary.values
+        ]
+        message = _MeshValidator._create_message(validated_mesh, message_body)
+        dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
+        return _MeshValidationReport(
+            _mesh=validated_mesh,
+            _message=message,
+            _subreports=None,
+            **dataclass_fields,  # type: ignore[arg-type]
+        )
+
+    @staticmethod
+    def _validate_multiblock(
+        mesh: MultiBlock,
+        *,
+        data_fields: tuple[_DataFields, ...],
+        cell_fields: tuple[_CellFields, ...],
+        point_fields: tuple[_PointFields, ...],
+    ) -> _MeshValidationReport:
+        validated_mesh = mesh.copy(deep=False)
+
+        # Generate reports and error messages for each block
+        reports: list[_MeshValidationReport | None] = []
+        message_body: list[str] = []
+        bullet = _MeshValidator._message_bullet
+        for i, block in enumerate(mesh):
+            if block is None:
+                reports.append(None)
+            else:
+                method = (
+                    _MeshValidator._validate_dataset
+                    if isinstance(block, pv.DataSet)
+                    else _MeshValidator._validate_multiblock
+                )
+                report = method(
+                    block,
+                    data_fields=data_fields,
+                    cell_fields=cell_fields,
+                    point_fields=point_fields,
+                )
+                reports.append(report)
+                validated_mesh.replace(i, report.mesh)
+
+                if (msg := report.message) is not None:
+                    prefix = f'Block id {i} {validated_mesh.get_block_name(i)!r}'
+                    indented = msg.replace(bullet, '  ' + bullet)
+                    message_body.append(f'{prefix} {indented}')
+
+        # Iterate over fields in order and identify blocks with invalid fields
+        dataclass_fields: dict[str, Sequence[int | str]] = {}
+        for field in [
+            *data_fields,
+            *cell_fields,
+            *point_fields,
+        ]:
+            invalid_block_ids: list[int] = []
+            for i, report in enumerate(reports):  # type: ignore[assignment]
+                if report is not None and field in report.invalid_fields:  # type: ignore[redundant-expr]
+                    invalid_block_ids.append(i)
+            dataclass_fields[field] = invalid_block_ids
+
+        message = _MeshValidator._create_message(validated_mesh, message_body)
+        return _MeshValidationReport(
+            _mesh=validated_mesh,
+            _message=message,
+            _subreports=tuple(reports),
+            **dataclass_fields,  # type: ignore[arg-type]
+        )
 
     @staticmethod
     def _normalize_field_name(name: str) -> str:
@@ -205,18 +314,19 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_cells(
-        mesh: _DataSetOrMultiBlockType, validation_fields: list[_CellFields]
+        mesh: _DataSetOrMultiBlockType, validation_fields: tuple[_CellFields, ...]
     ) -> tuple[list[_MeshValidator._FieldSummary], DataSet | None]:
         """Validate cells and only return summary objects for the requested fields."""
         summaries: list[_MeshValidator._FieldSummary] = []
         validated_mesh = None
-        if 'invalid_point_references' in validation_fields:
-            validation_fields.remove('invalid_point_references')
+        mutable_validation_fields = list(validation_fields)
+        if 'invalid_point_references' in mutable_validation_fields:
+            mutable_validation_fields.remove('invalid_point_references')
             summary = _MeshValidator._validate_invalid_point_references(mesh)
             summaries.append(summary)
-        if validation_fields:
+        if mutable_validation_fields:
             validated_mesh = mesh.cell_validator()
-            for name in validation_fields:
+            for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
                 msg = _MeshValidator._invalid_cell_msg(name, array)
                 summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
@@ -267,7 +377,7 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_data(
-        mesh: _DataSetOrMultiBlockType, validation_fields: list[_DataFields]
+        mesh: _DataSetOrMultiBlockType, validation_fields: tuple[_DataFields, ...]
     ) -> list[_MeshValidator._FieldSummary]:
         """Validate data arrays and only return summary objects for the requested fields."""
 
@@ -321,7 +431,7 @@ class _MeshValidator:
 
     @staticmethod
     def _validate_points(
-        mesh: _DataSetOrMultiBlockType, validation_fields: list[_PointFields]
+        mesh: _DataSetOrMultiBlockType, validation_fields: tuple[_PointFields, ...]
     ) -> list[_MeshValidator._FieldSummary]:
         """Validate points and only return summary objects for the requested fields."""
 
@@ -361,22 +471,22 @@ class _MeshValidator:
                 summaries.append(issue)
         return summaries
 
-    @property
-    def _message(self) -> str:
-        messages: list[str] = []
-        messages += [issue.message for issue in self._field_summaries.values() if issue.values]
-        bullet = ' - '
-        body = bullet + f'\n{bullet}'.join(messages)
-        header = (
-            f'{self._mesh.__class__.__name__} mesh is not valid due to the following problems:'
-        )
+    _message_bullet = ' - '
+
+    @staticmethod
+    def _create_message(obj: object, message_body: list[str]) -> str:
+        bullet = _MeshValidator._message_bullet
+        body = bullet + f'\n{bullet}'.join(message_body)
+        header = _MeshValidator._create_message_header(obj)
         return f'{header}\n{body}'
+
+    @staticmethod
+    def _create_message_header(obj: object) -> str:
+        return f'{obj.__class__.__name__} mesh is not valid due to the following problems:'
 
     @property
     def validation_report(self) -> _MeshValidationReport:
-        summaries = self._field_summaries
-        kwargs = {issue.name: issue.values for issue in summaries.values()}
-        return _MeshValidationReport(_mesh=self._mesh, _message=self._message, **kwargs)  # type: ignore[arg-type]
+        return self._validation_report
 
 
 @dataclass(frozen=True)
@@ -384,8 +494,9 @@ class _MeshValidationReport(_NoNewAttrMixin):
     """Dataclass to report mesh validation results."""
 
     # Non-fields
-    _mesh: InitVar[DataSet]
+    _mesh: InitVar[DataSet | MultiBlock]
     _message: InitVar[str | None]
+    _subreports: InitVar[tuple[_MeshValidationReport | None, ...] | None]
 
     # Data fields
     point_data_wrong_length: list[str] | None = None
@@ -407,12 +518,18 @@ class _MeshValidationReport(_NoNewAttrMixin):
     unused_points: list[int] | None = None
     non_finite_points: list[int] | None = None
 
-    def __post_init__(self, _mesh: DataSet, _message: str | None) -> None:
+    def __post_init__(
+        self,
+        _mesh: DataSet | MultiBlock,
+        _message: str | None,
+        _subreports: tuple[_MeshValidationReport | None, ...] | None,
+    ) -> None:
         object.__setattr__(self, '_mesh', _mesh)
         object.__setattr__(self, '_message', _message)
+        object.__setattr__(self, '_subreports', _subreports)
 
     @property
-    def mesh(self) -> DataSet:
+    def mesh(self) -> DataSet | MultiBlock:
         return self._mesh  # type: ignore[attr-defined]
 
     @property
@@ -428,6 +545,20 @@ class _MeshValidationReport(_NoNewAttrMixin):
     def invalid_fields(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
         """Return any field names which have values."""
         return tuple(f.name for f in fields(self) if getattr(self, f.name))
+
+    def __getitem__(self, index: int) -> _MeshValidationReport | None:
+        subreports: tuple[_MeshValidationReport | None, ...] | None = self._subreports  # type: ignore[attr-defined]
+        if subreports is None:
+            msg = 'Indexing mesh validation reports is only supported for composite meshes.'
+            raise TypeError(msg)
+        return subreports[index]
+
+    def __len__(self) -> int:
+        subreports: tuple[_MeshValidationReport | None, ...] | None = self._subreports  # type: ignore[attr-defined]
+        if subreports is None:
+            msg = 'Length of mesh validation report is only defined for composite meshes.'
+            raise TypeError(msg)
+        return len(subreports)
 
     def __str__(self) -> str:
         """Include all validation results in a printable string."""
@@ -473,25 +604,32 @@ class _MeshValidationReport(_NoNewAttrMixin):
                     lines.append(
                         f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
                     )
-                else:
-                    ...
 
         def emit_mesh_info() -> None:
-            mesh = self.mesh
             lines.append('Mesh:')
-            mesh_items = {
-                'Type': mesh.__class__.__name__,
-                'N Points': mesh.n_points,
-                'N Cells': mesh.n_cells,
-            }
             for key, value in mesh_items.items():
                 lines.append(f'{indent}{key:<{label_width}} : {value}')
 
+        mesh = self.mesh
+        mesh_items: dict[str, str | int] = {'Type': mesh.__class__.__name__}
+        # Set report content based on mesh type
+        if isinstance(mesh, pv.DataSet):
+            mesh_items['N Points'] = mesh.n_points
+            mesh_items['N Cells'] = mesh.n_cells
+            data_text = 'Invalid data arrays'
+            cell_text = 'Invalid cell ids'
+            point_text = 'Invalid point ids'
+        else:
+            mesh_items['N Blocks'] = mesh.n_blocks
+            data_text = 'Blocks with invalid data arrays'
+            cell_text = 'Blocks with invalid cells'
+            point_text = 'Blocks with invalid points'
+
         emit_mesh_info()
         emit_group('Report summary', summary_fields)
-        emit_group('Invalid data arrays', _MeshValidator._allowed_data_fields)
-        emit_group('Invalid cell ids', _MeshValidator._allowed_cell_fields)
-        emit_group('Invalid point ids', _MeshValidator._allowed_point_fields)
+        emit_group(data_text, _MeshValidator._allowed_data_fields)
+        emit_group(cell_text, _MeshValidator._allowed_cell_fields)
+        emit_group(point_text, _MeshValidator._allowed_point_fields)
 
         return '\n'.join(lines)
 
@@ -503,7 +641,7 @@ class DataObjectFilters:
     points: pyvista_ndarray
 
     def validate_mesh(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType,
+        self: DataSet | MultiBlock,
         validation_fields: _MeshValidator._AllValidationOptions
         | Sequence[
             _MeshValidator._AllValidationOptions
@@ -579,6 +717,9 @@ class DataObjectFilters:
           summary of any problems detected, and is formatted for printing to console. This is the
           message used when the ``action`` keyword is set for emitting warnings or raising errors.
           This value is ``None`` if the mesh is valid.
+
+        Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
+        mesh blocks are validated separate and the results are aggregated and reported per-block.
 
         .. versionadded:: 0.47
 
@@ -714,7 +855,6 @@ class DataObjectFilters:
 
         Show a validation report for cells with intersecting edges and unused points only.
 
-        >>> mesh = examples.download_cow()
         >>> report = mesh.validate_mesh(['intersecting_edges', 'unused_points'])
         >>> print(report)
         Mesh Validation Report
@@ -743,11 +883,62 @@ class DataObjectFilters:
 
         >>> _ = mesh.validate_mesh('memory_safe', action='error')
 
+        Validate the mesh as a :class:`~pyvista.MultiBlock` instead.
+
+        >>> multi = mesh.cast_to_multiblock()
+        >>> report = multi.validate_mesh()
+
+        Instead of reporting problems with specific arrays, point ids, or cell ids, the errors
+        are reported by block id instead. Here, block id ``0`` is reported as having non-convex
+        cells.
+
+        >>> print(report)
+        Mesh Validation Report
+        ----------------------
+        Mesh:
+            Type                     : MultiBlock
+            N Blocks                 : 1
+        Report summary:
+            Is valid                 : False
+            Invalid fields (1)       : ('non_convex',)
+        Blocks with invalid data arrays:
+            Point data wrong length  : []
+            Cell data wrong length   : []
+        Blocks with invalid cells:
+            Wrong number of points   : []
+            Intersecting edges       : []
+            Intersecting faces       : []
+            Non-contiguous edges     : []
+            Non-convex (1)           : [0]
+            Inverted faces           : []
+            Non-planar faces         : []
+            Degenerate faces         : []
+            Coincident points        : []
+            Invalid point references : []
+        Blocks with invalid points:
+            Unused points            : []
+            Non-finite points        : []
+
+        The report message still contains specifics about the invalid cell ids though.
+
+        >>> print(report.message)
+        MultiBlock mesh is not valid due to the following problems:
+         - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
+           - Mesh has 3 non-convex cells. Invalid cell ids: [1013, 1532, 3250]
+
+        And subreports for each block can be accessed with indexing.
+
+        >>> len(report)
+        1
+        >>> subreport = report[0]
+        >>> print(subreport.message)
+        PolyData mesh is not valid due to the following problems:
+         - Mesh has 3 non-convex cells. Invalid cell ids: [1013, 1532, 3250]
+
         """
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-
         report = _MeshValidator(self, validation_fields).validation_report
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
