@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
@@ -72,5 +70,4 @@ def show_static_image(
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    assert isinstance(plotter.last_image, np.ndarray)
     return PIL.Image.fromarray(plotter.last_image)

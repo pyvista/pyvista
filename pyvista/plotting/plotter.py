@@ -4456,13 +4456,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                     msg = 'Invalid resolution dimensions.'
                     raise ValueError(msg)
                 volume.spacing = resolution
-            _validation.check_instance(volume, (pv.DataSet, pv.MultiBlock), name='volume')
         else:
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
             volume = volume.cell_data_to_point_data()
-        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))
+        _validation.check_instance(volume, (pv.DataSet, pv.MultiBlock), name='volume')
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
