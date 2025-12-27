@@ -4,7 +4,7 @@
 Mesh Validation
 ~~~~~~~~~~~~~~~
 This example explores different cases where a mesh may not be considered valid as defined by the
-:meth:`~pyvista.DataSet.validate_mesh` method.
+:meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 
 """
 
@@ -30,7 +30,7 @@ faces = [4, 0, 1, 2, 3]
 quad = pv.PolyData(points, faces)
 
 # %%
-# Use :meth:`~pyvista.DataSet.validate_mesh` to show that the cell is not convex.
+# Use :meth:`~pyvista.DataObjectFilters.validate_mesh` to show that the cell is not convex.
 report = quad.validate_mesh()
 assert not report.is_valid
 assert report.invalid_fields == ('non_convex',)
