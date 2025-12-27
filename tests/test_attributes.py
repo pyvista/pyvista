@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import is_dataclass
 from enum import Enum
 import importlib.util
 from pathlib import Path
@@ -266,11 +267,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pytest.skip('Test fails without proper dataset files.')
         elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
             pytest.skip('Deprecated.')
-        elif pyvista_class in (
-            pv.SeriesDataSet,
-            pv.PVDDataSet,
-            pv.core.utilities.cell_quality.CellQualityInfo,
-        ):
+        elif is_dataclass(pyvista_class):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Dataclass, no test required.')
         elif pyvista_class in (
