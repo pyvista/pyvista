@@ -12,6 +12,7 @@ Includes:
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 from pyvista._warn_external import warn_external
 
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
+    from pyvista import pyvista_ndarray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
     from pyvista.trame.jupyter import EmbeddableWidget
@@ -70,4 +72,5 @@ def show_static_image(
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    return PIL.Image.fromarray(plotter.last_image)
+    last_image = cast('pyvista_ndarray', plotter.last_image)
+    return PIL.Image.fromarray(last_image)
