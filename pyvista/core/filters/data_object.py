@@ -381,28 +381,30 @@ class _MeshValidator:
     ) -> list[_MeshValidator._FieldSummary]:
         """Validate data arrays and only return summary objects for the requested fields."""
 
+        def join_limited(items, max_items=4):
+            if len(items) <= max_items:
+                return ', '.join(items)
+            return ', '.join(items[:max_items]) + ', ...'
+
         def _invalid_array_length_msg(
             invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
-            if len(invalid_arrays) > 1:
-                s = 's'
-                do = 'do'
-            else:
-                s = ''
-                do = 'does'
-
+            n_arrays = len(invalid_arrays)
+            s = 's' if n_arrays > 1 else ''
             msg_template = (
-                '{kind} array length{s} {do} not match the number of {kind_lower} in the '
-                'mesh ({expected}). Invalid array{s}: {details}'
+                'Mesh has {n_arrays} {kind} array{s} with incorrect length '
+                '(length must be {expected}). Invalid array{s}: {details}'
             )
-            details = ', '.join(f'{name!r} ({length})' for name, length in invalid_arrays.items())
+            details = join_limited(
+                [f'{name!r} ({length})' for name, length in invalid_arrays.items()]
+            )
             return msg_template.format(
+                n_arrays=n_arrays,
                 kind=kind,
                 kind_lower=kind.lower() + 's',
                 expected=expected,
                 details=details,
                 s=s,
-                do=do,
             )
 
         def _validate_array_lengths(arrays: DataSetAttributes, expected: int) -> dict[str, int]:
@@ -415,8 +417,8 @@ class _MeshValidator:
             data,
             expected_n,
         ) in [
-            ('point_data_wrong_length', 'Point', mesh.point_data, mesh.n_points),
-            ('cell_data_wrong_length', 'Cell', mesh.cell_data, mesh.n_cells),
+            ('point_data_wrong_length', 'point', mesh.point_data, mesh.n_points),
+            ('cell_data_wrong_length', 'cell', mesh.cell_data, mesh.n_cells),
         ]:
             if name in validation_fields:
                 invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
@@ -454,17 +456,10 @@ class _MeshValidator:
             if name in validation_fields:
                 name_norm = _MeshValidator._normalize_field_name(name)
                 name_norm = name_norm.removesuffix('s')
-                if len(point_ids) > 1:
-                    s = 's'
-                    a = ' '
-                else:
-                    s = ''
-                    a = ' a '
-                    if name_norm.startswith(('a', 'e', 'i', 'o', 'u')):
-                        a = a.replace('a', 'an')
-
+                n_ids = len(point_ids)
+                s = 's' if n_ids > 1 else ''
                 msg = (
-                    f'Mesh has{a}{name_norm}{s}{info}. Invalid point id{s}: '
+                    f'Mesh has {n_ids} {name_norm}{s}{info}. Invalid point id{s}: '
                     f'{reprlib.repr(point_ids)}'
                 )
                 issue = _MeshValidator._FieldSummary(name=name, message=msg, values=point_ids)
@@ -719,7 +714,7 @@ class DataObjectFilters:
           This value is ``None`` if the mesh is valid.
 
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
-        mesh blocks are validated separate and the results are aggregated and reported per-block.
+        mesh blocks are validated separately and the results are aggregated and reported per-block.
 
         .. versionadded:: 0.47
 
@@ -889,8 +884,7 @@ class DataObjectFilters:
         >>> report = multi.validate_mesh()
 
         Instead of reporting problems with specific arrays, point ids, or cell ids, the errors
-        are reported by block id instead. Here, block id ``0`` is reported as having non-convex
-        cells.
+        are reported by block id. Here, block id ``0`` is reported as having non-convex cells.
 
         >>> print(report)
         Mesh Validation Report
@@ -931,9 +925,8 @@ class DataObjectFilters:
         >>> len(report)
         1
         >>> subreport = report[0]
-        >>> print(subreport.message)
-        PolyData mesh is not valid due to the following problems:
-         - Mesh has 3 non-convex cells. Invalid cell ids: [1013, 1532, 3250]
+        >>> subreport.non_convex
+        [1013, 1532, 3250]
 
         """
         if action is not None:
