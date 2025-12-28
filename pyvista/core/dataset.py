@@ -3467,14 +3467,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.dimensionality
         3
 
-        But the max and min cell dimensionality is ``2`` since it's a surface mesh
-        comprised of 2D polygons.
-
-        >>> mesh.max_cell_dimensionality
-        2
-        >>> mesh.min_cell_dimensionality
-        2
-
         """
         if self.n_points == 0:
             return 0
