@@ -401,6 +401,7 @@ extend-select = [
   'RET',
   'RSE',
   'RUF',
+  'S101',
   'SIM',
   'T10',
   'T20',
@@ -461,6 +462,7 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH113',
   'PTH118',
   'PTH123',
+  'S101',
   'T20',
 ]
 'examples*' = ['ANN', 'INP', 'PLC0415']
@@ -474,12 +476,13 @@ allow-dict-calls-with-keyword-arguments = true
   'D400',
   'D415',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
+  'S101',
   'SIM115',
   'T20',
 ]
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'examples_trame/*' = ['D100', 'D103', 'T20']
-'examples_trame/tests/*' = ['D']
+'examples_trame/tests/*' = ['D', 'S101']
 'hooks/*' = ['INP001']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
@@ -513,6 +516,7 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH117',
   'PTH118',
   'PTH202',
+  'S101',
 ]
 'pyvista/examples/cells.py' = ['N802']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
@@ -560,7 +564,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/report.py' = ['ANN']
 'pyvista/trame/*' = ['ANN', 'FBT', 'PLR0917']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
-'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'T20']
+'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'S101', 'T20']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',
