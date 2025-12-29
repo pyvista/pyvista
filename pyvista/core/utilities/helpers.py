@@ -248,7 +248,7 @@ def wrap(  # noqa: PLR0911
             raise TypeError(msg)
         else:
             # Warn if data arrays are invalid
-            if hasattr(wrapped_vtk, 'validate_mesh'):
+            if pv.vtk_version_info >= (9, 3, 0) and hasattr(wrapped_vtk, 'validate_mesh'):
                 wrapped_vtk.validate_mesh('data', action='warn')
             return wrapped_vtk
 
