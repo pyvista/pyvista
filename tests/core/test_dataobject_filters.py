@@ -1509,11 +1509,11 @@ def _add_invalid_arrays(mesh):
     # Invalid point arrays (multiple), need more than 4 to test truncated repr
     add_vtk_array(mesh, 'foo', range(10), association='point')
     add_vtk_array(mesh, 'bar', range(15), association='point')
-    add_vtk_array(sphere, 'baz', range(12), association='point')
-    add_vtk_array(sphere, 'qux', range(13), association='point')
-    add_vtk_array(sphere, 'fred', range(14), association='point')
-    add_vtk_array(sphere, 'waldo', range(16), association='point')
-    add_vtk_array(sphere, 'thud', range(17), association='point')
+    add_vtk_array(mesh, 'baz', range(12), association='point')
+    add_vtk_array(mesh, 'qux', range(13), association='point')
+    add_vtk_array(mesh, 'fred', range(14), association='point')
+    add_vtk_array(mesh, 'waldo', range(16), association='point')
+    add_vtk_array(mesh, 'thud', range(17), association='point')
 
     # Invalid cell array (single)
     add_vtk_array(mesh, 'ham', range(11), association='cell')
