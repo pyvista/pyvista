@@ -82,7 +82,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @_classproperty
     def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
         if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
         return None
 
     @classmethod
@@ -487,7 +487,7 @@ def read_exodus(  # noqa: PLR0917
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
     except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]  # noqa: PLC0415
+        from vtk import vtkExodusIIReader  # noqa: PLC0415
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
