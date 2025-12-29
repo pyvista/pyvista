@@ -64,6 +64,7 @@ pinned = [ # Pinned versions of core dependencies
 ]
 
 typing = [
+  'meshio<5.4.0',
   'mypy<1.19.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',

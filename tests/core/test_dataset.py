@@ -1542,23 +1542,66 @@ def test_active_array_info_deprecated():
 
 
 def test_dimensionality():
-    mesh = pv.PointSet()
-    assert mesh.dimensionality == 0
-
     mesh = pv.PointSet([[0.0, 0.0, 0.0]])
     assert mesh.dimensionality == 0
+    assert mesh.max_cell_dimensionality == 0
+    assert mesh.min_cell_dimensionality == 0
 
     mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     assert mesh.dimensionality == 1
-
-    mesh = pv.ImageData()
-    assert mesh.dimensionality == 0
+    assert mesh.max_cell_dimensionality == 0
+    assert mesh.min_cell_dimensionality == 0
 
     mesh = pv.ImageData(dimensions=(100, 100, 1))
     assert mesh.dimensionality == 2
+    assert mesh.max_cell_dimensionality == 2
+    assert mesh.min_cell_dimensionality == 2
 
     mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
     assert mesh.dimensionality == 2
+    assert mesh.max_cell_dimensionality == 2
+    assert mesh.min_cell_dimensionality == 2
 
     mesh = pv.Cube()
     assert mesh.dimensionality == 3
+    assert mesh.max_cell_dimensionality == 2
+    assert mesh.min_cell_dimensionality == 2
+
+    strip = examples.cells.TriangleStrip().extract_geometry()
+    assert strip.dimensionality == 2
+    assert strip.max_cell_dimensionality == 2
+    assert strip.min_cell_dimensionality == 2
+
+    line = examples.cells.Line().extract_geometry()
+    assert line.dimensionality == 1
+    assert line.max_cell_dimensionality == 1
+    assert line.min_cell_dimensionality == 1
+
+    vertex = examples.cells.Vertex().extract_geometry()
+    assert vertex.dimensionality == 0
+    assert vertex.max_cell_dimensionality == 0
+    assert vertex.min_cell_dimensionality == 0
+
+    mixed = strip + line + vertex
+    assert isinstance(mixed, pv.PolyData)
+    assert mixed.dimensionality == 2
+    assert mixed.max_cell_dimensionality == 2
+    assert mixed.min_cell_dimensionality == 0
+
+    mixed_grid = mixed.cast_to_unstructured_grid()
+    assert isinstance(mixed_grid, pv.UnstructuredGrid)
+    assert mixed_grid.dimensionality == 2
+    assert mixed_grid.max_cell_dimensionality == 2
+    assert mixed_grid.min_cell_dimensionality == 0
+
+
+@pytest.mark.parametrize('empty', [True, False])
+def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
+    for mesh in datasets_plus_pointset:
+        test_mesh = type(mesh)() if empty else mesh
+        min_dimensionality = test_mesh.min_cell_dimensionality
+        max_dimensionality = test_mesh.max_cell_dimensionality
+        assert min_dimensionality <= max_dimensionality, type(test_mesh)
+
+        expected_rank = 0 if empty else 3
+        assert test_mesh.dimensionality == expected_rank, type(test_mesh)

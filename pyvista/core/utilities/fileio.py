@@ -1066,9 +1066,9 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
             numnodes = vtk_type_to_numnodes[vtk_type]
             if numnodes == -1:
                 # Count nodes in each cell
-                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
+                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)  # type: ignore[union-attr]
             else:
-                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)  # type: ignore[union-attr]
             cells.append(np.hstack((fill_values, c.data)).ravel())  # type: ignore[arg-type]
 
         cell_type += [vtk_type] * len(c.data)
@@ -1263,7 +1263,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
 
 
-def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.Mesh:
+def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
     """Read any mesh file using meshio.
 
     Parameters
@@ -1276,7 +1276,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     Returns
     -------
-    pyvista.DataSet
+    UnstructuredGrid
         The mesh read from the file.
 
     Raises
