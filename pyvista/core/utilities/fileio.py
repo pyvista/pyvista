@@ -204,29 +204,13 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
-@overload
-def read(
-    filename: PathStrSeq,
-    *,
-    force_ext: str,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,
-) -> meshio.Mesh: ...
-@overload
-def read(
-    filename: PathStrSeq,
-    *,
-    force_ext: None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,
-) -> DataObject: ...
 @_deprecate_positional_args(allowed=['filename'])
 def read(  # noqa: PLR0911, PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,  # noqa: FBT001, FBT002
-) -> DataObject | meshio.Mesh:
+) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
