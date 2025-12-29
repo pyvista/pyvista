@@ -66,6 +66,7 @@ def trimesh_mesh_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
     return trimesh_poly
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
     vtk_poly = _vtk.vtkPolyData()
     vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
