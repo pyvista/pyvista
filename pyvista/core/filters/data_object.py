@@ -202,14 +202,26 @@ class _MeshValidator:
         cell_fields: tuple[_CellFields, ...],
         point_fields: tuple[_PointFields, ...],
     ) -> _MeshValidationReport:
-        if isinstance(mesh, pv.DataSet):
-            return _MeshValidator._validate_dataset(
-                mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
+        with warnings.catch_warnings():
+            # Ignore any warnings caused by wrapping alg outputs
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
             )
-        else:
-            return _MeshValidator._validate_multiblock(
-                mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
-            )
+            if isinstance(mesh, pv.DataSet):
+                return _MeshValidator._validate_dataset(
+                    mesh,
+                    data_fields=data_fields,
+                    cell_fields=cell_fields,
+                    point_fields=point_fields,
+                )
+            else:
+                return _MeshValidator._validate_multiblock(
+                    mesh,
+                    data_fields=data_fields,
+                    cell_fields=cell_fields,
+                    point_fields=point_fields,
+                )
 
     @staticmethod
     def _validate_dataset(
@@ -269,12 +281,7 @@ class _MeshValidator:
             if block is None:
                 reports.append(None)
             else:
-                method = (
-                    _MeshValidator._validate_dataset
-                    if isinstance(block, pv.DataSet)
-                    else _MeshValidator._validate_multiblock
-                )
-                report = method(
+                report = _MeshValidator._generate_report(
                     block,
                     data_fields=data_fields,
                     cell_fields=cell_fields,
@@ -326,13 +333,7 @@ class _MeshValidator:
             summary = _MeshValidator._validate_invalid_point_references(mesh)
             summaries.append(summary)
         if mutable_validation_fields:
-            with warnings.catch_warnings():
-                # Ignore any warnings caused by wrapping the cell validator alg output
-                warnings.filterwarnings(
-                    'ignore',
-                    category=pv.InvalidMeshWarning,
-                )
-                validated_mesh = mesh.cell_validator()
+            validated_mesh = mesh.cell_validator()
             for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
                 msg = _MeshValidator._invalid_cell_msg(name, array)
