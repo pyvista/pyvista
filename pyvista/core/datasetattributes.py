@@ -14,7 +14,6 @@ import numpy.typing as npt
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
-from .errors import InvalidMeshError
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
@@ -733,13 +732,13 @@ class DataSetAttributes(
                     f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) "
                     f'but a length of ({array_len}) was expected.'
                 )
-                raise InvalidMeshError(msg)
+                raise ValueError(msg)
             if any(data.shape) and data.size == 0:
                 msg = (
                     f'Invalid array shape. Empty arrays are not allowed. '
                     f"Array '{name}' cannot have shape {data.shape}."
                 )
-                raise InvalidMeshError(msg)
+                raise ValueError(msg)
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object

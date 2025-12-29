@@ -9,11 +9,13 @@ import contextlib
 import functools
 import itertools
 import operator
+import sys
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
+import warnings
 
 import numpy as np
 
@@ -2332,7 +2334,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(
             alg, progress_bar=progress_bar, message='Finding and Labeling Connected Regions.'
         )
-        output = _get_output(alg)
+        # This filter is known to return invalid arrays which emits a warning when
+        # the output is wrapped. These invalid arrays are removed later.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
+            )
+            output = _get_output(alg)
 
         # Process output
         output_needs_fixing = False  # initialize flag if output needs to be fixed
@@ -2399,6 +2408,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 pass
             else:
                 return self
+        if 'pytest' in sys.modules:
+            # For CI, ensure buggy output arrays have been fixed
+            assert output.validate_mesh('data').is_valid  # noqa: S101
         return output
 
     @_deprecate_positional_args
