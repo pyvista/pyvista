@@ -14,6 +14,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.examples import cells
+from tests.core.test_dataobject_filters import sphere_with_invalid_arrays  # noqa: F401
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -35,6 +36,13 @@ def test_wrap_raises():
         match=r'NumPy array could not be wrapped pyvista.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
+
+
+def test_wrap_warns(sphere_with_invalid_arrays):  # noqa: F811
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid arrays'):
+        pv.wrap(vtk_poly)
 
 
 def test_wrap_vtk_not_supported_raises(mocker: MockerFixture):
