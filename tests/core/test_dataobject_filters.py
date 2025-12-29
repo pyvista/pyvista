@@ -1486,3 +1486,69 @@ def test_resize_multiblock():
     # instead resized as part of the whole
     assert not np.allclose(resized['sphere'].bounds_size, new_size)
     assert not np.allclose(resized['cube'].bounds_size, new_size)
+
+
+@pytest.mark.skipif(_vtk_core.vtk_version_info < (9, 5, 0), reason='Requires VTK 9.5+')
+def test_reflect_axis_aligned():
+    """Test the axis-aligned reflection filter."""
+    # Test with a simple cube
+    mesh = pv.Cube(center=(2, 0, 0))
+
+    # Test reflection across YZ plane (x-normal)
+    reflected = mesh.reflect_axis_aligned(plane='x', value=1.0)
+    assert isinstance(reflected, pv.MultiBlock)
+    assert reflected.n_blocks == 2  # Original and reflection
+
+    # Test that points are reflected correctly
+    original = reflected[0]
+    reflection = reflected[1]
+
+    # Check that x-coordinates are reflected about x=1.0
+    for i in range(original.n_points):
+        orig_pt = original.points[i]
+        refl_pt = reflection.points[i]
+        assert np.isclose(2 * 1.0 - orig_pt[0], refl_pt[0])
+        assert np.isclose(orig_pt[1], refl_pt[1])
+        assert np.isclose(orig_pt[2], refl_pt[2])
+
+    # Test with copy_input=False
+    reflected_only = mesh.reflect_axis_aligned(plane='x', value=1.0, copy_input=False)
+    assert reflected_only.n_blocks == 1
+
+    # Test y-plane reflection
+    reflected_y = mesh.reflect_axis_aligned(plane='y', value=0.5)
+    assert isinstance(reflected_y, pv.MultiBlock)
+    assert reflected_y.n_blocks == 2
+
+    # Test z-plane reflection
+    reflected_z = mesh.reflect_axis_aligned(plane='z', value=-1.0)
+    assert isinstance(reflected_z, pv.MultiBlock)
+    assert reflected_z.n_blocks == 2
+
+    # Test with vector data
+    rng = np.random.default_rng()
+    mesh['vectors'] = rng.random((mesh.n_points, 3))
+    reflected_vectors = mesh.reflect_axis_aligned(
+        plane='x', value=0.0, reflect_all_input_arrays=True
+    )
+    assert 'vectors' in reflected_vectors[1].point_data
+
+    # Test with progress bar
+    reflected_pb = mesh.reflect_axis_aligned(progress_bar=True)
+    assert isinstance(reflected_pb, pv.MultiBlock)
+
+
+@pytest.mark.skipif(_vtk_core.vtk_version_info < (9, 5, 0), reason='Requires VTK 9.5+')
+def test_reflect_axis_aligned_invalid_plane():
+    """Test that invalid plane argument raises error."""
+    mesh = pv.Cube()
+    with pytest.raises(ValueError, match='plane must be one of'):
+        mesh.reflect_axis_aligned(plane='invalid')
+
+
+@pytest.mark.skipif(_vtk_core.vtk_version_info >= (9, 5, 0), reason='Testing VTK < 9.5 error')
+def test_reflect_axis_aligned_version_error():
+    """Test that the filter raises VTKVersionError for older VTK versions."""
+    mesh = pv.Cube()
+    with pytest.raises(VTKVersionError, match='requires VTK 9.5 or later'):
+        mesh.reflect_axis_aligned()

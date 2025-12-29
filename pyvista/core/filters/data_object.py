@@ -1415,6 +1415,140 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
+    @_deprecate_positional_args(allowed=['plane', 'value', 'copy_input'])
+    def reflect_axis_aligned(  # noqa: PLR0917
+        self: _MeshType_co,
+        plane: Literal['x', 'y', 'z'] = 'x',
+        value: float = 0.0,
+        copy_input: bool = True,  # noqa: FBT001, FBT002
+        reflect_all_input_arrays: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> MultiBlock:
+        """Reflect dataset across an axis-aligned plane.
+
+        This filter uses the VTK `vtkAxisAlignedReflectionFilter` internally,
+        which reflects the input dataset across one of the axis-aligned planes
+        (YZ, XZ, or XY). The output is a vtkPartitionedDataSetCollection containing
+        the reflection and optionally the original input.
+
+        .. note::
+            This filter requires VTK 9.5 or later.
+
+        Parameters
+        ----------
+        plane : {'x', 'y', 'z'}, default: 'x'
+            The axis-aligned plane to reflect across:
+
+            - ``'x'`` : YZ plane (normal to X-axis)
+            - ``'y'`` : XZ plane (normal to Y-axis)
+            - ``'z'`` : XY plane (normal to Z-axis)
+
+        value : float, default: 0.0
+            The position of the reflection plane along the normal axis.
+
+        copy_input : bool, default: True
+            When ``True``, the output includes both the input and its reflection.
+            When ``False``, only the reflection is returned.
+
+        reflect_all_input_arrays : bool, default: True
+            When ``True``, all 3, 6, and 9-component arrays are reflected.
+            When ``False``, only arrays marked as vectors, normals, and tensors
+            are reflected.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            A MultiBlock containing the reflected data (and optionally the input).
+
+        Raises
+        ------
+        VTKVersionError
+            If VTK version is less than 9.5.
+
+        Examples
+        --------
+        Reflect a mesh across the YZ plane at x=1.0.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube(center=(2, 0, 0))
+        >>> mesh['example_data'] = mesh.points[:, 0]
+        >>> reflected = mesh.reflect_axis_aligned(plane='x', value=1.0)
+        >>> print(f'Result contains {reflected.n_blocks} blocks')
+        Result contains 2 blocks
+        >>> print('Original mesh bounds:', mesh.bounds)
+        Original mesh bounds: (1.5, 2.5, -0.5, 0.5, -0.5, 0.5)
+        >>> print('Block 0 (original) bounds:', reflected[0].bounds)
+        Block 0 (original) bounds: (1.5, 2.5, -0.5, 0.5, -0.5, 0.5)
+        >>> print('Block 1 (reflection) bounds:', reflected[1].bounds)
+        Block 1 (reflection) bounds: (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+
+        Visualize the reflection.
+
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(reflected[0], color='blue', opacity=0.7, label='Original')
+        >>> pl.add_mesh(reflected[1], color='red', opacity=0.7, label='Reflection')
+        >>> pl.add_legend()
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        Reflect across the XY plane, returning only the reflection.
+
+        >>> mesh = pv.Sphere(center=(0, 0, 2))
+        >>> reflected = mesh.reflect_axis_aligned(
+        ...     plane='z', value=0.0, copy_input=False
+        ... )
+        >>> reflected.plot(show_edges=True)
+
+        """
+        if not hasattr(_vtk, 'vtkAxisAlignedReflectionFilter'):
+            msg = 'reflect_axis_aligned requires VTK 9.5 or later.'
+            raise VTKVersionError(msg)
+
+        # Create the reflection plane based on the specified axis
+        plane = plane.lower()
+        if plane not in ['x', 'y', 'z']:
+            msg = f"plane must be one of 'x', 'y', or 'z', got '{plane}'"
+            raise ValueError(msg)
+
+        # Create a vtkPlane for the reflection
+        reflection_plane = _vtk.vtkPlane()
+        reflection_plane.SetAxisAligned(True)
+        if plane == 'x':
+            # YZ plane (normal to X-axis)
+            reflection_plane.SetNormal(1, 0, 0)
+            reflection_plane.SetOrigin(value, 0, 0)
+        elif plane == 'y':
+            # XZ plane (normal to Y-axis)
+            reflection_plane.SetNormal(0, 1, 0)
+            reflection_plane.SetOrigin(0, value, 0)
+        else:  # plane == 'z'
+            # XY plane (normal to Z-axis)
+            reflection_plane.SetNormal(0, 0, 1)
+            reflection_plane.SetOrigin(0, 0, value)
+
+        alg = _vtk.vtkAxisAlignedReflectionFilter()
+        alg.SetInputData(self)
+        alg.SetPlaneMode(0)  # Use PLANE mode for custom plane
+        alg.SetReflectionPlane(reflection_plane)
+        alg.SetCopyInput(copy_input)
+        alg.SetReflectAllInputArrays(reflect_all_input_arrays)
+        _update_alg(alg, progress_bar=progress_bar, message='Reflecting dataset')
+
+        # The filter returns a vtkPartitionedDataSetCollection
+        output = _get_output(alg)
+
+        # Convert to PyVista MultiBlock for consistency
+        mb = pyvista.MultiBlock()
+        for i in range(output.GetNumberOfPartitionedDataSets()):
+            part = output.GetPartitionedDataSet(i)
+            if part and part.GetNumberOfPartitions() > 0:
+                mb.append(wrap(part.GetPartition(0)))
+
+        return mb
+
     @_deprecate_positional_args(allowed=['angle'])
     def rotate_x(  # noqa: PLR0917
         self: _MeshType_co,
