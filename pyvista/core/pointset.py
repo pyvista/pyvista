@@ -31,6 +31,7 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
+from .filters import DataObjectFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -519,7 +520,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    @wraps(DataSet.validate_mesh)
+    @wraps(DataObjectFilters.validate_mesh)
     def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
         self,
         validation_fields: _MeshValidator._AllValidationOptions
