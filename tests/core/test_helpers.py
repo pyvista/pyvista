@@ -105,6 +105,16 @@ def test_wrap_trimesh():
     assert np.allclose(mesh_with_uv.active_texture_coordinates, uvs)
 
 
+def test_wrap_meshio(hexbeam):
+    meshio_grid = pv.to_meshio(hexbeam)
+    assert pv.is_meshio_mesh(meshio_grid)
+    grid = pv.wrap(meshio_grid)
+    assert isinstance(grid, pv.UnstructuredGrid)
+    assert set(grid.array_names) == set(hexbeam.array_names)
+    assert grid.n_points == hexbeam.n_points
+    assert grid.n_cells == hexbeam.n_cells
+
+
 def test_to_trimesh_triangulate():
     match = (
         'Mesh must be all triangles to convert to Trimesh object.\n'
