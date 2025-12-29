@@ -290,6 +290,7 @@ disallow_subclassing_any = true
 enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
 exclude = ['pyvista/ext/']
 extra_checks = true
+follow_untyped_imports = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
