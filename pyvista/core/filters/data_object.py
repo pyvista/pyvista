@@ -1059,16 +1059,22 @@ class DataObjectFilters:
         cell_validator.Update()
         output = _get_output(cell_validator)
 
-        # Rename output scalars and make them active
-        validity_state = output.cell_data['ValidityState']
-        output.cell_data['validity_state'] = validity_state
-        del output.cell_data['ValidityState']
-        output.set_active_scalars('validity_state', preference='cell')
+        def _process_output_arrays(mesh: DataSet):
+            # Rename output scalars and make them active
+            validity_state = mesh.cell_data['ValidityState']
+            mesh.cell_data['validity_state'] = validity_state
+            del mesh.cell_data['ValidityState']
+            mesh.set_active_scalars('validity_state', preference='cell')
 
-        # Extract indices of invalid cells and store as field data
-        output.field_data['invalid'] = np.where(validity_state != 0)[0]
-        for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
-            output.field_data[name] = np.where(validity_state & value)[0]
+            # Extract indices of invalid cells and store as field data
+            mesh.field_data['invalid'] = np.where(validity_state != 0)[0]
+            for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
+                mesh.field_data[name] = np.where(validity_state & value)[0]
+
+        if isinstance(output, pv.DataSet):
+            _process_output_arrays(output)
+        else:
+            output.generic_filter(_process_output_arrays)
         return output
 
     @_deprecate_positional_args(allowed=['trans'])

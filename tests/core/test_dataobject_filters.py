@@ -1956,7 +1956,8 @@ def test_cell_validator_bitfield_values():
     assert bitfield['coincident_points'] == vtkCellStatus.CoincidentPoints
 
 
-def test_cell_validator_wrong_number_of_points():
+@pytest.fixture
+def invalid_tetra():
     # Define tetra with one point missing
     cells = [3, 0, 1, 2]
     celltypes = [pv.CellType.TETRA]
@@ -1965,15 +1966,22 @@ def test_cell_validator_wrong_number_of_points():
         [1.0, 1.0, 1.0],
         [-1.0, 1.0, -1.0],
     ]
-    grid = pv.UnstructuredGrid(cells, celltypes, points)
-    validated = grid.cell_validator()
+    return pv.UnstructuredGrid(cells, celltypes, points)
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
+    mesh = invalid_tetra.cast_to_multiblock() if as_composite else invalid_tetra
+    validated = mesh.cell_validator()
+    assert type(validated) is type(mesh)
+    single_mesh = validated[0] if as_composite else validated
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
         if name == 'wrong_number_of_points':
             expected_cell_ids = [0]
-            assert validated[name].tolist() == expected_cell_ids
+            assert single_mesh[name].tolist() == expected_cell_ids
         else:
-            array = validated.field_data[name]
+            array = single_mesh.field_data[name]
             assert array.shape == (0,)
 
 
