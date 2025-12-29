@@ -82,7 +82,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     @_classproperty
     def _vtk_class(cls) -> vtkWriter | None:  # noqa: N805
         if cls._vtk_module_name and cls._vtk_class_name:
-            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)
+            return _lazy_vtk_import(cls._vtk_module_name, cls._vtk_class_name)  # type: ignore[return-value]
         return None
 
     @classmethod
@@ -204,13 +204,29 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
+@overload
+def read(
+    filename: PathStrSeq,
+    *,
+    force_ext: str,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,
+) -> meshio.Mesh: ...
+@overload
+def read(
+    filename: PathStrSeq,
+    *,
+    force_ext: None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,
+) -> DataObject: ...
 @_deprecate_positional_args(allowed=['filename'])
 def read(  # noqa: PLR0911, PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,  # noqa: FBT001, FBT002
-) -> DataObject:
+) -> DataObject | meshio.Mesh:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
@@ -487,7 +503,7 @@ def read_exodus(  # noqa: PLR0917
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
     except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]  # noqa: PLC0415
+        from vtk import vtkExodusIIReader  # noqa: PLC0415
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -1066,9 +1082,9 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
             numnodes = vtk_type_to_numnodes[vtk_type]
             if numnodes == -1:
                 # Count nodes in each cell
-                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
+                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)  # type: ignore[union-attr]
             else:
-                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)  # type: ignore[union-attr]
             cells.append(np.hstack((fill_values, c.data)).ravel())  # type: ignore[arg-type]
 
         cell_type += [vtk_type] * len(c.data)
@@ -1263,7 +1279,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
 
 
-def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.Mesh:
+def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
     """Read any mesh file using meshio.
 
     Parameters
@@ -1276,7 +1292,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     Returns
     -------
-    pyvista.DataSet
+    UnstructuredGrid
         The mesh read from the file.
 
     Raises

@@ -12,9 +12,9 @@ try:
     from vtkmodules.vtkRenderingCore import vtkLight
     from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight  # type: ignore[no-redef]
-    from vtk import vtkLightActor  # type: ignore[no-redef]
-    from vtk import vtkMatrix4x4  # type: ignore[no-redef]
+    from vtk import vtkLight
+    from vtk import vtkLightActor
+    from vtk import vtkMatrix4x4
 
 from typing import TYPE_CHECKING
 
