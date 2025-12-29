@@ -243,13 +243,14 @@ def wrap(  # noqa: PLR0911
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            wrapped_vtk = pv._wrappers[key](dataset)
+            wrapped_vtk: DataObject = pv._wrappers[key](dataset)
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
         else:
             # Warn if data arrays are invalid
-            wrapped_vtk.validate_mesh('data', action='warn')
+            if hasattr(wrapped_vtk, 'validate_mesh'):
+                wrapped_vtk.validate_mesh('data', action='warn')
             return wrapped_vtk
 
     # wrap meshio
