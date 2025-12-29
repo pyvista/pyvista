@@ -1538,9 +1538,7 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays, as_composite):
     assert 'validity_state' in output_polydata.array_names
 
     invalid_mesh = (
-        sphere_with_invalid_arrays.cast_to_multiblock()
-        if as_composite
-        else sphere_with_invalid_arrays
+        pv.MultiBlock([sphere_with_invalid_arrays]) if as_composite else sphere_with_invalid_arrays
     )
     assert not invalid_mesh.validate_mesh().is_valid
 

@@ -74,12 +74,12 @@ def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
 
 
 def test_wrap_invalid_trimesh_raises(trimesh_mesh_with_invalid_arrays):
-    with pytest.raises(pv.InvalidMeshError, match='Invalid array'):
+    with pytest.raises(ValueError, match='Invalid array'):
         pv.wrap(trimesh_mesh_with_invalid_arrays)
 
 
 def test_wrap_invalid_meshio_raises(meshio_grid_with_invalid_arrays):
-    with pytest.raises(pv.InvalidMeshError, match='Invalid array'):
+    with pytest.raises(ValueError, match='Invalid array'):
         pv.wrap(meshio_grid_with_invalid_arrays)
 
 

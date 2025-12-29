@@ -15,6 +15,7 @@ from typing import Literal
 from typing import TypeVar
 from typing import cast
 from typing import get_args
+import warnings
 
 import numpy as np
 
@@ -325,7 +326,13 @@ class _MeshValidator:
             summary = _MeshValidator._validate_invalid_point_references(mesh)
             summaries.append(summary)
         if mutable_validation_fields:
-            validated_mesh = mesh.cell_validator()
+            with warnings.catch_warnings():
+                # Ignore any warnings caused by wrapping the cell validator alg output
+                warnings.filterwarnings(
+                    'ignore',
+                    category=pv.InvalidMeshWarning,
+                )
+                validated_mesh = mesh.cell_validator()
             for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
                 msg = _MeshValidator._invalid_cell_msg(name, array)
