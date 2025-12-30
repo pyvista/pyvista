@@ -936,11 +936,11 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
-        report = _MeshValidator(self, validation_fields).validation_report
-        if action is not None and (message := report.message) is not None:
+        if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-
+        report = _MeshValidator(self, validation_fields).validation_report
+        if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':

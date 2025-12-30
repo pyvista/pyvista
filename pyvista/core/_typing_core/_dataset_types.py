@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 
 if TYPE_CHECKING:
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataobject import DataObject
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.grid import Grid
-    from pyvista.core.pointset import PointGrid
-    from pyvista.core.pointset import PolyData
-    from pyvista.core.pointset import UnstructuredGrid
+    from pyvista import DataObject
+    from pyvista import DataSet
+    from pyvista import Grid
+    from pyvista import MultiBlock
+    from pyvista import PointGrid
+    from pyvista import PolyData
+    from pyvista import UnstructuredGrid
     from pyvista.core.pointset import _PointSet
 
 _GridType = TypeVar('_GridType', bound='Grid')
