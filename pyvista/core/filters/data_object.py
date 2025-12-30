@@ -204,11 +204,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields: tuple[_PointFields, ...],
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         if isinstance(mesh, pv.DataSet):
-            return _MeshValidator._validate_dataset(
+            return _MeshValidator._validate_dataset(  # type: ignore[return-value]
                 mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
             )
         else:
-            return _MeshValidator._validate_multiblock(
+            return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
                 mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
             )
 
