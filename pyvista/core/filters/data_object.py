@@ -340,8 +340,7 @@ class _MeshValidator:
         def _find_cells_with_invalid_point_refs() -> list[int]:
             """Return cell IDs that reference points that do not exist."""
             if hasattr(mesh, 'dimensions'):
-                # Cells are implicitly defined for dimensioned datasets and cannot be invalid
-                return []
+                return []  # Cells are implicitly defined and cannot be invalid
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -441,13 +440,19 @@ class _MeshValidator:
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            grid = mesh.cast_to_unstructured_grid()
+            if hasattr(mesh, 'dimensions'):
+                return []  # Cells are implicitly defined and cannot have unused points
+            grid = (
+                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+            )
             all_points = np.arange(grid.n_points)
             # Note: This may not include points used by Polyhedron cells
-            used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
+            used_points = np.unique(grid.cell_connectivity)
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
+            if isinstance(mesh, pv.Grid):
+                return []  # Points are implicitly defined and cannot be non-finite
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
@@ -686,8 +691,7 @@ class DataObjectFilters:
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
           same connectivity entry.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
-          that can be indexed. Only :class:`~pyvista.PolyData` and
-          :class:`~pyvista.UnstructuredGrid` can have invalid point references.
+          that can be indexed.
 
         .. note::
           Other than ``invalid_point_references``, all cell fields are computed using
@@ -933,11 +937,11 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
-        if action is not None:
-            allowed = get_args(_MeshValidator._ActionOptions)
-            _validation.check_contains(allowed, must_contain=action, name='action')
         report = _MeshValidator(self, validation_fields).validation_report
         if action is not None and (message := report.message) is not None:
+            allowed = get_args(_MeshValidator._ActionOptions)
+            _validation.check_contains(allowed, must_contain=action, name='action')
+
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':
