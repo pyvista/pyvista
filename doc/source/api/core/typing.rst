@@ -117,3 +117,50 @@ Jupyter backend to use.
 .. currentmodule:: pyvista
 
 .. autodata:: JupyterBackendOptions
+
+
+Data Object Types
+-----------------
+
+pyvista._GridType
+~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _GridType
+
+pyvista._PointGridType
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _PointGridType
+
+pyvista._PointSetType
+~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _PointSetType
+
+
+pyvista._DataSetType
+~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _DataSetType
+
+pyvista._DataSetOrMultiBlockType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _DataSetOrMultiBlockType
+
+pyvista._DataObjectType
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _DataObjectType
