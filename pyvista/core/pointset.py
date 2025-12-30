@@ -522,13 +522,13 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     @wraps(DataObjectFilters.validate_mesh)
     def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
-        self,
+        self: Self,
         validation_fields: _MeshValidator._AllValidationOptions
         | Sequence[_MeshValidator._AllValidationOptions]
         | None = None,
         *args,
         **kwargs,
-    ) -> _MeshValidationReport:
+    ) -> _MeshValidationReport[Self]:
         """Wrap validate_mesh with cell-related fields removed."""
         if validation_fields is None:
             fields: list[_MeshValidator._AllValidationOptions] = [
