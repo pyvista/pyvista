@@ -339,6 +339,9 @@ class _MeshValidator:
     ) -> _MeshValidator._FieldSummary:
         def _find_cells_with_invalid_point_refs() -> list[int]:
             """Return cell IDs that reference points that do not exist."""
+            if hasattr(mesh, 'dimensions'):
+                # Cells are implicitly defined for dimensioned datasets and cannot be invalid
+                return []
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -683,7 +686,8 @@ class DataObjectFilters:
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
           same connectivity entry.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
-          that can be indexed.
+          that can be indexed. Only :class:`~pyvista.PolyData` and
+          :class:`~pyvista.UnstructuredGrid` can have invalid point references.
 
         .. note::
           Other than ``invalid_point_references``, all cell fields are computed using
