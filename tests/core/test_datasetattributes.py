@@ -5,6 +5,7 @@ from string import ascii_letters
 from string import digits
 from string import whitespace
 import sys
+from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
 from hypothesis import given
@@ -19,6 +20,9 @@ import pytest
 import pyvista as pv
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
+
+if TYPE_CHECKING:
+    from pyvista.core.datasetattributes import DataSetAttributes
 
 
 @pytest.fixture
@@ -332,24 +336,30 @@ def test_add_should_not_add_none_array(hexbeam_point_attributes):
         hexbeam_point_attributes.set_array(None, 'sample_array')
 
 
-def test_add_should_contain_array_name(insert_arange_narray):
+def test_add_should_contain_array_name(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _ = insert_arange_narray
     assert 'sample_array' in dsa
 
 
-def test_add_should_contain_exact_array(insert_arange_narray):
+def test_add_should_contain_exact_array(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, sample_array = insert_arange_narray
     assert np.array_equal(sample_array, dsa['sample_array'])
 
 
-def test_getters_should_return_same_result(insert_arange_narray):
+def test_getters_should_return_same_result(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, _sample_array = insert_arange_narray
     result_a = dsa.get_array('sample_array')
     result_b = dsa['sample_array']
     assert np.array_equal(result_a, result_b)
 
 
-def test_contains_should_contain_when_added(insert_arange_narray):
+def test_contains_should_contain_when_added(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, _sample_array = insert_arange_narray
     assert 'sample_array' in dsa
 
@@ -398,25 +408,35 @@ def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
         _ = hexbeam_field_attributes.active_scalars
 
 
-def test_should_remove_array(insert_arange_narray):
+def test_should_remove_array(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     dsa.remove('sample_array')
     assert 'sample_array' not in dsa
 
 
-def test_should_del_array(insert_arange_narray):
+def test_should_del_array(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     del dsa['sample_array']
     assert 'sample_array' not in dsa
 
 
-def test_should_pop_array(insert_arange_narray):
+def test_should_del_all_arrays(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
+    dsa, _sample_array = insert_arange_narray
+    dsa['other_array'] = _sample_array
+    del dsa[:]
+    assert len(dsa) == 0
+    assert dsa.keys() == []
+
+
+def test_should_pop_array(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     dsa.pop('sample_array')
     assert 'sample_array' not in dsa
 
 
-def test_pop_should_return_arange_narray(insert_arange_narray):
+def test_pop_should_return_arange_narray(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, sample_array = insert_arange_narray
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
@@ -434,7 +454,7 @@ def test_pop_should_return_string_array(insert_string_array):
     assert np.array_equal(other_array, sample_array)
 
 
-def test_should_pop_array_invalid(insert_arange_narray):
+def test_should_pop_array_invalid(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     key = 'invalid_key'
     assert key not in dsa
@@ -452,14 +472,53 @@ def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attribute
             hexbeam_point_attributes.remove(removed_key)
 
 
-@pytest.mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
-def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
+@pytest.mark.parametrize(
+    'removed_key',
+    [
+        None,
+        'nonexistent_array_name',
+        '',
+        -1,
+        slice(1, 2),
+        slice(None, None, 2),
+        slice(None, 1),
+        slice(None, 1, 2),
+    ],
+    ids=[None, 'non_existent', 'empty', int, 'slice1', 'slice2', 'slice3', 'slice4'],
+)
+def test_del_should_fail_bad_argument(
+    removed_key: str | None | int,
+    hexbeam_point_attributes: pv.DataSetAttributes,
+):
     if removed_key in [None, -1]:
-        with pytest.raises(TypeError):
+        pat = re.escape('Only strings are valid keys for DataSetAttributes.')
+        with pytest.raises(TypeError, match=pat):
             del hexbeam_point_attributes[removed_key]
+    elif isinstance(removed_key, str):
+        pat = re.escape(f'{removed_key} not present.')
+        with pytest.raises(KeyError, match=pat):
+            del hexbeam_point_attributes[removed_key]
+
     else:
-        with pytest.raises(KeyError):
+        pat = re.escape('Slicing deletion is only allowed with all values (ie. with [:]).')
+        with pytest.raises(ValueError, match=pat):
             del hexbeam_point_attributes[removed_key]
+
+
+def test_del_should_fail_bad_slice(hexbeam_point_attributes: pv.DataSetAttributes):
+    pat = re.escape('Slicing deletion is only allowed with all values (ie. with [:]).')
+
+    with pytest.raises(ValueError, match=pat):
+        del hexbeam_point_attributes[0:1]
+
+    with pytest.raises(ValueError, match=pat):
+        del hexbeam_point_attributes[0::2]
+
+    with pytest.raises(ValueError, match=pat):
+        del hexbeam_point_attributes[:-2:1]
+
+    with pytest.raises(ValueError, match=pat):
+        del hexbeam_point_attributes[:-2]
 
 
 @pytest.mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
@@ -480,45 +539,51 @@ def test_length_should_increment_on_set_array(hexbeam_point_attributes):
     assert len(hexbeam_point_attributes) == initial_len + 1
 
 
-def test_length_should_decrement_on_remove(insert_arange_narray):
+def test_length_should_decrement_on_remove(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, _sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.remove('sample_array')
     assert len(dsa) == initial_len - 1
 
 
-def test_length_should_decrement_on_pop(insert_arange_narray):
+def test_length_should_decrement_on_pop(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, _sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.pop('sample_array')
     assert len(dsa) == initial_len - 1
 
 
-def test_length_should_be_0_on_clear(insert_arange_narray):
+def test_length_should_be_0_on_clear(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     assert len(dsa) != 0
     dsa.clear()
     assert len(dsa) == 0
 
 
-def test_keys_should_be_strings(insert_arange_narray):
+def test_keys_should_be_strings(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     for name in dsa.keys():
         assert isinstance(name, str)
 
 
-def test_key_should_exist(insert_arange_narray):
+def test_key_should_exist(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, _sample_array = insert_arange_narray
     assert 'sample_array' in dsa.keys()
 
 
-def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
+def test_values_should_be_pyvista_ndarrays(
+    insert_arange_narray: tuple[DataSetAttributes, np.ndarray],
+):
     dsa, _sample_array = insert_arange_narray
     for arr in dsa.values():
         assert type(arr) is pv.pyvista_ndarray
 
 
-def test_value_should_exist(insert_arange_narray):
+def test_value_should_exist(insert_arange_narray: tuple[DataSetAttributes, np.ndarray]):
     dsa, sample_array = insert_arange_narray
     for arr in dsa.values():
         if np.array_equal(sample_array, arr):
