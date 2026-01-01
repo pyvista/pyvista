@@ -122,6 +122,19 @@ class DataSetAttributes(
     >>> 'my_data' in mesh.point_data
     False
 
+    Remove all arrays.
+    >>> mesh.point_data['my_data'] = range(mesh.n_points)
+    >>> mesh.point_data['my_other_data'] = range(mesh.n_points)
+    >>> del mesh.point_data[:]
+    >>> mesh.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays : None
+
     Print the available arrays from dataset attributes.
 
     >>> import numpy as np
