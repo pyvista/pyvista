@@ -6,7 +6,6 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import operator
-import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -29,6 +28,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
@@ -3968,9 +3968,9 @@ class ImageDataFilters(DataSetFilters):
 
         # Restore active scalars
         self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
-        if 'pytest' in sys.modules:
-            # For CI, ensure buggy output arrays have been fixed
-            assert output.validate_mesh('data').is_valid  # noqa: S101
+
+        # Make sure buggy scalars have been fixed
+        _warn_if_invalid_data(output)
         return output
 
     def label_connectivity(

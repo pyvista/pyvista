@@ -9,7 +9,6 @@ import contextlib
 import functools
 import itertools
 import operator
-import sys
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -39,6 +38,7 @@ from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -2407,10 +2407,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             except TypeError:
                 pass
             else:
-                return self
-        if 'pytest' in sys.modules:
-            # For CI, ensure buggy output arrays have been fixed
-            assert output.validate_mesh('data').is_valid  # noqa: S101
+                output = self
+        # Make sure buggy scalars have been fixed
+        _warn_if_invalid_data(output)
         return output
 
     @_deprecate_positional_args
