@@ -328,7 +328,7 @@ class _MeshValidator:
             validated_mesh = mesh.cell_validator()
             for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
-                msg = None if not array else _MeshValidator._invalid_cell_msg(name, array)
+                msg = '' if not array else _MeshValidator._invalid_cell_msg(name, array)
                 summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
                 summaries.append(summary)
         return summaries, validated_mesh
@@ -356,7 +356,7 @@ class _MeshValidator:
 
         name = 'invalid_point_references'
         array = _find_cells_with_invalid_point_refs()
-        msg = None if not array else _MeshValidator._invalid_cell_msg(name, array)
+        msg = '' if not array else _MeshValidator._invalid_cell_msg(name, array)
         return _MeshValidator._FieldSummary(name=name, message=msg, values=array)
 
     @staticmethod
@@ -423,7 +423,7 @@ class _MeshValidator:
             if name in validation_fields:
                 invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
                 message = (
-                    None
+                    ''
                     if not invalid_arrays
                     else _invalid_array_length_msg(
                         invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
@@ -459,7 +459,7 @@ class _MeshValidator:
         ]:
             if name in validation_fields:
                 if not point_ids:
-                    msg = None
+                    msg = ''
                 else:
                     name_norm = _MeshValidator._normalize_field_name(name)
                     name_norm = name_norm.removesuffix('s')
