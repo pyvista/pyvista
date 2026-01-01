@@ -276,13 +276,25 @@ class DataSetAttributes(
         ):
             self.active_scalars_name = key
 
-    def __delitem__(self: Self, key: str) -> None:
-        """Implement del with array name or index."""
-        if not isinstance(key, str):
+    def __delitem__(
+        self: Self,
+        key: str | slice,
+    ) -> None:
+        """Implement del with array name or all values."""
+        if not isinstance(key, (str, slice)):
             msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        self.remove(key)
+        if isinstance(key, str):
+            self.remove(key)
+            return
+
+        if key != slice(None, None, None):
+            msg = 'Slicing deletion is only allowed with all values (ie. with [:]).'
+            raise ValueError(msg)
+
+        for k in self.keys():
+            self.remove(key=k)
 
     def __contains__(self: Self, name: str) -> bool:
         """Implement the ``in`` operator."""
