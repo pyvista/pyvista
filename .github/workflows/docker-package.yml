@@ -53,7 +53,7 @@ jobs:
 
       - name: Extract metadata for the Jupyter Docker image
         id: jupyter_meta
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       - name: Build and push the Jupyter Docker image
@@ -67,7 +67,7 @@ jobs:
 
       - name: Extract metadata for the Slim Docker image
         id: slim_meta
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
