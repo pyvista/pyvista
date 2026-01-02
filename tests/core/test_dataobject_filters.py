@@ -1492,8 +1492,7 @@ def test_resize_multiblock():
     assert not np.allclose(resized['cube'].bounds_size, new_size)
 
 
-@pytest.fixture
-def sphere_with_invalid_arrays(sphere):
+def _add_invalid_arrays(mesh):
     def add_vtk_array(dataset, name, values, association: Literal['point', 'cell']):
         arr = _vtk.vtkFloatArray()
         arr.SetName(name)
@@ -1508,18 +1507,28 @@ def sphere_with_invalid_arrays(sphere):
             dataset.GetCellData().AddArray(arr)
 
     # Invalid point arrays (multiple), need more than 4 to test truncated repr
-    add_vtk_array(sphere, 'foo', range(10), association='point')
-    add_vtk_array(sphere, 'bar', range(15), association='point')
-    add_vtk_array(sphere, 'baz', range(12), association='point')
-    add_vtk_array(sphere, 'qux', range(13), association='point')
-    add_vtk_array(sphere, 'fred', range(14), association='point')
-    add_vtk_array(sphere, 'waldo', range(16), association='point')
-    add_vtk_array(sphere, 'thud', range(17), association='point')
+    add_vtk_array(mesh, 'foo', range(10), association='point')
+    add_vtk_array(mesh, 'bar', range(15), association='point')
+    add_vtk_array(mesh, 'baz', range(12), association='point')
+    add_vtk_array(mesh, 'qux', range(13), association='point')
+    add_vtk_array(mesh, 'fred', range(14), association='point')
+    add_vtk_array(mesh, 'waldo', range(16), association='point')
+    add_vtk_array(mesh, 'thud', range(17), association='point')
 
     # Invalid cell array (single)
-    add_vtk_array(sphere, 'ham', range(11), association='cell')
+    add_vtk_array(mesh, 'ham', range(11), association='cell')
 
+
+@pytest.fixture
+def sphere_with_invalid_arrays(sphere):
+    _add_invalid_arrays(sphere)
     return sphere
+
+
+@pytest.fixture
+def grid_with_invalid_arrays(hexbeam):
+    _add_invalid_arrays(hexbeam)
+    return hexbeam
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
@@ -1534,9 +1543,7 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays, as_composite):
     assert 'validity_state' in output_polydata.array_names
 
     invalid_mesh = (
-        sphere_with_invalid_arrays.cast_to_multiblock()
-        if as_composite
-        else sphere_with_invalid_arrays
+        pv.MultiBlock([sphere_with_invalid_arrays]) if as_composite else sphere_with_invalid_arrays
     )
     assert not invalid_mesh.validate_mesh().is_valid
 
