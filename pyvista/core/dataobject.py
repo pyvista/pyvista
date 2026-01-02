@@ -25,6 +25,7 @@ from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
+from .utilities.helpers import _warn_if_invalid_data
 from .utilities.helpers import wrap
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
@@ -113,6 +114,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             )
             raise TypeError(msg)
         self.shallow_copy(data)
+        _warn_if_invalid_data(self)
         self._post_file_load_processing()
 
     def _post_file_load_processing(self: Self) -> None:
