@@ -12,6 +12,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -873,6 +874,26 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
 
+    def _check_invalid_point_references(
+        self, attr: Literal['verts', 'lines', 'faces', 'strips']
+    ) -> str | None:
+        vtkattr = {'verts': 'Verts', 'lines': 'Lines', 'faces': 'Polys', 'strips': 'Strips'}[attr]
+        if getattr(self, f'GetNumberOf{vtkattr}')():
+            n_points = self.n_points
+            connectivity = _get_connectivity_array(getattr(self, f'Get{vtkattr}')())
+            if connectivity.size and connectivity.max() >= n_points:
+                return (
+                    f'The connectivity of `{type(self).__name__}.{attr}` includes references to\n'
+                    f'point ids that do not exist. The point ids must be strictly less '
+                    f'than the number of points ({n_points}).'
+                )
+        return None
+
+    def _raise_invalid_point_references(self, attr: Literal['verts', 'lines', 'faces', 'strips']):
+        msg = self._check_invalid_point_references(attr)
+        if msg is not None:
+            raise pv.InvalidMeshError(msg)
+
     def __repr__(self) -> str:
         """Return the standard representation."""
         return DataSet.__repr__(self)
@@ -942,6 +963,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.SetVerts(verts)
         else:
             self.SetVerts(CellArray(verts))
+        self._raise_invalid_point_references('verts')
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -970,6 +992,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.SetLines(lines)
         else:
             self.SetLines(CellArray(lines))
+        self._raise_invalid_point_references('lines')
 
     @property
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1047,6 +1070,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
+        self._raise_invalid_point_references('faces')
 
     @property
     def regular_faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1240,6 +1264,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.SetStrips(strips)
         else:
             self.SetStrips(CellArray(strips))
+        self._raise_invalid_point_references('strips')
 
     @property
     def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01

@@ -338,6 +338,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             """Return cell IDs that reference points that do not exist."""
             if hasattr(mesh, 'dimensions'):
                 return []  # Cells are implicitly defined and cannot be invalid
+            elif isinstance(mesh, pv.PolyData):
+                # Check PolyData refs directly first to avoid casting to UnstructuredGrid in
+                # case refs are valid
+                check = mesh._check_invalid_point_references
+                if not any((check('verts'), check('lines'), check('faces'), check('strips'))):
+                    return []
+
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )

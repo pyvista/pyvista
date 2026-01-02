@@ -1626,7 +1626,11 @@ def invalid_random_polydata():
         )
     ).astype(int)
     points = np.append(points, [[np.nan, 0, 0]], axis=0)
-    return pv.PolyData(points, faces=faces)
+
+    # Create with valid points first, then set invalid points
+    poly = pv.PolyData(np.zeros((faces.max() + 1, 3)), faces=faces)
+    poly.points = points
+    return poly
 
 
 def test_validate_mesh_report_str():
@@ -1986,8 +1990,9 @@ def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
 
 
 def test_validate_mesh_invalid_point_references():
-    # Cell has point indices > n_points
-    grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
+    # Make poly with cell where indices > n_points
+    grid = examples.cells.Triangle()
+    grid.points = [0.0, 0.0, 0.0]
     report = grid.validate_mesh('invalid_point_references')
     expected_cell_ids = [0]
     assert report.invalid_point_references == expected_cell_ids

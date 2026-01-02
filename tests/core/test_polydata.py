@@ -229,6 +229,26 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
         _ = pv.PolyData(points, **{arr: value})
 
 
+@pytest.mark.parametrize(
+    ('attr', 'value'),
+    [
+        ('faces', [3, 0, 1, 2]),
+        ('strips', [4, 0, 1, 2, 3]),
+        ('lines', [2, 0, 1]),
+        ('verts', [1, 0]),
+    ],
+)
+def test_invalid_point_references(attr: str, value: list):
+    mesh = pv.PolyData()
+    match = (
+        f'The connectivity of `PolyData.{attr}` includes references to\n'
+        f'point ids that do not exist. The point ids must be strictly less '
+        f'than the number of points (0).'
+    )
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        setattr(mesh, attr, value)
+
+
 @pytest.mark.parametrize('lines_is_cell_array', [False, True])
 def test_lines_on_init(lines_is_cell_array):
     points = np.random.default_rng().random((5, 3))
