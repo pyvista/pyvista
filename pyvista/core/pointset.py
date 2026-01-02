@@ -890,12 +890,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Get the vertex cells.
+        """Get the vertex cell connectivity array.
+
+        See Also
+        --------
+        n_verts, lines, faces, strips
 
         Returns
         -------
         numpy.ndarray
-            Array of vertex cell indices.
+            Array of vertex cell connectivity.
 
         Examples
         --------
@@ -949,6 +953,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Lines can also be set by assigning a :class:`~pyvista.CellArray`.
 
+        See Also
+        --------
+        n_lines, verts, faces, strips
+
         Examples
         --------
         Return the lines from a spline.
@@ -982,6 +990,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
         Y'th point in face X.
 
+        Faces can be :attr:`~pyvista.CellType.TRIANGLE`, :attr:`~pyvista.CellType.QUAD`,
+        or :attr:`~pyvista.CellType.POLYGON` cells.
+
         For example, a triangle and a quadrilateral might be represented as::
 
            [3, 0, 1, 2, 4, 0, 1, 3, 4]
@@ -998,6 +1009,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
+        n_faces_strict, verts, lines, strips
         pyvista.PolyData.regular_faces
         pyvista.PolyData.irregular_faces
 
@@ -1215,12 +1227,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return a pointer to the strips as a numpy array.
+        """Return a pointer to the strips connectivity array.
 
         Returns
         -------
         numpy.ndarray
             Array of strip indices.
+
+        See Also
+        --------
+        n_strips, verts, lines, faces
 
         Examples
         --------
@@ -1229,6 +1245,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> extruded = polygon.extrude((0, 0, 1), capping=False)
         >>> extruded.strips
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+        >>> extruded.n_strips
+        4
 
         """
         self.GetStrips().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
@@ -1308,50 +1326,76 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def n_lines(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of lines.
+        """Return the number of line cells.
+
+        This is the number of :attr:`~pyvista.CellType.LINE` and
+        :attr:`~pyvista.CellType.POLY_LINE` cells defined by the :attr:`lines` connectivity array.
+
+        See Also
+        --------
+        lines, n_verts, n_faces_strict, n_strips
+        n_cells, n_points
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Line()
-        >>> mesh.n_lines
-        1
+        >>> mesh.n_lines, mesh.n_cells
+        (1, 1)
 
         """
         return self.GetNumberOfLines()
 
     @property
     def n_verts(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of vertices.
+        """Return the number of vertex cells.
 
-        A vertex is a 0D cell, which is usually a cell that references one point,
-        a :vtk:`vtkVertex`. It can also be a :vtk:`vtkPolyVertex`.
-        See `pyvista.PolyData.n_points` for the more common measure.
+        This is the number of :attr:`~pyvista.CellType.VERTEX` and
+        :attr:`~pyvista.CellType.POLY_VERTEX` cells defined by the :attr:`verts` connectivity
+        array.
+
+        .. note::
+            The number of vertices is separate and distinct from the
+            :attr:`number of points <n_points>`, as it's possible for :class:`~pyvista.PolyData`
+            to have :attr:`points` but no :attr:`verts`.
+
+        See Also
+        --------
+        n_lines, n_faces_strict, n_strips
+        n_cells, n_points
 
         Examples
         --------
         Create a simple mesh containing just two points and return the
-        number of vertices. By default, when constructing a PolyData with points but no cells,
-        vertices are automatically created, one per point.
+        number of vertices and cells. By default, when constructing a PolyData with points but no
+        cells, vertices are automatically created, one per point.
 
         >>> import pyvista as pv
         >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-        >>> mesh.n_points, mesh.n_verts
-        (2, 2)
+        >>> mesh.n_points, mesh.n_verts, mesh.n_cells
+        (2, 2, 2)
 
         If any other cells are specified, these vertices are not created.
 
         >>> import pyvista as pv
         >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1])
-        >>> mesh.n_points, mesh.n_verts
-        (2, 0)
+        >>> mesh.n_points, mesh.n_verts, mesh.n_cells
+        (2, 0, 1)
 
         """
         return self.GetNumberOfVerts()
 
     @property
     def n_strips(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of strips.
+        """Return the number of triangle strips.
+
+        This is the number of :attr:`~pyvista.CellType.TRIANGLE_STRIP` defined by the
+        :attr:`strips` connectivity array.
+
+        See Also
+        --------
+        strips, n_verts, n_lines, n_faces_strict
+        n_cells, n_points
 
         Examples
         --------
@@ -1363,8 +1407,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
         >>> strip = np.array([3, 0, 1, 2])
         >>> mesh = pv.PolyData(vertices, strips=strip)
-        >>> mesh.n_strips
-        1
+        >>> mesh.n_strips, mesh.n_cells
+        (1, 1)
 
         """
         return self.GetNumberOfStrips()
@@ -1415,10 +1459,19 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
         """Return the number of polygonal faces.
 
+        This is the number of :attr:`~pyvista.CellType.TRIANGLE`, :attr:`~pyvista.CellType.QUAD`,
+        and :attr:`~pyvista.CellType.POLYGON` cells defined by the :attr:`faces` connectivity
+        array.
+
+        See Also
+        --------
+        faces, n_verts, n_lines, n_strips
+        n_cells, n_points
+
         Returns
         -------
         int :
-             Number of faces represented in the :attr:`n_faces <pyvista.PolyData.n_faces>` array.
+             Number of faces represented in the :attr:`~pyvista.PolyData.faces` array.
 
         Examples
         --------
@@ -1430,8 +1483,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ...     faces=[3, 0, 1, 2],
         ...     lines=[2, 0, 1],
         ... )
-        >>> mesh.n_cells, mesh.n_faces_strict
-        (2, 1)
+        >>> mesh.n_cells, mesh.n_faces_strict, mesh.n_lines
+        (2, 1, 1)
 
         """
         return self.GetNumberOfPolys()
