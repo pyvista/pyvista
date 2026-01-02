@@ -328,7 +328,7 @@ class _MeshValidator:
             validated_mesh = mesh.cell_validator()
             for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
-                msg = '' if not array else _MeshValidator._invalid_cell_msg(name, array)
+                msg = _MeshValidator._invalid_cell_msg(name, array)
                 summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
                 summaries.append(summary)
         return summaries, validated_mesh
@@ -356,11 +356,13 @@ class _MeshValidator:
 
         name = 'invalid_point_references'
         array = _find_cells_with_invalid_point_refs()
-        msg = '' if not array else _MeshValidator._invalid_cell_msg(name, array)
+        msg = _MeshValidator._invalid_cell_msg(name, array)
         return _MeshValidator._FieldSummary(name=name, message=msg, values=array)
 
     @staticmethod
     def _invalid_cell_msg(name: str, array: list[int]) -> str:
+        if not array:
+            return ''
         name_norm = _MeshValidator._normalize_field_name(name)
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -389,6 +391,8 @@ class _MeshValidator:
         def _invalid_array_length_msg(
             invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
+            if not invalid_arrays:
+                return ''
             n_arrays = len(invalid_arrays)
             s = 's' if n_arrays > 1 else ''
             msg_template = (
@@ -422,12 +426,8 @@ class _MeshValidator:
         ]:
             if name in validation_fields:
                 invalid_arrays: dict[str, int] = _validate_array_lengths(data, expected_n)
-                message = (
-                    ''
-                    if not invalid_arrays
-                    else _invalid_array_length_msg(
-                        invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
-                    )
+                message = _invalid_array_length_msg(
+                    invalid_arrays=invalid_arrays, kind=kind, expected=expected_n
                 )
                 issue = _MeshValidator._FieldSummary(
                     name=name, message=message, values=list(invalid_arrays.keys())
