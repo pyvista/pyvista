@@ -892,6 +892,23 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Get the vertex cell connectivity array.
 
+        Like all padded VTK connectivity arrays, the array is structured as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in vertex 0, and ``pX_Y`` is the
+        Y'th point in vertex X.
+
+        Vertices can be a single :attr:`~pyvista.CellType.VERTEX` cell with connectivity
+        to a single point, or a :attr:`~pyvista.CellType.POLY_VERTEX` with connectivity
+        to multiple points.
+
+        For example, a single vertex and poly-vertex with five points might be represented as::
+
+           [1, 0, 5, 3, 2, 4, 1, 5]
+
+        Where the two separate vertex cells are ``[1, 0]`` and ``[5, 3, 2, 4, 1, 5]``.
+
         See Also
         --------
         n_verts, lines, faces, strips
@@ -951,6 +968,23 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the connectivity array of the lines of this PolyData.
 
+        Like all padded VTK connectivity arrays, the array is structured as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in line 0, and ``pX_Y`` is the
+        Y'th point in line X.
+
+        Lines can be a single :attr:`~pyvista.CellType.LINE` cell with connectivity
+        to two points, or a :attr:`~pyvista.CellType.POLY_LINE` with connectivity
+        to any number of points.
+
+        For example, a single line and poly-line with five points might be represented as::
+
+           [2, 0, 1, 5, 3, 2, 4, 6, 5]
+
+        Where the two separate line cells are ``[2, 0, 1]`` and ``[5, 3, 2, 4, 6, 5]``.
+
         Lines can also be set by assigning a :class:`~pyvista.CellArray`.
 
         See Also
@@ -983,7 +1017,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the connectivity array of the faces of this PolyData.
 
-        The faces array is organized as::
+        Like all padded VTK connectivity arrays, the array is structured as::
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
@@ -997,7 +1031,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
            [3, 0, 1, 2, 4, 0, 1, 3, 4]
 
-        Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
+        Where the two individual faces are ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
         Faces can also be set by assigning a :class:`~pyvista.CellArray` object
         instead of an array.
