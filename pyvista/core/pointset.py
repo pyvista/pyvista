@@ -1334,7 +1334,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         See Also
         --------
         lines, n_verts, n_faces_strict, n_strips
-        n_cells, n_points
+        pyvista.DataSet.n_cells
+        pyvista.DataSet.n_points
 
         Examples
         --------
@@ -1355,14 +1356,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         array.
 
         .. note::
-            The number of vertices is separate and distinct from the
-            :attr:`number of points <n_points>`, as it's possible for :class:`~pyvista.PolyData`
-            to have :attr:`points` but no :attr:`verts`.
+            The number of vertices is separate and distinct from :attr:`~pyvista.DataSet.n_points`,
+            as it's possible for :class:`~pyvista.PolyData` to have :attr:`~pyvista.DataSet.points`
+            but no :attr:`verts`.
 
         See Also
         --------
         n_lines, n_faces_strict, n_strips
-        n_cells, n_points
+        pyvista.DataSet.n_cells
+        pyvista.DataSet.n_points
 
         Examples
         --------
@@ -1395,7 +1397,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         See Also
         --------
         strips, n_verts, n_lines, n_faces_strict
-        n_cells, n_points
+        pyvista.DataSet.n_cells
+        pyvista.DataSet.n_points
 
         Examples
         --------
@@ -1466,7 +1469,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         See Also
         --------
         faces, n_verts, n_lines, n_strips
-        n_cells, n_points
+        pyvista.DataSet.n_cells
+        pyvista.DataSet.n_points
 
         Returns
         -------
