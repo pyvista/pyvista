@@ -21,6 +21,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
@@ -2218,7 +2219,7 @@ class MultiBlock(
         # in case we add meta data to this pbject down the road.
 
     @_deprecate_positional_args
-    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:  # noqa: FBT001, FBT002
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the multiblock.
 
         Parameters
