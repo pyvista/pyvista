@@ -392,7 +392,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)  # type: ignore[has-type]
+    @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
@@ -522,13 +522,13 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     @wraps(DataObjectFilters.validate_mesh)
     def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
-        self,
+        self: Self,
         validation_fields: _MeshValidator._AllValidationOptions
         | Sequence[_MeshValidator._AllValidationOptions]
         | None = None,
         *args,
         **kwargs,
-    ) -> _MeshValidationReport:
+    ) -> _MeshValidationReport[Self]:
         """Wrap validate_mesh with cell-related fields removed."""
         if validation_fields is None:
             fields: list[_MeshValidator._AllValidationOptions] = [
@@ -1177,7 +1177,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @irregular_faces.setter
     def irregular_faces(self, faces: Sequence[VectorLike[int]]) -> None:  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
-        self.faces = CellArray.from_irregular_cells(faces)
+        self.faces = CellArray.from_irregular_cells(faces)  # type: ignore[arg-type]
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
@@ -1223,7 +1223,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> pyramid.plot()
 
         """
-        return cls(points, faces=CellArray.from_irregular_cells(faces))
+        return cls(points, faces=CellArray.from_irregular_cells(faces))  # type: ignore[arg-type]
 
     @property
     def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
