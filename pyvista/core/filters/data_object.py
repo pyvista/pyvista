@@ -336,6 +336,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     ) -> _MeshValidator._FieldSummary:
         def _find_cells_with_invalid_point_refs() -> list[int]:
             """Return cell IDs that reference points that do not exist."""
+            if hasattr(mesh, 'dimensions'):
+                return []  # Cells are implicitly defined and cannot be invalid
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -435,13 +437,19 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            grid = mesh.cast_to_unstructured_grid()
+            if hasattr(mesh, 'dimensions'):
+                return []  # Cells are implicitly defined and cannot have unused points
+            grid = (
+                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+            )
             all_points = np.arange(grid.n_points)
             # Note: This may not include points used by Polyhedron cells
-            used_points = np.unique(_vtk.vtk_to_numpy(grid._get_cells().GetConnectivityArray()))
+            used_points = np.unique(grid.cell_connectivity)
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
+            if isinstance(mesh, pv.Grid):
+                return []  # Points are implicitly defined and cannot be non-finite
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
