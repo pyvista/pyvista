@@ -543,13 +543,31 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
-    Can be initialized in several ways:
+    The surface geometry is defined by its :attr:`~pyvista.DataSet.points` and four separate
+    cell connectivity arrays:
+
+    - :attr:`verts` for 0-dimensional :attr:`~pyvista.CellType.VERTEX` and
+      :attr:`~pyvista.CellType.POLY_VERTEX` cells.
+    - :attr:`lines` for 1-dimensional :attr:`~pyvista.CellType.LINE` and
+      :attr:`~pyvista.CellType.POLY_LINE` cells.
+    - :attr:`faces` for 2-dimensional :attr:`~pyvista.CellType.TRIANGLE`,
+      :attr:`~pyvista.CellType.QUAD`, and :attr:`~pyvista.CellType.POLYGON` cells.
+    - :attr:`strips` for 2-dimensional :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
+
+    Cell types can be mixed, and any combination of cell connectivity array(s) may be specified.
+
+    :class:`~pyvista.PolyData` can be initialized in several ways:
 
     - Create an empty mesh
     - Initialize from a :vtk:`vtkPolyData`
-    - Using vertices
-    - Using vertices and faces
+    - Using points only
+    - Using points with verts, faces, lines, and/or strips
     - From a file
+
+    If a points array is provided with no cell connectivity, the :attr:`verts` connectivity is
+    populated by default, and each point is automatically associated with a single
+    :attr:`~pyvista.CellType.VERTEX` to create a point cloud where :attr:`n_verts` equals
+    :attr:`~pyvista.DataSet.n_points`.
 
     .. deprecated:: 0.44.0
        The parameters ``n_faces``, ``n_lines``, ``n_strips``, and
@@ -574,8 +592,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        Polygonal faces of the mesh. Can be either a padded connectivity
+    faces : CellArrayLike, optional
+        Connectivity of polygonal :attr:`faces`. Can be either a padded connectivity
         array or an explicit cell array object.
 
         In the padded array format, faces must contain padding
@@ -584,15 +602,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
         lets you have an arbitrary number of points per face.
 
-        When not including the face connectivity array, each point
-        will be assigned to a single vertex.  This is used for point
-        clouds that have no connectivity.
-
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        Line connectivity. Like ``faces``, this can be either a padded
+    lines : CellArrayLike, optional
+        Connectivity of :attr:`lines`. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
         a line segment.  For example, the two line segments ``[0, 1]``
@@ -602,8 +616,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        Triangle strips connectivity.  Triangle strips require an
+    strips : CellArrayLike optional
+        Connectivity of triangle :attr:`strips`. Triangle strips require an
         initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
         points.
@@ -636,8 +650,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        The verts connectivity.  Like ``faces``, ``lines``, and
+    verts : CellArrayLike, optional
+        The :attr:`verts` connectivity.  Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
         the padding indicates the number of vertices in each cell.  For
@@ -890,7 +904,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Get the vertex cell connectivity array.
+        """Return or set the vertex padded connectivity array.
 
         Like all padded VTK connectivity arrays, the array is structured as::
 
@@ -911,7 +925,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
-        n_verts, lines, faces, strips
+        n_verts
+        lines, faces, strips
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
 
         Returns
         -------
@@ -966,7 +982,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the connectivity array of the lines of this PolyData.
+        """Return the lines connectivity array.
 
         Like all padded VTK connectivity arrays, the array is structured as::
 
@@ -989,7 +1005,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
-        n_lines, verts, faces, strips
+        n_lines
+        verts, faces, strips
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
 
         Examples
         --------
@@ -1015,7 +1033,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the connectivity array of the faces of this PolyData.
+        """Return the polygonal faces padded connectivity array.
 
         Like all padded VTK connectivity arrays, the array is structured as::
 
@@ -1043,9 +1061,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
-        n_faces_strict, verts, lines, strips
-        pyvista.PolyData.regular_faces
-        pyvista.PolyData.irregular_faces
+        n_faces_strict
+        verts, lines, strips
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
+        pyvista.PolyData.regular_faces, pyvista.PolyData.irregular_faces
+            Initialize :class:`~pyvista.PolyData` from faces.
 
         Notes
         -----
@@ -1261,7 +1281,23 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return a pointer to the strips connectivity array.
+        """Return or set the strips padded connectivity array.
+
+        Like all padded VTK connectivity arrays, the array is structured as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in strip 0, and ``pX_Y`` is the
+        Y'th point in strip X.
+
+        Only the connectivity of :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells is stored in this
+        array.
+
+        For example, two strips with one and two triangles, respectively, might look like::
+
+           [3, 0, 1, 2, 4, 3, 4, 5, 6]
+
+        Where the individual strips are ``[3, 0, 1, 2]`` and ``[4, 3, 4, 5, 6]``.
 
         Returns
         -------
@@ -1270,7 +1306,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
-        n_strips, verts, lines, faces
+        n_strips
+        verts, lines, faces
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
 
         Examples
         --------
@@ -1362,14 +1400,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def n_lines(self) -> int:  # numpydoc ignore=RT01
         """Return the number of line cells.
 
-        This is the number of :attr:`~pyvista.CellType.LINE` and
-        :attr:`~pyvista.CellType.POLY_LINE` cells defined by the :attr:`lines` connectivity array.
+        This is the total number of :attr:`~pyvista.CellType.LINE` and
+        :attr:`~pyvista.CellType.POLY_LINE` cells defined in the :attr:`lines` connectivity array.
 
         See Also
         --------
-        lines, n_verts, n_faces_strict, n_strips
-        pyvista.DataSet.n_cells
-        pyvista.DataSet.n_points
+        lines
+        n_verts, n_faces_strict, n_strips
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
@@ -1385,8 +1425,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def n_verts(self) -> int:  # numpydoc ignore=RT01
         """Return the number of vertex cells.
 
-        This is the number of :attr:`~pyvista.CellType.VERTEX` and
-        :attr:`~pyvista.CellType.POLY_VERTEX` cells defined by the :attr:`verts` connectivity
+        This is the total number of :attr:`~pyvista.CellType.VERTEX` and
+        :attr:`~pyvista.CellType.POLY_VERTEX` cells defined in the :attr:`verts` connectivity
         array.
 
         .. note::
@@ -1396,9 +1436,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
+        verts
         n_lines, n_faces_strict, n_strips
-        pyvista.DataSet.n_cells
-        pyvista.DataSet.n_points
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
@@ -1425,14 +1467,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def n_strips(self) -> int:  # numpydoc ignore=RT01
         """Return the number of triangle strips.
 
-        This is the number of :attr:`~pyvista.CellType.TRIANGLE_STRIP` defined by the
+        This is the total number of :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells defined in the
         :attr:`strips` connectivity array.
 
         See Also
         --------
-        strips, n_verts, n_lines, n_faces_strict
-        pyvista.DataSet.n_cells
-        pyvista.DataSet.n_points
+        strips
+        n_verts, n_lines, n_faces_strict
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
@@ -1496,20 +1540,17 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
         """Return the number of polygonal faces.
 
-        This is the number of :attr:`~pyvista.CellType.TRIANGLE`, :attr:`~pyvista.CellType.QUAD`,
-        and :attr:`~pyvista.CellType.POLYGON` cells defined by the :attr:`faces` connectivity
-        array.
+        This is the total number of :attr:`~pyvista.CellType.TRIANGLE`,
+        :attr:`~pyvista.CellType.QUAD`, and :attr:`~pyvista.CellType.POLYGON` cells defined in
+        the :attr:`faces` connectivity array.
 
         See Also
         --------
-        faces, n_verts, n_lines, n_strips
-        pyvista.DataSet.n_cells
-        pyvista.DataSet.n_points
-
-        Returns
-        -------
-        int :
-             Number of faces represented in the :attr:`~pyvista.PolyData.faces` array.
+        faces
+        n_verts, n_lines, n_strips
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
