@@ -817,6 +817,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+            # Validate connectivity
             self._raise_invalid_point_references(as_warning=True)
             return
 
@@ -876,9 +877,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
         else:
-            # Validate cell connectivity
-            # This validation is normally done by the connectivity setters, but these aren't
-            # used when loading from file, so we check post-load
+            # Validate connectivity
             self._raise_invalid_point_references(as_warning=True)
 
     def _check_invalid_point_references(
