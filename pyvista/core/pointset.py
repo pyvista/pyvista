@@ -12,12 +12,14 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -815,6 +817,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+            # Validate connectivity
+            self._raise_invalid_point_references(as_warning=True)
             return
 
         # First parameter is points
@@ -872,6 +876,55 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
+        else:
+            # Validate connectivity
+            self._raise_invalid_point_references(as_warning=True)
+
+    def _check_invalid_point_references(
+        self, attr: Literal['verts', 'lines', 'faces', 'strips']
+    ) -> str | None:
+        """Verify that a connectivity array does not reference invalid points."""
+        vtkattr = {'verts': 'Verts', 'lines': 'Lines', 'faces': 'Polys', 'strips': 'Strips'}[attr]
+        if getattr(self, f'GetNumberOf{vtkattr}')():
+            n_points = self.n_points
+            connectivity = _get_connectivity_array(getattr(self, f'Get{vtkattr}')())
+            if connectivity.size and connectivity.max() >= n_points:
+                return (
+                    f'The connectivity of `{type(self).__name__}.{attr}` includes references to\n'
+                    f'point ids that do not exist. The point ids must be strictly less '
+                    f'than the number of points ({n_points}).'
+                )
+        return None
+
+    def _raise_invalid_point_references(
+        self,
+        attr: Literal['verts', 'lines', 'faces', 'strips'] | None = None,
+        *,
+        as_warning: bool = False,
+    ):
+        """Raise error if the specified connectivity array has invalid point references.
+
+        If attr is None, all connectivity arrays are checked.
+
+        """
+
+        def _raise_invalid_point_references(attr_):
+            msg = self._check_invalid_point_references(attr_)
+            if msg is not None:
+                if as_warning:
+                    warn_external(msg, pv.InvalidMeshWarning)
+                else:
+                    raise pv.InvalidMeshError(msg)
+
+        if attr is None:
+            # Check all connectivity arrays
+            _raise_invalid_point_references('verts')
+            _raise_invalid_point_references('lines')
+            _raise_invalid_point_references('faces')
+            _raise_invalid_point_references('strips')
+            return
+
+        _raise_invalid_point_references(attr)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -942,6 +995,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.SetVerts(verts)
         else:
             self.SetVerts(CellArray(verts))
+        self._raise_invalid_point_references('verts')
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -970,6 +1024,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.SetLines(lines)
         else:
             self.SetLines(CellArray(lines))
+        self._raise_invalid_point_references('lines')
 
     @property
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1047,6 +1102,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
+        self._raise_invalid_point_references('faces')
 
     @property
     def regular_faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1240,6 +1296,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.SetStrips(strips)
         else:
             self.SetStrips(CellArray(strips))
+        self._raise_invalid_point_references('strips')
 
     @property
     def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01

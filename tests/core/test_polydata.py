@@ -12,10 +12,12 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
 radius = 0.5
 
@@ -227,6 +229,43 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
 
     with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
         _ = pv.PolyData(points, **{arr: value})
+
+
+@pytest.mark.parametrize(
+    ('attr', 'value'),
+    [
+        ('faces', [3, 0, 1, 2]),
+        ('strips', [4, 0, 1, 2, 3]),
+        ('lines', [2, 0, 1]),
+        ('verts', [1, 0]),
+    ],
+)
+def test_invalid_point_references(attr: str, value: list):
+    mesh = pv.PolyData()
+    match = (
+        f'The connectivity of `PolyData.{attr}` includes references to\n'
+        f'point ids that do not exist. The point ids must be strictly less '
+        f'than the number of points (0).'
+    )
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        setattr(mesh, attr, value)
+
+
+def test_init_invalid_polydata_warns(invalid_random_polydata, tmp_path):  # noqa: F811
+    filepath = tmp_path / 'invalid.vtp'
+    invalid_random_polydata.save(filepath)
+    match = (
+        'The connectivity of `PolyData.faces` includes references to\n'
+        'point ids that do not exist. The point ids must be strictly '
+        'less than the number of points (21).'
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        pv.PolyData(filepath)
+
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(invalid_random_polydata)
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        pv.PolyData(vtk_poly)
 
 
 @pytest.mark.parametrize('lines_is_cell_array', [False, True])
