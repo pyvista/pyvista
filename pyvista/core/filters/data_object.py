@@ -354,8 +354,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             elif isinstance(mesh, pv.PolyData):
                 # Check PolyData refs directly first to avoid casting to UnstructuredGrid in
                 # case refs are valid
-                check = mesh._check_invalid_point_references
-                if not any((check('verts'), check('lines'), check('faces'), check('strips'))):
+                try:
+                    mesh._raise_invalid_point_references()
+                except pv.InvalidMeshError:
+                    pass
+                else:
                     return []
 
             grid = (

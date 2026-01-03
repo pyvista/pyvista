@@ -19,6 +19,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -816,6 +817,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+            self._raise_invalid_point_references(as_warning=True)
             return
 
         # First parameter is points
@@ -873,10 +875,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
+        else:
+            # Validate cell connectivity
+            # This validation is normally done by the connectivity setters, but these aren't
+            # used when loading from file, so we check post-load
+            self._raise_invalid_point_references(as_warning=True)
 
     def _check_invalid_point_references(
         self, attr: Literal['verts', 'lines', 'faces', 'strips']
     ) -> str | None:
+        """Verify that a connectivity array does not reference invalid points."""
         vtkattr = {'verts': 'Verts', 'lines': 'Lines', 'faces': 'Polys', 'strips': 'Strips'}[attr]
         if getattr(self, f'GetNumberOf{vtkattr}')():
             n_points = self.n_points
@@ -889,10 +897,35 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 )
         return None
 
-    def _raise_invalid_point_references(self, attr: Literal['verts', 'lines', 'faces', 'strips']):
-        msg = self._check_invalid_point_references(attr)
-        if msg is not None:
-            raise pv.InvalidMeshError(msg)
+    def _raise_invalid_point_references(
+        self,
+        attr: Literal['verts', 'lines', 'faces', 'strips'] | None = None,
+        *,
+        as_warning: bool = False,
+    ):
+        """Raise error if the specified connectivity array has invalid point references.
+
+        If attr is None, all connectivity arrays are checked.
+
+        """
+
+        def _raise_invalid_point_references(attr_):
+            msg = self._check_invalid_point_references(attr_)
+            if msg is not None:
+                if as_warning:
+                    warn_external(msg, pv.InvalidMeshWarning)
+                else:
+                    raise pv.InvalidMeshError(msg)
+
+        if attr is None:
+            # Check all connectivity arrays
+            _raise_invalid_point_references('verts')
+            _raise_invalid_point_references('lines')
+            _raise_invalid_point_references('faces')
+            _raise_invalid_point_references('strips')
+            return
+
+        _raise_invalid_point_references(attr)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
