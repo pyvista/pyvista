@@ -122,6 +122,19 @@ class DataSetAttributes(
     >>> 'my_data' in mesh.point_data
     False
 
+    Remove all arrays.
+    >>> mesh.point_data['my_data'] = range(mesh.n_points)
+    >>> mesh.point_data['my_other_data'] = range(mesh.n_points)
+    >>> del mesh.point_data[:]
+    >>> mesh.point_data
+    pyvista DataSetAttributes
+    Association     : POINT
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays : None
+
     Print the available arrays from dataset attributes.
 
     >>> import numpy as np
@@ -276,13 +289,25 @@ class DataSetAttributes(
         ):
             self.active_scalars_name = key
 
-    def __delitem__(self: Self, key: str) -> None:
-        """Implement del with array name or index."""
-        if not isinstance(key, str):
+    def __delitem__(
+        self: Self,
+        key: str | slice,
+    ) -> None:
+        """Implement del with array name or all values."""
+        if not isinstance(key, (str, slice)):
             msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        self.remove(key)
+        if isinstance(key, str):
+            self.remove(key)
+            return
+
+        if key != slice(None, None, None):
+            msg = 'Slicing deletion is only allowed with all values (ie. with [:]).'
+            raise ValueError(msg)
+
+        for k in self.keys():
+            self.remove(key=k)
 
     def __contains__(self: Self, name: str) -> bool:
         """Implement the ``in`` operator."""
