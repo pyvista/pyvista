@@ -234,18 +234,24 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
 @pytest.mark.parametrize(
     ('attr', 'value'),
     [
+        # Index exceeds n_points
         ('faces', [3, 0, 1, 2]),
         ('strips', [4, 0, 1, 2, 3]),
         ('lines', [2, 0, 1]),
         ('verts', [1, 0]),
+        # Negative point indices
+        ('faces', [3, -1, -1, -1]),
+        ('strips', [4, -1, -1, -1, -1]),
+        ('lines', [2, -1, -1]),
+        ('verts', [1, -1]),
     ],
 )
 def test_invalid_point_references(attr: str, value: list):
     mesh = pv.PolyData()
     match = (
         f'The connectivity of `PolyData.{attr}` includes references to\n'
-        f'point ids that do not exist. The point ids must be strictly less '
-        f'than the number of points (0).'
+        f'point ids that do not exist. The point ids must be non-negative and strictly less '
+        f'than the\nnumber of points (0).'
     )
     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
         setattr(mesh, attr, value)
@@ -256,8 +262,8 @@ def test_init_invalid_polydata_warns(invalid_random_polydata, tmp_path):  # noqa
     invalid_random_polydata.save(filepath)
     match = (
         'The connectivity of `PolyData.faces` includes references to\n'
-        'point ids that do not exist. The point ids must be strictly '
-        'less than the number of points (21).'
+        'point ids that do not exist. The point ids must be non-negative and strictly less '
+        'than the\nnumber of points (21).'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         pv.PolyData(filepath)

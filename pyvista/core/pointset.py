@@ -887,12 +887,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         vtkattr = {'verts': 'Verts', 'lines': 'Lines', 'faces': 'Polys', 'strips': 'Strips'}[attr]
         if getattr(self, f'GetNumberOf{vtkattr}')():
             n_points = self.n_points
-            connectivity = _get_connectivity_array(getattr(self, f'Get{vtkattr}')())
-            if connectivity.size and connectivity.max() >= n_points:
+            vtk_connectivity = getattr(self, f'Get{vtkattr}')().GetConnectivityArray()
+            conn_min, conn_max = vtk_connectivity.GetRange()
+            if conn_min < 0 or conn_max >= n_points:
                 return (
                     f'The connectivity of `{type(self).__name__}.{attr}` includes references to\n'
-                    f'point ids that do not exist. The point ids must be strictly less '
-                    f'than the number of points ({n_points}).'
+                    f'point ids that do not exist. The point ids must be non-negative and strictly'
+                    f' less than the\nnumber of points ({n_points}).'
                 )
         return None
 
