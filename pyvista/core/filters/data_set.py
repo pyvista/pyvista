@@ -6175,7 +6175,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def infer_scalars_with_onnx(  # type: ignore[misc]  # noqa: PLR0917
+    def infer_scalars_with_onnx(  # type: ignore[misc]  # noqa: PLR0917  # pragma: no cover
         self: _DataSetType,
         model_path: str,
         input_parameters: Sequence[float] | np.ndarray,
