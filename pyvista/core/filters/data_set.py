@@ -14,6 +14,7 @@ from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
+import warnings
 
 import numpy as np
 
@@ -37,6 +38,7 @@ from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -2332,7 +2334,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(
             alg, progress_bar=progress_bar, message='Finding and Labeling Connected Regions.'
         )
-        output = _get_output(alg)
+        # This filter is known to return invalid arrays which emits a warning when
+        # the output is wrapped. These invalid arrays are removed later.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
+            )
+            output = _get_output(alg)
 
         # Process output
         output_needs_fixing = False  # initialize flag if output needs to be fixed
@@ -2398,7 +2407,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             except TypeError:
                 pass
             else:
-                return self
+                output = self
+        # Make sure buggy scalars have been fixed
+        _warn_if_invalid_data(output)
         return output
 
     @_deprecate_positional_args

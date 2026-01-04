@@ -56,6 +56,11 @@ _NORMALS = {
 _NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
+def _warn_if_invalid_data(obj: DataObject):
+    if pv.vtk_version_info >= (9, 3, 0) and hasattr(obj, 'validate_mesh'):
+        obj.validate_mesh('data', action='warn')
+
+
 # vtkDataSet overloads
 # Overload types should match the mappings in the `pyvista._wrappers` dict
 # Overloads should be ordered from narrow types (child class) to general types (parent class)
@@ -242,10 +247,14 @@ def wrap(  # noqa: PLR0911
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return pv._wrappers[key](dataset)
+            wrapped_vtk: DataObject = pv._wrappers[key](dataset)
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
+        else:
+            # Warn if data arrays are invalid
+            _warn_if_invalid_data(wrapped_vtk)
+            return wrapped_vtk
 
     # wrap meshio
     if is_meshio_mesh(dataset):
