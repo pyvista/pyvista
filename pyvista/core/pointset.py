@@ -1811,6 +1811,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             geometry is modified, the obb tree will no longer be valid.
 
         """
+        if self.n_points < 1 or self.n_cells < 1:
+            msg = 'Building the OBB tree requires PolyData with points and cells.'
+            raise ValueError(msg)
         obb_tree = _vtk.vtkOBBTree()
         obb_tree.SetDataSet(self)
         obb_tree.BuildLocator()
@@ -1868,7 +1871,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
-        self.obbTree = None  # type: ignore[assignment]
+        with contextlib.suppress(KeyError):
+            del self.__dict__['obbTree']
 
 
 @abstract_class
