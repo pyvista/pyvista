@@ -1153,7 +1153,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         from meshio._vtk_common import vtk_to_meshio_type  # noqa: PLC0415
 
     # Cast to unstructured grid
-    mesh = mesh.cast_to_unstructured_grid()
+    mesh = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
     mesh = (
         mesh.extract_cells(mesh.cell_data['vtkGhostType'] == 0)
         if 'vtkGhostType' in mesh.cell_data

@@ -357,6 +357,34 @@ def test_ray_trace_origin():
     assert cells[0] == 0
 
 
+def test_vtk_obb_tree_raises():
+    poly = pv.PolyData()
+    match = 'Building the OBB tree requires PolyData with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.points = [[0.0, 0.0, 0.0]]
+    assert poly.n_points == 1
+    assert poly.n_cells == 0
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.faces = [3, 0, 0, 0]
+    assert poly.n_points == 0
+    assert poly.n_cells == 1
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+
+def test_polydata_subclass_del():
+    class PolyDataDerived(pv.PolyData): ...
+
+    poly = PolyDataDerived()
+    del poly
+
+
 def test_multi_ray_trace(sphere):
     trimesh = pytest.importorskip('trimesh')
     if not trimesh.ray.has_embree:
