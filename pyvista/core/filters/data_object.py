@@ -373,6 +373,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @staticmethod
     def _invalid_cell_msg(name: str, array: list[int]) -> str:
+        if not array:
+            return ''
         name_norm = _MeshValidator._normalize_field_name(name)
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -401,6 +403,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         def _invalid_array_length_msg(
             invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
+            if not invalid_arrays:
+                return ''
             n_arrays = len(invalid_arrays)
             s = 's' if n_arrays > 1 else ''
             msg_template = (
@@ -466,20 +470,25 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
+        def invalid_points_msg(name_: str, array: list[int], info_: str) -> str:
+            if not array:
+                return ''
+            name_norm = _MeshValidator._normalize_field_name(name_)
+            name_norm = name_norm.removesuffix('s')
+            n_ids = len(array)
+            s = 's' if n_ids > 1 else ''
+            return (
+                f'Mesh has {n_ids} {name_norm}{s}{info_}. Invalid point id{s}: '
+                f'{reprlib.repr(array)}'
+            )
+
         summaries: list[_MeshValidator._FieldSummary] = []
         for name, point_ids, info in [
             ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
             ('non_finite_points', get_non_finite_point_ids(), ''),
         ]:
             if name in validation_fields:
-                name_norm = _MeshValidator._normalize_field_name(name)
-                name_norm = name_norm.removesuffix('s')
-                n_ids = len(point_ids)
-                s = 's' if n_ids > 1 else ''
-                msg = (
-                    f'Mesh has {n_ids} {name_norm}{s}{info}. Invalid point id{s}: '
-                    f'{reprlib.repr(point_ids)}'
-                )
+                msg = invalid_points_msg(name, point_ids, info)
                 issue = _MeshValidator._FieldSummary(name=name, message=msg, values=point_ids)
                 summaries.append(issue)
         return summaries
