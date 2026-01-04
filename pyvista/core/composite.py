@@ -21,6 +21,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
@@ -52,6 +53,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyvista import PolyData
+    from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
     from .utilities.writer import BaseWriter
@@ -1299,7 +1301,10 @@ class MultiBlock(
 
     @property
     def center(self: MultiBlock) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or return the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1320,6 +1325,11 @@ class MultiBlock(
 
         """
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def length(self: MultiBlock) -> float:
@@ -2209,7 +2219,7 @@ class MultiBlock(
         # in case we add meta data to this pbject down the road.
 
     @_deprecate_positional_args
-    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:  # noqa: FBT001, FBT002
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the multiblock.
 
         Parameters

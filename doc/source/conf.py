@@ -243,9 +243,11 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', '.*colors.Colormap'),
     (r'py:.*', 'colors.ListedColormap'),
+    (r'py:.*', '.*MeshValidationReport'),
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'pyvista.SeriesDataSet'),
     (r'py:.*', 'ScalarBarArgs'),
     (r'py:.*', 'SilhouetteArgs'),
     (r'py:.*', 'BackfaceArgs'),
@@ -259,6 +261,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*JupyterBackendOptions'),
     (r'py:.*', '_InterpolationOptions'),
     (r'py:.*', 'PlottableType'),
+    (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -289,6 +292,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
     (r'py:.*', 'Rotation'),
+    (r'py:.*', '.*VtkEvent'),
     (r'py:.*', 'vtk.*'),
     (r'py:.*', '_vtk.*'),
     (r'py:.*', 'VTK'),
@@ -394,6 +398,12 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
+def _filter_sphinx_gallery_warnings():
+    import warnings
+
+    warnings.simplefilter('error')
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
@@ -402,6 +412,7 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
+        _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
         # clear all mpl figures, force non-interactive backend, and reset defaults

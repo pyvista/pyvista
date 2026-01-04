@@ -36,10 +36,10 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
-import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
+from tests.examples.test_cell_examples import cell_example_functions
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -668,6 +668,15 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl.add_mesh(hexbeam, style='wireframe')
     pl.add_mesh(plane)
     pl.show_grid(mesh=plane, show_zlabels=False, show_zaxis=False)
+    pl.show()
+
+
+@pytest.mark.parametrize('use_3d_text', [True, False])
+@pytest.mark.parametrize('font_size', [12, 24])
+def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show_grid(use_3d_text=use_3d_text, font_size=font_size)
     pl.show()
 
 
@@ -3511,6 +3520,30 @@ def test_plot_cell():
     examples.plot_cell(grid)
 
 
+@skip_windows_mesa  # due to opacity
+@pytest.mark.parametrize('wrong_orientation', [True, False])
+def test_plot_cell_polyhedron(wrong_orientation):
+    points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
+    cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    if wrong_orientation:
+        # Swap two ids
+        id1 = cells[2]
+        cells[2] = cells[3]
+        cells[3] = id1
+    cells = [len(cells), *cells]
+    polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
+    examples.plot_cell(polyhedron, show_normals=True)
+
+
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
+def test_plot_cell_multiple_cell_types(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    cell3d = examples.cells.Polyhedron()
+    cell2d = examples.cells.Quadrilateral().translate((2, -2, 0))
+    grid = cell2d + cell3d
+    examples.plot_cell(grid, show_normals=True)
+
+
 def test_tight_square_padding():
     grid = pv.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
@@ -5275,3 +5308,31 @@ def test_box():
     pl.add_point_labels(box_multi.points, np.arange(box_multi.n_points))
     pl.add_point_labels(box.points, np.arange(box.n_points))
     pl.show()
+
+
+def test_partitioned_dataset(sphere):
+    mesh = pv.PartitionedDataSet([sphere])
+    mesh.plot()
+
+
+@pytest.mark.parametrize('cell_example', cell_example_functions)
+def test_cell_examples_normals(cell_example, verify_image_cache):
+    if cell_example is examples.cells.Empty:
+        pytest.skip('nothing to plot')
+    if cell_example in [
+        examples.cells.BiQuadraticQuadraticWedge,
+        examples.cells.QuadraticLinearWedge,
+        examples.cells.QuadraticWedge,
+    ] and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('point ordering changed in newer VTK')
+
+    # Skip since variance is too high
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.windows_skip_image_cache = True
+
+    grid = cell_example()
+    if next(grid.cell).dimension == 2:
+        # Ensure normals of 2D cells point in z-direction for consistency
+        normal = grid.extract_geometry().cell_normals.mean(axis=0)
+        assert np.allclose(normal, (0.0, 0.0, 1.0))
+    examples.plot_cell(grid, show_normals=True)

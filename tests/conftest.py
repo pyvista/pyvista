@@ -209,6 +209,11 @@ def datasets():
 
 
 @pytest.fixture
+def datasets_plus_pointset(datasets, ant):
+    return [*datasets, ant.cast_to_pointset()]
+
+
+@pytest.fixture
 def multiblock_poly():
     # format and order of data (including missing) is intentional
     mesh_a = pv.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
@@ -258,7 +263,7 @@ def multiblock_all(datasets):
 def multiblock_all_with_nested_and_none(datasets, multiblock_all):
     """Return datasets fixture combined in a pyvista multiblock."""
     multiblock_all.append(None)
-    return pv.MultiBlock([*datasets, None, multiblock_all])
+    return pv.MultiBlock([*datasets, None, multiblock_all.copy()])
 
 
 @pytest.fixture

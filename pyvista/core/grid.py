@@ -1134,7 +1134,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)  # type:ignore[has-type]
+    @wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
@@ -1187,10 +1187,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     ) -> None:  # numpydoc ignore=GL08
         T, R, N, S, K = pv.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
-            warn_external(
-                'The transformation matrix has a shear component which has been removed. \n'
-                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+            msg = (
+                'The transformation has a shear component which is not supported by ImageData.\n'
+                'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+                '`Transform.decompose()` to remove this component.'
             )
+            raise ValueError(msg)
 
         self.origin = T
         self.direction_matrix = R * N

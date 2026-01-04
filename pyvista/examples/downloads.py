@@ -34,8 +34,6 @@ from typing import cast
 
 import numpy as np
 import pooch
-from pooch import Unzip
-from pooch.utils import get_logger
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -55,7 +53,7 @@ if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import MultiBlock
 # disable pooch verbose logging
-POOCH_LOGGER = get_logger()
+POOCH_LOGGER = pooch.get_logger()  # type: ignore[attr-defined]
 POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 
@@ -64,7 +62,7 @@ CACHE_VERSION = 3
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
 
@@ -136,7 +134,7 @@ _warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
 # to the registry since we're not (at the moment) concerned about hashes.
-FETCHER = pooch.create(
+FETCHER = pooch.create(  # type: ignore[attr-defined]
     path=USER_DATA_PATH,
     base_url=SOURCE,
     registry={},
@@ -232,7 +230,7 @@ def _download_file(filename):
     """Download a file using pooch."""
     return FETCHER.fetch(
         filename,
-        processor=Unzip() if filename.endswith('.zip') else None,
+        processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
     )
 
@@ -1566,6 +1564,10 @@ def download_foot_bones(load=True):  # noqa: FBT002
 
         :ref:`voxelize_example`
             Example using this dataset.
+
+        :ref:`compare_threshold_filters_example`
+            Example using this dataset.
+
 
     """
     return _download_dataset(_dataset_foot_bones, load=load)
@@ -3242,6 +3244,7 @@ def download_carotid(load=True):  # noqa: FBT002
         * :ref:`gradients_example`
         * :ref:`streamlines_example`
         * :ref:`plane_widget_example`
+        * :ref:`compare_threshold_filters_example`
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -7663,15 +7666,15 @@ def download_reservoir(load=True):  # noqa: FBT002
       N Arrays:   6
 
 
-    >>> plot = pv.Plotter()
-    >>> _ = plot.add_mesh(dataset, show_edges=True)
-    >>> camera = plot.camera
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(dataset, show_edges=True)
+    >>> camera = pl.camera
     >>> camera.position = (312452, 7474760, 3507)
     >>> camera.focal_point = (314388, 7481520, -2287)
     >>> camera.up = (0.09, 0.63, 0.77)
     >>> camera.distance = 9112
     >>> camera.clipping_range = (595, 19595)
-    >>> plot.show()
+    >>> pl.show()
 
     .. seealso::
 
@@ -7915,7 +7918,7 @@ class _WholeBodyCTUtilities:
         # Add scalars to a new image
         label_map_image = pv.ImageData()
         label_map_image.copy_structure(cast('pv.ImageData', masks[0]))
-        label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
+        label_map_image['label_map'] = label_map_array
         return label_map_image
 
     @staticmethod
@@ -8701,3 +8704,47 @@ def download_yinyang(*, load=True):
 
 
 _dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
+
+
+def download_warping_spheres(*, load=True):
+    """Download warping spheres dataset.
+
+    .. versionadded:: 0.47.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : PartitionedDataSet | str
+        Data object or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the warping spheres and plot them.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> partitioned = examples.download_warping_spheres()
+    >>> cpos = pv.CameraPosition(
+    ...     position=(70.0, -70.0, 0.0),
+    ...     focal_point=(7.0, 7.0, 7.0),
+    ...     viewup=(0.0, 0.0, 1.0),
+    ... )
+    >>> partitioned.plot(cpos=cpos)
+
+    .. seealso::
+
+        :ref:`Warping Spheres Dataset <warping_spheres_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_warping_spheres, load=load)
+
+
+_dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
+    'warping_spheres/warping_spheres.vtkhdf'
+)

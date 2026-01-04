@@ -30,6 +30,9 @@ def matplotlib_named_cmaps():
     return [cmap for cmap in mpl.colormaps if not is_synonym(cmap) and not is_reversed(cmap)]
 
 
+@pytest.mark.skipif(
+    'dev' in mpl.__version__, reason='Only run documentation tests for matplotlib releases.'
+)
 def test_colormap_table_matplotlib(matplotlib_named_cmaps):
     if (
         'berlin' not in matplotlib_named_cmaps

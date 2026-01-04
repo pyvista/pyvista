@@ -38,8 +38,10 @@ from .features import transform_vectors_sph_to_cart as transform_vectors_sph_to_
 from .features import voxelize as voxelize
 from .features import voxelize_volume as voxelize_volume
 from .fileio import from_meshio as from_meshio
+from .fileio import from_trimesh as from_trimesh
 from .fileio import get_ext as get_ext
 from .fileio import is_meshio_mesh as is_meshio_mesh
+from .fileio import is_trimesh_mesh as is_trimesh_mesh
 from .fileio import read as read
 from .fileio import read_exodus as read_exodus
 from .fileio import read_grdecl as read_grdecl
@@ -50,7 +52,7 @@ from .fileio import save_meshio as save_meshio
 from .fileio import save_pickle as save_pickle
 from .fileio import set_pickle_format as set_pickle_format
 from .fileio import to_meshio as to_meshio
-from .geometric_objects import NORMALS as NORMALS
+from .fileio import to_trimesh as to_trimesh
 from .geometric_objects import Arrow as Arrow
 from .geometric_objects import Box as Box
 from .geometric_objects import Capsule as Capsule
@@ -210,6 +212,8 @@ from .reader import PTSReader as PTSReader
 from .reader import PVDDataSet as PVDDataSet
 from .reader import PVDReader as PVDReader
 from .reader import SegYReader as SegYReader
+from .reader import SeriesDataSet as SeriesDataSet
+from .reader import SeriesReader as SeriesReader
 from .reader import SLCReader as SLCReader
 from .reader import STLReader as STLReader
 from .reader import TecplotReader as TecplotReader

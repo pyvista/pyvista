@@ -8,10 +8,13 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
+import operator
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import get_args
+import warnings
 
 import numpy as np
 
@@ -34,7 +37,8 @@ from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
-from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -56,6 +60,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
+
+
+_SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
 @abstract_class
@@ -119,40 +126,43 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Create a cylinder, translate it, and use iterative closest point to
         align mesh to its original position.
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
-        >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
-        >>> aligned = transformed.align(source)
-        >>> _, closest_points = aligned.find_closest_cell(
-        ...     source.points, return_closest_point=True
-        ... )
-        >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
+        .. pyvista-plot::
+           :force_static:
 
-        Visualize the source, transformed, and aligned meshes.
+            >>> import pyvista as pv
+            >>> import numpy as np
+            >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
+            >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
+            >>> aligned = transformed.align(source)
+            >>> _, closest_points = aligned.find_closest_cell(
+            ...     source.points, return_closest_point=True
+            ... )
+            >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
 
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> _ = pl.add_text('Before Alignment')
-        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
-        >>> _ = pl.add_mesh(transformed)
-        >>> pl.subplot(0, 1)
-        >>> _ = pl.add_text('After Alignment')
-        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
-        >>> _ = pl.add_mesh(
-        ...     aligned,
-        ...     scalars=dist,
-        ...     scalar_bar_args={
-        ...         'title': 'Distance to Source',
-        ...         'fmt': '%.1E',
-        ...     },
-        ... )
-        >>> pl.show()
+            Visualize the source, transformed, and aligned meshes.
 
-        Show that the mean distance between the source and the target is
-        nearly zero.
+            >>> pl = pv.Plotter(shape=(1, 2))
+            >>> _ = pl.add_text('Before Alignment')
+            >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
+            >>> _ = pl.add_mesh(transformed)
+            >>> pl.subplot(0, 1)
+            >>> _ = pl.add_text('After Alignment')
+            >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
+            >>> _ = pl.add_mesh(
+            ...     aligned,
+            ...     scalars=dist,
+            ...     scalar_bar_args={
+            ...         'title': 'Distance to Source',
+            ...         'fmt': '%.1E',
+            ...     },
+            ... )
+            >>> pl.show()
 
-        >>> np.abs(dist).mean()  # doctest:+SKIP
-        9.997635192915073e-05
+            Show that the mean distance between the source and the target is
+            nearly zero.
+
+            >>> np.abs(dist).mean()  # doctest:+SKIP
+            9.997635192915073e-05
 
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
@@ -343,9 +353,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             else:
                 if isinstance(vector, str):
                     vector = vector.lower()
-                    valid_strings = list(NORMALS.keys())
+                    valid_strings = list(_NORMALS.keys())
                     _validation.check_contains(valid_strings, must_contain=vector, name=name)
-                    vector = NORMALS[vector]
+                    vector = _NORMALS[vector]
                 vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector_
 
@@ -440,6 +450,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Dataset containing the ``'implicit_distance'`` array in
             ``point_data``.
 
+        See Also
+        --------
+        select_interior_points
+
         Examples
         --------
         Compute the distance between all the points on a sphere and a
@@ -502,7 +516,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         self: _DataSetType,
         scalars: str | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
-        value: float = 0.0,
+        value: float | VectorLike[float] = 0.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         both: bool = False,  # noqa: FBT001, FBT002
@@ -519,8 +533,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             only the mesh below ``value`` will be kept.  When
             ``False``, only values above ``value`` will be kept.
 
-        value : float, default: 0.0
-            Set the clipping value.
+        value : float | VectorLike[float], default: 0.0
+            Set the clipping value. Can also be set as a range of values.
+            The range produces an output similar to an isovolume filter of Paraview.
 
         inplace : bool, default: False
             Update mesh in-place.
@@ -566,14 +581,40 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> clipped.plot()
 
+        Clip the part of the mesh with "sample_point_scalars" between 200 and 250.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.load_hexbeam()
+        >>> clipped = dataset.clip_scalar(
+        ...     scalars='sample_point_scalars', value=(200, 250)
+        ... )
+        >>> clipped.plot()
+
+        .. seealso::
+
+            :ref:`compare_threshold_filters_example`
+                This example showcases this filter and
+                other similar ones.
+
         """
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
 
+        if is_single_value := isinstance(value, (float, int)):
+            alg.SetValue(value)
+        else:
+            lower, upper = _validation.validate_data_range(value)
+            alg.SetValue(upper)
+            if not invert:
+                msg = 'Cannot have invert=False for a range clip'
+                raise ValueError(msg)
+            if both:
+                msg = 'Cannot have both=True for a range clip'
+                raise ValueError(msg)
         alg.SetInputDataObject(self)
-        alg.SetValue(value)
         if scalars is None:
             set_default_active_scalars(self)
         else:
@@ -584,11 +625,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = _get_output(alg)
-
         if inplace:
+            if isinstance(self, pv.core.grid.ImageData):
+                msg = 'Cannot use inplace argument for ImageData type input.'
+                raise TypeError(msg)
             self.copy_from(result0, deep=False)
             result0 = self
-
+        if not is_single_value:
+            return result0.clip_scalar(scalars=scalars, invert=False, value=lower, inplace=inplace)
         if both:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):
@@ -793,6 +837,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Threshold-like filter for ``ImageData`` to keep some values and replace others.
+        :ref:`compare_threshold_filters_example`
+            This example showcases this filter and
+            other similar ones.
+
 
         Returns
         -------
@@ -2286,7 +2334,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(
             alg, progress_bar=progress_bar, message='Finding and Labeling Connected Regions.'
         )
-        output = _get_output(alg)
+        # This filter is known to return invalid arrays which emits a warning when
+        # the output is wrapped. These invalid arrays are removed later.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
+            )
+            output = _get_output(alg)
 
         # Process output
         output_needs_fixing = False  # initialize flag if output needs to be fixed
@@ -2352,7 +2407,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             except TypeError:
                 pass
             else:
-                return self
+                output = self
+        # Make sure buggy scalars have been fixed
+        _warn_if_invalid_data(output)
         return output
 
     @_deprecate_positional_args
@@ -2723,7 +2780,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         (The name of the output :vtk:`vtkDataArray` is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
-        input dataset. If you wish to extract cells or poinrs, various
+        input dataset. If you wish to extract cells or points, various
         threshold filters are available (i.e., threshold the output array).
 
         .. warning::
@@ -2731,6 +2788,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
            manifold. A boolean flag can be set to force the filter to
            first check whether this is true. If ``False`` and not manifold,
            an error will be raised.
+
+        .. deprecated:: 0.47
+            This filter may be unreliable as it can erroneously mark outside points as inside.
+            Use :meth:`select_interior_points` instead.
 
         Parameters
         ----------
@@ -2774,17 +2835,27 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> plane = pv.Plane()
-        >>> selected = plane.select_enclosed_points(sphere)
-        >>> pts = plane.extract_points(
+        >>> selected = plane.select_enclosed_points(sphere)  # doctest:+SKIP
+        >>> pts = plane.extract_points(  # doctest:+SKIP
         ...     selected['SelectedPoints'].view(bool),
         ...     adjacent_cells=False,
         ... )
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, style='wireframe')
-        >>> _ = pl.add_points(pts, color='r')
-        >>> pl.show()
+        >>> pl = pv.Plotter()  # doctest:+SKIP
+        >>> _ = pl.add_mesh(sphere, style='wireframe')  # doctest:+SKIP
+        >>> _ = pl.add_points(pts, color='r')  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         """
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 51):  # pragma: no cover
+            msg = 'Remove this filter.'
+            raise RuntimeError(msg)
+
+        msg = 'This filter is deprecated. Use `select_interior_points` instead.'
+        warn_external(msg, PyVistaDeprecationWarning)
+
         if not isinstance(surface, pv.PolyData):
             msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -2795,18 +2866,165 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 '`check_surface=False` or repair the surface.'
             )
             raise RuntimeError(msg)
+
+        bools = self._select_enclosed_points(
+            surface, inside_out=inside_out, tolerance=tolerance, progress_bar=progress_bar
+        )
+        out = self.copy()
+        out['SelectedPoints'] = bools
+        return out
+
+    def _select_enclosed_points(  # type: ignore[misc]
+        self: _DataSetType,
+        surface: PolyData,
+        *,
+        inside_out: bool,
+        tolerance: float,
+        progress_bar: bool,
+    ) -> NumpyArray[np.uint8]:
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
         _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
-        result = _get_output(alg)
-        out = self.copy()
-        bools = result['SelectedPoints'].astype(np.uint8)
-        if len(bools) < 1:
-            bools = np.zeros(out.n_points, dtype=np.uint8)
-        out['SelectedPoints'] = bools
+        return _get_output(alg)['SelectedPoints']
+
+    def select_interior_points(  # type:ignore[misc]
+        self: _DataSetType,
+        surface: pv.PolyData,
+        *,
+        method: _SelectInteriorPointsOptions = 'signed_distance',
+        inside_out: bool = False,
+        check_surface: bool = True,
+        locator_tolerance: float | None = None,
+    ) -> _DataSetType:
+        """Mark points from this mesh as inside or outside relative to a closed surface.
+
+        Evaluate all of this mesh's points to determine if they are inside an enclosed surface.
+        The filter produces a boolean point array named ``'selected_points'`` with ``True``
+        values indicating points are inside, and ``False`` values indicating points are outside the
+        provided surface.
+
+        By default, the input surface is checked to ensure it is closed. Optionally, this check may
+        be disabled.
+
+        .. note::
+            This filter generates a data array, but does not modify the
+            input dataset. If you wish to extract cells or points, various
+            threshold filters are available (i.e., threshold the output array).
+
+        .. versionadded:: 0.47
+
+        Parameters
+        ----------
+        surface : PolyData
+           Surface used to test for containment. It should be a closed surface such that it has
+           a defined "inside" and "outside".
+
+        method : 'signed_distance' | 'cell_locator', default: 'signed_distance'
+            Underlying method used to select points.
+
+            - ``'signed_distance'``: Use :meth:`compute_implicit_distance` and select points based
+              on the distance. Points with negative distance are inside, points with positive
+              distance are outside.
+            - ``'cell_locator'``: Use :vtk:`vtkSelectEnclosedPoints` to select points. This uses
+              :vtk:`vtkStaticCellLocator` internally to spatially search for interior points. Use
+              the ``locator_tolerance`` to control the search tolerance.
+
+            .. note::
+                The ``'signed_distance'`` method is generally slower, but is also more reliable
+                for correctly identifying interior points.
+
+            .. warning::
+                The ``'cell_locator'`` option can erroneously mark outside points as inside.
+
+        inside_out : bool, default: False
+            By default, points inside the surface have value ``True``, and points outside
+            have value ``False``. Set ``inside_out=True`` to invert this.
+
+        check_surface : bool, default: True
+            Specify whether to check the surface for closure. When ``True``, the
+            algorithm first checks to see if the surface is closed and
+            manifold. If the surface is not closed, a runtime error is raised.
+
+        locator_tolerance : float, default: 0.001
+            The tolerance on the intersection when using the ``'cell_locator'`` method. The
+            tolerance is expressed as a fraction of the bounding box of the enclosing surface.
+
+        Returns
+        -------
+        PolyData
+            Mesh with a new ``'selected_points'`` :attr:`~pyvista.DataSet.point_data` array.
+
+        See Also
+        --------
+        compute_implicit_distance, extract_points, extract_cells
+        :ref:`extract_cells_inside_surface_example`
+
+        Examples
+        --------
+        Determine which points on a plane are inside a manifold sphere surface mesh.
+        Extract these points using the :func:`~DataSetFilters.extract_points` filter
+        and then plot them.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plane = pv.Plane()
+        >>> selected = plane.select_interior_points(sphere)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'], include_cells=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        Select the outside points instead.
+
+        >>> selected = plane.select_interior_points(sphere, inside_out=True)
+        >>> pts = plane.extract_points(
+        ...     selected['selected_points'], include_cells=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, style='wireframe', line_width=3)
+        >>> _ = pl.add_points(
+        ...     pts, color='r', point_size=15, render_points_as_spheres=True
+        ... )
+        >>> pl.show()
+
+        """
+        _validation.check_instance(surface, pv.PolyData, name='surface')
+        allowed_methods = get_args(_SelectInteriorPointsOptions)
+        _validation.check_contains(allowed_methods, must_contain=method, name='method')
+        if check_surface and not _vtk.vtkSelectEnclosedPoints.IsSurfaceClosed(surface):
+            msg = (
+                'Surface is not closed. Please read the warning in the '
+                'documentation for\nthis function and either pass '
+                '`check_surface=False` or repair the surface.'
+            )
+            raise RuntimeError(msg)
+
+        out = self.copy(deep=False)
+        if method == 'signed_distance':
+            if locator_tolerance is not None:
+                msg = 'locator_tolerance cannot be used with the signed_distance method.'
+                raise ValueError(msg)
+            distance = self.compute_implicit_distance(surface)
+            # Negative distance means inside
+            operation = operator.ge if inside_out else operator.le
+            bools = operation(distance['implicit_distance'], 0)
+        else:
+            bools = self._select_enclosed_points(
+                surface,
+                inside_out=inside_out,
+                tolerance=0.001 if locator_tolerance is None else locator_tolerance,
+                progress_bar=False,
+            ).astype(bool)
+        out['selected_points'] = bools
+        out.set_active_scalars('selected_points')
         return out
 
     @_deprecate_positional_args(allowed=['target'])
@@ -4505,10 +4723,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Plot the regions.
 
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_composite(multiblock, multi_colors=True)
-        >>> _ = plot.show_grid()
-        >>> plot.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_composite(multiblock, multi_colors=True)
+        >>> _ = pl.show_grid()
+        >>> pl.show()
 
         Note that the block names are generic by default.
 
@@ -4533,14 +4751,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> _ = [block.clear_data() for block in multiblock]
         >>>
-        >>> plot = pv.Plotter()
-        >>> plot.set_color_cycler('default')
+        >>> pl = pv.Plotter()
+        >>> pl.set_color_cycler('default')
         >>> _ = [
-        ...     plot.add_mesh(block, label=label)
+        ...     pl.add_mesh(block, label=label)
         ...     for block, label in zip(multiblock, labels)
         ... ]
-        >>> _ = plot.add_legend()
-        >>> plot.show()
+        >>> _ = pl.add_legend()
+        >>> pl.show()
 
         """
         if values is None and ranges is None:
@@ -4724,6 +4942,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Similar filter for thresholding a mesh by value.
         partition
             Split a mesh into a number of sub-parts.
+        :ref:`compare_threshold_filters_example`
+            This example showcases this filter and
+            other similar ones.
 
         Returns
         -------
@@ -7800,14 +8021,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> def mask_and_polydata_plotter(mask, poly):
         ...     voxel_cells = mask.points_to_cells().threshold(0.5)
         ...
-        ...     plot = pv.Plotter()
-        ...     _ = plot.add_mesh(voxel_cells, color='blue')
-        ...     _ = plot.add_mesh(poly, color='lime')
-        ...     plot.camera_position = 'xy'
-        ...     return plot
+        ...     pl = pv.Plotter()
+        ...     _ = pl.add_mesh(voxel_cells, color='blue')
+        ...     _ = pl.add_mesh(poly, color='lime')
+        ...     pl.camera_position = 'xy'
+        ...     return pl
 
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         The spacing of the mask image is automatically adjusted to match the
         density of the input.
@@ -7816,14 +8037,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> poly = examples.download_bunny()
         >>> mask = poly.voxelize_binary_mask()
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         Control the spacing manually instead. Here, a very coarse spacing is used.
 
         >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         Note that the spacing is only approximate. Check the mask's actual spacing.
 
@@ -7842,8 +8063,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Set the dimensions instead of the spacing.
 
         >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         >>> mask.dimensions
         (10, 20, 30)
@@ -7857,8 +8078,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Now create the mask from the polydata using the volume as a reference.
 
         >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
+        >>> pl = mask_and_polydata_plotter(mask, poly)
+        >>> pl.show()
 
         Visualize the effect of internal surfaces.
 
@@ -7866,10 +8087,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 100, 50)
         ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(binary_mask)
+        >>> _ = pl.add_mesh(mesh.slice(), color='red')
+        >>> pl.show(cpos='yz')
 
         Note how the intersection is excluded from the mask.
         To include the voxels delimited by internal surfaces in the foreground, the internal
@@ -7897,11 +8118,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
 
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask_1)
-        >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
-        >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(binary_mask_1)
+        >>> _ = pl.add_mesh(cylinder_1.slice(), color='red')
+        >>> _ = pl.add_mesh(cylinder_2.slice(), color='red')
+        >>> pl.show(cpos='yz')
 
         When multiple internal surfaces are nested, they are successively treated as
         interfaces between background and foreground.
@@ -7910,10 +8131,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 50, 50)
         ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(binary_mask)
+        >>> _ = pl.add_mesh(mesh.slice(), color='red')
+        >>> pl.show(cpos='yz')
 
         """
         surface = wrap(self).extract_geometry()
@@ -8024,7 +8245,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars  # type: ignore[type-var]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Sized
 import itertools
+import platform
 import re
+from typing import Literal
 from typing import get_args
 
 from hypothesis import HealthCheck
@@ -21,6 +24,7 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -146,6 +150,34 @@ def test_clip_filter_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.clip(normal=normals[0], invert=False)
     assert output.n_blocks == multiblock_all.n_blocks
+
+
+@pytest.mark.parametrize(
+    'filt',
+    [
+        pv.DataObjectFilters.clip,
+        pv.DataObjectFilters.slice,
+        pv.PolyDataFilters.clip_closed_surface,
+        pv.PolyDataFilters.project_points_to_plane,
+    ],
+)
+def test_filters_with_plane_keyword(filt, ant):
+    origin = (1, 2, 3)
+    normal = (4, 5, 6)
+    plane = pv.Plane(center=origin, direction=normal)
+    output_no_plane = filt(ant, origin=origin, normal=normal)
+    output_with_plane = filt(ant, plane=plane)
+    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
+
+    match = 'The plane mesh must be planar. Got a non-planar mesh with dimensionality of 3.'
+    with pytest.raises(ValueError, match=match):
+        filt(ant, plane=pv.Box())
+
+    match = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+    with pytest.raises(ValueError, match=match):
+        filt(ant, plane=plane, normal='x')
+    with pytest.raises(ValueError, match=match):
+        filt(ant, plane=plane, origin=(0, 0, 0))
 
 
 def test_transform_raises(sphere):
@@ -813,25 +845,26 @@ def test_transform_inplace(datasets):
         assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
 
 
-def test_transform_rectilinear_warns(rectilinear):
+def test_transform_rectilinear_raises(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
-        'The transformation has a non-diagonal rotation component which has been removed. '
-        'Rotation is\nnot supported by RectilinearGrid; cast to StructuredGrid first to fully '
-        'support rotations.'
+        'The transformation has a non-diagonal rotation component which is not supported by\n'
+        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations, or use\n'
+        '`Transform.decompose()` to remove this component.'
     )
-    with pytest.warns(UserWarning, match=match):
+
+    with pytest.raises(ValueError, match=re.escape(match)):
         rectilinear.transform(tf, inplace=False)
 
     matrix = np.eye(4)
     matrix[0, 1] = 0.1
     matrix[1, 0] = 0.1
     match = (
-        'The transformation has a shear component which has been removed. Shear is not '
-        'supported\nby RectilinearGrid; cast to StructuredGrid first to support shear '
-        'transformations.'
+        'The transformation has a shear component which is not supported by RectilinearGrid.\n'
+        'Cast to StructuredGrid first to support shear transformations.'
     )
-    with pytest.warns(UserWarning, match=match):
+
+    with pytest.raises(ValueError, match=match):
         rectilinear.transform(matrix, inplace=False)
 
 
@@ -884,15 +917,17 @@ def test_transform_imagedata(uniform, spacing):
     assert np.allclose(translated.center, uniform.origin)
 
 
-def test_transform_imagedata_warns_with_shear(uniform):
+def test_transform_imagedata_raises_with_shear(uniform):
     shear = np.eye(4)
     shear[0, 1] = 0.1
 
-    with pytest.warns(
-        Warning,
-        match=r'The transformation matrix has a shear component which has been removed\. \n'
-        r'Shear is not supported when setting `ImageData` `index_to_physical_matrix`\.',
-    ):
+    match = (
+        'The transformation has a shear component which is not supported by ImageData.\n'
+        'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+        '`Transform.decompose()` to remove this component.'
+    )
+
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.transform(shear, inplace=True)
 
 
@@ -1384,23 +1419,53 @@ def test_resize_bounds_size(sphere, bounds_size, center):
     assert np.allclose(resized.center, expected_center)
 
 
+@pytest.mark.parametrize('length', [42, 5.0])
+@pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
+def test_resize_length(sphere, length, center):
+    """Test resize method with length parameter."""
+    expected_center = sphere.center if center is None else center
+
+    resized = sphere.resize(length=length, center=center)
+    new_length = resized.length
+    assert np.isclose(new_length, length)
+    assert np.allclose(resized.center, expected_center)
+
+
+@pytest.mark.parametrize('mesh', [pv.MultiBlock(), pv.PolyData()])
+def test_resize_empty(mesh):
+    resized = mesh.resize()
+    assert resized.is_empty
+    assert isinstance(resized, type(mesh))
+    assert resized is not mesh
+
+
 def test_resize_raises(sphere):
     """Test resize method error handling."""
 
-    match = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
-    with pytest.raises(ValueError, match=match):
+    match = (
+        'Cannot specify more than one resizing method. '
+        'Choose either `bounds`, `bounds_size`, or `length` independently.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(length=5, bounds_size=2.0)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], length=5)
 
-    match = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
-    with pytest.raises(ValueError, match=match):
+    match = '`bounds`, `bounds_size`, and `length` cannot all be None. Choose one resizing method.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize()
 
-    match = (
-        "Cannot specify both 'bounds' and 'center'. "
-        "'center' can only be used with the 'bounds_size' parameter."
-    )
-    with pytest.raises(ValueError, match=match):
+    match = '`center` can only be used with the `bounds_size` and `length` parameters.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
+
+    match = '{name} values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=match.format(name='length')):
+        sphere.resize(length=0)
+    with pytest.raises(ValueError, match=match.format(name='bounds_size')):
+        sphere.resize(bounds_size=[-1, 2, 3])
 
 
 def test_resize_zero_extent(plane):
@@ -1425,3 +1490,626 @@ def test_resize_multiblock():
     # instead resized as part of the whole
     assert not np.allclose(resized['sphere'].bounds_size, new_size)
     assert not np.allclose(resized['cube'].bounds_size, new_size)
+
+
+def _add_invalid_arrays(mesh):
+    def add_vtk_array(dataset, name, values, association: Literal['point', 'cell']):
+        arr = _vtk.vtkFloatArray()
+        arr.SetName(name)
+        arr.SetNumberOfComponents(1)
+
+        for v in values:
+            arr.InsertNextValue(float(v))
+
+        if association == 'point':
+            dataset.GetPointData().AddArray(arr)
+        else:  # association == "cell":
+            dataset.GetCellData().AddArray(arr)
+
+    # Invalid point arrays (multiple), need more than 4 to test truncated repr
+    add_vtk_array(mesh, 'foo', range(10), association='point')
+    add_vtk_array(mesh, 'bar', range(15), association='point')
+    add_vtk_array(mesh, 'baz', range(12), association='point')
+    add_vtk_array(mesh, 'qux', range(13), association='point')
+    add_vtk_array(mesh, 'fred', range(14), association='point')
+    add_vtk_array(mesh, 'waldo', range(16), association='point')
+    add_vtk_array(mesh, 'thud', range(17), association='point')
+
+    # Invalid cell array (single)
+    add_vtk_array(mesh, 'ham', range(11), association='cell')
+
+
+@pytest.fixture
+def sphere_with_invalid_arrays(sphere):
+    _add_invalid_arrays(sphere)
+    return sphere
+
+
+@pytest.fixture
+def grid_with_invalid_arrays(hexbeam):
+    _add_invalid_arrays(hexbeam)
+    return hexbeam
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_validate_mesh_is_valid(sphere_with_invalid_arrays, as_composite):
+    mesh = pv.PolyData()
+    mesh = mesh.cast_to_multiblock() if as_composite else mesh
+    report = mesh.validate_mesh()
+    assert report.is_valid
+    assert isinstance(report.mesh, pv.MultiBlock if as_composite else pv.PolyData)
+    assert report.mesh is not mesh
+    output_polydata = report.mesh[0] if as_composite else report.mesh
+    assert 'validity_state' in output_polydata.array_names
+
+    invalid_mesh = (
+        pv.MultiBlock([sphere_with_invalid_arrays]) if as_composite else sphere_with_invalid_arrays
+    )
+    assert not invalid_mesh.validate_mesh().is_valid
+
+
+def test_validate_mesh_default_fields():
+    mesh = pv.ImageData()
+    report1 = str(mesh.validate_mesh())
+    report2 = str(mesh.validate_mesh(['data', 'cells', 'points']))
+    assert report1 == report2
+
+
+def test_validate_mesh_message(sphere_with_invalid_arrays):
+    assert pv.PolyData().validate_mesh().message is None
+    assert sphere_with_invalid_arrays.validate_mesh().message
+
+
+def test_validate_mesh_point_arrays(sphere_with_invalid_arrays):
+    # Dataset had invalid point AND cell arrays, but we validate point arrays only
+    report = sphere_with_invalid_arrays.validate_mesh(['point_data_wrong_length'])
+    assert report.point_data_wrong_length == ['foo', 'bar', 'baz', 'qux', 'fred', 'waldo', 'thud']
+    assert report.cell_data_wrong_length is None
+
+    # Clear cell arrays and validate ALL arrays
+    sphere_with_invalid_arrays.cell_data.clear()
+    report = sphere_with_invalid_arrays.validate_mesh('data')
+    assert report.point_data_wrong_length == ['foo', 'bar', 'baz', 'qux', 'fred', 'waldo', 'thud']
+    assert report.cell_data_wrong_length == []
+
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 7 point arrays with incorrect length (length must be 422). '
+        "Invalid arrays: 'foo' (10), 'bar' (15), 'baz' (12), 'qux' (13), ..."
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        report = sphere_with_invalid_arrays.validate_mesh(action='warn')
+    assert report.message == match
+
+
+def test_validate_mesh_cell_arrays(sphere_with_invalid_arrays):
+    # Dataset had invalid point AND cell arrays, but we validate cell arrays only
+    report = sphere_with_invalid_arrays.validate_mesh('cell_data_wrong_length')
+    assert report.cell_data_wrong_length == ['ham']
+    assert report.point_data_wrong_length is None
+
+    # Clear point arrays and validate ALL arrays
+    sphere_with_invalid_arrays.point_data.clear()
+    report = sphere_with_invalid_arrays.validate_mesh('data')
+    assert report.cell_data_wrong_length == ['ham']
+    assert report.point_data_wrong_length == []
+
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 cell array with incorrect length (length must be 840). '
+        "Invalid array: 'ham' (11)"
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        report = sphere_with_invalid_arrays.validate_mesh(action='warn')
+    assert report.message == match
+
+
+def test_validate_mesh_raises(sphere_with_invalid_arrays):
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 7 point arrays with incorrect length (length must be 422).'
+        " Invalid arrays: 'foo' (10), 'bar' (15), 'baz' (12), 'qux' (13), ...\n"
+        ' - Mesh has 1 cell array with incorrect length (length must be 840). '
+        "Invalid array: 'ham' (11)"
+    )
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        sphere_with_invalid_arrays.validate_mesh(action='error')
+
+
+@pytest.fixture
+def invalid_random_polydata():
+    n = 20
+    rng = np.random.default_rng(seed=103)
+    points = rng.random(n * 3).reshape(-1, 3)
+
+    faces = [[0, 1, n + 1]]
+    faces = np.column_stack(
+        (
+            np.ones(
+                len(faces),
+            )
+            * 3,
+            faces,
+        )
+    ).astype(int)
+    points = np.append(points, [[np.nan, 0, 0]], axis=0)
+    return pv.PolyData(points, faces=faces)
+
+
+def test_validate_mesh_report_str():
+    report = pv.Sphere().validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 842\n'
+        '    N Cells                  : 1680\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid cell ids:\n'
+        '    Wrong number of points   : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Inverted faces           : []\n'
+        '    Non-planar faces         : []\n'
+        '    Degenerate faces         : []\n'
+        '    Coincident points        : []\n'
+        '    Invalid point references : []\n'
+        'Invalid point ids:\n'
+        '    Unused points            : []\n'
+        '    Non-finite points        : []'
+    )
+    assert actual == expected
+
+
+def test_validate_mesh_composite_report_str():
+    report = pv.Sphere().cast_to_multiblock().validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : MultiBlock\n'
+        '    N Blocks                 : 1\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Blocks with invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Blocks with invalid cells:\n'
+        '    Wrong number of points   : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Inverted faces           : []\n'
+        '    Non-planar faces         : []\n'
+        '    Degenerate faces         : []\n'
+        '    Coincident points        : []\n'
+        '    Invalid point references : []\n'
+        'Blocks with invalid points:\n'
+        '    Unused points            : []\n'
+        '    Non-finite points        : []'
+    )
+    assert actual == expected
+
+
+def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
+    report = invalid_random_polydata.validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                         : PolyData\n'
+        '    N Points                     : 21\n'
+        '    N Cells                      : 1\n'
+        'Report summary:\n'
+        '    Is valid                     : False\n'
+        "    Invalid fields (3)           : ('invalid_point_references', "
+        "'unused_points', 'non_finite_points')\n"
+        'Invalid data arrays:\n'
+        '    Point data wrong length      : []\n'
+        '    Cell data wrong length       : []\n'
+        'Invalid cell ids:\n'
+        '    Wrong number of points       : []\n'
+        '    Intersecting edges           : []\n'
+        '    Intersecting faces           : []\n'
+        '    Non-contiguous edges         : []\n'
+        '    Non-convex                   : []\n'
+        '    Inverted faces               : []\n'
+        '    Non-planar faces             : []\n'
+        '    Degenerate faces             : []\n'
+        '    Coincident points            : []\n'
+        '    Invalid point references (1) : [0]\n'
+        'Invalid point ids:\n'
+        '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
+        '    Non-finite points (1)        : [20]'
+    )
+    assert actual == expected
+
+
+@pytest.fixture
+def invalid_nested_multiblock(invalid_random_polydata):
+    return pv.MultiBlock(
+        dict(
+            none=None,
+            poly_root=invalid_random_polydata,
+            nested=pv.MultiBlock(dict(poly_nested=invalid_random_polydata.copy())),
+        )
+    )
+
+
+def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
+    report = invalid_nested_multiblock.validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                         : MultiBlock\n'
+        '    N Blocks                     : 3\n'
+        'Report summary:\n'
+        '    Is valid                     : False\n'
+        "    Invalid fields (3)           : ('invalid_point_references', "
+        "'unused_points', 'non_finite_points')\n"
+        'Blocks with invalid data arrays:\n'
+        '    Point data wrong length      : []\n'
+        '    Cell data wrong length       : []\n'
+        'Blocks with invalid cells:\n'
+        '    Wrong number of points       : []\n'
+        '    Intersecting edges           : []\n'
+        '    Intersecting faces           : []\n'
+        '    Non-contiguous edges         : []\n'
+        '    Non-convex                   : []\n'
+        '    Inverted faces               : []\n'
+        '    Non-planar faces             : []\n'
+        '    Degenerate faces             : []\n'
+        '    Coincident points            : []\n'
+        '    Invalid point references (2) : [1, 2]\n'
+        'Blocks with invalid points:\n'
+        '    Unused points (2)            : [1, 2]\n'
+        '    Non-finite points (2)        : [1, 2]'
+    )
+    assert actual == expected
+
+
+def test_validate_mesh_composite_message(invalid_nested_multiblock):
+    report = invalid_nested_multiblock.validate_mesh()
+    actual = report.message
+    expected = (
+        'MultiBlock mesh is not valid due to the following problems:\n'
+        " - Block id 1 'poly_root' PolyData mesh is not valid due to the "
+        'following problems:\n'
+        '   - Mesh has 1 cell with invalid point references. Invalid cell id: [0]\n'
+        '   - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
+        'ids: [2, 3, 4, 5, 6, 7, ...]\n'
+        '   - Mesh has 1 non-finite point. Invalid point id: [20]\n'
+        " - Block id 2 'nested' MultiBlock mesh is not valid due to the "
+        'following problems:\n'
+        "   - Block id 0 'poly_nested' PolyData mesh is not valid due to the "
+        'following problems:\n'
+        '     - Mesh has 1 cell with invalid point references. Invalid cell id: [0]\n'
+        '     - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
+        'ids: [2, 3, 4, 5, 6, 7, ...]\n'
+        '     - Mesh has 1 non-finite point. Invalid point id: [20]'
+    )
+    assert actual == expected
+
+
+def test_validate_mesh_composite_subreports(invalid_nested_multiblock):
+    report = invalid_nested_multiblock.validate_mesh()
+    # Test subreports
+    assert len(report) == len(invalid_nested_multiblock)
+    assert report[0] is None
+
+    index = 1
+    expected_subreport = str(invalid_nested_multiblock[index].validate_mesh())
+    actual_subreport = str(report[index])
+    assert actual_subreport == expected_subreport
+
+    assert isinstance(report, Sized)
+    for subreport in report:
+        assert isinstance(subreport, (type(report), type(None)))
+
+    match = 'Indexing mesh validation reports is only supported for composite meshes.'
+    poly_subreport = report[1]
+    assert isinstance(poly_subreport.mesh, pv.PolyData)
+    with pytest.raises(TypeError, match=match):
+        poly_subreport[0]
+
+    multi_subreport = report[2]
+    assert isinstance(multi_subreport.mesh, pv.MultiBlock)
+    poly_subreport = multi_subreport[0]
+    assert isinstance(poly_subreport.mesh, pv.PolyData)
+    with pytest.raises(TypeError, match=match):
+        poly_subreport[0]
+
+    match = 'Length of mesh validation report is only defined for composite meshes.'
+    with pytest.raises(TypeError, match=match):
+        len(poly_subreport)
+
+
+def test_validate_mesh_str_filtered():
+    report = pv.PolyData().validate_mesh(['data', 'unused_points'])
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 0\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid point ids:\n'
+        '    Unused points            : []'
+    )
+    assert actual == expected
+
+    report = pv.PolyData().validate_mesh(['memory_safe'])
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 0\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid cell ids:\n'
+        '    Invalid point references : []'
+    )
+    assert actual == expected
+
+
+def test_validate_mesh_pointset(ant):
+    pset = ant.cast_to_pointset()
+    report = pset.validate_mesh()
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PointSet\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []'
+    )
+    assert actual == expected
+
+    report = pset.validate_mesh('data')
+    actual = str(report)
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PointSet\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 0\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Point data wrong length  : []\n'
+        '    Cell data wrong length   : []'
+    )
+    assert actual == expected
+
+
+def test_cell_validator_pointset_raises():
+    match = 'Cell operations are not supported'
+    with pytest.raises(pv.PointSetCellOperationError, match=match):
+        pv.PointSet().cell_validator()
+
+
+def test_cell_validator():
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    sphere = pv.Sphere()
+    sphere.cell_data['data'] = range(sphere.n_cells)
+    validated = sphere.cell_validator()
+    assert validated.active_scalars_name == 'validity_state'
+    assert isinstance(validated, pv.PolyData)
+    assert validated.field_data.keys() == ['invalid', *validator_array_names]
+    assert validated.array_names == [
+        'validity_state',
+        'invalid',
+        *validator_array_names,
+        'Normals',
+        'data',
+    ]
+    for name in validator_array_names:
+        array = validated.field_data[name]
+        assert array.shape == (0,)
+
+
+@pytest.mark.needs_vtk_version(9, 5, 99)
+def test_cell_validator_bitfield_values():
+    from vtkmodules.vtkCommonDataModel import vtkCellStatus
+
+    bitfield = _CELL_VALIDATOR_BIT_FIELD
+    assert bitfield['wrong_number_of_points'] == vtkCellStatus.WrongNumberOfPoints
+    assert bitfield['intersecting_edges'] == vtkCellStatus.IntersectingEdges
+    assert bitfield['intersecting_faces'] == vtkCellStatus.IntersectingFaces
+    assert bitfield['non_contiguous_edges'] == vtkCellStatus.NoncontiguousEdges
+    assert bitfield['non_convex'] == vtkCellStatus.Nonconvex
+    assert bitfield['inverted_faces'] == vtkCellStatus.FacesAreOrientedIncorrectly
+    assert bitfield['non_planar_faces'] == vtkCellStatus.NonPlanarFaces
+    assert bitfield['coincident_points'] == vtkCellStatus.CoincidentPoints
+
+
+@pytest.fixture
+def invalid_tetra():
+    # Define tetra with one point missing
+    cells = [3, 0, 1, 2]
+    celltypes = [pv.CellType.TETRA]
+    points = [
+        [-1.0, 1.0, -1.0],
+        [1.0, 1.0, 1.0],
+        [-1.0, 1.0, -1.0],
+    ]
+    return pv.UnstructuredGrid(cells, celltypes, points)
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
+    mesh = invalid_tetra.cast_to_multiblock() if as_composite else invalid_tetra
+    validated = mesh.cell_validator()
+    assert type(validated) is type(mesh)
+    single_mesh = validated[0] if as_composite else validated
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    for name in validator_array_names:
+        if name == 'wrong_number_of_points':
+            expected_cell_ids = [0]
+            assert single_mesh[name].tolist() == expected_cell_ids
+        else:
+            array = single_mesh.field_data[name]
+            assert array.shape == (0,)
+
+
+def test_validate_mesh_invalid_point_references():
+    # Cell has point indices > n_points
+    grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
+    report = grid.validate_mesh('invalid_point_references')
+    expected_cell_ids = [0]
+    assert report.invalid_point_references == expected_cell_ids
+
+
+@pytest.fixture
+def invalid_hexahedron():
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+    ]
+
+    # Swap first two points to create a bad cell
+    cells = [8, 1, 0, 2, 3, 4, 5, 6, 7]
+    celltypes = [pv.CellType.HEXAHEDRON]
+
+    return pv.UnstructuredGrid(cells, celltypes, points)
+
+
+def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
+    validated = invalid_hexahedron.cell_validator()
+    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    expected_cell_ids = [0]
+    for name in validator_array_names:
+        if name in ['intersecting_edges', 'non_convex', 'inverted_faces']:
+            assert validated[name].tolist() == expected_cell_ids
+        else:
+            array = validated.field_data[name]
+            assert array.shape == (0,)
+    assert validated['invalid'].tolist() == expected_cell_ids
+
+    # Test validating specific fields
+    report = invalid_hexahedron.validate_mesh('cells')
+    assert report.intersecting_edges is not None
+    assert report.non_convex is not None
+    assert report.inverted_faces is not None
+
+    report = invalid_hexahedron.validate_mesh('non_convex')
+    assert report.intersecting_edges is None
+    assert report.non_convex is not None
+    assert report.inverted_faces is None
+
+
+@pytest.fixture
+def poly_with_invalid_point():
+    poly = pv.PolyData()
+    poly.points = [[np.nan, 0.0, 0.0]]
+    return poly
+
+
+def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
+    def _format_composite(match):
+        prefix = (
+            'MultiBlock mesh is not valid due to the following problems:\n'
+            " - Block id 0 'Block-00' "
+        )
+        return prefix + match.replace(' - ', '   - ')
+
+    # Test single cell
+    match = (
+        'UnstructuredGrid mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 cell with intersecting edges. Invalid cell id: [0]\n'
+        ' - Mesh has 1 non-convex cell. Invalid cell id: [0]\n'
+        ' - Mesh has 1 cell with inverted faces. Invalid cell id: [0]'
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        invalid_hexahedron.validate_mesh(action='warn')
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
+        invalid_hexahedron.cast_to_multiblock().validate_mesh(action='warn')
+
+    # Test multiple cells
+    # Likely VTK bug: we have two nonconvex cells, but on macOS only one is reported as such
+    nonconvex = (
+        ' - Mesh has 1 non-convex cell. Invalid cell id: [0]\n'
+        if platform.system() == 'Darwin'
+        else ' - Mesh has 2 non-convex cells. Invalid cell ids: [0, 1]\n'
+    )
+    match = (
+        'UnstructuredGrid mesh is not valid due to the following problems:\n'
+        ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0, 1]\n'
+        f'{nonconvex}'
+        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0, 1]'
+    )
+    invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        invalid_hexahedrons.validate_mesh(action='warn')
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
+        invalid_hexahedrons.cast_to_multiblock().validate_mesh(action='warn')
+
+    # Test points
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 unused point not referenced by any cell(s). Invalid point id: [0]\n'
+        ' - Mesh has 1 non-finite point. Invalid point id: [0]'
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        poly_with_invalid_point.validate_mesh(action='warn')
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
+        poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
+
+    poly_with_invalid_point.points = poly_with_invalid_point.points.tolist() * 100
+    # Test multiple points
+    ids = '[0, 1, 2, 3, 4, 5, ...]'
+    match = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        f' - Mesh has 100 unused points not referenced by any cell(s). Invalid point ids: {ids}\n'
+        f' - Mesh has 100 non-finite points. Invalid point ids: {ids}'
+    )
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+        poly_with_invalid_point.validate_mesh(action='warn')
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
+        poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')

@@ -3695,8 +3695,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 mesh, algo = algorithm_to_mesh_handler(algo)
             else:
                 mesh = mesh.cast_to_polydata(deep=False)
-        elif isinstance(mesh, pv.MultiBlock):  # type: ignore[unreachable]
-            if algo is not None:  # type: ignore[unreachable]
+        elif isinstance(mesh, (pv.MultiBlock, pv.PartitionedDataSet)):  # type: ignore[unreachable]
+            if not isinstance(mesh, pv.MultiBlock):  # type: ignore[unreachable]
+                mesh = mesh.cast_to_multiblock()
+            if algo is not None:
                 msg = (
                     'Algorithms with `MultiBlock` output type are not supported by '
                     '`add_mesh` at this time.'
@@ -4460,7 +4462,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
             volume = volume.cell_data_to_point_data()
-        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))
+        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))  # noqa: S101
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'

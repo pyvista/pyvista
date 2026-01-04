@@ -13,6 +13,9 @@ from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
+from pyvista.examples import cells
+from tests.core.test_dataobject_filters import grid_with_invalid_arrays  # noqa: F401
+from tests.core.test_dataobject_filters import sphere_with_invalid_arrays  # noqa: F401
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -34,6 +37,51 @@ def test_wrap_raises():
         match=r'NumPy array could not be wrapped pyvista.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
+
+
+@pytest.fixture
+def meshio_grid_with_invalid_arrays(grid_with_invalid_arrays):  # noqa: F811
+    grid = grid_with_invalid_arrays
+    assert len(grid['foo']) == 10
+    # Meshio does internal checks so we can't convert directly:
+    match = 'len(points) = 99, but len(point_data["foo"]) = 10'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.to_meshio(grid)
+    # Clear data and add it back after init
+    point_data = grid.point_data.items()
+    grid.clear_data()
+    meshio_grid = pv.to_meshio(grid)
+    meshio_grid.point_data.update(point_data)
+    assert len(meshio_grid.point_data['foo']) == 10
+    return meshio_grid
+
+
+@pytest.fixture
+def trimesh_mesh_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
+    poly = sphere_with_invalid_arrays
+    assert len(poly['foo']) == 10
+    # Trimesh doesn't do internal checks so we can convert without error
+    trimesh_poly = pv.to_trimesh(poly)
+    assert len(trimesh_poly.vertex_attributes['foo']) == 10
+    return trimesh_poly
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
+def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_poly)
+
+
+def test_wrap_invalid_trimesh_raises(trimesh_mesh_with_invalid_arrays):
+    with pytest.raises(ValueError, match='Invalid array'):
+        pv.wrap(trimesh_mesh_with_invalid_arrays)
+
+
+def test_wrap_invalid_meshio_raises(meshio_grid_with_invalid_arrays):
+    with pytest.raises(ValueError, match='Invalid array'):
+        pv.wrap(meshio_grid_with_invalid_arrays)
 
 
 def test_wrap_vtk_not_supported_raises(mocker: MockerFixture):
@@ -102,6 +150,308 @@ def test_wrap_trimesh():
 
     assert mesh_with_uv.active_texture_coordinates is not None
     assert np.allclose(mesh_with_uv.active_texture_coordinates, uvs)
+
+
+def test_wrap_meshio(hexbeam):
+    meshio_grid = pv.to_meshio(hexbeam)
+    assert pv.is_meshio_mesh(meshio_grid)
+    grid = pv.wrap(meshio_grid)
+    assert isinstance(grid, pv.UnstructuredGrid)
+    assert set(grid.array_names) == set(hexbeam.array_names)
+    assert grid.n_points == hexbeam.n_points
+    assert grid.n_cells == hexbeam.n_cells
+
+
+def test_to_trimesh_triangulate():
+    match = (
+        'Mesh must be all triangles to convert to Trimesh object.\n'
+        'Use `triangulate=True` to automatically convert to a triangle surface mesh.'
+    )
+
+    uniform = pv.Wavelet()
+    assert isinstance(uniform, pv.ImageData)
+    with pytest.raises(pv.NotAllTrianglesError, match=match):
+        pv.to_trimesh(uniform)
+    out = pv.to_trimesh(uniform, triangulate=True)
+    assert isinstance(out, trimesh.Trimesh)
+
+    quad_poly = cells.Quadrilateral().extract_geometry()
+    assert isinstance(quad_poly, pv.PolyData)
+    with pytest.raises(pv.NotAllTrianglesError, match=match):
+        pv.to_trimesh(quad_poly)
+    out = pv.to_trimesh(quad_poly, triangulate=True)
+    assert isinstance(out, trimesh.Trimesh)
+
+    grid_tetra = cells.Tetrahedron()
+    assert isinstance(grid_tetra, pv.UnstructuredGrid)
+    with pytest.raises(pv.NotAllTrianglesError, match=match):
+        pv.to_trimesh(grid_tetra)
+    out = pv.to_trimesh(grid_tetra, triangulate=True)
+    assert isinstance(out, trimesh.Trimesh)
+
+    poly_tetra = grid_tetra.extract_geometry()
+    assert isinstance(poly_tetra, pv.PolyData)
+    out = pv.to_trimesh(poly_tetra)
+    assert isinstance(out, trimesh.Trimesh)
+
+    grid_tri = cells.Triangle()
+    assert isinstance(grid_tri, pv.UnstructuredGrid)
+    pv.to_trimesh(grid_tri)
+    assert isinstance(out, trimesh.Trimesh)
+
+    poly_tri = grid_tri.extract_geometry()
+    assert isinstance(poly_tri, pv.PolyData)
+    pv.to_trimesh(poly_tri)
+    assert isinstance(out, trimesh.Trimesh)
+
+
+def test_to_trimesh_raises(sphere):
+    match = "pass_data must be one of: \n\t[True, False, 'point', 'cell', 'field']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.to_trimesh(sphere, pass_data='foo')
+
+    tmesh = pv.to_trimesh(sphere)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.from_trimesh(tmesh, pass_data=dict)
+
+    match = (
+        "mesh must be an instance of <class 'pyvista.core.dataset.DataSet'>. "
+        "Got <class 'trimesh.base.Trimesh'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.to_trimesh(tmesh)
+
+    match = (
+        "mesh must be an instance of <class 'trimesh.base.Trimesh'>. "
+        "Got <class 'pyvista.core.pointset.PolyData'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.from_trimesh(sphere)
+
+
+def test_to_from_trimesh_empty_mesh():
+    mesh = pv.ImageData()
+    tmesh = pv.to_trimesh(mesh)
+    assert isinstance(tmesh, trimesh.Trimesh)
+
+    pvmesh = pv.from_trimesh(tmesh)
+    assert isinstance(pvmesh, pv.PolyData)
+
+
+def test_to_from_trimesh_points_faces(ant):
+    ant.points_to_double()
+    tmesh = pv.to_trimesh(ant)
+    assert np.shares_memory(tmesh.vertices, ant.points)
+    assert np.shares_memory(tmesh.faces, ant.regular_faces)
+
+    pvmesh = pv.from_trimesh(tmesh)
+    assert np.shares_memory(pvmesh.points, ant.points)
+    assert np.shares_memory(pvmesh.regular_faces, ant.regular_faces)
+
+
+def test_to_from_trimesh_texture_coordinates(ant):
+    texture_coordinates_name = 'uv coordinates'
+    texture_coordinates_array = np.random.default_rng().random((ant.n_points, 2))
+    ant.point_data[texture_coordinates_name] = texture_coordinates_array
+    ant.point_data.active_texture_coordinates_name = texture_coordinates_name
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert not isinstance(tmesh.visual, trimesh.visual.TextureVisuals)
+
+    tmesh = pv.to_trimesh(ant, pass_data='cell')
+    assert not isinstance(tmesh.visual, trimesh.visual.TextureVisuals)
+
+    tmesh = pv.to_trimesh(ant)
+
+    actual_array = tmesh.visual.uv
+    assert np.allclose(actual_array, texture_coordinates_array)
+    assert np.shares_memory(actual_array, texture_coordinates_array)
+    assert texture_coordinates_name not in tmesh.vertex_attributes
+
+    # Test we have the same array round-trip
+    pvmesh = pv.from_trimesh(tmesh)
+    actual_array = pvmesh.active_texture_coordinates
+    assert np.allclose(actual_array, texture_coordinates_array)
+    assert np.shares_memory(actual_array, texture_coordinates_array)
+    assert 'uv' not in pvmesh.point_data
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.active_texture_coordinates is None
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data='cell')
+    assert pvmesh.active_texture_coordinates is None
+
+
+def test_to_from_trimesh_point_normals(ant):
+    point_normals_name = 'point normals'
+    point_normals_array = np.random.default_rng().random((ant.n_points, 3))
+    ant.point_data[point_normals_name] = point_normals_array
+    ant.point_data.active_normals_name = point_normals_name
+
+    tmesh = pv.to_trimesh(ant)
+
+    actual_array = tmesh.vertex_normals
+    assert np.allclose(actual_array, point_normals_array)
+    assert np.shares_memory(actual_array, point_normals_array)
+    assert point_normals_name not in tmesh.vertex_attributes
+
+    # Trimesh uses a cache or re-computes normals on-the-fly, so we don't store them when
+    # converting back
+    pvmesh = pv.from_trimesh(tmesh)
+    assert pvmesh.array_names == []
+
+
+def test_to_from_trimesh_cell_normals(ant):
+    cell_normals_name = 'cells normals'
+    cell_normals_array = ant.copy().compute_normals().cell_data['Normals'].astype(float)
+    ant.cell_data[cell_normals_name] = cell_normals_array
+    ant.cell_data.active_normals_name = cell_normals_name
+
+    tmesh = pv.to_trimesh(ant)
+
+    actual_array = tmesh.face_normals
+    assert np.allclose(actual_array, cell_normals_array)
+    assert np.shares_memory(actual_array, cell_normals_array)
+    assert cell_normals_name not in tmesh.face_attributes
+
+    # Trimesh uses a cache or re-computes normals on-the-fly, so we don't store them when
+    # converting back
+    pvmesh = pv.from_trimesh(tmesh)
+    assert pvmesh.array_names == []
+
+
+def test_to_from_trimesh_point_data(ant):
+    point_data_name = 'point data'
+    point_data_array = np.arange(ant.n_points)
+    ant.point_data[point_data_name] = point_data_array
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.vertex_attributes == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data='cell')
+    assert tmesh.vertex_attributes == {}
+
+    tmesh = pv.to_trimesh(ant)
+
+    actual_attributes = tmesh.vertex_attributes
+    assert ant.point_data.keys() == list(actual_attributes.keys())
+    actual_array = actual_attributes[point_data_name]
+    assert np.allclose(actual_array, point_data_array)
+    assert np.shares_memory(actual_array, point_data_array)
+
+    # Test we have the same array round-trip
+    for pass_data in [True, 'point', ['point']]:
+        pvmesh = pv.from_trimesh(tmesh, pass_data=pass_data)
+        actual_array = pvmesh.point_data[point_data_name]
+        assert np.allclose(actual_array, point_data_array)
+        assert np.shares_memory(actual_array, point_data_array)
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.point_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data='cell')
+    assert pvmesh.point_data.items() == []
+
+
+def test_to_from_trimesh_cell_data(ant):
+    cell_data_name = 'cell data'
+    cell_data_array = np.arange(ant.n_cells)
+    ant.cell_data[cell_data_name] = cell_data_array
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.face_attributes == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data='point')
+    assert tmesh.face_attributes == {}
+
+    tmesh = pv.to_trimesh(ant)
+
+    actual_attributes = tmesh.face_attributes
+    assert ant.cell_data.keys() == list(actual_attributes.keys())
+    actual_array = actual_attributes[cell_data_name]
+    assert np.allclose(actual_array, cell_data_array)
+    assert np.shares_memory(actual_array, cell_data_array)
+
+    # Test we have the same array round-trip
+    for pass_data in [True, 'cell', ['cell']]:
+        pvmesh = pv.from_trimesh(tmesh, pass_data=pass_data)
+        actual_array = pvmesh.cell_data[cell_data_name]
+        assert np.allclose(actual_array, cell_data_array)
+        assert np.shares_memory(actual_array, cell_data_array)
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.cell_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data='point')
+    assert pvmesh.cell_data.items() == []
+
+
+def test_to_from_trimesh_field_data(ant):
+    field_data_name = 'field data'
+    field_data_array = np.array([42, 67])
+    ant.field_data[field_data_name] = field_data_array
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.metadata == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data=['point', 'cell'])
+    assert tmesh.metadata == {}
+
+    tmesh = pv.to_trimesh(ant)
+
+    metadata = tmesh.metadata
+    assert ant.field_data.keys() == list(metadata.keys())
+    actual_array = metadata[field_data_name]
+    assert np.array_equal(actual_array, field_data_array)
+    assert np.shares_memory(actual_array, field_data_array)
+
+    # Test we have the same array round-trip
+    for pass_data in [True, 'field', ['field']]:
+        pvmesh = pv.from_trimesh(tmesh, pass_data=pass_data)
+        actual_array = pvmesh.field_data[field_data_name]
+        assert np.allclose(actual_array, field_data_array)
+        assert np.shares_memory(actual_array, field_data_array)
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.field_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=['point', 'cell'])
+    assert pvmesh.field_data.items() == []
+
+
+def test_to_from_trimesh_user_dict(ant):
+    user_dict = {'ham': 'eggs'}
+    ant.user_dict = user_dict
+
+    tmesh = pv.to_trimesh(ant, pass_data=False)
+    assert tmesh.metadata == {}
+
+    tmesh = pv.to_trimesh(ant, pass_data=['point', 'cell'])
+    assert tmesh.metadata == {}
+
+    tmesh = pv.to_trimesh(ant)
+
+    metadata = tmesh.metadata
+    assert metadata == user_dict
+
+    # Test we have the same array round-trip
+    pvmesh = pv.from_trimesh(tmesh)
+    round_trip_dict = pvmesh.user_dict
+    assert round_trip_dict == user_dict
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=False)
+    assert pvmesh.field_data.items() == []
+
+    pvmesh = pv.from_trimesh(tmesh, pass_data=['point', 'cell'])
+    assert pvmesh.field_data.items() == []
+
+    tmesh.metadata['bad_value'] = object
+    match = (
+        "Unable to store metadata key 'bad_value' with value type <class 'type'>.\n"
+        'Only NumPy arrays or JSON-serializable values are supported.'
+    )
+    with pytest.warns(UserWarning, match=match):
+        pv.from_trimesh(tmesh)
 
 
 def test_make_tri_mesh(sphere):

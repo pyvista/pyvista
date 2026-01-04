@@ -31,10 +31,13 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
+from .filters import DataObjectFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .filters.data_object import _MeshValidationReport
+from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
@@ -389,14 +392,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)  # type: ignore[has-type]
+    @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @wraps(PolyDataFilters.threshold)  # type: ignore[has-type]
+    @wraps(PolyDataFilters.threshold)
     def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -404,7 +407,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.threshold_percent)  # type:ignore[has-type]
+    @wraps(PolyDataFilters.threshold_percent)
     def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
@@ -423,7 +426,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.delaunay_3d)  # type: ignore[has-type]
+    @wraps(PolyDataFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
@@ -512,6 +515,29 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
         """Raise extract geometry are not supported."""
         raise PointSetCellOperationError
+
+    def cell_validator(self, *args, **kwargs):  # noqa: ARG002
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    @wraps(DataObjectFilters.validate_mesh)
+    def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
+        self: Self,
+        validation_fields: _MeshValidator._AllValidationOptions
+        | Sequence[_MeshValidator._AllValidationOptions]
+        | None = None,
+        *args,
+        **kwargs,
+    ) -> _MeshValidationReport[Self]:
+        """Wrap validate_mesh with cell-related fields removed."""
+        if validation_fields is None:
+            fields: list[_MeshValidator._AllValidationOptions] = [
+                *_MeshValidator._allowed_data_fields,
+                *_MeshValidator._allowed_point_fields,
+            ]
+            fields.remove('unused_points')
+            return DataSet.validate_mesh(self, fields, *args, **kwargs)
+        return DataSet.validate_mesh(self, validation_fields, *args, **kwargs)
 
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
@@ -688,7 +714,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(points, lines=pv.CellArray.from_regular_cells(lines))
-    >>> mesh.cell_data['line_idx'] = np.arange(n_lines, dtype=float)
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
     >>> mesh.plot(scalars='line_idx')
 
     Construct a set of random triangle strips using a ``pv.CellArray``.
@@ -706,7 +732,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
     ... )
-    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips, dtype=float)
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
     >>> mesh.plot(show_edges=True, scalars='strip_idx')
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
@@ -1139,7 +1165,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @irregular_faces.setter
     def irregular_faces(self, faces: Sequence[VectorLike[int]]) -> None:  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
-        self.faces = CellArray.from_irregular_cells(faces)
+        self.faces = CellArray.from_irregular_cells(faces)  # type: ignore[arg-type]
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
@@ -1185,7 +1211,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> pyramid.plot()
 
         """
-        return cls(points, faces=CellArray.from_irregular_cells(faces))
+        return cls(points, faces=CellArray.from_irregular_cells(faces))  # type: ignore[arg-type]
 
     @property
     def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -2349,13 +2375,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         This mesh contains only linear hexahedral cells, type
         :attr:`pyvista.CellType.HEXAHEDRON`, which evaluates to 12.
 
-        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> hex_beam = examples.load_hexbeam()
         >>> hex_beam.celltypes
         array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12], dtype=uint8)
+
+        Compare this to :attr:`distinct_cell_types`.
+
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
 
         """
         return _vtk.vtk_to_numpy(self._get_cell_types_array())
@@ -2370,6 +2400,44 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
         return array
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        Compare this to :attr:`celltypes`.
+
+        >>> hex_beam.celltypes
+        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12], dtype=uint8)
+
+        """
+        cell_types = (
+            convert_array(self.GetDistinctCellTypesArray())
+            if pv.vtk_version_info >= (9, 5, 0)
+            else np.unique(self.celltypes)
+        )
+        return {pv.CellType(cell_num) for cell_num in cell_types}
 
     @property
     def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
