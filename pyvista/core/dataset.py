@@ -1055,11 +1055,42 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.point_data.keys()
         []
 
+        Alternatively, the ``del`` keyword can be used.
+        >>> mesh = pv.Sphere()
+        >>> mesh.point_data.keys()
+        ['Normals']
+        >>> del mesh.point_data[:]
+        >>> mesh.point_data.keys()
+        []
+
         """
         self.point_data.clear()
 
     def clear_cell_data(self: Self) -> None:
-        """Remove all cell arrays."""
+        """Remove all cell arrays.
+
+        Examples
+        --------
+        Clear all cell arrays from a mesh.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Sphere().compute_normals()
+        >>> mesh.cell_data.keys()
+        ['Normals']
+        >>> mesh.clear_cell_data()
+        >>> mesh.cell_data.keys()
+        []
+
+        Alternatively, the ``del`` keyword can be used.
+        >>> mesh = pv.Sphere().compute_normals()
+        >>> mesh.cell_data.keys()
+        ['Normals']
+        >>> del mesh.cell_data[:]
+        >>> mesh.cell_data.keys()
+        []
+
+        """
         self.cell_data.clear()
 
     def clear_data(self: Self) -> None:

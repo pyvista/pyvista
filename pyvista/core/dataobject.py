@@ -521,6 +521,15 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         >>> len(mesh.field_data)
         0
 
+        Alternatively, the ``del`` keyword can be used.
+        >>> mesh = pv.Sphere()
+        >>> mesh.field_data['my-field-data'] = range(10)
+        >>> len(mesh.field_data)
+        1
+        >>> del mesh.field_data[:]
+        >>> len(mesh.field_data)
+        0
+
         """
         if not hasattr(self, 'field_data'):
             msg = f'`{type(self)}` does not support field data'

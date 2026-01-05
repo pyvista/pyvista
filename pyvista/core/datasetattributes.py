@@ -1030,6 +1030,14 @@ class DataSetAttributes(
         >>> len(mesh.point_data)
         0
 
+        Alternatively, the ``del`` keyword can be used.
+        >>> mesh.point_data['my_data'] = range(mesh.n_points)
+        >>> len(mesh.point_data)
+        1
+        >>> del mesh.point_data[:]
+        >>> len(mesh.point_data)
+        0
+
         """
         for array_name in self.keys():
             self.remove(key=array_name)
