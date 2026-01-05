@@ -777,8 +777,8 @@ class DataObjectFilters:
 
             Similar validation checks for ``point_data_wrong_length``, ``cell_data_wrong_length``,
             and ``invalid_point_references`` are `already` performed internally by PyVista
-            when creating meshes or setting new data. As such, these checks may be redundant
-            in many cases.
+            when creating meshes or setting new data. As such, validating these fields may be
+            redundant in many cases.
 
         .. versionadded:: 0.47
 
