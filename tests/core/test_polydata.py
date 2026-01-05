@@ -246,7 +246,7 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
         ('verts', [1, -1]),
     ],
 )
-def test_invalid_point_references(attr: str, value: list):
+def test_invalid_point_references_polydata(attr: str, value: list):
     mesh = pv.PolyData()
     match = (
         f'The connectivity of `PolyData.{attr}` includes references to\n'
@@ -257,21 +257,57 @@ def test_invalid_point_references(attr: str, value: list):
         setattr(mesh, attr, value)
 
 
-def test_init_invalid_polydata_warns(invalid_random_polydata, tmp_path):  # noqa: F811
-    filepath = tmp_path / 'invalid.vtp'
-    invalid_random_polydata.save(filepath)
-    match = (
-        'The connectivity of `PolyData.faces` includes references to\n'
-        'point ids that do not exist. The point ids must be non-negative and strictly less '
-        'than the\nnumber of points (21).'
-    )
-    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        pv.PolyData(filepath)
+@pytest.mark.parametrize(
+    ('cells', 'celltypes', 'points'),
+    [
+        ([1, 1], [pv.CellType.VERTEX], [[0.0, 0.0, 0.0]]),  # Index exceeds n_points
+        ([1, -1], [pv.CellType.VERTEX], [[0.0, 0.0, 0.0]]),  # Negative point indices
+    ],
+)
+def test_invalid_point_references_unstructured_grid(cells, celltypes, points):
+    # TODO: If a setter is implemented for UnstructuredGrid.cells in the future,
+    #   the setter should also emit the warning, and not only during init
 
-    vtk_poly = _vtk.vtkPolyData()
-    vtk_poly.ShallowCopy(invalid_random_polydata)
-    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
-        pv.PolyData(vtk_poly)
+    match = (
+        'The connectivity of `UnstructuredGrid.cells` includes references to\n'
+        'point ids that do not exist. The point ids must be non-negative and strictly less '
+        'than the\nnumber of points (1).'
+    )
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        pv.UnstructuredGrid(cells, celltypes, points)
+
+
+@pytest.mark.parametrize('as_grid', [True, False])
+def test_init_invalid_connectivity_warns(invalid_random_polydata, tmp_path, as_grid):  # noqa: F811
+    if as_grid:
+        alg = _vtk.vtkAppendFilter()
+        alg.AddInputData(invalid_random_polydata)
+        alg.Update()
+        vtk_mesh = alg.GetOutput()
+        mesh = pv.UnstructuredGrid()
+        mesh.ShallowCopy(vtk_mesh)
+    else:
+        mesh = invalid_random_polydata
+        vtk_mesh = _vtk.vtkPolyData()
+        vtk_mesh.ShallowCopy(mesh)
+
+    filepath = tmp_path / 'invalid.vtk'
+    mesh.save(filepath)
+    match = (
+        r'The point ids must be non-negative and strictly less than the\s+'
+        r'number of points \(21\)\.'
+    )
+    # Warning from file
+    with pytest.warns(pv.InvalidMeshWarning, match=match):
+        mesh.__class__(filepath)
+
+    # Warning from unwrapped VTK mesh
+    with pytest.warns(pv.InvalidMeshWarning, match=match):
+        mesh.__class__(vtk_mesh)
+
+    # Error from PyVista mesh
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh.__class__(mesh)
 
 
 @pytest.mark.parametrize('lines_is_cell_array', [False, True])

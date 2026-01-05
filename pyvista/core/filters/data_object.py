@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
+    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetType
@@ -355,7 +356,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 # Check PolyData refs directly first to avoid casting to UnstructuredGrid in
                 # case refs are valid
                 try:
-                    mesh._raise_invalid_point_references()
+                    mesh._check_invalid_connectivity(action='error')
                 except pv.InvalidMeshError:
                     pass
                 else:
@@ -519,6 +520,29 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         return self._validation_report
+
+    @staticmethod
+    def _check_connectivity_invalid_point_references(
+        mesh: PolyData | UnstructuredGrid,
+        cell_array: _vtk.vtkCellArray,
+        attr: Literal['verts', 'lines', 'faces', 'strips', 'cells'],
+        *,
+        action: _MeshValidator._ActionOptions,
+    ) -> None:
+        """Raise error if the connectivity array has invalid point references."""
+        if cell_array.GetNumberOfCells() > 0:
+            n_points = mesh.n_points
+            conn_min, conn_max = cell_array.GetConnectivityArray().GetRange()
+            if conn_min < 0 or conn_max >= n_points:
+                msg = (
+                    f'The connectivity of `{type(mesh).__name__}.{attr}` includes references to\n'
+                    f'point ids that do not exist. The point ids must be non-negative and strictly'
+                    f' less than the\nnumber of points ({n_points}).'
+                )
+                if action == 'warn':
+                    warn_external(msg, pv.InvalidMeshWarning)
+                else:
+                    raise pv.InvalidMeshError(msg)
 
 
 @dataclass(frozen=True)
@@ -700,12 +724,6 @@ class DataObjectFilters:
         - ``cell_data_wrong_length``: Ensure the length of each cell data array matches
           :attr:`~pyvista.DataSet.n_cells`.
 
-        .. note:
-            When setting new arrays using PyVista's API, similar array validation checks are
-            `already` implicitly performed. As such, these checks may be redundant in many cases.
-            They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
-            meshes.
-
         **Cell validation fields**
 
         - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
@@ -754,6 +772,13 @@ class DataObjectFilters:
 
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
+
+        .. note::
+
+            Similar validation checks for ``point_data_wrong_length``, ``cell_data_wrong_length``,
+            and ``invalid_point_references`` are `already` performed internally by PyVista
+            when creating meshes or setting new data. As such, these checks may be redundant
+            in many cases.
 
         .. versionadded:: 0.47
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
@@ -19,7 +20,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -817,8 +817,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+
             # Validate connectivity
-            self._raise_invalid_point_references(as_warning=True)
+            # Only warn if init from unwrapped vtk objects so users can fix issues post-init
+            action: _MeshValidator._ActionOptions = (
+                'error' if isinstance(var_inp, pv.DataSet) else 'warn'
+            )
+            self._check_invalid_connectivity(action=action)
             return
 
         # First parameter is points
@@ -878,54 +883,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             self.verts = self._make_vertex_cells(self.n_points)
         else:
             # Validate connectivity
-            self._raise_invalid_point_references(as_warning=True)
+            self._check_invalid_connectivity(action='warn')
 
-    def _check_invalid_point_references(
-        self, attr: Literal['verts', 'lines', 'faces', 'strips']
-    ) -> str | None:
-        """Verify that a connectivity array does not reference invalid points."""
-        vtkattr = {'verts': 'Verts', 'lines': 'Lines', 'faces': 'Polys', 'strips': 'Strips'}[attr]
-        if getattr(self, f'GetNumberOf{vtkattr}')():
-            n_points = self.n_points
-            vtk_connectivity = getattr(self, f'Get{vtkattr}')().GetConnectivityArray()
-            conn_min, conn_max = vtk_connectivity.GetRange()
-            if conn_min < 0 or conn_max >= n_points:
-                return (
-                    f'The connectivity of `{type(self).__name__}.{attr}` includes references to\n'
-                    f'point ids that do not exist. The point ids must be non-negative and strictly'
-                    f' less than the\nnumber of points ({n_points}).'
-                )
-        return None
-
-    def _raise_invalid_point_references(
-        self,
-        attr: Literal['verts', 'lines', 'faces', 'strips'] | None = None,
-        *,
-        as_warning: bool = False,
-    ):
-        """Raise error if the specified connectivity array has invalid point references.
-
-        If attr is None, all connectivity arrays are checked.
-
-        """
-
-        def _raise_invalid_point_references(attr_):
-            msg = self._check_invalid_point_references(attr_)
-            if msg is not None:
-                if as_warning:
-                    warn_external(msg, pv.InvalidMeshWarning)
-                else:
-                    raise pv.InvalidMeshError(msg)
-
-        if attr is None:
-            # Check all connectivity arrays
-            _raise_invalid_point_references('verts')
-            _raise_invalid_point_references('lines')
-            _raise_invalid_point_references('faces')
-            _raise_invalid_point_references('strips')
-            return
-
-        _raise_invalid_point_references(attr)
+    def _check_invalid_connectivity(self, action: _MeshValidator._ActionOptions):
+        # Validate all connectivity arrays
+        check = _MeshValidator._check_connectivity_invalid_point_references
+        check(self, self.GetVerts(), 'verts', action=action)
+        check(self, self.GetLines(), 'lines', action=action)
+        check(self, self.GetPolys(), 'faces', action=action)
+        check(self, self.GetStrips(), 'strips', action=action)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -941,6 +907,20 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         cells[:, 0] = 1
         cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
         return cells
+
+    def _set_cell_array(
+        self,
+        setter: Callable[[_vtk.vtkCellArray], None],
+        cell_array: CellArrayLike,
+        attr: Literal['verts', 'lines', 'faces', 'strips'],
+    ) -> None:
+        vtk_cell_array: _vtk.vtkCellArray = (
+            cell_array if isinstance(cell_array, _vtk.vtkCellArray) else CellArray(cell_array)
+        )
+        setter(vtk_cell_array)
+        _MeshValidator._check_connectivity_invalid_point_references(
+            self, vtk_cell_array, attr, action='error'
+        )
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -992,11 +972,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @verts.setter
     def verts(self, verts: CellArrayLike) -> None:
-        if isinstance(verts, _vtk.vtkCellArray):
-            self.SetVerts(verts)
-        else:
-            self.SetVerts(CellArray(verts))
-        self._raise_invalid_point_references('verts')
+        self._set_cell_array(self.SetVerts, verts, 'verts')
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1021,11 +997,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @lines.setter
     def lines(self, lines: CellArrayLike) -> None:
-        if isinstance(lines, _vtk.vtkCellArray):
-            self.SetLines(lines)
-        else:
-            self.SetLines(CellArray(lines))
-        self._raise_invalid_point_references('lines')
+        self._set_cell_array(self.SetLines, lines, 'lines')
 
     @property
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1098,12 +1070,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @faces.setter
     def faces(self, faces: CellArrayLike) -> None:
-        if isinstance(faces, _vtk.vtkCellArray):
-            self.SetPolys(faces)
-        else:
-            # TODO: faster to mutate in-place if array is same size?
-            self.SetPolys(CellArray(faces))
-        self._raise_invalid_point_references('faces')
+        self._set_cell_array(self.SetPolys, faces, 'faces')
 
     @property
     def regular_faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1293,11 +1260,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @strips.setter
     def strips(self, strips: CellArrayLike) -> None:
-        if isinstance(strips, _vtk.vtkCellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
-        self._raise_invalid_point_references('strips')
+        self._set_cell_array(self.SetStrips, strips, 'strips')
 
     @property
     def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01
@@ -1901,14 +1864,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         if not args:
             return
         if len(args) == 1:
+            if isinstance(args[0], (str, Path)):
+                self._from_file(args[0], **kwargs)
+                return
+
             if isinstance(args[0], _vtk.vtkUnstructuredGrid):
                 if deep:
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])  # type: ignore[arg-type]
-
-            elif isinstance(args[0], (str, Path)):
-                self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
@@ -1921,10 +1885,18 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 msg = f'Cannot work with input type {itype}'
                 raise TypeError(msg)
 
+            # Only warn if init from unwrapped vtk objects so users can fix issues post-init
+            action: _MeshValidator._ActionOptions = (
+                'error' if isinstance(args[0], pv.DataSet) else 'warn'
+            )
+            self._check_invalid_connectivity(action=action)
+            return
+
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
             self._from_cells_dict(args[0], args[1], deep=deep)
             self._check_for_consistency()
+            self._check_invalid_connectivity(action='error')
 
         elif len(args) == 3:
             arg0_is_seq = isinstance(args[0], (np.ndarray, Sequence))
@@ -1934,6 +1906,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(args[0], args[1], args[2], deep=deep, **kwargs)
                 self._check_for_consistency()
+                self._check_invalid_connectivity(action='error')
             else:
                 msg = 'All input types must be sequences.'
                 raise TypeError(msg)
@@ -1951,6 +1924,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
+
+    def _post_file_load_processing(self) -> None:
+        """Execute after loading a UnstructuredGrid from file."""
+        self._check_invalid_connectivity(action='warn')
+
+    def _check_invalid_connectivity(self, action: _MeshValidator._ActionOptions):
+        _MeshValidator._check_connectivity_invalid_point_references(
+            self, cell_array=self._get_cells(), attr='cells', action=action
+        )
 
     def _from_cells_dict(self, cells_dict, points, *, deep: bool = True):
         if points.ndim != 2 or points.shape[-1] != 3:
@@ -2135,7 +2117,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self._get_cells().ImportLegacyFormat(vtk_idarr)
 
-    def _get_cells(self):
+    def _get_cells(self) -> _vtk.vtkCellArray:
         cells = self.GetCells()
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
 
