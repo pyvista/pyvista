@@ -49,7 +49,7 @@ def description(entry: HelpEntry):  # noqa: ANN202
 class _PyvistaHelpFormatter(DefaultFormatter):
     def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
         """Render the usage line."""
-        if usage:
+        if usage:  # pragma: no branch
             console.print(usage)
 
 
