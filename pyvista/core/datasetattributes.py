@@ -291,7 +291,7 @@ class DataSetAttributes(
 
     def __delitem__(
         self: Self,
-        key: str | slice,
+        key: str | slice[None, None, None],
     ) -> None:
         """Implement del with array name or all values."""
         if not isinstance(key, (str, slice)):
