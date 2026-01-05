@@ -306,8 +306,7 @@ class DataSetAttributes(
             msg = 'Slicing deletion is only allowed with all values (ie. with [:]).'
             raise ValueError(msg)
 
-        for k in self.keys():
-            self.remove(key=k)
+        self.clear()
 
     def __contains__(self: Self, name: str) -> bool:
         """Implement the ``in`` operator."""
