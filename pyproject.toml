@@ -149,7 +149,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-vtk<=2.10.2',
+  'trame-vtk==2.10.1',
   'trame-vuetify==3.2.0',
   'trame==3.12.0',
   'trimesh==4.10.0',
