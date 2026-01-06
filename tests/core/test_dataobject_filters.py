@@ -2125,10 +2125,13 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
         vtk_mesh = alg.GetOutput()
         mesh = pv.UnstructuredGrid()
         mesh.ShallowCopy(vtk_mesh)
+        array_args = mesh.cells, mesh.celltypes, mesh.points
     else:
         mesh = invalid_random_polydata
         vtk_mesh = _vtk.vtkPolyData()
         vtk_mesh.ShallowCopy(mesh)
+        array_args = mesh.points, mesh.faces
+    mesh_type = type(mesh)
 
     filepath = tmp_path / 'invalid.vtk'
     mesh.save(filepath)
@@ -2137,12 +2140,16 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
 
     # Init from file
     with pytest.raises(pv.InvalidMeshError, match=match):
-        mesh.__class__(filepath, validate=validate)
+        mesh_type(filepath, validate=validate)
 
     # Init from unwrapped VTK mesh
     with pytest.raises(pv.InvalidMeshError, match=match):
-        mesh.__class__(vtk_mesh, validate=validate)
+        mesh_type(vtk_mesh, validate=validate)
 
     # Init from PyVista mesh
     with pytest.raises(pv.InvalidMeshError, match=match):
-        mesh.__class__(mesh, validate=validate)
+        mesh_type(mesh, validate=validate)
+
+    # Init from arrays
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh_type(*array_args, validate=validate)
