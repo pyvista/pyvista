@@ -1633,11 +1633,7 @@ def invalid_random_polydata():
         )
     ).astype(int)
     points = np.append(points, [[np.nan, 0, 0]], axis=0)
-
-    # Create with valid points first, then set invalid points
-    poly = pv.PolyData(np.zeros((faces.max() + 1, 3)), faces=faces)
-    poly.points = points
-    return poly
+    return pv.PolyData(points, faces=faces)
 
 
 def test_validate_mesh_report_str():
@@ -1997,9 +1993,8 @@ def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
 
 
 def test_validate_mesh_invalid_point_references():
-    # Make poly with cell where indices > n_points
-    grid = examples.cells.Triangle()
-    grid.points = [0.0, 0.0, 0.0]
+    # Cell has point indices > n_points
+    grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
     report = grid.validate_mesh('invalid_point_references')
     expected_cell_ids = [0]
     assert report.invalid_point_references == expected_cell_ids
@@ -2121,7 +2116,8 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
-def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid):
+@pytest.mark.parametrize('validate', [True, 'cells'])
+def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate):
     if as_grid:
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(invalid_random_polydata)
@@ -2141,12 +2137,12 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid):
 
     # Init from file
     with pytest.raises(pv.InvalidMeshError, match=match):
-        mesh.__class__(filepath, validate=True)
+        mesh.__class__(filepath, validate=validate)
 
     # Init from unwrapped VTK mesh
     with pytest.raises(pv.InvalidMeshError, match=match):
-        mesh.__class__(vtk_mesh, validate=True)
+        mesh.__class__(vtk_mesh, validate=validate)
 
     # Init from PyVista mesh
     with pytest.raises(pv.InvalidMeshError, match=match):
-        mesh.__class__(mesh, validate=True)
+        mesh.__class__(mesh, validate=validate)

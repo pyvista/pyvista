@@ -371,6 +371,13 @@ def test_vtk_obb_tree_raises():
     with pytest.raises(ValueError, match=match):
         _ = poly.obbTree
 
+    poly = pv.PolyData()
+    poly.faces = [3, 0, 0, 0]
+    assert poly.n_points == 0
+    assert poly.n_cells == 1
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
 
 def test_polydata_subclass_del():
     class PolyDataDerived(pv.PolyData): ...

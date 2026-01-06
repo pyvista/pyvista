@@ -666,6 +666,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
 
+        .. versionadded:: 0.47
+
     See Also
     --------
     pyvista.PolyData.from_regular_faces
@@ -841,7 +843,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return
 
         # First parameter is points
-        elif isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
+        if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
             self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
         else:
@@ -898,31 +900,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
-
-    # def _check_invalid_connectivity(self):
-    #     def check(
-    #             cell_array: _vtk.vtkCellArray,
-    #             attr: Literal['verts', 'lines', 'faces', 'strips'],
-    #     ) -> None:
-    #         """Raise error if the connectivity array has invalid point references."""
-    #         if cell_array.GetNumberOfCells() > 0:
-    #             array = _get_connectivity_array(cell_array)
-    #             min_, max_ = np.min(array), np.max(array)
-    #             if max_ >= (n_points := self.n_points) or min_ < 0:
-    #                 msg = (
-    #                     f'The connectivity of `{attr}` includes references to point ids that\n'
-    #                     f'do not exist. The point ids must be non-negative and strictly '
-    #                     f'less than the number of points ({n_points}).'
-    #                 )
-    #                 raise pv.InvalidMeshError(msg)
-    #
-    #     # Validate all connectivity arrays
-    #     check(self.GetVerts(), 'verts')
-    #     check(self.GetLines(), 'lines')
-    #     check(self.GetPolys(), 'faces')
-    #     check(self.GetStrips(), 'strips')
-    #
-    #
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -1970,6 +1947,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
 
+        .. versionadded:: 0.47
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2015,7 +1994,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self, *args, deep: bool = False, validate: bool = False, **kwargs) -> None:
+    def __init__(
+        self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False, **kwargs
+    ) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
 
@@ -2064,6 +2045,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 'following arrays:\n`cells`, `cell_type`, `points`'
             )
             raise TypeError(msg)
+
         if validate:
             self._validate_mesh(validate)
 

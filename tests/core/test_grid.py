@@ -283,39 +283,38 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
 def test_init_polyhedron():
     polyhedron_nodes = [
-        [0.02, 0.0, 0.02],
-        [0.02, 0.01, 0.02],
-        [0.03, 0.01, 0.02],
-        [0.035, 0.005, 0.02],
-        [0.03, 0.0, 0.02],
-        [0.02, 0.0, 0.03],
-        [0.02, 0.01, 0.03],
-        [0.03, 0.01, 0.03],
-        [0.035, 0.005, 0.03],
-        [0.03, 0.0, 0.03],
+        [0.02, 0.0, 0.02],  # 17
+        [0.02, 0.01, 0.02],  # 18
+        [0.03, 0.01, 0.02],  # 19
+        [0.035, 0.005, 0.02],  # 20
+        [0.03, 0.0, 0.02],  # 21
+        [0.02, 0.0, 0.03],  # 22
+        [0.02, 0.01, 0.03],  # 23
+        [0.03, 0.01, 0.03],  # 24
+        [0.035, 0.005, 0.03],  # 25
+        [0.03, 0.0, 0.03],  # 26
     ]
     nodes = np.array(polyhedron_nodes)
 
     polyhedron_connectivity = [
         3,
         5,
-        0,
-        1,
-        2,
-        3,
+        17,
+        18,
+        19,
+        20,
+        21,
         4,
+        17,
+        18,
+        23,
+        22,
         4,
-        0,
-        1,
-        6,
-        5,
-        4,
-        0,
-        4,
-        9,
-        5,
+        17,
+        21,
+        26,
+        22,
     ]
-
     cells = np.array([len(polyhedron_connectivity), *polyhedron_connectivity])
     cell_type = np.array([pv.CellType.POLYHEDRON])
     grid = pv.UnstructuredGrid(cells, cell_type, nodes)
