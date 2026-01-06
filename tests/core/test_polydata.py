@@ -278,7 +278,7 @@ def test_invalid_point_references_unstructured_grid(cells, celltypes, points):
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
-def test_init_invalid_connectivity_does_not_warn(invalid_random_polydata, tmp_path, as_grid):  # noqa: F811
+def test_init_invalid_connectivity_warns(invalid_random_polydata, tmp_path, as_grid):  # noqa: F811
     if as_grid:
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(invalid_random_polydata)
@@ -293,15 +293,21 @@ def test_init_invalid_connectivity_does_not_warn(invalid_random_polydata, tmp_pa
 
     filepath = tmp_path / 'invalid.vtk'
     mesh.save(filepath)
+    match = (
+        r'The point ids must be non-negative and strictly less than the\s+'
+        r'number of points \(21\)\.'
+    )
+    # Warning from file
+    with pytest.warns(pv.InvalidMeshWarning, match=match):
+        mesh.__class__(filepath)
 
-    # No warning/error from file
-    mesh.__class__(filepath)
+    # Warning from unwrapped VTK mesh
+    with pytest.warns(pv.InvalidMeshWarning, match=match):
+        mesh.__class__(vtk_mesh)
 
-    # No warning/error when wrapping VTK mesh
-    mesh.__class__(vtk_mesh)
-
-    # No error/warning when wrapping PyVista mesh
-    mesh.__class__(mesh)
+    # Error from PyVista mesh
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh.__class__(mesh)
 
 
 @pytest.mark.parametrize('lines_is_cell_array', [False, True])
