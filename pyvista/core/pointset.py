@@ -831,6 +831,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+
+            # Validate connectivity
+            # Only warn if init from unwrapped vtk objects so users can fix issues post-init
+            action: _MeshValidator._ActionOptions = (
+                'error' if isinstance(var_inp, pv.DataSet) else 'warn'
+            )
+            self._check_invalid_connectivity(action=action)
             return
 
         # First parameter is points
@@ -888,6 +895,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
+        else:
+            # Validate connectivity
+            self._check_invalid_connectivity(action='warn')
 
     def _check_invalid_connectivity(self, action: _MeshValidator._ActionOptions):
         # Validate all connectivity arrays
@@ -1990,14 +2000,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         if not args:
             return
         if len(args) == 1:
+            if isinstance(args[0], (str, Path)):
+                self._from_file(args[0], **kwargs)
+                return
+
             if isinstance(args[0], _vtk.vtkUnstructuredGrid):
                 if deep:
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])  # type: ignore[arg-type]
-
-            elif isinstance(args[0], (str, Path)):
-                self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
@@ -2009,6 +2020,13 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 itype = type(args[0])
                 msg = f'Cannot work with input type {itype}'
                 raise TypeError(msg)
+
+            # Only warn if init from unwrapped vtk objects so users can fix issues post-init
+            action: _MeshValidator._ActionOptions = (
+                'error' if isinstance(args[0], pv.DataSet) else 'warn'
+            )
+            self._check_invalid_connectivity(action=action)
+            return
 
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
@@ -2042,6 +2060,10 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
+
+    def _post_file_load_processing(self) -> None:
+        """Execute after loading a UnstructuredGrid from file."""
+        self._check_invalid_connectivity(action='warn')
 
     def _check_invalid_connectivity(self, action: _MeshValidator._ActionOptions):
         _MeshValidator._check_connectivity_invalid_point_references(
