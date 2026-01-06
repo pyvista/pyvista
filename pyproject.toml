@@ -54,8 +54,8 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.4.0',
-  'matplotlib<3.10.8',
+  'cyclopts<4.5.0',
+  'matplotlib<3.10.9',
   'numpy<2.4.0',
   'pillow<12.1.0',
   'pooch<1.9.0',
@@ -65,7 +65,7 @@ pinned = [ # Pinned versions of core dependencies
 
 typing = [
   'meshio<5.4.0',
-  'mypy<1.19.0',
+  'mypy<1.20.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
   'trimesh<4.11.0',
@@ -77,7 +77,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.148.3',
+  'hypothesis<6.148.9',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
@@ -85,7 +85,7 @@ test = [
   'libcst<1.8.7',
   'meshio<5.4.0',
   'nest-asyncio2<1.8.0',
-  'numpydoc<1.10.0',
+  'numpydoc<1.11.0',
   'pandas<=2.4.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.10.0',
@@ -120,15 +120,15 @@ docs = [
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.2',
-  'joblib==1.5.2',
+  'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.5.0',
+  'jupyterlab==4.5.1',
   'lxml==6.0.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==1.18.2',
+  'mypy==1.19.1',
   'nest-asyncio2==1.7.1',
-  'numpydoc==1.9.0',
+  'numpydoc==1.10.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.16.2',
   'pytest-sphinx==0.6.3',
@@ -152,7 +152,7 @@ docs = [
   'trame-vtk==2.10.0',
   'trame-vuetify==3.1.0',
   'trame==3.12.0',
-  'trimesh==4.10.0',
+  'trimesh==4.10.1',
   'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]

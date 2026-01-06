@@ -34,7 +34,7 @@ repos:
           ]
 
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: numpydoc-validation
         files: ^pyvista/
@@ -65,7 +65,7 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.35.0
+    rev: 0.36.0
     hooks:
       - id: check-github-workflows
 
@@ -81,14 +81,14 @@ repos:
         exclude: pyvista/_warn_external.py
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.7
+    rev: v0.14.10
     hooks:
       - id: ruff-format
       - id: ruff-check
         args: [--fix, --show-fixes]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.7.3
+    rev: v3.7.4
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -121,7 +121,7 @@ repos:
           ]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.18.0
+    rev: v1.19.0
     hooks:
       - id: zizmor
 
