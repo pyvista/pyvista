@@ -2118,3 +2118,35 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.validate_mesh(action='warn')
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
+
+
+@pytest.mark.parametrize('as_grid', [True, False])
+def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid):
+    if as_grid:
+        alg = _vtk.vtkAppendFilter()
+        alg.AddInputData(invalid_random_polydata)
+        alg.Update()
+        vtk_mesh = alg.GetOutput()
+        mesh = pv.UnstructuredGrid()
+        mesh.ShallowCopy(vtk_mesh)
+    else:
+        mesh = invalid_random_polydata
+        vtk_mesh = _vtk.vtkPolyData()
+        vtk_mesh.ShallowCopy(mesh)
+
+    filepath = tmp_path / 'invalid.vtk'
+    mesh.save(filepath)
+
+    match = 'mesh is not valid'
+
+    # Init from file
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh.__class__(filepath, validate=True)
+
+    # Init from unwrapped VTK mesh
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh.__class__(vtk_mesh, validate=True)
+
+    # Init from PyVista mesh
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh.__class__(mesh, validate=True)

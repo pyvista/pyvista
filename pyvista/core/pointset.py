@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
@@ -13,7 +12,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -38,6 +36,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .filters.data_object import _MeshValidationOptions
 from .filters.data_object import _MeshValidationReport
 from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
@@ -525,9 +524,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     @wraps(DataObjectFilters.validate_mesh)
     def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
         self: Self,
-        validation_fields: _MeshValidator._AllValidationOptions
-        | Sequence[_MeshValidator._AllValidationOptions]
-        | None = None,
+        validation_fields: _MeshValidationOptions | None = None,
         *args,
         **kwargs,
     ) -> _MeshValidationReport[Self]:
@@ -663,6 +660,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     n_verts : int, optional
         Deprecated. Not used.
+
+    validate: bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
 
     See Also
     --------
@@ -801,6 +803,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
+        *,
+        validate: bool | _MeshValidationOptions = False,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -818,7 +822,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     msg = 'No other arguments should be set when first parameter is a string'
                     raise ValueError(msg)
             self._from_file(var_inp, force_ext=force_ext)  # is filename
-
+            if validate:
+                self._validate_mesh(validate)
             return
 
         # PolyData-like
@@ -831,17 +836,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
-
-            # Validate connectivity
-            # Only warn if init from unwrapped vtk objects so users can fix issues post-init
-            action: _MeshValidator._ActionOptions = (
-                'error' if isinstance(var_inp, pv.DataSet) else 'warn'
-            )
-            self._check_invalid_connectivity(action=action)
+            if validate:
+                self._validate_mesh(validate)
             return
 
         # First parameter is points
-        if isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
+        elif isinstance(var_inp, (np.ndarray, list, _vtk.vtkDataArray)):
             self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
         else:
@@ -878,6 +878,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
             setattr(self, k, v)
 
+        if validate:
+            self._validate_mesh(validate)
+
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (  # type: ignore[assignment]
             ('n_verts', n_verts),
@@ -895,17 +898,31 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
-        else:
-            # Validate connectivity
-            self._check_invalid_connectivity(action='warn')
 
-    def _check_invalid_connectivity(self, action: _MeshValidator._ActionOptions):
-        # Validate all connectivity arrays
-        check = _MeshValidator._check_connectivity_invalid_point_references
-        check(self, self.GetVerts(), 'verts', action=action)
-        check(self, self.GetLines(), 'lines', action=action)
-        check(self, self.GetPolys(), 'faces', action=action)
-        check(self, self.GetStrips(), 'strips', action=action)
+    # def _check_invalid_connectivity(self):
+    #     def check(
+    #             cell_array: _vtk.vtkCellArray,
+    #             attr: Literal['verts', 'lines', 'faces', 'strips'],
+    #     ) -> None:
+    #         """Raise error if the connectivity array has invalid point references."""
+    #         if cell_array.GetNumberOfCells() > 0:
+    #             array = _get_connectivity_array(cell_array)
+    #             min_, max_ = np.min(array), np.max(array)
+    #             if max_ >= (n_points := self.n_points) or min_ < 0:
+    #                 msg = (
+    #                     f'The connectivity of `{attr}` includes references to point ids that\n'
+    #                     f'do not exist. The point ids must be non-negative and strictly '
+    #                     f'less than the number of points ({n_points}).'
+    #                 )
+    #                 raise pv.InvalidMeshError(msg)
+    #
+    #     # Validate all connectivity arrays
+    #     check(self.GetVerts(), 'verts')
+    #     check(self.GetLines(), 'lines')
+    #     check(self.GetPolys(), 'faces')
+    #     check(self.GetStrips(), 'strips')
+    #
+    #
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -921,20 +938,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         cells[:, 0] = 1
         cells[:, 1] = np.arange(npoints, dtype=pv.ID_TYPE)
         return cells
-
-    def _set_cell_array(
-        self,
-        setter: Callable[[_vtk.vtkCellArray], None],
-        cell_array: CellArrayLike,
-        attr: Literal['verts', 'lines', 'faces', 'strips'],
-    ) -> None:
-        vtk_cell_array: _vtk.vtkCellArray = (
-            cell_array if isinstance(cell_array, _vtk.vtkCellArray) else CellArray(cell_array)
-        )
-        setter(vtk_cell_array)
-        _MeshValidator._check_connectivity_invalid_point_references(
-            self, vtk_cell_array, attr, action='error'
-        )
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1009,7 +1012,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @verts.setter
     def verts(self, verts: CellArrayLike) -> None:
-        self._set_cell_array(self.SetVerts, verts, 'verts')
+        if isinstance(verts, _vtk.vtkCellArray):
+            self.SetVerts(verts)
+        else:
+            self.SetVerts(CellArray(verts))
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1057,7 +1063,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @lines.setter
     def lines(self, lines: CellArrayLike) -> None:
-        self._set_cell_array(self.SetLines, lines, 'lines')
+        if isinstance(lines, _vtk.vtkCellArray):
+            self.SetLines(lines)
+        else:
+            self.SetLines(CellArray(lines))
 
     @property
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1136,7 +1145,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @faces.setter
     def faces(self, faces: CellArrayLike) -> None:
-        self._set_cell_array(self.SetPolys, faces, 'faces')
+        if isinstance(faces, _vtk.vtkCellArray):
+            self.SetPolys(faces)
+        else:
+            # TODO: faster to mutate in-place if array is same size?
+            self.SetPolys(CellArray(faces))
 
     @property
     def regular_faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -1350,7 +1363,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @strips.setter
     def strips(self, strips: CellArrayLike) -> None:
-        self._set_cell_array(self.SetStrips, strips, 'strips')
+        if isinstance(strips, _vtk.vtkCellArray):
+            self.SetStrips(strips)
+        else:
+            self.SetStrips(CellArray(strips))
 
     @property
     def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01
@@ -1944,9 +1960,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     ----------
     args : str, :vtk:`vtkUnstructuredGrid`, iterable
         See examples below.
+
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
+
+    validate: bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
 
     Examples
     --------
@@ -1993,22 +2015,21 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self, *args, deep: bool = False, **kwargs) -> None:
+    def __init__(self, *args, deep: bool = False, validate: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
 
         if not args:
             return
         if len(args) == 1:
-            if isinstance(args[0], (str, Path)):
-                self._from_file(args[0], **kwargs)
-                return
-
             if isinstance(args[0], _vtk.vtkUnstructuredGrid):
                 if deep:
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])  # type: ignore[arg-type]
+
+            elif isinstance(args[0], (str, Path)):
+                self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
@@ -2021,18 +2042,10 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 msg = f'Cannot work with input type {itype}'
                 raise TypeError(msg)
 
-            # Only warn if init from unwrapped vtk objects so users can fix issues post-init
-            action: _MeshValidator._ActionOptions = (
-                'error' if isinstance(args[0], pv.DataSet) else 'warn'
-            )
-            self._check_invalid_connectivity(action=action)
-            return
-
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
             self._from_cells_dict(args[0], args[1], deep=deep)
             self._check_for_consistency()
-            self._check_invalid_connectivity(action='error')
 
         elif len(args) == 3:
             arg0_is_seq = isinstance(args[0], (np.ndarray, Sequence))
@@ -2042,7 +2055,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(args[0], args[1], args[2], deep=deep, **kwargs)
                 self._check_for_consistency()
-                self._check_invalid_connectivity(action='error')
             else:
                 msg = 'All input types must be sequences.'
                 raise TypeError(msg)
@@ -2052,6 +2064,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 'following arrays:\n`cells`, `cell_type`, `points`'
             )
             raise TypeError(msg)
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -2060,15 +2074,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
-
-    def _post_file_load_processing(self) -> None:
-        """Execute after loading a UnstructuredGrid from file."""
-        self._check_invalid_connectivity(action='warn')
-
-    def _check_invalid_connectivity(self, action: _MeshValidator._ActionOptions):
-        _MeshValidator._check_connectivity_invalid_point_references(
-            self, cell_array=self._get_cells(), attr='cells', action=action
-        )
 
     def _from_cells_dict(self, cells_dict, points, *, deep: bool = True):
         if points.ndim != 2 or points.shape[-1] != 3:

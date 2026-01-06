@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from collections.abc import Sized
 from dataclasses import InitVar
 from dataclasses import dataclass
@@ -42,7 +43,6 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
     from typing import ClassVar
 
     from pyvista import DataSet
@@ -51,7 +51,6 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
-    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetType
@@ -352,16 +351,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             """Return cell IDs that reference points that do not exist."""
             if hasattr(mesh, 'dimensions'):
                 return []  # Cells are implicitly defined and cannot be invalid
-            elif isinstance(mesh, pv.PolyData):
-                # Check PolyData refs directly first to avoid casting to UnstructuredGrid in
-                # case refs are valid
-                try:
-                    mesh._check_invalid_connectivity(action='error')
-                except pv.InvalidMeshError:
-                    pass
-                else:
-                    return []
-
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -521,28 +510,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         return self._validation_report
 
-    @staticmethod
-    def _check_connectivity_invalid_point_references(
-        mesh: PolyData | UnstructuredGrid,
-        cell_array: _vtk.vtkCellArray,
-        attr: Literal['verts', 'lines', 'faces', 'strips', 'cells'],
-        *,
-        action: _MeshValidator._ActionOptions,
-    ) -> None:
-        """Raise error if the connectivity array has invalid point references."""
-        if cell_array.GetNumberOfCells() > 0:
-            n_points = mesh.n_points
-            conn_min, conn_max = cell_array.GetConnectivityArray().GetRange()
-            if conn_min < 0 or conn_max >= n_points:
-                msg = (
-                    f'The connectivity of `{type(mesh).__name__}.{attr}` includes references to\n'
-                    f'point ids that do not exist. The point ids must be non-negative and strictly'
-                    f' less than the\nnumber of points ({n_points}).'
-                )
-                if action == 'warn':
-                    warn_external(msg, pv.InvalidMeshWarning)
-                else:
-                    raise pv.InvalidMeshError(msg)
+
+# Create alias for reuse/export to other modules
+_MeshValidationOptions = (
+    _MeshValidator._AllValidationOptions | Sequence[_MeshValidator._AllValidationOptions]
+)
 
 
 @dataclass(frozen=True)
@@ -700,10 +672,7 @@ class DataObjectFilters:
 
     def validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        validation_fields: _MeshValidator._AllValidationOptions
-        | Sequence[
-            _MeshValidator._AllValidationOptions
-        ] = _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, cells, and points.
@@ -772,13 +741,6 @@ class DataObjectFilters:
 
         Validating composite :class:`~pyvista.MultiBlock` is also supported. In this case, all
         mesh blocks are validated separately and the results are aggregated and reported per-block.
-
-        .. note::
-
-            Similar validation checks for ``point_data_wrong_length``, ``cell_data_wrong_length``,
-            and ``invalid_point_references`` are `already` performed internally by PyVista
-            when creating meshes or setting new data. As such, validating these fields may be
-            redundant in many cases.
 
         .. versionadded:: 0.47
 
@@ -993,16 +955,29 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
+        input_fields = (
+            _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS
+            if validation_fields is None
+            else validation_fields
+        )
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-        report = _MeshValidator(self, validation_fields).validation_report
+        report = _MeshValidator(self, input_fields).validation_report
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':
                 raise pv.InvalidMeshError(message)
         return report
+
+    def _validate_mesh(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        validate: Literal[True] | _MeshValidationOptions,
+    ):
+        """Validate mesh using a bool or named fields and raise error."""
+        validation_fields = None if validate is True else validate
+        self.validate_mesh(validation_fields, action='error')
 
     def cell_validator(self: _DataSetOrMultiBlockType):  # type:ignore[misc]
         """Check the validity of each cell in this dataset.
