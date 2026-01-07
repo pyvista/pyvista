@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from collections.abc import Sized
 from dataclasses import InitVar
 from dataclasses import dataclass
@@ -42,7 +43,6 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
     from typing import ClassVar
 
     from pyvista import DataSet
@@ -511,6 +511,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         return self._validation_report
 
 
+# Create alias for reuse/export to other modules
+_MeshValidationOptions = (
+    _MeshValidator._AllValidationOptions | Sequence[_MeshValidator._AllValidationOptions]
+)
+
+
 @dataclass(frozen=True)
 class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     """Dataclass to report mesh validation results."""
@@ -666,10 +672,7 @@ class DataObjectFilters:
 
     def validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        validation_fields: _MeshValidator._AllValidationOptions
-        | Sequence[
-            _MeshValidator._AllValidationOptions
-        ] = _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, cells, and points.
@@ -690,7 +693,7 @@ class DataObjectFilters:
         - ``cell_data_wrong_length``: Ensure the length of each cell data array matches
           :attr:`~pyvista.DataSet.n_cells`.
 
-        .. note:
+        .. note::
             When setting new arrays using PyVista's API, similar array validation checks are
             `already` implicitly performed. As such, these checks may be redundant in many cases.
             They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
@@ -958,16 +961,29 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
+        input_fields = (
+            _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS
+            if validation_fields is None
+            else validation_fields
+        )
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-        report = _MeshValidator(self, validation_fields).validation_report
+        report = _MeshValidator(self, input_fields).validation_report
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':
                 raise pv.InvalidMeshError(message)
         return report
+
+    def _validate_mesh(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        validate: Literal[True] | _MeshValidationOptions,
+    ):
+        """Validate mesh using a bool or named fields and raise error."""
+        validation_fields = None if validate is True else validate
+        self.validate_mesh(validation_fields, action='error')
 
     def cell_validator(self: _DataSetOrMultiBlockType):  # type:ignore[misc]
         """Check the validity of each cell in this dataset.

@@ -36,6 +36,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .filters.data_object import _MeshValidationOptions
 from .filters.data_object import _MeshValidationReport
 from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
@@ -523,9 +524,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     @wraps(DataObjectFilters.validate_mesh)
     def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
         self: Self,
-        validation_fields: _MeshValidator._AllValidationOptions
-        | Sequence[_MeshValidator._AllValidationOptions]
-        | None = None,
+        validation_fields: _MeshValidationOptions | None = None,
         *args,
         **kwargs,
     ) -> _MeshValidationReport[Self]:
@@ -661,6 +660,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     n_verts : int, optional
         Deprecated. Not used.
+
+    validate: bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     See Also
     --------
@@ -799,6 +805,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
+        *,
+        validate: bool | _MeshValidationOptions = False,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -816,7 +824,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     msg = 'No other arguments should be set when first parameter is a string'
                     raise ValueError(msg)
             self._from_file(var_inp, force_ext=force_ext)  # is filename
-
+            if validate:
+                self._validate_mesh(validate)
             return
 
         # PolyData-like
@@ -829,6 +838,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+            if validate:
+                self._validate_mesh(validate)
             return
 
         # First parameter is points
@@ -868,6 +879,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     raise CellSizeError(msg) from err
 
             setattr(self, k, v)
+
+        if validate:
+            self._validate_mesh(validate)
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (  # type: ignore[assignment]
@@ -1923,9 +1937,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     ----------
     args : str, :vtk:`vtkUnstructuredGrid`, iterable
         See examples below.
+
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
+
+    validate: bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     Examples
     --------
@@ -1972,7 +1994,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self, *args, deep: bool = False, **kwargs) -> None:
+    def __init__(
+        self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False, **kwargs
+    ) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
 
@@ -2021,6 +2045,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 'following arrays:\n`cells`, `cell_type`, `points`'
             )
             raise TypeError(msg)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -2213,7 +2240,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self._get_cells().ImportLegacyFormat(vtk_idarr)
 
-    def _get_cells(self):
+    def _get_cells(self) -> _vtk.vtkCellArray:
         cells = self.GetCells()
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
 

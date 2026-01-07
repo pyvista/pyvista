@@ -16,6 +16,7 @@ from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
 radius = 0.5
 
