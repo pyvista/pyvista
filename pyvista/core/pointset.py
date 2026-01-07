@@ -3221,7 +3221,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         '.vtk': UnstructuredGridWriter,
     }
 
-    def __init__(self, *args, deep: bool = False, validate: bool | _MeshValidationOptions):
+    def __init__(self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
