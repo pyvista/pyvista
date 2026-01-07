@@ -1939,6 +1939,24 @@ def test_distinct_cell_types():
     assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
 
 
+def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
+    for dataset in datasets_plus_pointset:
+        distinct_cell_types = dataset.distinct_cell_types
+        assert all(isinstance(celltype, pv.CellType) for celltype in distinct_cell_types)
+        if dataset.n_cells == 0:
+            assert distinct_cell_types == set()
+        else:
+            assert len(distinct_cell_types) > 0, type(dataset)
+
+
+@pytest.mark.parametrize('dimensions', [(0, 0, 0), (1, 1, 1), (2, 1, 1), (2, 2, 1), (2, 2, 2)])
+def test_distinct_cell_types_imagedata(dimensions):
+    image = pv.ImageData(dimensions=dimensions)
+    expected = {image.get_cell(0).type} if image.n_cells > 0 else set()
+    actual = image.distinct_cell_types
+    assert actual == expected
+
+
 @pytest.fixture
 def appended_images():
     def create_slice(ind: 0):

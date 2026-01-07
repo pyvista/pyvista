@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import Cell
+    from pyvista import CellType
     from pyvista import PointSet
 
     from ._typing_core import MatrixLike
@@ -3243,3 +3244,50 @@ class DataSet(DataSetFilters, DataObject):
             return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        """
+        if self.n_cells == 0:
+            return set()
+        elif isinstance(self, pv.Grid):
+            # Fast path for cartesian grids
+            mapping = {
+                0: pv.CellType.VERTEX,
+                1: pv.CellType.LINE,
+                2: pv.CellType.PIXEL,
+                3: pv.CellType.VOXEL,
+            }
+            return {mapping[self.dimensionality]}
+
+        if pv.vtk_version_info >= (9, 5, 0):
+            types = _vtk.vtkCellTypes()
+            self.GetDistinctCellTypes(types)
+            types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
+        else:
+            grid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+            types_array = np.unique(grid.celltypes)
+        return {pv.CellType(cell_num) for cell_num in types_array}
