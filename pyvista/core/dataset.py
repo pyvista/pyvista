@@ -3068,7 +3068,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        min_cell_dimensionality, dimensionality
+        min_cell_dimensionality, dimensionality, distinct_cell_types
 
         Returns
         -------
@@ -3176,7 +3176,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        max_cell_dimensionality, dimensionality
+        max_cell_dimensionality, dimensionality, distinct_cell_types
 
         Returns
         -------
@@ -3261,6 +3261,8 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
+        min_cell_dimensionality
+        max_cell_dimensionality
         pyvista.UnstructuredGrid.celltypes
 
         Examples
