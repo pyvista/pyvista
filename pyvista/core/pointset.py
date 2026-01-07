@@ -2545,7 +2545,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12], dtype=uint8)
 
-        Compare this to :attr:`distinct_cell_types`.
+        Compare this to :attr:`pyvista.DataSet.distinct_cell_types`.
 
         >>> hex_beam.distinct_cell_types
         {<CellType.HEXAHEDRON: 12>}

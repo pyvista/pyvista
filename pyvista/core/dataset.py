@@ -3259,6 +3259,10 @@ class DataSet(DataSetFilters, DataObject):
         set[CellType]
             Set of :class:`~pyvista.CellType` values.
 
+        See Also
+        --------
+        pyvista.UnstructuredGrid.celltypes
+
         Examples
         --------
         Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
@@ -3267,6 +3271,18 @@ class DataSet(DataSetFilters, DataObject):
         >>> hex_beam = examples.load_hexbeam()
         >>> hex_beam.distinct_cell_types
         {<CellType.HEXAHEDRON: 12>}
+
+        Load a mesh with mixed cells.
+
+        >>> mesh = examples.download_cow()
+        >>> sorted(mesh.distinct_cell_types)
+        [<CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>, <CellType.QUAD: 9>]
+
+        Load 2D image.
+
+        >>> mesh = examples.load_logo()
+        >>> mesh.distinct_cell_types
+        {<CellType.PIXEL: 8>}
 
         """
         if self.n_cells == 0:
