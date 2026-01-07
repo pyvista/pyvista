@@ -2164,6 +2164,7 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
         pv.PointSet(),
         pv.PolyData(),
         pv.UnstructuredGrid(),
+        pv.ExplicitStructuredGrid(),
         pv.MultiBlock([pv.PolyData()]),
     ],
 )
