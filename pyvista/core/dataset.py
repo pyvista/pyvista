@@ -3297,7 +3297,9 @@ class DataSet(DataSetFilters, DataObject):
             }
             return {mapping[self.dimensionality]}
 
-        if pv.vtk_version_info >= (9, 5, 0):
+        if isinstance(self, pv.UnstructuredGrid):
+            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
+        elif pv.vtk_version_info >= (9, 5, 0):
             types = _vtk.vtkCellTypes()
             self.GetDistinctCellTypes(types)
             types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
