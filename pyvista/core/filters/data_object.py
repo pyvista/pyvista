@@ -456,6 +456,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         def get_unused_point_ids() -> list[int]:
             if hasattr(mesh, 'dimensions'):
                 return []  # Cells are implicitly defined and cannot have unused points
+            elif isinstance(mesh, pv.PointSet):
+                return []  # No cells, all points are considered "used"
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )

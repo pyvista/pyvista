@@ -2153,3 +2153,28 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
     # Init from arrays
     with pytest.raises(pv.InvalidMeshError, match=match):
         mesh_type(*array_args, validate=validate)
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.ImageData(),
+        pv.RectilinearGrid(),
+        pv.StructuredGrid(),
+        pv.PointSet(),
+        pv.PolyData(),
+        pv.UnstructuredGrid(),
+        pv.MultiBlock([pv.PolyData()]),
+    ],
+)
+@pytest.mark.parametrize('validate', [True, 'data'])
+def test_init_mesh_validate(mesh, validate):
+    mesh_type = type(mesh)
+    if mesh_type is pv.MultiBlock:
+        _add_invalid_arrays(mesh[0])
+    else:
+        _add_invalid_arrays(mesh)
+
+    match = 'mesh is not valid'
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh_type(mesh, validate=validate)
