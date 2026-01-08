@@ -3289,15 +3289,16 @@ class DataSet(DataSetFilters, DataObject):
         """
         if self.n_cells == 0:
             return set()
-        elif isinstance(self, pv.Grid):
-            # Fast path for cartesian grids
+        elif hasattr(self, 'dimensions'):
+            # Fast path for dimensioned grids
+            cell_dimension = next(iter(self._distinct_cell_dimensions))
             mapping = {
                 0: pv.CellType.VERTEX,
                 1: pv.CellType.LINE,
                 2: pv.CellType.PIXEL,
                 3: pv.CellType.VOXEL,
             }
-            return {mapping[self.dimensionality]}
+            return {mapping[cell_dimension]}
 
         if hasattr(self, 'GetCellTypesArray'):
             types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())

@@ -1634,3 +1634,22 @@ def test_distinct_cell_types_imagedata(dimensions):
     expected = {image.get_cell(0).type} if image.n_cells > 0 else set()
     actual = image.distinct_cell_types
     assert actual == expected
+
+
+def test_structured_grid_dimensionality():
+    cell_dimension = 2
+    cell_types = {pv.CellType.PIXEL}
+
+    curvilinear = examples.load_structured()
+    assert isinstance(curvilinear, pv.StructuredGrid)
+    assert curvilinear.dimensionality == 3
+    assert curvilinear.distinct_cell_types == cell_types
+    assert curvilinear.max_cell_dimensionality == cell_dimension
+    assert curvilinear.min_cell_dimensionality == cell_dimension
+
+    linear = pv.ImageData(dimensions=(10, 10, 1)).cast_to_structured_grid()
+    assert isinstance(linear, pv.StructuredGrid)
+    assert linear.dimensionality == cell_dimension
+    assert linear.distinct_cell_types == cell_types
+    assert linear.max_cell_dimensionality == cell_dimension
+    assert linear.min_cell_dimensionality == cell_dimension
