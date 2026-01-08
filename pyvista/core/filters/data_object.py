@@ -270,6 +270,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
         return _MeshValidationReport(
             _mesh=validated_mesh,
+            _distinct_cell_types=self._distinct_cell_types,
             _message=message,
             _subreports=None,
             **dataclass_fields,  # type: ignore[arg-type]
@@ -288,6 +289,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Generate reports and error messages for each block
         reports: list[_MeshValidationReport[DataSet] | None] = []
         message_body: list[str] = []
+        all_cell_types: set[CellType] = set()
         bullet = _MeshValidator._message_bullet
         for i, block in enumerate(mesh):
             if block is None:
@@ -301,6 +303,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 ).validation_report
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
+                all_cell_types.update(set(report._distinct_cell_types))
 
                 if (msg := report.message) is not None:
                     prefix = f'Block id {i} {validated_mesh.get_block_name(i)!r}'
@@ -323,6 +326,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         message = _MeshValidator._create_message(validated_mesh, message_body)
         return _MeshValidationReport(
             _mesh=validated_mesh,
+            _distinct_cell_types=sorted(all_cell_types),
             _message=message,
             _subreports=tuple(reports),
             **dataclass_fields,  # type: ignore[arg-type]
@@ -393,7 +397,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             elif len(cell_dimensions) == 1:
                 # Single cell dimension
                 return f'{cell_dimensions[0]}-dimensional ', ''
-            return '',''
+            return '', ''
 
         def name_before_and_after():
             name_norm = _MeshValidator._normalize_field_name(name)
@@ -546,6 +550,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     # Non-fields
     _mesh: InitVar[_DataSetOrMultiBlockType]
+    _distinct_cell_types: InitVar[list[CellType]]
     _message: InitVar[str | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
 
@@ -572,10 +577,12 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     def __post_init__(
         self,
         _mesh: _DataSetOrMultiBlockType,
+        _distinct_cell_types: list[CellType],
         _message: str | None,
         _subreports: tuple[_MeshValidationReport[DataSet] | None, ...] | None,
     ) -> None:
         object.__setattr__(self, '_mesh', _mesh)
+        object.__setattr__(self, '_distinct_cell_types', _distinct_cell_types)
         object.__setattr__(self, '_message', _message)
         object.__setattr__(self, '_subreports', _subreports)
 
@@ -669,6 +676,17 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
             mesh_items['N Cells'] = mesh.n_cells
+            # Use a list to preserve order, but we format it to look like a set
+            cell_types = self._distinct_cell_types
+            cell_types_fmt = (
+                str(set())
+                if len(cell_types) == 0
+                else str([celltype.name for celltype in self._distinct_cell_types])
+                .replace('[', '{')
+                .replace(']', '}')
+                .replace("'", '')
+            )
+            mesh_items['Cell types'] = cell_types_fmt
             data_text = 'Invalid data arrays'
             cell_text = 'Invalid cell ids'
             point_text = 'Invalid point ids'
@@ -825,6 +843,7 @@ class DataObjectFilters:
             Type                     : PolyData
             N Points                 : 842
             N Cells                  : 1680
+            Cell types               : {TRIANGLE}
         Report summary:
             Is valid                 : True
             Invalid fields           : ()
@@ -862,6 +881,7 @@ class DataObjectFilters:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
+            Cell types               : {TRIANGLE, POLYGON, QUAD}
         Report summary:
             Is valid                 : False
             Invalid fields (1)       : ('non_convex',)
@@ -913,6 +933,7 @@ class DataObjectFilters:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
+            Cell types               : {TRIANGLE, POLYGON, QUAD}
         Report summary:
             Is valid                 : True
             Invalid fields           : ()
