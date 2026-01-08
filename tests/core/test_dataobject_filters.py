@@ -2152,7 +2152,7 @@ def test_validate_mesh_distinct_cell_types(
     message = mixed_dimension_cells_invalid_point_references.validate_mesh().message
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 2 cells (0D, 2D) with invalid point references. Invalid cell ids: [0, 1]'
+        ' - Mesh has 2 cells with invalid point references. Invalid cell ids: [0, 1]'
     )
     assert message == expected
 

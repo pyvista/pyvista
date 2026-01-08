@@ -393,9 +393,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             elif len(cell_dimensions) == 1:
                 # Single cell dimension
                 return f'{cell_dimensions[0]}-dimensional ', ''
-            else:
-                dims = ', '.join([f'{dim}D' for dim in self._distinct_cell_dimensions])
-                return '', f' ({dims})'
+            return '',''
 
         def name_before_and_after():
             name_norm = _MeshValidator._normalize_field_name(name)
