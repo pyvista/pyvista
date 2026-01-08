@@ -1922,12 +1922,6 @@ def test_validate_mesh_pointset(ant):
     assert actual == expected
 
 
-def test_validate_mesh_explicit_structured_grid():
-    grid = examples.load_explicit_structured()
-    report = grid.validate_mesh()
-    print(report)
-
-
 def test_cell_validator_pointset_raises():
     match = 'Cell operations are not supported'
     with pytest.raises(pv.PointSetCellOperationError, match=match):
@@ -2188,3 +2182,9 @@ def test_init_mesh_validate(mesh, validate):
     match = 'mesh is not valid'
     with pytest.raises(pv.InvalidMeshError, match=match):
         mesh_type(mesh, validate=validate)
+
+
+def test_validate_mesh_explicit_structured_grid():
+    grid = examples.load_explicit_structured()
+    valid_grid = pv.ExplicitStructuredGrid(grid, validate=True)
+    assert valid_grid == grid
