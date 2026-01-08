@@ -8,6 +8,7 @@ from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
 import functools
+from functools import cached_property
 import itertools
 import re
 import reprlib
@@ -28,6 +29,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
+from pyvista.core.celltype import _CELL_TYPE_TO_DIMENSION
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -45,6 +47,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
+    from pyvista import CellType
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
@@ -119,16 +122,49 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def __init__(
         self,
         mesh: _DataSetOrMultiBlockType,
-        validation_fields: _AllValidationOptions
-        | Sequence[_AllValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        *,
+        data_fields: tuple[_DataFields, ...],
+        cell_fields: tuple[_CellFields, ...],
+        point_fields: tuple[_PointFields, ...],
     ) -> None:
-        data_fields, cell_fields, point_fields = _MeshValidator._validate_fields(validation_fields)
-        self._validation_report = _MeshValidator._generate_report(
-            mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
-        )
+        self._mesh = mesh
+
+        with warnings.catch_warnings():
+            # Ignore any warnings caused by wrapping alg outputs
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
+            )
+            if isinstance(self._mesh, pv.DataSet):
+                self._validation_report: _MeshValidationReport[_DataSetOrMultiBlockType] = (
+                    self._validate_dataset(
+                        data_fields=data_fields,
+                        cell_fields=cell_fields,
+                        point_fields=point_fields,
+                    )
+                )
+            else:
+                self._validation_report = self._validate_multiblock(
+                    data_fields=data_fields,
+                    cell_fields=cell_fields,
+                    point_fields=point_fields,
+                )
+
+    @cached_property
+    def _mesh_as_unstructured_grid(self):
+        mesh = self._mesh
+        return mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+
+    @cached_property
+    def _distinct_cell_types(self) -> list[CellType]:
+        return sorted(self._mesh_as_unstructured_grid.distinct_cell_types)
+
+    @cached_property
+    def _distinct_cell_dimensions(self) -> list[Literal[0, 1, 2, 3]]:
+        return sorted(_CELL_TYPE_TO_DIMENSION[celltype] for celltype in self._distinct_cell_types)
 
     @staticmethod
-    def _validate_fields(
+    def validate_fields(
         validation_fields,
     ) -> tuple[tuple[_DataFields, ...], tuple[_CellFields, ...], tuple[_PointFields, ...]]:
         # Validate inputs
@@ -196,43 +232,14 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             tuple(point_fields_to_validate),
         )
 
-    @staticmethod
-    def _generate_report(
-        mesh: _DataSetOrMultiBlockType,
-        *,
-        data_fields: tuple[_DataFields, ...],
-        cell_fields: tuple[_CellFields, ...],
-        point_fields: tuple[_PointFields, ...],
-    ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
-        with warnings.catch_warnings():
-            # Ignore any warnings caused by wrapping alg outputs
-            warnings.filterwarnings(
-                'ignore',
-                category=pv.InvalidMeshWarning,
-            )
-            if isinstance(mesh, pv.DataSet):
-                return _MeshValidator._validate_dataset(  # type: ignore[return-value]
-                    mesh,
-                    data_fields=data_fields,
-                    cell_fields=cell_fields,
-                    point_fields=point_fields,
-                )
-            else:
-                return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
-                    mesh,
-                    data_fields=data_fields,
-                    cell_fields=cell_fields,
-                    point_fields=point_fields,
-                )
-
-    @staticmethod
     def _validate_dataset(
-        mesh: _DataSetType,
+        self,
         *,
         data_fields: tuple[_DataFields, ...],
         cell_fields: tuple[_CellFields, ...],
         point_fields: tuple[_PointFields, ...],
     ) -> _MeshValidationReport[_DataSetType]:
+        mesh: _DataSetType = self._mesh  # type: ignore[assignment]
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
         # Validate data arrays
@@ -242,15 +249,16 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         # Validate cells
         if cell_fields:
-            summaries, validated = _MeshValidator._validate_cells(mesh, cell_fields)
+            summaries, validated = self._validate_cells(cell_fields)
             if validated:
-                validated_mesh = validated  # Store the output from cell_validator
+                # Store the output from cell_validator
+                validated_mesh = validated  # type: ignore[unreachable]
             for summary in summaries:
                 field_summaries[summary.name] = summary
 
         # Validate points
         if point_fields:
-            for summary in _MeshValidator._validate_points(mesh, point_fields):
+            for summary in self._validate_points(point_fields):
                 field_summaries[summary.name] = summary
 
         message_body: list[str] = [
@@ -265,15 +273,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             **dataclass_fields,  # type: ignore[arg-type]
         )
 
-    @staticmethod
     def _validate_multiblock(
-        mesh: _MultiBlockType,
+        self,
         *,
         data_fields: tuple[_DataFields, ...],
         cell_fields: tuple[_CellFields, ...],
         point_fields: tuple[_PointFields, ...],
     ) -> _MeshValidationReport[_MultiBlockType]:
-        validated_mesh = mesh.copy(deep=False)
+        mesh: _MultiBlockType = self._mesh  # type: ignore[assignment]
+        validated_mesh: _MultiBlockType = mesh.copy(deep=False)
 
         # Generate reports and error messages for each block
         reports: list[_MeshValidationReport[DataSet] | None] = []
@@ -283,12 +291,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if block is None:
                 reports.append(None)
             else:
-                report = _MeshValidator._generate_report(
+                report = _MeshValidator(
                     block,
                     data_fields=data_fields,
                     cell_fields=cell_fields,
                     point_fields=point_fields,
-                )
+                ).validation_report
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
 
@@ -322,9 +330,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _normalize_field_name(name: str) -> str:
         return name.replace('_', ' ').replace('non ', 'non-')
 
-    @staticmethod
     def _validate_cells(
-        mesh: _DataSetType, validation_fields: tuple[_CellFields, ...]
+        self, validation_fields: tuple[_CellFields, ...]
     ) -> tuple[list[_MeshValidator._FieldSummary], _DataSetType | None]:
         """Validate cells and only return summary objects for the requested fields."""
         summaries: list[_MeshValidator._FieldSummary] = []
@@ -332,28 +339,27 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         mutable_validation_fields = list(validation_fields)
         if 'invalid_point_references' in mutable_validation_fields:
             mutable_validation_fields.remove('invalid_point_references')
-            summary = _MeshValidator._validate_invalid_point_references(mesh)
+            summary = self._validate_invalid_point_references()
             summaries.append(summary)
         if mutable_validation_fields:
-            validated_mesh = mesh.cell_validator()
+            validated_mesh = self._mesh.cell_validator()
             for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
-                msg = _MeshValidator._invalid_cell_msg(name, array)
+                msg = self._invalid_cell_msg(name, array)
                 summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
                 summaries.append(summary)
         return summaries, validated_mesh
 
-    @staticmethod
     def _validate_invalid_point_references(
-        mesh: DataSet,
+        self,
     ) -> _MeshValidator._FieldSummary:
+        mesh = self._mesh
+
         def _find_cells_with_invalid_point_refs() -> list[int]:
             """Return cell IDs that reference points that do not exist."""
             if hasattr(mesh, 'dimensions'):
                 return []  # Cells are implicitly defined and cannot be invalid
-            grid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
+            grid = self._mesh_as_unstructured_grid
 
             # Find indices in the connectivity array that are invalid
             conn = grid.cell_connectivity
@@ -368,24 +374,44 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         name = 'invalid_point_references'
         array = _find_cells_with_invalid_point_refs()
-        msg = _MeshValidator._invalid_cell_msg(name, array)
+        msg = self._invalid_cell_msg(name, array)
         return _MeshValidator._FieldSummary(name=name, message=msg, values=array)
 
-    @staticmethod
-    def _invalid_cell_msg(name: str, array: list[int]) -> str:
+    def _invalid_cell_msg(self, name: str, array: list[int]) -> str:
         if not array:
             return ''
-        name_norm = _MeshValidator._normalize_field_name(name)
-        # Need to write name either before of after the word "cell"
-        if name == 'non_convex':
-            before = f' {name_norm} '
-            after = ''
-        else:
-            before = ' '
-            after = f' with {name_norm}'
+
+        def cell_before_and_after() -> tuple[str, str]:
+            cell_types = self._distinct_cell_types
+            cell_dimensions = self._distinct_cell_dimensions
+
+            if len(cell_types) == 1:
+                # Full name of single cell type
+                return f'{cell_types[0].name} ', ''
+            elif len(cell_dimensions):
+                # Single cell dimension
+                return f'{cell_dimensions[0]}-dimensional ', ''
+            else:
+                dims = [f'{dim}D' for dim in self._distinct_cell_dimensions]
+                return '', f'({dims}) '
+
+        def name_before_and_after():
+            name_norm = _MeshValidator._normalize_field_name(name)
+            # Need to write name either before of after the word "cell"
+            if name == 'non_convex':
+                before = f' {name_norm} '
+                after = ''
+            else:
+                before = ' '
+                after = f' with {name_norm}'
+            return before, after
+
+        cell_before, cell_after = cell_before_and_after()
+        name_before, name_after = name_before_and_after()
+
         s = 's' if len(array) > 1 else ''
         return (
-            f'Mesh has {len(array)}{before}cell{s}{after}. '
+            f'Mesh has {len(array)}{name_before}{cell_before}cell{s}{cell_after}{name_after}. '
             f'Invalid cell id{s}: {reprlib.repr(array)}'
         )
 
@@ -447,27 +473,24 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 summaries.append(issue)
         return summaries
 
-    @staticmethod
     def _validate_points(
-        mesh: DataSet, validation_fields: tuple[_PointFields, ...]
+        self, validation_fields: tuple[_PointFields, ...]
     ) -> list[_MeshValidator._FieldSummary]:
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            if hasattr(mesh, 'dimensions'):
+            if hasattr(self._mesh, 'dimensions'):
                 return []  # Cells are implicitly defined and cannot have unused points
-            grid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
+            grid = self._mesh_as_unstructured_grid
             all_points = np.arange(grid.n_points)
             # Note: This may not include points used by Polyhedron cells
             used_points = np.unique(grid.cell_connectivity)
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
-            if isinstance(mesh, pv.Grid):
+            if isinstance(self._mesh, pv.Grid):
                 return []  # Points are implicitly defined and cannot be non-finite
-            mask = ~np.isfinite(mesh.points).all(axis=1)
+            mask = ~np.isfinite(self._mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
         def invalid_points_msg(name_: str, array: list[int], info_: str) -> str:
@@ -878,7 +901,7 @@ class DataObjectFilters:
 
         >>> print(report.message)
         PolyData mesh is not valid due to the following problems:
-         - Mesh has 3 non-convex cells. Invalid cell ids: [1013, 1532, 3250]
+         - Mesh has 3 non-convex 2-dimensional cells. Invalid cell ids: [1013, 1532, 3250]
 
         Show a validation report for cells with intersecting edges and unused points only.
 
@@ -950,7 +973,7 @@ class DataObjectFilters:
         >>> print(report.message)
         MultiBlock mesh is not valid due to the following problems:
          - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
-           - Mesh has 3 non-convex cells. Invalid cell ids: [1013, 1532, 3250]
+           - Mesh has 3 non-convex 2-dimensional cells. Invalid cell ids: [1013, 1532, 3250]
 
         And subreports for each block can be accessed with indexing.
 
@@ -969,7 +992,11 @@ class DataObjectFilters:
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-        report = _MeshValidator(self, input_fields).validation_report
+
+        data_fields, cell_fields, point_fields = _MeshValidator.validate_fields(input_fields)
+        report = _MeshValidator(
+            self, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
+        ).validation_report
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
