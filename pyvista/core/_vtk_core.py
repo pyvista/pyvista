@@ -204,7 +204,6 @@ from vtkmodules.vtkCommonDataModel import vtkCell as vtkCell
 from vtkmodules.vtkCommonDataModel import vtkCellArray as vtkCellArray
 from vtkmodules.vtkCommonDataModel import vtkCellLocator as vtkCellLocator
 from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator as vtkCellTreeLocator
-from vtkmodules.vtkCommonDataModel import vtkCellTypes as vtkCellTypes
 from vtkmodules.vtkCommonDataModel import vtkColor3ub as vtkColor3ub
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet as vtkCompositeDataSet
 from vtkmodules.vtkCommonDataModel import vtkConvexPointSet as vtkConvexPointSet
