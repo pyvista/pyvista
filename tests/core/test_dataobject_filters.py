@@ -1492,8 +1492,7 @@ def test_resize_multiblock():
     assert not np.allclose(resized['cube'].bounds_size, new_size)
 
 
-@pytest.fixture
-def sphere_with_invalid_arrays(sphere):
+def _add_invalid_arrays(mesh):
     def add_vtk_array(dataset, name, values, association: Literal['point', 'cell']):
         arr = _vtk.vtkFloatArray()
         arr.SetName(name)
@@ -1508,18 +1507,28 @@ def sphere_with_invalid_arrays(sphere):
             dataset.GetCellData().AddArray(arr)
 
     # Invalid point arrays (multiple), need more than 4 to test truncated repr
-    add_vtk_array(sphere, 'foo', range(10), association='point')
-    add_vtk_array(sphere, 'bar', range(15), association='point')
-    add_vtk_array(sphere, 'baz', range(12), association='point')
-    add_vtk_array(sphere, 'qux', range(13), association='point')
-    add_vtk_array(sphere, 'fred', range(14), association='point')
-    add_vtk_array(sphere, 'waldo', range(16), association='point')
-    add_vtk_array(sphere, 'thud', range(17), association='point')
+    add_vtk_array(mesh, 'foo', range(10), association='point')
+    add_vtk_array(mesh, 'bar', range(15), association='point')
+    add_vtk_array(mesh, 'baz', range(12), association='point')
+    add_vtk_array(mesh, 'qux', range(13), association='point')
+    add_vtk_array(mesh, 'fred', range(14), association='point')
+    add_vtk_array(mesh, 'waldo', range(16), association='point')
+    add_vtk_array(mesh, 'thud', range(17), association='point')
 
     # Invalid cell array (single)
-    add_vtk_array(sphere, 'ham', range(11), association='cell')
+    add_vtk_array(mesh, 'ham', range(11), association='cell')
 
+
+@pytest.fixture
+def sphere_with_invalid_arrays(sphere):
+    _add_invalid_arrays(sphere)
     return sphere
+
+
+@pytest.fixture
+def grid_with_invalid_arrays(hexbeam):
+    _add_invalid_arrays(hexbeam)
+    return hexbeam
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
@@ -1534,15 +1543,13 @@ def test_validate_mesh_is_valid(sphere_with_invalid_arrays, as_composite):
     assert 'validity_state' in output_polydata.array_names
 
     invalid_mesh = (
-        sphere_with_invalid_arrays.cast_to_multiblock()
-        if as_composite
-        else sphere_with_invalid_arrays
+        pv.MultiBlock([sphere_with_invalid_arrays]) if as_composite else sphere_with_invalid_arrays
     )
     assert not invalid_mesh.validate_mesh().is_valid
 
 
 def test_validate_mesh_default_fields():
-    mesh = pv.PolyData()
+    mesh = pv.ImageData()
     report1 = str(mesh.validate_mesh())
     report2 = str(mesh.validate_mesh(['data', 'cells', 'points']))
     assert report1 == report2
@@ -2106,3 +2113,43 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.validate_mesh(action='warn')
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
+
+
+@pytest.mark.parametrize('as_grid', [True, False])
+@pytest.mark.parametrize('validate', [True, 'cells'])
+def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate):
+    if as_grid:
+        alg = _vtk.vtkAppendFilter()
+        alg.AddInputData(invalid_random_polydata)
+        alg.Update()
+        vtk_mesh = alg.GetOutput()
+        mesh = pv.UnstructuredGrid()
+        mesh.ShallowCopy(vtk_mesh)
+        array_args = mesh.cells, mesh.celltypes, mesh.points
+    else:
+        mesh = invalid_random_polydata
+        vtk_mesh = _vtk.vtkPolyData()
+        vtk_mesh.ShallowCopy(mesh)
+        array_args = mesh.points, mesh.faces
+    mesh_type = type(mesh)
+
+    filepath = tmp_path / 'invalid.vtk'
+    mesh.save(filepath)
+
+    match = 'mesh is not valid'
+
+    # Init from file
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh_type(filepath, validate=validate)
+
+    # Init from unwrapped VTK mesh
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh_type(vtk_mesh, validate=validate)
+
+    # Init from PyVista mesh
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh_type(mesh, validate=validate)
+
+    # Init from arrays
+    with pytest.raises(pv.InvalidMeshError, match=match):
+        mesh_type(*array_args, validate=validate)

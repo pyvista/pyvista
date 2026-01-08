@@ -16,6 +16,7 @@ from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
 radius = 0.5
 
@@ -355,6 +356,34 @@ def test_ray_trace_origin():
     _pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
     assert len(cells) == 1
     assert cells[0] == 0
+
+
+def test_vtk_obb_tree_raises():
+    poly = pv.PolyData()
+    match = 'Building the OBB tree requires PolyData with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.points = [[0.0, 0.0, 0.0]]
+    assert poly.n_points == 1
+    assert poly.n_cells == 0
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.faces = [3, 0, 0, 0]
+    assert poly.n_points == 0
+    assert poly.n_cells == 1
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+
+def test_polydata_subclass_del():
+    class PolyDataDerived(pv.PolyData): ...
+
+    poly = PolyDataDerived()
+    del poly
 
 
 def test_multi_ray_trace(sphere):
