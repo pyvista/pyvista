@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -43,7 +44,9 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.filters.data_object import _MeshValidationOptions
     from pyvista.wrappers import _WrappableVTKDataObjectType
+
 
 _NORMALS = {
     'x': [1, 0, 0],
@@ -54,6 +57,9 @@ _NORMALS = {
     '-z': [0, 0, -1],
 }
 _NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
+
+
+_T = TypeVar('_T')
 
 
 def _warn_if_invalid_data(obj: DataObject):
@@ -117,6 +123,8 @@ def wrap(  # noqa: PLR0911
     | _vtk.vtkAbstractArray
     | NumpyArray[float]
     | None,
+    *,
+    validate: bool | _MeshValidationOptions = False,
 ) -> DataObject | pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -142,9 +150,14 @@ def wrap(  # noqa: PLR0911
     dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
         Dataset to wrap.
 
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        wrapping. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
     Returns
     -------
-    pyvista.DataSet
+    output : pyvista.DataObject | pyvista.pyvista_ndarray
         The PyVista wrapped dataset.
 
     See Also
@@ -211,18 +224,25 @@ def wrap(  # noqa: PLR0911
       N Arrays: 0
 
     """
+
+    def _optionally_validate_mesh(obj: _T) -> _T:
+        if validate and hasattr(obj, '_validate_mesh'):
+            obj._validate_mesh(validate)
+        return obj
+
     # Return if None
     if dataset is None:
         return None
 
     if isinstance(dataset, tuple(pv._wrappers.values())):
         # Return object if it is already wrapped
-        return cast('DataObject', dataset)
+        return _optionally_validate_mesh(cast('DataObject', dataset))
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
     if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
+        # NOTE: no need to validate wrapped arrays
         if dataset.ndim == 1 and dataset.shape[0] == 3:
             return pv.PolyData(dataset)
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
@@ -252,17 +272,20 @@ def wrap(  # noqa: PLR0911
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
         else:
-            # Warn if data arrays are invalid
-            _warn_if_invalid_data(wrapped_vtk)
-            return wrapped_vtk
+            if validate:
+                return _optionally_validate_mesh(wrapped_vtk)
+            else:
+                # By default, warn if data arrays are invalid
+                _warn_if_invalid_data(wrapped_vtk)
+                return wrapped_vtk
 
     # wrap meshio
     if is_meshio_mesh(dataset):
-        return from_meshio(cast('meshio.Mesh', dataset))
+        return _optionally_validate_mesh(from_meshio(cast('meshio.Mesh', dataset)))
 
     # wrap trimesh
     if is_trimesh_mesh(dataset):
-        return from_trimesh(cast('trimesh.Trimesh', dataset))
+        return _optionally_validate_mesh(from_trimesh(cast('trimesh.Trimesh', dataset)))
 
     # otherwise, flag tell the user we can't wrap this object
     msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'
