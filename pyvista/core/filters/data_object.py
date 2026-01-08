@@ -161,7 +161,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @cached_property
     def _distinct_cell_dimensions(self) -> list[Literal[0, 1, 2, 3]]:
-        return sorted(_CELL_TYPE_TO_DIMENSION[celltype] for celltype in self._distinct_cell_types)
+        return sorted(
+            {_CELL_TYPE_TO_DIMENSION[celltype] for celltype in self._distinct_cell_types}
+        )
 
     @staticmethod
     def validate_fields(
@@ -388,12 +390,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if len(cell_types) == 1:
                 # Full name of single cell type
                 return f'{cell_types[0].name} ', ''
-            elif len(cell_dimensions):
+            elif len(cell_dimensions) == 1:
                 # Single cell dimension
                 return f'{cell_dimensions[0]}-dimensional ', ''
             else:
-                dims = [f'{dim}D' for dim in self._distinct_cell_dimensions]
-                return '', f'({dims}) '
+                dims = ', '.join([f'{dim}D' for dim in self._distinct_cell_dimensions])
+                return '', f' ({dims})'
 
         def name_before_and_after():
             name_norm = _MeshValidator._normalize_field_name(name)

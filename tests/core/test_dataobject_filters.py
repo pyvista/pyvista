@@ -2021,8 +2021,25 @@ def invalid_hexahedron():
 
 
 @pytest.fixture
-def invalid_triangle_poly():
-    return pv.PolyData([0.0, 0.0, 0.0], [3, 1, 1, 1])
+def poly_with_invalid_point():
+    poly = pv.PolyData()
+    poly.points = [[np.nan, 0.0, 0.0]]
+    return poly
+
+
+@pytest.fixture
+def single_cell_invalid_point_references():
+    return pv.PolyData([0.0, 0.0, 0.0], [3, 0, 1, 1])
+
+
+@pytest.fixture
+def mixed_2d_cells_invalid_point_references():
+    return pv.PolyData([0.0, 0.0, 0.0], [3, 0, 1, 1, 4, 0, 1, 1, 1])
+
+
+@pytest.fixture
+def mixed_dimension_cells_invalid_point_references():
+    return pv.PolyData([0.0, 0.0, 0.0], faces=[3, 0, 1, 1], verts=[2, 0, -1])
 
 
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
@@ -2047,13 +2064,6 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     assert report.intersecting_edges is None
     assert report.non_convex is not None
     assert report.inverted_faces is None
-
-
-@pytest.fixture
-def poly_with_invalid_point():
-    poly = pv.PolyData()
-    poly.points = [[np.nan, 0.0, 0.0]]
-    return poly
 
 
 def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
@@ -2118,6 +2128,33 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.validate_mesh(action='warn')
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
+
+
+def test_validate_mesh_distinct_cell_types(
+    single_cell_invalid_point_references,
+    mixed_2d_cells_invalid_point_references,
+    mixed_dimension_cells_invalid_point_references,
+):
+    message = single_cell_invalid_point_references.validate_mesh().message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+    )
+    assert message == expected
+
+    message = mixed_2d_cells_invalid_point_references.validate_mesh().message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 2 2-dimensional cells with invalid point references. Invalid cell ids: [0, 1]'
+    )
+    assert message == expected
+
+    message = mixed_dimension_cells_invalid_point_references.validate_mesh().message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 2 cells (0D, 2D) with invalid point references. Invalid cell ids: [0, 1]'
+    )
+    assert message == expected
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
