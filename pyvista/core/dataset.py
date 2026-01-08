@@ -3299,12 +3299,12 @@ class DataSet(DataSetFilters, DataObject):
             }
             return {mapping[self.dimensionality]}
 
-        if isinstance(self, pv.UnstructuredGrid):
-            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
-        elif pv.vtk_version_info >= (9, 5, 0):
+        if hasattr(self, 'GetDistinctCellTypes'):
             types = _vtk.vtkCellTypes()
             self.GetDistinctCellTypes(types)
             types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
+        elif hasattr(self, 'GetCellTypesArray'):
+            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
         else:
             grid = (
                 self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
