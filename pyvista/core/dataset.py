@@ -3299,11 +3299,7 @@ class DataSet(DataSetFilters, DataObject):
             }
             return {mapping[self.dimensionality]}
 
-        if hasattr(self, 'GetDistinctCellTypes'):
-            types = _vtk.vtkCellTypes()
-            self.GetDistinctCellTypes(types)
-            types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
-        elif hasattr(self, 'GetCellTypesArray'):
+        if hasattr(self, 'GetCellTypesArray'):
             types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
         else:
             grid = (
