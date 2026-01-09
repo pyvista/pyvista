@@ -1240,6 +1240,27 @@ def test_cast_to_poly_points_implicit(uniform):
         assert not np.allclose(uniform[name], points[name])
 
 
+@pytest.mark.parametrize('rectilinear', [True, False])
+def test_cast_grid_cell_types(rectilinear):
+    grid2d = pv.ImageData(dimensions=(3, 2, 1))
+    grid3d = pv.ImageData(dimensions=(2, 2, 2))
+    grid2d = grid2d.cast_to_rectilinear_grid() if rectilinear else grid2d
+    grid3d = grid3d.cast_to_rectilinear_grid() if rectilinear else grid3d
+
+    assert grid2d.get_cell(0).type == pv.CellType.PIXEL
+    assert grid3d.get_cell(0).type == pv.CellType.VOXEL
+
+    structured2d = grid2d.cast_to_structured_grid()
+    structured3d = grid3d.cast_to_structured_grid()
+    assert structured2d.get_cell(0).type == pv.CellType.QUAD
+    assert structured3d.get_cell(0).type == pv.CellType.HEXAHEDRON
+
+    unstructured2d = grid2d.cast_to_unstructured_grid()
+    unstructured3d = grid3d.cast_to_unstructured_grid()
+    assert unstructured2d.get_cell(0).type == pv.CellType.QUAD
+    assert unstructured3d.get_cell(0).type == pv.CellType.HEXAHEDRON
+
+
 def test_partition(hexbeam):
     # split as composite
     n_part = 2

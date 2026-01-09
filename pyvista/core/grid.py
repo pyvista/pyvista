@@ -99,6 +99,20 @@ class Grid(DataSet):
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
+    def cast_to_unstructured_grid(self) -> UnstructuredGrid:
+        """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset cast to a :class:`pyvista.UnstructuredGrid`.
+
+        """
+        return self.cast_to_structured_grid().cast_to_unstructured_grid()
+
+    def cast_to_structured_grid(self) -> StructuredGrid:
+        """Cast this dataset to :class:`pyvista.StructuredGrid`."""
+
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
