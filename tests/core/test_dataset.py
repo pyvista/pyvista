@@ -1269,6 +1269,9 @@ def test_cast_grid_to_structured_unstructured_grid(rectilinear):
     assert unstructured2d.get_cell(0).type == pv.CellType.QUAD
     assert unstructured3d.get_cell(0).type == pv.CellType.HEXAHEDRON
 
+    assert structured2d.cast_to_unstructured_grid() == unstructured2d
+    assert structured3d.cast_to_unstructured_grid() == unstructured3d
+
 
 def test_partition(hexbeam):
     # split as composite
