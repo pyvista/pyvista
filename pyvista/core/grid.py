@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from collections.abc import Sequence
 from functools import wraps
 from pathlib import Path
@@ -110,10 +109,6 @@ class Grid(DataSet):
 
         """
         return self.cast_to_structured_grid().cast_to_unstructured_grid()
-
-    @abstractmethod
-    def cast_to_structured_grid(self) -> StructuredGrid:
-        """Cast this dataset to :class:`pyvista.StructuredGrid`."""
 
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
