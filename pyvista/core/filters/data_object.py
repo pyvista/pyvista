@@ -483,11 +483,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             )
 
         summaries: list[_MeshValidator._FieldSummary] = []
-        for name, point_ids, info in [
-            ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
-            ('non_finite_points', get_non_finite_point_ids(), ''),
+        for name, func, info in [
+            ('unused_points', get_unused_point_ids, ' not referenced by any cell(s)'),
+            ('non_finite_points', get_non_finite_point_ids, ''),
         ]:
             if name in validation_fields:
+                point_ids = func()
                 msg = invalid_points_msg(name, point_ids, info)
                 issue = _MeshValidator._FieldSummary(name=name, message=msg, values=point_ids)
                 summaries.append(issue)
