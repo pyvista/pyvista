@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
@@ -48,7 +49,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
+class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, ABC):
     """Methods common to all wrapped data objects.
 
     Parameters
