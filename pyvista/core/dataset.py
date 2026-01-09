@@ -1704,8 +1704,8 @@ class DataSet(DataSetFilters, DataObject):
             Casting preserves the cell type(s) of the input. This means that any
             :class:`~pyvista.CellType.PIXEL` and :class:`~pyvista.CellType.VOXEL` cells from
             :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid` are preserved.
-            Use :meth:`~pyvista.Grid.to_quads` or :meth:`~pyvista.Grid.to_hexahedra` instead
-            to convert the cell type for these cases.
+            Use :meth:`~pyvista.ImageData.to_quads` or :meth:`~pyvista.ImageData.to_hexahedra`
+            instead to convert the cell type for these cases.
 
         Returns
         -------
