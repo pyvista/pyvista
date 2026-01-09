@@ -2170,7 +2170,7 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
 )
 @pytest.mark.parametrize('validate', [True, 'data'])
 def test_init_mesh_validate(mesh, validate):
-    if isinstance(mesh, pv.ExplicitStructuredGrid) and platform.system() == 'Linux':
+    if isinstance(mesh, pv.ExplicitStructuredGrid) and platform.system() in ['Linux', 'Windows']:
         pytest.skip('Crashes parallel workers when coverage is enabled')
 
     mesh_type = type(mesh)
