@@ -3289,15 +3289,23 @@ class DataSet(DataSetFilters, DataObject):
         """
         if self.n_cells == 0:
             return set()
-        elif hasattr(self, 'dimensions'):
+        if hasattr(self, 'dimensions'):
             # Fast path for dimensioned grids
             cell_dimension = next(iter(self._distinct_cell_dimensions))
-            mapping = {
-                0: pv.CellType.VERTEX,
-                1: pv.CellType.LINE,
-                2: pv.CellType.PIXEL,
-                3: pv.CellType.VOXEL,
-            }
+            if isinstance(self, pv.Grid):
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.PIXEL,
+                    3: pv.CellType.VOXEL,
+                }
+            else:
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.QUAD,
+                    3: pv.CellType.HEXAHEDRON,
+                }
             return {mapping[cell_dimension]}
 
         if hasattr(self, 'GetCellTypesArray'):

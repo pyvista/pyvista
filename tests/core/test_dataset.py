@@ -1629,11 +1629,20 @@ def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
 
 
 @pytest.mark.parametrize('dimensions', [(0, 0, 0), (1, 1, 1), (2, 1, 1), (2, 2, 1), (2, 2, 2)])
-def test_distinct_cell_types_imagedata(dimensions):
+def test_distinct_cell_types_dimensions(dimensions):
+    def assert_distinct_cell_types(mesh_):
+        expected = {mesh_.get_cell(0).type} if mesh_.n_cells > 0 else set()
+        actual = mesh_.distinct_cell_types
+        assert actual == expected, type(mesh_)
+
     image = pv.ImageData(dimensions=dimensions)
-    expected = {image.get_cell(0).type} if image.n_cells > 0 else set()
-    actual = image.distinct_cell_types
-    assert actual == expected
+    assert_distinct_cell_types(image)
+
+    rectilinear = image.cast_to_rectilinear_grid()
+    assert_distinct_cell_types(rectilinear)
+
+    structured = image.cast_to_structured_grid()
+    assert_distinct_cell_types(structured)
 
 
 def test_structured_grid_dimensionality():
