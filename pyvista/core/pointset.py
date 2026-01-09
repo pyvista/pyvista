@@ -300,6 +300,13 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
+
     Examples
     --------
     Create a simple point cloud of 10 points from a numpy array.
@@ -318,7 +325,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     """
 
     @_deprecate_positional_args(allowed=['var_inp'])
-    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
+    def __init__(
+        self,
+        var_inp=None,
+        deep: bool = False,  # noqa: FBT001, FBT002
+        force_float: bool = True,  # noqa: FBT001, FBT002
+        *,
+        validate: bool | _MeshValidationOptions = False,
+    ) -> None:
         """Initialize the pointset."""
         super().__init__()
 
@@ -331,6 +345,9 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
         else:
             self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -661,7 +678,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_verts : int, optional
         Deprecated. Not used.
 
-    validate: bool | str | sequence[str], default: False
+    validate : bool | str | sequence[str], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -1942,7 +1959,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
 
-    validate: bool | str | sequence[str], default: False
+    validate : bool | str | sequence[str], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -2690,9 +2707,16 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Coordinates of the points in z direction. If this is passed, ``uinput``
         and ``y`` must be a :class:`numpy.ndarray` and match the shape of ``z``.
 
-    deep : optional
+    deep : bool, default: False
         Whether to deep copy a StructuredGrid object.
         Default is ``False``.  Keyword only.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     **kwargs : dict, optional
         Additional keyword arguments passed when reading from a file or loading
@@ -2746,7 +2770,16 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         '.vts': XMLStructuredGridWriter,
     }  # type: ignore[assignment]
 
-    def __init__(self, uinput=None, y=None, z=None, *args, deep: bool = False, **kwargs) -> None:
+    def __init__(
+        self,
+        uinput=None,
+        y=None,
+        z=None,
+        *args,
+        deep: bool = False,
+        validate: bool | _MeshValidationOptions = False,
+        **kwargs,
+    ) -> None:
         """Initialize the structured grid."""
         super().__init__()
 
@@ -2782,6 +2815,9 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
                 ' - Three `numpy.ndarray` as the first three arguments'
             )
             raise TypeError(msg)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -3094,8 +3130,16 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     ----------
     args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
         See examples below.
+
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     See Also
     --------
@@ -3139,7 +3183,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         '.vtk': UnstructuredGridWriter,
     }
 
-    def __init__(self, *args, deep: bool = False, **kwargs):  # noqa: ARG002
+    def __init__(self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
@@ -3176,6 +3220,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             arg1 = np.asarray(arg1) if not isinstance(arg1, dict) else arg1
             arg2 = np.asarray(arg2)
             self._from_cells_points(arg0, arg1, arg2)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
