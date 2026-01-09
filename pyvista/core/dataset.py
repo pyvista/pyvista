@@ -1697,7 +1697,15 @@ class DataSet(DataSetFilters, DataObject):
             self.copy_meta_from(mesh, deep=deep)
 
     def cast_to_unstructured_grid(self: Self) -> pv.UnstructuredGrid:
-        """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
+        """Get a new representation of this object as a :class:`~pyvista.UnstructuredGrid`.
+
+        .. note::
+
+            Casting preserves the cell type(s) of the input. This means that any
+            :class:`~pyvista.CellType.PIXEL` and :class:`~pyvista.CellType.VOXEL` cells from
+            :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid` are preserved.
+            Use :meth:`~pyvista.Grid.to_quads` or :meth:`~pyvista.Grid.to_hexahedra` instead
+            to convert the cell type for these cases.
 
         Returns
         -------
