@@ -952,7 +952,7 @@ def test_cast_rectilinear_grid():
 
 
 @pytest.mark.parametrize('as_rectilinear', [True, False])
-def test_cast_grid(as_rectilinear):
+def test_cast_grid_scalars_and_cell_type(as_rectilinear):
     """Test cell type and scalars after casting to structured or unstructured grid."""
     scalars_name = 'data'
     grid2d = pv.ImageData(dimensions=(3, 2, 1))
@@ -996,6 +996,13 @@ def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
     with pytest.raises(ValueError, match=match):
         type(grid)().to_hexahedra()
 
+    match = (
+        'Input must be 3-dimensional. Got 2-dimensional input instead.\n'
+        'Use `to_quads` for 2D inputs.'
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(2, 2, 1)).to_hexahedra()
+
 
 @pytest.mark.parametrize('as_rectilinear', [True, False])
 def test_to_quads(image, as_rectilinear):
@@ -1007,6 +1014,13 @@ def test_to_quads(image, as_rectilinear):
     match = 'Input must be 2-dimensional. Got 0-dimensional input instead.'
     with pytest.raises(ValueError, match=match):
         type(grid)().to_quads()
+
+    match = (
+        'Input must be 2-dimensional. Got 3-dimensional input instead.\n'
+        'Use `to_hexahedra` for 3D inputs.'
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(2, 2, 2)).to_quads()
 
 
 def test_create_image_data_from_specs():

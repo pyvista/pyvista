@@ -111,6 +111,8 @@ class Grid(DataSet):
         """
         if (dim := self.dimensionality) != 3:
             msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
+            if dim == 2:
+                msg += '\nUse `to_quads` for 2D inputs.'
             raise ValueError(msg)
         return self.cast_to_structured_grid().cast_to_unstructured_grid()
 
@@ -131,6 +133,8 @@ class Grid(DataSet):
         """
         if (dim := self.dimensionality) != 2:
             msg = f'Input must be 2-dimensional. Got {dim}-dimensional input instead.'
+            if dim == 3:
+                msg += '\nUse `to_hexahedra` for 3D inputs.'
             raise ValueError(msg)
         return self.cast_to_structured_grid().cast_to_unstructured_grid()
 
