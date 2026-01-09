@@ -41,7 +41,6 @@ from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import _NoNewAttrMixin
-from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:
@@ -182,7 +181,6 @@ class ActiveArrayInfo(_NoNewAttrMixin):
 
 
 @promote_type(_vtk.vtkDataSet)
-@abstract_class
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
 
