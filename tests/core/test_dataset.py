@@ -1647,7 +1647,7 @@ def test_distinct_cell_types_dimensions(dimensions):
 
 def test_structured_grid_dimensionality():
     cell_dimension = 2
-    cell_types = {pv.CellType.PIXEL}
+    cell_types = {pv.CellType.QUAD}
 
     curvilinear = examples.load_structured()
     assert isinstance(curvilinear, pv.StructuredGrid)
