@@ -104,11 +104,11 @@ def plot_cell(
     ... )
 
     """
-    document_build = isinstance(pv.global_theme, pv.plotting.themes._DocumentBuildTheme)
-    line_width_ = (10 if document_build else 5) if line_width is None else line_width
-    point_size_ = (80 if document_build else 30) if point_size is None else point_size
-    font_size_ = (50 if document_build else 20) if font_size is None else font_size
-    normals_scale_ = (0.25 if document_build else 0.1) if normals_scale is None else normals_scale
+    config = pv.global_theme._plot_cell
+    line_width_ = config._line_width if line_width is None else line_width
+    point_size_ = config._point_size if point_size is None else point_size
+    font_size_ = config._font_size if font_size is None else font_size
+    normals_scale_ = config._normals_scale if normals_scale is None else normals_scale
 
     def _extract_geometry(cell_):
         if cell_.type == pv.CellType.POLYHEDRON:

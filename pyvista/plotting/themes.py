@@ -1715,6 +1715,18 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = value
 
 
+class _PlotCellConfig(_ThemeConfig):
+    """Internal config for plotting cells."""
+
+    __slots__ = ['_font_size', '_line_width', '_normals_scale', '_point_size']
+
+    def __init__(self):
+        self._line_width = 5
+        self._point_size = 30
+        self._font_size = 20
+        self._normals_scale = 0.1
+
+
 class Theme(_ThemeConfig):
     """Base VTK theme.
 
@@ -1779,6 +1791,7 @@ class Theme(_ThemeConfig):
         '_notebook',
         '_opacity',
         '_outline_color',
+        '_plot_cell',
         '_point_size',
         '_render_lines_as_tubes',
         '_render_points_as_spheres',
@@ -1884,6 +1897,8 @@ class Theme(_ThemeConfig):
         self._logo_file = None
 
         self._resample_environment_texture: bool | float = False
+
+        self._plot_cell = _PlotCellConfig()
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -3465,6 +3480,11 @@ class _DocumentBuildTheme(DocumentTheme):
         self.font.title_size = 22
         self.return_cpos = False
         self.resample_environment_texture = True
+
+        self._plot_cell._line_width = 10
+        self._plot_cell._point_size = 80
+        self._plot_cell._font_size = 50
+        self._plot_cell._normals_scale = 0.25
 
 
 class _TestingTheme(Theme):
