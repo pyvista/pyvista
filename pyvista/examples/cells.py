@@ -92,6 +92,17 @@ def plot_cell(
     >>> grid = examples.cells.Hexahedron()
     >>> examples.plot_cell(grid)
 
+    Show normals and customize the size of various elements in the rendering.
+
+    >>> examples.plot_cell(
+    ...     grid,
+    ...     show_normals=True,
+    ...     normals_scale=0.1,
+    ...     line_width=5,
+    ...     point_size=30,
+    ...     font_size=20,
+    ... )
+
     """
     document_build = isinstance(pv.global_theme, pv.plotting.themes._DocumentBuildTheme)
     line_width_ = (10 if document_build else 5) if line_width is None else line_width
