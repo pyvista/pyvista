@@ -21,7 +21,15 @@ if TYPE_CHECKING:
 
 
 def plot_cell(
-    grid: PolyData | UnstructuredGrid, cpos=None, *, show_normals: bool = False, **kwargs
+    grid: PolyData | UnstructuredGrid,
+    cpos=None,
+    *,
+    line_width: int | None = None,
+    point_size: int | None = None,
+    font_size: int | None = None,
+    show_normals: bool = False,
+    normals_scale: float | None = None,
+    **kwargs,
 ):
     """Plot a mesh while displaying cell indices.
 
@@ -37,9 +45,32 @@ def plot_cell(
     cpos : str, optional
         Camera position.
 
+    line_width : int, default: 5
+        Line width of the cell's edges.
+
+        .. versionadded:: 0.47
+
+    point_size : int, default: 30
+        Size of the cell's points.
+
+        .. versionadded:: 0.47
+
+    font_size : int, default: 20
+        Size of the point labels.
+
+        .. versionadded:: 0.47
+
     show_normals : bool, optional
         Show the face normals of the cell. Only applies to 2D or 3D cells.
         Cell faces with correct orientation should have the normal pointing outward.
+
+        The size of the normals is controlled by ``normals_scale``.
+
+        .. versionadded:: 0.47
+
+    normals_scale : float, default: 0.1
+        Scale factor used when ``show_normals`` is enabled. The normals are
+        scaled proportional to the diagonal length of the input ``grid``.
 
         .. versionadded:: 0.47
 
@@ -55,6 +86,11 @@ def plot_cell(
     >>> examples.plot_cell(grid)
 
     """
+    document_build = isinstance(pv.global_theme, pv.plotting.themes._DocumentBuildTheme)
+    line_width_ = (10 if document_build else 5) if line_width is None else line_width
+    point_size_ = (80 if document_build else 30) if point_size is None else point_size
+    font_size_ = (50 if document_build else 20) if font_size is None else font_size
+    normals_scale_ = (0.25 if document_build else 0.1) if normals_scale is None else normals_scale
 
     def _extract_geometry(cell_):
         if cell_.type == pv.CellType.POLYHEDRON:
@@ -87,11 +123,13 @@ def plot_cell(
             pl.add_mesh(
                 cell_as_grid,
                 style='wireframe',
-                line_width=10,
+                line_width=line_width_,
                 color='k',
                 render_lines_as_tubes=True,
             )
-        pl.add_points(cell.points, render_points_as_spheres=True, point_size=80, color='r')
+        pl.add_points(
+            cell.points, render_points_as_spheres=True, point_size=point_size_, color='r'
+        )
         pl.add_point_labels(
             cell.points,
             cell.point_ids,
@@ -99,7 +137,7 @@ def plot_cell(
             fill_shape=False,
             margin=0,
             shape_opacity=0.0,
-            font_size=50,
+            font_size=font_size_,
         )
 
         if show_normals and cell.dimension >= 2:
@@ -108,7 +146,7 @@ def plot_cell(
             pl.add_arrows(
                 surface.cell_centers().points,
                 surface.cell_normals,
-                mag=grid.length / 4,
+                mag=grid.length * normals_scale_,
                 color='yellow',
                 show_scalar_bar=False,
             )
