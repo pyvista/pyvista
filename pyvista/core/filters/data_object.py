@@ -510,11 +510,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             )
 
         summaries: list[_MeshValidator._FieldSummary] = []
-        for name, point_ids, info in [
-            ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
-            ('non_finite_points', get_non_finite_point_ids(), ''),
+        for name, func, info in [
+            ('unused_points', get_unused_point_ids, ' not referenced by any cell(s)'),
+            ('non_finite_points', get_non_finite_point_ids, ''),
         ]:
             if name in validation_fields:
+                point_ids = func()
                 msg = invalid_points_msg(name, point_ids, info)
                 issue = _MeshValidator._FieldSummary(name=name, message=msg, values=point_ids)
                 summaries.append(issue)
@@ -2010,7 +2011,7 @@ class DataObjectFilters:
         bounds_size : float | VectorLike[float], optional
             Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
             single float to specify the size of all three axes, or a 3-element vector to set the
-            size of each axis independently. Cannot be used together with ``bounds``.
+            size of each axis independently. Cannot be used together with ``bounds`` or ``length``.
 
         length : float, optional
             Target length of the :attr:`~pyvista.DataSet.bounds` for the resized dataset.
@@ -2020,7 +2021,8 @@ class DataObjectFilters:
 
         center : VectorLike[float], optional
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
-            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` or ``length``
+            is specified.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
