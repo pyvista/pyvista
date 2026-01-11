@@ -3511,6 +3511,11 @@ class _TestingTheme(Theme):
         self.return_cpos = False
         self.resample_environment_texture = True
 
+        self._plot_cell._line_width = 8
+        self._plot_cell._point_size = 50
+        self._plot_cell._font_size = 30
+        self._plot_cell._normals_scale = 0.2
+
 
 class _NATIVE_THEMES(Enum):  # noqa: N801
     """Global built-in themes available to PyVista."""
