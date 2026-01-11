@@ -97,10 +97,10 @@ def plot_cell(
     >>> examples.plot_cell(
     ...     grid,
     ...     show_normals=True,
-    ...     normals_scale=0.1,
-    ...     line_width=5,
-    ...     point_size=30,
-    ...     font_size=20,
+    ...     normals_scale=0.2,
+    ...     line_width=8,
+    ...     point_size=50,
+    ...     font_size=30,
     ... )
 
     """
