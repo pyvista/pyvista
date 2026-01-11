@@ -33,6 +33,13 @@ def plot_cell(
 ):
     """Plot a mesh while displaying cell indices.
 
+    .. versionchanged:: 0.45
+        The default line width, point size, and font size are increased.
+
+    .. versionchanged:: 0.47
+        The default line width, point size, and font size are restored to their original
+        value prior to version 0.45. These values can now be customized with keywords.
+
     Parameters
     ----------
     grid : PolyData | UnstructuredGrid
