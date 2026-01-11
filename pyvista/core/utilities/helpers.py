@@ -238,7 +238,7 @@ def wrap(  # noqa: PLR0911
         else:
             msg = (
                 'NumPy array could not be wrapped. `pv.wrap` only supports '
-                '3-length point arrays, 2D points arrays with shape (N, 3), or 3D volumes.'
+                f'ndarray with shape (3,) or (N, 3) or (X, Y, Z). Got {dataset.shape}'
             )
             raise NotImplementedError(msg)
 
