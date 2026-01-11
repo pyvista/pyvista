@@ -21,6 +21,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
+    from .filters.data_object import _MeshValidationOptions
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
@@ -86,6 +88,13 @@ class MultiBlock(
     ----------
     *args : dict, optional
         Data object dictionary.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     **kwargs : dict, optional
         See :func:`pyvista.read` for additional options.
@@ -145,7 +154,9 @@ class MultiBlock(
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self: MultiBlock, *args, **kwargs) -> None:
+    def __init__(
+        self: MultiBlock, *args, validate: bool | _MeshValidationOptions = False, **kwargs
+    ) -> None:
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
@@ -180,6 +191,9 @@ class MultiBlock(
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
+
+        if validate:
+            self._validate_mesh(validate)
 
     def wrap_nested(self: MultiBlock) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
@@ -2218,7 +2232,7 @@ class MultiBlock(
         # in case we add meta data to this pbject down the road.
 
     @_deprecate_positional_args
-    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:  # noqa: FBT001, FBT002
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the multiblock.
 
         Parameters
