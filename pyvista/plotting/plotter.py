@@ -5664,7 +5664,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def add_point_labels(  # noqa: PLR0917
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
-        labels: list[str | int] | str,
+        labels: Sequence[str | int] | str,
         italic: bool = False,  # noqa: FBT001, FBT002
         bold: bool = True,  # noqa: FBT001, FBT002
         font_size: int | None = None,
