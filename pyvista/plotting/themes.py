@@ -200,6 +200,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
         for key in self._all__slots__():
             value = getattr(self, key)
             key_ = key[1:]
+            if key_ == 'plot_cell':  # private config values
+                continue
             if hasattr(value, 'to_dict'):
                 dict_[key_] = value.to_dict()
             else:
