@@ -35,7 +35,7 @@ def plot_cell(
 
     .. versionchanged:: 0.45
         The default line width, point size, and font size are increased from ``5``, ``30``
-        and ``20`` to ``10``, ``80``, and ``50``, repectively.
+        and ``20`` to ``10``, ``80``, and ``50``, respectively.
 
     .. versionchanged:: 0.47
         The default line width, point size, and font size are restored to their original
