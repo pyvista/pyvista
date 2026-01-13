@@ -23,7 +23,7 @@ from pyvista.typing.mypy_plugin import promote_type
 from . import _validation
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
-from .celltype import _CELL_TYPE_INFO
+from .celltype import _CELL_TYPE_TO_DIMENSION
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -3237,9 +3237,7 @@ class DataSet(DataSetFilters, DataObject):
         elif isinstance(self, pv.UnstructuredGrid):
             distinct_dimensions = set()
             for cell_type in self.distinct_cell_types:
-                cell_class = _CELL_TYPE_INFO[cell_type.name].cell_class
-                if cell_class is not None:
-                    distinct_dimensions.add(cell_class().GetCellDimension())
+                distinct_dimensions.add(_CELL_TYPE_TO_DIMENSION[cell_type])
             return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
