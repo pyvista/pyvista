@@ -218,6 +218,8 @@ doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error',
 
+  'ignore::DeprecationWarning',
+
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
