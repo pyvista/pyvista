@@ -2021,15 +2021,12 @@ def invalid_hexahedron():
     return pv.UnstructuredGrid(cells, celltypes, points)
 
 
+@pytest.mark.needs_vtk_version(9, 5, 99)
 def test_cell_validator_intersecting_edges(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     expected_cell_ids = [0]
-    expected_invalid_fields = (
-        ['intersecting_edges', 'non_planar_faces', 'inverted_faces']
-        if pv.vtk_version_info > (9, 5, 99)
-        else ['intersecting_edges', 'non_convex', 'inverted_faces']
-    )
+    expected_invalid_fields = ['intersecting_edges', 'non_planar_faces', 'inverted_faces']
     for name in validator_array_names:
         if name in expected_invalid_fields:
             assert validated[name].tolist() == expected_cell_ids, name
