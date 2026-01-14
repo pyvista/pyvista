@@ -4,6 +4,7 @@ from collections.abc import Sized
 import itertools
 import platform
 import re
+import sys
 from typing import Literal
 from typing import get_args
 
@@ -2020,16 +2021,18 @@ def invalid_hexahedron():
     return pv.UnstructuredGrid(cells, celltypes, points)
 
 
-def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
+@pytest.mark.needs_vtk_version(9, 5, 99)
+def test_cell_validator_intersecting_edges(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     expected_cell_ids = [0]
+    expected_invalid_fields = ['intersecting_edges', 'non_planar_faces', 'inverted_faces']
     for name in validator_array_names:
-        if name in ['intersecting_edges', 'non_convex', 'inverted_faces']:
-            assert validated[name].tolist() == expected_cell_ids
+        if name in expected_invalid_fields:
+            assert validated[name].tolist() == expected_cell_ids, name
         else:
             array = validated.field_data[name]
-            assert array.shape == (0,)
+            assert array.shape == (0,), name
     assert validated['invalid'].tolist() == expected_cell_ids
 
     # Test validating specific fields
@@ -2051,6 +2054,8 @@ def poly_with_invalid_point():
     return poly
 
 
+@pytest.mark.needs_vtk_version(9, 5, 99)
+@pytest.mark.skipif(sys.platform == 'Darwin', reason='Results differ for macOS and older vtk')
 def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
     def _format_composite(match):
         prefix = (
@@ -2063,26 +2068,19 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 cell with intersecting edges. Invalid cell id: [0]\n'
-        ' - Mesh has 1 non-convex cell. Invalid cell id: [0]\n'
-        ' - Mesh has 1 cell with inverted faces. Invalid cell id: [0]'
+        ' - Mesh has 1 cell with inverted faces. Invalid cell id: [0]\n'
+        ' - Mesh has 1 cell with non-planar faces. Invalid cell id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         invalid_hexahedron.validate_mesh(action='warn')
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
         invalid_hexahedron.cast_to_multiblock().validate_mesh(action='warn')
 
-    # Test multiple cells
-    # Likely VTK bug: we have two nonconvex cells, but on macOS only one is reported as such
-    nonconvex = (
-        ' - Mesh has 1 non-convex cell. Invalid cell id: [0]\n'
-        if platform.system() == 'Darwin'
-        else ' - Mesh has 2 non-convex cells. Invalid cell ids: [0, 1]\n'
-    )
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
         ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0, 1]\n'
-        f'{nonconvex}'
-        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0, 1]'
+        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0, 1]\n'
+        ' - Mesh has 2 cells with non-planar faces. Invalid cell ids: [0, 1]'
     )
     invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
