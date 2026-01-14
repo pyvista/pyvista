@@ -49,6 +49,7 @@ else:
 
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
 
+
 class BoundsTuple(NamedTuple):
     """Tuple of six values representing 3D bounds.
 
