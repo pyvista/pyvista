@@ -3520,6 +3520,26 @@ def test_plot_cell():
     examples.plot_cell(grid)
 
 
+@pytest.mark.parametrize(
+    ('line_width', 'point_size', 'font_size', 'normals_scale'),
+    [(5, 30, 20, 0.1), (10, 80, 50, 0.25)],
+)
+def test_plot_cell_kwargs(line_width, point_size, font_size, normals_scale, verify_image_cache):
+    # Skip since variance is too high across operating systems
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.windows_skip_image_cache = True
+
+    grid = examples.cells.Polyhedron()
+    examples.plot_cell(
+        grid,
+        show_normals=True,
+        point_size=point_size,
+        font_size=font_size,
+        line_width=line_width,
+        normals_scale=normals_scale,
+    )
+
+
 @skip_windows_mesa  # due to opacity
 @pytest.mark.parametrize('wrong_orientation', [True, False])
 def test_plot_cell_polyhedron(wrong_orientation):
