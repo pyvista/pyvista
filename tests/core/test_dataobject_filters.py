@@ -2021,7 +2021,7 @@ def invalid_hexahedron():
     return pv.UnstructuredGrid(cells, celltypes, points)
 
 
-@pytest.mark.needs_vtk_version(9, 5, 99)
+@pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_validator_intersecting_edges(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
@@ -2054,7 +2054,7 @@ def poly_with_invalid_point():
     return poly
 
 
-@pytest.mark.needs_vtk_version(9, 5, 99)
+@pytest.mark.needs_vtk_version(9, 6, 0)
 @pytest.mark.skipif(sys.platform == 'Darwin', reason='Results differ for macOS and older vtk')
 def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
     def _format_composite(match):
