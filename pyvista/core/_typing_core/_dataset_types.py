@@ -14,17 +14,17 @@ from pyvista.core.pointset import PolyData
 from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.pointset import _PointSet
 
-_GridType = TypeVar('_GridType', bound=Grid)
+_GridType = TypeVar('_GridType', bound=Grid)  # noqa: PYI018
 
-_PointGridType = TypeVar('_PointGridType', bound=PointGrid)
+_PointGridType = TypeVar('_PointGridType', bound=PointGrid)  # noqa: PYI018
 
-_PointSetType = TypeVar('_PointSetType', bound=_PointSet)
+_PointSetType = TypeVar('_PointSetType', bound=_PointSet)  # noqa: PYI018
 
-_DataSetType = TypeVar('_DataSetType', bound=DataSet)
+_DataSetType = TypeVar('_DataSetType', bound=DataSet)  # noqa: PYI018
 
-_DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=Union[DataSet, MultiBlock])
+_DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=Union[DataSet, MultiBlock])  # noqa: PYI018
 
-_DataObjectType = TypeVar('_DataObjectType', bound=DataObject)
+_DataObjectType = TypeVar('_DataObjectType', bound=DataObject)  # noqa: PYI018
 
 
 # Undocumented
