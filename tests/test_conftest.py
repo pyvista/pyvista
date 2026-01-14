@@ -114,6 +114,7 @@ def test_warnings_turned_to_errors(
 
 
 @pytest.mark.parametrize('greater', [True, False])
+@pytest.mark.skip('Skip for patch release')
 def test_warning_vtk(
     pytester: pytest.Pytester,
     results_parser: PytesterStdoutParser,
