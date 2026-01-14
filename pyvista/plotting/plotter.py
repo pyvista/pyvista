@@ -6021,16 +6021,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-            fmt = '%.6e' if pv.vtk_version_info < (9, 5, 99) else '{:.6e}'  # type: ignore[unreachable]
+            fmt = '%.6e' if pv.vtk_version_info < (9, 6, 0) else '{:.6e}'  # type: ignore[unreachable]
         if isinstance(points, np.ndarray):
             scalars = labels
         elif is_pyvista_dataset(points):
             scalars = points.point_data[labels]  # type: ignore[assignment, index]
         phrase = f'{preamble} {fmt}'
 
-        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-        if pv.vtk_version_info < (9, 5, 99):
+        if pv.vtk_version_info < (9, 6, 0):
             labels = [phrase % val for val in scalars]
         else:
             labels = [phrase.format(val) for val in scalars]

@@ -1948,7 +1948,7 @@ def test_cell_validator():
         assert array.shape == (0,)
 
 
-@pytest.mark.needs_vtk_version(9, 5, 99)
+@pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_validator_bitfield_values():
     from vtkmodules.vtkCommonDataModel import vtkCellStatus
 
