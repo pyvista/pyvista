@@ -2999,7 +2999,7 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError(msg)
 
         if orient_faces is None:
-            orient_faces = bool(pv.vtk_version_info < (9, 5, 99))
+            orient_faces = bool(pv.vtk_version_info < (9, 6, 0))
         else:
             warn_external(
                 'Use of `orient_faces` is deprecated and should not be used. It will be removed '
