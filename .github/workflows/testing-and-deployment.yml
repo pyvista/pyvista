@@ -288,11 +288,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
+        run: tox run -e py${{ matrix.python-version }}-cov-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-cov-plotting-vtk_dev
 
       - name: Upload Images for Failed Tests
         if: always()
