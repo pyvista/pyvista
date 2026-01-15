@@ -6028,7 +6028,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             scalars = points.point_data[labels]  # type: ignore[assignment, index]
         phrase = f'{preamble} {fmt}'
 
-        if pv.vtk_version_info < (9, 6, 0):
+        if pv.vtk_version_info < (9, 6, 0):  # pragma: no branch
             labels = [phrase % val for val in scalars]
         else:
             labels = [phrase.format(val) for val in scalars]
