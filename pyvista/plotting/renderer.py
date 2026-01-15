@@ -1968,8 +1968,7 @@ class Renderer(
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-            fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'  # fallback
+            fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
@@ -2144,7 +2143,7 @@ class Renderer(
         scaled_font_size = 50
 
         font_size_factor = (
-            scaled_font_size / default_font_size if pv.vtk_version_info > (9, 5, 99) else 1.0
+            scaled_font_size / default_font_size if pv.vtk_version_info > (9, 6, 0) else 1.0
         )
         for prop in props:
             prop.SetColor(color.float_rgb)
