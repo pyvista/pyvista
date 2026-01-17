@@ -2143,7 +2143,7 @@ class Renderer(
         scaled_font_size = 50
 
         font_size_factor = (
-            scaled_font_size / default_font_size if pv.vtk_version_info > (9, 6, 0) else 1.0
+            scaled_font_size / default_font_size if pv.vtk_version_info >= (9, 6, 0) else 1.0
         )
         for prop in props:
             prop.SetColor(color.float_rgb)
