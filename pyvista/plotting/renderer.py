@@ -1889,8 +1889,9 @@ class Renderer(
                 This flag is now ``False`` by default. See warning below.
 
             .. warning::
-                The 3D labels may not render at all in some case when using VTK 9.6.0 or later.
-                See https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
+                Setting ``use_3d_text=True`` is not recommended with VTK 9.6.0 or later since
+                the 3D labels may not render at all in some cases. This is a known VTK bug:
+                https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
         render : bool, optional
             If the render window is being shown, trigger a render
