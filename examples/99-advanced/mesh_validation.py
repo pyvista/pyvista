@@ -132,7 +132,7 @@ plot_cell(hexahedron)
 
 # %%
 # Let's review the invalid fields reported.
-assert report.invalid_fields == ('intersecting_edges', 'non_convex', 'inverted_faces')
+assert report.invalid_fields == ('intersecting_edges', 'inverted_faces')
 
 # %%
 # Similar to the cell from `Cells with inverted faces`_, multiple invalid fields are reported. From
