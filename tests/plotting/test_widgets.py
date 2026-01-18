@@ -818,7 +818,7 @@ def test_logo_widget():
 @pytest.mark.usefixtures('verify_image_cache')
 def test_camera3d_widget():
     sphere = pv.Sphere()
-    pl = pv.Plotter(window_size=[600, 300], shape=(1, 2))
+    pl = pv.Plotter(shape=(1, 2))
     pl.add_mesh(sphere)
     pl.subplot(0, 1)
     pl.add_mesh(sphere)
