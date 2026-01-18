@@ -64,6 +64,7 @@ dargs = dict(clim=[0, 200], cmap='rainbow')
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(threshold(data_to_probe), **dargs)
 pl.subplot(0, 1)
+pv.global_theme.allow_empty_mesh = True  # TEMP: this should be reverted
 pl.add_mesh(threshold(result), **dargs)
 pl.link_views()
 pl.view_isometric()
