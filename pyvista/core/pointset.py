@@ -2562,7 +2562,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12], dtype=uint8)
 
-        Compare this to :attr:`distinct_cell_types`.
+        Compare this to :attr:`~pyvista.DataSet.distinct_cell_types`.
 
         >>> hex_beam.distinct_cell_types
         {<CellType.HEXAHEDRON: 12>}
@@ -2580,44 +2580,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
         return array
-
-    @property
-    def distinct_cell_types(self) -> set[CellType]:
-        """Return the set of distinct cell types in this dataset.
-
-        The set contains :class:`~pyvista.CellType` values corresponding to the
-        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
-
-        .. versionadded:: 0.47
-
-        Returns
-        -------
-        set[CellType]
-            Set of :class:`~pyvista.CellType` values.
-
-        Examples
-        --------
-        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
-
-        >>> from pyvista import examples
-        >>> hex_beam = examples.load_hexbeam()
-        >>> hex_beam.distinct_cell_types
-        {<CellType.HEXAHEDRON: 12>}
-
-        Compare this to :attr:`celltypes`.
-
-        >>> hex_beam.celltypes
-        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12], dtype=uint8)
-
-        """
-        cell_types = (
-            convert_array(self.GetDistinctCellTypesArray())
-            if pv.vtk_version_info >= (9, 5, 0)
-            else np.unique(self.celltypes)
-        )
-        return {pv.CellType(cell_num) for cell_num in cell_types}
 
     @property
     def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01

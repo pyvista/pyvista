@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import Cell
+    from pyvista import CellType
     from pyvista import PointSet
 
     from ._typing_core import MatrixLike
@@ -3067,7 +3068,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        min_cell_dimensionality, dimensionality
+        min_cell_dimensionality, dimensionality, distinct_cell_types
 
         Returns
         -------
@@ -3175,7 +3176,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        max_cell_dimensionality, dimensionality
+        max_cell_dimensionality, dimensionality, distinct_cell_types
 
         Returns
         -------
@@ -3243,3 +3244,79 @@ class DataSet(DataSetFilters, DataObject):
             return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        See Also
+        --------
+        min_cell_dimensionality
+        max_cell_dimensionality
+        pyvista.UnstructuredGrid.celltypes
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        Load a mesh with mixed cells.
+
+        >>> mesh = examples.download_cow()
+        >>> sorted(mesh.distinct_cell_types)
+        [<CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>, <CellType.QUAD: 9>]
+
+        Load 2D image.
+
+        >>> mesh = examples.load_logo()
+        >>> mesh.distinct_cell_types
+        {<CellType.PIXEL: 8>}
+
+        """
+        if self.n_cells == 0:
+            return set()
+        if hasattr(self, 'dimensions'):
+            # Fast path for dimensioned grids
+            cell_dimension = next(iter(self._distinct_cell_dimensions))
+            if isinstance(self, pv.Grid):
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.PIXEL,
+                    3: pv.CellType.VOXEL,
+                }
+            else:
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.QUAD,
+                    3: pv.CellType.HEXAHEDRON,
+                }
+            return {mapping[cell_dimension]}
+
+        if hasattr(self, 'GetDistinctCellTypes'):
+            types = _vtk.vtkCellTypes()
+            self.GetDistinctCellTypes(types)
+            types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
+        elif hasattr(self, 'GetCellTypesArray'):
+            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
+        else:
+            grid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+            types_array = np.unique(grid.celltypes)
+        return {pv.CellType(cell_num) for cell_num in types_array}
