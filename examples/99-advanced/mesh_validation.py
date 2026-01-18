@@ -87,7 +87,7 @@ plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
 # If we review the invalid fields, we see that `two` are reported instead of only one.
-assert report.invalid_fields == ('non_convex', 'inverted_faces')
+assert report.invalid_fields == ('inverted_faces',)
 
 # %%
 # The ``'inverted_faces'`` issue is accurate, but the ``'non_convex'`` issue
