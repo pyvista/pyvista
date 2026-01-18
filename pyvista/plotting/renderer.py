@@ -1753,7 +1753,7 @@ class Renderer(
         fmt=None,
         minor_ticks=False,  # noqa: FBT002
         padding=0.0,
-        use_3d_text=True,  # noqa: FBT002
+        use_3d_text: bool | None = None,  # noqa: FBT001
         render=None,
         **kwargs,
     ):
@@ -1881,8 +1881,16 @@ class Renderer(
             cushion the datasets in the scene from the axes
             annotations. Defaults no padding.
 
-        use_3d_text : bool, default: True
-            Use :vtk:`vtkTextActor3D` for titles and labels.
+        use_3d_text : bool
+            Use :vtk:`vtkTextActor3D` for titles and labels. Defaults to ``False`` for
+            VTK 9.6 and later, and ``True`` for older versions of VTK.
+
+            .. versionchanged:: 0.47
+                This flag is now ``False`` by default. See warning below.
+
+            .. warning::
+                The 3D labels may not render at all in some case when using VTK 9.6.0 or later.
+                See https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -1960,7 +1968,9 @@ class Renderer(
 
         """
         self.remove_bounds_axes()
-
+        if use_3d_text is None:
+            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
+            use_3d_text = pv.vtk_version_info < (9, 6, 0)
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
