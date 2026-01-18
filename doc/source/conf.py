@@ -409,7 +409,7 @@ def _filter_sphinx_gallery_warnings():
     )
 
     # Treat all remaining warnings as errors
-    warnings.simplefilter('error')
+    warnings.simplefilter('error', append=True)
 
 
 class ResetPyVista:
