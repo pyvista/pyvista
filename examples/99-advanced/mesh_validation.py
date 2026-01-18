@@ -83,18 +83,10 @@ invalid_polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points
 # inward.
 report = invalid_polyhedron.validate_mesh()
 assert not report.is_valid
+assert report.invalid_fields == ('inverted_faces',)
 plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
-# If we review the invalid fields, we see that `two` are reported instead of only one.
-assert report.invalid_fields == ('inverted_faces',)
-
-# %%
-# The ``'inverted_faces'`` issue is accurate, but the ``'non_convex'`` issue
-# is a false-positive, since the only real problem is with the face orientation. But since the face
-# orientation is wrong, it's no longer possible for the mesh validation to accurately determine the
-# cell convexity. This can sometimes make identifying the core issue with a cell challenging.
-#
 # Now let's compare the centroid of the valid and invalid cells using
 # :meth:`~pyvista.DataObjectFilters.cell_centers`. The computed centroids differ, demonstrating
 # the need to have valid cells when using filters that depend on geometric properties.
@@ -135,15 +127,15 @@ plot_cell(hexahedron)
 assert report.invalid_fields == ('intersecting_edges', 'inverted_faces', 'non_planar_faces')
 
 # %%
-# Similar to the cell from `Cells with inverted faces`_, multiple invalid fields are reported. From
-# the plot above, we can see the ``'intersecting_edges'`` issue appears to be correct, but to
-# investigate the ``'inverted_faces'`` problem further, let's plot the cell again with normals.
+# From the plot above, we can visually confirm these issues since some faces appear to intersect,
+# and others appear to be "folded" and hence there are non-planar. To investigate the
+# ``'inverted_faces'`` problem further, let's plot the cell again with normals.
 plot_cell(hexahedron, show_normals=True)
 
 # %%
-# Since we can see some of the normals are indeed pointing inward, this confirms that both invalid
-# reported are correct. To rectify this problem, we need to re-order the cell connectivity based
-# on the required ordering stated in the documentation for :vtk:`vtkHexahedron`.
+# Since some of the normals are pointing inward, this confirms that there are inverted faces.
+# To make the cell valid, we need to re-order the cell connectivity based on the required ordering
+# stated in the documentation for :vtk:`vtkHexahedron`.
 cells = [8, 0, 1, 4, 2, 3, 5, 7, 6]  # instead of [8, 0, 1, 2, 3, 4, 5, 6, 7]
 celltype = [pv.CellType.HEXAHEDRON]
 hexahedron = pv.UnstructuredGrid(cells, celltype, points)
