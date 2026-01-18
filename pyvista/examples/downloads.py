@@ -4189,6 +4189,9 @@ def _embryo_load_func(dataset):
     # cleanup artifact
     mask = dataset['SLCImage'] == 255
     dataset['SLCImage'][mask] = 0
+    # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
+    # Set explicitly as a workaround
+    dataset.spacing = (1.0, 1.0, 1.0)
     return dataset
 
 
