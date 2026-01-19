@@ -559,7 +559,13 @@ class Texture(DataObject, _vtk.vtkTexture):
         pl = pv.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
         pl.set_environment_texture(self, is_srgb=True)
-        pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
+
+        # maintain backwards compatibility with VTK <9.6
+        if pv.vtk_version_info >= (9, 6, 0):
+            vmat = pv.vtkmatrix_from_array(pv.Transform().rotate_y(180).as_rotation().as_matrix())
+            pl.renderer.SetEnvironmentRotationMatrix(vmat)
+
+        pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
