@@ -2153,9 +2153,7 @@ class Renderer(
         default_font_size = 12
         scaled_font_size = 50
 
-        font_size_factor = (
-            scaled_font_size / default_font_size if pv.vtk_version_info > (9, 6, 0) else 1.0
-        )
+        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
         for prop in props:
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
@@ -2168,9 +2166,12 @@ class Renderer(
                 prop.SetFontSize(font_size)
 
         if use_3d_text:
+            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
             cube_axes_actor.SetScreenSize(
                 font_size / default_font_size / font_size_factor * default_screen_size
             )
+        elif vtk_less_than_96:
+            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
