@@ -957,13 +957,14 @@ def download_bolt_nut(load=True):  # noqa: FBT002
 
 def _bolt_nut_files_func():
     # Multiple mesh files are loaded for this example
-    bolt = _SingleFileDownloadableDatasetLoader('bolt.slc')
-    nut = _SingleFileDownloadableDatasetLoader('nut.slc')
+    def load_func(dataset):
+        # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
+        # Set explicitly as a workaround
+        dataset.spacing = (1.0, 1.0, 1.0)
+        return dataset
 
-    # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
-    # Set explicitly as a workaround
-    bolt.spacing = (1.0, 1.0, 1.0)
-    nut.spacing = (1.0, 1.0, 1.0)
+    bolt = _SingleFileDownloadableDatasetLoader('bolt.slc', load_func=load_func)
+    nut = _SingleFileDownloadableDatasetLoader('nut.slc', load_func=load_func)
     return bolt, nut
 
 
