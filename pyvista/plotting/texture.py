@@ -561,11 +561,16 @@ class Texture(DataObject, _vtk.vtkTexture):
         pl.set_environment_texture(self, is_srgb=True)
 
         # maintain backwards compatibility with VTK <9.6
-        if pv.vtk_version_info >= (9, 6, 0):
+        if pv.vtk_version_info >= (9, 6, 0):  # pragma: no cover
             vmat = pv.vtkmatrix_from_array(pv.Transform().rotate_y(180).as_rotation().as_matrix())
             pl.renderer.SetEnvironmentRotationMatrix(vmat)
 
-        pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=1.0)
+        pl.add_mesh(
+            pv.Sphere(),
+            pbr=True,
+            roughness=kwargs.pop('roughness', 0.5),
+            metallic=kwargs.pop('metallic', 1.0),
+        )
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
