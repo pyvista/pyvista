@@ -2105,7 +2105,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
         >>> mesh = large + medium + small
 
-        Compute connectivity.
+        Compute connectivity. There are three regions, one for each sphere.
 
         >>> conn = mesh.connectivity('all')
         >>> np.unique(conn['RegionId'])
@@ -2118,10 +2118,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     pl = pv.Plotter()
         ...     pl.add_mesh(colored, show_edges=True)
         ...     pl.add_legend(color_dict)
+        ...     pl.camera_position = pv.CameraPosition(
+        ...         position=(3.8, 5.8, 5.8),
+        ...         focal_point=(-2.0, 0.0, 0.0),
+        ...         viewup=(0.0, 0.0, 1.0),
+        ...     )
         ...     return pl
-
+        >>>
         >>> pl = labels_plotter(conn)
         >>> pl.show()
+
 
         Restrict connectivity to a scalar range.
 
