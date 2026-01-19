@@ -562,7 +562,8 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         # maintain backwards compatibility with VTK <9.6
         if pv.vtk_version_info >= (9, 6, 0):
-            vmat = pv.vtkmatrix_from_array(pv.Transform().rotate_y(180).rotation_matrix)
+            rotate_y_180 = np.array([[-1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0]])
+            vmat = pv.vtkmatrix_from_array(rotate_y_180)
             pl.renderer.SetEnvironmentRotationMatrix(vmat)
 
         pl.add_mesh(
