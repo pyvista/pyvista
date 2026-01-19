@@ -77,10 +77,9 @@ noise_region_ids = region_ids[1::]  # All region ids except '0'
 noise = pine_roots.connectivity('specified', noise_region_ids)
 
 # %%
-# Plot the noisy regions using :meth:`~pyvista.DataSetFilters.color_labels`.
-# For context, also plot the largest region.
+# Plot the noisy regions. For context, also plot the largest region.
 pl = pv.Plotter()
-pl.add_mesh(noise.color_labels())
+pl.add_mesh(noise, cmap='glasbey', categories=True)
 pl.add_mesh(largest, color='lightgray', opacity=0.1)
 pl.add_mesh(pine_roots.outline())
 pl.camera_position = cpos
@@ -103,13 +102,23 @@ mesh = examples.download_foot_bones()
 conn = mesh.connectivity('all')
 
 # %%
-# Plot the labeled regions using :meth:`~pyvista.DataSetFilters.color_labels`.
+# Plot the labeled regions.
 
-colored = conn.color_labels()
+# Format scalar bar text for integer values.
+scalar_bar_args = dict(
+    fmt='{0:.1f}',
+)
+
 cpos = pv.CameraPosition(
     position=(10.5, 12.2, 18.3), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
 )
-colored.plot(cpos=cpos)
+
+conn.plot(
+    categories=True,
+    cmap='glasbey',
+    scalar_bar_args=scalar_bar_args,
+    cpos=cpos,
+)
 
 
 # %%
