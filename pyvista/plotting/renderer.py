@@ -1886,7 +1886,8 @@ class Renderer(
             VTK 9.6 and later, and ``True`` for older versions of VTK.
 
             .. versionchanged:: 0.47
-                This flag is now ``False`` by default. See warning below.
+                The default value of this flag is now dependent on the version of VTK used.
+                Previously, the default was always ``True``.
 
             .. warning::
                 Setting ``use_3d_text=True`` is not recommended with VTK 9.6.0 or later since
@@ -1969,9 +1970,11 @@ class Renderer(
 
         """
         self.remove_bounds_axes()
+
+        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
         if use_3d_text is None:
             # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
-            use_3d_text = pv.vtk_version_info < (9, 6, 0)
+            use_3d_text = vtk_less_than_96
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -1979,7 +1982,7 @@ class Renderer(
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'  # fallback
+            fmt = '%.1f' if vtk_less_than_96 else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
@@ -2153,7 +2156,6 @@ class Renderer(
         default_font_size = 12
         scaled_font_size = 50
 
-        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
         for prop in props:
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
