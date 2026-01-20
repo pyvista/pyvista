@@ -957,14 +957,8 @@ def download_bolt_nut(load=True):  # noqa: FBT002
 
 def _bolt_nut_files_func():
     # Multiple mesh files are loaded for this example
-    def load_func(dataset):
-        # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
-        # Set explicitly as a workaround
-        dataset.spacing = (1.0, 1.0, 1.0)
-        return dataset
-
-    bolt = _SingleFileDownloadableDatasetLoader('bolt.slc', load_func=load_func)
-    nut = _SingleFileDownloadableDatasetLoader('nut.slc', load_func=load_func)
+    bolt = _SingleFileDownloadableDatasetLoader('bolt.slc')
+    nut = _SingleFileDownloadableDatasetLoader('nut.slc')
     return bolt, nut
 
 
@@ -1211,14 +1205,7 @@ def download_knee_full(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_knee_full, load=load)
 
 
-def _knee_full_func(dataset):
-    # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
-    # Set explicitly as a workaround
-    dataset.spacing = (0.723, 0.723, 1.0)
-    return dataset
-
-
-_dataset_knee_full = _SingleFileDownloadableDatasetLoader('vw_knee.slc', load_func=_knee_full_func)
+_dataset_knee_full = _SingleFileDownloadableDatasetLoader('vw_knee.slc')
 
 
 @_deprecate_positional_args
@@ -4202,9 +4189,6 @@ def _embryo_load_func(dataset):
     # cleanup artifact
     mask = dataset['SLCImage'] == 255
     dataset['SLCImage'][mask] = 0
-    # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
-    # Set explicitly as a workaround
-    dataset.spacing = (1.0, 1.0, 1.0)
     return dataset
 
 

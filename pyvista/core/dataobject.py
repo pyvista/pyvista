@@ -115,6 +115,11 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         self.shallow_copy(data)
         self._post_file_load_processing()
 
+        if get_ext(filename) == '.slc':
+            # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
+            # Set explicitly as a workaround
+            self.spacing = (*self.spacing[0:2], 1.0)
+
     def _post_file_load_processing(self: Self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
