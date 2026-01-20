@@ -951,6 +951,78 @@ def test_cast_rectilinear_grid():
         assert np.allclose(structured.cell_data[k], v)
 
 
+@pytest.mark.parametrize('as_rectilinear', [True, False])
+def test_cast_grid_scalars_and_cell_type(as_rectilinear):
+    """Test cell type and scalars after casting to structured or unstructured grid."""
+    scalars_name = 'data'
+    grid2d = pv.ImageData(dimensions=(3, 2, 1))
+    grid2d.point_data[scalars_name] = range(grid2d.n_points)
+
+    grid3d = pv.ImageData(dimensions=(2, 2, 2))
+    grid3d.point_data[scalars_name] = range(grid3d.n_points)
+
+    grid2d = grid2d.cast_to_rectilinear_grid() if as_rectilinear else grid2d
+    grid3d = grid3d.cast_to_rectilinear_grid() if as_rectilinear else grid3d
+
+    assert grid2d.get_cell(0).type == pv.CellType.PIXEL
+    assert grid3d.get_cell(0).type == pv.CellType.VOXEL
+
+    structured2d = grid2d.cast_to_structured_grid()
+    structured3d = grid3d.cast_to_structured_grid()
+    assert structured2d.active_scalars_name == scalars_name
+    assert structured3d.active_scalars_name == scalars_name
+    assert structured2d.get_cell(0).type == pv.CellType.QUAD
+    assert structured3d.get_cell(0).type == pv.CellType.HEXAHEDRON
+
+    unstructured2d = grid2d.cast_to_unstructured_grid()
+    unstructured3d = grid3d.cast_to_unstructured_grid()
+    assert unstructured2d.active_scalars_name == scalars_name
+    assert unstructured3d.active_scalars_name == scalars_name
+    assert unstructured2d.get_cell(0).type == pv.CellType.PIXEL
+    assert unstructured3d.get_cell(0).type == pv.CellType.VOXEL
+
+    assert structured2d.cast_to_unstructured_grid() != unstructured2d
+    assert structured3d.cast_to_unstructured_grid() != unstructured3d
+
+
+@pytest.mark.parametrize('as_rectilinear', [True, False])
+def test_to_hexahedra(uniform, rectilinear, as_rectilinear):
+    grid = rectilinear if as_rectilinear else uniform
+    hexahedra = grid.to_hexahedra()
+    assert isinstance(hexahedra, pv.UnstructuredGrid)
+    assert hexahedra.distinct_cell_types == {pv.CellType.HEXAHEDRON}
+    assert hexahedra.n_cells == grid.n_cells
+    match = 'Input must be 3-dimensional. Got 0-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        type(grid)().to_hexahedra()
+
+    match = (
+        'Input must be 3-dimensional. Got 2-dimensional input instead.\n'
+        'Use `to_quads` for 2D inputs.'
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(2, 2, 1)).to_hexahedra()
+
+
+@pytest.mark.parametrize('as_rectilinear', [True, False])
+def test_to_quads(image, as_rectilinear):
+    grid = image.cast_to_rectilinear_grid() if as_rectilinear else image
+    hexahedra = grid.to_quads()
+    assert isinstance(hexahedra, pv.UnstructuredGrid)
+    assert hexahedra.distinct_cell_types == {pv.CellType.QUAD}
+    assert hexahedra.n_cells == grid.n_cells
+    match = 'Input must be 2-dimensional. Got 0-dimensional input instead.'
+    with pytest.raises(ValueError, match=match):
+        type(grid)().to_quads()
+
+    match = (
+        'Input must be 2-dimensional. Got 3-dimensional input instead.\n'
+        'Use `to_hexahedra` for 3D inputs.'
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=(2, 2, 2)).to_quads()
+
+
 def test_create_image_data_from_specs():
     # empty
     grid = pv.ImageData()
