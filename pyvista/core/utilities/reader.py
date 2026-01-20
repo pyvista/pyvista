@@ -297,10 +297,6 @@ class BaseReader(_FileIOBase):
             msg = 'File reader failed to read and/or produced no output.'
             raise RuntimeError(msg)
         data._post_file_load_processing()
-        if getattr(self, '_filename', None) and self._filename.endswith('.slc'):  # type: ignore[union-attr]
-            # SLCReader spacing is broken in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19909
-            # Set explicitly as a workaround
-            data.spacing = (*data.spacing[0:2], 1.0)
 
         # check for any pyvista metadata
         data._restore_metadata()
