@@ -2114,7 +2114,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
 
         >>> def labels_plotter(dataset: pv.DataSet) -> pv.Plotter:
-        ...     colored, color_dict = dataset.color_labels(return_dict=True)
+        ...     rgb = ['red', 'green', 'blue']
+        ...     colored, color_dict = dataset.color_labels(rgb, return_dict=True)
         ...     pl = pv.Plotter()
         ...     pl.add_mesh(colored, show_edges=True)
         ...     pl.add_legend(color_dict)
