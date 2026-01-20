@@ -3087,3 +3087,35 @@ def test_ply_writer(sphere, tmp_path):
     assert writer.texture == texture_name
     writer.texture = texture_name
     assert writer.texture == texture_name
+
+
+@pytest.mark.parametrize(
+    ('invalid_value', 'error_type', 'error_match'),
+    [
+        ([2, 2], TypeError, 'must be an instance of tuple'),
+        ((2,), ValueError, 'must be a tuple of two integers'),
+        ((2, 2, 0), ValueError, 'must be a tuple of two integers'),
+        ((2.0, 2), TypeError, 'must be an instance of int'),
+        ((2, '2'), TypeError, 'must be an instance of int'),
+    ],
+)
+def test_xml_writer_file_version_validation(
+    sphere, tmp_path, invalid_value, error_type, error_match
+):
+    """Test validation of file_version setter."""
+    path = tmp_path / 'sphere.vtp'
+    writer = pv.XMLPolyDataWriter(path, sphere)
+
+    # Test normal case: setting valid file_version values
+    try:
+        writer.file_version = (2, 2)
+        assert writer.file_version == (2, 2)
+        writer.file_version = (1, 0)
+        assert writer.file_version == (1, 0)
+    except AttributeError:
+        # Skip if VTK version doesn't support file_version setter
+        pytest.skip('VTK version does not support file_version setter')
+
+    # Test validation of file_version setter
+    with pytest.raises(error_type, match=error_match):
+        writer.file_version = invalid_value
