@@ -1141,11 +1141,49 @@ def test_fluentcffreader():
     assert isinstance(reader, pv.FLUENTCFFReader)
     assert reader.path == filename
 
+    assert 'Number of Cell Arrays: 12' in repr(reader)
+
+    n_expected_arrays = 12
+    assert len(reader.cell_arrays) == n_expected_arrays
+    assert 'SV_T' in reader.cell_arrays
+
     blocks = reader.read()
     assert_output_type(blocks, reader)
     assert blocks.n_blocks == 1
     assert isinstance(blocks[0], pv.UnstructuredGrid)
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+    assert len(blocks[0].cell_data) == n_expected_arrays
+
+    # read again, disabling all arrays
+    reader = pv.get_reader(filename)
+    reader.disable_all_cell_arrays()
+    blocks = reader.read()
+    assert len(blocks[0].cell_data) == 0
+
+    # Read all
+    reader = pv.get_reader(filename)
+    reader.disable_all_cell_arrays()
+    reader.enable_all_cell_arrays()
+    blocks = reader.read()
+    assert len(blocks[0].cell_data) == n_expected_arrays
+
+    # disable one
+    reader = pv.get_reader(filename)
+    reader.disable_cell_array('SV_T')
+    blocks = reader.read()
+    assert 'SV_T' not in blocks[0].cell_data
+
+    # enable one
+    reader = pv.get_reader(filename)
+    reader.disable_all_cell_arrays()
+    reader.enable_cell_array('SV_T')
+    blocks = reader.read()
+    assert len(blocks[0].cell_data) == 1
+    assert 'SV_T' in blocks[0].cell_data
+
+    # missing array
+    with pytest.raises(ValueError, match='does not exist'):
+        reader.enable_cell_array('NOT AN ARRAY')
 
 
 def test_gambitreader():
