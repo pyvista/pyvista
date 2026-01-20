@@ -3834,8 +3834,7 @@ class Renderer(
         else:
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        if vtk_version_info >= (9, 6, 0):
-            self.SetEnvironmentRight(-1.0, 0.0, 0.0)
+        self.SetBackgroundTexture(texture)
         self.Modified()
 
     def remove_environment_texture(self) -> None:
