@@ -310,6 +310,9 @@ def read(  # noqa: PLR0911, PLR0917
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
+    if ext == '.frd':
+        from .frd import FRDReader
+        return FRDReader(filename).read()   
     if ext.lower() == '.grdecl':
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
