@@ -5353,3 +5353,44 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
         normal = grid.extract_geometry().cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
+
+
+@pytest.mark.parametrize(
+    'mesh_type', [pv.ImageData, pv.StructuredGrid, pv.ExplicitStructuredGrid, pv.UnstructuredGrid]
+)
+def test_hidden_cells_mixin(mesh_type):
+    def cast_mesh(mesh):
+        if mesh_type is pv.ImageData:
+            out = mesh.copy()
+        elif mesh_type is pv.StructuredGrid:
+            out = mesh.cast_to_structured_grid()
+        elif mesh_type is pv.ExplicitStructuredGrid:
+            out = mesh.cast_to_explicit_structured_grid()
+        elif mesh_type is pv.UnstructuredGrid:
+            # Ensure we have hexahedron cells
+            out = mesh.cast_to_unstructured_grid()
+        assert out is not mesh
+        assert type(out) is mesh_type
+        return out
+
+    HIDDEN_RANGE = np.arange(22, 122)
+    original_grid = pv.ImageData(dimensions=(6, 6, 6))
+
+    # Cast first, then hide
+    cast_then_hide = cast_mesh(original_grid)
+    cast_then_hide.hide_cells(HIDDEN_RANGE, inplace=True)
+    assert cast_then_hide.distinct_cell_types.issubset({pv.CellType.HEXAHEDRON, pv.CellType.VOXEL})
+    assert np.array_equal(cast_then_hide.hidden_cell_ids, HIDDEN_RANGE)
+    cast_then_hide.plot(show_edges=True)
+    cast_then_hide.show_cells().plot(show_edges=True)
+
+    # Hide, then cast
+    hidden = original_grid.hide_cells(HIDDEN_RANGE)
+    assert hidden.distinct_cell_types.issubset({pv.CellType.HEXAHEDRON, pv.CellType.VOXEL})
+    assert np.array_equal(hidden.hidden_cell_ids, HIDDEN_RANGE)
+    assert hidden is not original_grid
+    hide_then_cast = cast_mesh(hidden)
+    hide_then_cast.plot(show_edges=True)
+    hide_then_cast.show_cells().plot(show_edges=True)
+
+    assert cast_then_hide == hide_then_cast

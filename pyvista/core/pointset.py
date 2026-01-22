@@ -27,6 +27,7 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
+from .dataset import HiddenCellsMixin
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
@@ -66,7 +67,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ._typing_core import ArrayLike
-    from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
@@ -1907,7 +1907,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
 
 @abstract_class
-class PointGrid(_PointSet):
+class PointGrid(_PointSet, HiddenCellsMixin):
     """Class in common with structured and unstructured grids."""
 
     def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
@@ -2573,7 +2573,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def _get_cell_types_array(self):
         array = (
             self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
-            if pv.vtk_version_info > (9, 6, 0)
+            if pv.vtk_version_info >= (9, 6, 0)
             else self.GetCellTypesArray()
         )
 
@@ -2971,61 +2971,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             rate.append(step)
 
         return self.extract_subset(voi, rate, boundary=False)
-
-    @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
-        """Hide cells without deleting them.
-
-        Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
-
-        Parameters
-        ----------
-        ind : sequence[int]
-            List or array of cell indices to be hidden.  The array can
-            also be a boolean array of the same size as the number of
-            cells.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.StructuredGrid
-            Structured grid with hidden cells.
-
-        Examples
-        --------
-        Hide part of the middle of a structured surface.
-
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> x = np.arange(-10, 10, 0.25)
-        >>> y = np.arange(-10, 10, 0.25)
-        >>> z = 0
-        >>> x, y, z = np.meshgrid(x, y, z)
-        >>> grid = pv.StructuredGrid(x, y, z)
-        >>> grid = grid.hide_cells(range(79 * 30, 79 * 50))
-        >>> grid.plot(color=True, show_edges=True)
-
-        """
-        if not inplace:
-            return self.copy().hide_cells(ind, inplace=True)
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                msg = f'Boolean array size must match the number of cells ({self.n_cells})'
-                raise ValueError(msg)
-        ghost_cells = np.zeros(self.n_cells, np.uint8)
-        ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
-
-        # NOTE: cells cannot be removed from a structured grid, only
-        # hidden setting ghost_cells to a value besides
-        # vtk.vtkDataSetAttributes.HIDDENCELL will not hide them
-        # properly, additionally, calling self.RemoveGhostCells will
-        # have no effect
-
-        # add but do not make active
-        self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
-        return self
 
     def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
         """Hide points without deleting them.
@@ -3513,93 +3458,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary=binary, compression=compression)
 
-    @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
-        """Hide specific cells.
-
-        Hides cells by setting the ghost cell array to ``HIDDENCELL``.
-
-        Parameters
-        ----------
-        ind : sequence[int]
-            Cell indices to be hidden. A boolean array of the same
-            size as the number of cells also is acceptable.
-
-        inplace : bool, default: False
-            This method is applied to this grid if ``True``
-            or to a copy otherwise.
-
-        Returns
-        -------
-        output : ExplicitStructuredGrid | None
-            A deep copy of this grid if ``inplace=False`` with the
-            hidden cells, or this grid with the hidden cells if
-            otherwise.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()
-        >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
-
-        """
-        ind_arr = np.asanyarray(ind)
-
-        if inplace:
-            array = np.zeros(self.n_cells, dtype=np.uint8)
-            array[ind_arr] = _vtk.vtkDataSetAttributes.HIDDENCELL
-            name = _vtk.vtkDataSetAttributes.GhostArrayName()
-            self.cell_data[name] = array
-            return self
-
-        grid = self.copy()
-        grid.hide_cells(ind, inplace=True)
-        return grid
-
-    @_deprecate_positional_args
-    def show_cells(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
-        """Show hidden cells.
-
-        Shows hidden cells by setting the ghost cell array to ``0``
-        where ``HIDDENCELL``.
-
-        Parameters
-        ----------
-        inplace : bool, default: False
-            This method is applied to this grid if ``True``
-            or to a copy otherwise.
-
-        Returns
-        -------
-        ExplicitStructuredGrid
-            A deep copy of this grid if ``inplace=False`` with the
-            hidden cells shown.  Otherwise, this dataset with the
-            shown cells.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()
-        >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
-
-        >>> grid = grid.show_cells()
-        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
-
-        """
-        if inplace:
-            name = _vtk.vtkDataSetAttributes.GhostArrayName()
-            if name in self.cell_data.keys():
-                array = self.cell_data[name]
-                ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
-                array[ind] = 0
-            return self
-        else:
-            grid = self.copy()
-            grid.show_cells(inplace=True)
-            return grid
-
     def _dimensions(self) -> tuple[int, int, int]:
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
@@ -3626,51 +3484,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         """
         return self._dimensions()
-
-    @property
-    def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounding box of the visible cells.
-
-        Different from `bounds`, which returns the bounding box of the
-        complete grid, this method returns the bounding box of the
-        visible cells, where the ghost cell array is not
-        ``HIDDENCELL``.
-
-        Returns
-        -------
-        tuple[float, float, float]
-            The limits of the visible grid in the X, Y and Z
-            directions respectively.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()
-        >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.bounds
-        BoundsTuple(x_min =  0.0,
-                    x_max = 80.0,
-                    y_min =  0.0,
-                    y_max = 50.0,
-                    z_min =  0.0,
-                    z_max =  6.0)
-
-        >>> grid.visible_bounds
-        BoundsTuple(x_min =  0.0,
-                    x_max = 80.0,
-                    y_min =  0.0,
-                    y_max = 50.0,
-                    z_min =  0.0,
-                    z_max =  4.0)
-
-        """
-        name = _vtk.vtkDataSetAttributes.GhostArrayName()
-        if name in self.cell_data:
-            array = self.cell_data[name]
-            grid = self.extract_cells(array == 0)
-            return grid.bounds
-        else:
-            return self.bounds
 
     def cell_id(self, coords: ArrayLike[int]) -> int | NumpyArray[int] | None:
         """Return the cell ID.
