@@ -1730,7 +1730,7 @@ class DataSet(DataSetFilters, DataObject):
             and (ids := self.hidden_cell_ids).size > 0
         ):
             hidden_cell_ids = ids
-            self_input = self.show_cells()
+            self_input: DataSet = self.show_cells()
         else:
             self_input = self
 
@@ -3416,14 +3416,14 @@ class _HiddenCellsMixin:
             pass  # ind may be a scalar, keep going
 
         try:
-            ghost_cells = self.cell_data[GHOST_ARRAY_NAME]
+            ghost_cells: np.ndarray | pyvista_ndarray = self.cell_data[GHOST_ARRAY_NAME]
         except KeyError:
             ghost_cells = np.zeros(self.n_cells, np.uint8)
 
-        ghost_cells[ind] = HIDDEN_CELL
+        ghost_cells[ind] = HIDDEN_CELL  # type: ignore[index]
 
         # add but do not make active
-        self.cell_data.set_array(ghost_cells, GHOST_ARRAY_NAME)  # type: ignore[arg-type]
+        self.cell_data.set_array(ghost_cells, GHOST_ARRAY_NAME)
         return self
 
     @_deprecate_positional_args
@@ -3524,5 +3524,5 @@ class _HiddenCellsMixin:
         return np.empty(shape=(0,), dtype=int)
 
     @property
-    def _has_ghost_cells(self) -> bool:
+    def _has_ghost_cells(self: _DataSetType) -> bool:  # type: ignore[misc]
         return GHOST_ARRAY_NAME in self.cell_data

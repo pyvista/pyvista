@@ -27,12 +27,14 @@ if TYPE_CHECKING:
 
     from pyvista.core.dataset import DataSet
 
-HIDDEN_CELL_MESH_TYPES = {
-    pv.ImageData,
-    pv.StructuredGrid,
-    pv.ExplicitStructuredGrid,
-    pv.UnstructuredGrid,
-}
+HIDDEN_CELL_MESH_TYPES = list(
+    {
+        pv.ImageData,
+        pv.StructuredGrid,
+        pv.ExplicitStructuredGrid,
+        pv.UnstructuredGrid,
+    }
+)
 
 
 def test_invalid_copy_from(hexbeam):
