@@ -27,14 +27,12 @@ if TYPE_CHECKING:
 
     from pyvista.core.dataset import DataSet
 
-HIDDEN_CELL_MESH_TYPES = list(
-    {
-        pv.ImageData,
-        pv.StructuredGrid,
-        pv.ExplicitStructuredGrid,
-        pv.UnstructuredGrid,
-    }
-)
+HIDDEN_CELL_MESH_TYPES = [
+    pv.ImageData,
+    pv.StructuredGrid,
+    pv.ExplicitStructuredGrid,
+    pv.UnstructuredGrid,
+]
 
 
 def test_invalid_copy_from(hexbeam):
@@ -1708,6 +1706,7 @@ def test_hidden_cells_mixin(mesh_type):
     assert hidden.visible_bounds == pv.BoundsTuple(
         x_min=1e299, x_max=-1e299, y_min=1e299, y_max=-1e299, z_min=1e299, z_max=-1e299
     )
+    assert hidden.n_cells == 1
 
     ugrid_hidden = hidden.cast_to_unstructured_grid()
     assert ugrid_hidden.hidden_cell_ids.tolist() == [0]
