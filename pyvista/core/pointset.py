@@ -3458,6 +3458,49 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary=binary, compression=compression)
 
+    @_deprecate_positional_args
+    def show_cells(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
+        """Show hidden cells.
+
+        Shows hidden cells by setting the ghost cell array to ``0``
+        where ``HIDDENCELL``.
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
+            or to a copy otherwise.
+
+        Returns
+        -------
+        ExplicitStructuredGrid
+            A deep copy of this grid if ``inplace=False`` with the
+            hidden cells shown.  Otherwise, this dataset with the
+            shown cells.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
+
+        >>> grid = grid.show_cells()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
+
+        """
+        if inplace:
+            name = _vtk.vtkDataSetAttributes.GhostArrayName()
+            if name in self.cell_data.keys():
+                array = self.cell_data[name]
+                ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
+                array[ind] = 0
+            return self
+        else:
+            grid = self.copy()
+            grid.show_cells(inplace=True)
+            return grid
+
     def _dimensions(self) -> tuple[int, int, int]:
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and

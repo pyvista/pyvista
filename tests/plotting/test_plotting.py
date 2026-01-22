@@ -5385,7 +5385,7 @@ def test_hidden_cells_mixin(mesh_type):
 
     pl.subplot(0, 1)
     pl.add_title('show', font_size=10, color='red')
-    pl.add_mesh(cast_then_hide.show_cells(), show_edges=True)
+    pl.add_mesh(cast_then_hide.unhide_cells(), show_edges=True)
 
     pl.subplot(1, 0)
     pl.add_title('hide & cast', font_size=10, color='red')
@@ -5393,6 +5393,6 @@ def test_hidden_cells_mixin(mesh_type):
 
     pl.subplot(1, 1)
     pl.add_title('show', font_size=10, color='red')
-    pl.add_mesh(hide_then_cast.show_cells(), show_edges=True)
+    pl.add_mesh(hide_then_cast.unhide_cells(), show_edges=True)
 
     pl.show()

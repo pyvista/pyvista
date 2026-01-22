@@ -1708,6 +1708,10 @@ def test_hidden_cells_mixin(mesh_type):
     )
     assert hidden.n_cells == 1
 
+    # Test hide all cells by default
+    hidden_no_args = single_cell_cast.hide_cells()
+    assert hidden_no_args == hidden
+
     ugrid_hidden = hidden.cast_to_unstructured_grid()
     assert ugrid_hidden.hidden_cell_ids.tolist() == [0]
     assert pv.CellType.EMPTY_CELL not in ugrid_hidden.celltypes

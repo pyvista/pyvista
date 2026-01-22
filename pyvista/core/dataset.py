@@ -1730,7 +1730,7 @@ class DataSet(DataSetFilters, DataObject):
             and (ids := self.hidden_cell_ids).size > 0
         ):
             hidden_cell_ids = ids
-            self_input: DataSet = self.show_cells()
+            self_input: DataSet = self.unhide_cells()
         else:
             self_input = self
 
@@ -3358,7 +3358,7 @@ class _HiddenCellsMixin:
     @_deprecate_positional_args(allowed=['ind'])
     def hide_cells(  # type: ignore[misc]
         self: _DataSetType,
-        ind: VectorLike[int] | VectorLike[bool],
+        ind: VectorLike[int] | VectorLike[bool] | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
     ) -> _DataSetType:
         """Hide cells without deleting them.
@@ -3404,13 +3404,20 @@ class _HiddenCellsMixin:
         """
         if not inplace:
             return self.copy().hide_cells(ind, inplace=True)
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                msg = f'Boolean array size must match the number of cells ({self.n_cells})'
-                raise ValueError(msg)
+
+        if ind is None:
+            indices: VectorLike[int] | VectorLike[bool] = np.full(
+                shape=(self.n_cells,), fill_value=np.True_, dtype=np.bool_
+            )
+        else:
+            indices = ind
+            if isinstance(ind, np.ndarray):
+                if ind.dtype == np.bool_ and ind.size != self.n_cells:
+                    msg = f'Boolean array size must match the number of cells ({self.n_cells})'
+                    raise ValueError(msg)
 
         try:
-            if len(ind) == 0:
+            if len(indices) == 0:
                 return self
         except TypeError:
             pass  # ind may be a scalar, keep going
@@ -3420,16 +3427,16 @@ class _HiddenCellsMixin:
         except KeyError:
             ghost_cells = np.zeros(self.n_cells, np.uint8)
 
-        ghost_cells[ind] = HIDDEN_CELL  # type: ignore[index]
+        ghost_cells[indices] = HIDDEN_CELL  # type: ignore[index]
 
         # add but do not make active
         self.cell_data.set_array(ghost_cells, GHOST_ARRAY_NAME)
         return self
 
-    @_deprecate_positional_args
-    def show_cells(  # type: ignore[misc]
+    def unhide_cells(  # type: ignore[misc]
         self: _DataSetType,
-        inplace: bool = False,  # noqa: FBT001, FBT002
+        *,
+        inplace: bool = False,
     ) -> _DataSetType:
         """Show hidden cells.
 
@@ -3467,7 +3474,7 @@ class _HiddenCellsMixin:
                 array[ind] = 0
             return self
 
-        return self.copy().show_cells(inplace=True)
+        return self.copy().unhide_cells(inplace=True)
 
     @property
     def visible_bounds(self: _DataSetType) -> BoundsTuple:  # type: ignore[misc]
