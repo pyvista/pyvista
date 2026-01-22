@@ -5381,8 +5381,6 @@ def test_hidden_cells_mixin(mesh_type):
     cast_then_hide.hide_cells(HIDDEN_RANGE, inplace=True)
     assert cast_then_hide.distinct_cell_types.issubset({pv.CellType.HEXAHEDRON, pv.CellType.VOXEL})
     assert np.array_equal(cast_then_hide.hidden_cell_ids, HIDDEN_RANGE)
-    cast_then_hide.plot(show_edges=True)
-    cast_then_hide.show_cells().plot(show_edges=True)
 
     # Hide, then cast
     hidden = original_grid.hide_cells(HIDDEN_RANGE)
@@ -5390,7 +5388,25 @@ def test_hidden_cells_mixin(mesh_type):
     assert np.array_equal(hidden.hidden_cell_ids, HIDDEN_RANGE)
     assert hidden is not original_grid
     hide_then_cast = cast_mesh(hidden)
-    hide_then_cast.plot(show_edges=True)
-    hide_then_cast.show_cells().plot(show_edges=True)
 
     assert cast_then_hide == hide_then_cast
+
+    pl = pv.Plotter(shape=(2, 2))
+
+    pl.subplot(0, 0)
+    pl.add_title('cast & hide', font_size=10, color='red')
+    pl.add_mesh(cast_then_hide, show_edges=True)
+
+    pl.subplot(0, 1)
+    pl.add_title('show', font_size=10, color='red')
+    pl.add_mesh(cast_then_hide.show_cells(), show_edges=True)
+
+    pl.subplot(1, 0)
+    pl.add_title('hide & cast', font_size=10, color='red')
+    pl.add_mesh(hide_then_cast, show_edges=True)
+
+    pl.subplot(1, 1)
+    pl.add_title('show', font_size=10, color='red')
+    pl.add_mesh(hide_then_cast.show_cells(), show_edges=True)
+
+    pl.show()
