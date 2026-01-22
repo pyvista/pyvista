@@ -62,8 +62,10 @@ if TYPE_CHECKING:
     from ._typing_core import _ArrayLikeOrScalar
     from ._typing_core import _DataSetType
 
-# vector array names
-DEFAULT_VECTOR_KEY = '_vectors'
+
+DEFAULT_VECTOR_KEY = '_vectors'  # vector array names
+GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
+HIDDEN_CELL = _vtk.vtkDataSetAttributes.HIDDENCELL
 _Dimensionality = Literal[0, 1, 2, 3]
 
 
@@ -1720,22 +1722,26 @@ class DataSet(DataSetFilters, DataObject):
         <class 'pyvista.core.pointset.UnstructuredGrid'>
 
         """
-        # Process hidden cells.
-        # We need to show then re-hide them else vtkAppendFilter converts the cells to EMPTY
-        store_hidden_cell_ids = isinstance(self, HiddenCellsMixin) and not isinstance(  # type: ignore[unreachable]
-            self, pv.UnstructuredGrid
-        )
-        hidden_cell_ids = self.hidden_cell_ids if store_hidden_cell_ids else None
-
-        if hidden_cell_ids is not None:
-            self.show_cells(inplace=True)
+        # Process hidden cells. We need to show then re-hide them for some mesh types else
+        # vtkAppendFilter converts the cells to EMPTY_CELL cells
+        hidden_cell_ids: NumpyArray[int] | None = None
+        if (
+            isinstance(self, (pv.ImageData, pv.StructuredGrid))
+            and (ids := self.hidden_cell_ids).size > 0
+        ):
+            hidden_cell_ids = ids
+            self_input = self.show_cells()
+        else:
+            self_input = self
 
         alg = _vtk.vtkAppendFilter()
-        alg.AddInputData(self)
+        alg.AddInputData(self_input)
         alg.Update()
         output = _get_output(alg)
+
         if hidden_cell_ids is not None:
             output.hide_cells(hidden_cell_ids, inplace=True)
+
         return output
 
     @_deprecate_positional_args
@@ -3403,14 +3409,21 @@ class HiddenCellsMixin:
                 msg = f'Boolean array size must match the number of cells ({self.n_cells})'
                 raise ValueError(msg)
 
-        if len(ind) == 0:
-            return self
+        try:
+            if len(ind) == 0:
+                return self
+        except TypeError:
+            pass  # ind may be a scalar, keep going
 
-        ghost_cells = np.zeros(self.n_cells, np.uint8)
-        ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
+        try:
+            ghost_cells = self.cell_data[GHOST_ARRAY_NAME]
+        except KeyError:
+            ghost_cells = np.zeros(self.n_cells, np.uint8)
+
+        ghost_cells[ind] = HIDDEN_CELL
 
         # add but do not make active
-        self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+        self.cell_data.set_array(ghost_cells, GHOST_ARRAY_NAME)  # type: ignore[arg-type]
         return self
 
     @_deprecate_positional_args
@@ -3448,9 +3461,9 @@ class HiddenCellsMixin:
 
         """
         if inplace:
-            if (name := _vtk.vtkDataSetAttributes.GhostArrayName()) in self.cell_data:
-                array = self.cell_data[name]
-                ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
+            if GHOST_ARRAY_NAME in self.cell_data:
+                array = self.cell_data[GHOST_ARRAY_NAME]
+                ind = np.where(array == HIDDEN_CELL)[0]
                 array[ind] = 0
             return self
 
@@ -3503,9 +3516,13 @@ class HiddenCellsMixin:
         return self.hidden_cell_ids.size > 0  # type: ignore[misc]
 
     @property
-    def hidden_cell_ids(self: _DataSetType) -> np.ndarray:  # type: ignore[misc]  # numpydoc ignore=RT01
+    def hidden_cell_ids(self: _DataSetType) -> NumpyArray[int]:  # type: ignore[misc]  # numpydoc ignore=RT01
         """Return the IDs of currently hidden cells."""
-        if (name := _vtk.vtkDataSetAttributes.GhostArrayName()) in self.cell_data:
-            array = self.cell_data[name]
-            return np.where(array == _vtk.vtkDataSetAttributes.HIDDENCELL)[0]
-        return np.empty(shape=(0,), dtype=np.uint8)
+        if GHOST_ARRAY_NAME in self.cell_data:
+            array = self.cell_data[GHOST_ARRAY_NAME]
+            return np.where(array == HIDDEN_CELL)[0]
+        return np.empty(shape=(0,), dtype=int)
+
+    @property
+    def _has_ghost_cells(self) -> bool:
+        return GHOST_ARRAY_NAME in self.cell_data
