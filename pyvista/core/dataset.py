@@ -3343,7 +3343,7 @@ class DataSet(DataSetFilters, DataObject):
 
 
 @abstract_class
-class HiddenCellsMixin:
+class _HiddenCellsMixin:
     """Mixin class for DataSet types that support hidden ghost cells.
 
     Hidden cells are supported by:

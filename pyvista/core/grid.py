@@ -34,7 +34,7 @@ from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
-from .dataset import HiddenCellsMixin
+from .dataset import _HiddenCellsMixin
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
@@ -528,7 +528,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return _get_output(alg)
 
 
-class ImageData(Grid, HiddenCellsMixin, ImageDataFilters, _vtk.vtkImageData):
+class ImageData(Grid, _HiddenCellsMixin, ImageDataFilters, _vtk.vtkImageData):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:

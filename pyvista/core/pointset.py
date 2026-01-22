@@ -27,7 +27,7 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
-from .dataset import HiddenCellsMixin
+from .dataset import _HiddenCellsMixin
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
@@ -1907,7 +1907,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
 
 @abstract_class
-class PointGrid(_PointSet, HiddenCellsMixin):
+class PointGrid(_PointSet, _HiddenCellsMixin):
     """Class in common with structured and unstructured grids."""
 
     def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
