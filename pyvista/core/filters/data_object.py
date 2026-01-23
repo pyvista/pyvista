@@ -3445,7 +3445,7 @@ class DataObjectFilters:
             )
         # Default case: use vtkGeometryFilter. This will automatically delegate to
         # vtkDataSetSurfaceFilter internally as needed for non-linear cells
-        return self._geometry_filter(**kwargs)
+        return self._geometry_filter(extent=None, **kwargs)
 
     @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917

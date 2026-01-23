@@ -1258,7 +1258,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         boundary faces of the dataset.
 
         .. deprecated:: 0.47.0
-            Use :meth:`extract_surface` instead.
+            Use :meth:`extract_surface(algorithm='geometry`)` instead.
 
         Parameters
         ----------
@@ -1294,25 +1294,28 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
-        warn_external(
-            '`extract_geometry` is deprecated. Use `extract_surface` instead.',
-            PyVistaDeprecationWarning,
+        msg = (
+            '`extract_geometry` is deprecated. '
+            "Use `extract_surface(algorithm='geometry')` instead."
         )
+        warn_external(msg, PyVistaDeprecationWarning)
         if pv.version_info >= (0, 50):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 53):  # pragma: no cover
             msg = 'Remove this deprecated filter.'
             raise RuntimeError(msg)
-        return self._geometry_filter(extent=extent, progress_bar=progress_bar)
+        return self._geometry_filter(
+            extent=extent, pass_pointid=False, pass_cellid=False, progress_bar=progress_bar
+        )
 
     def _geometry_filter(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        pass_pointid: bool = True,
-        pass_cellid: bool = True,
-        extent: VectorLike[float] | None = None,
-        progress_bar: bool = False,
+        pass_pointid: bool,
+        pass_cellid: bool,
+        extent: VectorLike[float] | None,
+        progress_bar: bool,
         message: str = 'Extracting Geometry',
     ) -> PolyData:
         alg = _vtk.vtkGeometryFilter()
@@ -3784,7 +3787,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         return (
-            self.extract_surface(progress_bar=progress_bar)
+            self.extract_surface(algorithm='geometry', progress_bar=progress_bar)
             .triangulate()
             .decimate(target_reduction)
         )

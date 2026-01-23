@@ -80,6 +80,7 @@ def prepare_smooth_shading(  # noqa: PLR0917
     # extract surface if not already a surface
     if not is_polydata:
         mesh = mesh.extract_surface(
+            algorithm='geometry',
             pass_pointid=use_points or texture is not None,
             pass_cellid=not use_points,
         )
