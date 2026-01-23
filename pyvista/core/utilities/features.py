@@ -198,7 +198,7 @@ def _voxelize_legacy(
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_surface()  # filter preserves topology
+    surface = mesh.extract_surface(algorithm='geometry')  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'
@@ -411,7 +411,7 @@ def voxelize_volume(  # noqa: PLR0917
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_surface()  # filter preserves topology
+    surface = mesh.extract_surface(algorithm='geometry')  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'

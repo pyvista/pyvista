@@ -562,8 +562,9 @@ def test_extract_geometry(multiblock_all_with_nested_and_none):
     assert isinstance(geom, PolyData)
 
 
-def test_extract_surface(multiblock_all_with_nested_and_none):
-    geom = multiblock_all_with_nested_and_none.extract_surface()
+@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None])
+def test_extract_surface(multiblock_all_with_nested_and_none, algorithm):
+    geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
     assert isinstance(geom, PolyData)
 
 

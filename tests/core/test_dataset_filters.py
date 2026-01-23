@@ -250,7 +250,7 @@ def test_clip_surface():
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
-        clp = dataset.clip_surface(dataset.extract_surface(), crinkle=crinkle)
+        clp = dataset.clip_surface(dataset.extract_surface(algorithm='geometry'), crinkle=crinkle)
         assert clp is not None
         if isinstance(dataset, pv.PointSet):
             assert isinstance(clp, pv.PointSet)
@@ -1410,7 +1410,7 @@ def test_delaunay_3d():
 
 
 def test_smooth(uniform):
-    surf = uniform.extract_surface().clean()
+    surf = uniform.extract_surface(algorithm='geometry').clean()
     smoothed = surf.smooth()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
@@ -1422,7 +1422,7 @@ def test_smooth(uniform):
 
 
 def test_smooth_taubin(uniform):
-    surf = uniform.extract_surface().clean()
+    surf = uniform.extract_surface(algorithm='geometry').clean()
     smoothed = surf.smooth_taubin()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
@@ -2172,7 +2172,7 @@ def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = append(big_box, small_box).extract_surface().connectivity()
+    labeled = append(big_box, small_box).extract_surface(algorithm='geometry').connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2719,11 +2719,12 @@ def test_extract_surface(datasets, multiblock_all):
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = multiblock_all.extract_surface()
+    output = multiblock_all.extract_surface(algorithm='geometry')
     assert isinstance(output, pv.PolyData)
 
 
-def test_extract_surface_nonlinear():
+@pytest.mark.parametrize('as_multiblock', [True, False])
+def test_extract_surface_nonlinear(as_multiblock):
     # create a single quadratic hexahedral cell
     lin_pts = np.array(
         [
@@ -2763,14 +2764,20 @@ def test_extract_surface_nonlinear():
     cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
     celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
     grid = pv.UnstructuredGrid(cells, celltypes, pts)
+    grid = grid.cast_to_multiblock() if as_multiblock else grid
 
     # expect each face to be divided 6 times since it has a midside node
-    surf = grid.extract_surface(progress_bar=True)
+    surf = grid.extract_surface(algorithm='geometry', progress_bar=True)
+    assert surf.n_faces_strict == 36
+    surf = grid.extract_surface(algorithm='dataset_surface', progress_bar=True)
     assert surf.n_faces_strict == 36
 
     # expect each face to be divided several more times than the linear extraction
     surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=True)
     assert surf_subdivided.n_faces_strict > surf.n_faces_strict
+    match = "algorithm must be 'dataset_surface' to control non-linear subdivision."
+    with pytest.raises(ValueError, match=match):
+        grid.extract_surface(algorithm='geometry', nonlinear_subdivision=5)
 
     # No subdivision, expect one face per cell
     surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=True)
@@ -2785,7 +2792,7 @@ def test_merge_general(uniform):
     merged = con + thresh
     assert isinstance(merged, pv.UnstructuredGrid)
     # Pure PolyData inputs should yield poly data output
-    merged = uniform.extract_surface() + con
+    merged = uniform.extract_surface(algorithm='geometry') + con
     assert isinstance(merged, pv.PolyData)
 
 

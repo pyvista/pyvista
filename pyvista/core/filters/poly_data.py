@@ -568,7 +568,7 @@ class PolyDataFilters(DataSetFilters):
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
-                merged = merged.extract_surface()
+                merged = merged.extract_surface(algorithm='geometry')
             else:
                 polydata_merged = pv.PolyData(
                     merged.points,
@@ -4122,7 +4122,7 @@ class PolyDataFilters(DataSetFilters):
         """
         # other mesh must be a polydata
         if not isinstance(other_mesh, pv.PolyData):
-            other_mesh = other_mesh.extract_surface()
+            other_mesh = other_mesh.extract_surface(algorithm='geometry')
 
         # according to VTK limitations
         poly_data = self
@@ -4253,7 +4253,7 @@ class PolyDataFilters(DataSetFilters):
         Extract the surface from the uniform grid dataset and plot its contours
         alongside the output from the banded contour filter.
 
-        >>> surf = examples.load_uniform().extract_surface()
+        >>> surf = examples.load_uniform().extract_surface(algorithm='geometry')
         >>> n_contours = 5
         >>> rng = [200, 500]
         >>> output, edges = surf.contour_banded(n_contours, rng=rng)
@@ -4631,7 +4631,11 @@ class PolyDataFilters(DataSetFilters):
           N Arrays:   0
 
         """
-        removed = self.cast_to_unstructured_grid().remove_unused_points().extract_surface()
+        removed = (
+            self.cast_to_unstructured_grid()
+            .remove_unused_points()
+            .extract_surface(algorithm='geometry')
+        )
         out = self if inplace else type(self)()
         out.copy_from(removed, deep=not inplace)
         return out

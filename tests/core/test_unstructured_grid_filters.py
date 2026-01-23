@@ -102,7 +102,11 @@ def test_remove_unused_points(mesh_type, inplace):
     cube_ug['TCoords'] = np.append(cube_ug['TCoords'], [[0, 0]], axis=0)
     assert cube_ug.n_points == n_points_expected + 2
 
-    mesh_in = cube_ug if mesh_type is pv.UnstructuredGrid else cube_poly.extract_surface()
+    mesh_in = (
+        cube_ug
+        if mesh_type is pv.UnstructuredGrid
+        else cube_poly.extract_surface(algorithm='geometry')
+    )
     mesh_out = mesh_in.remove_unused_points(inplace=inplace)
 
     # Test unused point is removed and no points are merged

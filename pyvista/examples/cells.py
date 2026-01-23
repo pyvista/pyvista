@@ -123,8 +123,8 @@ def plot_cell(
                 point_ids = [face.GetPointId(i) for i in range(face_n_points)]
                 poly = pv.PolyData(grid.points, [face_n_points, *point_ids])
                 faces.append(poly)
-            return faces.extract_geometry()
-        return cell_.cast_to_unstructured_grid().extract_surface()
+            return faces.extract_surface(algorithm='geometry')
+        return cell_.cast_to_unstructured_grid().extract_surface(algorithm='geometry')
 
     grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()

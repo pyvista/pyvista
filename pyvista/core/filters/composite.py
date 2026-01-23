@@ -245,21 +245,9 @@ class CompositeFilters(DataObjectFilters):
         if pv.version_info >= (0, 53):  # pragma: no cover
             msg = 'Remove this deprecated filter.'
             raise RuntimeError(msg)
-        return self.extract_surface()
+        return self._geometry_filter()
 
-    def extract_surface(self):
-        """Extract the surface the geometry of all blocks.
-
-        Place this filter at the end of a pipeline before a polydata
-        consumer such as a polydata mapper to extract geometry from
-        all blocks and append them to one polydata object.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Surface of the composite dataset.
-
-        """
+    def _geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
         gf.Update()
