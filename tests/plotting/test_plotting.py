@@ -5350,6 +5350,6 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
     grid = cell_example()
     if next(grid.cell).dimension == 2:
         # Ensure normals of 2D cells point in z-direction for consistency
-        normal = grid.extract_geometry().cell_normals.mean(axis=0)
+        normal = grid.extract_surface().cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)

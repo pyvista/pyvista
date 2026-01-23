@@ -334,7 +334,7 @@ def test_raise_unsupported(pointset):
         pointset.extract_surface()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.extract_geometry()
+        pointset.extract_surface()
 
 
 def test_rotate_x():

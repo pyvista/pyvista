@@ -124,7 +124,7 @@ def plot_cell(
                 poly = pv.PolyData(grid.points, [face_n_points, *point_ids])
                 faces.append(poly)
             return faces.extract_geometry()
-        return cell_.cast_to_unstructured_grid().extract_geometry()
+        return cell_.cast_to_unstructured_grid().extract_surface()
 
     grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()

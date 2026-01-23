@@ -9,7 +9,9 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
@@ -221,6 +223,31 @@ class CompositeFilters(DataObjectFilters):
         return output
 
     def extract_geometry(self):
+        """Extract the surface the geometry of all blocks.
+
+        Place this filter at the end of a pipeline before a polydata
+        consumer such as a polydata mapper to extract geometry from
+        all blocks and append them to one polydata object.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface of the composite dataset.
+
+        """
+        warn_external(
+            '`extract_geometry` is deprecated. Use `extract_surface` instead.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove this deprecated filter.'
+            raise RuntimeError(msg)
+        return self.extract_surface()
+
+    def extract_surface(self):
         """Extract the surface the geometry of all blocks.
 
         Place this filter at the end of a pipeline before a polydata

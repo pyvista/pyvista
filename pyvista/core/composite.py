@@ -1848,7 +1848,7 @@ class MultiBlock(
         Get one of the blocks and extract its surface.
 
         >>> block = multi[0][42]
-        >>> surface = block.extract_geometry()
+        >>> surface = block.extract_surface()
 
         Replace the block.
 

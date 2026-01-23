@@ -1120,7 +1120,7 @@ def test_project_points_to_plane():
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
-    poly = pv.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
+    poly = pv.StructuredGrid(xx, yy, zz).extract_surface(progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length

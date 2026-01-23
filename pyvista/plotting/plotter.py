@@ -4089,7 +4089,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         if isinstance(self.mesh, pv.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
-            geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_geometry()
+            geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_surface()
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 

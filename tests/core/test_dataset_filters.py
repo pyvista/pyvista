@@ -250,7 +250,7 @@ def test_clip_surface():
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
-        clp = dataset.clip_surface(dataset.extract_geometry(), crinkle=crinkle)
+        clp = dataset.clip_surface(dataset.extract_surface(), crinkle=crinkle)
         assert clp is not None
         if isinstance(dataset, pv.PointSet):
             assert isinstance(clp, pv.PointSet)
@@ -552,16 +552,20 @@ def test_gaussian_splatting(sphere: PolyData):
 
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
-        geom = dataset.extract_geometry(progress_bar=True)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            geom = dataset.extract_geometry(progress_bar=True)
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = multiblock_all.extract_geometry()
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        output = multiblock_all.extract_geometry()
     assert isinstance(output, pv.PolyData)
 
 
 def test_extract_geometry_extent(uniform):
-    geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
+    match = '`extract_geometry` is deprecated. Use `extract_surface` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
     assert isinstance(geom, pv.PolyData)
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
@@ -2168,7 +2172,7 @@ def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = append(big_box, small_box).extract_geometry().connectivity()
+    labeled = append(big_box, small_box).extract_surface().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2709,7 +2713,17 @@ def test_decimate_boundary():
     assert boundary.n_points
 
 
-def test_extract_surface():
+def test_extract_surface(datasets, multiblock_all):
+    for dataset in datasets:
+        geom = dataset.extract_surface(progress_bar=True)
+        assert geom is not None
+        assert isinstance(geom, pv.PolyData)
+    # Now test composite data structures
+    output = multiblock_all.extract_surface()
+    assert isinstance(output, pv.PolyData)
+
+
+def test_extract_surface_nonlinear():
     # create a single quadratic hexahedral cell
     lin_pts = np.array(
         [
