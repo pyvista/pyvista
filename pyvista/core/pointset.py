@@ -18,6 +18,8 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -531,7 +533,21 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         raise PointSetCellOperationError
 
     def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
-        """Raise extract geometry are not supported."""
+        """Raise extract geometry are not supported.
+
+        ..deprecated:: 0.47
+
+        """
+        warn_external(
+            '`extract_geometry` is deprecated. Use `extract_surface` instead.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove this deprecated filter.'
+            raise RuntimeError(msg)
         raise PointSetCellOperationError
 
     def cell_validator(self, *args, **kwargs):  # noqa: ARG002
