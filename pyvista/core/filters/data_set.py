@@ -5577,7 +5577,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """
         dataset = self
         if not isinstance(dataset, _vtk.vtkPolyData):
-            dataset = DataSetFilters.extract_surface(dataset)
+            dataset = DataObjectFilters.extract_surface(dataset, algorithm='geometry')
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(dataset)
         featureEdges.SetFeatureAngle(feature_angle)

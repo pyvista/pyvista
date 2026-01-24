@@ -3388,7 +3388,7 @@ class DataObjectFilters:
             return _get_output(append)
 
         if algorithm is None and nonlinear_subdivision == 1:
-            # Deprecated v0.47, convert to error in v0.50, remove v0.53
+            # Deprecated v0.47, convert to error in v0.50, remove v0.51
             if pv.version_info >= (0, 50):  # pragma: no cover
                 msg = (
                     'Convert this future warning into an error '

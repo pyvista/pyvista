@@ -568,7 +568,9 @@ class PolyDataFilters(DataSetFilters):
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
-                merged = merged.extract_surface(algorithm='geometry')
+                merged = merged.extract_surface(
+                    algorithm='geometry', pass_cellid=False, pass_pointid=False
+                )
             else:
                 polydata_merged = pv.PolyData(
                     merged.points,
@@ -4634,7 +4636,7 @@ class PolyDataFilters(DataSetFilters):
         removed = (
             self.cast_to_unstructured_grid()
             .remove_unused_points()
-            .extract_surface(algorithm='geometry')
+            .extract_surface(algorithm='geometry', pass_pointid=False, pass_cellid=False)
         )
         out = self if inplace else type(self)()
         out.copy_from(removed, deep=not inplace)
