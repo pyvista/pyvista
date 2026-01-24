@@ -3271,7 +3271,7 @@ class DataObjectFilters:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
 
         .. versionchanged:: 0.47
-            This filter is now generalized to work with :class:`~pyvista.MultiBlock`.
+            This filter is now generalized to also work with :class:`~pyvista.MultiBlock`.
 
         Parameters
         ----------
@@ -3364,16 +3364,16 @@ class DataObjectFilters:
 
         """
 
-        def extract_surface_multiblock():
+        def extract_surface_multiblock(mesh: MultiBlock):
             # Try to use vtkCompositeDataGeometryFilter directly if possible
             if (
-                algorithm is None
+                algorithm in ['geometry', None]
                 and not pass_cellid
                 and not pass_pointid
                 and not progress_bar
                 and nonlinear_subdivision == 1
             ):
-                return self._geometry_filter()
+                return mesh._geometry_filter()
 
             # Otherwise, extract each block separately and combine into a single PolyData
             multi_polys = self.generic_filter(
@@ -3428,9 +3428,7 @@ class DataObjectFilters:
             algorithm = 'dataset_surface'  # The old default behavior
 
         if isinstance(self, pv.MultiBlock):
-            # The 'extract_surface' method is new in 0.47 for MultiBlock, so we don't need to worry
-            # about any deprecations for the algorithm being used for this type
-            return extract_surface_multiblock()
+            return extract_surface_multiblock(self)
 
         return self._extract_surface(
             pass_pointid=pass_pointid,

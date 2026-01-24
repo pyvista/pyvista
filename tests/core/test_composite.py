@@ -574,6 +574,26 @@ def test_extract_surface(multiblock_all_with_nested_and_none, algorithm):
     assert isinstance(geom, PolyData)
 
 
+def test_extract_surface_no_args(multiblock_all_with_nested_and_none):
+    # Test same output
+    kwargs = dict(
+        algorithm='geometry',
+        pass_cellid=False,
+        pass_pointid=False,
+        progress_bar=False,
+        nonlinear_subdivision=1,
+    )
+    poly1 = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    poly2 = multiblock_all_with_nested_and_none._geometry_filter()
+    assert poly1 == poly2
+
+    kwargs['pass_cellid'] = True
+    poly3 = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    assert poly3.array_names == ['vtkOriginalCellIds']
+    # poly3.clear_data()
+    # assert poly3 == poly1
+
+
 def test_combine_filter(multiblock_all_with_nested_and_none):
     geom = multiblock_all_with_nested_and_none.combine()
     assert isinstance(geom, pv.UnstructuredGrid)

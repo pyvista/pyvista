@@ -236,10 +236,8 @@ class CompositeFilters(DataObjectFilters):
 
         """
         msg = (
-            (
-                '`extract_geometry` is deprecated. '
-                "Use `extract_surface(algorithm='geometry')` instead."
-            ),
+            '`extract_geometry` is deprecated. '
+            "Use `extract_surface(algorithm='geometry')` instead."
         )
         warn_external(msg, PyVistaDeprecationWarning)
         if pv.version_info >= (0, 50):  # pragma: no cover

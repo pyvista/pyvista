@@ -2723,7 +2723,7 @@ def test_extract_surface(datasets, multiblock_all):
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = multiblock_all.extract_surface()
+    output = multiblock_all.extract_surface(algorithm='geometry')
     assert isinstance(output, pv.PolyData)
 
 
