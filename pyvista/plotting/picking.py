@@ -1361,7 +1361,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     smesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
                     smesh.cell_data['original_cell_ids'] = np.arange(smesh.n_cells)
-                    tri_smesh = smesh.extract_surface(algorithm='geometry').triangulate()
+                    tri_smesh = smesh.extract_surface(
+                        algorithm='geometry', pass_pointid=False, pass_cellid=False
+                    ).triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 

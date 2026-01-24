@@ -4124,7 +4124,9 @@ class PolyDataFilters(DataSetFilters):
         """
         # other mesh must be a polydata
         if not isinstance(other_mesh, pv.PolyData):
-            other_mesh = other_mesh.extract_surface(algorithm='geometry')
+            other_mesh = other_mesh.extract_surface(
+                algorithm='geometry', pass_pointid=False, pass_cellid=False
+            )
 
         # according to VTK limitations
         poly_data = self

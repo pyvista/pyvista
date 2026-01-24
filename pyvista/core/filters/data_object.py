@@ -3384,7 +3384,7 @@ class DataObjectFilters:
             append = _vtk.vtkAppendPolyData()
             for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
                 append.AddInputData(poly)
-            _update_alg(append)
+            _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
             return _get_output(append)
 
         if algorithm is None and nonlinear_subdivision == 1:
@@ -3417,38 +3417,6 @@ class DataObjectFilters:
             nonlinear_subdivision=nonlinear_subdivision,
             algorithm=algorithm,
             progress_bar=progress_bar,
-        )
-
-    def _extract_surface(  # type: ignore[misc]
-        self: _DataSetType,
-        *,
-        pass_pointid: bool,
-        pass_cellid: bool,
-        nonlinear_subdivision: int,
-        algorithm: Literal['geometry', 'dataset_surface'] | None,
-        progress_bar: bool,
-    ) -> PolyData:
-        message = 'Extracting Surface'
-        # Special case: use vtkDataSetSurfaceFilter only if requested or for non-linear
-        # subdivision
-        if algorithm == 'dataset_surface' or (
-            isinstance(self, _vtk.vtkUnstructuredGrid) and nonlinear_subdivision != 1  # type: ignore[unreachable]
-        ):
-            return self._dataset_surface_filter(
-                nonlinear_subdivision=nonlinear_subdivision,
-                pass_pointid=pass_pointid,
-                pass_cellid=pass_cellid,
-                progress_bar=progress_bar,
-                message=message,
-            )
-        # Default case: use vtkGeometryFilter. This will automatically delegate to
-        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
-        return self._geometry_filter(
-            extent=None,
-            pass_pointid=pass_pointid,
-            pass_cellid=pass_cellid,
-            progress_bar=progress_bar,
-            message=message,
         )
 
     @_deprecate_positional_args

@@ -1411,6 +1411,7 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth(uniform):
     surf = uniform.extract_surface(algorithm='geometry').clean()
     smoothed = surf.smooth()

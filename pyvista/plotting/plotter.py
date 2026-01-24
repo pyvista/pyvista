@@ -881,7 +881,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 )
 
                                 try:
-                                    dataset = dataset.extract_surface(algorithm='geometry')
+                                    dataset = dataset.extract_surface(
+                                        algorithm='geometry', pass_pointid=False, pass_cellid=False
+                                    )
                                     mapper.SetInputData(dataset)
                                 except (AttributeError, ValueError, TypeError):  # pragma: no cover
                                     warn_external(
@@ -4090,7 +4092,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if isinstance(self.mesh, pv.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
             geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_surface(
-                algorithm='geometry'
+                algorithm='geometry', pass_pointid=False, pass_cellid=False
             )
         else:
             geom = 'triangle' if scalars is None else 'rectangle'

@@ -2480,7 +2480,9 @@ class MultiBlock(
             elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface(algorithm='geometry')
+                return block.extract_surface(
+                    algorithm='geometry', pass_pointid=False, pass_cellid=False
+                )
 
         return self.generic_filter(block_filter, _skip_none=False)
 

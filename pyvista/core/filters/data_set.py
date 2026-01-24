@@ -712,7 +712,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = wrap(surface).extract_surface(algorithm='geometry')
+            surface = wrap(surface).extract_surface(
+                algorithm='geometry', pass_pointid=False, pass_cellid=False
+            )
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -1258,7 +1260,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         boundary faces of the dataset.
 
         .. deprecated:: 0.47.0
-            Use :meth:`extract_surface(algorithm='geometry`)` instead.
+            Use :meth:`~pyvista.DataObjectFilters.extract_surface` instead
+            with keyword `algorithm='geometry'`.
 
         Parameters
         ----------
@@ -3787,9 +3790,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         return (
-            self.extract_surface(algorithm='geometry', progress_bar=progress_bar)
-            .triangulate()
-            .decimate(target_reduction)
+            self.extract_surface(
+                algorithm='geometry',
+                pass_cellid=False,
+                pass_pointid=False,
+                progress_bar=progress_bar,
+            )
+            .triangulate(progress_bar=progress_bar)
+            .decimate(target_reduction, progress_bar=progress_bar)
         )
 
     @_deprecate_positional_args(allowed=['pointa', 'pointb'])
@@ -5472,9 +5480,40 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         surf_filter.SetPassThroughPointIds(pass_pointid)
         surf_filter.SetPassThroughCellIds(pass_cellid)
         surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
-
         _update_alg(surf_filter, progress_bar=progress_bar, message=message)
         return _get_output(surf_filter)
+
+    def _extract_surface(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        pass_pointid: bool,
+        pass_cellid: bool,
+        nonlinear_subdivision: int,
+        algorithm: Literal['geometry', 'dataset_surface'] | None,
+        progress_bar: bool,
+    ) -> PolyData:
+        """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
+        message = 'Extracting Surface'
+        # Special case: use vtkDataSetSurfaceFilter only if requested or for non-linear subdivision
+        if algorithm == 'dataset_surface' or (
+            isinstance(self, _vtk.vtkUnstructuredGrid) and nonlinear_subdivision != 1  # type: ignore[unreachable]
+        ):
+            return self._dataset_surface_filter(
+                nonlinear_subdivision=nonlinear_subdivision,
+                pass_pointid=pass_pointid,
+                pass_cellid=pass_cellid,
+                progress_bar=progress_bar,
+                message=message,
+            )
+        # Default case: use vtkGeometryFilter. This will automatically delegate to
+        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
+        return self._geometry_filter(
+            extent=None,
+            pass_pointid=pass_pointid,
+            pass_cellid=pass_cellid,
+            progress_bar=progress_bar,
+            message=message,
+        )
 
     @_deprecate_positional_args
     def surface_indices(  # type: ignore[misc]
@@ -5509,7 +5548,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         surf = DataObjectFilters.extract_surface(
-            self, algorithm='geometry', pass_cellid=True, progress_bar=progress_bar
+            self, algorithm='geometry', pass_cellid=False, progress_bar=progress_bar
         )
         return surf.point_data['vtkOriginalPointIds']
 
@@ -5583,7 +5622,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """
         dataset: DataSet = self
         if not isinstance(dataset, _vtk.vtkPolyData):
-            dataset = DataObjectFilters.extract_surface(dataset, algorithm='geometry')
+            dataset = DataObjectFilters.extract_surface(
+                dataset, algorithm='geometry', pass_pointid=False, pass_cellid=False
+            )
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(dataset)
         featureEdges.SetFeatureAngle(feature_angle)
@@ -6201,7 +6242,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Shrinking Mesh')
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
-            return output.extract_surface(algorithm='geometry')  # type: ignore[unreachable]
+            return output.extract_surface(  # type: ignore[unreachable]
+                algorithm='geometry', pass_cellid=False, pass_pointid=False
+            )
         return output
 
     @_deprecate_positional_args
@@ -6761,7 +6804,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         as_composite: bool,
     ):
         def _multiblock_to_polydata(multiblock):
-            return multiblock.combine(merge_points=False).extract_surface(algorithm='geometry')
+            return multiblock.combine(merge_points=False).extract_surface(
+                algorithm='geometry', pass_pointid=False, pass_cellid=False
+            )
 
         # Validate style
         _validation.check_contains(['frame', 'outline', 'face'], must_contain=box_style)
@@ -7978,7 +8023,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
-        surface = wrap(self).extract_surface(algorithm='geometry')
+        surface = wrap(self).extract_surface(
+            algorithm='geometry', pass_pointid=False, pass_cellid=False
+        )
         if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh
             msg = 'Input mesh must have faces for voxelization.'
