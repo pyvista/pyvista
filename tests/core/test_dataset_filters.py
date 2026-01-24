@@ -1424,6 +1424,7 @@ def test_smooth(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth_taubin(uniform):
     surf = uniform.extract_surface(algorithm='geometry').clean()
     smoothed = surf.smooth_taubin()

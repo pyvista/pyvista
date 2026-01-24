@@ -3268,7 +3268,10 @@ class DataObjectFilters:
         algorithm: Literal['geometry', 'dataset_surface'] | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> PolyData:
-        """Extract surface mesh of the grid as :class:`~pyvista.PolyData`.
+        """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
+
+        .. versionchanged:: 0.47
+            This filter is now generalized to work with :class:`~pyvista.MultiBlock`.
 
         Parameters
         ----------
@@ -3298,7 +3301,17 @@ class DataObjectFilters:
             has no effect if the input is not an unstructured grid.
 
         algorithm : 'geometry' | 'dataset_surface'
-            Bleg
+            VTK algorithm to use internally. Specify ``'geometry'`` to use
+            :vtk:`vtkGeometryFilter`, or ``'dataset_surface'`` to use
+            :vtk:`vtkDataSetSurfaceFilter`. ``'geometry'`` is more performant than
+            ``'dataset_surface'``, and is the recommended algorithm to use in most cases.
+            ``'dataset_surface'`` is mainly useful for backwards-compatibility or when
+            ``nonlinear_subdivision`` is used.
+
+            The current default is ``'dataset_surface'``, but this will change to ``'geometry'``
+            in a future version.
+
+            .. versionadded:: 0.47
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3350,13 +3363,8 @@ class DataObjectFilters:
         for more examples using this filter.
 
         """
-        if nonlinear_subdivision != 1 and algorithm == 'geometry':
-            msg = "algorithm must be 'dataset_surface' to control non-linear subdivision."
-            raise ValueError(msg)
-        if isinstance(self, pv.MultiBlock):
-            # The 'extract_surface' method is new in 0.47 for MultiBlock, so we don't need to worry
-            # about any deprecations for the algorithm being used for this type
 
+        def extract_surface_multiblock():
             # Try to use vtkCompositeDataGeometryFilter directly if possible
             if (
                 algorithm is None
@@ -3387,7 +3395,7 @@ class DataObjectFilters:
             _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
             return _get_output(append)
 
-        if algorithm is None and nonlinear_subdivision == 1:
+        def warn_future():
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
             if pv.version_info >= (0, 50):  # pragma: no cover
                 msg = (
@@ -3409,6 +3417,20 @@ class DataObjectFilters:
                 'Explicitly set the `algorithm` keyword to\nsilence this warning.'
             )
             warn_external(msg, pv.PyVistaFutureWarning)
+
+        if nonlinear_subdivision != 1 and algorithm == 'geometry':
+            msg = "algorithm must be 'dataset_surface' to control non-linear subdivision."
+            raise ValueError(msg)
+
+        if isinstance(self, pv.MultiBlock):
+            # The 'extract_surface' method is new in 0.47 for MultiBlock, so we don't need to worry
+            # about any deprecations for the algorithm being used for this type
+            return extract_surface_multiblock()
+
+        if algorithm is None and nonlinear_subdivision == 1:
+            # Warn about future change in default alg when the default
+            # 'nonlinear_subdivision' is used
+            warn_future()
             algorithm = 'dataset_surface'  # The old default behavior
 
         return self._extract_surface(
