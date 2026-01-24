@@ -235,17 +235,20 @@ class CompositeFilters(DataObjectFilters):
             Surface of the composite dataset.
 
         """
-        warn_external(
-            '`extract_geometry` is deprecated. Use `extract_surface` instead.',
-            PyVistaDeprecationWarning,
+        msg = (
+            (
+                '`extract_geometry` is deprecated. '
+                "Use `extract_surface(algorithm='geometry')` instead."
+            ),
         )
+        warn_external(msg, PyVistaDeprecationWarning)
         if pv.version_info >= (0, 50):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
-        if pv.version_info >= (0, 53):  # pragma: no cover
+        if pv.version_info >= (0, 51):  # pragma: no cover
             msg = 'Remove this deprecated filter.'
             raise RuntimeError(msg)
-        return self._geometry_filter()
+        return CompositeFilters._geometry_filter(self)
 
     def _geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()

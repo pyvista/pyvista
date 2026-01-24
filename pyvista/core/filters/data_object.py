@@ -3376,10 +3376,6 @@ class DataObjectFilters:
                 return self._geometry_filter()
 
             # Otherwise, extract each block separately and combine into a single PolyData
-            _validation.check_contains(
-                ('geometry', 'dataset_surface', None), must_contain=algorithm, name='algorithm'
-            )
-
             multi_polys = self.generic_filter(
                 '_extract_surface',
                 pass_pointid=pass_pointid,
@@ -3422,16 +3418,19 @@ class DataObjectFilters:
             msg = "algorithm must be 'dataset_surface' to control non-linear subdivision."
             raise ValueError(msg)
 
-        if isinstance(self, pv.MultiBlock):
-            # The 'extract_surface' method is new in 0.47 for MultiBlock, so we don't need to worry
-            # about any deprecations for the algorithm being used for this type
-            return extract_surface_multiblock()
-
+        _validation.check_contains(
+            ('geometry', 'dataset_surface', None), must_contain=algorithm, name='algorithm'
+        )
         if algorithm is None and nonlinear_subdivision == 1:
             # Warn about future change in default alg when the default
             # 'nonlinear_subdivision' is used
             warn_future()
             algorithm = 'dataset_surface'  # The old default behavior
+
+        if isinstance(self, pv.MultiBlock):
+            # The 'extract_surface' method is new in 0.47 for MultiBlock, so we don't need to worry
+            # about any deprecations for the algorithm being used for this type
+            return extract_surface_multiblock()
 
         return self._extract_surface(
             pass_pointid=pass_pointid,
