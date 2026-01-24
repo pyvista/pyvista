@@ -2717,11 +2717,11 @@ def test_decimate_boundary():
 
 def test_extract_surface(datasets, multiblock_all):
     for dataset in datasets:
-        geom = dataset.extract_surface(progress_bar=True)
+        geom = dataset.extract_surface(algorithm='geometry', progress_bar=True)
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = multiblock_all.extract_surface(algorithm='geometry')
+    output = multiblock_all.extract_surface()
     assert isinstance(output, pv.PolyData)
 
 

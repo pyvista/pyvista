@@ -5483,6 +5483,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         """Return the surface indices of a grid.
 
+        .. versionchanged:: 0.47
+            The underlying algorithm used to compute surface indices has changed.
+            :vtk:`vtkGeometryFilter` is now used, previously it was :vtk:`vtkDataSetSurfaceFilter`.
+
         Parameters
         ----------
         progress_bar : bool, default: False
@@ -5500,11 +5504,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
-        >>> ind[:10]  # doctest:+SKIP
-        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
+        >>> ind[:10]
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         """
-        surf = DataSetFilters.extract_surface(self, pass_cellid=True, progress_bar=progress_bar)
+        surf = DataObjectFilters.extract_surface(
+            self, algorithm='geometry', pass_cellid=True, progress_bar=progress_bar
+        )
         return surf.point_data['vtkOriginalPointIds']
 
     @_deprecate_positional_args(allowed=['feature_angle'])
@@ -5517,7 +5523,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         manifold_edges: bool = True,  # noqa: FBT001, FBT002
         clear_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> PolyData:
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -5575,7 +5581,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
-        dataset = self
+        dataset: DataSet = self
         if not isinstance(dataset, _vtk.vtkPolyData):
             dataset = DataObjectFilters.extract_surface(dataset, algorithm='geometry')
         featureEdges = _vtk.vtkFeatureEdges()

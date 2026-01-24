@@ -3261,7 +3261,7 @@ class DataObjectFilters:
 
     @_deprecate_positional_args
     def extract_surface(  # type: ignore[misc]  # noqa: PLR0917
-        self: _DataSetType,
+        self: DataSet | MultiBlock,
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
         nonlinear_subdivision: int = 1,
@@ -3429,23 +3429,27 @@ class DataObjectFilters:
         progress_bar: bool,
     ) -> PolyData:
         message = 'Extracting Surface'
-        kwargs = dict(
+        # Special case: use vtkDataSetSurfaceFilter only if requested or for non-linear
+        # subdivision
+        if algorithm == 'dataset_surface' or (
+            isinstance(self, _vtk.vtkUnstructuredGrid) and nonlinear_subdivision != 1  # type: ignore[unreachable]
+        ):
+            return self._dataset_surface_filter(
+                nonlinear_subdivision=nonlinear_subdivision,
+                pass_pointid=pass_pointid,
+                pass_cellid=pass_cellid,
+                progress_bar=progress_bar,
+                message=message,
+            )
+        # Default case: use vtkGeometryFilter. This will automatically delegate to
+        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
+        return self._geometry_filter(
+            extent=None,
             pass_pointid=pass_pointid,
             pass_cellid=pass_cellid,
             progress_bar=progress_bar,
             message=message,
         )
-        # Special case: use vtkDataSetSurfaceFilter only if requested or for non-linear
-        # subdivision
-        if algorithm == 'dataset_surface' or (
-            isinstance(self, _vtk.vtkUnstructuredGrid) and nonlinear_subdivision != 1
-        ):
-            return self._dataset_surface_filter(
-                nonlinear_subdivision=nonlinear_subdivision, **kwargs
-            )
-        # Default case: use vtkGeometryFilter. This will automatically delegate to
-        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
-        return self._geometry_filter(extent=None, **kwargs)
 
     @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917
