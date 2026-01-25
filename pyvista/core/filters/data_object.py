@@ -3365,9 +3365,12 @@ class DataObjectFilters:
         """
 
         def extract_surface_multiblock(mesh: MultiBlock):
-            # Try to use vtkCompositeDataGeometryFilter directly if possible
+            # Try to use `vtkCompositeDataGeometryFilter` directly if possible, which doesn't
+            # support any additional config options.
+            # Despite its name, it uses `vtkDataSetSurfaceFilter` internally:
+            # https://github.com/Kitware/VTK/blob/e75f54db867f82ab50ad887e5ac36bf82425ee69/Filters/Geometry/vtkCompositeDataGeometryFilter.cxx#L81
             if (
-                algorithm in ['geometry', None]
+                algorithm in ['dataset_surface', None]
                 and not pass_cellid
                 and not pass_pointid
                 and not progress_bar

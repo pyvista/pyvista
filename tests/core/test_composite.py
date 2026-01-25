@@ -557,7 +557,8 @@ def test_multi_io_erros(tmpdir):
 
 def test_extract_geometry(multiblock_all_with_nested_and_none):
     match = (
-        "`extract_geometry` is deprecated. Use `extract_surface(algorithm='geometry')` instead."
+        '`extract_geometry` is deprecated. '
+        "Use `extract_surface(algorithm='dataset_surface')` instead."
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
         geom = multiblock_all_with_nested_and_none.extract_geometry()
@@ -575,23 +576,27 @@ def test_extract_surface(multiblock_all_with_nested_and_none, algorithm):
 
 
 def test_extract_surface_no_args(multiblock_all_with_nested_and_none):
-    # Test same output
+    # Get output directly from vtkCompositeDataGeometryFilter
+    poly_from_vtk_filter = multiblock_all_with_nested_and_none._geometry_filter()
+
+    # Test branch without any config options which calls vtkCompositeDataGeometryFilter
     kwargs = dict(
-        algorithm='geometry',
+        algorithm='dataset_surface',
         pass_cellid=False,
         pass_pointid=False,
         progress_bar=False,
         nonlinear_subdivision=1,
     )
-    poly1 = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
-    poly2 = multiblock_all_with_nested_and_none._geometry_filter()
-    assert poly1 == poly2
+    poly_no_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    assert poly_no_config == poly_from_vtk_filter
 
+    # Test branch which does not use vtkCompositeDataGeometryFilter
+    # by requesting original ids
     kwargs['pass_cellid'] = True
-    poly3 = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
-    assert poly3.array_names == ['vtkOriginalCellIds']
-    # poly3.clear_data()
-    # assert poly3 == poly1
+    poly_with_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    assert poly_with_config.array_names == ['vtkOriginalCellIds']
+    poly_with_config.clear_data()
+    assert poly_with_config == poly_from_vtk_filter
 
 
 def test_combine_filter(multiblock_all_with_nested_and_none):
