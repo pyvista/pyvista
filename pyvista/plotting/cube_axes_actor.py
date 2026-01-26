@@ -197,8 +197,7 @@ class CubeAxesActor(
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
-        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-        default_fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'
+        default_fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
         if x_label_format is None:
             x_label_format = pv.global_theme.font.fmt
             if x_label_format is None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from collections.abc import Sized
 from dataclasses import InitVar
 from dataclasses import dataclass
@@ -42,7 +43,6 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
     from typing import ClassVar
 
     from pyvista import DataSet
@@ -373,6 +373,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @staticmethod
     def _invalid_cell_msg(name: str, array: list[int]) -> str:
+        if not array:
+            return ''
         name_norm = _MeshValidator._normalize_field_name(name)
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -401,6 +403,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         def _invalid_array_length_msg(
             invalid_arrays: dict[str, int], kind: str, expected: int
         ) -> str:
+            if not invalid_arrays:
+                return ''
             n_arrays = len(invalid_arrays)
             s = 's' if n_arrays > 1 else ''
             msg_template = (
@@ -466,20 +470,26 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
+        def invalid_points_msg(name_: str, array: list[int], info_: str) -> str:
+            if not array:
+                return ''
+            name_norm = _MeshValidator._normalize_field_name(name_)
+            name_norm = name_norm.removesuffix('s')
+            n_ids = len(array)
+            s = 's' if n_ids > 1 else ''
+            return (
+                f'Mesh has {n_ids} {name_norm}{s}{info_}. Invalid point id{s}: '
+                f'{reprlib.repr(array)}'
+            )
+
         summaries: list[_MeshValidator._FieldSummary] = []
-        for name, point_ids, info in [
-            ('unused_points', get_unused_point_ids(), ' not referenced by any cell(s)'),
-            ('non_finite_points', get_non_finite_point_ids(), ''),
+        for name, func, info in [
+            ('unused_points', get_unused_point_ids, ' not referenced by any cell(s)'),
+            ('non_finite_points', get_non_finite_point_ids, ''),
         ]:
             if name in validation_fields:
-                name_norm = _MeshValidator._normalize_field_name(name)
-                name_norm = name_norm.removesuffix('s')
-                n_ids = len(point_ids)
-                s = 's' if n_ids > 1 else ''
-                msg = (
-                    f'Mesh has {n_ids} {name_norm}{s}{info}. Invalid point id{s}: '
-                    f'{reprlib.repr(point_ids)}'
-                )
+                point_ids = func()
+                msg = invalid_points_msg(name, point_ids, info)
                 issue = _MeshValidator._FieldSummary(name=name, message=msg, values=point_ids)
                 summaries.append(issue)
         return summaries
@@ -500,6 +510,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         return self._validation_report
+
+
+# Create alias for reuse/export to other modules
+_MeshValidationOptions = (
+    _MeshValidator._AllValidationOptions | Sequence[_MeshValidator._AllValidationOptions]
+)
 
 
 @dataclass(frozen=True)
@@ -657,10 +673,7 @@ class DataObjectFilters:
 
     def validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        validation_fields: _MeshValidator._AllValidationOptions
-        | Sequence[
-            _MeshValidator._AllValidationOptions
-        ] = _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, cells, and points.
@@ -681,7 +694,7 @@ class DataObjectFilters:
         - ``cell_data_wrong_length``: Ensure the length of each cell data array matches
           :attr:`~pyvista.DataSet.n_cells`.
 
-        .. note:
+        .. note::
             When setting new arrays using PyVista's API, similar array validation checks are
             `already` implicitly performed. As such, these checks may be redundant in many cases.
             They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
@@ -949,16 +962,29 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
+        input_fields = (
+            _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS
+            if validation_fields is None
+            else validation_fields
+        )
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-        report = _MeshValidator(self, validation_fields).validation_report
+        report = _MeshValidator(self, input_fields).validation_report
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':
                 raise pv.InvalidMeshError(message)
         return report
+
+    def _validate_mesh(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        validate: Literal[True] | _MeshValidationOptions,
+    ):
+        """Validate mesh using a bool or named fields and raise error."""
+        validation_fields = None if validate is True else validate
+        self.validate_mesh(validation_fields, action='error')
 
     def cell_validator(self: _DataSetOrMultiBlockType):  # type:ignore[misc]
         """Check the validity of each cell in this dataset.
@@ -1937,7 +1963,7 @@ class DataObjectFilters:
         bounds_size : float | VectorLike[float], optional
             Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
             single float to specify the size of all three axes, or a 3-element vector to set the
-            size of each axis independently. Cannot be used together with ``bounds``.
+            size of each axis independently. Cannot be used together with ``bounds`` or ``length``.
 
         length : float, optional
             Target length of the :attr:`~pyvista.DataSet.bounds` for the resized dataset.
@@ -1947,7 +1973,8 @@ class DataObjectFilters:
 
         center : VectorLike[float], optional
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
-            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` or ``length``
+            is specified.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are transformed as part of the resize. Otherwise, only

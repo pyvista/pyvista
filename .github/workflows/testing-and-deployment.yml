@@ -57,7 +57,7 @@ jobs:
 
       - name: Test if the example data cache exists
         id: restore-cache-vtk-data
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
@@ -73,7 +73,7 @@ jobs:
       - name: Create the example data cache
         if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
         id: save-cache-vtk-data
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
@@ -121,7 +121,7 @@ jobs:
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
       - name: Restore example data cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
@@ -139,14 +139,14 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
@@ -203,7 +203,7 @@ jobs:
           version: 3.0
 
       - name: Cache example data
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
@@ -221,20 +221,22 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
-        name: "Upload coverage to CodeCov"
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -276,7 +278,7 @@ jobs:
           version: 3.0
 
       - name: Cache example data
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
@@ -286,28 +288,30 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
+        run: tox run -e py${{ matrix.python-version }}-cov-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-cov-plotting-vtk_dev
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
-        name: "Upload coverage to CodeCov"
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -335,7 +339,7 @@ jobs:
           cache: "pip"
 
       - name: Cache example data
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
@@ -366,14 +370,14 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
@@ -406,4 +410,4 @@ jobs:
 
       - name: Upload to PyPi
         if: matrix.python-version == '3.13' && startsWith(github.ref, 'refs/tags/v')
-        uses: pypa/gh-action-pypi-publish@3317ede93a4981d0fc490510c6fcf8bf0e92ed05
+        uses: pypa/gh-action-pypi-publish@03f86fee9ac21f854951f5c6e2a02c2a1324aec7

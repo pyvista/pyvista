@@ -2094,6 +2094,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Create a single mesh with three disconnected regions where each
         region has a different cell count.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> large = pv.Sphere(
         ...     center=(-4, 0, 0), phi_resolution=40, theta_resolution=40
@@ -2104,31 +2105,55 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
         >>> mesh = large + medium + small
 
-        Plot their connectivity.
+        Compute connectivity. There are three regions, one for each sphere.
 
         >>> conn = mesh.connectivity('all')
-        >>> conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+        >>> np.unique(conn['RegionId'])
+        pyvista_ndarray([0, 1, 2])
+
+        Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
+
+        >>> def labels_plotter(dataset: pv.DataSet) -> pv.Plotter:
+        ...     rgb = ['red', 'green', 'blue']
+        ...     colored, color_dict = dataset.color_labels(rgb, return_dict=True)
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(colored, show_edges=True)
+        ...     pl.add_legend(color_dict)
+        ...     pl.camera_position = pv.CameraPosition(
+        ...         position=(3.8, 5.8, 5.8),
+        ...         focal_point=(-2.0, 0.0, 0.0),
+        ...         viewup=(0.0, 0.0, 1.0),
+        ...     )
+        ...     return pl
+        >>>
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
+
 
         Restrict connectivity to a scalar range.
 
         >>> mesh['y_coordinates'] = mesh.points[:, 1]
         >>> conn = mesh.connectivity('all', scalar_range=[-1, 0])
-        >>> conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract the region closest to the origin.
 
         >>> conn = mesh.connectivity('closest', (0, 0, 0))
-        >>> conn.plot(color='blue', show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract a region using a cell ID ``3100`` as a seed.
 
         >>> conn = mesh.connectivity('cell_seed', 3100)
-        >>> conn.plot(color='green', show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract the largest region.
 
         >>> conn = mesh.connectivity('largest')
-        >>> conn.plot(color='red', show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract the largest and smallest regions by specifying their
         region IDs. Note that the region IDs of the output differ from
@@ -2138,7 +2163,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> large_id = 0  # largest always has ID '0'
         >>> small_id = 2  # smallest has ID 'N-1' with N=3 regions
         >>> conn = mesh.connectivity('specified', (small_id, large_id))
-        >>> conn.plot(cmap=['red', 'blue'], show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         """
         # Deprecated on v0.43.0

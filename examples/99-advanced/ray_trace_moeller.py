@@ -124,7 +124,12 @@ if inter:
         style='wireframe',
     )
     pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True, color='b')
-    pl.add_point_labels(tri, [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'], font_size=40)
+    pl.add_point_labels(
+        tri,
+        [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'],
+        font_size=40,
+        always_visible=True,
+    )
     pl.show_bounds()
     pl.camera_position = 'xy'
     pl.show()
