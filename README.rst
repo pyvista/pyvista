@@ -52,6 +52,9 @@ Status badges
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
+.. |nix| image:: https://img.shields.io/badge/nix-unstable-blue.svg?logo=nixos&logoColor=white
+   :target: https://search.nixos.org/packages?channel=unstable&show=python3Packages.pyvista&query=pyvista
+
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
@@ -109,9 +112,9 @@ Status badges
     :target: https://pypi.org/project/pyvista
     :alt: Python versions
 
-+----------------------+------------------------------------------------+
-| Deployment           | |pypi| |pyversions| |conda| |Packaging status| |
-+----------------------+------------------------------------------------+
++----------------------+------------------------------------------------------+
+| Deployment           | |pypi| |pyversions| |conda| |nix| |Packaging status| |
++----------------------+------------------------------------------------------+
 | Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
 +----------------------+------------------------------------------------+
 | Metrics              | |codacy| |codecov|                             |
