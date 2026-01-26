@@ -638,7 +638,7 @@ class DisableVtkSnakeCase:
 
     @staticmethod
     def check_attribute(target, attr):
-        # Raise error if accessing attributes from VTK's pythonic snake_case API
+        # Skip check and exit early if possible
         if (
             _VTK_SNAKE_CASE_STATE == 'allow'
             or not attr
@@ -648,11 +648,12 @@ class DisableVtkSnakeCase:
         ):
             return
 
-        # Cache lookup
+        # Check if we have a vtk-defined attribute using cached lookup
         cls = target if isinstance(target, type) else target.__class__
         if not _is_vtk_attribute_cached(cls, attr):
             return
 
+        # We have a VTK attribute, so raise or warn
         if sys.meta_path is not None:  # Avoid dynamic imports when Python is shutting down
             msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
             if _VTK_SNAKE_CASE_STATE == 'error':
