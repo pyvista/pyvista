@@ -5,7 +5,7 @@ Extract Surface
 ~~~~~~~~~~~~~~~
 
 You can extract the surface of nearly any object within ``pyvista``
-using the :meth:`~pyvista.DataSetFilters.extract_surface` filter.
+using the :meth:`~pyvista.DataObjectFilters.extract_surface` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -69,7 +69,7 @@ celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # finally, extract the surface and plot it
-surf = grid.extract_surface()
+surf = grid.extract_surface(algorithm='geometry')
 surf.plot(show_scalar_bar=False)
 
 

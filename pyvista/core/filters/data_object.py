@@ -3260,6 +3260,188 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args
+    def extract_surface(  # type: ignore[misc]  # noqa: PLR0917
+        self: DataSet | MultiBlock,
+        pass_pointid: bool = True,  # noqa: FBT001, FBT002
+        pass_cellid: bool = True,  # noqa: FBT001, FBT002
+        nonlinear_subdivision: int = 1,
+        algorithm: Literal['geometry', 'dataset_surface'] | None = None,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> PolyData:
+        """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
+
+        .. versionchanged:: 0.47
+            This filter is now generalized to also work with :class:`~pyvista.MultiBlock`.
+
+        Parameters
+        ----------
+        pass_pointid : bool, default: True
+            Adds a point array ``"vtkOriginalPointIds"`` that
+            identifies which original points these surface points
+            correspond to.
+
+        pass_cellid : bool, default: True
+            Adds a cell array ``"vtkOriginalCellIds"`` that
+            identifies which original cells these surface cells
+            correspond to.
+
+        nonlinear_subdivision : int, default: 1
+            If the input is an unstructured grid with nonlinear faces,
+            this parameter determines how many times the face is
+            subdivided into linear faces.
+
+            If 0, the output is the equivalent of its linear
+            counterpart (and the midpoints determining the nonlinear
+            interpolation are discarded). If 1 (the default), the
+            nonlinear face is triangulated based on the midpoints. If
+            greater than 1, the triangulated pieces are recursively
+            subdivided to reach the desired subdivision. Setting the
+            value to greater than 1 may cause some point data to not
+            be passed even if no nonlinear faces exist. This option
+            has no effect if the input is not an unstructured grid.
+
+        algorithm : 'geometry' | 'dataset_surface'
+            VTK algorithm to use internally. Specify ``'geometry'`` to use
+            :vtk:`vtkGeometryFilter`, or ``'dataset_surface'`` to use
+            :vtk:`vtkDataSetSurfaceFilter`. ``'geometry'`` is more performant than
+            ``'dataset_surface'``, and is the recommended algorithm to use in most cases.
+            ``'dataset_surface'`` is mainly useful for backwards-compatibility or when
+            ``nonlinear_subdivision`` is used.
+
+            The current default is ``'dataset_surface'``, but this will change to ``'geometry'``
+            in a future version.
+
+            .. versionadded:: 0.47
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Warnings
+        --------
+        Both ``"vtkOriginalPointIds"`` and ``"vtkOriginalCellIds"`` may be
+        affected by other VTK operations. See `issue 1164
+        <https://github.com/pyvista/pyvista/issues/1164>`_ for
+        recommendations on tracking indices across operations.
+
+        Examples
+        --------
+        Extract the surface of an UnstructuredGrid.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> surf = grid.extract_surface(algorithm='geometry')
+        >>> type(surf)
+        <class 'pyvista.core.pointset.PolyData'>
+        >>> surf['vtkOriginalPointIds']
+        pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+                         28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
+                         42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                         56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
+                         70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
+                         84, 85, 86, 87, 88, 89])
+        >>> surf['vtkOriginalCellIds']
+        pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
+                         36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
+                         13, 13, 17, 17, 21, 21, 25, 25, 29, 29, 33, 33,  4,  4,
+                          8,  8, 12, 12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32,
+                          7,  7, 11, 11, 15, 15, 19, 19, 23, 23, 27, 27, 31, 31,
+                         35, 35,  6,  6, 10, 10, 14, 14, 18, 18, 22, 22, 26, 26,
+                         30, 30, 34, 34])
+
+        Note that in the "vtkOriginalCellIds" array, the same original cells
+        appears multiple times since this array represents the original cell of
+        each surface cell extracted.
+
+        See the :ref:`extract_surface_example` and :ref:`surface_smoothing_example`
+        for more examples using this filter.
+
+        """
+
+        def extract_surface_multiblock(mesh: MultiBlock):
+            # Try to use `vtkCompositeDataGeometryFilter` directly if possible, which doesn't
+            # support any additional config options.
+            # Despite its name, it uses `vtkDataSetSurfaceFilter` internally:
+            # https://github.com/Kitware/VTK/blob/e75f54db867f82ab50ad887e5ac36bf82425ee69/Filters/Geometry/vtkCompositeDataGeometryFilter.cxx#L81
+            if (
+                algorithm in ['dataset_surface', None]
+                and not pass_cellid
+                and not pass_pointid
+                and not progress_bar
+                and nonlinear_subdivision == 1
+            ):
+                return mesh._geometry_filter()
+
+            # Otherwise, extract each block separately and combine into a single PolyData
+            multi_polys = self.generic_filter(
+                '_extract_surface',
+                pass_pointid=pass_pointid,
+                pass_cellid=pass_cellid,
+                nonlinear_subdivision=nonlinear_subdivision,
+                algorithm=algorithm,
+                progress_bar=progress_bar,
+            )
+
+            append = _vtk.vtkAppendPolyData()
+            for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
+                append.AddInputData(poly)
+            _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
+            return _get_output(append)
+
+        def warn_future():
+            # Deprecated v0.47, convert to error in v0.50, remove v0.51
+            if pv.version_info >= (0, 50):  # pragma: no cover
+                msg = (
+                    'Convert this future warning into an error '
+                    'and update the docstring default value to "geometry".'
+                )
+                raise RuntimeError(msg)
+            if pv.version_info >= (0, 51):  # pragma: no cover
+                msg = (
+                    'Remove this future warning. Using `algorithm=None` should automatically '
+                    'default to "geometry", unless `nonlinear_subdivision` is not unity.'
+                )
+                raise RuntimeError(msg)
+
+            msg = (
+                f'The default value of `algorithm` for the filter\n'
+                f'`{self.__class__.__name__}.extract_surface` will change in the future. '
+                'It currently defaults to\n`dataset_surface`, but will change to `geometry`. '
+                'Explicitly set the `algorithm` keyword to\nsilence this warning.'
+            )
+            warn_external(msg, pv.PyVistaFutureWarning)
+
+        if nonlinear_subdivision != 1 and algorithm == 'geometry':
+            msg = "algorithm must be 'dataset_surface' to control non-linear subdivision."
+            raise ValueError(msg)
+
+        _validation.check_contains(
+            ('geometry', 'dataset_surface', None), must_contain=algorithm, name='algorithm'
+        )
+        if algorithm is None and nonlinear_subdivision == 1:
+            # Warn about future change in default alg when the default
+            # 'nonlinear_subdivision' is used
+            warn_future()
+            algorithm = 'dataset_surface'  # The old default behavior
+
+        if isinstance(self, pv.MultiBlock):
+            return extract_surface_multiblock(self)
+
+        return self._extract_surface(
+            pass_pointid=pass_pointid,
+            pass_cellid=pass_cellid,
+            nonlinear_subdivision=nonlinear_subdivision,
+            algorithm=algorithm,
+            progress_bar=progress_bar,
+        )
+
+    @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         low_point: VectorLike[float] | None = None,
@@ -4157,7 +4339,7 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_geometry()
+            return mesh_out.extract_surface(algorithm='geometry')
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out

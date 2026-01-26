@@ -477,7 +477,7 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
 
     assert 'Normals' in mesh.point_data
 
-    expected_mesh = hexbeam.extract_surface().compute_normals(
+    expected_mesh = hexbeam.extract_surface(algorithm='geometry').compute_normals(
         cell_normals=False,
         split_vertices=True,
     )
