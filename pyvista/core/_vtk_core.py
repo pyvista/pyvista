@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import contextlib
 from functools import cache
-from sys import meta_path
+import sys
+from typing import Literal
 from typing import NamedTuple
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
@@ -629,6 +630,9 @@ class vtkPyVistaOverride:  # noqa: N801
         return cls
 
 
+_VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
+
+
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
@@ -636,17 +640,12 @@ class DisableVtkSnakeCase:
     def check_attribute(target, attr):
         # Raise error if accessing attributes from VTK's pythonic snake_case API
         if (
-            not attr
+            _VTK_SNAKE_CASE_STATE == 'allow'
+            or not attr
             or not attr[0].islower()
             or attr in ('__class__', '__init__')
             or vtk_version_info < (9, 4)
-            or meta_path is None  # Avoid dynamic imports when Python is shutting down
         ):
-            return
-
-        from pyvista import _VTK_SNAKE_CASE_STATE as STATE  # noqa: PLC0415
-
-        if STATE == 'allow':
             return
 
         # Cache lookup
@@ -654,13 +653,15 @@ class DisableVtkSnakeCase:
         if not _is_vtk_attribute_cached(cls, attr):
             return
 
-        msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
-        if STATE == 'error':
-            from pyvista import PyVistaAttributeError  # noqa: PLC0415
+        if sys.meta_path is not None:  # Avoid dynamic imports when Python is shutting down
+            msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
+            if _VTK_SNAKE_CASE_STATE == 'error':
+                from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
-            raise PyVistaAttributeError(msg)
-        else:
-            warn_external(msg, RuntimeWarning)
+                raise PyVistaAttributeError(msg)
+            else:
+                warn_external(msg, RuntimeWarning)
+        return
 
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)
