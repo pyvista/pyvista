@@ -25,6 +25,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_core import VersionInfo
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -2657,7 +2658,7 @@ class _GIFReader(BaseVTKReader):
         from PIL import ImageSequence  # noqa: PLC0415
         from PIL import __version__ as pillow_version  # noqa: PLC0415
 
-        PILLOW_VERSION_INFO = pv.VersionInfo(
+        PILLOW_VERSION_INFO = VersionInfo(
             major=int(pillow_version.split('.')[0]),
             minor=int(pillow_version.split('.')[1]),
             micro=int(pillow_version.split('.')[2]),
