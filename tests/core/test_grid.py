@@ -1079,7 +1079,7 @@ def test_cast_uniform_to_structured():
 def test_cast_uniform_to_rectilinear():
     grid = examples.load_uniform()
     grid.offset = (1, 2, 3)
-    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))
+    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))  # on-axis rotation is allowed
     grid.spacing = (1.1, 2.2, 3.3)
     rectilinear = grid.cast_to_rectilinear_grid()
     assert rectilinear.n_points == grid.n_points
@@ -1088,16 +1088,12 @@ def test_cast_uniform_to_rectilinear():
 
     grid.direction_matrix = pv.Transform().rotate_x(30).matrix[:3, :3]
     match = (
-        'The direction matrix is not a diagonal matrix and cannot be used when casting to '
-        'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid instead.'
+        'Rectilinear grid does not support off-axis rotations.\n'
+        'Consider removing off-axis rotations from the `direction_matrix`, '
+        'or casting to StructuredGrid instead.'
     )
-    with pytest.warns(RuntimeWarning, match=match):
-        rectilinear = grid.cast_to_rectilinear_grid()
-    # Input has orientation, output does not
-    assert rectilinear.bounds != grid.bounds
-    # Test output has orientation component removed
-    grid.direction_matrix = np.eye(3)
-    assert rectilinear.bounds == grid.bounds
+    with pytest.raises(ValueError, match=match):
+        grid.cast_to_rectilinear_grid()
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():
