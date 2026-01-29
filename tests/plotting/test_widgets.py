@@ -784,6 +784,9 @@ def test_affine_widget(sphere):
     assert not widget._circles
     assert not widget._arrows
 
+    interact_calls = []
+    release_calls = []
+
 
 @pytest.mark.usefixtures('verify_image_cache')
 def test_logo_widget():
