@@ -645,11 +645,7 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
     def shaft_length(self, length: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
-        # Set value on source to validate
         self._shaft_and_tip_geometry_source.shaft_length = length
-        # Store value on this object
-        self._shaft_length = self._shaft_and_tip_geometry_source.shaft_length
-        # Update geometry. The geometry may modify its value internally.
         self._shaft_and_tip_geometry_source.update()
 
     @property
@@ -662,11 +658,7 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
     def tip_length(self, length: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
-        # Set value on source to validate
         self._shaft_and_tip_geometry_source.tip_length = length
-        # Store value on this object
-        self._tip_length = self._shaft_and_tip_geometry_source.tip_length
-        # Update geometry. The geometry may modify its value internally.
         self._shaft_and_tip_geometry_source.update()
 
     @property
@@ -679,11 +671,7 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
     def shaft_radius(self, radius: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
-        # Set value on source to validate
         self._shaft_and_tip_geometry_source.shaft_radius = radius
-        # Store value on this object
-        self._shaft_radius = self._shaft_and_tip_geometry_source.shaft_radius
-        # Update geometry. The geometry may modify its value internally.
         self._shaft_and_tip_geometry_source.update()
 
     @property
@@ -696,11 +684,7 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
     def tip_radius(self, radius: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
-        # Set value on source to validate
         self._shaft_and_tip_geometry_source.tip_radius = radius
-        # Store value on this object
-        self._tip_radius = self._shaft_and_tip_geometry_source.tip_radius
-        # Update geometry. The geometry may modify its value internally.
         self._shaft_and_tip_geometry_source.update()
 
     @property
@@ -714,6 +698,7 @@ class AxesAssembly(_XYZAssembly):
     def shaft_type(self, shaft_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_type = shaft_type
+        self._shaft_and_tip_geometry_source.update()
 
     @property
     @wraps(AxesGeometrySource.tip_type.fget)  # type: ignore[attr-defined]
@@ -726,6 +711,7 @@ class AxesAssembly(_XYZAssembly):
     def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_type = tip_type
+        self._shaft_and_tip_geometry_source.update()
 
     @property
     @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
@@ -1310,9 +1296,6 @@ class AxesAssemblySymmetric(AxesAssembly):
         The name of this assembly used when tracking on a plotter.
 
         .. versionadded:: 0.45
-
-    **kwargs
-        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
     See Also
     --------
