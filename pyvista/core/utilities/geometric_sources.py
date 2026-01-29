@@ -3143,7 +3143,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    shaft_radius : float, default: 0.025
+    shaft_radius : float | VectorLike[float], default: 0.025
         Radius of the axes shafts.
 
     shaft_length : float | VectorLike[float], default: 0.8
@@ -3164,7 +3164,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    tip_radius : float, default: 0.1
+    tip_radius : float | VectorLike[float], default: 0.1
         Radius of the axes tips.
 
     tip_length : float | VectorLike[float], default: 0.2
@@ -3195,10 +3195,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self: AxesGeometrySource,
         *,
         shaft_type: GeometryTypes | DataSet = 'cylinder',
-        shaft_radius: float = 0.025,
+        shaft_radius: float | VectorLike[float] = 0.025,
         shaft_length: float | VectorLike[float] = 0.8,
         tip_type: GeometryTypes | DataSet = 'cone',
-        tip_radius: float = 0.1,
+        tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric: bool = False,
         symmetric_bounds: bool = False,
@@ -3397,7 +3397,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         )
 
     @property
-    def tip_radius(self: AxesGeometrySource) -> float:  # numpydoc ignore=RT01
+    def tip_radius(self: AxesGeometrySource) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Radius of the axes tips.
 
         Value must be non-negative.
@@ -3407,21 +3407,28 @@ class AxesGeometrySource(_NoNewAttrMixin):
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource()
         >>> axes_geometry_source.tip_radius
-        0.1
+        (0.1, 0.1, 0.1)
         >>> axes_geometry_source.tip_radius = 0.2
         >>> axes_geometry_source.tip_radius
-        0.2
+        (0.2, 0.2, 0.2)
 
         """
         return self._tip_radius
 
     @tip_radius.setter
-    def tip_radius(self: AxesGeometrySource, radius: float) -> None:
-        _validation.check_range(radius, (0, float('inf')), name='tip radius')
-        self._tip_radius = radius
+    def tip_radius(self: AxesGeometrySource, radius: float | VectorLike[float]) -> None:
+        self._tip_radius = _validation.validate_array3(
+            radius,
+            broadcast=True,
+            must_be_in_range=(0, float('inf')),
+            to_tuple=True,
+            name='tip radius',
+        )
 
     @property
-    def shaft_radius(self: AxesGeometrySource) -> float:  # numpydoc ignore=RT01
+    def shaft_radius(
+        self: AxesGeometrySource,
+    ) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Radius of the axes shafts.
 
         Value must be non-negative.
@@ -3431,18 +3438,23 @@ class AxesGeometrySource(_NoNewAttrMixin):
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource()
         >>> axes_geometry_source.shaft_radius
-        0.025
+        (0.025, 0.025, 0.025)
         >>> axes_geometry_source.shaft_radius = 0.05
         >>> axes_geometry_source.shaft_radius
-        0.05
+        (0.05, 0.05, 0.05)
 
         """
         return self._shaft_radius
 
     @shaft_radius.setter
-    def shaft_radius(self: AxesGeometrySource, radius: float) -> None:
-        _validation.check_range(radius, (0, float('inf')), name='shaft radius')
-        self._shaft_radius = radius
+    def shaft_radius(self: AxesGeometrySource, radius: float | VectorLike[float]) -> None:
+        self._shaft_radius = _validation.validate_array3(
+            radius,
+            broadcast=True,
+            must_be_in_range=(0, float('inf')),
+            to_tuple=True,
+            name='shaft radius',
+        )
 
     @property
     def shaft_type(self: AxesGeometrySource) -> str:  # numpydoc ignore=RT01
@@ -3521,7 +3533,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self: AxesGeometrySource, tip_type: str | DataSet) -> None:
+    def tip_type(self: AxesGeometrySource, tip_type: GeometryTypes | DataSet) -> None:
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(
@@ -3566,7 +3578,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
                 if part_type == _PartEnum.shaft
                 else (tip_radius, tip_length)
             )
-            diameter = radius * 2
+            diameter = radius[axis] * 2
             scale = [diameter] * 3
             scale[axis] = length[axis]
             part.scale(scale, inplace=True)
