@@ -1584,9 +1584,43 @@ def Text3D(  # noqa: PLR0917
 
     Examples
     --------
+    Create 3D text.
+
     >>> import pyvista as pv
     >>> text_mesh = pv.Text3D('PyVista')
-    >>> text_mesh.plot(cpos='xy')
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Create planar text.
+
+    >>> text_mesh = pv.Text3D('PyVista', depth=0)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the depth explicitly.
+
+    >>> text_mesh = pv.Text3D('PyVista', depth=5)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the width explicitly. The height and depth are automatically scaled proportionally.
+
+    >>> text_mesh = pv.Text3D('PyVista', width=10)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the height explicitly. The width and depth are automatically scaled proportionally.
+
+    >>> text_mesh = pv.Text3D('PyVista', height=10)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the height `and` width. The depth is automatically scaled proportional to height.
+
+    >>> text_mesh = pv.Text3D('PyVista', height=10, width=10)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the height, width, and depth independently, and adjust the center.
+
+    >>> text_mesh = pv.Text3D(
+    ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
+    ... )
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
 
     """
     return Text3DSource(
