@@ -25,6 +25,7 @@ from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
@@ -485,10 +486,24 @@ class AxesAssembly(_XYZAssembly):
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
 
-    Add the axes as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`:
+    Scale the axes non-uniformly.
 
-    >>> import pyvista as pv
+    >>> axes = pv.AxesAssembly(scale=(2.0, 6.0, 10.0))
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Note how the non-uniform scaling distorts the axes such that the tips all have different
+    lengths and the shafts are no longer cylindrical. Use the anti-distortion mode when scaling to
+    avoid this.
+
+    >>> axes.scale_mode = 'anti_distortion'
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Add the axes as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`.
 
     >>> axes = pv.AxesAssembly(symmetric_bounds=True)
 
@@ -717,17 +732,14 @@ class AxesAssembly(_XYZAssembly):
     @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap Prop3D.scale."""
-        return _Prop3DMixin.scale.fget(self)
+        return _Prop3DMixin.scale.fget(self)  # type: ignore[attr-defined]
 
     @scale.setter
     @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
     def scale(self, scale: float | VectorLike[float]):
         """Wrap Prop3D.scale."""
-        _Prop3DMixin.scale.fset(self, scale)
-        source = self._shaft_and_tip_geometry_source
-        source._actor_scale = (1.0, 1.0, 1.0) if self.scale_mode == 'default' else self.scale
-        source.update()
-        self._update_label_positions()
+        _Prop3DMixin.scale.fset(self, scale)  # type: ignore[attr-defined]
+        self._update_scale()
 
     @property
     def scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
@@ -737,6 +749,22 @@ class AxesAssembly(_XYZAssembly):
     @scale_mode.setter
     def scale_mode(self, mode: ScaleModeOptions) -> None:
         self._scale_mode = mode
+        self._update_scale()
+
+    def _update_scale(self):
+        if self.scale_mode == 'anti_distortion':
+            scale = self.scale
+            # We "undo" anisotropic scaling by the actor, and apply uniform scaling
+            # instead using the geometric mean
+            geometric_mean = np.array(np.cbrt(np.prod(scale)))
+            factor = geometric_mean * _reciprocal(scale)
+        else:
+            factor = np.ones(shape=(3,), dtype=float)
+
+        source = self._shaft_and_tip_geometry_source
+        source._anti_distortion_factor = factor
+        source.update()
+        self._update_label_positions()
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -1130,18 +1158,16 @@ class AxesAssembly(_XYZAssembly):
 
         return actors
 
-    def _get_offset_label_position_vectors(self, position_scalars: tuple[float, float, float]):
-        # Create position vectors
+    def _get_offset_label_position_vectors(self, position_scalars):
         position_vectors = np.diag(position_scalars)
 
-        # Offset label positions radially by the tip radius
-        scale_factor = self._shaft_and_tip_geometry_source._actor_scale
-        tip_radius = self._shaft_and_tip_geometry_source.tip_radius * np.array(scale_factor)
-        offset_array = np.diag(tip_radius)
-        radial_offset1 = np.roll(offset_array, shift=1, axis=1)
-        radial_offset2 = np.roll(offset_array, shift=-1, axis=1)
+        tip_radius = self.tip_radius
+        factor = self._shaft_and_tip_geometry_source._anti_distortion_factor
+        for axis in range(3):
+            # Set radial (off-axis) values
+            for r in [i for i in range(3) if i != axis]:
+                position_vectors[axis, r] += tip_radius[r] * factor[r]
 
-        position_vectors += radial_offset1 + radial_offset2
         return position_vectors
 
     def _update_label_positions(self):
@@ -1357,7 +1383,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric_bounds: bool = False,
-        scale_mode: str = 'uniform',
+        scale_mode: ScaleModeOptions = 'default',
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,

@@ -3228,7 +3228,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         # Set flags
         self._symmetric = symmetric
         self._symmetric_bounds = symmetric_bounds
-        self._actor_scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
+        self._anti_distortion_factor: NumpyArray[float] = np.ones(shape=(3,), dtype=float)
 
     def __repr__(self: AxesGeometrySource) -> str:
         """Representation of the axes."""
@@ -3577,15 +3577,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
                 else (tip_radius, tip_length)
             )
             diameter = radius[axis] * 2
-            scale = np.array((diameter, diameter, diameter))
-            apply_actor_scale = (actor_scale := self._actor_scale) != (1.0, 1.0, 1.0)
-            if apply_actor_scale:
-                # We "undo" anisotropic scaling by the actor, and apply uniform scaling
-                # instead using the geometric mean
-                geometric_mean = np.array(np.cbrt(np.prod(actor_scale)))
-                scale = geometric_mean * scale / actor_scale
+            factor = self._anti_distortion_factor
+            scale = np.array((diameter, diameter, diameter)) * factor
 
-            if part_type == _PartEnum.shaft or not apply_actor_scale:
+            if part_type == _PartEnum.shaft or np.allclose(factor, 1.0):
                 scale[axis] = length[axis]
             part.scale(scale, inplace=True)
 
