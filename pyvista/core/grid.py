@@ -15,7 +15,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
@@ -1032,13 +1031,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         if np.allclose(np.abs(direction), np.eye(3)):
             sign = np.diagonal(direction)
         else:
-            sign = np.array((1.0, 1.0, 1.0))
             msg = (
-                'The direction matrix is not a diagonal matrix and cannot be used when casting to '
-                'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
-                'instead.'
+                'Rectilinear grid does not support off-axis rotations.\n'
+                'Consider removing off-axis rotations from the `direction_matrix`, '
+                'or casting to StructuredGrid instead.'
             )
-            warn_external(msg, RuntimeWarning)
+            raise ValueError(msg)
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
