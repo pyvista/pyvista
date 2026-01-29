@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Sequence
+from functools import wraps
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -55,16 +56,6 @@ class _AxesPropTuple(NamedTuple):
     x_tip: float | str | ColorLike
     y_tip: float | str | ColorLike
     z_tip: float | str | ColorLike
-
-
-class _AxesGeometryKwargs(TypedDict):
-    shaft_type: AxesGeometrySource.GeometryTypes | DataSet
-    shaft_radius: float
-    shaft_length: float | VectorLike[float]
-    tip_type: AxesGeometrySource.GeometryTypes | DataSet
-    tip_radius: float
-    tip_length: float | VectorLike[float]
-    symmetric_bounds: bool
 
 
 class _OrthogonalPlanesKwargs(TypedDict):
@@ -316,6 +307,67 @@ class AxesAssembly(_XYZAssembly):
 
     Parameters
     ----------
+    shaft_type : str | DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+        .. versionadded:: 0.47
+
+    shaft_radius : float | VectorLike[float], default: 0.025
+        Radius of the axes shafts.
+
+        .. versionadded:: 0.47
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+        .. versionadded:: 0.47
+
+    tip_type : str | DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+        .. versionadded:: 0.47
+
+    tip_radius : float | VectorLike[float], default: 0.1
+        Radius of the axes tips.
+
+        .. versionadded:: 0.47
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+        .. versionadded:: 0.47
+
+    symmetric_bounds : bool, default: False
+        Make the bounds of the axes symmetric. This option is similar to
+        :attr:`symmetric`, except only the bounds are made to be symmetric,
+        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+
+        .. versionadded:: 0.47
+
     x_label : str, default: 'X'
         Text label for the x-axis. Alternatively, set the label with :attr:`labels`.
 
@@ -375,9 +427,6 @@ class AxesAssembly(_XYZAssembly):
         The name of this assembly used when tracking on a plotter.
 
         .. versionadded:: 0.45
-
-    **kwargs
-        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
     See Also
     --------
@@ -463,6 +512,13 @@ class AxesAssembly(_XYZAssembly):
     def __init__(
         self,
         *,
+        shaft_type: AxesGeometrySource.GeometryTypes | DataSet = 'cylinder',
+        shaft_radius: float | VectorLike[float] = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
+        tip_radius: float | VectorLike[float] = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        symmetric_bounds: bool = False,
         x_label: str | None = None,
         y_label: str | None = None,
         z_label: str | None = None,
@@ -480,10 +536,19 @@ class AxesAssembly(_XYZAssembly):
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
-        **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
-        self._init_actors_from_source(AxesGeometrySource(symmetric=False, **kwargs))
+        source = AxesGeometrySource(
+            shaft_type=shaft_type,
+            shaft_radius=shaft_radius,
+            shaft_length=shaft_length,
+            tip_type=tip_type,
+            tip_radius=tip_radius,
+            tip_length=tip_length,
+            symmetric_bounds=symmetric_bounds,
+            symmetric=False,
+        )
+        self._init_actors_from_source(source)
         # Init label actors
         self._label_actors = (Label(), Label(), Label())
 
@@ -555,6 +620,78 @@ class AxesAssembly(_XYZAssembly):
             f'  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}',
         ]
         return '\n'.join(attr)
+
+    @property
+    @wraps(AxesGeometrySource.shaft_length.fget)  # type: ignore[attr-defined]
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.shaft_length
+
+    @shaft_length.setter
+    @wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
+    def shaft_length(self, length: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.shaft_length = length
+
+    @property
+    @wraps(AxesGeometrySource.tip_length.fget)  # type: ignore[attr-defined]
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.tip_length
+
+    @tip_length.setter
+    @wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
+    def tip_length(self, length: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.tip_length = length
+
+    @property
+    @wraps(AxesGeometrySource.shaft_radius.fget)  # type: ignore[attr-defined]
+    def shaft_radius(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.shaft_radius
+
+    @shaft_radius.setter
+    @wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
+    def shaft_radius(self, radius: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.shaft_radius = radius
+
+    @property
+    @wraps(AxesGeometrySource.tip_radius.fget)  # type: ignore[attr-defined]
+    def tip_radius(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.tip_radius
+
+    @tip_radius.setter
+    @wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
+    def tip_radius(self, radius: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.tip_radius = radius
+
+    @property
+    @wraps(AxesGeometrySource.shaft_type.fget)  # type: ignore[attr-defined]
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.shaft_type
+
+    @shaft_type.setter
+    @wraps(AxesGeometrySource.shaft_type.fset)  # type: ignore[attr-defined]
+    def shaft_type(self, shaft_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.shaft_type = shaft_type
+
+    @property
+    @wraps(AxesGeometrySource.tip_type.fget)  # type: ignore[attr-defined]
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.tip_type
+
+    @tip_type.setter
+    @wraps(AxesGeometrySource.tip_type.fset)  # type: ignore[attr-defined]
+    def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.tip_type = tip_type
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -954,7 +1091,7 @@ class AxesAssembly(_XYZAssembly):
 
         # Offset label positions radially by the tip radius
         tip_radius = self._shaft_and_tip_geometry_source.tip_radius
-        offset_array = np.diag([tip_radius] * 3)
+        offset_array = np.diag(tip_radius)
         radial_offset1 = np.roll(offset_array, shift=1, axis=1)
         radial_offset2 = np.roll(offset_array, shift=-1, axis=1)
 
@@ -985,6 +1122,67 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     Parameters
     ----------
+    shaft_type : str | DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+        .. versionadded:: 0.47
+
+    shaft_radius : float | VectorLike[float], default: 0.025
+        Radius of the axes shafts.
+
+        .. versionadded:: 0.47
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+        .. versionadded:: 0.47
+
+    tip_type : str | DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+        .. versionadded:: 0.47
+
+    tip_radius : float | VectorLike[float], default: 0.1
+        Radius of the axes tips.
+
+        .. versionadded:: 0.47
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+        .. versionadded:: 0.47
+
+    symmetric_bounds : bool, default: False
+        Make the bounds of the axes symmetric. This option is similar to
+        :attr:`symmetric`, except only the bounds are made to be symmetric,
+        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+
+        .. versionadded:: 0.47
+
     x_label : str, default: ('+X', '-X')
         Text labels for the positive and negative x-axis. Specify two strings or a
         single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
@@ -1109,6 +1307,13 @@ class AxesAssemblySymmetric(AxesAssembly):
     def __init__(
         self,
         *,
+        shaft_type: AxesGeometrySource.GeometryTypes | DataSet = 'cylinder',
+        shaft_radius: float | VectorLike[float] = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
+        tip_radius: float | VectorLike[float] = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        symmetric_bounds: bool = False,
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,
@@ -1126,10 +1331,19 @@ class AxesAssemblySymmetric(AxesAssembly):
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
-        **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
-        self._init_actors_from_source(AxesGeometrySource(symmetric=True, **kwargs))
+        source = AxesGeometrySource(
+            shaft_type=shaft_type,
+            shaft_radius=shaft_radius,
+            shaft_length=shaft_length,
+            tip_type=tip_type,
+            tip_radius=tip_radius,
+            tip_length=tip_length,
+            symmetric_bounds=symmetric_bounds,
+            symmetric=True,
+        )
+        self._init_actors_from_source(source)
         # Init label actors
         self._label_actors = (Label(), Label(), Label())
         self._label_actors_symmetric = (Label(), Label(), Label())
