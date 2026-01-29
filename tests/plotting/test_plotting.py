@@ -4410,6 +4410,14 @@ def test_xyz_assembly_show_labels_false(assembly):
     pl.show()
 
 
+@pytest.mark.parametrize('scale_mode', ['uniform', 'normalize_shape'])
+def test_axes_assembly_scale_mode(scale_mode):
+    axes = pv.AxesAssembly(position=(10, 20, 30), scale=(0.4, 1.0, 2.5), scale_mode=scale_mode)
+    pl = pv.Plotter()
+    pl.add_actor(axes)
+    pl.show()
+
+
 @pytest.mark.parametrize('relative_position', [(0, 0, -0.5), (0, 0, 0.5)], ids=['bottom', 'top'])
 def test_label_prop3d(relative_position):
     dataset = pv.Cone(direction=(0, 0, 1))

@@ -3228,6 +3228,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         # Set flags
         self._symmetric = symmetric
         self._symmetric_bounds = symmetric_bounds
+        self._actor_scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
 
     def __repr__(self: AxesGeometrySource) -> str:
         """Representation of the axes."""
@@ -3552,11 +3553,8 @@ class AxesGeometrySource(_NoNewAttrMixin):
 
     def _reset_shaft_and_tip_geometry(self: AxesGeometrySource) -> None:
         # Store local copies of properties for iterating
-        shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
-        tip_radius, tip_length = (
-            self.tip_radius,
-            self.tip_length,
-        )
+        shaft_radius, shaft_length = list(self.shaft_radius), list(self.shaft_length)
+        tip_radius, tip_length = list(self.tip_radius), list(self.tip_length)
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
         nested_datasets_normalized = [
@@ -3579,8 +3577,16 @@ class AxesGeometrySource(_NoNewAttrMixin):
                 else (tip_radius, tip_length)
             )
             diameter = radius[axis] * 2
-            scale = [diameter] * 3
-            scale[axis] = length[axis]
+            scale = np.array((diameter, diameter, diameter))
+            apply_actor_scale = (actor_scale := self._actor_scale) != (1.0, 1.0, 1.0)
+            if apply_actor_scale:
+                # We "undo" anisotropic scaling by the actor, and apply uniform scaling
+                # instead using the geometric mean
+                geometric_mean = np.array(np.cbrt(np.prod(actor_scale)))
+                scale = geometric_mean * scale / actor_scale
+
+            if part_type == _PartEnum.shaft or not apply_actor_scale:
+                scale[axis] = length[axis]
             part.scale(scale, inplace=True)
 
             if part_type == _PartEnum.tip:

@@ -48,6 +48,8 @@ if TYPE_CHECKING:
     else:
         from typing_extensions import Unpack
 
+ScaleModeOptions = Literal['uniform', 'normalized_shape']
+
 
 class _AxesPropTuple(NamedTuple):
     x_shaft: float | str | ColorLike
@@ -368,6 +370,9 @@ class AxesAssembly(_XYZAssembly):
 
         .. versionadded:: 0.47
 
+    scale_mode
+        Blarg
+
     x_label : str, default: 'X'
         Text label for the x-axis. Alternatively, set the label with :attr:`labels`.
 
@@ -505,9 +510,16 @@ class AxesAssembly(_XYZAssembly):
 
         # Init shaft and tip datasets
         self._shaft_and_tip_geometry_source = geometry_source
-        shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
+        # Get output without updating source, since source will be updated when setting actor scale
+        shaft_tip_datasets = self._shaft_and_tip_geometry_source._output
         for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets, strict=True):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
+
+        # Length and radii set on this object may differ from the actual values set on the source
+        self._shaft_length = geometry_source.shaft_length
+        self._tip_length = geometry_source.tip_length
+        self._shaft_radius = geometry_source.shaft_radius
+        self._tip_radius = geometry_source.tip_radius
 
     def __init__(
         self,
@@ -519,6 +531,7 @@ class AxesAssembly(_XYZAssembly):
         tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric_bounds: bool = False,
+        scale_mode: ScaleModeOptions = 'uniform',
         x_label: str | None = None,
         y_label: str | None = None,
         z_label: str | None = None,
@@ -537,6 +550,7 @@ class AxesAssembly(_XYZAssembly):
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
     ):
+        self._scale_mode = scale_mode
         # Init shaft and tip actors
         source = AxesGeometrySource(
             shaft_type=shaft_type,
@@ -625,13 +639,18 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.shaft_length.fget)  # type: ignore[attr-defined]
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
-        return self._shaft_and_tip_geometry_source.shaft_length
+        return self._shaft_length
 
     @shaft_length.setter
     @wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
     def shaft_length(self, length: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
+        # Set value on source to validate
         self._shaft_and_tip_geometry_source.shaft_length = length
+        # Store value on this object
+        self._shaft_length = self._shaft_and_tip_geometry_source.shaft_length
+        # Update geometry. The geometry may modify its value internally.
+        self._shaft_and_tip_geometry_source.update()
 
     @property
     @wraps(AxesGeometrySource.tip_length.fget)  # type: ignore[attr-defined]
@@ -643,7 +662,12 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
     def tip_length(self, length: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
+        # Set value on source to validate
         self._shaft_and_tip_geometry_source.tip_length = length
+        # Store value on this object
+        self._tip_length = self._shaft_and_tip_geometry_source.tip_length
+        # Update geometry. The geometry may modify its value internally.
+        self._shaft_and_tip_geometry_source.update()
 
     @property
     @wraps(AxesGeometrySource.shaft_radius.fget)  # type: ignore[attr-defined]
@@ -655,7 +679,12 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
     def shaft_radius(self, radius: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
+        # Set value on source to validate
         self._shaft_and_tip_geometry_source.shaft_radius = radius
+        # Store value on this object
+        self._shaft_radius = self._shaft_and_tip_geometry_source.shaft_radius
+        # Update geometry. The geometry may modify its value internally.
+        self._shaft_and_tip_geometry_source.update()
 
     @property
     @wraps(AxesGeometrySource.tip_radius.fget)  # type: ignore[attr-defined]
@@ -667,7 +696,12 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
     def tip_radius(self, radius: float | VectorLike[float]) -> None:
         """Wrap AxesGeometrySource."""
+        # Set value on source to validate
         self._shaft_and_tip_geometry_source.tip_radius = radius
+        # Store value on this object
+        self._tip_radius = self._shaft_and_tip_geometry_source.tip_radius
+        # Update geometry. The geometry may modify its value internally.
+        self._shaft_and_tip_geometry_source.update()
 
     @property
     @wraps(AxesGeometrySource.shaft_type.fget)  # type: ignore[attr-defined]
@@ -692,6 +726,31 @@ class AxesAssembly(_XYZAssembly):
     def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
         """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_type = tip_type
+
+    @property
+    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap Prop3D.scale."""
+        return _Prop3DMixin.scale.fget(self)
+
+    @scale.setter
+    @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
+    def scale(self, scale: float | VectorLike[float]):
+        """Wrap Prop3D.scale."""
+        _Prop3DMixin.scale.fset(self, scale)
+        source = self._shaft_and_tip_geometry_source
+        source._actor_scale = (1.0, 1.0, 1.0) if self.scale_mode == 'uniform' else self.scale
+        source.update()
+        self._update_label_positions()
+
+    @property
+    def scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
+        """Set or return the scaling mode."""
+        return self._scale_mode
+
+    @scale_mode.setter
+    def scale_mode(self, mode: ScaleModeOptions) -> None:
+        self._scale_mode = mode
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -1090,7 +1149,8 @@ class AxesAssembly(_XYZAssembly):
         position_vectors = np.diag(position_scalars)
 
         # Offset label positions radially by the tip radius
-        tip_radius = self._shaft_and_tip_geometry_source.tip_radius
+        scale_factor = self._shaft_and_tip_geometry_source._actor_scale
+        tip_radius = self._shaft_and_tip_geometry_source.tip_radius * np.array(scale_factor)
         offset_array = np.diag(tip_radius)
         radial_offset1 = np.roll(offset_array, shift=1, axis=1)
         radial_offset2 = np.roll(offset_array, shift=-1, axis=1)
@@ -1314,6 +1374,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric_bounds: bool = False,
+        scale_mode: str = 'uniform',
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,
@@ -1332,6 +1393,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
     ):
+        self._scale_mode = scale_mode
         # Init shaft and tip actors
         source = AxesGeometrySource(
             shaft_type=shaft_type,
