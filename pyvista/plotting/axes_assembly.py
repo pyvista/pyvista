@@ -502,6 +502,22 @@ class AxesAssembly(_XYZAssembly):
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
 
+    Add axes to the minimum extent of a mesh's bounds.
+
+    >>> mesh = pv.ParametricEllipsoid(xradius=6, yradius=3, zradius=1)
+
+    >>> scale = mesh.bounds_size
+    >>> position = (mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min)
+    >>> axes = pv.AxesAssembly(
+    ...     position=position, scale=scale, scale_mode='anti_distortion'
+    ... )
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh)
+    >>> _ = pl.add_actor(axes)
+    >>> pl.view_xy()
+    >>> pl.show()
+
     Add the axes as a custom orientation widget with
     :func:`~pyvista.Renderer.add_orientation_widget`.
 
@@ -529,12 +545,6 @@ class AxesAssembly(_XYZAssembly):
         shaft_tip_datasets = self._shaft_and_tip_geometry_source._output
         for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets, strict=True):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
-
-        # Length and radii set on this object may differ from the actual values set on the source
-        self._shaft_length = geometry_source.shaft_length
-        self._tip_length = geometry_source.tip_length
-        self._shaft_radius = geometry_source.shaft_radius
-        self._tip_radius = geometry_source.tip_radius
 
     def __init__(
         self,
