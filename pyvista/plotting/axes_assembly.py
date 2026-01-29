@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     else:
         from typing_extensions import Unpack
 
-ScaleModeOptions = Literal['uniform', 'normalized_shape']
+ScaleModeOptions = Literal['default', 'anti_distortion']
 
 
 class _AxesPropTuple(NamedTuple):
@@ -531,7 +531,7 @@ class AxesAssembly(_XYZAssembly):
         tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric_bounds: bool = False,
-        scale_mode: ScaleModeOptions = 'uniform',
+        scale_mode: ScaleModeOptions = 'default',
         x_label: str | None = None,
         y_label: str | None = None,
         z_label: str | None = None,
@@ -725,7 +725,7 @@ class AxesAssembly(_XYZAssembly):
         """Wrap Prop3D.scale."""
         _Prop3DMixin.scale.fset(self, scale)
         source = self._shaft_and_tip_geometry_source
-        source._actor_scale = (1.0, 1.0, 1.0) if self.scale_mode == 'uniform' else self.scale
+        source._actor_scale = (1.0, 1.0, 1.0) if self.scale_mode == 'default' else self.scale
         source.update()
         self._update_label_positions()
 

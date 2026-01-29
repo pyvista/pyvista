@@ -18,6 +18,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
+from typing import get_args
 
 import numpy as np
 from PIL import Image
@@ -32,6 +33,7 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import _vtk
+from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
@@ -4410,7 +4412,7 @@ def test_xyz_assembly_show_labels_false(assembly):
     pl.show()
 
 
-@pytest.mark.parametrize('scale_mode', ['uniform', 'normalize_shape'])
+@pytest.mark.parametrize('scale_mode', get_args(ScaleModeOptions))
 def test_axes_assembly_scale_mode(scale_mode):
     axes = pv.AxesAssembly(position=(10, 20, 30), scale=(0.4, 1.0, 2.5), scale_mode=scale_mode)
     pl = pv.Plotter()
