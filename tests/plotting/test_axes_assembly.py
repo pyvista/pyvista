@@ -23,6 +23,20 @@ def planes_assembly():
     return pv.PlanesAssembly()
 
 
+@pytest.mark.parametrize('scale_mode', ['default', 'anti_distortion'])
+def test_axes_assembly_scale_mode(axes_assembly, scale_mode):
+    tip_actors = axes_assembly._tip_actors
+    shaft_actors = axes_assembly._shaft_actors
+    axes_assembly.scale_mode = scale_mode
+    assert axes_assembly.scale_mode == scale_mode
+    scale = (0.2, 1.1, 2.0)
+    axes_assembly.scale = scale
+    x_size = shaft_actors[0].bounds_size[0] + tip_actors[0].bounds_size[0]
+    y_size = shaft_actors[1].bounds_size[1] + tip_actors[1].bounds_size[1]
+    z_size = shaft_actors[2].bounds_size[2] + tip_actors[2].bounds_size[2]
+    assert (x_size, y_size, z_size) == scale
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]

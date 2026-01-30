@@ -3571,17 +3571,16 @@ class AxesGeometrySource(_NoNewAttrMixin):
             part.points[:, axis] += 0.5
 
             # Scale by length along axis, scale by radius off-axis
-            radius, length = (
-                (shaft_radius, shaft_length)
-                if part_type == _PartEnum.shaft
-                else (tip_radius, tip_length)
-            )
-            diameter = radius[axis] * 2
+            diameter = (shaft_radius if part_type == _PartEnum.shaft else tip_radius)[axis] * 2
             factor = self._anti_distortion_factor
             scale = np.array((diameter, diameter, diameter)) * factor
 
-            if part_type == _PartEnum.shaft or np.allclose(factor, 1.0):
-                scale[axis] = length[axis]
+            if part_type == _PartEnum.shaft:
+                shaft_length[axis] += tip_length[axis] * (1 - factor[axis])
+                scale[axis] = shaft_length[axis]
+            else:
+                scale[axis] = tip_length[axis] * factor[axis]
+
             part.scale(scale, inplace=True)
 
             if part_type == _PartEnum.tip:

@@ -895,7 +895,11 @@ class AxesAssembly(_XYZAssembly):
 
         """
         position = self._label_position
-        return self._shaft_and_tip_geometry_source.shaft_length if position is None else position
+        value = self._shaft_and_tip_geometry_source.shaft_length if position is None else position
+        if self.scale_mode == 'anti_distortion':
+            factor = self._shaft_and_tip_geometry_source._anti_distortion_factor
+            value += self.tip_length * (1 - factor)
+        return value
 
     @label_position.setter
     def label_position(self, position: float | VectorLike[float] | None):
