@@ -3784,7 +3784,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
             # We ignore `copy_mesh` if the input is an algorithm
-            mesh = mesh.copy(deep=False)  # type: ignore[call-arg]
+            mesh = mesh.copy(deep=False)
         mesh = cast('pv.DataSet', mesh)
 
         # Parse arguments
