@@ -10,7 +10,9 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+from functools import cache
 import sys
+from typing import Literal
 from typing import NamedTuple
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
@@ -628,32 +630,39 @@ class vtkPyVistaOverride:  # noqa: N801
         return cls
 
 
+_VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
+
+
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
     @staticmethod
     def check_attribute(target, attr):
-        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
-        if vtk_version_info >= (9, 4) and sys.meta_path is not None:
-            # Raise error if accessing attributes from VTK's pythonic snake_case API
+        # Skip check and exit early if possible
+        if (
+            _VTK_SNAKE_CASE_STATE == 'allow'
+            or not attr
+            or not attr[0].islower()
+            or attr in ('__class__', '__init__')
+            or vtk_version_info < (9, 4)
+        ):
+            return
 
-            import pyvista as pv  # noqa: PLC0415
+        # Check if we have a vtk-defined attribute using cached lookup
+        cls = target if isinstance(target, type) else target.__class__
+        if not _is_vtk_attribute_cached(cls, attr):
+            return
 
-            state = pv._VTK_SNAKE_CASE_STATE
-            if state != 'allow':
-                if (
-                    attr not in ['__class__', '__init__']
-                    and attr[0].islower()
-                    and is_vtk_attribute(target, attr)
-                ):
-                    msg = (
-                        f'The attribute {attr!r} is defined by VTK and is not part of the '
-                        f'PyVista API'
-                    )
-                    if state == 'error':
-                        raise pv.PyVistaAttributeError(msg)
-                    else:
-                        warn_external(msg, RuntimeWarning)
+        # We have a VTK attribute, so raise or warn
+        if sys.meta_path is not None:  # Avoid dynamic imports when Python is shutting down
+            msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
+            if _VTK_SNAKE_CASE_STATE == 'error':
+                from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+                raise PyVistaAttributeError(msg)
+            else:
+                warn_external(msg, RuntimeWarning)
+        return
 
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)
@@ -682,6 +691,12 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
     cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
     return cls is not None and cls.__module__.startswith('vtkmodules')
+
+
+# Wrap the check in an LRU cache
+@cache
+def _is_vtk_attribute_cached(target_type, attr):
+    return is_vtk_attribute(target_type, attr)
 
 
 class VTKObjectWrapperCheckSnakeCase(VTKObjectWrapper):
