@@ -3516,6 +3516,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             with caution. Defaults to ``False``. This is ignored if the input
             is a :vtk:`vtkAlgorithm` subclass.
 
+            .. versionchanged:: 0.47
+                If the mesh is a :class:`~pyvista.UnstructuredGrid` with hidden ghost cells,
+                a copy is always made with VTK 9.6 or later. This is a necessary workaround to
+                ensure the ghost cells are rendered correctly.
+                See https://gitlab.kitware.com/vtk/vtk/-/issues/19922.
+
         backface_params : dict | Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
             backface rendering. This is useful for instance when the inside of
@@ -3661,6 +3667,26 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ... )
 
         """
+        if (
+            pv.vtk_version_info >= (9, 6, 0)
+            and isinstance(mesh, pv.UnstructuredGrid)
+            and (ghost_name := _vtk.vtkDataSetAttributes.GhostArrayName()) in mesh.cell_data.keys()
+        ):
+            # Ghost cells are not rendered properly in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
+            # As a workaround, extract non-hidden cells
+            hidden_cells = mesh.cell_data[ghost_name] == _vtk.vtkDataSetAttributes.HIDDENCELL
+            not_hidden = mesh.extract_cells(
+                ~hidden_cells, pass_cell_ids=False, pass_point_ids=False
+            )
+            with contextlib.suppress(KeyError):
+                del not_hidden.cell_data[ghost_name]
+
+            # Simulate the non-visible bounds by adding points
+            bounds_points = pv.Box(bounds=mesh.bounds).points
+            not_hidden.points = np.append(not_hidden.points, bounds_points, axis=0)
+            mesh = not_hidden
+            copy_mesh = False
+
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':

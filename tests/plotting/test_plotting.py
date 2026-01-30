@@ -4901,7 +4901,7 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    if pv.vtk_version_info > (9, 6, 0) and orient_faces is False:
+    if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
         # This bug was fixed in VTK 9.6
         pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -5365,3 +5365,17 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
         normal = grid.extract_geometry().cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
+
+
+def test_hide_cells():
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    grid.cell_data['scalars'] = range(grid.n_cells)
+    kwargs = dict(show_edges=True, show_grid=True, clim=[0, grid.n_cells])
+
+    grid.plot(**kwargs)
+
+    grid = grid.hide_cells(range(60, 120))
+    grid.plot(**kwargs)
+
+    grid = grid.cast_to_unstructured_grid()
+    grid.plot(**kwargs)

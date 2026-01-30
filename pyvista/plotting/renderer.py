@@ -4577,7 +4577,7 @@ class Renderer(
             if pv.vtk_version_info >= (9, 4):
                 legend_scale.SetLabelModeToCoordinates()
             else:
-                legend_scale.SetLabelModeToXYCoordinates()
+                legend_scale.SetLabelModeToXYCoordinates()  # type: ignore[attr-defined]
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
