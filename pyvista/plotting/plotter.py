@@ -3673,70 +3673,18 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             and isinstance(mesh, (pv.UnstructuredGrid, pv.ExplicitStructuredGrid))
             and _vtk.vtkDataSetAttributes.GhostArrayName() in mesh.cell_data.keys()
         ):
-            # Ghost cells are not rendered properly in VTK 9.6, we need to use
-            # vtkDataSetSurfaceFilter explicitly https://gitlab.kitware.com/vtk/vtk/-/issues/19922
-            alg = _vtk.vtkDataSetSurfaceFilter()
-            alg.SetInputData(mesh)
-            alg.Update()
-
-            self.add_mesh(
-                mesh=alg,
-                color=color,
-                style=style,
-                scalars=scalars,
-                clim=clim,
-                show_edges=show_edges,
-                edge_color=edge_color,
-                point_size=point_size,
-                line_width=line_width,
-                opacity=opacity,
-                flip_scalars=flip_scalars,
-                lighting=lighting,
-                n_colors=n_colors,
-                interpolate_before_map=interpolate_before_map,
-                cmap=cmap,
-                label=label,
-                reset_camera=reset_camera,
-                scalar_bar_args=scalar_bar_args,
-                show_scalar_bar=show_scalar_bar,
-                multi_colors=multi_colors,
-                name=name,
-                texture=texture,
-                render_points_as_spheres=render_points_as_spheres,
-                render_lines_as_tubes=render_lines_as_tubes,
-                smooth_shading=smooth_shading,
-                split_sharp_edges=split_sharp_edges,
-                ambient=ambient,
-                diffuse=diffuse,
-                specular=specular,
-                specular_power=specular_power,
-                nan_color=nan_color,
-                nan_opacity=nan_opacity,
-                culling=culling,
-                rgb=rgb,
-                categories=categories,
-                silhouette=silhouette,
-                use_transparency=use_transparency,
-                below_color=below_color,
-                above_color=above_color,
-                annotations=annotations,
-                pickable=pickable,
-                preference=preference,
-                log_scale=log_scale,
-                pbr=pbr,
-                metallic=metallic,
-                roughness=roughness,
-                render=render,
-                user_matrix=user_matrix,
-                component=component,
-                emissive=emissive,
-                copy_mesh=copy_mesh,
-                backface_params=backface_params,
-                show_vertices=show_vertices,
-                edge_opacity=edge_opacity,
-                remove_existing_actor=remove_existing_actor,
-                **kwargs,
+            # Ghost cells are not rendered properly in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
+            # As a workaround, extract non-hidden cells
+            hidden_cells = (
+                mesh.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()]
+                == _vtk.vtkDataSetAttributes.HIDDENCELL
             )
+            not_hidden = mesh.extract_cells(~hidden_cells)
+            # Simulate the non-visible bounds by adding points
+            bounds_points = pv.Box(bounds=mesh.bounds).points
+            not_hidden.points = np.append(not_hidden.points, bounds_points, axis=0)
+            mesh = not_hidden
+            copy_mesh = False
 
         if user_matrix is None:
             user_matrix = np.eye(4)

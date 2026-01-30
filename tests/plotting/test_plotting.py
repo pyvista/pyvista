@@ -5357,10 +5357,13 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
 
 def test_hide_cells():
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
-    grid.plot(color='w', show_edges=True)
+    grid.cell_data['scalars'] = range(grid.n_cells)
+    kwargs = dict(show_edges=True, show_grid=True, clim=[0, grid.n_cells])
+
+    grid.plot(**kwargs)
 
     grid = grid.hide_cells(range(60, 120))
-    grid.plot(color='w', show_edges=True)
+    grid.plot(**kwargs)
 
     grid = grid.cast_to_unstructured_grid()
-    grid.plot(color='w', show_edges=True)
+    grid.plot(**kwargs)
