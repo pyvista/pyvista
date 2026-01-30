@@ -372,8 +372,17 @@ class AxesAssembly(_XYZAssembly):
 
         .. versionadded:: 0.47
 
-    scale_mode
-        Blarg
+    scale_mode : 'default', 'anti_distortion', default: 'default'
+        Mode used when scaling the axes.
+
+        - ``'default'``: Apply standard geometric scaling using ``'scale'`` factors. The full
+          assembly is scaled as a single object. If non-uniform scaling is used, the axes may
+          appear distorted.
+        - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
+          do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
+          be scaled to appear uniform.
+
+        .. versionadded:: 0.47
 
     x_label : str, default: 'X'
         Text label for the x-axis. Alternatively, set the label with :attr:`labels`.
@@ -754,7 +763,18 @@ class AxesAssembly(_XYZAssembly):
 
     @property
     def scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
-        """Set or return the scaling mode."""
+        """Set or return the scaling mode.
+
+        - ``'default'``: Apply standard geometric scaling using ``'scale'`` factors. The full
+          assembly is scaled as a single object. If non-uniform scaling is used, the axes may
+          appear distorted.
+        - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
+          do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
+          be scaled to appear uniform.
+
+        .. versionadded:: 0.47
+
+        """
         return self._scale_mode
 
     @scale_mode.setter
@@ -1270,6 +1290,18 @@ class AxesAssemblySymmetric(AxesAssembly):
         Make the bounds of the axes symmetric. This option is similar to
         :attr:`symmetric`, except only the bounds are made to be symmetric,
         not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+
+        .. versionadded:: 0.47
+
+    scale_mode : 'default', 'anti_distortion', default: 'default'
+        Mode used when scaling the axes.
+
+        - ``'default'``: Apply standard geometric scaling using ``'scale'`` factors. The full
+          assembly is scaled as a single object. If non-uniform scaling is used, the axes may
+          appear distorted.
+        - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
+          do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
+          be scaled to appear uniform.
 
         .. versionadded:: 0.47
 
