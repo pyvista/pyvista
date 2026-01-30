@@ -366,9 +366,9 @@ class AxesAssembly(_XYZAssembly):
         .. versionadded:: 0.47
 
     symmetric_bounds : bool, default: False
-        Make the bounds of the axes symmetric. This option is similar to
-        :attr:`symmetric`, except only the bounds are made to be symmetric,
-        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+        Make the bounds of the axes symmetric. This is mainly for using the axes with
+        :func:`~pyvista.Renderer.add_orientation_widget` to ensure the axes rotate correctly
+        about the origin.
 
         .. versionadded:: 0.47
 
@@ -1294,13 +1294,6 @@ class AxesAssemblySymmetric(AxesAssembly):
 
         .. versionadded:: 0.47
 
-    symmetric_bounds : bool, default: False
-        Make the bounds of the axes symmetric. This option is similar to
-        :attr:`symmetric`, except only the bounds are made to be symmetric,
-        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
-
-        .. versionadded:: 0.47
-
     scale_mode : 'default', 'anti_distortion', default: 'default'
         Mode used when scaling the axes.
 
@@ -1440,7 +1433,6 @@ class AxesAssemblySymmetric(AxesAssembly):
         tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
         tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
-        symmetric_bounds: bool = False,
         scale_mode: ScaleModeOptions = 'default',
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
@@ -1469,7 +1461,6 @@ class AxesAssemblySymmetric(AxesAssembly):
             tip_type=tip_type,
             tip_radius=tip_radius,
             tip_length=tip_length,
-            symmetric_bounds=symmetric_bounds,
             symmetric=True,
         )
         self._init_actors_from_source(source)

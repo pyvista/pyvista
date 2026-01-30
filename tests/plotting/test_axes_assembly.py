@@ -93,6 +93,16 @@ def test_axes_assembly_scale_mode(axes_assembly, scale_mode):
     assert (x_size, y_size, z_size) == scale
 
 
+def test_axes_assembly_symmetric_bounds():
+    asymmetric_bounds = pv.AxesAssembly().bounds
+    assert np.allclose(asymmetric_bounds, (-0.1, 1.0, -0.1, 1.0, -0.1, 1.0))
+    symmetric_bounds = pv.AxesAssembly(symmetric_bounds=True).bounds
+    assert np.allclose(symmetric_bounds, (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'symmetric_bounds'"):
+        pv.AxesAssemblySymmetric(symmetric_bounds=True)
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
