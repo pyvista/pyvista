@@ -326,17 +326,11 @@ class AxesAssembly(_XYZAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-        .. versionadded:: 0.47
-
     shaft_radius : float | VectorLike[float], default: 0.025
         Radius of the axes shafts.
 
-        .. versionadded:: 0.47
-
     shaft_length : float | VectorLike[float], default: 0.8
         Length of the shaft for each axis.
-
-        .. versionadded:: 0.47
 
     tip_type : str | DataSet, default: 'cone'
         Tip type for all axes. Can be any of the following:
@@ -353,24 +347,16 @@ class AxesAssembly(_XYZAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-        .. versionadded:: 0.47
-
     tip_radius : float | VectorLike[float], default: 0.1
         Radius of the axes tips.
 
-        .. versionadded:: 0.47
-
     tip_length : float | VectorLike[float], default: 0.2
         Length of the tip for each axis.
-
-        .. versionadded:: 0.47
 
     symmetric_bounds : bool, default: False
         Make the bounds of the axes symmetric. This is mainly for using the axes with
         :func:`~pyvista.Renderer.add_orientation_widget` to ensure the axes rotate correctly
         about the origin.
-
-        .. versionadded:: 0.47
 
     scale_mode : 'default', 'anti_distortion', default: 'default'
         Mode used when scaling the axes.
@@ -507,8 +493,8 @@ class AxesAssembly(_XYZAssembly):
         >>> pl.show()
 
         Note how the non-uniform scaling distorts the axes such that the tips all have different
-        lengths and the shafts are no longer cylindrical. Use the anti-distortion mode when scaling to
-        avoid this.
+        lengths and the shafts are no longer cylindrical. Use the anti-distortion mode when
+        scaling to avoid this.
 
         >>> axes.scale_mode = 'anti_distortion'
         >>> pl = pv.Plotter()
@@ -1258,17 +1244,11 @@ class AxesAssemblySymmetric(AxesAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-        .. versionadded:: 0.47
-
     shaft_radius : float | VectorLike[float], default: 0.025
         Radius of the axes shafts.
 
-        .. versionadded:: 0.47
-
     shaft_length : float | VectorLike[float], default: 0.8
         Length of the shaft for each axis.
-
-        .. versionadded:: 0.47
 
     tip_type : str | DataSet, default: 'cone'
         Tip type for all axes. Can be any of the following:
@@ -1285,17 +1265,11 @@ class AxesAssemblySymmetric(AxesAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-        .. versionadded:: 0.47
-
     tip_radius : float | VectorLike[float], default: 0.1
         Radius of the axes tips.
 
-        .. versionadded:: 0.47
-
     tip_length : float | VectorLike[float], default: 0.2
         Length of the tip for each axis.
-
-        .. versionadded:: 0.47
 
     scale_mode : 'default', 'anti_distortion', default: 'default'
         Mode used when scaling the axes.
