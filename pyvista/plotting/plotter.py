@@ -3679,7 +3679,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 mesh.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()]
                 == _vtk.vtkDataSetAttributes.HIDDENCELL
             )
-            not_hidden = mesh.extract_cells(~hidden_cells)
+            not_hidden = mesh.extract_cells(
+                ~hidden_cells, pass_cell_ids=False, pass_point_ids=False
+            )
+            del not_hidden.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()]
+
             # Simulate the non-visible bounds by adding points
             bounds_points = pv.Box(bounds=mesh.bounds).points
             not_hidden.points = np.append(not_hidden.points, bounds_points, axis=0)
