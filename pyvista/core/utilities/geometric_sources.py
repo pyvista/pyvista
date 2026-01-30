@@ -3228,6 +3228,8 @@ class AxesGeometrySource(_NoNewAttrMixin):
         # Set flags
         self._symmetric = symmetric
         self._symmetric_bounds = symmetric_bounds
+
+        # Used by AxesAssembly for scale_mode='anti_distortion'
         self._anti_distortion_factor: NumpyArray[float] = np.ones(shape=(3,), dtype=float)
 
     def __repr__(self: AxesGeometrySource) -> str:
