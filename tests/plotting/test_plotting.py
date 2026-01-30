@@ -5353,3 +5353,14 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
         normal = grid.extract_geometry().cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
+
+
+def test_hide_cells():
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    grid.plot(color='w', show_edges=True)
+
+    grid = grid.hide_cells(range(60, 120))
+    grid.plot(color='w', show_edges=True)
+
+    grid = grid.cast_to_unstructured_grid()
+    grid.plot(color='w', show_edges=True)

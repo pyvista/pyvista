@@ -3516,6 +3516,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             with caution. Defaults to ``False``. This is ignored if the input
             is a :vtk:`vtkAlgorithm` subclass.
 
+            .. versionchanged:: 0.47
+                If the mesh is a :class:`~pyvista.ExplicitStructuredGrid` or
+                :class:`~pyvista.UnstructuredGrid` with hidden ghost cells, a copy is always
+                made with VTK 9.6 or later. This is a necessary workaround to ensure the ghost
+                cells are rendered correctly.
+                See https://gitlab.kitware.com/vtk/vtk/-/issues/19922.
+
         backface_params : dict | Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
             backface rendering. This is useful for instance when the inside of
@@ -3661,6 +3668,76 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ... )
 
         """
+        if (
+            pv.vtk_version_info >= (9, 6, 0)
+            and isinstance(mesh, (pv.UnstructuredGrid, pv.ExplicitStructuredGrid))
+            and _vtk.vtkDataSetAttributes.GhostArrayName() in mesh.cell_data.keys()
+        ):
+            # Ghost cells are not rendered properly in VTK 9.6, we need to use
+            # vtkDataSetSurfaceFilter explicitly https://gitlab.kitware.com/vtk/vtk/-/issues/19922
+            alg = _vtk.vtkDataSetSurfaceFilter()
+            alg.SetInputData(mesh)
+            alg.Update()
+
+            self.add_mesh(
+                mesh=alg,
+                color=color,
+                style=style,
+                scalars=scalars,
+                clim=clim,
+                show_edges=show_edges,
+                edge_color=edge_color,
+                point_size=point_size,
+                line_width=line_width,
+                opacity=opacity,
+                flip_scalars=flip_scalars,
+                lighting=lighting,
+                n_colors=n_colors,
+                interpolate_before_map=interpolate_before_map,
+                cmap=cmap,
+                label=label,
+                reset_camera=reset_camera,
+                scalar_bar_args=scalar_bar_args,
+                show_scalar_bar=show_scalar_bar,
+                multi_colors=multi_colors,
+                name=name,
+                texture=texture,
+                render_points_as_spheres=render_points_as_spheres,
+                render_lines_as_tubes=render_lines_as_tubes,
+                smooth_shading=smooth_shading,
+                split_sharp_edges=split_sharp_edges,
+                ambient=ambient,
+                diffuse=diffuse,
+                specular=specular,
+                specular_power=specular_power,
+                nan_color=nan_color,
+                nan_opacity=nan_opacity,
+                culling=culling,
+                rgb=rgb,
+                categories=categories,
+                silhouette=silhouette,
+                use_transparency=use_transparency,
+                below_color=below_color,
+                above_color=above_color,
+                annotations=annotations,
+                pickable=pickable,
+                preference=preference,
+                log_scale=log_scale,
+                pbr=pbr,
+                metallic=metallic,
+                roughness=roughness,
+                render=render,
+                user_matrix=user_matrix,
+                component=component,
+                emissive=emissive,
+                copy_mesh=copy_mesh,
+                backface_params=backface_params,
+                show_vertices=show_vertices,
+                edge_opacity=edge_opacity,
+                remove_existing_actor=remove_existing_actor,
+                **kwargs,
+            )
+
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':
@@ -3759,7 +3836,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             # A shallow copy of `mesh` is made here so when we set (or add) scalars
             # active, it doesn't modify the original input mesh.
             # We ignore `copy_mesh` if the input is an algorithm
-            mesh = mesh.copy(deep=False)
+            mesh = mesh.copy(deep=False)  # type: ignore[call-arg]
         mesh = cast('pv.DataSet', mesh)
 
         # Parse arguments
