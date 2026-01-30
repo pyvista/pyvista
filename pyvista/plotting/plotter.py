@@ -3671,18 +3671,16 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if (
             pv.vtk_version_info >= (9, 6, 0)
             and isinstance(mesh, (pv.UnstructuredGrid, pv.ExplicitStructuredGrid))
-            and _vtk.vtkDataSetAttributes.GhostArrayName() in mesh.cell_data.keys()
+            and (ghost_name := _vtk.vtkDataSetAttributes.GhostArrayName()) in mesh.cell_data.keys()
         ):
             # Ghost cells are not rendered properly in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
             # As a workaround, extract non-hidden cells
-            hidden_cells = (
-                mesh.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()]
-                == _vtk.vtkDataSetAttributes.HIDDENCELL
-            )
+            hidden_cells = mesh.cell_data[ghost_name] == _vtk.vtkDataSetAttributes.HIDDENCELL
             not_hidden = mesh.extract_cells(
                 ~hidden_cells, pass_cell_ids=False, pass_point_ids=False
             )
-            del not_hidden.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()]
+            with contextlib.suppress(KeyError):
+                del not_hidden.cell_data[ghost_name]
 
             # Simulate the non-visible bounds by adding points
             bounds_points = pv.Box(bounds=mesh.bounds).points
