@@ -2573,7 +2573,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def _get_cell_types_array(self):
         array = (
             self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
-            if pv.vtk_version_info > (9, 6, 0)
+            if pv.vtk_version_info >= (9, 6, 0)
             else self.GetCellTypesArray()
         )
 
