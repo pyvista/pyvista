@@ -453,93 +453,96 @@ class AxesAssembly(_XYZAssembly):
 
     Examples
     --------
-    Add axes to a plot.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> axes = pv.AxesAssembly()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Add axes to a plot.
 
-    Customize the axes colors. Set each axis to a single color, or set the colors of
-    each shaft and tip separately with two colors.
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes.x_color = ['cyan', 'blue']
-    >>> axes.y_color = ['magenta', 'red']
-    >>> axes.z_color = 'yellow'
+        Customize the axes colors. Set each axis to a single color, or set the colors of
+        each shaft and tip separately with two colors.
 
-    Customize the label color too.
+        >>> axes.x_color = ['cyan', 'blue']
+        >>> axes.y_color = ['magenta', 'red']
+        >>> axes.z_color = 'yellow'
 
-    >>> axes.label_color = 'brown'
+        Customize the label color too.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        >>> axes.label_color = 'brown'
 
-    Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
-    modify the lengths.
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes = pv.AxesAssembly(
-    ...     shaft_type='pyramid',
-    ...     tip_type='hemisphere',
-    ...     tip_length=0.1,
-    ...     shaft_length=(0.5, 1.0, 1.5),
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
+        modify the lengths.
 
-    Position and orient the axes in space.
+        >>> axes = pv.AxesAssembly(
+        ...     shaft_type='pyramid',
+        ...     tip_type='hemisphere',
+        ...     tip_length=0.1,
+        ...     shaft_length=(0.5, 1.0, 1.5),
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Position and orient the axes in space.
 
-    Scale the axes non-uniformly.
+        >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes = pv.AxesAssembly(scale=(2.0, 6.0, 10.0))
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Scale the axes non-uniformly.
 
-    Note how the non-uniform scaling distorts the axes such that the tips all have different
-    lengths and the shafts are no longer cylindrical. Use the anti-distortion mode when scaling to
-    avoid this.
+        >>> axes = pv.AxesAssembly(scale=(2.0, 6.0, 10.0))
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes.scale_mode = 'anti_distortion'
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Note how the non-uniform scaling distorts the axes such that the tips all have different
+        lengths and the shafts are no longer cylindrical. Use the anti-distortion mode when scaling to
+        avoid this.
 
-    Add axes to the minimum extent of a mesh's bounds.
+        >>> axes.scale_mode = 'anti_distortion'
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> mesh = pv.ParametricEllipsoid(xradius=6, yradius=3, zradius=1)
+        Add axes to the minimum extent of a mesh's bounds.
 
-    >>> scale = mesh.bounds_size
-    >>> position = (mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min)
-    >>> axes = pv.AxesAssembly(
-    ...     position=position, scale=scale, scale_mode='anti_distortion'
-    ... )
+        >>> mesh = pv.ParametricEllipsoid(xradius=6, yradius=3, zradius=1)
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh)
-    >>> _ = pl.add_actor(axes)
-    >>> pl.view_xy()
-    >>> pl.show()
+        >>> scale = mesh.bounds_size
+        >>> position = (mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min)
+        >>> axes = pv.AxesAssembly(
+        ...     position=position, scale=scale, scale_mode='anti_distortion'
+        ... )
 
-    Add the axes as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`.
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_actor(axes)
+        >>> pl.view_xy()
+        >>> pl.show()
 
-    >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+        Add the axes as a custom orientation widget with
+        :func:`~pyvista.Renderer.add_orientation_widget`.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(pv.Cone())
-    >>> _ = pl.add_orientation_widget(
-    ...     axes,
-    ...     viewport=(0, 0, 0.5, 0.5),
-    ... )
-    >>> pl.show()
+        >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> _ = pl.add_orientation_widget(
+        ...     axes,
+        ...     viewport=(0, 0, 0.5, 0.5),
+        ... )
+        >>> pl.show()
 
     """
 
@@ -1383,44 +1386,47 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     Examples
     --------
-    Add symmetric axes to a plot.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> axes_assembly = pv.AxesAssemblySymmetric()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_assembly)
-    >>> pl.show()
+        Add symmetric axes to a plot.
 
-    Customize the axes labels.
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
 
-    >>> axes_assembly.labels = [
-    ...     'east',
-    ...     'west',
-    ...     'north',
-    ...     'south',
-    ...     'up',
-    ...     'down',
-    ... ]
-    >>> axes_assembly.label_color = 'darkgoldenrod'
+        Customize the axes labels.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_assembly)
-    >>> pl.show()
+        >>> axes_assembly.labels = [
+        ...     'east',
+        ...     'west',
+        ...     'north',
+        ...     'south',
+        ...     'up',
+        ...     'down',
+        ... ]
+        >>> axes_assembly.label_color = 'darkgoldenrod'
 
-    Add the axes as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
-    only show text for the positive axes.
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
 
-    >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(pv.Cone())
-    >>> _ = pl.add_orientation_widget(
-    ...     axes_assembly,
-    ...     viewport=(0, 0, 0.5, 0.5),
-    ... )
-    >>> pl.show()
+        Add the axes as a custom orientation widget with
+        :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
+        only show text for the positive axes.
+
+        >>> axes_assembly = pv.AxesAssemblySymmetric(
+        ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> _ = pl.add_orientation_widget(
+        ...     axes_assembly,
+        ...     viewport=(0, 0, 0.5, 0.5),
+        ... )
+        >>> pl.show()
 
     """
 
