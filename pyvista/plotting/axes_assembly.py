@@ -11,6 +11,7 @@ from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import TypedDict
+from typing import get_args
 
 import numpy as np
 
@@ -575,7 +576,7 @@ class AxesAssembly(_XYZAssembly):
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
     ):
-        self._scale_mode = scale_mode
+        self.scale_mode = scale_mode
         # Init shaft and tip actors
         source = AxesGeometrySource(
             shaft_type=shaft_type,
@@ -758,6 +759,9 @@ class AxesAssembly(_XYZAssembly):
 
     @scale_mode.setter
     def scale_mode(self, mode: ScaleModeOptions) -> None:
+        _validation.check_contains(
+            get_args(ScaleModeOptions), must_contain=mode, name='scale mode'
+        )
         self._scale_mode = mode
         self._update_scale()
 
@@ -1416,7 +1420,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
     ):
-        self._scale_mode = scale_mode
+        self.scale_mode = scale_mode
         # Init shaft and tip actors
         source = AxesGeometrySource(
             shaft_type=shaft_type,
