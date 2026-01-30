@@ -2811,6 +2811,8 @@ class FLUENTCFFReader(BaseReader):
 
     Examples
     --------
+    Read an example Fluent .h5 dataset and plot the temperature.
+
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> filename = examples.download_room_cff(load=False)
@@ -2819,10 +2821,167 @@ class FLUENTCFFReader(BaseReader):
     >>> mesh = blocks[0]
     >>> mesh.plot(cpos='xy', scalars='SV_T')
 
+    These Fluent result files typically contain several cell result arrays,
+    including:
+
+    >>> mesh.cell_data
+    pyvista DataSetAttributes
+    Association     : CELL
+    Active Scalars  : SV_T
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays :
+        SV_D                    float64    (4338,)
+        SV_DENSITY              float64    (4338,)
+        SV_DPM_PARTITION        float64    (4338,)
+        SV_H                    float64    (4338,)
+        SV_K                    float64    (4338,)
+        SV_MU_LAM               float64    (4338,)
+        SV_MU_T                 float64    (4338,)
+        SV_P                    float64    (4338,)
+        SV_T                    float64    (4338,)              SCALARS
+        SV_U                    float64    (4338,)
+        SV_V                    float64    (4338,)
+        SV_BF_V                 float64    (4338, 2)
+
+    For large files, you might want to turn off reading certain arrays to speed
+    up performance. If you're only interested in a single array, disable all
+    cell arrays and then enable just that one.
+
+    >>> reader = pv.get_reader(filename)
+    >>> reader.disable_all_cell_arrays()
+    >>> reader.enable_cell_array('SV_D')
+    >>> blocks = reader.read()
+    >>> mesh = blocks[0]
+    >>> mesh.cell_data
+    pyvista DataSetAttributes
+    Association     : CELL
+    Active Scalars  : None
+    Active Vectors  : None
+    Active Texture  : None
+    Active Normals  : None
+    Contains arrays :
+        SV_D                    float64    (4338,)
+
     """
 
     _vtk_module_name = 'vtkIOFLUENTCFF'
     _vtk_class_name = 'vtkFLUENTCFFReader'
+
+    @property
+    def cell_arrays(self) -> list[str]:
+        """Return a list of available cell arrays from the Fluent file.
+
+        Returns
+        -------
+        list[str]
+            List of the names of each cell array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_room_cff(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.disable_all_cell_arrays()
+        >>> blocks = reader.read()
+        >>> len(blocks[0].cell_data)
+        0
+
+        """
+        return [
+            self.reader.GetCellArrayName(ii) for ii in range(self.reader.GetNumberOfCellArrays())
+        ]
+
+    def _set_cell_array_status(self, cell_array: str, enabled: bool) -> None:
+        """Enable or disable reading a cell array."""
+        # we need to check if it exists since VTK doesn't do it
+        if cell_array not in self.cell_arrays:
+            basename = Path(self.path).name
+            msg = (
+                f'cell_array "{cell_array}" does not exist in {basename}.\n\n'
+                f'Available arrays: {self.cell_arrays}'
+            )
+            raise ValueError(msg)
+        self.reader.SetCellArrayStatus(cell_array, enabled)
+
+    def disable_cell_array(self, cell_array: str) -> None:
+        """Disable reading a single cell array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_room_cff(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.disable_cell_array('SV_T')
+
+        """
+        self._set_cell_array_status(cell_array, False)
+
+    def enable_cell_array(self, cell_array: str) -> None:
+        """Enable reading a single cell array.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_room_cff(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.disable_all_cell_arrays()
+        >>> reader.enable_cell_array('SV_T')
+        >>> blocks = reader.read()
+        >>> len(blocks[0].cell_data)
+        1
+
+        """
+        self._set_cell_array_status(cell_array, True)
+
+    def disable_all_cell_arrays(self) -> None:
+        """Disable reading all cell arrays.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_room_cff(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.disable_all_cell_arrays()
+        >>> blocks = reader.read()
+        >>> len(blocks[0].cell_data)
+        0
+
+        """
+        self.reader.DisableAllCellArrays()
+
+    def enable_all_cell_arrays(self) -> None:
+        """Enable reading all cell arrays.
+
+        This is the default behavior.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_room_cff(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.enable_all_cell_arrays()
+        >>> blocks = reader.read()
+        >>> len(blocks[0].cell_data)
+        12
+
+        """
+        self.reader.EnableAllCellArrays()
+
+    def __repr__(self) -> str:
+        """Return the representation of this Fluent .h5 file."""
+        num_arrays = len(self.cell_arrays)
+        arrays_repr = '\n    '.join(self.cell_arrays) if num_arrays else 'None'
+
+        return (
+            super().__repr__() + '\n'
+            f'  Number of Cell Arrays: {num_arrays}\n'
+            f'  Cell Arrays:\n    {arrays_repr}'
+        )
 
 
 class GambitReader(BaseReader):
