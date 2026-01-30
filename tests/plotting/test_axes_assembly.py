@@ -23,6 +23,62 @@ def planes_assembly():
     return pv.PlanesAssembly()
 
 
+def test_axes_assembly_shaft_length(axes_assembly):
+    val = 0.8
+    assert axes_assembly.shaft_length == (val, val, val)
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[0], val)
+
+    val = 1.0
+    axes_assembly.shaft_length = val
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[0], val)
+
+
+def test_axes_assembly_tip_length(axes_assembly):
+    val = 0.2
+    assert axes_assembly.tip_length == (val, val, val)
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[0], val)
+
+    val = 1.0
+    axes_assembly.tip_length = val
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[0], val)
+
+
+def test_axes_assembly_shaft_radius(axes_assembly):
+    val = 0.025
+    assert axes_assembly.shaft_radius == (val, val, val)
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[1], val * 2)
+
+    val = 1.0
+    axes_assembly.shaft_radius = val
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[1], val * 2)
+
+
+def test_axes_assembly_tip_radius(axes_assembly):
+    val = 0.1
+    assert axes_assembly.tip_radius == (val, val, val)
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[1], val * 2)
+
+    val = 1.0
+    axes_assembly.tip_radius = val
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[1], val * 2)
+
+
+def test_axes_assembly_shaft_type(axes_assembly):
+    assert axes_assembly.shaft_type == 'cylinder'
+    dataset = axes_assembly._shaft_actors[0].mapper.dataset.copy()
+    axes_assembly.shaft_type = 'sphere'
+    dataset_new = axes_assembly._shaft_actors[0].mapper.dataset.copy()
+    assert dataset != dataset_new
+
+
+def test_axes_assembly_tip_type(axes_assembly):
+    assert axes_assembly.tip_type == 'cone'
+    dataset = axes_assembly._tip_actors[0].mapper.dataset.copy()
+    axes_assembly.tip_type = 'sphere'
+    dataset_new = axes_assembly._tip_actors[0].mapper.dataset.copy()
+    assert dataset != dataset_new
+
+
 @pytest.mark.parametrize('scale_mode', ['default', 'anti_distortion'])
 def test_axes_assembly_scale_mode(axes_assembly, scale_mode):
     tip_actors = axes_assembly._tip_actors

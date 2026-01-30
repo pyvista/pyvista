@@ -664,7 +664,7 @@ class AxesAssembly(_XYZAssembly):
     @wraps(AxesGeometrySource.shaft_length.fget)  # type: ignore[attr-defined]
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap AxesGeometrySource."""
-        return self._shaft_length
+        return self._shaft_and_tip_geometry_source.shaft_length
 
     @shaft_length.setter
     @wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
