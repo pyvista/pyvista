@@ -585,7 +585,7 @@ class AxesAssembly(_XYZAssembly):
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
     ):
-        self.scale_mode = scale_mode
+        self._scale_mode = scale_mode
         # Init shaft and tip actors
         source = AxesGeometrySource(
             shaft_type=shaft_type,
@@ -779,11 +779,19 @@ class AxesAssembly(_XYZAssembly):
 
     @scale_mode.setter
     def scale_mode(self, mode: ScaleModeOptions) -> None:
+        self._scale_mode = mode
+        self._update_scale()
+
+    @property
+    def _scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
+        return self.__scale_mode
+
+    @_scale_mode.setter
+    def _scale_mode(self, mode: ScaleModeOptions) -> None:
         _validation.check_contains(
             get_args(ScaleModeOptions), must_contain=mode, name='scale mode'
         )
-        self._scale_mode = mode
-        self._update_scale()
+        self.__scale_mode = mode
 
     def _update_scale(self):
         if self.scale_mode == 'anti_distortion':
@@ -1452,7 +1460,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
     ):
-        self.scale_mode = scale_mode
+        self._scale_mode = scale_mode
         # Init shaft and tip actors
         source = AxesGeometrySource(
             shaft_type=shaft_type,
