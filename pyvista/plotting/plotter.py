@@ -3517,10 +3517,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             is a :vtk:`vtkAlgorithm` subclass.
 
             .. versionchanged:: 0.47
-                If the mesh is a :class:`~pyvista.ExplicitStructuredGrid` or
-                :class:`~pyvista.UnstructuredGrid` with hidden ghost cells, a copy is always
-                made with VTK 9.6 or later. This is a necessary workaround to ensure the ghost
-                cells are rendered correctly.
+                If the mesh is a :class:`~pyvista.UnstructuredGrid` with hidden ghost cells,
+                a copy is always made with VTK 9.6 or later. This is a necessary workaround to
+                ensure the ghost cells are rendered correctly.
                 See https://gitlab.kitware.com/vtk/vtk/-/issues/19922.
 
         backface_params : dict | Property, optional
@@ -3670,7 +3669,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """
         if (
             pv.vtk_version_info >= (9, 6, 0)
-            and isinstance(mesh, (pv.UnstructuredGrid, pv.ExplicitStructuredGrid))
+            and isinstance(mesh, pv.UnstructuredGrid)
             and (ghost_name := _vtk.vtkDataSetAttributes.GhostArrayName()) in mesh.cell_data.keys()
         ):
             # Ghost cells are not rendered properly in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
