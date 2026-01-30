@@ -3266,8 +3266,8 @@ class AxesGeometrySource(_NoNewAttrMixin):
     def symmetric_bounds(self: AxesGeometrySource) -> bool:  # numpydoc ignore=RT01
         """Enable or disable symmetry in the axes bounds.
 
-        This option is similar to :attr:`symmetric`, except instead of making
-        the axes parts symmetric, only the bounds of the axes are made to be
+        This option is similar to :attr:`~pyvista.AxesGeometrySource.symmetric`, except instead
+        of making the axes parts symmetric, only the bounds of the axes are made to be
         symmetric. This is achieved by adding a single invisible cell to each tip
         dataset along each axis to simulate the symmetry. Setting this
         parameter primarily affects camera positioning and is useful if the
