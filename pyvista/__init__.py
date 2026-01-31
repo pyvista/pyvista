@@ -78,8 +78,6 @@ DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
 
-_VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
-
 # Allow setting new private -- but not public -- attributes by default
 _ALLOW_NEW_ATTRIBUTES_MODE: Literal['private', True, False] = 'private'
 
