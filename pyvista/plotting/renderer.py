@@ -133,6 +133,7 @@ def make_legend_face(face) -> PolyData:
 
     def normalize(poly):
         norm_poly = poly.copy()  # Avoid mutating input
+        norm_poly.clear_data()
 
         # Center data
         norm_poly.points -= np.array(norm_poly.center)
