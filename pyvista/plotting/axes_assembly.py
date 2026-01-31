@@ -770,14 +770,13 @@ class AxesAssembly(_XYZAssembly):
     def scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
         """Set or return the scaling mode.
 
-        - ``'default'``: Apply standard geometric scaling using ``'scale'`` factors. The full
+        - ``'default'``: Apply standard geometric scaling using :attr:`scale` factors. The full
           assembly is scaled as a single object. If non-uniform scaling is used, the axes may
           appear distorted.
         - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
           do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
-          be scaled to appear uniform. The corrective scaling applies to
-          :attr:`~pyvista.Prop3D.scale` as well as any scaling from
-          :attr:`~pyvista.Prop3D.user_matrix`.
+          be scaled to appear uniform. The corrective scaling applies to :attr:`scale` as well as
+          any scaling from :attr:`user_matrix`.
 
         .. versionadded:: 0.47
 
