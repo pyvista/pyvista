@@ -28,6 +28,7 @@ from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.transformations import decomposition
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -41,6 +42,8 @@ if TYPE_CHECKING:
     import sys
 
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._typing import ColorLike
@@ -751,6 +754,19 @@ class AxesAssembly(_XYZAssembly):
         self._update_scale()
 
     @property
+    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Wrap Prop3D.user_matrix."""
+        return _Prop3DMixin.user_matrix.fget(self)  # type: ignore[attr-defined]
+
+    @user_matrix.setter
+    @wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
+    def user_matrix(self, value: TransformLike) -> None:
+        """Wrap Prop3D.user_matrix."""
+        _Prop3DMixin.user_matrix.fset(self, value)  # type: ignore[attr-defined]
+        self._update_scale()
+
+    @property
     def scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
         """Set or return the scaling mode.
 
@@ -759,7 +775,9 @@ class AxesAssembly(_XYZAssembly):
           appear distorted.
         - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
           do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
-          be scaled to appear uniform.
+          be scaled to appear uniform. The corrective scaling applies to
+          :attr:`~pyvista.Prop3D.scale` as well as any scaling from
+          :attr:`~pyvista.Prop3D.user_matrix`.
 
         .. versionadded:: 0.47
 
@@ -784,7 +802,7 @@ class AxesAssembly(_XYZAssembly):
 
     def _update_scale(self):
         if self.scale_mode == 'anti_distortion':
-            scale = self.scale
+            _, _, _, scale, _ = decomposition(self._transformation_matrix)
             # We "undo" anisotropic scaling by the actor, and apply uniform scaling
             # instead using the geometric mean
             geometric_mean = np.array(np.cbrt(np.prod(scale)))
