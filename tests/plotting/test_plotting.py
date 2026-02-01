@@ -4416,9 +4416,15 @@ def test_xyz_assembly_show_labels_false(assembly):
 @pytest.mark.parametrize('symmetric', [True, False])
 def test_axes_assembly_scale_mode(scale_mode, symmetric):
     cls = pv.AxesAssemblySymmetric if symmetric else pv.AxesAssembly
-    axes = cls(position=(10, 20, 30), scale=(0.4, 1.0, 2.5), scale_mode=scale_mode)
+    scale = (0.4, 1.0, 2.5)
+    axes_scale = cls(position=(-1, 2, 1), scale=scale, scale_mode=scale_mode)
+    matrix = pv.Transform().scale(scale).matrix
+    axes_matrix = cls(user_matrix=matrix, scale_mode=scale_mode)
+
     pl = pv.Plotter()
-    pl.add_actor(axes)
+    pl.add_actor(axes_scale)
+    pl.add_actor(axes_matrix)
+    pl.enable_parallel_projection()
     pl.show()
 
 
