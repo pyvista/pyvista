@@ -556,21 +556,28 @@ def test_multi_io_erros(tmpdir):
 
 
 def test_extract_geometry(multiblock_all_with_nested_and_none):
-    match = '`extract_geometry` is deprecated. Use `extract_surface` instead.'
+    match = (
+        '`extract_geometry` is deprecated. '
+        "Use `extract_surface(algorithm='dataset_surface')` instead."
+    )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
         geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
 
 
-@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface'])
+@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None])
 def test_extract_surface(multiblock_all_with_nested_and_none, algorithm):
-    geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
+    if algorithm is None:
+        with pytest.warns(pv.PyVistaFutureWarning):
+            geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
+    else:
+        geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
     assert isinstance(geom, PolyData)
 
 
 def test_extract_surface_no_args(multiblock_all_with_nested_and_none):
     # Get output directly from vtkCompositeDataGeometryFilter
-    poly_from_vtk_filter = multiblock_all_with_nested_and_none._composite_geometry_filter()
+    poly_from_vtk_filter = multiblock_all_with_nested_and_none._geometry_filter()
 
     # Test branch without any config options which calls vtkCompositeDataGeometryFilter
     kwargs = dict(

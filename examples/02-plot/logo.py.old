@@ -32,7 +32,7 @@ t_grid = pyvista.voxelize(mesh_letters['t'], density=0.07)
 k_grid = pyvista.voxelize(mesh_letters['k'], density=0.08)
 i_grid = pyvista.voxelize(mesh_letters['i'], 0.05)
 
-v_mesh = v_grid.triangulate().extract_surface().decimate_pro(0.9)
+v_mesh = v_grid.triangulate().extract_surface(algorithm='geometry').decimate_pro(0.9)
 
 ###############################################################################
 
@@ -43,7 +43,7 @@ plotter = pyvista.Plotter(window_size=np.array([1024, 512]) * 2)
 plotter.add_mesh(v_mesh, color='w', show_edges=True)
 
 # Add the T
-plotter.add_mesh(t_grid.extract_surface(),
+plotter.add_mesh(t_grid.extract_surface(algorithm='geometry'),
                  style='points', color='r', render_points_as_spheres=True,
                  point_size=12)
 plotter.add_mesh(t_grid, style='wireframe', color='k', line_width=3, )

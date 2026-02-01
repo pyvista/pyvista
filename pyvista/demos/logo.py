@@ -247,7 +247,7 @@ def plot_logo(  # noqa: PLR0917
     v_grid = _voxelize_legacy(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
-    v_grid_atom_surf = v_grid_atom.extract_surface()
+    v_grid_atom_surf = v_grid_atom.extract_surface(algorithm='geometry')
     faces = v_grid_atom_surf.faces.reshape(-1, 5).copy()
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
@@ -263,7 +263,7 @@ def plot_logo(  # noqa: PLR0917
     i_grid = _voxelize_legacy(mesh_letters['i'], density=0.1)
 
     pl.add_mesh(
-        i_grid.extract_surface(),
+        i_grid.extract_surface(algorithm='geometry'),
         style='points',
         color='r',
         render_points_as_spheres=True,

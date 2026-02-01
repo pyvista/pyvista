@@ -1264,13 +1264,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Get the face arrays of the five faces of a pyramid.
 
         >>> import pyvista as pv
-        >>> pyramid = pv.Pyramid().extract_surface()
+        >>> pyramid = pv.Pyramid().extract_surface(algorithm='geometry')
         >>> pyramid.irregular_faces  # doctest: +NORMALIZE_WHITESPACE
-        (array([0, 1, 2, 3]),
-         array([0, 3, 4]),
-         array([0, 4, 1]),
-         array([3, 2, 4]),
-         array([2, 1, 4]))
+        (array([0, 4, 3], dtype=int32),
+         array([0, 1, 4], dtype=int32),
+         array([0, 3, 2, 1], dtype=int32),
+         array([1, 2, 4], dtype=int32),
+         array([2, 3, 4], dtype=int32))
 
         """
         return _get_irregular_cells(self.GetPolys())
@@ -1952,7 +1952,9 @@ class PointGrid(_PointSet):
             ``return_cpos`` is ``True``.
 
         """
-        trisurf = self.extract_surface().triangulate()
+        trisurf = self.extract_surface(
+            algorithm='geometry', pass_cellid=False, pass_pointid=False
+        ).triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 

@@ -3265,7 +3265,7 @@ class DataObjectFilters:
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
         nonlinear_subdivision: int = 1,
-        algorithm: Literal['geometry', 'dataset_surface'] = 'dataset_surface',
+        algorithm: Literal['geometry', 'dataset_surface'] | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> PolyData:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
@@ -3307,6 +3307,9 @@ class DataObjectFilters:
             ``'dataset_surface'``, and is the recommended algorithm to use in most cases.
             ``'dataset_surface'`` is mainly useful for backwards-compatibility or when
             ``nonlinear_subdivision`` is used.
+
+            The current default is ``'dataset_surface'``, but this will change to ``'geometry'``
+            in a future version.
 
             .. versionadded:: 0.47
 
@@ -3367,13 +3370,13 @@ class DataObjectFilters:
             # Despite its name, it uses `vtkDataSetSurfaceFilter` internally:
             # https://github.com/Kitware/VTK/blob/e75f54db867f82ab50ad887e5ac36bf82425ee69/Filters/Geometry/vtkCompositeDataGeometryFilter.cxx#L81
             if (
-                algorithm == 'dataset_surface'
+                algorithm in ['dataset_surface', None]
                 and not pass_cellid
                 and not pass_pointid
                 and not progress_bar
                 and nonlinear_subdivision == 1
             ):
-                return mesh._composite_geometry_filter()
+                return mesh._geometry_filter()
 
             # Otherwise, extract each block separately and combine into a single PolyData
             multi_polys = self.generic_filter(
@@ -3391,41 +3394,41 @@ class DataObjectFilters:
             _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
             return _get_output(append)
 
-        # def warn_future():
-        #     # Deprecated v0.47, convert to error in v0.50, remove v0.51
-        #     if pv.version_info >= (0, 50):  # pragma: no cover
-        #         msg = (
-        #             'Convert this future warning into an error '
-        #             'and update the docstring default value to "geometry".'
-        #         )
-        #         raise RuntimeError(msg)
-        #     if pv.version_info >= (0, 51):  # pragma: no cover
-        #         msg = (
-        #             'Remove this future warning. Using `algorithm=None` should automatically '
-        #             'default to "geometry", unless `nonlinear_subdivision` is not unity.'
-        #         )
-        #         raise RuntimeError(msg)
-        #
-        #     msg = (
-        #         f'The default value of `algorithm` for the filter\n'
-        #         f'`{self.__class__.__name__}.extract_surface` will change in the future. '
-        #         'It currently defaults to\n`dataset_surface`, but will change to `geometry`. '
-        #         'Explicitly set the `algorithm` keyword to\nsilence this warning.'
-        #     )
-        #     warn_external(msg, pv.PyVistaFutureWarning)
+        def warn_future():
+            # Deprecated v0.47, convert to error in v0.50, remove v0.51
+            if pv.version_info >= (0, 50):  # pragma: no cover
+                msg = (
+                    'Convert this future warning into an error '
+                    'and update the docstring default value to "geometry".'
+                )
+                raise RuntimeError(msg)
+            if pv.version_info >= (0, 51):  # pragma: no cover
+                msg = (
+                    'Remove this future warning. Using `algorithm=None` should automatically '
+                    'default to "geometry", unless `nonlinear_subdivision` is not unity.'
+                )
+                raise RuntimeError(msg)
+
+            msg = (
+                f'The default value of `algorithm` for the filter\n'
+                f'`{self.__class__.__name__}.extract_surface` will change in the future. '
+                'It currently defaults to\n`dataset_surface`, but will change to `geometry`. '
+                'Explicitly set the `algorithm` keyword to\nsilence this warning.'
+            )
+            warn_external(msg, pv.PyVistaFutureWarning)
 
         if nonlinear_subdivision != 1 and algorithm == 'geometry':
             msg = "algorithm must be 'dataset_surface' to control non-linear subdivision."
             raise ValueError(msg)
 
         _validation.check_contains(
-            ('geometry', 'dataset_surface'), must_contain=algorithm, name='algorithm'
+            ('geometry', 'dataset_surface', None), must_contain=algorithm, name='algorithm'
         )
-        # if algorithm is None and nonlinear_subdivision == 1:
-        #     # Warn about future change in default alg when the default
-        #     # 'nonlinear_subdivision' is used
-        #     warn_future()
-        #     algorithm = 'dataset_surface'  # The old default behavior
+        if algorithm is None and nonlinear_subdivision == 1:
+            # Warn about future change in default alg when the default
+            # 'nonlinear_subdivision' is used
+            warn_future()
+            algorithm = 'dataset_surface'  # The old default behavior
 
         if isinstance(self, pv.MultiBlock):
             return extract_surface_multiblock(self)
@@ -4336,7 +4339,7 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_surface()
+            return mesh_out.extract_surface(algorithm='geometry')
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out
