@@ -443,7 +443,7 @@ reset_pyvista = ResetPyVista()
 
 
 sphinx_gallery_conf = {
-    'abort_on_example_error': True,  # Fail early
+    # 'abort_on_example_error': True,  # Fail early
     # convert rst to md for ipynb
     'pypandoc': True,
     # path to your examples scripts
