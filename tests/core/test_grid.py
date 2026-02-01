@@ -372,7 +372,7 @@ def test_destructor():
 
 
 def test_surface_indices(hexbeam):
-    surf = hexbeam.extract_surface()
+    surf = hexbeam.extract_surface(algorithm='geometry')
     surf_ind = surf.point_data['vtkOriginalPointIds']
     assert np.allclose(surf_ind, hexbeam.surface_indices())
 
@@ -1891,9 +1891,7 @@ def test_rect_grid_dimensions_raises():
 @pytest.fixture
 def empty_poly_cast_to_ugrid():
     def get_cell_types(mesh):
-        return (
-            mesh.GetCellTypes() if pv.vtk_version_info >= (9, 6, 0) else mesh.GetCellTypesArray()
-        )
+        return mesh.GetCellTypes() if pv.vtk_version_info > (9, 6, 0) else mesh.GetCellTypesArray()
 
     cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
 
