@@ -5373,10 +5373,17 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
     examples.plot_cell(grid, show_normals=True)
 
 
-def test_hide_cells():
+@pytest.mark.parametrize('data', ['point', 'cell'])
+def test_hide_cells(data):
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
-    grid.cell_data['scalars'] = range(grid.n_cells)
-    kwargs = dict(show_edges=True, show_grid=True, clim=[0, grid.n_cells])
+    if data == 'cell':
+        grid.cell_data['scalars'] = range(grid.n_cells)
+        clim_max = grid.n_cells
+    else:
+        grid.point_data['scalars'] = range(grid.n_points)
+        clim_max = grid.n_points
+
+    kwargs = dict(show_edges=True, show_grid=True, clim=[0, clim_max])
 
     grid.plot(**kwargs)
 
