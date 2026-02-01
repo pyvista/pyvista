@@ -111,7 +111,7 @@ def plot_cell(
     font_size_ = config._font_size if font_size is None else font_size
     normals_scale_ = config._normals_scale if normals_scale is None else normals_scale
 
-    def _extract_geometry(cell_):
+    def _extract_surface(cell_):
         if cell_.type == pv.CellType.POLYHEDRON:
             # For Polyhedron, we don't use ``extract_geometry`` directly because that may alter
             # the face orientation, so we iterate over each face directly to create separate
@@ -123,12 +123,8 @@ def plot_cell(
                 point_ids = [face.GetPointId(i) for i in range(face_n_points)]
                 poly = pv.PolyData(grid.points, [face_n_points, *point_ids])
                 faces.append(poly)
-            return faces.extract_surface(
-                algorithm='geometry', pass_pointid=False, pass_cellid=False
-            )
-        return cell_.cast_to_unstructured_grid().extract_surface(
-            algorithm='geometry', pass_pointid=False, pass_cellid=False
-        )
+            return faces.extract_surface()
+        return cell_.cast_to_unstructured_grid().extract_surface()
 
     grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()
@@ -164,7 +160,7 @@ def plot_cell(
         )
 
         if show_normals and cell.dimension >= 2:
-            surface = _extract_geometry(cell)
+            surface = _extract_surface(cell)
             surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
             pl.add_arrows(
                 surface.cell_centers().points,

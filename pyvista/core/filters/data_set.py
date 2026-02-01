@@ -712,9 +712,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = wrap(surface).extract_surface(
-                algorithm='geometry', pass_pointid=False, pass_cellid=False
-            )
+            surface = wrap(surface).extract_surface()
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -1260,8 +1258,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         boundary faces of the dataset.
 
         .. deprecated:: 0.47.0
-            Use :meth:`~pyvista.DataObjectFilters.extract_surface` instead
-            with keyword `algorithm='geometry'`.
+            Use :meth:`~pyvista.DataObjectFilters.extract_surface` instead.
 
         Parameters
         ----------
@@ -1297,10 +1294,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
-        msg = (
-            '`extract_geometry` is deprecated. '
-            "Use `extract_surface(algorithm='geometry')` instead."
-        )
+        msg = '`extract_geometry` is deprecated. Use `extract_surface` instead.'
         warn_external(msg, PyVistaDeprecationWarning)
         if pv.version_info >= (0, 50):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
@@ -3790,12 +3784,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         return (
-            self.extract_surface(
-                algorithm='geometry',
-                pass_cellid=False,
-                pass_pointid=False,
-                progress_bar=progress_bar,
-            )
+            self.extract_surface(progress_bar=progress_bar)
             .triangulate(progress_bar=progress_bar)
             .decimate(target_reduction, progress_bar=progress_bar)
         )
@@ -5495,20 +5484,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
         message = 'Extracting Surface'
         # Special case: use vtkDataSetSurfaceFilter only if requested or for non-linear subdivision
-        if algorithm == 'dataset_surface' or (
-            isinstance(self, _vtk.vtkUnstructuredGrid) and nonlinear_subdivision != 1  # type: ignore[unreachable]
-        ):
-            return self._dataset_surface_filter(
-                nonlinear_subdivision=nonlinear_subdivision,
+        if algorithm == 'geometry':
+            return self._geometry_filter(
+                extent=None,
                 pass_pointid=pass_pointid,
                 pass_cellid=pass_cellid,
                 progress_bar=progress_bar,
                 message=message,
             )
-        # Default case: use vtkGeometryFilter. This will automatically delegate to
-        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
-        return self._geometry_filter(
-            extent=None,
+        return self._dataset_surface_filter(
+            nonlinear_subdivision=nonlinear_subdivision,
             pass_pointid=pass_pointid,
             pass_cellid=pass_cellid,
             progress_bar=progress_bar,
@@ -5544,12 +5529,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
         >>> ind[:10]
-        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
 
         """
-        surf = DataObjectFilters.extract_surface(
-            self, algorithm='geometry', pass_cellid=False, progress_bar=progress_bar
-        )
+        surf = DataSetFilters.extract_surface(self, pass_pointid=True, progress_bar=progress_bar)
         return surf.point_data['vtkOriginalPointIds']
 
     @_deprecate_positional_args(allowed=['feature_angle'])

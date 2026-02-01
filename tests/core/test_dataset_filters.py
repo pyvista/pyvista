@@ -563,9 +563,7 @@ def test_extract_geometry(datasets, multiblock_all):
 
 
 def test_extract_geometry_extent(uniform):
-    match = (
-        "`extract_geometry` is deprecated. Use `extract_surface(algorithm='geometry')` instead."
-    )
+    match = '`extract_geometry` is deprecated. Use `extract_surface` instead.'
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
         geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
     assert isinstance(geom, pv.PolyData)

@@ -38,7 +38,7 @@ sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500
 # value of the Perlin noise.  This is necessary to the terrain its shape.
 
 mesh = sampled.warp_by_scalar('scalars')
-mesh = mesh.extract_surface(algorithm='geometry')
+mesh = mesh.extract_surface()
 
 # clean and smooth a little to reduce Perlin noise artifacts
 mesh = mesh.smooth(n_iter=100, inplace=False, relaxation_factor=1)

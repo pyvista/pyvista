@@ -165,7 +165,7 @@ pl.background_color = 'w'
 # clear and overwrite the mesh on each frame
 n_frames = 20
 for i in range(n_frames):
-    exploded = sphere.explode(factor=i / (n_frames * 2)).extract_surface(algorithm='geometry')
+    exploded = sphere.explode(factor=i / (n_frames * 2)).extract_surface()
     actor.mapper.dataset.copy_from(exploded)
     pl.camera.reset_clipping_range()
     pl.write_frame()  # Write this frame

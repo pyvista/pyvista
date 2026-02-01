@@ -69,7 +69,7 @@ celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # finally, extract the surface and plot it
-surf = grid.extract_surface(algorithm='geometry')
+surf = grid.extract_surface()
 surf.plot(show_scalar_bar=False)
 
 
