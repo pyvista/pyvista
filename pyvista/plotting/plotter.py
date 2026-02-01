@@ -3721,8 +3721,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 # Combine meshes
                 not_hidden = not_hidden + corners_grid
                 association, name = mesh.active_scalars_info
-                not_hidden.set_active_scalars(name, preference=association)
-
+                try:
+                    not_hidden.set_active_scalars(name, preference=association)
+                except KeyError:
+                    not_hidden.set_active_scalars(None, preference=association)
                 mesh = not_hidden
                 copy_mesh = False
 
