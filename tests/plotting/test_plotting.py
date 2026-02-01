@@ -5392,3 +5392,12 @@ def test_hide_cells(data):
 
     grid = grid.cast_to_unstructured_grid()
     grid.plot(**kwargs)
+
+
+def test_hide_cells_no_scalars():
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    grid = grid.hide_cells(range(80, 120))
+    grid = grid.cast_to_unstructured_grid()
+    # Test plotting still works with ghost cells active
+    assert grid.active_scalars_name == _vtk.vtkDataSetAttributes.GhostArrayName()
+    grid.plot(color='w', show_edges=True, show_grid=True)
