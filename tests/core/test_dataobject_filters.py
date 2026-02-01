@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Sized
 import itertools
-import platform
 import re
 import sys
 from typing import Literal
@@ -2162,15 +2161,12 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
         pv.PointSet(),
         pv.PolyData(),
         pv.UnstructuredGrid(),
-        pv.ExplicitStructuredGrid(),
         pv.MultiBlock([pv.PolyData()]),
+        # pv.ExplicitStructuredGrid(),  Seg fault with empty mesh. This type is tested separately.
     ],
 )
 @pytest.mark.parametrize('validate', [True, 'data'])
 def test_init_mesh_validate(mesh, validate):
-    if isinstance(mesh, pv.ExplicitStructuredGrid) and platform.system() in ['Linux', 'Windows']:
-        pytest.skip('Crashes parallel workers when coverage is enabled')
-
     mesh_type = type(mesh)
     if mesh_type is pv.MultiBlock:
         _add_invalid_arrays(mesh[0])

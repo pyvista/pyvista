@@ -1891,7 +1891,9 @@ def test_rect_grid_dimensions_raises():
 @pytest.fixture
 def empty_poly_cast_to_ugrid():
     def get_cell_types(mesh):
-        return mesh.GetCellTypes() if pv.vtk_version_info > (9, 6, 0) else mesh.GetCellTypesArray()
+        return (
+            mesh.GetCellTypes() if pv.vtk_version_info >= (9, 6, 0) else mesh.GetCellTypesArray()
+        )
 
     cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
 

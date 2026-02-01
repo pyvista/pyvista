@@ -401,7 +401,15 @@ from sphinx_gallery.sorting import FileNameSortKey
 def _filter_sphinx_gallery_warnings():
     import warnings
 
-    warnings.simplefilter('error')
+    # Ignore specific warnings
+    warnings.filterwarnings(
+        'ignore',
+        message='Call to deprecated method GetData',  # emitted by trame-vtk
+        category=DeprecationWarning,
+    )
+
+    # Treat all remaining warnings as errors
+    warnings.simplefilter('error', append=True)
 
 
 class ResetPyVista:

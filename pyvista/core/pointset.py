@@ -2293,7 +2293,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             polyhedron_faces = pv.convert_array(self.GetFaces())
 
             if polyhedron_faces is None:
-                return np.array([], dtype=int)  # type: ignore[unreachable]
+                return np.array([], dtype=int)
 
             cell_faces = []
             i = 0
@@ -2352,7 +2352,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             polyhedron_faces = pv.convert_array(self.GetFaces())
 
             if polyhedron_faces is None:
-                return np.array([], dtype=int)  # type: ignore[unreachable]
+                return np.array([], dtype=int)
 
             i, face_counts = 0, []
 
@@ -2572,9 +2572,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     def _get_cell_types_array(self):
         array = (
-            self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
-            if pv.vtk_version_info >= (9, 6, 0)
-            else self.GetCellTypesArray()
+            self.GetCellTypes() if pv.vtk_version_info >= (9, 6, 0) else self.GetCellTypesArray()
         )
 
         if array is None:
