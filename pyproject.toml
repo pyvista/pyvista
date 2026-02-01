@@ -131,7 +131,7 @@ docs = [
   'numpydoc==1.10.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.16.2',
-  'pytest-sphinx==0.6.3',
+  'pytest-sphinx==0.7.1',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.0; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
