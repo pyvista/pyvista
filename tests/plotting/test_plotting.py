@@ -40,6 +40,8 @@ from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.core.test_dataset import HIDDEN_CELL_MESH_TYPES
+from tests.core.test_dataset import _cast_hidden_cells_mesh
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 
@@ -5371,3 +5373,44 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
         normal = grid.extract_geometry().cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
+
+
+@pytest.mark.parametrize('mesh_type', HIDDEN_CELL_MESH_TYPES)
+def test_hidden_cells_mixin(mesh_type):
+    HIDDEN_RANGE = np.arange(22, 122)
+    original_grid = pv.ImageData(dimensions=(6, 6, 6))
+
+    # Cast first, then hide
+    cast_then_hide = _cast_hidden_cells_mesh(original_grid, mesh_type)
+    cast_then_hide.hide_cells(HIDDEN_RANGE, inplace=True)
+    assert cast_then_hide.distinct_cell_types.issubset({pv.CellType.HEXAHEDRON, pv.CellType.VOXEL})
+    assert np.array_equal(cast_then_hide.hidden_cell_ids, HIDDEN_RANGE)
+
+    # Hide, then cast
+    hidden = original_grid.hide_cells(HIDDEN_RANGE)
+    assert hidden.distinct_cell_types.issubset({pv.CellType.HEXAHEDRON, pv.CellType.VOXEL})
+    assert np.array_equal(hidden.hidden_cell_ids, HIDDEN_RANGE)
+    assert hidden is not original_grid
+    hide_then_cast = _cast_hidden_cells_mesh(hidden, mesh_type)
+
+    assert cast_then_hide == hide_then_cast
+
+    pl = pv.Plotter(shape=(2, 2))
+
+    pl.subplot(0, 0)
+    pl.add_title('cast & hide', font_size=10, color='red')
+    pl.add_mesh(cast_then_hide, show_edges=True)
+
+    pl.subplot(0, 1)
+    pl.add_title('show', font_size=10, color='red')
+    pl.add_mesh(cast_then_hide.unhide_cells(), show_edges=True)
+
+    pl.subplot(1, 0)
+    pl.add_title('hide & cast', font_size=10, color='red')
+    pl.add_mesh(hide_then_cast, show_edges=True)
+
+    pl.subplot(1, 1)
+    pl.add_title('show', font_size=10, color='red')
+    pl.add_mesh(hide_then_cast.unhide_cells(), show_edges=True)
+
+    pl.show()
