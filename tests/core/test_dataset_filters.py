@@ -250,7 +250,7 @@ def test_clip_surface():
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
-        clp = dataset.clip_surface(dataset.extract_surface(algorithm='geometry'), crinkle=crinkle)
+        clp = dataset.clip_surface(dataset.extract_surface(), crinkle=crinkle)
         assert clp is not None
         if isinstance(dataset, pv.PointSet):
             assert isinstance(clp, pv.PointSet)
@@ -1411,7 +1411,7 @@ def test_delaunay_3d():
 
 @pytest.mark.needs_vtk_version(9, 3)
 def test_smooth(uniform):
-    surf = uniform.extract_surface(algorithm='geometry').clean()
+    surf = uniform.extract_surface().clean()
     smoothed = surf.smooth()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
@@ -1424,7 +1424,7 @@ def test_smooth(uniform):
 
 @pytest.mark.needs_vtk_version(9, 3)
 def test_smooth_taubin(uniform):
-    surf = uniform.extract_surface(algorithm='geometry').clean()
+    surf = uniform.extract_surface().clean()
     smoothed = surf.smooth_taubin()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
@@ -2174,7 +2174,7 @@ def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = append(big_box, small_box).extract_surface(algorithm='geometry').connectivity()
+    labeled = append(big_box, small_box).extract_surface().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2717,11 +2717,11 @@ def test_decimate_boundary():
 
 def test_extract_surface(datasets, multiblock_all):
     for dataset in datasets:
-        geom = dataset.extract_surface(algorithm='geometry', progress_bar=True)
+        geom = dataset.extract_surface(progress_bar=True)
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = multiblock_all.extract_surface(algorithm='geometry')
+    output = multiblock_all.extract_surface()
     assert isinstance(output, pv.PolyData)
 
 
@@ -2794,7 +2794,7 @@ def test_merge_general(uniform):
     merged = con + thresh
     assert isinstance(merged, pv.UnstructuredGrid)
     # Pure PolyData inputs should yield poly data output
-    merged = uniform.extract_surface(algorithm='geometry') + con
+    merged = uniform.extract_surface() + con
     assert isinstance(merged, pv.PolyData)
 
 

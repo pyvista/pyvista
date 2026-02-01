@@ -1346,7 +1346,9 @@ def Box(
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
     mesh = pv.ImageData(dimensions=level_vector + 2)
-    mesh = mesh.extract_surface().resize(bounds=bounds)
+    mesh = mesh.extract_surface(
+        algorithm='geometry', pass_cellid=False, pass_pointid=False
+    ).resize(bounds=bounds)
     if not quads:
         mesh = mesh.triangulate()
     return mesh

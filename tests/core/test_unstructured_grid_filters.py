@@ -105,7 +105,7 @@ def test_remove_unused_points(mesh_type, inplace):
     mesh_in = (
         cube_ug
         if mesh_type is pv.UnstructuredGrid
-        else cube_poly.extract_surface(algorithm='geometry', pass_cellid=False, pass_pointid=False)
+        else cube_poly.extract_surface(pass_cellid=False, pass_pointid=False)
     )
     mesh_out = mesh_in.remove_unused_points(inplace=inplace)
 
