@@ -166,7 +166,7 @@ assert poly_surface.n_points == 24
 assert poly_surface.n_open_edges == 24
 
 # %%
-# This can be fixed with a call to :meth:`~pyvista.PolyData.clean`, however.
+# This can be fixed with a call to :meth:`~pyvista.PolyDataFilters.clean`, however.
 
 cleaned = poly_surface.clean()
 assert cleaned.n_points == 8
