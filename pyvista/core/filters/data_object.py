@@ -3311,6 +3311,8 @@ class DataObjectFilters:
             The current default is ``'dataset_surface'``, but this will change to ``'geometry'``
             in a future version.
 
+            See :ref:`compare_surface_extract_algorithms` for some examples of differences.
+
             .. versionadded:: 0.47
 
         progress_bar : bool, default: False
