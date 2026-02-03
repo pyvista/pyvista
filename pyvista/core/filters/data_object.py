@@ -3380,7 +3380,7 @@ class DataObjectFilters:
                 and not progress_bar
                 and nonlinear_subdivision == 1
             ):
-                return mesh._geometry_filter()
+                return mesh._composite_geometry_filter()
 
             # Otherwise, extract each block separately and combine into a single PolyData
             multi_polys = self.generic_filter(

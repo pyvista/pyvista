@@ -790,7 +790,7 @@ class _DataSetMapper(_BaseMapper):
 
         >>> mesh = examples.download_tri_quadratic_hexahedron()
         >>> surface_sep = mesh.separate_cells().extract_surface(
-        ...     nonlinear_subdivision=4
+        ...     algorithm='auto', nonlinear_subdivision=4
         ... )
         >>> edges = surface_sep.extract_feature_edges()
         >>> surface = mesh.extract_surface(nonlinear_subdivision=4)

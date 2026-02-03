@@ -3079,7 +3079,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Show non-linear subdivision.
 
-    >>> surf = dataset.extract_surface(nonlinear_subdivision=5)
+    >>> surf = dataset.extract_surface(algorithm='auto', nonlinear_subdivision=5)
     >>> surf.plot(smooth_shading=True)
 
     .. seealso::
