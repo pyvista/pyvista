@@ -474,6 +474,67 @@ encouraged to use the ``.. versionadded`` sphinx directive. For example:
         """
 
 
+Input Validation
+^^^^^^^^^^^^^^^^
+Validating user input is an essential part of software development to ensure
+algorithms perform as expected. This is especially the case in Python when
+working with multiple array-like object types (e.g. ``Sequence`` and
+``numpy.ndarray``) which may lack support for explicit typing and type
+hints for cases where arrays with a certain shape, dimensionality, and/or
+data type (e.g. ``float``, ``int``) may be required. Therefore it is imperative
+to validate all user input and raise any errors as appropriate.
+
+However, manually writing input validation routines and associated test cases
+can be time consuming and error prone. Therefore, it is recommended to make
+use of existing validation methods in ``pyvista.core.validate``.
+
+For example, a typical validation routine for some function may look like:
+
+.. code:: python
+
+    def some_function(points_array, method):
+        """Apply a method to an Nx3 points array.
+
+        Parameters
+        ----------
+        points_array : array_like
+            Array-like input of points with shape Nx3.
+
+        method : str
+            Method to apply. Must be one of:
+                * ``'method_a'``
+                * ``'method_b'``
+
+        """
+        # Import the `validate` package
+        ## It is preferred to give the package its own namespace rather
+        ## than importing individual package functions
+        from pyvista.core import validate
+
+        # Validate the input array.
+        ## There is no need to check for type (e.g. Sequence or
+        ## np.ndarray) or array shape. An error is automatically raised
+        ## for bad input.
+        arr = validate.validate_arrayNx3(points_array)
+
+        # Validate the input method.
+        ## An error is automatically raised if the method is not valid.
+        possible_methods = ["method_a", "method_b"]
+        validate.check_contains(method, possible_methods)
+
+        # Start of implementation code...
+
+When using the array validation methods, consider setting the input
+type in the docstring to ``array_like`` (if appropriate), as the validation
+methods are very general and can operate on any array-like input.
+
+Note: ``array_like`` is a `NumPy glossary term <https://numpy.org/doc/stable/glossary.html#term-array_like>`_,
+not an actual type. Nevertheless, it's use is common in NumPy and
+PyVista documentation. A formal ``ArrayLike`` type was `introduced
+in NumPy 1.20 <https://numpy.org/devdocs/reference/typing.html#numpy.typing.ArrayLike>`_,
+but its use is not currently supported in PyVista.
+
+
 Branch Naming Conventions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
