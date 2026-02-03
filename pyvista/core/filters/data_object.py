@@ -3266,11 +3266,16 @@ class DataObjectFilters:
         self: DataSet | MultiBlock,
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
-        nonlinear_subdivision: int = 1,
+        nonlinear_subdivision: int | None = None,
         algorithm: _ExtractSurfaceOptions | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> PolyData:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
+
+        .. note::
+            The underlying VTK algorithm can be selected for surface extraction.
+            Using ``algorithm='auto'`` is recommended. The current default is
+            ``'dataset_surface'``, but this will change to ``'auto'`` in a future version.
 
         .. versionchanged:: 0.47
             This filter is now generalized to also work with :class:`~pyvista.MultiBlock`.
@@ -3278,42 +3283,53 @@ class DataObjectFilters:
         Parameters
         ----------
         pass_pointid : bool, default: True
-            Adds a point array ``"vtkOriginalPointIds"`` that
-            identifies which original points these surface points
-            correspond to.
+            Adds a point array ``"vtkOriginalPointIds"`` that identifies which original points
+            these surface points correspond to.
 
         pass_cellid : bool, default: True
-            Adds a cell array ``"vtkOriginalCellIds"`` that
-            identifies which original cells these surface cells
-            correspond to.
+            Adds a cell array ``"vtkOriginalCellIds"`` that identifies which original cells these
+            surface cells correspond to.
 
         nonlinear_subdivision : int, default: 1
-            If the input is an unstructured grid with nonlinear faces,
-            this parameter determines how many times the face is
-            subdivided into linear faces.
+            Determines how many times the faces of non-linear cells are subdivided into linear
+            faces. This option is only relevant when the input is an
+            :class:`~pyvista.UnstructuredGrid` with non-linear cells, and cannot be used with
+            the ``'geometry'`` algorithm.
 
-            If 0, the output is the equivalent of its linear
-            counterpart (and the midpoints determining the nonlinear
-            interpolation are discarded). If 1 (the default), the
-            nonlinear face is triangulated based on the midpoints. If
-            greater than 1, the triangulated pieces are recursively
-            subdivided to reach the desired subdivision. Setting the
-            value to greater than 1 may cause some point data to not
-            be passed even if no nonlinear faces exist. This option
-            has no effect if the input is not an unstructured grid.
+            If ``0``, the output is the equivalent to its linear counterpart (and the midpoints
+            determining the non-linear interpolation are discarded). If ``1`` (the default), the
+            non-linear face is triangulated based on the midpoints. If greater than ``1``, the
+            triangulated pieces are recursively subdivided to reach the desired subdivision.
+            Setting the value to greater than ``1`` may cause some point data to not be passed even
+            if no nonlinear faces exist.
 
-        algorithm : 'geometry' | 'dataset_surface'
-            VTK algorithm to use internally. Specify ``'geometry'`` to use
-            :vtk:`vtkGeometryFilter`, or ``'dataset_surface'`` to use
-            :vtk:`vtkDataSetSurfaceFilter`. ``'geometry'`` is more performant than
-            ``'dataset_surface'``, and is the recommended algorithm to use in most cases.
-            ``'dataset_surface'`` is mainly useful for backwards-compatibility or when
-            ``nonlinear_subdivision`` is used.
+        algorithm : 'auto' | 'geometry' | 'dataset_surface'
+            VTK algorithm to use internally.
 
-            The current default is ``'dataset_surface'``, but this will change to ``'geometry'``
-            in a future version.
+            - ``'geometry'``: use :vtk:`vtkGeometryFilter`.
+            - ``'dataset_surface'``: use :vtk:`vtkDataSetSurfaceFilter`.
+            - ``'auto'``: The algorithm is automatically selected based on the input. For most
+              cases, the ``'geometry'`` algorithm is selected by default. The ``'dataset_surface'``
+              algorithm is only selected for cases where the input is an
+              :class:`~pyvista.UnstructuredGrid` with at least one non-linear cell.
+
+            Using ``'auto'`` is recommended. The current default is ``'dataset_surface'``, but
+            this will change to ``'auto'`` in a future version.
+
+            Both algorithms produce similar surfaces, but ``'geometry'`` is more performant.
+            The ``'geometry'`` algorithm also
+
+            - merges points by default,
+            - tends to preserve the original mesh structure, and
+            - generates closed surfaces where closed surfaces would normally be expected.
 
             See :ref:`compare_surface_extract_algorithms` for some examples of differences.
+
+            In general, users should not need to select the specific algorithm. This option is
+            mostly provided for backwards-compatibility or specific use cases. For example, if
+            working with both linear and non-linear meshes, it may be preferable to use
+            ``'dataset_surface'`` explicitly so that the generated surfaces may be more directly
+            comparable.
 
             .. versionadded:: 0.47
 
@@ -3369,8 +3385,8 @@ class DataObjectFilters:
         """
 
         def extract_surface_multiblock(mesh: MultiBlock):
-            # Try to use `vtkCompositeDataGeometryFilter` directly if possible, which doesn't
-            # support any additional config options.
+            # For performance, try to use `vtkCompositeDataGeometryFilter` directly if possible,
+            # which doesn't support any additional config options.
             # Despite its name, it uses `vtkDataSetSurfaceFilter` internally:
             # https://github.com/Kitware/VTK/blob/e75f54db867f82ab50ad887e5ac36bf82425ee69/Filters/Geometry/vtkCompositeDataGeometryFilter.cxx#L81
             if (
@@ -3403,36 +3419,42 @@ class DataObjectFilters:
             if pv.version_info >= (0, 50):  # pragma: no cover
                 msg = (
                     'Convert this future warning into an error '
-                    'and update the docstring default value to "geometry".'
+                    'and update the docstring default value to "auto".'
                 )
                 raise RuntimeError(msg)
             if pv.version_info >= (0, 51):  # pragma: no cover
                 msg = (
-                    'Remove this future warning. Using `algorithm=None` should automatically '
-                    'default to "geometry", unless `nonlinear_subdivision` is not unity.'
+                    'Remove this future warning. Using `algorithm=None` should not be allowed, and'
+                    "the default value in the function signature should be `algorithm='auto'`."
                 )
                 raise RuntimeError(msg)
 
             msg = (
                 f'The default value of `algorithm` for the filter\n'
                 f'`{self.__class__.__name__}.extract_surface` will change in the future. '
-                'It currently defaults to\n`dataset_surface`, but will change to `geometry`. '
+                "It currently defaults to\n`'dataset_surface'`, but will change to `'auto'`. "
                 'Explicitly set the `algorithm` keyword to\nsilence this warning.'
             )
             warn_external(msg, pv.PyVistaFutureWarning)
 
-        if nonlinear_subdivision != 1 and algorithm == 'geometry':
-            msg = "algorithm must be 'dataset_surface' to control non-linear subdivision."
-            raise ValueError(msg)
-
-        _validation.check_contains(
-            (*get_args(_ExtractSurfaceOptions), None), must_contain=algorithm, name='algorithm'
-        )
         if algorithm is None:
             # Warn about future change in default alg
             warn_future()
             # The old default is 'dataset_surface', will be 'auto' in the future
             algorithm = 'dataset_surface'
+
+        if nonlinear_subdivision is None:
+            nonlinear_subdivision = 1
+        elif algorithm == 'geometry':
+            msg = (
+                'geometry algorithm cannot process non-linear cells and therefore '
+                'cannot be used to control non-linear subdivision.'
+            )
+            raise ValueError(msg)
+
+        _validation.check_contains(
+            get_args(_ExtractSurfaceOptions), must_contain=algorithm, name='algorithm'
+        )
 
         if isinstance(self, pv.MultiBlock):
             return extract_surface_multiblock(self)

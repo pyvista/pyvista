@@ -2779,9 +2779,23 @@ def test_extract_surface_nonlinear(as_multiblock):
         algorithm='auto', nonlinear_subdivision=5, progress_bar=True
     )
     assert surf_subdivided.n_faces_strict > surf.n_faces_strict
-    match = "algorithm must be 'dataset_surface' to control non-linear subdivision."
+    match = (
+        'geometry algorithm cannot process non-linear cells and therefore '
+        'cannot be used to control non-linear subdivision.'
+    )
     with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry', nonlinear_subdivision=5)
+
+    if as_multiblock:
+        expected_error = RuntimeError
+        match = 'could not be applied to the block at index 0'
+    else:
+        expected_error = ValueError
+        match = (
+            'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
+        )
+    with pytest.raises(expected_error, match=match):
+        grid.extract_surface(algorithm='geometry')
 
     # No subdivision, expect one face per cell
     surf_no_subdivide = grid.extract_surface(

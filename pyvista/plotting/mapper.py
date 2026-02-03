@@ -793,7 +793,7 @@ class _DataSetMapper(_BaseMapper):
         ...     algorithm='auto', nonlinear_subdivision=4
         ... )
         >>> edges = surface_sep.extract_feature_edges()
-        >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
+        >>> surface = mesh.extract_surface(algorithm='auto', nonlinear_subdivision=4)
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(surface, smooth_shading=True, split_sharp_edges=True)

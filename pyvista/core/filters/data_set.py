@@ -5499,13 +5499,23 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
         message = 'Extracting Surface'
 
-        # Default case: use vtkGeometryFilter. This will automatically delegate to
-        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
         if algorithm in ('auto', 'geometry'):
-            # if algorithm == 'geometry':
-            #     # Input must be linear to avoid delegation to vtkDataSetSurfaceFilter
-            #     # distinct_cells = self.distinct_cell_types
-            #     # is_linear = _vtk.vtkCellTypes.IsLinear()
+            # Default case: use vtkGeometryFilter. This will automatically delegate to
+            # vtkDataSetSurfaceFilter internally as needed for non-linear cells
+            if (
+                algorithm == 'geometry'
+                and isinstance(self, pv.UnstructuredGrid)
+                and not all(
+                    _vtk.vtkCellTypes.IsLinear(celltype) for celltype in self.distinct_cell_types
+                )
+            ):
+                # vtkGeometryFilter itself cannot process non-linear cells
+                msg = (
+                    'Mesh contains non-linear cells which cannot be processed '
+                    'by the geometry algorithm.'
+                )
+                raise ValueError(msg)
+
             return self._geometry_filter(
                 extent=None,  # Extent is only used by deprecated extract_geometry filter
                 nonlinear_subdivision=nonlinear_subdivision,

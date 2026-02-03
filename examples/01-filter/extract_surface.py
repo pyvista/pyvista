@@ -101,7 +101,6 @@ surf_subdivided.plot(show_scalar_bar=False)
 # important ways. As the following examples will demonstrate, it is generally preferable to use the
 # geometry algorithm.
 #
-# %%
 # Structural Preservation
 # =======================
 # The geometry algorithm preserves structure when converting between mesh types, whereas the
