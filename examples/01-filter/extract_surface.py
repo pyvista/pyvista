@@ -128,6 +128,28 @@ poly_surface = ugrid.extract_surface(
 assert poly_surface != poly
 
 # %%
+# Compare the point ids of the original mesh to the generated surfaces.
+pl = pv.Plotter(shape=(1, 3))
+
+pl.subplot(0, 0)
+pl.add_mesh(poly_geometry)
+pl.add_title('geometry')
+pl.add_point_labels(poly_geometry, range(poly_geometry.n_points))
+
+pl.subplot(0, 1)
+pl.add_mesh(poly)
+pl.add_title('original')
+pl.add_point_labels(poly, range(poly.n_points))
+
+pl.subplot(0, 2)
+pl.add_mesh(poly_surface)
+pl.add_title('dataset_surface')
+pl.add_point_labels(poly_surface, range(poly_surface.n_points))
+
+pl.link_views()
+pl.show()
+
+# %%
 # Closed Surface Generation
 # =========================
 # The geometry filter also generates closed surfaces in cases where a closed surface is expected,
@@ -175,28 +197,6 @@ assert cleaned.n_open_edges == 0
 # Note that a closed surface is important for some calculations. E.g. the filter
 # :meth:`~pyvista.DataSetFilters.select_interior_points` requires a closed surface by default, and
 # properties like :attr:`~pyvista.PolyData.volume` assume the input is a closed surface.
-
-# %%
-# Compare the point ids of the original mesh to the generated surfaces.
-pl = pv.Plotter(shape=(1, 3))
-
-pl.subplot(0, 0)
-pl.add_mesh(poly_geometry)
-pl.add_title('geometry')
-pl.add_point_labels(poly_geometry, range(poly_geometry.n_points))
-
-pl.subplot(0, 1)
-pl.add_mesh(grid)
-pl.add_title('original')
-pl.add_point_labels(grid, range(grid.n_points))
-
-pl.subplot(0, 2)
-pl.add_mesh(poly_surface)
-pl.add_title('dataset_surface')
-pl.add_point_labels(poly_surface, range(poly_surface.n_points))
-
-pl.link_views()
-pl.show()
 
 # %%
 # .. tags:: filter
