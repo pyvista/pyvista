@@ -3339,6 +3339,17 @@ class DataSet(DataSetFilters, DataObject):
 
         .. versionadded:: 0.47
 
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.cells.Hexahedron()
+        >>> mesh.has_nonlinear_cells
+        False
+
+        >>> mesh = examples.cells.QuadraticHexahedron()
+        >>> mesh.has_nonlinear_cells
+        True
+
         """
         if not isinstance(self, pv.UnstructuredGrid):
             return False
