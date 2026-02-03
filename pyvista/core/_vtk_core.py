@@ -534,6 +534,9 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
     from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 
+with contextlib.suppress(ImportError):  # Introduced VTK 9.6.0
+    from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities as vtkCellTypeUtilities
+
 
 class VersionInfo(NamedTuple):
     """Version information as a named tuple."""
