@@ -4348,7 +4348,9 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_surface(algorithm='auto')
+            return mesh_out.extract_surface(
+                algorithm='auto', pass_cellid=False, pass_pointid=False
+            )
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out
