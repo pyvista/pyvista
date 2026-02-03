@@ -580,6 +580,11 @@ html_theme_options = {
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
         },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/pyvista",
+            "icon": "fa-custom fa-pypi",
+        },
     ],
 }
 
