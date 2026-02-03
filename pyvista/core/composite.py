@@ -142,7 +142,7 @@ class MultiBlock(
 
     >>> for block in blocks:
     ...     # Do something with each dataset
-    ...     surf = block.extract_surface(algorithm='geometry')
+    ...     surf = block.extract_surface(algorithm='auto')
 
     """
 
@@ -1848,7 +1848,7 @@ class MultiBlock(
         Get one of the blocks and extract its surface.
 
         >>> block = multi[0][42]
-        >>> surface = block.extract_surface(algorithm='geometry')
+        >>> surface = block.extract_surface(algorithm='auto')
 
         Replace the block.
 
@@ -2481,7 +2481,7 @@ class MultiBlock(
                 return block.copy(deep=False) if copy else block
             else:
                 return block.extract_surface(
-                    algorithm='geometry', pass_pointid=False, pass_cellid=False
+                    algorithm='auto', pass_pointid=False, pass_cellid=False
                 )
 
         return self.generic_filter(block_filter, _skip_none=False)

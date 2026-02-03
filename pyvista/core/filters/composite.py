@@ -246,9 +246,9 @@ class CompositeFilters(DataObjectFilters):
         if pv.version_info >= (0, 51):  # pragma: no cover
             msg = 'Remove this deprecated filter.'
             raise RuntimeError(msg)
-        return CompositeFilters._geometry_filter(self)
+        return self._composite_geometry_filter()
 
-    def _geometry_filter(self):
+    def _composite_geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
         gf.Update()

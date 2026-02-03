@@ -1030,7 +1030,7 @@ def test_extract_largest(sphere):
 
 
 def test_clean(sphere):
-    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm='geometry')
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm='auto')
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1e-5)
     assert cleaned.n_points == sphere.n_points
@@ -1120,7 +1120,7 @@ def test_project_points_to_plane():
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
-    poly = pv.StructuredGrid(xx, yy, zz).extract_surface(algorithm='geometry', progress_bar=True)
+    poly = pv.StructuredGrid(xx, yy, zz).extract_surface(algorithm='auto', progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
@@ -1470,7 +1470,7 @@ def test_irregular_faces():
 
 
 def test_set_irregular_faces():
-    mesh = pv.Pyramid().extract_surface(algorithm='geometry')
+    mesh = pv.Pyramid().extract_surface(algorithm='auto')
     flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
     mesh.irregular_faces = flipped_faces
     _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)

@@ -175,7 +175,7 @@ def test_to_trimesh_triangulate():
     out = pv.to_trimesh(uniform, triangulate=True)
     assert isinstance(out, trimesh.Trimesh)
 
-    quad_poly = cells.Quadrilateral().extract_surface(algorithm='geometry')
+    quad_poly = cells.Quadrilateral().extract_surface(algorithm='auto')
     assert isinstance(quad_poly, pv.PolyData)
     with pytest.raises(pv.NotAllTrianglesError, match=match):
         pv.to_trimesh(quad_poly)
@@ -189,7 +189,7 @@ def test_to_trimesh_triangulate():
     out = pv.to_trimesh(grid_tetra, triangulate=True)
     assert isinstance(out, trimesh.Trimesh)
 
-    poly_tetra = grid_tetra.extract_surface(algorithm='geometry')
+    poly_tetra = grid_tetra.extract_surface(algorithm='auto')
     assert isinstance(poly_tetra, pv.PolyData)
     out = pv.to_trimesh(poly_tetra)
     assert isinstance(out, trimesh.Trimesh)
@@ -199,7 +199,7 @@ def test_to_trimesh_triangulate():
     pv.to_trimesh(grid_tri)
     assert isinstance(out, trimesh.Trimesh)
 
-    poly_tri = grid_tri.extract_surface(algorithm='geometry')
+    poly_tri = grid_tri.extract_surface(algorithm='auto')
     assert isinstance(poly_tri, pv.PolyData)
     pv.to_trimesh(poly_tri)
     assert isinstance(out, trimesh.Trimesh)
@@ -489,7 +489,7 @@ def test_wrappers():
         assert isinstance(tri_data, Foo)
 
         image = pv.ImageData()
-        surface = image.extract_surface(algorithm='geometry')
+        surface = image.extract_surface(algorithm='auto')
 
         assert isinstance(surface, Foo)
 

@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
 
@@ -713,7 +714,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """
         if not isinstance(surface, _vtk.vtkPolyData):
             surface = wrap(surface).extract_surface(
-                algorithm='geometry', pass_pointid=False, pass_cellid=False
+                algorithm='auto', pass_pointid=False, pass_cellid=False
             )
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
@@ -1261,7 +1262,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         .. deprecated:: 0.47.0
             Use :meth:`~pyvista.DataObjectFilters.extract_surface` instead
-            with keyword `algorithm='geometry'`.
+            with keyword `algorithm='auto'`.
 
         Parameters
         ----------
@@ -1297,10 +1298,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
-        msg = (
-            '`extract_geometry` is deprecated. '
-            "Use `extract_surface(algorithm='geometry')` instead."
-        )
+        msg = "`extract_geometry` is deprecated. Use `extract_surface(algorithm='auto')` instead."
         warn_external(msg, PyVistaDeprecationWarning)
         if pv.version_info >= (0, 50):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
@@ -1309,7 +1307,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             msg = 'Remove this deprecated filter.'
             raise RuntimeError(msg)
         return self._geometry_filter(
-            extent=extent, pass_pointid=False, pass_cellid=False, progress_bar=progress_bar
+            extent=extent,
+            pass_pointid=False,
+            pass_cellid=False,
+            nonlinear_subdivision=1,
+            progress_bar=progress_bar,
         )
 
     def _geometry_filter(  # type: ignore[misc]
@@ -1318,6 +1320,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_pointid: bool,
         pass_cellid: bool,
         extent: VectorLike[float] | None,
+        nonlinear_subdivision: int,
         progress_bar: bool,
         message: str = 'Extracting Geometry',
     ) -> PolyData:
@@ -1325,6 +1328,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetPassThroughCellIds(pass_cellid)
         alg.SetPassThroughPointIds(pass_pointid)
+        alg.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
         if extent is not None:
             extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
             alg.SetExtent(extent_)
@@ -3791,7 +3795,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """
         return (
             self.extract_surface(
-                algorithm='geometry',
+                algorithm='auto',
                 pass_cellid=False,
                 pass_pointid=False,
                 progress_bar=progress_bar,
@@ -5489,26 +5493,30 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_pointid: bool,
         pass_cellid: bool,
         nonlinear_subdivision: int,
-        algorithm: Literal['geometry', 'dataset_surface'] | None,
+        algorithm: _ExtractSurfaceOptions,
         progress_bar: bool,
     ) -> PolyData:
         """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
         message = 'Extracting Surface'
-        # Special case: use vtkDataSetSurfaceFilter only if requested or for non-linear subdivision
-        if algorithm == 'dataset_surface' or (
-            isinstance(self, _vtk.vtkUnstructuredGrid) and nonlinear_subdivision != 1  # type: ignore[unreachable]
-        ):
-            return self._dataset_surface_filter(
+
+        # Default case: use vtkGeometryFilter. This will automatically delegate to
+        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
+        if algorithm in ('auto', 'geometry'):
+            # if algorithm == 'geometry':
+            #     # Input must be linear to avoid delegation to vtkDataSetSurfaceFilter
+            #     # distinct_cells = self.distinct_cell_types
+            #     # is_linear = _vtk.vtkCellTypes.IsLinear()
+            return self._geometry_filter(
+                extent=None,  # Extent is only used by deprecated extract_geometry filter
                 nonlinear_subdivision=nonlinear_subdivision,
                 pass_pointid=pass_pointid,
                 pass_cellid=pass_cellid,
                 progress_bar=progress_bar,
                 message=message,
             )
-        # Default case: use vtkGeometryFilter. This will automatically delegate to
-        # vtkDataSetSurfaceFilter internally as needed for non-linear cells
-        return self._geometry_filter(
-            extent=None,
+        # Special case: use vtkDataSetSurfaceFilter only if requested
+        return self._dataset_surface_filter(
+            nonlinear_subdivision=nonlinear_subdivision,
             pass_pointid=pass_pointid,
             pass_cellid=pass_cellid,
             progress_bar=progress_bar,
@@ -5548,7 +5556,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         surf = DataObjectFilters.extract_surface(
-            self, algorithm='geometry', pass_cellid=False, progress_bar=progress_bar
+            self, algorithm='auto', pass_cellid=False, progress_bar=progress_bar
         )
         return surf.point_data['vtkOriginalPointIds']
 
@@ -5623,7 +5631,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         dataset: DataSet = self
         if not isinstance(dataset, _vtk.vtkPolyData):
             dataset = DataObjectFilters.extract_surface(
-                dataset, algorithm='geometry', pass_pointid=False, pass_cellid=False
+                dataset, algorithm='auto', pass_pointid=False, pass_cellid=False
             )
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(dataset)
@@ -6243,7 +6251,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface(  # type: ignore[unreachable]
-                algorithm='geometry', pass_cellid=False, pass_pointid=False
+                algorithm='auto', pass_cellid=False, pass_pointid=False
             )
         return output
 
@@ -6805,7 +6813,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         def _multiblock_to_polydata(multiblock):
             return multiblock.combine(merge_points=False).extract_surface(
-                algorithm='geometry', pass_pointid=False, pass_cellid=False
+                algorithm='auto', pass_pointid=False, pass_cellid=False
             )
 
         # Validate style
@@ -8024,7 +8032,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         surface = wrap(self).extract_surface(
-            algorithm='geometry', pass_pointid=False, pass_cellid=False
+            algorithm='auto', pass_pointid=False, pass_cellid=False
         )
         if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh

@@ -73,6 +73,8 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     coincident_points=0x100,
 )
 
+_ExtractSurfaceOptions = Literal['auto', 'geometry', 'dataset_surface']
+
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _ActionOptions = Literal['warn', 'error']
@@ -3265,7 +3267,7 @@ class DataObjectFilters:
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
         nonlinear_subdivision: int = 1,
-        algorithm: Literal['geometry', 'dataset_surface'] | None = None,
+        algorithm: _ExtractSurfaceOptions | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> PolyData:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
@@ -3337,7 +3339,7 @@ class DataObjectFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
-        >>> surf = grid.extract_surface(algorithm='geometry')
+        >>> surf = grid.extract_surface(algorithm='auto')
         >>> type(surf)
         <class 'pyvista.core.pointset.PolyData'>
         >>> surf['vtkOriginalPointIds']
@@ -3372,7 +3374,7 @@ class DataObjectFilters:
             # Despite its name, it uses `vtkDataSetSurfaceFilter` internally:
             # https://github.com/Kitware/VTK/blob/e75f54db867f82ab50ad887e5ac36bf82425ee69/Filters/Geometry/vtkCompositeDataGeometryFilter.cxx#L81
             if (
-                algorithm in ['dataset_surface', None]
+                algorithm == 'dataset_surface'
                 and not pass_cellid
                 and not pass_pointid
                 and not progress_bar
@@ -3424,13 +3426,13 @@ class DataObjectFilters:
             raise ValueError(msg)
 
         _validation.check_contains(
-            ('geometry', 'dataset_surface', None), must_contain=algorithm, name='algorithm'
+            (*get_args(_ExtractSurfaceOptions), None), must_contain=algorithm, name='algorithm'
         )
-        if algorithm is None and nonlinear_subdivision == 1:
-            # Warn about future change in default alg when the default
-            # 'nonlinear_subdivision' is used
+        if algorithm is None:
+            # Warn about future change in default alg
             warn_future()
-            algorithm = 'dataset_surface'  # The old default behavior
+            # The old default is 'dataset_surface', will be 'auto' in the future
+            algorithm = 'dataset_surface'
 
         if isinstance(self, pv.MultiBlock):
             return extract_surface_multiblock(self)
@@ -4341,7 +4343,7 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_surface(algorithm='geometry')
+            return mesh_out.extract_surface(algorithm='auto')
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out

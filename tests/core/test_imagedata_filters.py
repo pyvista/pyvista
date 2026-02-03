@@ -412,7 +412,7 @@ def test_contour_labels_cell_data(channels):
         boundary_style='external',
     )
     voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface(
-        algorithm='geometry'
+        algorithm='auto'
     )
 
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells

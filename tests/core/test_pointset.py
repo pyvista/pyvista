@@ -331,7 +331,7 @@ def test_raise_unsupported(pointset):
         pointset.point_is_inside_cell()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.extract_surface(algorithm='geometry')
+        pointset.extract_surface(algorithm='auto')
 
     with pytest.raises(PointSetCellOperationError):
         with pytest.warns(pv.PyVistaDeprecationWarning):
