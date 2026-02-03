@@ -235,10 +235,7 @@ class CompositeFilters(DataObjectFilters):
             Surface of the composite dataset.
 
         """
-        msg = (
-            '`extract_geometry` is deprecated. '
-            "Use `extract_surface(algorithm='dataset_surface')` instead."
-        )
+        msg = "`extract_geometry` is deprecated. Use `extract_surface(algorithm='auto')` instead."
         warn_external(msg, PyVistaDeprecationWarning)
         if pv.version_info >= (0, 50):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'

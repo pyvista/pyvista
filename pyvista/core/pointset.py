@@ -539,7 +539,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
         """
         warn_external(
-            '`extract_geometry` is deprecated. Use `extract_surface` instead.',
+            "`extract_geometry` is deprecated. Use `extract_surface(algorithm='auto')` instead.",
             PyVistaDeprecationWarning,
         )
         if pv.version_info >= (0, 50):  # pragma: no cover
