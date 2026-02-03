@@ -19,9 +19,9 @@ from pyvista import CellType
 # %%
 # Surface extraction of nonlinear cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Here we create a single quadratic hexahedral cell and then extract its surface
-# to demonstrate how to extract the surface of an UnstructuredGrid. First define points
-# of a linear cell:
+# Here we create a single :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` cell and then extract its
+# surface to demonstrate how to extract the surface of an :class:`~pyvista.UnstructuredGrid`.
+# First define points of a linear cell:
 
 lin_pts = np.array(
     [
@@ -152,7 +152,7 @@ pl.show()
 # %%
 # Closed Surface Generation
 # =========================
-# The geometry filter also generates closed surfaces in cases where a closed surface is expected,
+# The geometry filter generates closed surfaces in cases where a closed surface is expected,
 # whereas the dataset surface algorithm may not. For example, extract the surface of
 # :class:`~pyvista.ImageData` comprised of a single :attr:`~pyvista.CellType.VOXEL` cell.
 
