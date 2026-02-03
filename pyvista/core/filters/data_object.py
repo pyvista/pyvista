@@ -3384,36 +3384,6 @@ class DataObjectFilters:
 
         """
 
-        def extract_surface_multiblock(mesh: MultiBlock):
-            # For performance, try to use `vtkCompositeDataGeometryFilter` directly if possible,
-            # which doesn't support any additional config options.
-            # Despite its name, it uses `vtkDataSetSurfaceFilter` internally:
-            # https://github.com/Kitware/VTK/blob/e75f54db867f82ab50ad887e5ac36bf82425ee69/Filters/Geometry/vtkCompositeDataGeometryFilter.cxx#L81
-            if (
-                algorithm == 'dataset_surface'
-                and not pass_cellid
-                and not pass_pointid
-                and not progress_bar
-                and nonlinear_subdivision == 1
-            ):
-                return mesh._composite_geometry_filter()
-
-            # Otherwise, extract each block separately and combine into a single PolyData
-            multi_polys = self.generic_filter(
-                '_extract_surface',
-                pass_pointid=pass_pointid,
-                pass_cellid=pass_cellid,
-                nonlinear_subdivision=nonlinear_subdivision,
-                algorithm=algorithm,
-                progress_bar=progress_bar,
-            )
-
-            append = _vtk.vtkAppendPolyData()
-            for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
-                append.AddInputData(poly)
-            _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
-            return _get_output(append)
-
         def warn_future():
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
             if pv.version_info >= (0, 50):  # pragma: no cover
@@ -3457,7 +3427,20 @@ class DataObjectFilters:
         )
 
         if isinstance(self, pv.MultiBlock):
-            return extract_surface_multiblock(self)
+            # Extract surface from each block separately and combine into a single PolyData
+            multi_polys = self.generic_filter(
+                '_extract_surface',
+                pass_pointid=pass_pointid,
+                pass_cellid=pass_cellid,
+                nonlinear_subdivision=nonlinear_subdivision,
+                algorithm=algorithm,
+                progress_bar=progress_bar,
+            )
+            append = _vtk.vtkAppendPolyData()
+            for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
+                append.AddInputData(poly)
+            _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
+            return _get_output(append)
 
         return self._extract_surface(
             pass_pointid=pass_pointid,

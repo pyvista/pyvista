@@ -579,7 +579,7 @@ def test_extract_surface_no_args(multiblock_all_with_nested_and_none):
     # Get output directly from vtkCompositeDataGeometryFilter
     poly_from_vtk_filter = multiblock_all_with_nested_and_none._composite_geometry_filter()
 
-    # Test branch without any config options which calls vtkCompositeDataGeometryFilter
+    # Test branch without any config options, similar to vtkCompositeDataGeometryFilter
     kwargs = dict(
         algorithm='dataset_surface',
         pass_cellid=False,
@@ -588,14 +588,6 @@ def test_extract_surface_no_args(multiblock_all_with_nested_and_none):
     )
     poly_no_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
     assert poly_no_config == poly_from_vtk_filter
-
-    # Test branch which does not use vtkCompositeDataGeometryFilter
-    # by requesting original ids
-    kwargs['pass_cellid'] = True
-    poly_with_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
-    assert poly_with_config.array_names == ['vtkOriginalCellIds']
-    poly_with_config.clear_data()
-    assert poly_with_config == poly_from_vtk_filter
 
 
 def test_combine_filter(multiblock_all_with_nested_and_none):
