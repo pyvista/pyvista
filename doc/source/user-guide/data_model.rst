@@ -528,6 +528,14 @@ and the name of the active scalars array can be accessed or set with
    >>> ugrid.cell_data.active_scalars_name = 'my-cell-data'
    >>> ugrid.cell_data
 
+Note that setting a constant value induces that the resulting array
+is reshaped to fit the number of cells such that:
+
+.. jupyter-execute::
+
+   >>> ugrid.cell_data['constant'] = 1
+   >>> ugrid.cell_data['constant']
+
 
 Point Data
 ~~~~~~~~~~
@@ -600,6 +608,14 @@ active scalars array can be accessed or set with
 
    >>> ugrid.point_data.active_scalars_name = 'my-point-data'
    >>> ugrid.point_data
+
+As with cell data, note that setting a constant value induces that the resulting array
+is reshaped to fit the number of points such that:
+
+.. jupyter-execute::
+
+   >>> ugrid.point_data['constant'] = 1
+   >>> ugrid.point_data['constant']
 
 
 Dataset Active Scalars
