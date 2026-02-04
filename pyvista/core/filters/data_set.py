@@ -5502,13 +5502,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if algorithm in ('auto', 'geometry'):
             # Default case: use vtkGeometryFilter. This will automatically delegate to
             # vtkDataSetSurfaceFilter internally as needed for non-linear cells
-            if algorithm == 'geometry' and isinstance(self, pv.UnstructuredGrid):
-                is_linear = (
-                    _vtk.vtkCellTypeUtilities.IsLinear
-                    if pv.vtk_version_info >= (9, 6, 0)
-                    else _vtk.vtkCellTypes.IsLinear
-                )
-                if not all(is_linear(celltype) for celltype in self.distinct_cell_types):
+            if algorithm == 'geometry' and self.has_nonlinear_cells:
                     # vtkGeometryFilter itself cannot process non-linear cells
                     msg = (
                         'Mesh contains non-linear cells which cannot be processed '
