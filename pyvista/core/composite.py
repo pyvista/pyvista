@@ -2460,7 +2460,7 @@ class MultiBlock(
             Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_surface`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         Notes
@@ -2541,7 +2541,7 @@ class MultiBlock(
         --------
         as_polydata_blocks
             Convert all blocks to :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_surface`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
