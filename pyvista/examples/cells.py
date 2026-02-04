@@ -111,9 +111,9 @@ def plot_cell(
     font_size_ = config._font_size if font_size is None else font_size
     normals_scale_ = config._normals_scale if normals_scale is None else normals_scale
 
-    def _extract_geometry(cell_):
+    def _extract_surface(cell_):
         if cell_.type == pv.CellType.POLYHEDRON:
-            # For Polyhedron, we don't use ``extract_geometry`` directly because that may alter
+            # For Polyhedron, we don't use ``extract_surface`` directly because that may alter
             # the face orientation, so we iterate over each face directly to create separate
             # PolyData faces instead.
             faces = pv.MultiBlock()
@@ -162,7 +162,7 @@ def plot_cell(
         )
 
         if show_normals and cell.dimension >= 2:
-            surface = _extract_geometry(cell)
+            surface = _extract_surface(cell)
             surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
             pl.add_arrows(
                 surface.cell_centers().points,

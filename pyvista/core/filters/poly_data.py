@@ -557,7 +557,7 @@ class PolyDataFilters(DataSetFilters):
         # convert back to a polydata if both inputs were polydata
         if is_polydata:
             # if either of the input datasets contained lines or strips, we
-            # must use extract_geometry to ensure they get converted back
+            # must use extract_surface to ensure they get converted back
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pv.MultiBlock)):
