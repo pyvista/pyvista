@@ -1662,3 +1662,17 @@ def test_structured_grid_dimensionality():
     assert linear.distinct_cell_types == cell_types
     assert linear.max_cell_dimensionality == cell_dimension
     assert linear.min_cell_dimensionality == cell_dimension
+
+
+def test_has_nonlinear_cells():
+    linear = examples.cells.Hexahedron()
+    assert not linear.has_nonlinear_cells
+
+    nonlinear = examples.cells.QuadraticHexahedron()
+    assert nonlinear.has_nonlinear_cells
+
+    mixed = linear + nonlinear
+    assert mixed.has_nonlinear_cells
+
+    assert not pv.UnstructuredGrid().has_nonlinear_cells
+    assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells
