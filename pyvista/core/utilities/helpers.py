@@ -25,8 +25,8 @@ from .fileio import is_meshio_mesh
 from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
-    from meshio import Mesh
-    from trimesh import Trimesh
+    import meshio
+    import trimesh
 
     from pyvista import DataObject
     from pyvista import DataSet
@@ -54,6 +54,11 @@ _NORMALS = {
     '-z': [0, 0, -1],
 }
 _NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
+
+
+def _warn_if_invalid_data(obj: DataObject):
+    if pv.vtk_version_info >= (9, 3, 0) and hasattr(obj, 'validate_mesh'):
+        obj.validate_mesh('data', action='warn')
 
 
 # vtkDataSet overloads
@@ -101,15 +106,14 @@ def wrap(dataset: None) -> None: ...
 
 # Third-party meshes
 @overload
-def wrap(dataset: Trimesh) -> PolyData: ...
-# TODO: Support meshio overload
-# @overload
-# def wrap(dataset: Mesh) -> UnstructuredGrid: ...
+def wrap(dataset: trimesh.Trimesh) -> PolyData: ...
+@overload
+def wrap(dataset: meshio.Mesh) -> UnstructuredGrid: ...
 def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
-    | Trimesh
-    | Mesh
+    | trimesh.Trimesh
+    | meshio.Mesh
     | _vtk.vtkAbstractArray
     | NumpyArray[float]
     | None,
@@ -243,18 +247,22 @@ def wrap(  # noqa: PLR0911
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return pv._wrappers[key](dataset)
+            wrapped_vtk: DataObject = pv._wrappers[key](dataset)
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
+        else:
+            # Warn if data arrays are invalid
+            _warn_if_invalid_data(wrapped_vtk)
+            return wrapped_vtk
 
     # wrap meshio
     if is_meshio_mesh(dataset):
-        return from_meshio(dataset)
+        return from_meshio(cast('meshio.Mesh', dataset))
 
     # wrap trimesh
     if is_trimesh_mesh(dataset):
-        return from_trimesh(dataset)
+        return from_trimesh(cast('trimesh.Trimesh', dataset))
 
     # otherwise, flag tell the user we can't wrap this object
     msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'

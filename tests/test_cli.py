@@ -56,12 +56,12 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot one or more mesh files in an interactive window    │
-        │            that can be customized with various options.            │
-        │ report     Generate a PyVista software environment report.         │
-        │ --help -h  Display this message and exit.                          │
-        │ --version  Display application version.                            │
+        │ convert      Convert a mesh file to another format.                │
+        │ plot         Plot one or more mesh files in an interactive window  │
+        │              that can be customized with various options.          │
+        │ report       Generate a PyVista software environment report.       │
+        │ --help (-h)  Display this message and exit.                        │
+        │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )
@@ -75,12 +75,12 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
-    │ convert    Convert a mesh file to another format.                  │
-    │ plot       Plot one or more mesh files in an interactive window    │
-    │            that can be customized with various options.            │
-    │ report     Generate a PyVista software environment report.         │
-    │ --help -h  Display this message and exit.                          │
-    │ --version  Display application version.                            │
+    │ convert      Convert a mesh file to another format.                │
+    │ plot         Plot one or more mesh files in an interactive window  │
+    │              that can be customized with various options.          │
+    │ report       Generate a PyVista software environment report.       │
+    │ --help (-h)  Display this message and exit.                        │
+    │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown command "foo". Available commands: report, convert, plot.  │
@@ -802,12 +802,12 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot one or more mesh files in an interactive window    │
-        │            that can be customized with various options.            │
-        │ report     Generate a PyVista software environment report.         │
-        │ --help -h  Display this message and exit.                          │
-        │ --version  Display application version.                            │
+        │ convert      Convert a mesh file to another format.                │
+        │ plot         Plot one or more mesh files in an interactive window  │
+        │              that can be customized with various options.          │
+        │ report       Generate a PyVista software environment report.       │
+        │ --help (-h)  Display this message and exit.                        │
+        │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )

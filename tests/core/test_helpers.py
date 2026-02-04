@@ -14,6 +14,8 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.examples import cells
+from tests.core.test_dataobject_filters import grid_with_invalid_arrays  # noqa: F401
+from tests.core.test_dataobject_filters import sphere_with_invalid_arrays  # noqa: F401
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -35,6 +37,51 @@ def test_wrap_raises():
         match=r'NumPy array could not be wrapped pyvista.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
+
+
+@pytest.fixture
+def meshio_grid_with_invalid_arrays(grid_with_invalid_arrays):  # noqa: F811
+    grid = grid_with_invalid_arrays
+    assert len(grid['foo']) == 10
+    # Meshio does internal checks so we can't convert directly:
+    match = 'len(points) = 99, but len(point_data["foo"]) = 10'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.to_meshio(grid)
+    # Clear data and add it back after init
+    point_data = grid.point_data.items()
+    grid.clear_data()
+    meshio_grid = pv.to_meshio(grid)
+    meshio_grid.point_data.update(point_data)
+    assert len(meshio_grid.point_data['foo']) == 10
+    return meshio_grid
+
+
+@pytest.fixture
+def trimesh_mesh_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
+    poly = sphere_with_invalid_arrays
+    assert len(poly['foo']) == 10
+    # Trimesh doesn't do internal checks so we can convert without error
+    trimesh_poly = pv.to_trimesh(poly)
+    assert len(trimesh_poly.vertex_attributes['foo']) == 10
+    return trimesh_poly
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
+def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_poly)
+
+
+def test_wrap_invalid_trimesh_raises(trimesh_mesh_with_invalid_arrays):
+    with pytest.raises(ValueError, match='Invalid array'):
+        pv.wrap(trimesh_mesh_with_invalid_arrays)
+
+
+def test_wrap_invalid_meshio_raises(meshio_grid_with_invalid_arrays):
+    with pytest.raises(ValueError, match='Invalid array'):
+        pv.wrap(meshio_grid_with_invalid_arrays)
 
 
 def test_wrap_vtk_not_supported_raises(mocker: MockerFixture):
@@ -103,6 +150,16 @@ def test_wrap_trimesh():
 
     assert mesh_with_uv.active_texture_coordinates is not None
     assert np.allclose(mesh_with_uv.active_texture_coordinates, uvs)
+
+
+def test_wrap_meshio(hexbeam):
+    meshio_grid = pv.to_meshio(hexbeam)
+    assert pv.is_meshio_mesh(meshio_grid)
+    grid = pv.wrap(meshio_grid)
+    assert isinstance(grid, pv.UnstructuredGrid)
+    assert set(grid.array_names) == set(hexbeam.array_names)
+    assert grid.n_points == hexbeam.n_points
+    assert grid.n_cells == hexbeam.n_cells
 
 
 def test_to_trimesh_triangulate():

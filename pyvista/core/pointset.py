@@ -27,16 +27,18 @@ from .cell import _get_offset_array
 from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
-from .dataset import _MeshValidationReport
-from .dataset import _MeshValidator
 from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
+from .filters import DataObjectFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .filters.data_object import _MeshValidationOptions
+from .filters.data_object import _MeshValidationReport
+from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
@@ -298,6 +300,13 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
+
     Examples
     --------
     Create a simple point cloud of 10 points from a numpy array.
@@ -316,7 +325,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     """
 
     @_deprecate_positional_args(allowed=['var_inp'])
-    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
+    def __init__(
+        self,
+        var_inp=None,
+        deep: bool = False,  # noqa: FBT001, FBT002
+        force_float: bool = True,  # noqa: FBT001, FBT002
+        *,
+        validate: bool | _MeshValidationOptions = False,
+    ) -> None:
         """Initialize the pointset."""
         super().__init__()
 
@@ -329,6 +345,9 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
         else:
             self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -391,7 +410,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)  # type: ignore[has-type]
+    @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
@@ -519,15 +538,13 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    @wraps(DataSet.validate_mesh)
+    @wraps(DataObjectFilters.validate_mesh)
     def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
-        self,
-        validation_fields: _MeshValidator._AllValidationOptions
-        | Sequence[_MeshValidator._AllValidationOptions]
-        | None = None,
+        self: Self,
+        validation_fields: _MeshValidationOptions | None = None,
         *args,
         **kwargs,
-    ) -> _MeshValidationReport:
+    ) -> _MeshValidationReport[Self]:
         """Wrap validate_mesh with cell-related fields removed."""
         if validation_fields is None:
             fields: list[_MeshValidator._AllValidationOptions] = [
@@ -542,13 +559,31 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
-    Can be initialized in several ways:
+    The surface geometry is defined by its :attr:`~pyvista.DataSet.points` and four separate
+    cell connectivity arrays:
+
+    - :attr:`verts` for 0-dimensional :attr:`~pyvista.CellType.VERTEX` and
+      :attr:`~pyvista.CellType.POLY_VERTEX` cells.
+    - :attr:`lines` for 1-dimensional :attr:`~pyvista.CellType.LINE` and
+      :attr:`~pyvista.CellType.POLY_LINE` cells.
+    - :attr:`faces` for 2-dimensional :attr:`~pyvista.CellType.TRIANGLE`,
+      :attr:`~pyvista.CellType.QUAD`, and :attr:`~pyvista.CellType.POLYGON` cells.
+    - :attr:`strips` for 2-dimensional :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
+
+    Cell types can be mixed, and any combination of cell connectivity array(s) may be specified.
+
+    :class:`~pyvista.PolyData` can be initialized in several ways:
 
     - Create an empty mesh
     - Initialize from a :vtk:`vtkPolyData`
-    - Using vertices
-    - Using vertices and faces
+    - Using points only
+    - Using points with verts, faces, lines, and/or strips
     - From a file
+
+    If a points array is provided with no cell connectivity, the :attr:`verts` connectivity is
+    populated by default, and each point is automatically associated with a single
+    :attr:`~pyvista.CellType.VERTEX` to create a point cloud where :attr:`n_verts` equals
+    :attr:`~pyvista.DataSet.n_points`.
 
     .. deprecated:: 0.44.0
        The parameters ``n_faces``, ``n_lines``, ``n_strips``, and
@@ -573,8 +608,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        Polygonal faces of the mesh. Can be either a padded connectivity
+    faces : CellArrayLike, optional
+        Connectivity of polygonal :attr:`faces`. Can be either a padded connectivity
         array or an explicit cell array object.
 
         In the padded array format, faces must contain padding
@@ -583,15 +618,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
         lets you have an arbitrary number of points per face.
 
-        When not including the face connectivity array, each point
-        will be assigned to a single vertex.  This is used for point
-        clouds that have no connectivity.
-
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        Line connectivity. Like ``faces``, this can be either a padded
+    lines : CellArrayLike, optional
+        Connectivity of :attr:`lines`. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
         a line segment.  For example, the two line segments ``[0, 1]``
@@ -601,8 +632,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        Triangle strips connectivity.  Triangle strips require an
+    strips : CellArrayLike optional
+        Connectivity of triangle :attr:`strips`. Triangle strips require an
         initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
         points.
@@ -635,8 +666,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
-        The verts connectivity.  Like ``faces``, ``lines``, and
+    verts : CellArrayLike, optional
+        The :attr:`verts` connectivity.  Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
         the padding indicates the number of vertices in each cell.  For
@@ -646,6 +677,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     n_verts : int, optional
         Deprecated. Not used.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     See Also
     --------
@@ -784,6 +822,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
+        *,
+        validate: bool | _MeshValidationOptions = False,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -801,7 +841,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     msg = 'No other arguments should be set when first parameter is a string'
                     raise ValueError(msg)
             self._from_file(var_inp, force_ext=force_ext)  # is filename
-
+            if validate:
+                self._validate_mesh(validate)
             return
 
         # PolyData-like
@@ -814,6 +855,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 self.deep_copy(var_inp)
             else:
                 self.shallow_copy(var_inp)  # type: ignore[arg-type]
+            if validate:
+                self._validate_mesh(validate)
             return
 
         # First parameter is points
@@ -854,6 +897,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
             setattr(self, k, v)
 
+        if validate:
+            self._validate_mesh(validate)
+
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (  # type: ignore[assignment]
             ('n_verts', n_verts),
@@ -889,12 +935,35 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Get the vertex cells.
+        """Return or set the vertex padded connectivity array.
+
+        Like all padded VTK connectivity arrays, the array is structured as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in vertex 0, and ``pX_Y`` is the
+        Y'th point in vertex X.
+
+        Vertices can be a single :attr:`~pyvista.CellType.VERTEX` cell with connectivity
+        to a single point, or a :attr:`~pyvista.CellType.POLY_VERTEX` with connectivity
+        to multiple points.
+
+        For example, a single vertex and poly-vertex with five points might be represented as::
+
+           [1, 0, 5, 3, 2, 4, 1, 5]
+
+        Where the two separate vertex cells are ``[1, 0]`` and ``[5, 3, 2, 4, 1, 5]``.
+
+        See Also
+        --------
+        n_verts
+        lines, faces, strips
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
 
         Returns
         -------
         numpy.ndarray
-            Array of vertex cell indices.
+            Array of vertex cell connectivity.
 
         Examples
         --------
@@ -944,9 +1013,32 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the connectivity array of the lines of this PolyData.
+        """Return the lines connectivity array.
+
+        Like all padded VTK connectivity arrays, the array is structured as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in line 0, and ``pX_Y`` is the
+        Y'th point in line X.
+
+        Lines can be a single :attr:`~pyvista.CellType.LINE` cell with connectivity
+        to two points, or a :attr:`~pyvista.CellType.POLY_LINE` with connectivity
+        to any number of points.
+
+        For example, a single line and poly-line with five points might be represented as::
+
+           [2, 0, 1, 5, 3, 2, 4, 6, 5]
+
+        Where the two separate line cells are ``[2, 0, 1]`` and ``[5, 3, 2, 4, 6, 5]``.
 
         Lines can also be set by assigning a :class:`~pyvista.CellArray`.
+
+        See Also
+        --------
+        n_lines
+        verts, faces, strips
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
 
         Examples
         --------
@@ -972,20 +1064,23 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return the connectivity array of the faces of this PolyData.
+        """Return the polygonal faces padded connectivity array.
 
-        The faces array is organized as::
+        Like all padded VTK connectivity arrays, the array is structured as::
 
            [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
 
         where ``n0`` is the number of points in face 0, and ``pX_Y`` is the
         Y'th point in face X.
 
+        Faces can be :attr:`~pyvista.CellType.TRIANGLE`, :attr:`~pyvista.CellType.QUAD`,
+        or :attr:`~pyvista.CellType.POLYGON` cells.
+
         For example, a triangle and a quadrilateral might be represented as::
 
            [3, 0, 1, 2, 4, 0, 1, 3, 4]
 
-        Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
+        Where the two individual faces are ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
         Faces can also be set by assigning a :class:`~pyvista.CellArray` object
         instead of an array.
@@ -997,8 +1092,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         See Also
         --------
-        pyvista.PolyData.regular_faces
-        pyvista.PolyData.irregular_faces
+        n_faces_strict
+        verts, lines, strips
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
+        pyvista.PolyData.regular_faces, pyvista.PolyData.irregular_faces
+            Initialize :class:`~pyvista.PolyData` from faces.
 
         Notes
         -----
@@ -1164,7 +1262,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @irregular_faces.setter
     def irregular_faces(self, faces: Sequence[VectorLike[int]]) -> None:  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
-        self.faces = CellArray.from_irregular_cells(faces)
+        self.faces = CellArray.from_irregular_cells(faces)  # type: ignore[arg-type]
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
@@ -1210,16 +1308,38 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> pyramid.plot()
 
         """
-        return cls(points, faces=CellArray.from_irregular_cells(faces))
+        return cls(points, faces=CellArray.from_irregular_cells(faces))  # type: ignore[arg-type]
 
     @property
     def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Return a pointer to the strips as a numpy array.
+        """Return or set the strips padded connectivity array.
+
+        Like all padded VTK connectivity arrays, the array is structured as::
+
+           [n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ...]
+
+        where ``n0`` is the number of points in strip 0, and ``pX_Y`` is the
+        Y'th point in strip X.
+
+        Only the connectivity of :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells is stored in this
+        array.
+
+        For example, two strips with one and two triangles, respectively, might look like::
+
+           [3, 0, 1, 2, 4, 3, 4, 5, 6]
+
+        Where the individual strips are ``[3, 0, 1, 2]`` and ``[4, 3, 4, 5, 6]``.
 
         Returns
         -------
         numpy.ndarray
             Array of strip indices.
+
+        See Also
+        --------
+        n_strips
+        verts, lines, faces
+            Padded connectivity arrays for other :class:`~pyvista.PolyData` cell types.
 
         Examples
         --------
@@ -1228,6 +1348,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> extruded = polygon.extrude((0, 0, 1), capping=False)
         >>> extruded.strips
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+        >>> extruded.n_strips
+        4
 
         """
         self.GetStrips().ExportLegacyFormat(arr := _vtk.vtkIdTypeArray())
@@ -1307,50 +1429,85 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     @property
     def n_lines(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of lines.
+        """Return the number of line cells.
+
+        This is the total number of :attr:`~pyvista.CellType.LINE` and
+        :attr:`~pyvista.CellType.POLY_LINE` cells defined in the :attr:`lines` connectivity array.
+
+        See Also
+        --------
+        lines
+        n_verts, n_faces_strict, n_strips
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Line()
-        >>> mesh.n_lines
-        1
+        >>> mesh.n_lines, mesh.n_cells
+        (1, 1)
 
         """
         return self.GetNumberOfLines()
 
     @property
     def n_verts(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of vertices.
+        """Return the number of vertex cells.
 
-        A vertex is a 0D cell, which is usually a cell that references one point,
-        a :vtk:`vtkVertex`. It can also be a :vtk:`vtkPolyVertex`.
-        See `pyvista.PolyData.n_points` for the more common measure.
+        This is the total number of :attr:`~pyvista.CellType.VERTEX` and
+        :attr:`~pyvista.CellType.POLY_VERTEX` cells defined in the :attr:`verts` connectivity
+        array.
+
+        .. note::
+            The number of vertices is separate and distinct from :attr:`~pyvista.DataSet.n_points`,
+            as it's possible for :class:`~pyvista.PolyData` to have :attr:`~pyvista.DataSet.points`
+            but no :attr:`verts`.
+
+        See Also
+        --------
+        verts
+        n_lines, n_faces_strict, n_strips
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
         Create a simple mesh containing just two points and return the
-        number of vertices. By default, when constructing a PolyData with points but no cells,
-        vertices are automatically created, one per point.
+        number of vertices and cells. By default, when constructing a PolyData with points but no
+        cells, vertices are automatically created, one per point.
 
         >>> import pyvista as pv
         >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-        >>> mesh.n_points, mesh.n_verts
-        (2, 2)
+        >>> mesh.n_points, mesh.n_verts, mesh.n_cells
+        (2, 2, 2)
 
         If any other cells are specified, these vertices are not created.
 
         >>> import pyvista as pv
         >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1])
-        >>> mesh.n_points, mesh.n_verts
-        (2, 0)
+        >>> mesh.n_points, mesh.n_verts, mesh.n_cells
+        (2, 0, 1)
 
         """
         return self.GetNumberOfVerts()
 
     @property
     def n_strips(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of strips.
+        """Return the number of triangle strips.
+
+        This is the total number of :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells defined in the
+        :attr:`strips` connectivity array.
+
+        See Also
+        --------
+        strips
+        n_verts, n_lines, n_faces_strict
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
@@ -1362,8 +1519,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
         >>> strip = np.array([3, 0, 1, 2])
         >>> mesh = pv.PolyData(vertices, strips=strip)
-        >>> mesh.n_strips
-        1
+        >>> mesh.n_strips, mesh.n_cells
+        (1, 1)
 
         """
         return self.GetNumberOfStrips()
@@ -1414,10 +1571,17 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
         """Return the number of polygonal faces.
 
-        Returns
-        -------
-        int :
-             Number of faces represented in the :attr:`n_faces <pyvista.PolyData.n_faces>` array.
+        This is the total number of :attr:`~pyvista.CellType.TRIANGLE`,
+        :attr:`~pyvista.CellType.QUAD`, and :attr:`~pyvista.CellType.POLYGON` cells defined in
+        the :attr:`faces` connectivity array.
+
+        See Also
+        --------
+        faces
+        n_verts, n_lines, n_strips
+            Number of cells in other connectivity arrays.
+        pyvista.DataSet.n_cells, pyvista.DataSet.n_points
+            Number of total cells and points in this mesh.
 
         Examples
         --------
@@ -1429,8 +1593,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ...     faces=[3, 0, 1, 2],
         ...     lines=[2, 0, 1],
         ... )
-        >>> mesh.n_cells, mesh.n_faces_strict
-        (2, 1)
+        >>> mesh.n_cells, mesh.n_faces_strict, mesh.n_lines
+        (2, 1, 1)
 
         """
         return self.GetNumberOfPolys()
@@ -1678,6 +1842,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             geometry is modified, the obb tree will no longer be valid.
 
         """
+        if self.n_points < 1 or self.n_cells < 1:
+            msg = 'Building the OBB tree requires PolyData with points and cells.'
+            raise ValueError(msg)
         obb_tree = _vtk.vtkOBBTree()
         obb_tree.SetDataSet(self)
         obb_tree.BuildLocator()
@@ -1735,7 +1902,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
-        self.obbTree = None  # type: ignore[assignment]
+        with contextlib.suppress(KeyError):
+            del self.__dict__['obbTree']
 
 
 @abstract_class
@@ -1786,9 +1954,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     ----------
     args : str, :vtk:`vtkUnstructuredGrid`, iterable
         See examples below.
+
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     Examples
     --------
@@ -1835,7 +2011,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self, *args, deep: bool = False, **kwargs) -> None:
+    def __init__(
+        self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False, **kwargs
+    ) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
 
@@ -1884,6 +2062,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 'following arrays:\n`cells`, `cell_type`, `points`'
             )
             raise TypeError(msg)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -2076,7 +2257,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self._get_cells().ImportLegacyFormat(vtk_idarr)
 
-    def _get_cells(self):
+    def _get_cells(self) -> _vtk.vtkCellArray:
         cells = self.GetCells()
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
 
@@ -2112,7 +2293,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             polyhedron_faces = pv.convert_array(self.GetFaces())
 
             if polyhedron_faces is None:
-                return np.array([], dtype=int)  # type: ignore[unreachable]
+                return np.array([], dtype=int)
 
             cell_faces = []
             i = 0
@@ -2171,7 +2352,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             polyhedron_faces = pv.convert_array(self.GetFaces())
 
             if polyhedron_faces is None:
-                return np.array([], dtype=int)  # type: ignore[unreachable]
+                return np.array([], dtype=int)
 
             i, face_counts = 0, []
 
@@ -2381,7 +2562,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
                12, 12, 12, 12, 12, 12], dtype=uint8)
 
-        Compare this to :attr:`distinct_cell_types`.
+        Compare this to :attr:`~pyvista.DataSet.distinct_cell_types`.
 
         >>> hex_beam.distinct_cell_types
         {<CellType.HEXAHEDRON: 12>}
@@ -2391,52 +2572,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     def _get_cell_types_array(self):
         array = (
-            self.GetCellTypes()  # type: ignore[call-arg,func-returns-value]
-            if pv.vtk_version_info > (9, 5, 99)
-            else self.GetCellTypesArray()
+            self.GetCellTypes() if pv.vtk_version_info >= (9, 6, 0) else self.GetCellTypesArray()
         )
 
         if array is None:
             array = _vtk.vtkUnsignedCharArray()
         return array
-
-    @property
-    def distinct_cell_types(self) -> set[CellType]:
-        """Return the set of distinct cell types in this dataset.
-
-        The set contains :class:`~pyvista.CellType` values corresponding to the
-        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
-
-        .. versionadded:: 0.47
-
-        Returns
-        -------
-        set[CellType]
-            Set of :class:`~pyvista.CellType` values.
-
-        Examples
-        --------
-        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
-
-        >>> from pyvista import examples
-        >>> hex_beam = examples.load_hexbeam()
-        >>> hex_beam.distinct_cell_types
-        {<CellType.HEXAHEDRON: 12>}
-
-        Compare this to :attr:`celltypes`.
-
-        >>> hex_beam.celltypes
-        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12], dtype=uint8)
-
-        """
-        cell_types = (
-            convert_array(self.GetDistinctCellTypesArray())
-            if pv.vtk_version_info >= (9, 5, 0)
-            else np.unique(self.celltypes)
-        )
-        return {pv.CellType(cell_num) for cell_num in cell_types}
 
     @property
     def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
@@ -2564,9 +2705,16 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Coordinates of the points in z direction. If this is passed, ``uinput``
         and ``y`` must be a :class:`numpy.ndarray` and match the shape of ``z``.
 
-    deep : optional
+    deep : bool, default: False
         Whether to deep copy a StructuredGrid object.
         Default is ``False``.  Keyword only.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     **kwargs : dict, optional
         Additional keyword arguments passed when reading from a file or loading
@@ -2620,7 +2768,16 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         '.vts': XMLStructuredGridWriter,
     }  # type: ignore[assignment]
 
-    def __init__(self, uinput=None, y=None, z=None, *args, deep: bool = False, **kwargs) -> None:
+    def __init__(
+        self,
+        uinput=None,
+        y=None,
+        z=None,
+        *args,
+        deep: bool = False,
+        validate: bool | _MeshValidationOptions = False,
+        **kwargs,
+    ) -> None:
         """Initialize the structured grid."""
         super().__init__()
 
@@ -2656,6 +2813,9 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
                 ' - Three `numpy.ndarray` as the first three arguments'
             )
             raise TypeError(msg)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -2968,8 +3128,16 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     ----------
     args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
         See examples below.
+
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     See Also
     --------
@@ -3013,7 +3181,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         '.vtk': UnstructuredGridWriter,
     }
 
-    def __init__(self, *args, deep: bool = False, **kwargs):  # noqa: ARG002
+    def __init__(self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
@@ -3050,6 +3218,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             arg1 = np.asarray(arg1) if not isinstance(arg1, dict) else arg1
             arg2 = np.asarray(arg2)
             self._from_cells_points(arg0, arg1, arg2)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self) -> str:
         """Return the standard representation."""

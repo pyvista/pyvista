@@ -247,6 +247,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'pyvista.SeriesDataSet'),
     (r'py:.*', 'ScalarBarArgs'),
     (r'py:.*', 'SilhouetteArgs'),
     (r'py:.*', 'BackfaceArgs'),
@@ -260,6 +261,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*JupyterBackendOptions'),
     (r'py:.*', '_InterpolationOptions'),
     (r'py:.*', 'PlottableType'),
+    (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -399,7 +401,15 @@ from sphinx_gallery.sorting import FileNameSortKey
 def _filter_sphinx_gallery_warnings():
     import warnings
 
-    warnings.simplefilter('error')
+    # Ignore specific warnings
+    warnings.filterwarnings(
+        'ignore',
+        message='Call to deprecated method GetData',  # emitted by trame-vtk
+        category=DeprecationWarning,
+    )
+
+    # Treat all remaining warnings as errors
+    warnings.simplefilter('error', append=True)
 
 
 class ResetPyVista:

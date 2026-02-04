@@ -26,6 +26,8 @@ if TYPE_CHECKING:
 
     from cyclopts import App
     from cyclopts import Token
+    from rich.console import Console
+    from rich.console import ConsoleOptions
     from rich.console import Group
 
     from pyvista import DataObject
@@ -44,7 +46,14 @@ def description(entry: HelpEntry):  # noqa: ANN202
     return entry.description
 
 
-HELP_FORMATTER = DefaultFormatter(
+class _PyvistaHelpFormatter(DefaultFormatter):
+    def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
+        """Render the usage line."""
+        if usage:  # pragma: no branch
+            console.print(usage)
+
+
+HELP_FORMATTER = _PyvistaHelpFormatter(
     table_spec=TableSpec(show_header=True),
     column_specs=(
         ColumnSpec(
