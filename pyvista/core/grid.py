@@ -898,13 +898,15 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """
         return self.points[:, 2]
 
-    @wraps(Grid.dimensions.fget)
-    def dimensions(self: Self) -> tuple[int, int, int]:
+    @property
+    @wraps(Grid.dimensions.fget)  # type: ignore[attr-defined]
+    def dimensions(self: Self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Wrap Grid.dimensions.
 
         The parent ``Grid`` class is not documented and inherited members are not documented,
         so we need to define it explicitly so that it shows up in the docs.
         """
+        return super().dimensions
 
     @property
     def origin(self: Self) -> tuple[float]:  # numpydoc ignore=RT01
