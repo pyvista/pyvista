@@ -3252,6 +3252,10 @@ class DataSet(DataSetFilters, DataObject):
         The set contains :class:`~pyvista.CellType` values corresponding to the
         :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
 
+        .. warning::
+            Computing distinct cell types can be very slow for complex meshes with VTK version
+            less than 9.6.
+
         .. versionadded:: 0.47
 
         Returns
@@ -3320,3 +3324,38 @@ class DataSet(DataSetFilters, DataObject):
             )
             types_array = np.unique(grid.celltypes)
         return {pv.CellType(cell_num) for cell_num in types_array}
+
+    @property
+    def has_nonlinear_cells(self) -> bool:  # numpydoc ignore=RT01
+        """Return True if the mesh contains any non-linear cells.
+
+        .. note::
+            Only :class:`~pyvista.UnstructuredGrid` can have non-linear cells. This property is
+            therefore always False for all other dataset types.
+
+        .. warning::
+            Checking for non-linear cells can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.cells.Hexahedron()
+        >>> mesh.has_nonlinear_cells
+        False
+
+        >>> mesh = examples.cells.QuadraticHexahedron()
+        >>> mesh.has_nonlinear_cells
+        True
+
+        """
+        if not isinstance(self, pv.UnstructuredGrid):
+            return False
+        is_linear = (
+            _vtk.vtkCellTypeUtilities.IsLinear
+            if pv.vtk_version_info >= (9, 6, 0)
+            else _vtk.vtkCellTypes.IsLinear
+        )
+        return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
