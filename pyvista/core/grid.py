@@ -906,7 +906,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         The parent ``Grid`` class is not documented and inherited members are not documented,
         so we need to define it explicitly so that it shows up in the docs.
         """
-        return super().dimensions
+        return Grid.dimensions.fget(self)
+
+    @dimensions.setter
+    @wraps(Grid.dimensions.fset)  # type: ignore[attr-defined]
+    def dimensions(self: Self, dims: VectorLike[int]) -> None:
+        """Wrap Grid.dimensions."""
+        Grid.dimensions.fset(self, dims)
 
     @property
     def origin(self: Self) -> tuple[float]:  # numpydoc ignore=RT01
