@@ -2394,8 +2394,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             self.left_button_down,
         )
         self.add_key_event('b', b_left_down_callback)  # type: ignore[arg-type]
-        self.add_key_event('v', lambda: self.isometric_view_interactive())  # type: ignore[arg-type]
-        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type]
+        self.add_key_event('v', lambda: self.isometric_view_interactive())  # type: ignore[arg-type]  # noqa: PLW0108
+        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type]  # noqa: PLW0108
         self.add_key_event('Up', lambda: self.zoom_camera(1.05))  # type: ignore[arg-type]
         self.add_key_event('Down', lambda: self.zoom_camera(0.95))  # type: ignore[arg-type]
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))  # type: ignore[arg-type]
