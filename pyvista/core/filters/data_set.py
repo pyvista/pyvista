@@ -5503,12 +5503,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             # Default case: use vtkGeometryFilter. This will automatically delegate to
             # vtkDataSetSurfaceFilter internally as needed for non-linear cells
             if algorithm == 'geometry' and self.has_nonlinear_cells:
-                    # vtkGeometryFilter itself cannot process non-linear cells
-                    msg = (
-                        'Mesh contains non-linear cells which cannot be processed '
-                        'by the geometry algorithm.'
-                    )
-                    raise ValueError(msg)
+                # vtkGeometryFilter itself cannot process non-linear cells
+                msg = (
+                    'Mesh contains non-linear cells which cannot be processed '
+                    'by the geometry algorithm.'
+                )
+                raise ValueError(msg)
 
             return self._geometry_filter(
                 extent=None,  # Extent is only used by deprecated extract_geometry filter
