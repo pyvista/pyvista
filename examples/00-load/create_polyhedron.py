@@ -92,10 +92,10 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 # Polyhedron connectivity array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The connectivity array of polyhedra is defined differently from the rest of the cell
-# types. For polyhedra, we need to set the faces with the following format:
+# types. For polyhedra, we need to set the faces with the following format::
 #
-# ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1...,
-#    Face0PointN-1, Face1NPoints, ...]``
+#     [NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1...,
+#      Face0PointN-1, Face1NPoints, ...]
 #
 # Where:
 #
