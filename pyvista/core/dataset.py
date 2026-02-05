@@ -20,8 +20,10 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
+from . import _validation
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
+from .celltype import _CELL_TYPE_INFO
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -51,14 +53,18 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import Cell
+    from pyvista import CellType
     from pyvista import PointSet
 
     from ._typing_core import MatrixLike
+    from ._typing_core import NumberType
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+    from ._typing_core import _ArrayLikeOrScalar
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+_Dimensionality = Literal[0, 1, 2, 3]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -1251,7 +1257,10 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def center(self: Self) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or return the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1269,6 +1278,11 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return self.GetCenter()
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def volume(
@@ -1336,7 +1350,7 @@ class DataSet(DataSetFilters, DataObject):
 
         A mesh with 3D cells does not have an area.  To get
         the outer surface area, first extract the surface using
-        :func:`pyvista.DataSetFilters.extract_surface`.
+        :func:`~pyvista.DataObjectFilters.extract_surface`.
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.area
@@ -1487,7 +1501,7 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: NumpyArray[float] | Sequence[float] | float,
+        scalars: _ArrayLikeOrScalar[NumberType],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2964,18 +2978,32 @@ class DataSet(DataSetFilters, DataObject):
         return self.n_points == 0
 
     @property
-    def dimensionality(self: Self) -> Literal[0, 1, 2, 3]:
-        """Return the spatial dimensions spanned by this dataset.
+    def dimensionality(self) -> _Dimensionality:
+        """Return the number of spatial dimensions spanned by this dataset's points.
+
+        This is equivalent to computing the matrix rank of the points.
 
         .. versionchanged:: 0.47
 
             This property is now generalized for all datasets. Previously, it was only available
             for datasets with a ``dimensions`` property.
 
+        Notes
+        -----
+        :attr:`dimensionality`:
+
+        - ranges from ``0`` to ``3`` for all mesh types.
+        - is equivalent to :attr:`max_cell_dimensionality` and :attr:`min_cell_dimensionality`
+          for gridded data types :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
         Returns
         -------
         int
             The dimensionality of the dataset.
+
+        See Also
+        --------
+        max_cell_dimensionality, min_cell_dimensionality
 
         Examples
         --------
@@ -3015,7 +3043,320 @@ class DataSet(DataSetFilters, DataObject):
         """
         if self.n_points == 0:
             return 0
+        elif isinstance(self, pv.Grid):
+            # Fast path for gridded types
+            return self.max_cell_dimensionality
+
+        # Align points first to make rank computation more robust
+        aligned_points = self.align_xyz().points
+        return int(np.linalg.matrix_rank(aligned_points))  # type: ignore[return-value]
+
+    @property
+    def max_cell_dimensionality(self: Self) -> _Dimensionality:
+        """Return the maximum spatial dimensionality of all cells in this mesh.
+
+        .. versionadded:: 0.47
+
+        Notes
+        -----
+        :attr:`max_cell_dimensionality`:
+
+        - is always ``0`` for :class:`~pyvista.PointSet`
+        - ranges from ``0`` to ``2`` for :class:`~pyvista.PolyData`.
+        - ranges from ``0`` to ``3`` for all other mesh types.
+        - is equivalent to :attr:`dimensionality` for gridded data types
+          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
+        See Also
+        --------
+        min_cell_dimensionality, dimensionality, distinct_cell_types
+
+        Returns
+        -------
+        int
+            The maximum dimensionality of the dataset's cells.
+
+        Examples
+        --------
+        :class:`~pyvista.PointSet` has no cells, so its :attr:`max_cell_dimensionality` is always
+        ``0``.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = pv.Sphere().cast_to_pointset()
+        >>> mesh.max_cell_dimensionality
+        0
+
+        A :class:`~pyvista.PolyData` surface mesh with 2D polygonal cells such as
+        :func:`~pyvista.Sphere` has max cell dimensionality of ``2``.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.max_cell_dimensionality
+        2
+
+        Since there are no 1D :attr:`~pyvista.CellType.LINE` or 0D
+        :attr:`~pyvista.CellType.VERTEX` cells, the :attr:`min_cell_dimensionality` is also ``2``
+        in this case.
+
+        >>> mesh.min_cell_dimensionality
+        2
+
+        A :class:`~pyvista.UnstructuredGrid` with 3D cells such as :func:`~pyvista.SolidSphere`
+        has max and min cell dimensionality of ``3``.
+
+        >>> mesh = pv.SolidSphere()
+        >>> mesh.max_cell_dimensionality
+        3
+        >>> mesh.min_cell_dimensionality
+        3
+
+        A :func:`~pyvista.Line` or :func:`~pyvista.Spline` with 1D cells has a max and min
+        cell dimensionality of ``1``.
+
+        >>> mesh = pv.Line([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
+        >>> mesh.max_cell_dimensionality
+        1
+        >>> mesh.min_cell_dimensionality
+        1
+
+        A curvilinear :class:`~pyvista.StructuredGrid` such as the one from
+        :func:`~pyvista.examples.downloads.download_wavy` has 2D cells.
+
+        >>> mesh = examples.download_wavy()[0]
+        >>> mesh.max_cell_dimensionality
+        2
+        >>> mesh.min_cell_dimensionality
+        2
+
+        But it has a spatial :attr:`dimensionality` of ``3`` since its points span three
+        dimensions.
+
+        >>> mesh.dimensionality
+        3
+
+        The dimensionality can vary if there are mixed cell types. E.g. load
+        :func:`~pyvista.examples.downloads.download_prostar`.
+
+        >>> mesh = examples.download_prostar()
+        >>> sorted(mesh.distinct_cell_types)  # doctest:+NORMALIZE_WHITESPACE
+        [<CellType.VERTEX: 1>, <CellType.LINE: 3>, <CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>,
+         <CellType.QUAD: 9>, <CellType.TETRA: 10>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>, <CellType.POLYHEDRON: 42>]
+
+        There are 3D volumetric cells, so the max dimensionality is ``3``.
+
+        >>> mesh.max_cell_dimensionality
+        3
+
+        And since there are :attr:`~pyvista.CellType.VERTEX` cells its
+        :attr:`min_cell_dimensionality` is ``0``.
+
+        >>> mesh.min_cell_dimensionality
+        0
+
+        """
+        if pv.vtk_version_info < (9, 4, 0):
+            return max(self._distinct_cell_dimensions)
+        return self.GetMaxSpatialDimension()
+
+    @property
+    def min_cell_dimensionality(self) -> _Dimensionality:
+        """Get the minimum spatial dimensionality of all cells in this mesh.
+
+        .. versionadded:: 0.47
+
+        Notes
+        -----
+        :attr:`min_cell_dimensionality`:
+
+        - is always ``0`` for :class:`~pyvista.PointSet`
+        - ranges from ``0`` to ``2`` for :class:`~pyvista.PolyData`.
+        - ranges from ``0`` to ``3`` for all other mesh types.
+        - is equivalent to :attr:`dimensionality` for gridded data types
+          :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
+
+        See Also
+        --------
+        max_cell_dimensionality, dimensionality, distinct_cell_types
+
+        Returns
+        -------
+        int
+            The minimum dimensionality of the dataset's cells.
+
+        Examples
+        --------
+        Show the max and min cell dimensionality of a :attr:`~pyvista.CellType.LINE` cell and
+        :attr:`~pyvista.CellType.TRIANGLE` cell.
+
+        >>> from pyvista.examples import cells
+        >>> line = cells.Line()
+        >>> line.max_cell_dimensionality
+        1
+        >>> line.min_cell_dimensionality
+        1
+
+        >>> tri = cells.Triangle()
+        >>> tri.max_cell_dimensionality
+        2
+        >>> tri.min_cell_dimensionality
+        2
+
+        Merge the two cells and show the max and min cell dimensionality.
+
+        >>> merged = line + tri
+        >>> merged.max_cell_dimensionality
+        2
+        >>> merged.min_cell_dimensionality
+        1
+
+        """
+        if self.n_cells == 0:
+            # GetMinSpatialDimension returns 3 by default for meshes with no cells, which is odd
+            # because then we have min_cell_dimensionality > max_cell_dimensionality
+            return 0
+        if pv.vtk_version_info < (9, 5, 0):
+            return min(self._distinct_cell_dimensions)
+        return self.GetMinSpatialDimension()
+
+    @property
+    def _distinct_cell_dimensions(self) -> set[_Dimensionality]:
+        """Compute distinct dimensions of cells. Only needed for legacy vtk < 9.5."""
+        if self.n_cells == 0:
+            return {0}
         elif hasattr(self, 'dimensions'):
-            dims = np.asarray(self.dimensions)
-            return int(3 - (dims == 1).sum())  # type: ignore[return-value]
-        return int(np.linalg.matrix_rank(self.points))  # type: ignore[return-value]
+            dims = np.array(self.dimensions)
+            return {int(3 - (dims == 1).sum())}  # type: ignore[arg-type]
+        elif isinstance(self, pv.PolyData):
+            distinct_dimensions = set()
+            if self.n_faces_strict > 0 or self.n_strips > 0:
+                distinct_dimensions.add(2)
+            if self.n_lines > 0:
+                distinct_dimensions.add(1)
+            if self.n_verts > 0:
+                distinct_dimensions.add(0)
+            return distinct_dimensions  # type: ignore[return-value]
+        elif isinstance(self, pv.UnstructuredGrid):
+            distinct_dimensions = set()
+            for cell_type in self.distinct_cell_types:
+                cell_class = _CELL_TYPE_INFO[cell_type.name].cell_class
+                if cell_class is not None:
+                    distinct_dimensions.add(cell_class().GetCellDimension())
+            return distinct_dimensions  # type: ignore[return-value]
+        msg = f'Unexpected mesh type {type(self)}'
+        raise RuntimeError(msg)
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. warning::
+            Computing distinct cell types can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        See Also
+        --------
+        min_cell_dimensionality
+        max_cell_dimensionality
+        pyvista.UnstructuredGrid.celltypes
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        Load a mesh with mixed cells.
+
+        >>> mesh = examples.download_cow()
+        >>> sorted(mesh.distinct_cell_types)
+        [<CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>, <CellType.QUAD: 9>]
+
+        Load 2D image.
+
+        >>> mesh = examples.load_logo()
+        >>> mesh.distinct_cell_types
+        {<CellType.PIXEL: 8>}
+
+        """
+        if self.n_cells == 0:
+            return set()
+        if hasattr(self, 'dimensions'):
+            # Fast path for dimensioned grids
+            cell_dimension = next(iter(self._distinct_cell_dimensions))
+            if isinstance(self, pv.Grid):
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.PIXEL,
+                    3: pv.CellType.VOXEL,
+                }
+            else:
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.QUAD,
+                    3: pv.CellType.HEXAHEDRON,
+                }
+            return {mapping[cell_dimension]}
+
+        if hasattr(self, 'GetDistinctCellTypes'):
+            types = _vtk.vtkCellTypes()
+            self.GetDistinctCellTypes(types)
+            types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
+        elif hasattr(self, 'GetCellTypesArray'):
+            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
+        else:
+            grid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+            types_array = np.unique(grid.celltypes)
+        return {pv.CellType(cell_num) for cell_num in types_array}
+
+    @property
+    def has_nonlinear_cells(self) -> bool:  # numpydoc ignore=RT01
+        """Return True if the mesh contains any non-linear cells.
+
+        .. note::
+            Only :class:`~pyvista.UnstructuredGrid` can have non-linear cells. This property is
+            therefore always False for all other dataset types.
+
+        .. warning::
+            Checking for non-linear cells can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.cells.Hexahedron()
+        >>> mesh.has_nonlinear_cells
+        False
+
+        >>> mesh = examples.cells.QuadraticHexahedron()
+        >>> mesh.has_nonlinear_cells
+        True
+
+        """
+        if not isinstance(self, pv.UnstructuredGrid):
+            return False
+        is_linear = (
+            _vtk.vtkCellTypeUtilities.IsLinear
+            if pv.vtk_version_info >= (9, 6, 0)
+            else _vtk.vtkCellTypes.IsLinear
+        )
+        return not all(is_linear(celltype) for celltype in self.distinct_cell_types)

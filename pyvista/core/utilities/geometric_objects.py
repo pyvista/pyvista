@@ -49,16 +49,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
-NORMALS = {
-    'x': [1, 0, 0],
-    'y': [0, 1, 0],
-    'z': [0, 0, 1],
-    '-x': [-1, 0, 0],
-    '-y': [0, -1, 0],
-    '-z': [0, 0, -1],
-}
-NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
-
 
 @_deprecate_positional_args
 def Capsule(  # noqa: PLR0917
@@ -1357,7 +1347,9 @@ def Box(
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
     mesh = pv.ImageData(dimensions=level_vector + 2)
-    mesh = mesh.extract_geometry().resize(bounds=bounds)
+    mesh = mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
+        bounds=bounds
+    )
     if not quads:
         mesh = mesh.triangulate()
     return mesh
@@ -1595,9 +1587,43 @@ def Text3D(  # noqa: PLR0917
 
     Examples
     --------
+    Create 3D text.
+
     >>> import pyvista as pv
     >>> text_mesh = pv.Text3D('PyVista')
-    >>> text_mesh.plot(cpos='xy')
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Create planar text.
+
+    >>> text_mesh = pv.Text3D('PyVista', depth=0)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the depth explicitly.
+
+    >>> text_mesh = pv.Text3D('PyVista', depth=5)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the width explicitly. The height and depth are automatically scaled proportionally.
+
+    >>> text_mesh = pv.Text3D('PyVista', width=10)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the height explicitly. The width and depth are automatically scaled proportionally.
+
+    >>> text_mesh = pv.Text3D('PyVista', height=10)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the height `and` width. The depth is automatically scaled proportional to height.
+
+    >>> text_mesh = pv.Text3D('PyVista', height=10, width=10)
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Set the height, width, and depth independently, and adjust the center.
+
+    >>> text_mesh = pv.Text3D(
+    ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
+    ... )
+    >>> text_mesh.plot(cpos='xy', show_bounds=True)
 
     """
     return Text3DSource(
@@ -1688,7 +1714,7 @@ def Wavelet(  # noqa: PLR0917
 
     Extract lower valued cells of the wavelet and create a surface from it.
 
-    >>> thresh = wavelet.threshold(800).extract_surface()
+    >>> thresh = wavelet.threshold(800).extract_surface(algorithm=None)
     >>> thresh.plot(show_scalar_bar=False)
 
     Smooth it to create "waves"

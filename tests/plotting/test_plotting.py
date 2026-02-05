@@ -18,6 +18,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
+from typing import get_args
 
 import numpy as np
 from PIL import Image
@@ -32,14 +33,15 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import _vtk
+from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
-import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
+from tests.examples.test_cell_examples import cell_example_functions
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -673,6 +675,15 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.parametrize('use_3d_text', [True, False])
+@pytest.mark.parametrize('font_size', [12, 24])
+def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show_grid(use_3d_text=use_3d_text, font_size=font_size)
+    pl.show()
+
+
 cpos_param = [
     [(2.0, 5.0, 13.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
     [-1, 2, -5],  # trigger view vector
@@ -800,8 +811,7 @@ def test_plot_show_bounds(sphere):
 def test_plot_label_fmt(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    fmt = '%.3f' if pv.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    fmt = '%.3f' if pv.vtk_version_info < (9, 6, 0) else '{:.3f}'
     pl.show_bounds(xtitle='My X', fmt=fmt)
     pl.show()
 
@@ -3517,6 +3527,50 @@ def test_plot_cell():
     examples.plot_cell(grid)
 
 
+@pytest.mark.parametrize(
+    ('line_width', 'point_size', 'font_size', 'normals_scale'),
+    [(5, 30, 20, 0.1), (10, 80, 50, 0.25)],
+)
+def test_plot_cell_kwargs(line_width, point_size, font_size, normals_scale, verify_image_cache):
+    # Skip since variance is too high across operating systems
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.windows_skip_image_cache = True
+
+    grid = examples.cells.Polyhedron()
+    examples.plot_cell(
+        grid,
+        show_normals=True,
+        point_size=point_size,
+        font_size=font_size,
+        line_width=line_width,
+        normals_scale=normals_scale,
+    )
+
+
+@skip_windows_mesa  # due to opacity
+@pytest.mark.parametrize('wrong_orientation', [True, False])
+def test_plot_cell_polyhedron(wrong_orientation):
+    points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
+    cells = [4, 3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    if wrong_orientation:
+        # Swap two ids
+        id1 = cells[2]
+        cells[2] = cells[3]
+        cells[3] = id1
+    cells = [len(cells), *cells]
+    polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
+    examples.plot_cell(polyhedron, show_normals=True)
+
+
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
+def test_plot_cell_multiple_cell_types(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    cell3d = examples.cells.Polyhedron()
+    cell2d = examples.cells.Quadrilateral().translate((2, -2, 0))
+    grid = cell2d + cell3d
+    examples.plot_cell(grid, show_normals=True)
+
+
 def test_tight_square_padding():
     grid = pv.ImageData(dimensions=(200, 100, 1))
     grid['data'] = np.arange(grid.n_points)
@@ -3970,8 +4024,7 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     mesh = examples.load_uniform().slice()
     pl = pv.Plotter()
     pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    fmt = '%.3f' if pv.vtk_version_info < (9, 5, 99) else '{:.3f}'
+    fmt = '%.3f' if pv.vtk_version_info < (9, 6, 0) else '{:.3f}'
     pl.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt=fmt)
     pl.camera_position = pv.CameraPosition(
         position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
@@ -4362,6 +4415,22 @@ def test_xyz_assembly_show_labels_false(assembly):
     pl.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = pl.camera
+    pl.show()
+
+
+@pytest.mark.parametrize('scale_mode', get_args(ScaleModeOptions))
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_axes_assembly_scale_mode(scale_mode, symmetric):
+    cls = pv.AxesAssemblySymmetric if symmetric else pv.AxesAssembly
+    scale = (0.4, 1.0, 2.5)
+    axes_scale = cls(position=(-1, 2, 1), scale=scale, scale_mode=scale_mode)
+    matrix = pv.Transform().scale(scale).matrix
+    axes_matrix = cls(user_matrix=matrix, scale_mode=scale_mode)
+
+    pl = pv.Plotter()
+    pl.add_actor(axes_scale)
+    pl.add_actor(axes_matrix)
+    pl.enable_parallel_projection()
     pl.show()
 
 
@@ -4844,8 +4913,7 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-    if pv.vtk_version_info > (9, 5, 99) and orient_faces is False:
+    if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
         # This bug was fixed in VTK 9.6
         pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -5286,3 +5354,56 @@ def test_box():
 def test_partitioned_dataset(sphere):
     mesh = pv.PartitionedDataSet([sphere])
     mesh.plot()
+
+
+@pytest.mark.parametrize('cell_example', cell_example_functions)
+def test_cell_examples_normals(cell_example, verify_image_cache):
+    if cell_example is examples.cells.Empty:
+        pytest.skip('nothing to plot')
+    if cell_example in [
+        examples.cells.BiQuadraticQuadraticWedge,
+        examples.cells.QuadraticLinearWedge,
+        examples.cells.QuadraticWedge,
+    ] and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('point ordering changed in newer VTK')
+
+    # Skip since variance is too high
+    verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.windows_skip_image_cache = True
+
+    grid = cell_example()
+    if next(grid.cell).dimension == 2:
+        # Ensure normals of 2D cells point in z-direction for consistency
+        normal = grid.extract_surface(algorithm=None).cell_normals.mean(axis=0)
+        assert np.allclose(normal, (0.0, 0.0, 1.0))
+    examples.plot_cell(grid, show_normals=True)
+
+
+@pytest.mark.parametrize('data', ['point', 'cell'])
+def test_hide_cells(data):
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    if data == 'cell':
+        grid.cell_data['scalars'] = range(grid.n_cells)
+        clim_max = grid.n_cells
+    else:
+        grid.point_data['scalars'] = range(grid.n_points)
+        clim_max = grid.n_points
+
+    kwargs = dict(show_edges=True, show_grid=True, clim=[0, clim_max])
+
+    grid.plot(**kwargs)
+
+    grid = grid.hide_cells(range(60, 120))
+    grid.plot(**kwargs)
+
+    grid = grid.cast_to_unstructured_grid()
+    grid.plot(**kwargs)
+
+
+def test_hide_cells_no_scalars():
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    grid = grid.hide_cells(range(80, 120))
+    grid = grid.cast_to_unstructured_grid()
+    # Test plotting still works with ghost cells active
+    assert grid.active_scalars_name == _vtk.vtkDataSetAttributes.GhostArrayName()
+    grid.plot(color='w', show_edges=True, show_grid=True)

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 import os
 import sys
+import warnings
 
 import numpy as np
 
@@ -198,7 +199,9 @@ def _voxelize_legacy(
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_geometry()  # filter preserves topology
+    surface = mesh.extract_surface(
+        algorithm=None, pass_cellid=False, pass_pointid=False
+    )  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'
@@ -248,9 +251,11 @@ def _voxelize_legacy(
         del ugrid_norm, surface_norm
     else:
         # get part of the mesh within the mesh's bounding surface.
-        selection = ugrid.select_enclosed_points(
-            surface, tolerance=0.0, check_surface=check_surface
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=pv.PyVistaDeprecationWarning)
+            selection = ugrid.select_enclosed_points(
+                surface, tolerance=0.0, check_surface=check_surface
+            )
         mask = selection.point_data['SelectedPoints'].view(np.bool_)
         del selection
 
@@ -409,7 +414,9 @@ def voxelize_volume(  # noqa: PLR0917
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_geometry()  # filter preserves topology
+    surface = mesh.extract_surface(
+        algorithm=None, pass_cellid=False, pass_pointid=False
+    )  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'

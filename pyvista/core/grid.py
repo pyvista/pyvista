@@ -15,7 +15,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
@@ -29,6 +28,18 @@ from pyvista.core.utilities.writer import TIFFWriter
 from pyvista.core.utilities.writer import XMLImageDataWriter
 from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
+from . import _vtk_core as _vtk
+from .dataset import DataSet
+from .filters import ImageDataFilters
+from .filters import RectilinearGridFilters
+from .filters import _get_output
+from .utilities.arrays import array_from_vtkmatrix
+from .utilities.arrays import convert_array
+from .utilities.arrays import raise_has_duplicates
+from .utilities.arrays import vtkmatrix_from_array
+from .utilities.misc import abstract_class
+from .utilities.state_manager import _update_alg
+
 if TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -41,18 +52,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
-
-from . import _vtk_core as _vtk
-from .dataset import DataSet
-from .filters import ImageDataFilters
-from .filters import RectilinearGridFilters
-from .filters import _get_output
-from .utilities.arrays import array_from_vtkmatrix
-from .utilities.arrays import convert_array
-from .utilities.arrays import raise_has_duplicates
-from .utilities.arrays import vtkmatrix_from_array
-from .utilities.misc import abstract_class
-from .utilities.state_manager import _update_alg
+    from .filters.data_object import _MeshValidationOptions
 
 
 @abstract_class
@@ -136,6 +136,13 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         Whether to deep copy a :vtk:`vtkRectilinearGrid` object.
         Default is ``False``.  Keyword only.
 
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
+
     Examples
     --------
     >>> import pyvista as pv
@@ -171,6 +178,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         *args,
         check_duplicates: bool = False,
         deep: bool = False,
+        validate: bool | _MeshValidationOptions = False,
         **kwargs,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -217,6 +225,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             else:
                 msg = 'Arguments not understood by `RectilinearGrid`.'
                 raise TypeError(msg)
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -554,6 +565,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.45
 
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
+
     See Also
     --------
     :ref:`create_uniform_grid_example`
@@ -628,6 +646,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         deep: bool = False,  # noqa: FBT001, FBT002
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
+        *,
+        validate: bool | _MeshValidationOptions = False,
     ) -> None:
         """Initialize the uniform grid."""
         super().__init__()
@@ -662,6 +682,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 self.direction_matrix = direction_matrix
             if offset is not None:
                 self.offset = offset
+
+        if validate:
+            self._validate_mesh(validate)
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -1009,13 +1032,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         if np.allclose(np.abs(direction), np.eye(3)):
             sign = np.diagonal(direction)
         else:
-            sign = np.array((1.0, 1.0, 1.0))
             msg = (
-                'The direction matrix is not a diagonal matrix and cannot be used when casting to '
-                'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
-                'instead.'
+                'Rectilinear grid does not support off-axis rotations.\n'
+                'Consider removing off-axis rotations from the `direction_matrix`, '
+                'or casting to StructuredGrid instead.'
             )
-            warn_external(msg, RuntimeWarning)
+            raise ValueError(msg)
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
@@ -1135,7 +1157,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)  # type:ignore[has-type]
+    @wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
@@ -1188,10 +1210,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     ) -> None:  # numpydoc ignore=GL08
         T, R, N, S, K = pv.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
-            warn_external(
-                'The transformation matrix has a shear component which has been removed. \n'
-                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+            msg = (
+                'The transformation has a shear component which is not supported by ImageData.\n'
+                'Cast to StructuredGrid first to fully support shear transformations, or use\n'
+                '`Transform.decompose()` to remove this component.'
             )
+            raise ValueError(msg)
 
         self.origin = T
         self.direction_matrix = R * N

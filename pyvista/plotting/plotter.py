@@ -882,7 +882,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 )
 
                                 try:
-                                    dataset = dataset.extract_surface()
+                                    dataset = dataset.extract_surface(
+                                        algorithm=None, pass_pointid=False, pass_cellid=False
+                                    )
                                     mapper.SetInputData(dataset)
                                 except (AttributeError, ValueError, TypeError):  # pragma: no cover
                                     warn_external(
@@ -3517,6 +3519,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             with caution. Defaults to ``False``. This is ignored if the input
             is a :vtk:`vtkAlgorithm` subclass.
 
+            .. versionchanged:: 0.47
+                If the mesh is a :class:`~pyvista.UnstructuredGrid` with hidden ghost cells,
+                a copy is always made with VTK 9.6 or later. This is a necessary workaround to
+                ensure the ghost cells are rendered correctly.
+                See https://gitlab.kitware.com/vtk/vtk/-/issues/19922.
+
         backface_params : dict | Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
             backface rendering. This is useful for instance when the inside of
@@ -3662,6 +3670,67 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ... )
 
         """
+        if (
+            pv.vtk_version_info >= (9, 6, 0)
+            and isinstance(mesh, pv.UnstructuredGrid)
+            and (ghost_name := _vtk.vtkDataSetAttributes.GhostArrayName()) in mesh.cell_data.keys()
+        ):
+            # Ghost cells are not rendered properly in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
+            # As a workaround, extract non-hidden cells
+            hidden_cells = mesh.cell_data[ghost_name] == _vtk.vtkDataSetAttributes.HIDDENCELL
+            if np.any(hidden_cells):
+                not_hidden = mesh.extract_cells(
+                    ~hidden_cells, pass_cell_ids=False, pass_point_ids=False
+                )
+                with contextlib.suppress(KeyError):
+                    del not_hidden.cell_data[ghost_name]
+
+                # Simulate the non-visible bounds by adding points at the corners
+                xmin, xmax, ymin, ymax, zmin, zmax = mesh.bounds
+                points = np.array(
+                    [
+                        [xmin, ymin, zmin],
+                        [xmax, ymin, zmin],
+                        [xmin, ymax, zmin],
+                        [xmax, ymax, zmin],
+                        [xmin, ymin, zmax],
+                        [xmax, ymin, zmax],
+                        [xmin, ymax, zmax],
+                        [xmax, ymax, zmax],
+                    ],
+                    dtype=float,
+                )
+
+                # Create degenerate triangles at each point
+                n_points = points.shape[0]
+                cells = np.empty(n_points * 4, dtype=np.int64)
+                celltypes = np.full(n_points, pv.CellType.TRIANGLE, dtype=np.uint8)
+                for i in range(n_points):
+                    off = 4 * i
+                    cells[off] = 3
+                    cells[off + 1] = i
+                    cells[off + 2] = i
+                    cells[off + 3] = i
+
+                corners_grid = pv.UnstructuredGrid(cells, celltypes, points)
+
+                # Ensure we have data for the new points so we can merge the meshes
+                # and keep the original mesh arrays
+                for array in mesh.point_data.keys():
+                    corners_grid.point_data[array] = mesh.point_data[array][0]
+                for array in mesh.cell_data.keys():
+                    corners_grid.cell_data[array] = mesh.cell_data[array][0]
+
+                # Combine meshes
+                not_hidden = not_hidden + corners_grid
+                association, name = mesh.active_scalars_info
+                try:
+                    not_hidden.set_active_scalars(name, preference=association)
+                except KeyError:
+                    not_hidden.set_active_scalars(None, preference=association)
+                mesh = not_hidden
+                copy_mesh = False
+
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':
@@ -4090,7 +4159,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         if isinstance(self.mesh, pv.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
-            geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_geometry()
+            geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 
@@ -4463,7 +4534,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
             volume = volume.cell_data_to_point_data()
-        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))
+        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))  # noqa: S101
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
@@ -5665,7 +5736,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def add_point_labels(  # noqa: PLR0917
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
-        labels: list[str | int] | str,
+        labels: Sequence[str | int] | str,
         italic: bool = False,  # noqa: FBT001, FBT002
         bold: bool = True,  # noqa: FBT001, FBT002
         font_size: int | None = None,
@@ -6022,16 +6093,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-            fmt = '%.6e' if pv.vtk_version_info < (9, 5, 99) else '{:.6e}'  # type: ignore[unreachable]
+            fmt = '%.6e' if pv.vtk_version_info < (9, 6, 0) else '{:.6e}'  # type: ignore[unreachable]
         if isinstance(points, np.ndarray):
             scalars = labels
         elif is_pyvista_dataset(points):
             scalars = points.point_data[labels]  # type: ignore[assignment, index]
         phrase = f'{preamble} {fmt}'
 
-        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-        if pv.vtk_version_info < (9, 5, 99):
+        if pv.vtk_version_info < (9, 6, 0):  # pragma: no branch
             labels = [phrase % val for val in scalars]
         else:
             labels = [phrase.format(val) for val in scalars]

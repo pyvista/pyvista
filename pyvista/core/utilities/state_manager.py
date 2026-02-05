@@ -304,15 +304,11 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     @property
     def _state(self) -> _VtkSnakeCaseOptions:
-        import pyvista as pv  # noqa: PLC0415
-
-        return pv._VTK_SNAKE_CASE_STATE
+        return _vtk._VTK_SNAKE_CASE_STATE
 
     @_state.setter
     def _state(self, state: _VtkSnakeCaseOptions) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
-        pv._VTK_SNAKE_CASE_STATE = state
+        _vtk._VTK_SNAKE_CASE_STATE = state
 
 
 vtk_snake_case = _vtkSnakeCase()

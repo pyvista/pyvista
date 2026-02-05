@@ -663,7 +663,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
-            elif isinstance(array, str) and repr(self._user_dict) != array:  # type: ignore[unreachable]
+            elif isinstance(array, str) and str(self._user_dict) != array:  # type: ignore[unreachable]
                 # Filters may update the field data block separately, e.g.
                 # when copying field data, so we need to capture the new
                 # string and re-init

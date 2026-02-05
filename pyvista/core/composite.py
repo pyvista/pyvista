@@ -21,6 +21,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
@@ -52,8 +53,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyvista import PolyData
+    from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
+    from .filters.data_object import _MeshValidationOptions
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
@@ -85,6 +88,13 @@ class MultiBlock(
     ----------
     *args : dict, optional
         Data object dictionary.
+
+    validate : bool | str | sequence[str], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     **kwargs : dict, optional
         See :func:`pyvista.read` for additional options.
@@ -132,7 +142,7 @@ class MultiBlock(
 
     >>> for block in blocks:
     ...     # Do something with each dataset
-    ...     surf = block.extract_surface()
+    ...     surf = block.extract_surface(algorithm=None)
 
     """
 
@@ -144,7 +154,9 @@ class MultiBlock(
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self: MultiBlock, *args, **kwargs) -> None:
+    def __init__(
+        self: MultiBlock, *args, validate: bool | _MeshValidationOptions = False, **kwargs
+    ) -> None:
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
@@ -179,6 +191,9 @@ class MultiBlock(
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
+
+        if validate:
+            self._validate_mesh(validate)
 
     def wrap_nested(self: MultiBlock) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
@@ -1299,7 +1314,10 @@ class MultiBlock(
 
     @property
     def center(self: MultiBlock) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or return the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1320,6 +1338,11 @@ class MultiBlock(
 
         """
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def length(self: MultiBlock) -> float:
@@ -1825,7 +1848,7 @@ class MultiBlock(
         Get one of the blocks and extract its surface.
 
         >>> block = multi[0][42]
-        >>> surface = block.extract_geometry()
+        >>> surface = block.extract_surface(algorithm=None)
 
         Replace the block.
 
@@ -2209,7 +2232,7 @@ class MultiBlock(
         # in case we add meta data to this pbject down the road.
 
     @_deprecate_positional_args
-    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:  # noqa: FBT001, FBT002
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the multiblock.
 
         Parameters
@@ -2437,7 +2460,7 @@ class MultiBlock(
             Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         Notes
@@ -2457,7 +2480,7 @@ class MultiBlock(
             elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface()
+                return block.extract_surface(algorithm=None)
 
         return self.generic_filter(block_filter, _skip_none=False)
 
@@ -2518,7 +2541,7 @@ class MultiBlock(
         --------
         as_polydata_blocks
             Convert all blocks to :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """

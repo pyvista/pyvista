@@ -27,7 +27,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 3
 
 
-data_array = np.arange(start=8, stop=0, step=-1, dtype=np.int8)
+data_array = [8, 7, 6, 5, 4, 3, 2, 1]
 points_volume = pv.ImageData(dimensions=(2, 2, 2))
 points_volume.point_data['Data'] = data_array
 

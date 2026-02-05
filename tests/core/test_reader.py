@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import pickle
 import re
+import textwrap
 from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
@@ -1704,3 +1705,98 @@ def test_exodus_blocks():
 
     number_method = e_reader.face_sets._construct_result_method('GetNumberOf', 's')
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
+
+
+def test_vtu_series_reader():
+    filename = examples.download_file('vtu_series/wavy.zip')
+    reader = pv.get_reader(filename[0])
+    assert filename[0].endswith('.vtu.series')
+    assert isinstance(reader, pv.SeriesReader)
+    assert isinstance(reader.reader, pv.core.utilities.reader._SeriesReader)
+
+    assert reader.path == filename[0]
+
+    assert reader.number_time_points == 15
+    assert reader.time_point_value(1) == 1.0
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=float))
+
+    assert reader.active_time_value == reader.time_values[0]
+
+    active_dataset = reader.active_dataset
+    assert active_dataset.time == 0.0
+    assert active_dataset.name == 'ts/mesh_0.vtu'
+
+    assert len(reader.datasets) == len(reader.time_values)
+
+    assert isinstance(reader.active_reader, pv.XMLUnstructuredGridReader)
+
+    reader.set_active_time_value(1.0)
+    assert reader.active_time_value == 1.0
+
+    reader.set_active_time_point(2)
+    assert reader.active_time_value == 2.0
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.UnstructuredGrid)
+
+
+def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                { "name" : "ts/mesh_0.vti", "time" : 0.0 },
+                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
+                { "name" : "ts/mesh_2.vti", "time" : 2.0 }
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(
+        ValueError, match=r'Dataset extension .vti does not match series file parent extension'
+    ):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_forbid_inconsistent_ext_among_children(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                { "name" : "ts/mesh_0.vtu", "time" : 0.0 },
+                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
+                { "name" : "ts/mesh_2.vtp", "time" : 2.0 }
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(ValueError, match='Datasets in series file have multiple extensions'):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_forbid_empty_series_file(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(ValueError, match='No datasets found in series file'):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')

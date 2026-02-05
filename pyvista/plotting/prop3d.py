@@ -344,7 +344,7 @@ class Prop3D(
 
         See Also
         --------
-        transform
+        pyvista.Prop3D.transform
             Apply a transformation to the :attr:`user_matrix`.
 
         Returns

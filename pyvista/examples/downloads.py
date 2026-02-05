@@ -34,8 +34,6 @@ from typing import cast
 
 import numpy as np
 import pooch
-from pooch import Unzip
-from pooch.utils import get_logger
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -56,7 +54,7 @@ if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import MultiBlock
 # disable pooch verbose logging
-POOCH_LOGGER = get_logger()
+POOCH_LOGGER = pooch.get_logger()  # type: ignore[attr-defined]
 POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 
@@ -65,7 +63,7 @@ CACHE_VERSION = 3
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
 
@@ -137,7 +135,7 @@ _warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
 # to the registry since we're not (at the moment) concerned about hashes.
-FETCHER = pooch.create(
+FETCHER = pooch.create(  # type: ignore[attr-defined]
     path=USER_DATA_PATH,
     base_url=SOURCE,
     registry={},
@@ -233,7 +231,7 @@ def _download_file(filename):
     """Download a file using pooch."""
     return FETCHER.fetch(
         filename,
-        processor=Unzip() if filename.endswith('.zip') else None,
+        processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
     )
 
@@ -1567,6 +1565,10 @@ def download_foot_bones(load=True):  # noqa: FBT002
 
         :ref:`voxelize_example`
             Example using this dataset.
+
+        :ref:`compare_threshold_filters_example`
+            Example using this dataset.
+
 
     """
     return _download_dataset(_dataset_foot_bones, load=load)
@@ -3078,7 +3080,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Show non-linear subdivision.
 
-    >>> surf = dataset.extract_surface(nonlinear_subdivision=5)
+    >>> surf = dataset.extract_surface(algorithm=None, nonlinear_subdivision=5)
     >>> surf.plot(smooth_shading=True)
 
     .. seealso::
@@ -3243,6 +3245,7 @@ def download_carotid(load=True):  # noqa: FBT002
         * :ref:`gradients_example`
         * :ref:`streamlines_example`
         * :ref:`plane_widget_example`
+        * :ref:`compare_threshold_filters_example`
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -7917,7 +7920,7 @@ class _WholeBodyCTUtilities:
         # Add scalars to a new image
         label_map_image = pv.ImageData()
         label_map_image.copy_structure(cast('pv.ImageData', masks[0]))
-        label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
+        label_map_image['label_map'] = label_map_array
         return label_map_image
 
     @staticmethod

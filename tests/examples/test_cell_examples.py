@@ -23,11 +23,12 @@ def test_area_and_volume(cell_example):
     assert mesh.n_cells == 1
 
     if mesh.celltypes[0] in [
+        CellType.QUADRATIC_WEDGE,
         CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         CellType.TRIQUADRATIC_HEXAHEDRON,
     ]:
         pytest.xfail(
-            'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
+            'Volume should be positive but returns zero or negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
         )
 
     # Test area and volume
@@ -43,6 +44,14 @@ def test_area_and_volume(cell_example):
     else:
         assert np.isclose(area, 0.0)
         assert np.isclose(volume, 0.0)
+
+
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='vtkCellValidator output differs')
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_valid(cell_example):
+    mesh = cell_example()
+    invalid_fields = mesh.validate_mesh().invalid_fields
+    assert not invalid_fields
 
 
 def test_empty():

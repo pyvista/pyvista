@@ -17,6 +17,7 @@ from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
+from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
 radius = 0.5
 
@@ -356,6 +357,34 @@ def test_ray_trace_origin():
     _pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
     assert len(cells) == 1
     assert cells[0] == 0
+
+
+def test_vtk_obb_tree_raises():
+    poly = pv.PolyData()
+    match = 'Building the OBB tree requires PolyData with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.points = [[0.0, 0.0, 0.0]]
+    assert poly.n_points == 1
+    assert poly.n_cells == 0
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+    poly = pv.PolyData()
+    poly.faces = [3, 0, 0, 0]
+    assert poly.n_points == 0
+    assert poly.n_cells == 1
+    with pytest.raises(ValueError, match=match):
+        _ = poly.obbTree
+
+
+def test_polydata_subclass_del():
+    class PolyDataDerived(pv.PolyData): ...
+
+    poly = PolyDataDerived()
+    del poly
 
 
 def test_multi_ray_trace(sphere):
@@ -1007,7 +1036,7 @@ def test_extract_largest(sphere):
 
 
 def test_clean(sphere):
-    mesh = sphere.merge(sphere, merge_points=False).extract_surface()
+    mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1e-5)
     assert cleaned.n_points == sphere.n_points
@@ -1097,11 +1126,12 @@ def test_project_points_to_plane():
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
-    poly = pv.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
+    poly = pv.StructuredGrid(xx, yy, zz).extract_surface(algorithm=None, progress_bar=True)
     poly['elev'] = zz.ravel(order='f')
 
     # Wrong normal length
-    with pytest.raises(TypeError):
+    match = 'normal has shape (4,) which is not allowed.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         poly.project_points_to_plane(normal=(0, 0, 1, 1))
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
@@ -1446,7 +1476,7 @@ def test_irregular_faces():
 
 
 def test_set_irregular_faces():
-    mesh = pv.Pyramid().extract_surface()
+    mesh = pv.Pyramid().extract_surface(algorithm=None)
     flipped_faces = tuple(f[::-1] for f in mesh.irregular_faces)
     mesh.irregular_faces = flipped_faces
     _assert_irregular_faces_equal(mesh.irregular_faces, flipped_faces)
