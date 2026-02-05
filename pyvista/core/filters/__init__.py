@@ -36,13 +36,22 @@ if TYPE_CHECKING:
     from pyvista.core import _vtk_core as _vtk
 
 
-def _update_alg(alg, *, progress_bar: bool = False, message='') -> None:
+def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
+    # Get the status of the alg update using GetExecutive
+    # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
     if progress_bar:
         with ProgressMonitor(alg, message=message):
-            alg.Update()
+            status = alg.GetExecutive().Update()
     else:
-        alg.Update()
+        status = alg.GetExecutive().Update()
+    if not status:
+        # There was an error with the update. Re-run so we can catch it and
+        # raise it as a proper Python error.
+        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
+        # with VTK observers can be slow.
+        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
+            alg.Update()
 
 
 def _get_output(
