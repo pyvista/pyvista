@@ -26,6 +26,7 @@ Examples
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
 import pyvista as pv
@@ -40,17 +41,20 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
+    # TODO: For VTK 9.7, we no longer need to use alg.GetExecutive()
     try:
-        executive = alg.GetExecutive()
+        to_be_updated: Any = alg.GetExecutive()
     except AttributeError:
         # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
-        executive = alg
+        to_be_updated = alg
 
+    # Do the update
     if progress_bar:
         with ProgressMonitor(alg, message=message):
-            status = executive.Update()
+            status = to_be_updated.Update()
     else:
-        status = executive.Update()
+        status = to_be_updated.Update()
+
     if status is not None and status == 0:
         # There was an error with the update. Re-run so we can catch it and
         # raise it as a proper Python error.
