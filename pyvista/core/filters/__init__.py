@@ -40,12 +40,18 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
+    try:
+        executive = alg.GetExecutive()
+    except AttributeError:
+        # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
+        executive = alg
+
     if progress_bar:
         with ProgressMonitor(alg, message=message):
-            status = alg.GetExecutive().Update()
+            status = executive.Update()
     else:
-        status = alg.GetExecutive().Update()
-    if not status:
+        status = executive.Update()
+    if status is not None and status == 0:
         # There was an error with the update. Re-run so we can catch it and
         # raise it as a proper Python error.
         # We avoid using VtkErrorCatcher for the initial update because adding and tracking
