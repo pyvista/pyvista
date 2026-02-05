@@ -204,7 +204,9 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer._apply_kwargs_safely(
                 texture=texture, data_format=data_format, compression=compression
             )
-            writer.write()
+            with pv.VtkErrorCatcher(raise_errors=True):
+                writer.write()
+
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
         else:
