@@ -52,7 +52,7 @@ angle_v = np.linspace(0, np.pi, 200)
 u, v = np.meshgrid(angle_u, angle_v)
 x, y, z = hopf_torus(u, v)
 grid = pv.StructuredGrid(x, y, z)
-mesh = grid.extract_surface(algorithm='auto').clean(tolerance=1e-6)
+mesh = grid.extract_surface(algorithm=None).clean(tolerance=1e-6)
 
 # Distances normalized to [0, 2*pi]
 dists = np.linalg.norm(mesh.points, axis=1)

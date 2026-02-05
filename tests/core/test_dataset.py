@@ -1298,7 +1298,7 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface(algorithm='auto')
+    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface(algorithm=None)
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
 
@@ -1567,17 +1567,17 @@ def test_dimensionality():
     assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
-    strip = examples.cells.TriangleStrip().extract_surface(algorithm='auto')
+    strip = examples.cells.TriangleStrip().extract_surface(algorithm=None)
     assert strip.dimensionality == 2
     assert strip.max_cell_dimensionality == 2
     assert strip.min_cell_dimensionality == 2
 
-    line = examples.cells.Line().extract_surface(algorithm='auto')
+    line = examples.cells.Line().extract_surface(algorithm=None)
     assert line.dimensionality == 1
     assert line.max_cell_dimensionality == 1
     assert line.min_cell_dimensionality == 1
 
-    vertex = examples.cells.Vertex().extract_surface(algorithm='auto')
+    vertex = examples.cells.Vertex().extract_surface(algorithm=None)
     assert vertex.dimensionality == 0
     assert vertex.max_cell_dimensionality == 0
     assert vertex.min_cell_dimensionality == 0

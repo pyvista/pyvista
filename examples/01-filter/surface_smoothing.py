@@ -36,7 +36,7 @@ vol.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 # smoothing filter:
 
 # Get the out surface as PolyData
-surf = vol.extract_surface(algorithm='auto')
+surf = vol.extract_surface(algorithm=None)
 # Smooth the surface
 smooth = surf.smooth()
 smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)

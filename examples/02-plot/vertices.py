@@ -63,7 +63,7 @@ pl.show(cpos=cpos)
 #
 # The first step is to extract the outer surface geometry of the mesh then
 # grab all the points of that extraction.
-surf_points = mesh.extract_surface(algorithm='auto').points
+surf_points = mesh.extract_surface(algorithm=None).points
 
 
 # %%
