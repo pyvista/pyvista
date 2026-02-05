@@ -27,7 +27,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # <pyvista.DataSet.center>` of the grid.
 
 import numpy as np
-
 import pyvista as pv
 
 grid = pv.ImageData(dimensions=(200, 200, 200))

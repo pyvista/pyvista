@@ -94,7 +94,8 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 # The connectivity array of polyhedra is defined differently from the rest of the cell
 # types. For polyhedra, we need to set the faces with the following format:
 #
-# ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1..., Face0PointN-1, Face1NPoints, ...]``
+# ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1...,
+#    Face0PointN-1, Face1NPoints, ...]``
 #
 # Where:
 #
@@ -173,7 +174,12 @@ cells = quad + polygon + hexa + polyhedron
 # The number of items in this list must match the number of cells in the
 # connectivity array.
 
-celltypes = [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON]
+celltypes = [
+    pv.CellType.QUAD,
+    pv.CellType.POLYGON,
+    pv.CellType.HEXAHEDRON,
+    pv.CellType.POLYHEDRON,
+]
 
 
 # %%
