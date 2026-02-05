@@ -142,7 +142,7 @@ class MultiBlock(
 
     >>> for block in blocks:
     ...     # Do something with each dataset
-    ...     surf = block.extract_surface()
+    ...     surf = block.extract_surface(algorithm=None)
 
     """
 
@@ -1848,7 +1848,7 @@ class MultiBlock(
         Get one of the blocks and extract its surface.
 
         >>> block = multi[0][42]
-        >>> surface = block.extract_geometry()
+        >>> surface = block.extract_surface(algorithm=None)
 
         Replace the block.
 
@@ -2460,7 +2460,7 @@ class MultiBlock(
             Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         Notes
@@ -2480,7 +2480,7 @@ class MultiBlock(
             elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface()
+                return block.extract_surface(algorithm=None)
 
         return self.generic_filter(block_filter, _skip_none=False)
 
@@ -2541,7 +2541,7 @@ class MultiBlock(
         --------
         as_polydata_blocks
             Convert all blocks to :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """

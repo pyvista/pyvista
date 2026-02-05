@@ -1559,7 +1559,11 @@ def to_trimesh(  # numpydoc ignore=RT01
         )
         raise pv.NotAllTrianglesError(msg)
 
-    surf = mesh if isinstance(mesh, pv.PolyData) else mesh.extract_geometry()
+    surf = (
+        mesh
+        if isinstance(mesh, pv.PolyData)
+        else mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+    )
     surf = surf if is_all_triangles else surf.triangulate()
 
     pass_point_data, pass_cell_data, pass_field_data = _validate_pass_data(pass_data)

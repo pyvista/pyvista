@@ -112,7 +112,7 @@ curvsurf.plot(texture=tex)
 # +++++++++++++++++++++++++++++++++++++++++
 # Generate a moving gif from an active plotter with updating textures.
 
-mesh = curvsurf.extract_surface()
+mesh = curvsurf.extract_surface(algorithm=None)
 
 # Create a plotter object
 pl = pv.Plotter(notebook=False, off_screen=True)

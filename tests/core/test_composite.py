@@ -19,6 +19,7 @@ from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
+from pyvista.core.filters.data_object import _SENTINEL
 
 
 def test_multi_block_init_vtk():
@@ -556,8 +557,35 @@ def test_multi_io_erros(tmpdir):
 
 
 def test_extract_geometry(multiblock_all_with_nested_and_none):
-    geom = multiblock_all_with_nested_and_none.extract_geometry()
+    match = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
+
+
+@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None, _SENTINEL])
+def test_extract_surface(multiblock_all_with_nested_and_none, algorithm):
+    if algorithm is _SENTINEL:
+        with pytest.warns(pv.PyVistaFutureWarning):
+            geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
+    else:
+        geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
+    assert isinstance(geom, PolyData)
+
+
+def test_extract_surface_no_args(multiblock_all_with_nested_and_none):
+    # Get output directly from vtkCompositeDataGeometryFilter
+    poly_from_vtk_filter = multiblock_all_with_nested_and_none._composite_geometry_filter()
+
+    # Test branch without any config options, similar to vtkCompositeDataGeometryFilter
+    kwargs = dict(
+        algorithm='dataset_surface',
+        pass_cellid=False,
+        pass_pointid=False,
+        progress_bar=False,
+    )
+    poly_no_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    assert poly_no_config == poly_from_vtk_filter
 
 
 def test_combine_filter(multiblock_all_with_nested_and_none):

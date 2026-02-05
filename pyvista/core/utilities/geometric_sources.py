@@ -3645,11 +3645,15 @@ class AxesGeometrySource(_NoNewAttrMixin):
         elif geometry == 'sphere':
             out = pv.Sphere(phi_resolution=resolution, theta_resolution=resolution)
         elif geometry == 'hemisphere':
-            out = pv.SolidSphere(end_phi=90).extract_geometry()
+            out = pv.SolidSphere(end_phi=90).extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
         elif geometry == 'cone':
             out = pv.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            out = pv.Pyramid().extract_geometry()
+            out = pv.Pyramid().extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
         elif geometry == 'cube':
             out = pv.Cube()
         elif geometry == 'octahedron':
@@ -3681,7 +3685,11 @@ class AxesGeometrySource(_NoNewAttrMixin):
         else:
             msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'  # type: ignore[unreachable]
             raise TypeError(msg)
-        part_poly = part if isinstance(part, pv.PolyData) else part.extract_geometry()
+        part_poly = (
+            part
+            if isinstance(part, pv.PolyData)
+            else part.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+        )
         part_poly = AxesGeometrySource._normalize_part(part_poly)
         return name, part_poly
 

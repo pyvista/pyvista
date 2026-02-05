@@ -18,6 +18,8 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -531,7 +533,21 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         raise PointSetCellOperationError
 
     def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
-        """Raise extract geometry are not supported."""
+        """Raise extract geometry are not supported.
+
+        ..deprecated:: 0.47
+
+        """
+        warn_external(
+            '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.',
+            PyVistaDeprecationWarning,
+        )
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove this deprecated filter.'
+            raise RuntimeError(msg)
         raise PointSetCellOperationError
 
     def cell_validator(self, *args, **kwargs):  # noqa: ARG002
@@ -1248,13 +1264,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Get the face arrays of the five faces of a pyramid.
 
         >>> import pyvista as pv
-        >>> pyramid = pv.Pyramid().extract_surface()
+        >>> pyramid = pv.Pyramid().extract_surface(algorithm=None)
         >>> pyramid.irregular_faces  # doctest: +NORMALIZE_WHITESPACE
-        (array([0, 1, 2, 3]),
-         array([0, 3, 4]),
-         array([0, 4, 1]),
-         array([3, 2, 4]),
-         array([2, 1, 4]))
+        (array([0, 4, 3], dtype=int32),
+         array([0, 1, 4], dtype=int32),
+         array([0, 3, 2, 1], dtype=int32),
+         array([1, 2, 4], dtype=int32),
+         array([2, 3, 4], dtype=int32))
 
         """
         return _get_irregular_cells(self.GetPolys())
@@ -1936,7 +1952,9 @@ class PointGrid(_PointSet):
             ``return_cpos`` is ``True``.
 
         """
-        trisurf = self.extract_surface().triangulate()
+        trisurf = self.extract_surface(
+            algorithm=None, pass_cellid=False, pass_pointid=False
+        ).triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
