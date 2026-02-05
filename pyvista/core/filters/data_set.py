@@ -5499,7 +5499,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
         message = 'Extracting Surface'
 
-        if algorithm in ('auto', 'geometry'):
+        if algorithm in (None, 'geometry'):
             # Default case: use vtkGeometryFilter. This will automatically delegate to
             # vtkDataSetSurfaceFilter internally as needed for non-linear cells
             if algorithm == 'geometry' and self.has_nonlinear_cells:
