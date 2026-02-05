@@ -73,7 +73,11 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     coincident_points=0x100,
 )
 
-_ExtractSurfaceOptions = Literal['auto', 'geometry', 'dataset_surface']
+
+class _SENTINEL: ...
+
+
+_ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: PYI061
 
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
@@ -3267,15 +3271,16 @@ class DataObjectFilters:
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
         nonlinear_subdivision: int | None = None,
-        algorithm: _ExtractSurfaceOptions | None = None,
+        algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = _SENTINEL,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> PolyData:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
 
         .. note::
             The underlying VTK algorithm can be selected for surface extraction.
-            Using ``algorithm='auto'`` is recommended. The current default is
-            ``'dataset_surface'``, but this will change to ``'auto'`` in a future version.
+            Using ``algorithm=None`` is recommended, and the appropriate algorithm
+            will automatically be selected. The current default is ``'dataset_surface'``,
+            but this will change to ``None`` in a future version.
 
         .. versionchanged:: 0.47
             This filter is now generalized to also work with :class:`~pyvista.MultiBlock`.
@@ -3308,19 +3313,19 @@ class DataObjectFilters:
 
             - ``'geometry'``: use :vtk:`vtkGeometryFilter`.
             - ``'dataset_surface'``: use :vtk:`vtkDataSetSurfaceFilter`.
-            - ``'auto'``: The algorithm is automatically selected based on the input. For most
+            - ``None``: The algorithm is automatically selected based on the input. For most
               cases, the ``'geometry'`` algorithm is selected by default. The ``'dataset_surface'``
               algorithm is only selected for cases where the input is an
-              :class:`~pyvista.UnstructuredGrid` with at least one non-linear cell.
+              :class:`~pyvista.UnstructuredGrid` with non-linear cells.
 
-            Using ``'auto'`` is recommended. The current default is ``'dataset_surface'``, but
-            this will change to ``'auto'`` in a future version.
+            Using ``algorithm=None`` is recommended. The current default is ``'dataset_surface'``,
+            but this will change to ``None`` in a future version.
 
             Both algorithms produce similar surfaces, but ``'geometry'`` is more performant.
             The ``'geometry'`` algorithm also
 
             - merges points by default,
-            - tends to preserve the original mesh structure, and
+            - tends to preserve the original mesh's point order and connectivity, and
             - generates closed surfaces where closed surfaces would normally be expected.
 
             See :ref:`compare_surface_extract_algorithms` for some examples of differences.
@@ -3355,7 +3360,7 @@ class DataObjectFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
-        >>> surf = grid.extract_surface(algorithm='auto')
+        >>> surf = grid.extract_surface(algorithm=None)
         >>> type(surf)
         <class 'pyvista.core.pointset.PolyData'>
         >>> surf['vtkOriginalPointIds']
@@ -3389,29 +3394,33 @@ class DataObjectFilters:
             if pv.version_info >= (0, 50):  # pragma: no cover
                 msg = (
                     'Convert this future warning into an error '
-                    'and update the docstring default value to "auto".'
+                    'and update the docstring default value to None.'
                 )
                 raise RuntimeError(msg)
             if pv.version_info >= (0, 51):  # pragma: no cover
                 msg = (
-                    'Remove this future warning. Using `algorithm=None` should not be allowed, and'
-                    "the default value in the function signature should be `algorithm='auto'`."
+                    'Remove this future warning. _SENTINEL should be removed and the default '
+                    'value in the function signature should be `algorithm=None`.'
                 )
                 raise RuntimeError(msg)
 
             msg = (
                 f'The default value of `algorithm` for the filter\n'
                 f'`{self.__class__.__name__}.extract_surface` will change in the future. '
-                "It currently defaults to\n`'dataset_surface'`, but will change to `'auto'`. "
+                "It currently defaults to\n`'dataset_surface'`, but will change to `None`. "
                 'Explicitly set the `algorithm` keyword to\nsilence this warning.'
             )
             warn_external(msg, pv.PyVistaFutureWarning)
 
-        if algorithm is None:
+        if algorithm is _SENTINEL:
             # Warn about future change in default alg
             warn_future()
-            # The old default is 'dataset_surface', will be 'auto' in the future
+            # The old default is 'dataset_surface', will be None in the future
             algorithm = 'dataset_surface'
+        else:
+            _validation.check_contains(
+                get_args(_ExtractSurfaceOptions), must_contain=algorithm, name='algorithm'
+            )
 
         if nonlinear_subdivision is None:
             nonlinear_subdivision = 1
@@ -3421,10 +3430,6 @@ class DataObjectFilters:
                 'cannot be used to control non-linear subdivision.'
             )
             raise ValueError(msg)
-
-        _validation.check_contains(
-            get_args(_ExtractSurfaceOptions), must_contain=algorithm, name='algorithm'
-        )
 
         if isinstance(self, pv.MultiBlock):
             # Extract surface from each block separately and combine into a single PolyData
@@ -3446,7 +3451,7 @@ class DataObjectFilters:
             pass_pointid=pass_pointid,
             pass_cellid=pass_cellid,
             nonlinear_subdivision=nonlinear_subdivision,
-            algorithm=algorithm,
+            algorithm=algorithm,  # type: ignore[arg-type]
             progress_bar=progress_bar,
         )
 
@@ -4348,9 +4353,7 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_surface(
-                algorithm='auto', pass_cellid=False, pass_pointid=False
-            )
+            return mesh_out.extract_surface(algorithm=None, pass_cellid=False, pass_pointid=False)
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out

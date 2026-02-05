@@ -74,7 +74,7 @@ grid = pv.UnstructuredGrid(cells, celltypes, pts)
 # %%
 # Finally, extract the surface and plot it.
 # Note that the `'dataset_surface'` algorithm is necessary to use when generating surfaces from
-# non-linear cells. Setting ``algorithm='auto'`` also works.
+# non-linear cells. Setting ``algorithm=None`` also works.
 surf = grid.extract_surface(algorithm='dataset_surface')
 surf.plot(show_scalar_bar=False)
 

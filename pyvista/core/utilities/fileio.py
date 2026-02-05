@@ -1562,7 +1562,7 @@ def to_trimesh(  # numpydoc ignore=RT01
     surf = (
         mesh
         if isinstance(mesh, pv.PolyData)
-        else mesh.extract_surface(algorithm='auto', pass_pointid=False, pass_cellid=False)
+        else mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
     )
     surf = surf if is_all_triangles else surf.triangulate()
 

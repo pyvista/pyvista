@@ -163,7 +163,7 @@ assert report.invalid_fields == ('unused_points',)
 # %%
 # Use :meth:`~pyvista.DataObjectFilters.extract_surface` on the grid and observe that the
 # unused point is removed.
-poly = grid.extract_surface(algorithm='auto')
+poly = grid.extract_surface(algorithm=None)
 assert poly.n_points == 0
 assert poly.n_cells == 0
 
@@ -179,7 +179,7 @@ assert grid.n_cells == 1
 
 # %%
 # This time, the point is properly processed by the filter and is retained.
-poly = grid.extract_surface(algorithm='auto')
+poly = grid.extract_surface(algorithm=None)
 assert poly.n_points == 1
 assert poly.n_cells == 1
 

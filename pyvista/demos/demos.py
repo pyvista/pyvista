@@ -264,7 +264,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     # Create and plot structured grid
     sgrid = pv.StructuredGrid(X, Y, Z)
 
-    mesh = sgrid.extract_surface(algorithm='auto')
+    mesh = sgrid.extract_surface(algorithm=None)
     mesh['Height'] = Z.ravel()
 
     # Start a plotter object and set the scalars to the Z height

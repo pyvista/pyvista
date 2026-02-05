@@ -19,6 +19,7 @@ from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
+from pyvista.core.filters.data_object import _SENTINEL
 
 
 def test_multi_block_init_vtk():
@@ -556,15 +557,15 @@ def test_multi_io_erros(tmpdir):
 
 
 def test_extract_geometry(multiblock_all_with_nested_and_none):
-    match = "`extract_geometry` is deprecated. Use `extract_surface(algorithm='auto')` instead."
+    match = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
         geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
 
 
-@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None])
+@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None, _SENTINEL])
 def test_extract_surface(multiblock_all_with_nested_and_none, algorithm):
-    if algorithm is None:
+    if algorithm is _SENTINEL:
         with pytest.warns(pv.PyVistaFutureWarning):
             geom = multiblock_all_with_nested_and_none.extract_surface(algorithm=algorithm)
     else:

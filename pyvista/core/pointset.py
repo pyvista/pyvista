@@ -539,7 +539,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
         """
         warn_external(
-            "`extract_geometry` is deprecated. Use `extract_surface(algorithm='auto')` instead.",
+            '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.',
             PyVistaDeprecationWarning,
         )
         if pv.version_info >= (0, 50):  # pragma: no cover
@@ -1264,7 +1264,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         Get the face arrays of the five faces of a pyramid.
 
         >>> import pyvista as pv
-        >>> pyramid = pv.Pyramid().extract_surface(algorithm='auto')
+        >>> pyramid = pv.Pyramid().extract_surface(algorithm=None)
         >>> pyramid.irregular_faces  # doctest: +NORMALIZE_WHITESPACE
         (array([0, 4, 3], dtype=int32),
          array([0, 1, 4], dtype=int32),
@@ -1953,7 +1953,7 @@ class PointGrid(_PointSet):
 
         """
         trisurf = self.extract_surface(
-            algorithm='auto', pass_cellid=False, pass_pointid=False
+            algorithm=None, pass_cellid=False, pass_pointid=False
         ).triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 

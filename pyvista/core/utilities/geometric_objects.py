@@ -1346,7 +1346,7 @@ def Box(
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
     mesh = pv.ImageData(dimensions=level_vector + 2)
-    mesh = mesh.extract_surface(algorithm='auto', pass_pointid=False, pass_cellid=False).resize(
+    mesh = mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
         bounds=bounds
     )
     if not quads:
@@ -1713,7 +1713,7 @@ def Wavelet(  # noqa: PLR0917
 
     Extract lower valued cells of the wavelet and create a surface from it.
 
-    >>> thresh = wavelet.threshold(800).extract_surface(algorithm='auto')
+    >>> thresh = wavelet.threshold(800).extract_surface(algorithm=None)
     >>> thresh.plot(show_scalar_bar=False)
 
     Smooth it to create "waves"
