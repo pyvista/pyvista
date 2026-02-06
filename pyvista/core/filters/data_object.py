@@ -1333,7 +1333,7 @@ class DataObjectFilters:
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
         _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        vtk_filter_output = pv.core.filters._get_output(f)
+        vtk_filter_output = _get_output(f)
 
         output = self if inplace else self.__class__()
 

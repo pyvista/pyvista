@@ -900,7 +900,7 @@ def sample_function(  # noqa: PLR0917
     for a full example using this function.
 
     """
-    # internal import to avoide circular dependency
+    # internal import to avoid circular dependency
     from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()
