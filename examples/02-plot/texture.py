@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from matplotlib.pyplot import get_cmap
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -55,7 +54,9 @@ curvsurf.plot(texture=tex)
 
 elevated = curvsurf.elevation()
 
-elevated.plot(scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False)
+elevated.plot(
+    scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False
+)
 
 
 # %%
