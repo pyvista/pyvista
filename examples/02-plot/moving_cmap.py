@@ -13,7 +13,6 @@ This example uses :meth:`~pyvista.Plotter.open_gif` and
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 
@@ -21,7 +20,9 @@ import pyvista as pv
 def scurve(t):
     alpha = np.pi / 2 - (np.pi / 2 - 0.44) * np.cos(3 * t)
     beta = t + 0.44 * np.sin(6 * t)
-    return np.array([np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)])
+    return np.array(
+        [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)]
+    )
 
 
 # Hopf fiber
