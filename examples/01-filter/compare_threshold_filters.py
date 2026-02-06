@@ -36,7 +36,9 @@ value = 155
 outlines_mesh = pv.PolyData()
 volume = pv.examples.download_carotid()
 volume_outline = pv.Box(volume.bounds)
-volume_outline.cell_data['method'] = np.full((volume_outline.n_cells), method_map['default'])
+volume_outline.cell_data['method'] = np.full(
+    (volume_outline.n_cells), method_map['default']
+)
 outlines_mesh += volume_outline
 thresholded_vol = volume.threshold(value)
 thresholded_vol = thresholded_vol.translate([step, 0, 0])
@@ -98,7 +100,9 @@ values = (155, 580)
 mesh = pv.UnstructuredGrid()
 pl = pv.Plotter()
 clipped_vol = volume.clip_scalar(value=values)
-clipped_vol.cell_data['method'] = np.full((clipped_vol.number_of_cells), method_map['clip_scalar'])
+clipped_vol.cell_data['method'] = np.full(
+    (clipped_vol.number_of_cells), method_map['clip_scalar']
+)
 mesh += clipped_vol
 extracted_values_vol = volume.extract_values(values)
 extracted_values_vol.cell_data['method'] = np.full(

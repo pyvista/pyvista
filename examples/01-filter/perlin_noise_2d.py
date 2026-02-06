@@ -78,9 +78,17 @@ pl.show()
 
 pl = pv.Plotter(lighting=None)
 pl.add_light(
-    pv.Light(position=(3, 1, 0.5), show_actor=True, positional=True, cone_angle=90, intensity=1.2)
+    pv.Light(
+        position=(3, 1, 0.5),
+        show_actor=True,
+        positional=True,
+        cone_angle=90,
+        intensity=1.2,
+    )
 )
-pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim)
+pl.add_mesh(
+    mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim
+)
 pl.enable_shadows = True
 pl.show()
 # %%
