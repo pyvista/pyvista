@@ -4,8 +4,8 @@
 Connectivity
 ~~~~~~~~~~~~
 
-This example highlights some applications of the :func:`~pyvista.DataSetFilters.connectivity`
-filter.
+This example highlights some applications of the
+:func:`~pyvista.DataSetFilters.connectivity` filter.
 
 """
 
@@ -21,7 +21,6 @@ filter.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 

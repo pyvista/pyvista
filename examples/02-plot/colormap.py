@@ -13,7 +13,6 @@ from __future__ import annotations
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 

@@ -18,7 +18,6 @@ cylindrical shell, and sweeping a circle creates a torus.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # create a line and rotate it about the Z-axis

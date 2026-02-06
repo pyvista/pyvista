@@ -25,7 +25,9 @@ cpos = pv.CameraPosition(
 # We can easily display all vertices of a mesh with a ``points`` style
 # representation when plotting:
 pl = pv.Plotter()
-pl.add_mesh(mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10)
+pl.add_mesh(
+    mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10
+)
 pl.show(cpos=cpos)
 
 
