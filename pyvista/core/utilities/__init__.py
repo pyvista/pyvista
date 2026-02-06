@@ -234,6 +234,7 @@ from .reader import XMLStructuredGridReader as XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader as XMLUnstructuredGridReader
 from .reader import get_reader as get_reader
 from .state_manager import allow_new_attributes as allow_new_attributes
+from .state_manager import vtk_message_policy as vtk_message_policy
 from .state_manager import vtk_snake_case as vtk_snake_case
 from .state_manager import vtk_verbosity as vtk_verbosity
 from .transform import Transform as Transform

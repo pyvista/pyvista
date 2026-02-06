@@ -115,8 +115,9 @@ def test_boolean_intersect_edge_case():
     a = pv.Cube(x_length=2, y_length=2, z_length=2).triangulate()
     b = pv.Cube().triangulate()  # smaller cube (x_length=1)
 
-    with pytest.warns(UserWarning, match='contained within another'):
-        a.boolean_intersection(b)
+    with pytest.warns(pv.VTKExecutionWarning, match='vtkIntersectionPolyDataFilter'):
+        with pytest.warns(UserWarning, match='contained within another'):
+            a.boolean_intersection(b)
 
 
 def test_identical_boolean(sphere):

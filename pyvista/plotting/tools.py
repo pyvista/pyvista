@@ -13,6 +13,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .colors import Color
@@ -436,7 +437,7 @@ def create_axes_orientation_box(  # noqa: PLR0917
         cube_mapper = _vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)
         cube_mapper.SetColorModeToDirectScalars()
-        cube_mapper.Update()
+        _update_alg(cube_mapper)
 
         cube_actor = pv.Actor(mapper=cube_mapper)
         cube_actor.prop.culling = 'back'

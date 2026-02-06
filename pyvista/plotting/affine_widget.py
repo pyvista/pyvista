@@ -11,6 +11,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 
@@ -385,7 +386,7 @@ class AffineWidget3D(_NoNewAttrMixin):
                     self._axes[index][2],
                 )
                 trans.Translate(-self._origin)  # type: ignore[call-overload]
-                trans.Update()
+                _update_alg(trans)
                 rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
 

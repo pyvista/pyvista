@@ -13,6 +13,7 @@ import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
@@ -258,6 +259,10 @@ class Observer(_NoNewAttrMixin):
         On an event occurrence, this function executes.
 
         """
+        verbosity = pv.vtk_verbosity()
+        if verbosity == 'off' or (verbosity == 'error' and self.event_type == 'WarningEvent'):
+            # Ignore callback
+            return
         try:
             self.__event_occurred = True
             self.__message_etc = message

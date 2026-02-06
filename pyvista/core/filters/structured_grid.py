@@ -10,6 +10,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.state_manager import _update_alg
 
 
 @abstract_class
@@ -76,7 +77,7 @@ class StructuredGridFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     def concatenate(self, other, axis, tolerance=0.0):
