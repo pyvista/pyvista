@@ -17,7 +17,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core._vtk_core import VersionInfo
+from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pv.OFF_SCREEN = True
