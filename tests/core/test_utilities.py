@@ -36,6 +36,7 @@ from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
@@ -2786,19 +2787,19 @@ def test_cell_quality_info_raises():
 
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute():
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
-    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+    assert is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
 
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
-    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+    assert is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
 
-    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+    assert not is_vtk_attribute(pv.ImageData, 'foo')
 
 
 @pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
-    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
+    assert is_vtk_attribute(obj, 'GetDimensions')
 
 
 warnings.simplefilter('always')

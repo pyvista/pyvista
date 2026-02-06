@@ -26,6 +26,7 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
@@ -75,7 +76,7 @@ class GetOutput:
 
     def __call__(self, algorithm, *args, **kwargs):
         self._mock(algorithm, *args, **kwargs)
-        return pv.core.filters._get_output(algorithm)
+        return _get_output(algorithm)
 
     def reset(self, *args, **kwargs):
         self._mock.reset_mock(*args, **kwargs)
