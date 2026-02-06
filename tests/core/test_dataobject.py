@@ -534,8 +534,8 @@ def test_raise_error_when_failed_to_save(tmp_path):
     cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
 
     non_existent_dir = tmp_path / 'not_existing_directory'
-    with pytest.raises(pv.VTKExecutionError):
+    with pytest.raises(FileNotFoundError):
         cylinder.save(non_existent_dir / 'cylinder.vtk')
 
-    with pytest.raises(pv.VTKExecutionError):
+    with pytest.raises(FileNotFoundError):
         cylinder.cast_to_unstructured_grid().save(non_existent_dir / 'cylinder.vtu')

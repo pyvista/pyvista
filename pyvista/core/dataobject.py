@@ -204,8 +204,16 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
             writer._apply_kwargs_safely(
                 texture=texture, data_format=data_format, compression=compression
             )
-            with pv.VtkErrorCatcher(raise_errors=True):
-                writer.write()
+
+            if file_path.parent.exists() is False:
+                msg = f'Parent directory does not exist: {file_path.parent}'
+                raise FileNotFoundError(msg)
+
+            writer.write()
+
+            if file_path.exists() is False:
+                msg = f'VTK writer failed to write file: {file_path}'
+                raise OSError(msg)
 
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
