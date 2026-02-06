@@ -5,6 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -13,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.fileio import save_pickle
+from pyvista.core.utilities.writer import BaseWriter
 
 
 def test_eq_wrong_type(sphere):
@@ -530,7 +532,7 @@ def test_set_center(multiblock_all_with_nested_and_none):
         assert np.isclose(actual_length, original_length)
 
 
-def test_raise_error_when_failed_to_save(tmp_path):
+def test_raise_error_when_output_directory_is_missing(tmp_path):
     cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
 
     non_existent_dir = tmp_path / 'not_existing_directory'
@@ -539,3 +541,15 @@ def test_raise_error_when_failed_to_save(tmp_path):
 
     with pytest.raises(FileNotFoundError):
         cylinder.cast_to_unstructured_grid().save(non_existent_dir / 'cylinder.vtu')
+
+
+def test_raise_error_when_writing_is_failed(tmp_path):
+    cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
+
+    with mock.patch.object(
+        BaseWriter,
+        'write',
+        return_value=None,
+    ):
+        with pytest.raises(OSError, match='VTK writer failed to write file'):
+            cylinder.save(tmp_path / 'cylinder.vtk')
