@@ -43,6 +43,7 @@ from typing import Any
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import DeprecationError
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -945,20 +946,17 @@ class _AxesConfig(_ThemeConfig):
     def box(self) -> bool:  # numpydoc ignore=RT01
         """Use a box axes orientation widget.
 
-        If ``True``, Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
-        instead of the :class:`pyvista.AxesActor` as the orientation widget for plots.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pv.global_theme.axes.box = True
+        .. deprecated:: 0.43.0
+            This setting is deprecated. Use the ``Plotter.add_box_axes`` method
+            instead.
 
         """
         return self._box
 
     @box.setter
-    def box(self, box: bool):
-        self._box = bool(box)
+    def box(self, box: bool):  # noqa: ARG002
+        msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+        raise DeprecationError(msg)
 
     @property
     def show(self) -> bool:  # numpydoc ignore=RT01

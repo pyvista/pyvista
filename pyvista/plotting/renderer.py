@@ -21,6 +21,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
@@ -1252,6 +1253,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ylabel='Y',
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
+        box=None,
+        box_args=None,  # noqa: ARG002
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1288,6 +1291,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
+
+        box : bool, optional
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :func:`pyvista.create_axes_orientation_box` for details.
+
+            .. deprecated:: 0.43.0
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
+
+        box_args : dict, optional
+            Parameters for the orientation box widget when
+            ``box=True``. See the parameters of
+            :func:`pyvista.create_axes_orientation_box`.
+
+            .. deprecated:: 0.43.0
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
@@ -1350,6 +1370,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
+
+        if box:
+            msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+            raise DeprecationError(msg)
+
         self.axes_actor = create_axes_marker(
             label_color=color,
             line_width=line_width,
