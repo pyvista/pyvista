@@ -9,6 +9,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -97,9 +98,7 @@ def set_algorithm_input(alg, inp, port=0):
         alg.SetInputDataObject(port, inp)
 
 
-class PreserveTypeAlgorithmBase(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
-):
+class PreserveTypeAlgorithmBase(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type.
 
     Parameters
@@ -238,7 +237,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
 
 class PointSetToPolyDataAlgorithm(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
+    _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
 ):
     """Algorithm to cast PointSet to PolyData.
 
@@ -356,7 +355,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class CrinkleAlgorithm(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
+class CrinkleAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
     def __init__(self):
