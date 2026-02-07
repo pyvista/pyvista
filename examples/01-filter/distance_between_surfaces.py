@@ -26,23 +26,24 @@ surface at a spatial point inside a cell of the mesh.
 Second, we will use a KDTree to compute the distance from every vertex point in
 the bottom mesh to its closest vertex point in the top mesh.
 
-Lastly, we will use a PyVista filter, :func:`pyvista.DataSet.find_closest_cell` to calculate
-the distance from every vertex point in the bottom mesh to the closest spatial point
-inside a cell of the top mesh.  This will be the shortest distance from the vertex point
-to the top surface, unlike the first two examples.
+Lastly, we will use a PyVista filter, :func:`pyvista.DataSet.find_closest_cell` to
+calculate the distance from every vertex point in the bottom mesh to the closest spatial
+point inside a cell of the top mesh. This will be the shortest distance from the vertex
+point to the top surface, unlike the first two examples.
 
 """
 
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 
 def hill(seed):
     """Make a random surface."""
-    mesh = pv.ParametricRandomHills(random_seed=seed, u_res=50, v_res=50, hill_amplitude=0.5)
+    mesh = pv.ParametricRandomHills(
+        random_seed=seed, u_res=50, v_res=50, hill_amplitude=0.5
+    )
     mesh.rotate_y(-10, inplace=True)  # give the surfaces some tilt
 
     return mesh

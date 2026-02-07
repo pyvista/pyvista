@@ -6,6 +6,7 @@ import pyvista as pv
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -14,7 +15,7 @@ from .colors import Color
 from .opts import InterpolationType
 
 
-class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
+class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.

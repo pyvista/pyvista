@@ -25,6 +25,7 @@ from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
+from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -1646,6 +1647,7 @@ def test_validate_mesh_report_str():
         '    Type                     : PolyData\n'
         '    N Points                 : 842\n'
         '    N Cells                  : 1680\n'
+        '    Cell types               : {TRIANGLE}\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
@@ -1713,6 +1715,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Type                         : PolyData\n'
         '    N Points                     : 21\n'
         '    N Cells                      : 1\n'
+        '    Cell types                   : {TRIANGLE}\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
         "    Invalid fields (3)           : ('invalid_point_references', "
@@ -1790,7 +1793,7 @@ def test_validate_mesh_composite_message(invalid_nested_multiblock):
         'MultiBlock mesh is not valid due to the following problems:\n'
         " - Block id 1 'poly_root' PolyData mesh is not valid due to the "
         'following problems:\n'
-        '   - Mesh has 1 cell with invalid point references. Invalid cell id: [0]\n'
+        '   - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
         '   - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
         'ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '   - Mesh has 1 non-finite point. Invalid point id: [20]\n'
@@ -1798,7 +1801,7 @@ def test_validate_mesh_composite_message(invalid_nested_multiblock):
         'following problems:\n'
         "   - Block id 0 'poly_nested' PolyData mesh is not valid due to the "
         'following problems:\n'
-        '     - Mesh has 1 cell with invalid point references. Invalid cell id: [0]\n'
+        '     - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
         '     - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
         'ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '     - Mesh has 1 non-finite point. Invalid point id: [20]'
@@ -1849,6 +1852,7 @@ def test_validate_mesh_str_filtered():
         '    Type                     : PolyData\n'
         '    N Points                 : 0\n'
         '    N Cells                  : 0\n'
+        '    Cell types               : set()\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
@@ -1869,6 +1873,7 @@ def test_validate_mesh_str_filtered():
         '    Type                     : PolyData\n'
         '    N Points                 : 0\n'
         '    N Cells                  : 0\n'
+        '    Cell types               : set()\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
@@ -1892,6 +1897,7 @@ def test_validate_mesh_pointset(ant):
         '    Type                     : PointSet\n'
         '    N Points                 : 486\n'
         '    N Cells                  : 0\n'
+        '    Cell types               : {VERTEX}\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
@@ -1912,6 +1918,7 @@ def test_validate_mesh_pointset(ant):
         '    Type                     : PointSet\n'
         '    N Points                 : 486\n'
         '    N Cells                  : 0\n'
+        '    Cell types               : {VERTEX}\n'
         'Report summary:\n'
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
@@ -2020,8 +2027,30 @@ def invalid_hexahedron():
     return pv.UnstructuredGrid(cells, celltypes, points)
 
 
+@pytest.fixture
+def poly_with_invalid_point():
+    poly = pv.PolyData()
+    poly.points = [[np.nan, 0.0, 0.0]]
+    return poly
+
+
+@pytest.fixture
+def single_cell_invalid_point_references():
+    return pv.PolyData([0.0, 0.0, 0.0], [3, 0, 1, 1])
+
+
+@pytest.fixture
+def mixed_2d_cells_invalid_point_references():
+    return pv.PolyData([0.0, 0.0, 0.0], [3, 0, 1, 1, 4, 0, 1, 1, 1])
+
+
+@pytest.fixture
+def mixed_dimension_cells_invalid_point_references():
+    return pv.PolyData([0.0, 0.0, 0.0], faces=[3, 0, 1, 1], verts=[2, 0, -1])
+
+
 @pytest.mark.needs_vtk_version(9, 6, 0)
-def test_cell_validator_intersecting_edges(invalid_hexahedron):
+def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     expected_cell_ids = [0]
@@ -2046,13 +2075,6 @@ def test_cell_validator_intersecting_edges(invalid_hexahedron):
     assert report.inverted_faces is None
 
 
-@pytest.fixture
-def poly_with_invalid_point():
-    poly = pv.PolyData()
-    poly.points = [[np.nan, 0.0, 0.0]]
-    return poly
-
-
 @pytest.mark.needs_vtk_version(9, 6, 0)
 @pytest.mark.skipif(sys.platform == 'Darwin', reason='Results differ for macOS and older vtk')
 def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
@@ -2066,9 +2088,9 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     # Test single cell
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 cell with intersecting edges. Invalid cell id: [0]\n'
-        ' - Mesh has 1 cell with inverted faces. Invalid cell id: [0]\n'
-        ' - Mesh has 1 cell with non-planar faces. Invalid cell id: [0]'
+        ' - Mesh has 1 HEXAHEDRON cell with intersecting edges. Invalid cell id: [0]\n'
+        ' - Mesh has 1 HEXAHEDRON cell with inverted faces. Invalid cell id: [0]\n'
+        ' - Mesh has 1 HEXAHEDRON cell with non-planar faces. Invalid cell id: [0]'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         invalid_hexahedron.validate_mesh(action='warn')
@@ -2077,9 +2099,9 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
 
     match = (
         'UnstructuredGrid mesh is not valid due to the following problems:\n'
-        ' - Mesh has 2 cells with intersecting edges. Invalid cell ids: [0, 1]\n'
-        ' - Mesh has 2 cells with inverted faces. Invalid cell ids: [0, 1]\n'
-        ' - Mesh has 2 cells with non-planar faces. Invalid cell ids: [0, 1]'
+        ' - Mesh has 2 HEXAHEDRON cells with intersecting edges. Invalid cell ids: [0, 1]\n'
+        ' - Mesh has 2 HEXAHEDRON cells with inverted faces. Invalid cell ids: [0, 1]\n'
+        ' - Mesh has 2 HEXAHEDRON cells with non-planar faces. Invalid cell ids: [0, 1]'
     )
     invalid_hexahedrons = pv.merge([invalid_hexahedron, invalid_hexahedron.translate((3, 3, 3))])
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
@@ -2110,6 +2132,38 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.validate_mesh(action='warn')
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(_format_composite(match))):
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
+
+
+@pytest.mark.needs_vtk_version(
+    (9, 3, 0), reason='Issue with mixed cells mesh fixture for older VTK'
+)
+def test_validate_mesh_distinct_cell_types(
+    single_cell_invalid_point_references,
+    mixed_2d_cells_invalid_point_references,
+    mixed_dimension_cells_invalid_point_references,
+):
+    message = single_cell_invalid_point_references.validate_mesh().message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+    )
+    assert message == expected
+
+    message = mixed_2d_cells_invalid_point_references.validate_mesh().message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
+        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
+    )
+    assert message == expected
+
+    message = mixed_dimension_cells_invalid_point_references.validate_mesh().message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
+    )
+    assert message == expected
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
@@ -2182,3 +2236,119 @@ def test_validate_mesh_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     valid_grid = pv.ExplicitStructuredGrid(grid, validate=True)
     assert valid_grid == grid
+
+
+def test_extract_surface_multiblock_no_args(multiblock_all_with_nested_and_none):
+    # Get output directly from vtkCompositeDataGeometryFilter
+    poly_from_vtk_filter = multiblock_all_with_nested_and_none._composite_geometry_filter()
+
+    # Test branch without any config options, similar to vtkCompositeDataGeometryFilter
+    kwargs = dict(
+        algorithm='dataset_surface',
+        pass_cellid=False,
+        pass_pointid=False,
+        progress_bar=False,
+    )
+    poly_no_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    assert poly_no_config == poly_from_vtk_filter
+
+
+@pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None, _SENTINEL])
+@pytest.mark.parametrize('bool_kwargs', [True, False])
+def test_extract_surface_datasets(multiblock_all, algorithm, bool_kwargs):
+    kwargs = dict(
+        algorithm=algorithm,
+        progress_bar=bool_kwargs,
+        pass_cellid=bool_kwargs,
+        pass_pointid=bool_kwargs,
+    )
+    for dataobj in (*multiblock_all, multiblock_all):
+        if algorithm is _SENTINEL:
+            with pytest.warns(pv.PyVistaFutureWarning):
+                surf = dataobj.extract_surface(**kwargs)
+        else:
+            surf = dataobj.extract_surface(**kwargs)
+
+        assert surf is not None
+        assert isinstance(surf, pv.PolyData)
+        assert ('vtkOriginalPointIds' in surf.point_data) == bool_kwargs
+        assert ('vtkOriginalCellIds' in surf.cell_data) == bool_kwargs
+
+
+@pytest.mark.parametrize('as_multiblock', [True, False])
+def test_extract_surface_nonlinear(as_multiblock):
+    # create a single quadratic hexahedral cell
+    lin_pts = np.array(
+        [
+            [-1, -1, -1],  # node 0
+            [1, -1, -1],  # node 1
+            [1, 1, -1],  # node 2
+            [-1, 1, -1],  # node 3
+            [-1, -1, 1],  # node 4
+            [1, -1, 1],  # node 5
+            [1, 1, 1],  # node 6
+            [-1, 1, 1],  # node 7
+        ],
+        np.double,
+    )
+
+    quad_pts = np.array(
+        [
+            (lin_pts[1] + lin_pts[0]) / 2,  # between point 0 and 1
+            (lin_pts[1] + lin_pts[2]) / 2,  # between point 1 and 2
+            (lin_pts[2] + lin_pts[3]) / 2,  # and so on...
+            (lin_pts[3] + lin_pts[0]) / 2,
+            (lin_pts[4] + lin_pts[5]) / 2,
+            (lin_pts[5] + lin_pts[6]) / 2,
+            (lin_pts[6] + lin_pts[7]) / 2,
+            (lin_pts[7] + lin_pts[4]) / 2,
+            (lin_pts[0] + lin_pts[4]) / 2,
+            (lin_pts[1] + lin_pts[5]) / 2,
+            (lin_pts[2] + lin_pts[6]) / 2,
+            (lin_pts[3] + lin_pts[7]) / 2,
+        ],
+    )
+
+    # introduce a minor variation to the location of the mid-side points
+    quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.25
+    pts = np.vstack((lin_pts, quad_pts))
+
+    cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
+    celltypes = np.array([pv.CellType.QUADRATIC_HEXAHEDRON])
+    grid = pv.UnstructuredGrid(cells, celltypes, pts)
+    grid = grid.cast_to_multiblock() if as_multiblock else grid
+
+    # expect each face to be divided 6 times since it has a midside node
+    surf = grid.extract_surface(algorithm=None, progress_bar=True)
+    assert surf.n_faces_strict == 36
+    surf = grid.extract_surface(algorithm='dataset_surface', progress_bar=True)
+    assert surf.n_faces_strict == 36
+
+    # expect each face to be divided several more times than the linear extraction
+    surf_subdivided = grid.extract_surface(
+        algorithm=None, nonlinear_subdivision=5, progress_bar=True
+    )
+    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
+    match = (
+        'geometry algorithm cannot process non-linear cells and therefore '
+        'cannot be used to control non-linear subdivision.'
+    )
+    with pytest.raises(ValueError, match=match):
+        grid.extract_surface(algorithm='geometry', nonlinear_subdivision=5)
+
+    if as_multiblock:
+        expected_error = RuntimeError
+        match = 'could not be applied to the block at index 0'
+    else:
+        expected_error = ValueError
+        match = (
+            'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
+        )
+    with pytest.raises(expected_error, match=match):
+        grid.extract_surface(algorithm='geometry')
+
+    # No subdivision, expect one face per cell
+    surf_no_subdivide = grid.extract_surface(
+        algorithm=None, nonlinear_subdivision=0, progress_bar=True
+    )
+    assert surf_no_subdivide.n_faces_strict == 6

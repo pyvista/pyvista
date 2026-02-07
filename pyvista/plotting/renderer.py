@@ -20,6 +20,7 @@ from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
@@ -133,6 +134,7 @@ def make_legend_face(face) -> PolyData:
 
     def normalize(poly):
         norm_poly = poly.copy()  # Avoid mutating input
+        norm_poly.clear_data()
 
         # Center data
         norm_poly.points -= np.array(norm_poly.center)
@@ -308,9 +310,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = value
 
 
-class Renderer(
-    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer
-):
+class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute

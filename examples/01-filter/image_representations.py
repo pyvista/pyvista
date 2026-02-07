@@ -4,12 +4,14 @@
 Image Data Representations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example demonstrates how to use :meth:`~pyvista.ImageDataFilters.points_to_cells`
-and :meth:`~pyvista.ImageDataFilters.cells_to_points` to re-mesh :class:`~pyvista.ImageData`.
+and :meth:`~pyvista.ImageDataFilters.cells_to_points` to re-mesh
+:class:`~pyvista.ImageData`.
 
 These filters can be used to ensure that image data has an appropriate representation
 when generating plots and/or when using either point- or cell-based filters such as
-:meth:`ImageDataFilters.image_threshold <pyvista.ImageDataFilters.image_threshold>` (point-based)
-and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
+:meth:`ImageDataFilters.image_threshold <pyvista.ImageDataFilters.image_threshold>`
+(point-based) and
+:meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
 
 """
 
@@ -21,7 +23,6 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 3
@@ -195,9 +196,10 @@ plot_kwargs = dict(
 points_image.plot(**plot_kwargs)
 
 # %%#
-# To visualize the image correctly, we first use :meth:`~pyvista.ImageDataFilters.points_to_cells`
-# to get a cell-based representation of the image and plot the result. The plot
-# now correctly shows 16-pixel cells with discrete values.
+# To visualize the image correctly, we first use
+# :meth:`~pyvista.ImageDataFilters.points_to_cells` to get a cell-based representation of
+# the image and plot the result. The plot now correctly shows 16-pixel cells with discrete
+# values.
 
 cells_image = points_image.points_to_cells()
 cells_image.plot(**plot_kwargs)

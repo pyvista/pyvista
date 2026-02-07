@@ -12,6 +12,9 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import is_vtk_attribute
+from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -48,7 +51,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
+class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -415,7 +418,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista
             # (i.e. ignore any default vtk snake_case attributes)
-            if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
+            if hasattr(self, attr) and not is_vtk_attribute(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr), equal_nan=True):
                     return False
 
