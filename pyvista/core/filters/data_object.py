@@ -133,10 +133,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     ) -> None:
         data_fields, cell_fields, point_fields = _MeshValidator._validate_fields(validation_fields)
         self._validation_report = _MeshValidator._generate_report(
-            mesh,
-            data_fields=data_fields,
-            cell_fields=cell_fields,
-            point_fields=point_fields,
+            mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
         )
 
     @staticmethod
@@ -388,8 +385,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             validated_mesh = mesh.cell_validator()
             for name in mutable_validation_fields:
                 array = validated_mesh.field_data[name].tolist()
-                if array:
-                    ...
                 msg = get_message(array)
                 summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
                 summaries.append(summary)

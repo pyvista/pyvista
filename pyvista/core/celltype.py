@@ -6,14 +6,12 @@ from enum import IntEnum
 import textwrap
 from typing import Literal
 from typing import NamedTuple
-from typing import cast
 
 import numpy as np
 
 from . import _vtk_core as _vtk
 
 _CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
-_CELL_TYPE_TO_DIMENSION: dict[int, Literal[0, 1, 2, 3]] = {}
 
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
@@ -699,10 +697,7 @@ class CellType(IntEnum):
             badges = ''
             if _cell_class:
                 cell = _cell_class()
-                # Store data for lookup by other classes/modules
                 _CELL_TYPE_TO_NUM_POINTS[np.uint8(value)] = cell.GetNumberOfPoints()
-                _CELL_TYPE_TO_DIMENSION[value] = cast('Literal[0,1,2,3]', cell.GetCellDimension())
-
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
