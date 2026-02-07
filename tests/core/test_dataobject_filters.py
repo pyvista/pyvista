@@ -2134,6 +2134,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0, 'Issue with mixed cells mesh fixture for older VTK')
 def test_validate_mesh_distinct_cell_types(
     single_cell_invalid_point_references,
     mixed_2d_cells_invalid_point_references,
