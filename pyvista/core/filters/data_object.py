@@ -413,7 +413,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         name: str,
         array: list[int] | tuple[list[int]],
         cell_type: CellType | list[CellType] | None = None,
-    ) -> str | list[str]:
+    ) -> _NestedStrings:
         if not array:
             return ''
         if isinstance(cell_type, list) and isinstance(array, tuple):
@@ -421,6 +421,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 _MeshValidator._invalid_cell_msg(name, arr, ctype)
                 for arr, ctype in zip(array, cell_type, strict=True)
             ]
+
         name_norm = _MeshValidator._normalize_field_name(name)
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -430,7 +431,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             before = ' '
             after = f' with {name_norm}'
         s = 's' if len(array) > 1 else ''
-        celltype = f'{cell_type.name} ' if cell_type else ''
+        celltype = f'{cell_type.name} ' if cell_type else ''  # type: ignore[union-attr]
         return (
             f'Mesh has {len(array)}{before}{celltype}cell{s}{after}. '
             f'Invalid cell id{s}: {reprlib.repr(array)}'
@@ -564,7 +565,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     # Non-fields
     _mesh: InitVar[_DataSetOrMultiBlockType]
-    _message: InitVar[str | _NestedStrings | None]
+    _message: InitVar[_NestedStrings | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
 
     # Data fields
@@ -590,7 +591,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     def __post_init__(
         self,
         _mesh: _DataSetOrMultiBlockType,
-        _message: str | None,
+        _message: _NestedStrings | None,
         _subreports: tuple[_MeshValidationReport[DataSet] | None, ...] | None,
     ) -> None:
         object.__setattr__(self, '_mesh', _mesh)
@@ -622,12 +623,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             for item in message:
                 if isinstance(item, str):
                     lines.append(render_nested_list(item, level=level, bullet=bullet))
-                elif isinstance(item, Sequence):
+                else:
                     # Nested list: increase indentation
                     lines.append(render_nested_list(item, level=level + 1, bullet=bullet))
-                else:
-                    msg = f'Unexpected type in nested list: {type(item)}'
-                    raise TypeError(msg)
 
             return '\n'.join(lines)
 
