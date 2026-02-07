@@ -1278,7 +1278,8 @@ def test_axes():
     pl.show()
 
 
-def test_box_axes(verify_image_cache):
+@pytest.mark.skip_check_gc
+def test_box_axes_deprecated(verify_image_cache):
     """Test deprecated function and make sure we remove it by v0.48."""
     verify_image_cache.skip = True
 
