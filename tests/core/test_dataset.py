@@ -12,7 +12,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core import dataset
+from pyvista.core import dataset as dataset_module
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
@@ -512,7 +512,7 @@ def test_set_active_scalars_raises(mocker: MockerFixture):
     sphere = pv.Sphere(radius=math.pi)
     sphere.point_data[(f := 'foo')] = 1
 
-    m = mocker.patch.object(dataset, 'get_array_association')
+    m = mocker.patch.object(dataset_module, 'get_array_association')
     m.return_value = 1
 
     with pytest.raises(
@@ -693,7 +693,7 @@ def test_rename_array_field(hexbeam):
 def test_rename_array_raises(mocker: MockerFixture):
     sphere = pv.Sphere(radius=math.pi)
 
-    m = mocker.patch.object(dataset, 'get_array_association')
+    m = mocker.patch.object(dataset_module, 'get_array_association')
     m.return_value = None
     f = 'foo'
 
@@ -1117,7 +1117,7 @@ def test_copy_structure(hexbeam):
 
 
 def test_copy_structure_self(datasets):
-    for dataset in datasets:  # noqa: F402
+    for dataset in datasets:
         copied = dataset.copy()
         assert copied is not dataset
 
@@ -1254,7 +1254,7 @@ def test_partition(hexbeam):
 
 
 def test_explode(datasets):
-    for dataset in datasets:  # noqa: F402
+    for dataset in datasets:
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
         assert out.n_points > dataset.n_points
@@ -1298,7 +1298,7 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface()
+    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface(algorithm=None)
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
 
@@ -1324,7 +1324,7 @@ ids_cells = list(map(type, grids_cells))
 
 
 def test_raises_cell_neighbors_explicit_structured_grid(datasets_vtk9):
-    for dataset in datasets_vtk9:  # noqa: F402
+    for dataset in datasets_vtk9:
         with pytest.raises(TypeError):
             _ = dataset.cell_neighbors(0)
 
@@ -1567,17 +1567,17 @@ def test_dimensionality():
     assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
-    strip = examples.cells.TriangleStrip().extract_geometry()
+    strip = examples.cells.TriangleStrip().extract_surface(algorithm=None)
     assert strip.dimensionality == 2
     assert strip.max_cell_dimensionality == 2
     assert strip.min_cell_dimensionality == 2
 
-    line = examples.cells.Line().extract_geometry()
+    line = examples.cells.Line().extract_surface(algorithm=None)
     assert line.dimensionality == 1
     assert line.max_cell_dimensionality == 1
     assert line.min_cell_dimensionality == 1
 
-    vertex = examples.cells.Vertex().extract_geometry()
+    vertex = examples.cells.Vertex().extract_surface(algorithm=None)
     assert vertex.dimensionality == 0
     assert vertex.max_cell_dimensionality == 0
     assert vertex.min_cell_dimensionality == 0
@@ -1605,3 +1605,74 @@ def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
 
         expected_rank = 0 if empty else 3
         assert test_mesh.dimensionality == expected_rank, type(test_mesh)
+
+
+def test_distinct_cell_types_unstructured_grid():
+    wedge = pv.examples.cells.Wedge()
+    quad = pv.examples.cells.Quadrilateral()
+    mesh = pv.merge([wedge, wedge.translate((1.0, 1.0, 1.0)), quad.translate((2.0, 2.0, 2.0))])
+
+    distinct_cell_types = mesh.distinct_cell_types
+    assert isinstance(distinct_cell_types, set)
+    assert all(isinstance(val, pv.CellType) for val in distinct_cell_types)
+    assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
+
+
+def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
+    for dataset in datasets_plus_pointset:
+        distinct_cell_types = dataset.distinct_cell_types
+        assert all(isinstance(celltype, pv.CellType) for celltype in distinct_cell_types)
+        if dataset.n_cells == 0:
+            assert distinct_cell_types == set()
+        else:
+            assert len(distinct_cell_types) > 0, type(dataset)
+
+
+@pytest.mark.parametrize('dimensions', [(0, 0, 0), (1, 1, 1), (2, 1, 1), (2, 2, 1), (2, 2, 2)])
+def test_distinct_cell_types_dimensions(dimensions):
+    def assert_distinct_cell_types(mesh_):
+        expected = {mesh_.get_cell(0).type} if mesh_.n_cells > 0 else set()
+        actual = mesh_.distinct_cell_types
+        assert actual == expected, type(mesh_)
+
+    image = pv.ImageData(dimensions=dimensions)
+    assert_distinct_cell_types(image)
+
+    rectilinear = image.cast_to_rectilinear_grid()
+    assert_distinct_cell_types(rectilinear)
+
+    structured = image.cast_to_structured_grid()
+    assert_distinct_cell_types(structured)
+
+
+def test_structured_grid_dimensionality():
+    cell_dimension = 2
+    cell_types = {pv.CellType.QUAD}
+
+    curvilinear = examples.load_structured()
+    assert isinstance(curvilinear, pv.StructuredGrid)
+    assert curvilinear.dimensionality == 3
+    assert curvilinear.distinct_cell_types == cell_types
+    assert curvilinear.max_cell_dimensionality == cell_dimension
+    assert curvilinear.min_cell_dimensionality == cell_dimension
+
+    linear = pv.ImageData(dimensions=(10, 10, 1)).cast_to_structured_grid()
+    assert isinstance(linear, pv.StructuredGrid)
+    assert linear.dimensionality == cell_dimension
+    assert linear.distinct_cell_types == cell_types
+    assert linear.max_cell_dimensionality == cell_dimension
+    assert linear.min_cell_dimensionality == cell_dimension
+
+
+def test_has_nonlinear_cells():
+    linear = examples.cells.Hexahedron()
+    assert not linear.has_nonlinear_cells
+
+    nonlinear = examples.cells.QuadraticHexahedron()
+    assert nonlinear.has_nonlinear_cells
+
+    mixed = linear + nonlinear
+    assert mixed.has_nonlinear_cells
+
+    assert not pv.UnstructuredGrid().has_nonlinear_cells
+    assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells

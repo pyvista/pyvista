@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import Cell
+    from pyvista import CellType
     from pyvista import PointSet
 
     from ._typing_core import MatrixLike
@@ -1348,7 +1349,7 @@ class DataSet(DataSetFilters, DataObject):
 
         A mesh with 3D cells does not have an area.  To get
         the outer surface area, first extract the surface using
-        :func:`pyvista.DataSetFilters.extract_surface`.
+        :func:`~pyvista.DataObjectFilters.extract_surface`.
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.area
@@ -3067,7 +3068,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        min_cell_dimensionality, dimensionality
+        min_cell_dimensionality, dimensionality, distinct_cell_types
 
         Returns
         -------
@@ -3175,7 +3176,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        max_cell_dimensionality, dimensionality
+        max_cell_dimensionality, dimensionality, distinct_cell_types
 
         Returns
         -------
@@ -3241,3 +3242,118 @@ class DataSet(DataSetFilters, DataObject):
             return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
+
+    @property
+    def distinct_cell_types(self) -> set[CellType]:
+        """Return the set of distinct cell types in this dataset.
+
+        The set contains :class:`~pyvista.CellType` values corresponding to the
+        :attr:`pyvista.Cell.type` of each distinct cell in the dataset.
+
+        .. warning::
+            Computing distinct cell types can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Returns
+        -------
+        set[CellType]
+            Set of :class:`~pyvista.CellType` values.
+
+        See Also
+        --------
+        min_cell_dimensionality
+        max_cell_dimensionality
+        pyvista.UnstructuredGrid.celltypes
+
+        Examples
+        --------
+        Load a mesh with linear :attr:`pyvista.CellType.HEXAHEDRON` cells.
+
+        >>> from pyvista import examples
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        Load a mesh with mixed cells.
+
+        >>> mesh = examples.download_cow()
+        >>> sorted(mesh.distinct_cell_types)
+        [<CellType.TRIANGLE: 5>, <CellType.POLYGON: 7>, <CellType.QUAD: 9>]
+
+        Load 2D image.
+
+        >>> mesh = examples.load_logo()
+        >>> mesh.distinct_cell_types
+        {<CellType.PIXEL: 8>}
+
+        """
+        if self.n_cells == 0:
+            return set()
+        if hasattr(self, 'dimensions'):
+            # Fast path for dimensioned grids
+            cell_dimension = next(iter(self._distinct_cell_dimensions))
+            if isinstance(self, pv.Grid):
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.PIXEL,
+                    3: pv.CellType.VOXEL,
+                }
+            else:
+                mapping = {
+                    0: pv.CellType.VERTEX,
+                    1: pv.CellType.LINE,
+                    2: pv.CellType.QUAD,
+                    3: pv.CellType.HEXAHEDRON,
+                }
+            return {mapping[cell_dimension]}
+
+        if hasattr(self, 'GetDistinctCellTypes'):
+            types = _vtk.vtkCellTypes()
+            self.GetDistinctCellTypes(types)
+            types_array = _vtk.vtk_to_numpy(types.GetCellTypesArray())
+        elif hasattr(self, 'GetCellTypesArray'):
+            types_array = _vtk.vtk_to_numpy(self.GetCellTypesArray())
+        else:
+            grid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+            types_array = np.unique(grid.celltypes)
+        return {pv.CellType(cell_num) for cell_num in types_array}
+
+    @property
+    def has_nonlinear_cells(self) -> bool:  # numpydoc ignore=RT01
+        """Return True if the mesh contains any non-linear cells.
+
+        .. note::
+            Only :class:`~pyvista.UnstructuredGrid` can have non-linear cells. This property is
+            therefore always False for all other dataset types.
+
+        .. warning::
+            Checking for non-linear cells can be very slow for complex meshes with VTK version
+            less than 9.6.
+
+        .. versionadded:: 0.47
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.cells.Hexahedron()
+        >>> mesh.has_nonlinear_cells
+        False
+
+        >>> mesh = examples.cells.QuadraticHexahedron()
+        >>> mesh.has_nonlinear_cells
+        True
+
+        """
+        if not isinstance(self, pv.UnstructuredGrid):
+            return False
+        is_linear = (
+            _vtk.vtkCellTypeUtilities.IsLinear
+            if pv.vtk_version_info >= (9, 6, 0)
+            else _vtk.vtkCellTypes.IsLinear
+        )
+        return not all(is_linear(celltype) for celltype in self.distinct_cell_types)

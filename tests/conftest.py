@@ -12,11 +12,12 @@ import re
 
 import numpy as np
 from numpy.random import default_rng
+import PIL
 import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core._vtk_core import VersionInfo
+from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pv.OFF_SCREEN = True
@@ -25,6 +26,11 @@ NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
+)
+PILLOW_VERSION_INFO = VersionInfo(
+    major=int(PIL.__version__.split('.')[0]),
+    minor=int(PIL.__version__.split('.')[1]),
+    micro=int(PIL.__version__.split('.')[2]),
 )
 
 faulthandler.enable()

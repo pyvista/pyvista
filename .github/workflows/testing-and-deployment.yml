@@ -179,6 +179,10 @@ jobs:
             numpy-version: "latest"
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
+            vtk-version: "9.5.2"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.14"
             vtk-version: "latest"
             numpy-version: "nightly"
             runner-labels: "ubuntu-22.04-self-hosted"
@@ -233,8 +237,10 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
-        name: "Upload coverage to CodeCov"
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -286,11 +292,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
+        run: tox run -e py${{ matrix.python-version }}-cov-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-cov-plotting-vtk_dev
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -306,8 +312,10 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
-        name: "Upload coverage to CodeCov"
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 

@@ -25,6 +25,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import VersionInfo
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -2655,15 +2656,27 @@ class _GIFReader(BaseVTKReader):
         """Read the GIF and store internally to `_data_object`."""
         from PIL import Image  # noqa: PLC0415
         from PIL import ImageSequence  # noqa: PLC0415
+        from PIL import __version__ as pillow_version  # noqa: PLC0415
+
+        PILLOW_VERSION_INFO = VersionInfo(
+            major=int(pillow_version.split('.')[0]),
+            minor=int(pillow_version.split('.')[1]),
+            micro=int(pillow_version.split('.')[2]),
+        )
 
         img = Image.open(self._filename)
         self._data_object = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames  # type: ignore[attr-defined]
+        pillow_get_data = (
+            Image.Image.get_flattened_data
+            if PILLOW_VERSION_INFO >= (12, 1)
+            else Image.Image.getdata
+        )
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
-            data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
+            data = np.array(pillow_get_data(frame.convert('RGB')), dtype=np.uint8)
             self._data_object.point_data.set_array(data, f'frame{i}')
             self.UpdateObservers(6)
 

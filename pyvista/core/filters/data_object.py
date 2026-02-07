@@ -28,7 +28,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
-from pyvista.core.celltype import _CELL_TYPE_TO_DIMENSION
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -74,6 +73,12 @@ _CELL_VALIDATOR_BIT_FIELD = dict(
     degenerate_faces=0x80,
     coincident_points=0x100,
 )
+
+
+class _SENTINEL: ...
+
+
+_ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: PYI061
 
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
@@ -123,6 +128,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         mesh: _DataSetOrMultiBlockType,
         validation_fields: _AllValidationOptions
         | Sequence[_AllValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        *,
         verbose: bool | Literal['cell_type'] = False,
     ) -> None:
         data_fields, cell_fields, point_fields = _MeshValidator._validate_fields(validation_fields)
@@ -341,6 +347,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_cells(
         mesh: _DataSetType,
         validation_fields: tuple[_CellFields, ...],
+        *,
         verbose: bool | Literal['cell_type'],
     ) -> tuple[list[_MeshValidator._FieldSummary], _DataSetType | None]:
         """Validate cells and only return summary objects for the requested fields."""
@@ -537,10 +544,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     @staticmethod
     def _create_message(obj: object, message_body: list[str]) -> str:
         bullet = _MeshValidator._message_bullet
-        all_message: list[str] = []
-        for message in message_body:
-            for submessage in message.splitlines():
-                all_message.append(submessage)
+        all_message = [
+            submessage for message in message_body for submessage in message.splitlines()
+        ]
         body = bullet + f'\n{bullet}'.join(all_message)
         header = _MeshValidator._create_message_header(obj)
         return f'{header}\n{body}'
@@ -728,6 +734,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
+        *,
         verbose: bool | Literal['cell_type'] = False,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, cells, and points.
@@ -824,6 +831,9 @@ class DataObjectFilters:
         action : 'warn' | 'error', optional
             Issue a warning or raise an error if the mesh is not valid for the specified fields.
             By default, no action is taken.
+
+        verbose
+            TBD.
 
         Returns
         -------
@@ -1384,7 +1394,7 @@ class DataObjectFilters:
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
         _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        vtk_filter_output = pv.core.filters._get_output(f)
+        vtk_filter_output = _get_output(f)
 
         output = self if inplace else self.__class__()
 
@@ -3317,6 +3327,196 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args
+    def extract_surface(  # type: ignore[misc]  # noqa: PLR0917
+        self: DataSet | MultiBlock,
+        pass_pointid: bool = True,  # noqa: FBT001, FBT002
+        pass_cellid: bool = True,  # noqa: FBT001, FBT002
+        nonlinear_subdivision: int | None = None,
+        algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = _SENTINEL,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> PolyData:
+        """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
+
+        .. note::
+            The underlying VTK algorithm can be selected for surface extraction.
+            Using ``algorithm=None`` is recommended, and the appropriate algorithm
+            will automatically be selected. The current default is ``'dataset_surface'``,
+            but this will change to ``None`` in a future version.
+
+        .. versionchanged:: 0.47
+            This filter is now generalized to also work with :class:`~pyvista.MultiBlock`.
+
+        Parameters
+        ----------
+        pass_pointid : bool, default: True
+            Adds a point array ``"vtkOriginalPointIds"`` that identifies which original points
+            these surface points correspond to.
+
+        pass_cellid : bool, default: True
+            Adds a cell array ``"vtkOriginalCellIds"`` that identifies which original cells these
+            surface cells correspond to.
+
+        nonlinear_subdivision : int, default: 1
+            Determines how many times the faces of non-linear cells are subdivided into linear
+            faces. This option is only relevant when the input is an
+            :class:`~pyvista.UnstructuredGrid` with non-linear cells, and cannot be used with
+            the ``'geometry'`` algorithm.
+
+            If ``0``, the output is the equivalent to its linear counterpart (and the midpoints
+            determining the non-linear interpolation are discarded). If ``1`` (the default), the
+            non-linear face is triangulated based on the midpoints. If greater than ``1``, the
+            triangulated pieces are recursively subdivided to reach the desired subdivision.
+            Setting the value to greater than ``1`` may cause some point data to not be passed even
+            if no nonlinear faces exist.
+
+        algorithm : 'auto' | 'geometry' | 'dataset_surface'
+            VTK algorithm to use internally.
+
+            - ``'geometry'``: use :vtk:`vtkGeometryFilter`.
+            - ``'dataset_surface'``: use :vtk:`vtkDataSetSurfaceFilter`.
+            - ``None``: The algorithm is automatically selected based on the input. For most
+              cases, the ``'geometry'`` algorithm is selected by default. The ``'dataset_surface'``
+              algorithm is only selected for cases where the input is an
+              :class:`~pyvista.UnstructuredGrid` with non-linear cells.
+
+            Using ``algorithm=None`` is recommended. The current default is ``'dataset_surface'``,
+            but this will change to ``None`` in a future version.
+
+            Both algorithms produce similar surfaces, but ``'geometry'`` is more performant.
+            The ``'geometry'`` algorithm also
+
+            - merges points by default,
+            - tends to preserve the original mesh's point order and connectivity, and
+            - generates closed surfaces where closed surfaces would normally be expected.
+
+            See :ref:`compare_surface_extract_algorithms` for some examples of differences.
+
+            In general, users should not need to select the specific algorithm. This option is
+            mostly provided for backwards-compatibility or specific use cases. For example, if
+            working with both linear and non-linear meshes, it may be preferable to use
+            ``'dataset_surface'`` explicitly so that the generated surfaces may be more directly
+            comparable.
+
+            .. versionadded:: 0.47
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh of the grid.
+
+        Warnings
+        --------
+        Both ``"vtkOriginalPointIds"`` and ``"vtkOriginalCellIds"`` may be
+        affected by other VTK operations. See `issue 1164
+        <https://github.com/pyvista/pyvista/issues/1164>`_ for
+        recommendations on tracking indices across operations.
+
+        Examples
+        --------
+        Extract the surface of an UnstructuredGrid.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.load_hexbeam()
+        >>> surf = grid.extract_surface(algorithm=None)
+        >>> type(surf)
+        <class 'pyvista.core.pointset.PolyData'>
+        >>> surf['vtkOriginalPointIds']
+        pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+                         28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
+                         42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                         56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
+                         70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
+                         84, 85, 86, 87, 88, 89])
+        >>> surf['vtkOriginalCellIds']
+        pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
+                         36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
+                         13, 13, 17, 17, 21, 21, 25, 25, 29, 29, 33, 33,  4,  4,
+                          8,  8, 12, 12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32,
+                          7,  7, 11, 11, 15, 15, 19, 19, 23, 23, 27, 27, 31, 31,
+                         35, 35,  6,  6, 10, 10, 14, 14, 18, 18, 22, 22, 26, 26,
+                         30, 30, 34, 34])
+
+        Note that in the "vtkOriginalCellIds" array, the same original cells
+        appears multiple times since this array represents the original cell of
+        each surface cell extracted.
+
+        See the :ref:`extract_surface_example` and :ref:`surface_smoothing_example`
+        for more examples using this filter.
+
+        """
+
+        def warn_future():
+            # Deprecated v0.47, convert to error in v0.50, remove v0.51
+            if pv.version_info >= (0, 50):  # pragma: no cover
+                msg = (
+                    'Convert this future warning into an error '
+                    'and update the docstring default value to None.'
+                )
+                raise RuntimeError(msg)
+            if pv.version_info >= (0, 51):  # pragma: no cover
+                msg = (
+                    'Remove this future warning. _SENTINEL should be removed and the default '
+                    'value in the function signature should be `algorithm=None`.'
+                )
+                raise RuntimeError(msg)
+
+            msg = (
+                f'The default value of `algorithm` for the filter\n'
+                f'`{self.__class__.__name__}.extract_surface` will change in the future. '
+                "It currently defaults to\n`'dataset_surface'`, but will change to `None`. "
+                'Explicitly set the `algorithm` keyword to\nsilence this warning.'
+            )
+            warn_external(msg, pv.PyVistaFutureWarning)
+
+        if algorithm is _SENTINEL:
+            # Warn about future change in default alg
+            warn_future()
+            # The old default is 'dataset_surface', will be None in the future
+            algorithm = 'dataset_surface'
+        else:
+            _validation.check_contains(
+                get_args(_ExtractSurfaceOptions), must_contain=algorithm, name='algorithm'
+            )
+
+        if nonlinear_subdivision is None:
+            nonlinear_subdivision = 1
+        elif algorithm == 'geometry':
+            msg = (
+                'geometry algorithm cannot process non-linear cells and therefore '
+                'cannot be used to control non-linear subdivision.'
+            )
+            raise ValueError(msg)
+
+        if isinstance(self, pv.MultiBlock):
+            # Extract surface from each block separately and combine into a single PolyData
+            multi_polys = self.generic_filter(
+                '_extract_surface',
+                pass_pointid=pass_pointid,
+                pass_cellid=pass_cellid,
+                nonlinear_subdivision=nonlinear_subdivision,
+                algorithm=algorithm,
+                progress_bar=progress_bar,
+            )
+            append = _vtk.vtkAppendPolyData()
+            for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
+                append.AddInputData(poly)
+            _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
+            return _get_output(append)
+
+        return self._extract_surface(
+            pass_pointid=pass_pointid,
+            pass_cellid=pass_cellid,
+            nonlinear_subdivision=nonlinear_subdivision,
+            algorithm=algorithm,  # type: ignore[arg-type]
+            progress_bar=progress_bar,
+        )
+
+    @_deprecate_positional_args
     def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         low_point: VectorLike[float] | None = None,
@@ -4214,7 +4414,7 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_geometry()
+            return mesh_out.extract_surface(algorithm=None, pass_cellid=False, pass_pointid=False)
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out

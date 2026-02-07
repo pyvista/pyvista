@@ -37,7 +37,9 @@ pl.add_mesh(billboard, color='white')
 all_attenuation_values = [(1, 0, 0), (0, 2, 0), (0, 0, 2)]
 offsets = [-2, 0, 2]
 for attenuation_values, offset in zip(all_attenuation_values, offsets, strict=True):
-    light = pv.Light(position=(0.1, offset, 2), focal_point=(0.1, offset, 1), color='cyan')
+    light = pv.Light(
+        position=(0.1, offset, 2), focal_point=(0.1, offset, 1), color='cyan'
+    )
     light.positional = True
     light.cone_angle = 20
     light.intensity = 15
@@ -64,7 +66,9 @@ pl.add_mesh(billboard, color='white')
 all_attenuation_values = [(1, 0, 0), (0, 2, 0), (0, 0, 2)]
 offsets = [-2, 0, 2]
 for attenuation_values, offset in zip(all_attenuation_values, offsets, strict=True):
-    light = pv.Light(position=(0.5, offset, 3), focal_point=(0.5, offset, 1), color='cyan')
+    light = pv.Light(
+        position=(0.5, offset, 3), focal_point=(0.5, offset, 1), color='cyan'
+    )
     light.positional = True
     light.cone_angle = 20
     light.intensity = 15
@@ -86,10 +90,14 @@ pl = pv.Plotter(lighting='none')
 # loop over three lights with three kinds of attenuation
 all_attenuation_values = [(2, 0, 0), (0, 2, 0), (0, 0, 2)]
 light_offsets = [-6, 0, 6]
-for attenuation_values, light_x in zip(all_attenuation_values, light_offsets, strict=True):
+for attenuation_values, light_x in zip(
+    all_attenuation_values, light_offsets, strict=True
+):
     # loop over three perpendicular planes for each light
     for plane_y in [2, 5, 10]:
-        screen = pv.Plane(center=(light_x, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+        screen = pv.Plane(
+            center=(light_x, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5
+        )
         pl.add_mesh(screen, color='white')
 
     light = pv.Light(position=(light_x, 0, 0), focal_point=(light_x, 1, 0), color='cyan')
