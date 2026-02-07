@@ -80,6 +80,8 @@ class _SENTINEL: ...
 
 _ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: PYI061
 
+_NestedStrings = str | Sequence['_NestedStrings']
+
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _ActionOptions = Literal['warn', 'error']
@@ -120,7 +122,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     @dataclass
     class _FieldSummary:
         name: str
-        message: str
+        message: str | list[str]
         values: Sequence[str | int] | None
 
     def __init__(
@@ -272,14 +274,20 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             for summary in _MeshValidator._validate_points(mesh, point_fields):
                 field_summaries[summary.name] = summary
 
-        message_body: list[str] = [
-            summary.message for summary in field_summaries.values() if summary.values
-        ]
-        message = _MeshValidator._create_message(validated_mesh, message_body)
+        message_body: list[str] = []
+        for summary in field_summaries.values():
+            if summary.values:
+                if isinstance((message := summary.message), list):
+                    message_body.extend(message)
+                else:
+                    message_body.append(message)
+
+        header = _MeshValidator._create_message_header(validated_mesh)
+        message_structure = [header, message_body]
         dataclass_fields = {issue.name: issue.values for issue in field_summaries.values()}
         return _MeshValidationReport(
             _mesh=validated_mesh,
-            _message=message,
+            _message=message_structure,
             _subreports=None,
             **dataclass_fields,  # type: ignore[arg-type]
         )
@@ -331,7 +339,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     invalid_block_ids.append(i)
             dataclass_fields[field] = invalid_block_ids
 
-        message = _MeshValidator._create_message(validated_mesh, message_body)
+        bullet = _MeshValidator._message_bullet
+        body = bullet + f'\n{bullet}'.join(message_body)
+        header = _MeshValidator._create_message_header(validated_mesh)
+        message = f'{header}\n{body}'
+
         return _MeshValidationReport(
             _mesh=validated_mesh,
             _message=message,
@@ -415,10 +427,10 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         if not array:
             return ''
         if isinstance(cell_type, list) and isinstance(array, tuple):
-            return '\n'.join(
+            return [
                 _MeshValidator._invalid_cell_msg(name, arr, ctype)
                 for arr, ctype in zip(array, cell_type, strict=True)
-            )
+            ]
         name_norm = _MeshValidator._normalize_field_name(name)
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -542,16 +554,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _message_bullet = ' - '
 
     @staticmethod
-    def _create_message(obj: object, message_body: list[str]) -> str:
-        bullet = _MeshValidator._message_bullet
-        all_message = [
-            submessage for message in message_body for submessage in message.splitlines()
-        ]
-        body = bullet + f'\n{bullet}'.join(all_message)
-        header = _MeshValidator._create_message_header(obj)
-        return f'{header}\n{body}'
-
-    @staticmethod
     def _create_message_header(obj: object) -> str:
         return f'{obj.__class__.__name__} mesh is not valid due to the following problems:'
 
@@ -572,7 +574,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     # Non-fields
     _mesh: InitVar[_DataSetOrMultiBlockType]
-    _message: InitVar[str | None]
+    _message: InitVar[str | _NestedStrings | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
 
     # Data fields
@@ -611,7 +613,37 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     @property
     def message(self) -> str | None:
-        return None if self.is_valid else self._message  # type: ignore[attr-defined]
+        def render_nested_list(
+            message: _NestedStrings, *, level: int = 0, bullet: str = '-'
+        ) -> str:
+            """Render a nested list of strings with proper indentation and hyphens.
+
+            Top-level string does not get a leading hyphen.
+            """
+            indent = ' ' * level
+            lines: list[str] = []
+
+            if isinstance(message, str):
+                # Only add bullet if we're nested
+                if level == 0:
+                    return message
+                return f'{indent}{bullet} {message}'
+
+            for item in message:
+                if isinstance(item, str):
+                    lines.append(render_nested_list(item, level=level, bullet=bullet))
+                elif isinstance(item, Sequence):
+                    # Nested list: increase indentation
+                    lines.append(render_nested_list(item, level=level + 1, bullet=bullet))
+                else:
+                    msg = f'Unexpected type in nested list: {type(item)}'
+                    raise TypeError(msg)
+
+            return '\n'.join(lines)
+
+        if self.is_valid:
+            return None
+        return render_nested_list(self._message)  # type: ignore[attr-defined]
 
     @property
     def is_valid(self) -> bool:  # numpydoc ignore=RT01
