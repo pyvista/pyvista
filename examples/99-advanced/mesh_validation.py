@@ -84,7 +84,7 @@ invalid_polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points
 # pointing inward.
 report = invalid_polyhedron.validate_mesh()
 assert not report.is_valid
-assert report.invalid_fields == ('inverted_faces',)
+assert report.invalid_fields == ('non_convex', 'inverted_faces')
 plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
