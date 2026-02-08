@@ -310,6 +310,19 @@ def test_poked_subplot_context():
     pl.show()
 
 
+@pytest.mark.skip_plotting
+def test_add_pick_observer():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='`add_pick_obeserver` has been deprecated'):
+        pl.iren.add_pick_obeserver(empty_callback)
+
+    if pv.version_info >= (0, 48):
+        pytest.fail('Remove `Plotter.iren.add_pick_obeserver` method')
+
+    pl = pv.Plotter()
+    pl.iren.add_pick_observer(empty_callback)
+
+
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:
