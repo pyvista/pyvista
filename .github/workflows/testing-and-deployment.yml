@@ -82,7 +82,7 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-      - name: Restore example data cache
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
@@ -168,7 +168,7 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Cache example data
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
@@ -243,7 +243,7 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Cache example data
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
@@ -304,7 +304,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Cache example data
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}

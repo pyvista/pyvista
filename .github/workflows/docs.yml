@@ -19,6 +19,9 @@ permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    uses: ./.github/workflows/cache-vtk-data.yml
+
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
@@ -45,6 +48,13 @@ jobs:
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
+
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
+        with:
+          path: vtk-data
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
