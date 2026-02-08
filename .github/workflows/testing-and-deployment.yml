@@ -31,8 +31,8 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  VTK_DATA_DIRNAME: ${{ needs.cache-vtk-data.outputs.vtk-data-dirname }}
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/${{ needs.cache-vtk-data.outputs.vtk-data-dirname }}
+  VTK_DATA_DIRNAME: vtk-data
+  PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
 
 permissions:
   id-token: none

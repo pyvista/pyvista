@@ -3,14 +3,12 @@ name: Cache vtk-data Repo
 on:
   workflow_call:
     outputs:
-      vtk-data-dirname:
-        description: Path to vtk-data cache
-        value: ${{ jobs.cache-vtk-data.outputs.vtk-data-dirname }}
       key:
         description: Cache key used for vtk-data
         value: ${{ jobs.cache-vtk-data.outputs.key }}
 
 permissions:
+  id-token: none
   contents: read
 
 jobs:
@@ -20,36 +18,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # need both self-hosted and GitHub hosted to ensure cache is local to runners
+          # need both self-hosted and github hosted to ensure cache is local to runners
           - runner-labels: "ubuntu-22.04-self-hosted"
           - runner-labels: "ubuntu-22.04"
 
     runs-on: ${{ matrix.runner-labels }}
 
     outputs:
-      vtk-data-dirname: ${{ steps.set-path.outputs.vtk-data-dirname }}
       key: ${{ steps.restore.outputs.cache-primary-key }}
 
     steps:
-      - name: Set variables
+      - name: Set cache path dirname
         run: |
           # define a reusable variable for the folder name
           echo "VTK_DATA_DIRNAME=vtk-data" >> "$GITHUB_ENV"
 
-      - name: Define cache path
-        id: set-path
-        run: |
-          echo "vtk-data-dirname=${VTK_DATA_DIRNAME}" >> "$GITHUB_OUTPUT"
-
       - name: Get vtk-data commit
-        run: |
-          echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
 
       - name: Restore vtk-data cache
         id: restore
         uses: actions/cache/restore@v5
         with:
-          path: ${{ github.workspace }}/${{ env.VTK_DATA_DIRNAME }}
+          path: vtk-data
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
@@ -59,12 +50,12 @@ jobs:
         with:
           persist-credentials: false
           repository: pyvista/vtk-data
-          path: ${{ github.workspace }}/${{ env.VTK_DATA_DIRNAME }}
+          path: ${{ env.VTK_DATA_DIRNAME }}
 
       - name: Save vtk-data cache
         if: steps.restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
-          path: ${{ github.workspace }}/${{ env.VTK_DATA_DIRNAME }}
+          path: ${{ env.VTK_DATA_DIRNAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true
