@@ -1315,7 +1315,7 @@ class DataObjectFilters:
         ...         [0, 0, 0, 1],
         ...     ]
         ... )
-        >>> transformed = mesh.transform(transform_matrix)
+        >>> transformed = mesh.transform(transform_matrix, inplace=False)
         >>> transformed.plot(show_edges=True)
 
         """
