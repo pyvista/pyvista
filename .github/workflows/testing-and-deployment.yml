@@ -31,7 +31,8 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
+  VTK_DATA_DIRNAME: ${{ needs.cache-vtk-data.outputs.vtk-data-dirname }}
+  PYVISTA_VTK_DATA: ${{ github.workspace }}/${{ needs.cache-vtk-data.outputs.vtk-data-dirname }}
 
 permissions:
   id-token: none
@@ -84,7 +85,7 @@ jobs:
       - name: Restore example data cache
         uses: actions/cache/restore@v5
         with:
-          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
+          path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -170,7 +171,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v5
         with:
-          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
+          path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -245,7 +246,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v5
         with:
-          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
+          path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -306,7 +307,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v5
         with:
-          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
+          path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 

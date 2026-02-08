@@ -3,12 +3,15 @@ name: Cache vtk-data Repo
 on:
   workflow_call:
     outputs:
-      cache-path:
+      vtk-data-dirname:
         description: Path to vtk-data cache
-        value: ${{ jobs.cache-vtk-data.outputs.cache-path }}
+        value: ${{ jobs.cache-vtk-data.outputs.vtk-data-dirname }}
       key:
         description: Cache key used for vtk-data
         value: ${{ jobs.cache-vtk-data.outputs.key }}
+
+permissions:
+  contents: read
 
 jobs:
   cache-vtk-data:
@@ -24,14 +27,19 @@ jobs:
     runs-on: ${{ matrix.runner-labels }}
 
     outputs:
-      cache-path: ${{ steps.set-path.outputs.cache-path }}
+      vtk-data-dirname: ${{ steps.set-path.outputs.vtk-data-dirname }}
       key: ${{ steps.restore.outputs.cache-primary-key }}
 
     steps:
+      - name: Set variables
+        run: |
+          # define a reusable variable for the folder name
+          echo "VTK_DATA_DIRNAME=vtk-data" >> "$GITHUB_ENV"
+
       - name: Define cache path
         id: set-path
         run: |
-          echo "cache-path=${GITHUB_WORKSPACE}/vtk-data" >> "$GITHUB_OUTPUT"
+          echo "vtk-data-dirname=${VTK_DATA_DIRNAME}" >> "$GITHUB_OUTPUT"
 
       - name: Get vtk-data commit
         run: |
@@ -41,7 +49,7 @@ jobs:
         id: restore
         uses: actions/cache/restore@v5
         with:
-          path: ${{ steps.set-path.outputs.cache-path }}
+          path: ${{ github.workspace }}/${{ env.VTK_DATA_DIRNAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
@@ -51,12 +59,12 @@ jobs:
         with:
           persist-credentials: false
           repository: pyvista/vtk-data
-          path: ${{ steps.set-path.outputs.cache-path }}
+          path: ${{ github.workspace }}/${{ env.VTK_DATA_DIRNAME }}
 
       - name: Save vtk-data cache
         if: steps.restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
-          path: ${{ steps.set-path.outputs.cache-path }}
+          path: ${{ github.workspace }}/${{ env.VTK_DATA_DIRNAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true
