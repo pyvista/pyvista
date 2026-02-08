@@ -128,8 +128,9 @@ class VtkErrorCatcher:
         self._emit_warnings_and_raise_errors()
 
     def _stop_observing(self):
-        error_win = _vtk.vtkOutputWindow()
-        error_win.SetInstance(self._error_output_orig)
+        if hasattr(self, '_error_output_orig'):
+            error_win = _vtk.vtkOutputWindow()
+            error_win.SetInstance(self._error_output_orig)
 
     def _emit_warnings_and_raise_errors(self):
         if self.emit_warnings and self.warning_events:

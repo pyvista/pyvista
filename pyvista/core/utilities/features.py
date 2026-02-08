@@ -901,8 +901,6 @@ def sample_function(  # noqa: PLR0917
     for a full example using this function.
 
     """
-    # internal import to avoide circular dependency
-
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
     samp.SetSampleDimensions(dim)  # type: ignore[call-overload]

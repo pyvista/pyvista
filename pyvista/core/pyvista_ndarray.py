@@ -8,6 +8,8 @@ from typing import cast
 
 import numpy as np
 
+from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
+
 from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
@@ -132,4 +134,4 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    __getattr__ = _vtk.VTKObjectWrapperCheckSnakeCase.__getattr__
+    __getattr__ = VTKObjectWrapperCheckSnakeCase.__getattr__

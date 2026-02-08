@@ -6,6 +6,7 @@ from abc import ABC
 from abc import abstractmethod
 import contextlib
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
@@ -14,7 +15,9 @@ from typing import final
 from typing import get_args
 from typing import overload
 
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk_utilities
 from pyvista.core.utilities.observers import VtkErrorCatcher
 
 if TYPE_CHECKING:
@@ -304,11 +307,11 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     @property
     def _state(self) -> _VtkSnakeCaseOptions:
-        return _vtk._VTK_SNAKE_CASE_STATE
+        return _vtk_utilities._VTK_SNAKE_CASE_STATE
 
     @_state.setter
     def _state(self, state: _VtkSnakeCaseOptions) -> None:
-        _vtk._VTK_SNAKE_CASE_STATE = state
+        _vtk_utilities._VTK_SNAKE_CASE_STATE = state
 
 
 vtk_snake_case = _vtkSnakeCase()
@@ -444,18 +447,38 @@ vtk_message_policy = _VTKMessagePolicy()
 
 
 def _update_alg(
-    alg: _Updatable, *, progress_bar: bool = False, message: str | None = ''
-) -> bool | None:
+    alg: _Updatable, *, progress_bar: bool = False, message: str | None = None
+) -> None:
     """Update an algorithm with or without a progress bar."""
-    func = alg.Update
+    # Get the status of the alg update using GetExecutive
+    # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
+    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
+        to_be_updated: Any = alg
+    else:
+        try:
+            to_be_updated = alg.GetExecutive()
+        except AttributeError:
+            # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
+            to_be_updated = alg
+
+    # Do the update
+    func = to_be_updated.Update
     if progress_bar:
         from pyvista.core.utilities.observers import ProgressMonitor  # noqa: PLC0415
 
         msg = message if message else ''
         with ProgressMonitor(alg, message=msg):
-            return vtk_message_policy._call_function(func)
+            status = vtk_message_policy._call_function(func)
     else:
-        return vtk_message_policy._call_function(func)
+        status = vtk_message_policy._call_function(func)
+
+    if status is not None and status == 0:
+        # There was an error with the update. Re-run so we can catch it and
+        # raise it as a proper Python error.
+        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
+        # with VTK observers can be slow.
+        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
+            func()
 
 
 _AllowNewAttributesOptions = Literal['private', True, False]

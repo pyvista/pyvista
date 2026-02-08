@@ -9,8 +9,9 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core._vtk_core import DisableVtkSnakeCase
-from pyvista.core._vtk_core import VTKObjectWrapperCheckSnakeCase
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
+from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -275,9 +276,9 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pv.core.utilities.misc.conditional_decorator,
             pv.plotting.utilities.sphinx_gallery.Scraper,
             pv.plotting.utilities.sphinx_gallery.DynamicScraper,
-            pv.core._vtk_core.DisableVtkSnakeCase,
-            pv.core._vtk_core.vtkPyVistaOverride,
-            pv.core._vtk_core.VTKObjectWrapperCheckSnakeCase,
+            DisableVtkSnakeCase,
+            vtkPyVistaOverride,
+            VTKObjectWrapperCheckSnakeCase,
             pv.VtkErrorCatcher,
         ):
             assert not issubclass(pyvista_class, _NoNewAttrMixin)

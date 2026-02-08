@@ -31,7 +31,9 @@ pl.add_mesh(dataset, style='wireframe', color='blue', label='Input')
 pl.add_mesh(clipped, label='Clipped')
 pl.add_legend()
 pl.camera_position = pv.CameraPosition(
-    position=(0.24, 0.32, 0.7), focal_point=(0.02, 0.03, -0.02), viewup=(-0.12, 0.93, -0.34)
+    position=(0.24, 0.32, 0.7),
+    focal_point=(0.02, 0.03, -0.02),
+    viewup=(-0.12, 0.93, -0.34),
 )
 pl.show()
 
@@ -63,7 +65,9 @@ pl.show()
 mesh = examples.load_airplane()
 
 # Use `pv.Box()` or `pv.Cube()` to create a region of interest
-roi = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
+roi = pv.Cube(
+    center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500
+)
 roi.rotate_z(33, inplace=True)
 
 pl = pv.Plotter()

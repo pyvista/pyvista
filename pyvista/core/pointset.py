@@ -19,6 +19,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk_core as _vtk
@@ -821,7 +822,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.obj': OBJWriter,
         '.iv': IVWriter,
     }
-    if _vtk.vtk_version_info >= (9, 4):
+    if vtk_version_info >= (9, 4):
         _WRITERS.update({'.vtkhdf': HDFWriter})
 
     @_deprecate_positional_args(allowed=['var_inp', 'faces'])
@@ -2029,7 +2030,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
     }
-    if _vtk.vtk_version_info >= (9, 4):
+    if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(

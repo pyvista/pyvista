@@ -25,9 +25,8 @@ classes are nearly always used for particular types of DataSets.
 from __future__ import annotations
 
 import numpy as np
-import vtk
-
 import pyvista as pv
+import vtk
 
 pv.set_plot_theme('document')
 

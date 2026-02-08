@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.state_manager import _update_alg
 
@@ -18,7 +19,7 @@ from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
