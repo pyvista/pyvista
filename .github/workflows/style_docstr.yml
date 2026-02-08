@@ -37,7 +37,7 @@ jobs:
       - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
-          path: ${{ env.VTK_DATA_DIRNAME }}
+          path: vtk-data
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
