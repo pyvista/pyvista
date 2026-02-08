@@ -25,6 +25,7 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
+    needs: cache-vtk-data
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
