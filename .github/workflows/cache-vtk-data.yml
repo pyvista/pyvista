@@ -9,7 +9,7 @@ on:
 
 permissions:
   id-token: none
-  contents: read
+  contents: none
 
 jobs:
   cache-vtk-data:
