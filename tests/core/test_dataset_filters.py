@@ -2705,7 +2705,8 @@ def test_select_interior_points_raises(sphere, plane):
 
 @pytest.mark.parametrize('method', ['cell_locator', 'signed_distance'])
 def test_select_interior_points_empty_mesh(method):
-    out = pv.PolyData().select_interior_points(pv.PolyData(), method=method)
+    with pv.vtk_message_policy('off'):
+        out = pv.PolyData().select_interior_points(pv.PolyData(), method=method)
     assert isinstance(out, pv.PolyData)
     assert out.array_names == ['selected_points']
     assert out['selected_points'].size == 0

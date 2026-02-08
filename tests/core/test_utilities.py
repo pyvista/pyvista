@@ -927,7 +927,6 @@ def test_vtk_error_catcher():
         pass
 
 
-@pytest.mark.skip_catch_vtk_errors
 def test_update_alg_raises():
     from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
 
