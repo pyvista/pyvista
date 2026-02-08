@@ -12,7 +12,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import colors
-from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
@@ -191,7 +190,7 @@ def test_axes_eq(default_theme):
     assert default_theme.axes == pv.plotting.themes.Theme().axes
 
     theme = pv.plotting.themes.Theme()
-    theme.axes.show = True
+    theme.axes.box = not default_theme.axes.box
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
 
@@ -219,8 +218,8 @@ def test_theme_wrong_type(default_theme):
 
 def test_axes_box(default_theme):
     new_value = not default_theme.axes.box
-    with pytest.raises(DeprecationError, match='`box` is deprecated'):
-        default_theme.axes.box = new_value
+    default_theme.axes.box = new_value
+    assert default_theme.axes.box == new_value
 
 
 def test_axes_color(default_theme):
