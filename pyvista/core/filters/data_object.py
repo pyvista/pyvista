@@ -352,10 +352,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         def get_message(array_):
             if array_:
                 # Create separate message of each cell type
-                ugrid = mesh.cast_to_unstructured_grid()
-                cell_types = sorted(ugrid.distinct_cell_types)
+                cell_types = sorted(mesh.distinct_cell_types)
                 if len(cell_types) > 1:
-                    all_cell_types = ugrid.celltypes
+                    all_cell_types = mesh.cast_to_unstructured_grid().celltypes
                     arrays = []
                     for ctype in cell_types.copy():
                         ctype_ids = np.where(all_cell_types == ctype)[0]
@@ -717,7 +716,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             mesh_items['N Points'] = mesh.n_points
             mesh_items['N Cells'] = mesh.n_cells
             # Use a list to preserve order, but we format it to look like a set
-            cell_types = sorted(mesh.cast_to_unstructured_grid().distinct_cell_types)
+            cell_types = sorted(mesh.distinct_cell_types)
             cell_types_fmt = (
                 str(set())
                 if len(cell_types) == 0
