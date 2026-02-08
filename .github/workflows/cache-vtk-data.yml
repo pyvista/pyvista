@@ -13,12 +13,15 @@ permissions:
 
 jobs:
   cache-vtk-data:
-    name: Cache vtk-data Repo
+    name: job # Avoid duplicating name since the calling workflow's job name is also used
     strategy:
       fail-fast: false
       matrix:
         include:
-          # need both self-hosted and github hosted to ensure cache is local to runners
+          # Need both self-hosted and github hosted to ensure cache is local to runners
+          # Runner labels must be added for every machine/OS
+          - runner-labels: "macos-15-self-hosted"
+          - runner-labels: "ubuntu-24.04-self-hosted-gpu"
           - runner-labels: "ubuntu-22.04-self-hosted"
           - runner-labels: "ubuntu-22.04"
 
