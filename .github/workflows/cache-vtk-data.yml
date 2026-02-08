@@ -1,0 +1,54 @@
+name: Cache vtk-data Repo
+
+on:
+  workflow_call:
+    inputs:
+      cache-folder-name:
+        required: true
+        type: string
+    outputs:
+      key:
+        description: Cache key used for vtk-data
+        value: ${{ jobs.cache-vtk-data.outputs.key }}
+
+jobs:
+  cache-vtk-data:
+    name: Cache vtk-data Repo
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # need both self-hosted and github hosted to ensure cache is local to runners
+          - runner-labels: "ubuntu-22.04-self-hosted"
+          - runner-labels: "ubuntu-22.04"
+
+    runs-on: ${{ matrix.runner-labels }}
+    outputs:
+      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
+    steps:
+      - name: Get vtk-data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+
+      - name: Test if the example data cache exists
+        id: restore-cache-vtk-data
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          lookup-only: true
+
+      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: pyvista/vtk-data
+          path: ${{ env.CACHE_FOLDER_NAME }}
+
+      - name: Create the example data cache
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        id: save-cache-vtk-data
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          enableCrossOsArchive: true
