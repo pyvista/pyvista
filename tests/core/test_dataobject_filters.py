@@ -28,6 +28,7 @@ from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
+from tests.conftest import flaky_test
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -2134,9 +2135,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
         poly_with_invalid_point.cast_to_multiblock().validate_mesh(action='warn')
 
 
-@pytest.mark.needs_vtk_version(
-    (9, 3, 0), reason='Issue with mixed cells mesh fixture for older VTK'
-)
+@flaky_test  # Suspected flaky issue with generating fixtures for older VTK
 def test_validate_mesh_distinct_cell_types(
     single_cell_invalid_point_references,
     mixed_2d_cells_invalid_point_references,
