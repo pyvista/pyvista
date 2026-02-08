@@ -31,7 +31,6 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  CACHE_FOLDER_NAME: vtk-data
   PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
 
 permissions:
@@ -40,8 +39,6 @@ permissions:
 jobs:
   cache-vtk-data:
     uses: ./.github/workflows/cache-vtk-data.yml
-    with:
-      cache-folder-name: vtk-data
 
   macOS:
     name: ${{ matrix.name }}
@@ -87,7 +84,7 @@ jobs:
       - name: Restore example data cache
         uses: actions/cache/restore@v5
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
+          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -173,7 +170,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v5
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
+          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -248,7 +245,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v5
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
+          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -309,7 +306,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v5
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
+          path: ${{ needs.cache-vtk-data.outputs.cache-path }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
