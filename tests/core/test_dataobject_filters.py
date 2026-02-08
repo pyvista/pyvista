@@ -24,6 +24,7 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _get_cell_quality_measures
@@ -613,14 +614,9 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    with pytest.warns(
-        PyVistaDeprecationWarning, match='This filter is deprecated. Use `cell_quality` instead'
-    ):
-        qual = mesh.compute_cell_quality(progress_bar=True)
-    assert 'CellQuality' in qual.array_names
-    with pytest.raises(KeyError):
-        with pytest.warns(PyVistaDeprecationWarning):
-            qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+    match_str = re.escape('This filter is deprecated. Use `cell_quality` instead')
+    with pytest.raises(DeprecationError, match=match_str):
+        _ = mesh.compute_cell_quality(progress_bar=True)
 
 
 SHAPE = 'shape'
@@ -932,12 +928,12 @@ def test_transform_imagedata_raises_with_shear(uniform):
         uniform.transform(shear, inplace=True)
 
 
-def test_transform_filter_inplace_default_warns(cube):
+def test_transform_filter_inplace_default_raises(cube):
     expected_msg = (
         'The default value of `inplace` for the filter `PolyData.transform` '
         'will change in the future.'
     )
-    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+    with pytest.raises(DeprecationError, match=expected_msg):
         _ = cube.transform(np.eye(4))
 
 

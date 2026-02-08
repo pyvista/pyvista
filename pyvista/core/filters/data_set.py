@@ -25,6 +25,7 @@ from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -5885,9 +5886,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     @_deprecate_positional_args(allowed=['quality_measure'])
     def compute_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
-        quality_measure: str = 'scaled_jacobian',
-        null_value: float = -1.0,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        quality_measure: str = 'scaled_jacobian',  # noqa: ARG002
+        null_value: float = -1.0,  # noqa: ARG002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002, ARG002
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -5975,9 +5976,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
-        if pv.version_info >= (0, 48):  # pragma: no cover
-            msg = 'Convert this deprecation warning into an error.'
-            raise RuntimeError(msg)
         if pv.version_info >= (0, 49):  # pragma: no cover
             msg = 'Remove this filter.'
             raise RuntimeError(msg)
@@ -5986,59 +5984,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
             "new filter does not include an array named ``'CellQuality'`"
         )
-        warn_external(msg, PyVistaDeprecationWarning)
-
-        alg = _vtk.vtkCellQuality()
-        possible_measure_setters = {
-            'area': 'SetQualityMeasureToArea',
-            'aspect_beta': 'SetQualityMeasureToAspectBeta',
-            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
-            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
-            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
-            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
-            'condition': 'SetQualityMeasureToCondition',
-            'diagonal': 'SetQualityMeasureToDiagonal',
-            'dimension': 'SetQualityMeasureToDimension',
-            'distortion': 'SetQualityMeasureToDistortion',
-            'jacobian': 'SetQualityMeasureToJacobian',
-            'max_angle': 'SetQualityMeasureToMaxAngle',
-            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
-            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
-            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
-            'min_angle': 'SetQualityMeasureToMinAngle',
-            'oddy': 'SetQualityMeasureToOddy',
-            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
-            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
-            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
-            'shape': 'SetQualityMeasureToShape',
-            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
-            'shear': 'SetQualityMeasureToShear',
-            'shear_and_size': 'SetQualityMeasureToShearAndSize',
-            'skew': 'SetQualityMeasureToSkew',
-            'stretch': 'SetQualityMeasureToStretch',
-            'taper': 'SetQualityMeasureToTaper',
-            'volume': 'SetQualityMeasureToVolume',
-            'warpage': 'SetQualityMeasureToWarpage',
-        }
-
-        # we need to check if these quality measures exist as VTK API changes
-        measure_setters = {}
-        for name, attr in possible_measure_setters.items():
-            setter_candidate = getattr(alg, attr, None)
-            if setter_candidate:
-                measure_setters[name] = setter_candidate
-
-        try:
-            # Set user specified quality measure
-            measure_setters[quality_measure]()
-        except (KeyError, IndexError):
-            options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
-            msg = f'Cell quality type ({quality_measure}) not available. Options are: {options}'
-            raise KeyError(msg)
-        alg.SetInputData(self)
-        alg.SetUndefinedQuality(null_value)
-        _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Quality')
-        return _get_output(alg)
+        raise DeprecationError(msg)
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False

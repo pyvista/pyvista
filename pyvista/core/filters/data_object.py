@@ -28,6 +28,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -1247,9 +1248,9 @@ class DataObjectFilters:
             :class:`~pyvista.ImageData.spacing`, and
             :class:`~pyvista.ImageData.direction_matrix` properties.
 
-        .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change
-            to `False`.
+        .. versionchanged:: 0.48.0
+            The parameter ``inplace`` must be specified whereas it previously
+            defaulted to ``True``.
 
         .. versionchanged:: 0.45.0
             Transforming :class:`~pyvista.ImageData` now returns ``ImageData``.
@@ -1274,8 +1275,11 @@ class DataObjectFilters:
             transformed. Otherwise, only the normals and vectors are
             transformed.  See the warning for more details.
 
-        inplace : bool, default: True
-            When ``True``, modifies the dataset inplace.
+        inplace : bool
+            When ``True``, modifies the dataset inplace and returned dataset is
+            the same dataset. When ``False`` a new transformed dataset is
+            returned with the original unchanged. The value of this parameter
+            must be explicitly set.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1311,19 +1315,13 @@ class DataObjectFilters:
         ...         [0, 0, 0, 1],
         ...     ]
         ... )
-        >>> transformed = mesh.transform(transform_matrix, inplace=False)
+        >>> transformed = mesh.transform(transform_matrix)
         >>> transformed.plot(show_edges=True)
 
         """
         # Deprecated v0.45, convert to error in v0.48, remove v0.51
         if inplace is None:
             # if inplace is None user has not explicitly opted into inplace behavior
-            if version_info >= (0, 48):  # pragma: no cover
-                msg = (
-                    'Convert this deprecation warning into an error '
-                    'and update the docstring default value/type for inplace.'
-                )
-                raise RuntimeError(msg)
             if version_info >= (0, 51):  # pragma: no cover
                 msg = 'Remove this deprecation and update the docstring value/type for inplace.'
                 raise RuntimeError(msg)
@@ -1332,10 +1330,9 @@ class DataObjectFilters:
                 f'The default value of `inplace` for the filter '
                 f'`{self.__class__.__name__}.transform` will change in the future. '
                 'Previously it defaulted to `True`, but will change to `False`. '
-                'Explicitly set `inplace` to `True` or `False` to silence this warning.'
+                'Explicitly set `inplace` to `True` or `False`.'
             )
-            warn_external(msg, PyVistaDeprecationWarning)
-            inplace = True  # The old default behavior
+            raise DeprecationError(msg)
 
         if isinstance(self, pv.MultiBlock):
             return self.generic_filter(
