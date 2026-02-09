@@ -1,4 +1,4 @@
-name: Syntax Check
+name: Check Python Syntax
 
 on:
   pull_request:
@@ -15,6 +15,7 @@ jobs:
     name: Compile Python Files
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.10, 3.11, 3.12, 3.13, 3.14]
 
