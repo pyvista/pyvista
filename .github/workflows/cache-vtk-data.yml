@@ -1,0 +1,58 @@
+name: Cache vtk-data
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: "Runner to run cache on."
+        required: true
+        type: string
+    outputs:
+      key:
+        description: Cache key used for vtk-data
+        value: ${{ jobs.run.outputs.key }}
+
+permissions:
+  id-token: none
+  contents: none
+
+jobs:
+  run: # Use generic name here since workflows that call this one should provide a better name.
+    # Workflows that re-use this workflow must specify a runner label for which to cache the data
+    runs-on: ${{ inputs.runs-on }}
+
+    outputs:
+      key: ${{ steps.restore.outputs.cache-primary-key }}
+
+    steps:
+      - name: Set cache path dirname
+        run: |
+          # define a reusable variable for the folder name
+          echo "CACHE_FOLDER_NAME=vtk-data" >> "$GITHUB_ENV"
+
+      - name: Get vtk-data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+
+      - name: Restore vtk-data cache
+        id: restore
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          lookup-only: true
+
+      - name: Clone vtk-data if cache miss
+        if: steps.restore.outputs.cache-hit != 'true'
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          repository: pyvista/vtk-data
+          path: ${{ env.CACHE_FOLDER_NAME }}
+
+      - name: Save vtk-data cache
+        if: steps.restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          enableCrossOsArchive: true

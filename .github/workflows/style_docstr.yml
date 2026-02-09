@@ -7,13 +7,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  TOX_COLORED: "yes"
-  PARALLEL: "-n2"
 permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    name: Cache vtk-data (ubuntu-24.04-self-hosted-gpu)
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      # Runner should match the actual runner used by the docstring job
+      runs-on: "ubuntu-24.04-self-hosted-gpu"
+
   docstringcheck:
     strategy:
       fail-fast: false
@@ -26,6 +30,11 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    needs: cache-vtk-data
+    env:
+      TOX_COLORED: "yes"
+      PARALLEL: "-n2"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
     steps:
       - uses: actions/checkout@v6
         with:
@@ -37,15 +46,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - uses: actions/cache@v5
-        with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-Data-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-Data-
-
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
+        with:
+          path: vtk-data
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
