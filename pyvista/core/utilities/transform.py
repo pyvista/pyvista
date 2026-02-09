@@ -2783,7 +2783,7 @@ class Transform(
 
         >>> rot = transform.as_rotation()
         >>> type(rot)
-        scipy.spatial.transform._rotation.Rotation
+        <class 'scipy.spatial.transform._rotation.Rotation'>
 
         Represent the rotation as a quaternion.
 
