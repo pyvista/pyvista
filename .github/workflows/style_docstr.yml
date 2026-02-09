@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   cache-vtk-data:
-    name: cache
+    name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       # Runner should match the actual runner used by the docstring job

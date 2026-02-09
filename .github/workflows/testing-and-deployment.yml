@@ -44,19 +44,19 @@ jobs:
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
-    name: cache
+    name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
   # For self-hosted runners, we need to cache each runner separately
   cache-macOS-self-hosted:
-    name: cache
+    name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
   cache-ubuntu-self-hosted:
-    name: cache
+    name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "ubuntu-22.04-self-hosted"

@@ -19,7 +19,7 @@ permissions:
 jobs:
   cache-vtk-data:
     # Workflows that re-use this workflow must specify a runner label for which to cache the data
-    name: Cache vtk-data (${{ inputs.runs-on }})
+    name: ${{ inputs.runs-on }}
     runs-on: ${{ inputs.runs-on }}
 
     outputs:
