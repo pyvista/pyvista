@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   cache-vtk-data:
-    name: Cache vtk-data (ubuntu-24.04-self-hosted-gpu)
+    name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       # Runner should match the actual runner used by the build job
