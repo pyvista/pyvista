@@ -10,7 +10,7 @@ on:
     outputs:
       key:
         description: Cache key used for vtk-data
-        value: ${{ jobs.run.outputs.key }}
+        value: ${{ jobs.cache-vtk-data.outputs.key }}
 
 permissions:
   id-token: none
