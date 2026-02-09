@@ -33,6 +33,7 @@ jobs:
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
     steps:
       - uses: actions/checkout@v6
         with:

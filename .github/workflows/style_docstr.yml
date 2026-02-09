@@ -7,9 +7,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  TOX_COLORED: "yes"
-  PARALLEL: "-n2"
 permissions:
   id-token: none
 
@@ -24,6 +21,10 @@ jobs:
   docstringcheck:
     runs-on: ubuntu-24.04-self-hosted-gpu
     needs: cache-vtk-data
+    env:
+      TOX_COLORED: "yes"
+      PARALLEL: "-n2"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
     steps:
       - uses: actions/checkout@v6
         with:
