@@ -104,6 +104,7 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -189,6 +190,7 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -263,6 +265,7 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -323,6 +326,7 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-windows.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
