@@ -17,7 +17,7 @@ permissions:
   contents: none
 
 jobs:
-  cache-vtk-data:
+  run: # Use generic name here since workflows that call this one should provide a better name.
     # Workflows that re-use this workflow must specify a runner label for which to cache the data
     runs-on: ${{ inputs.runs-on }}
 
