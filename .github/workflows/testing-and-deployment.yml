@@ -38,18 +38,29 @@ permissions:
   id-token: none
 
 jobs:
-  cache-vtk-data:
+  # Cache vtk-data for each runner separately
+  # Runner labels should match the actual runners used by the different jobs in this file
+  cache-vtk-data-macOS-self-hosted:
     name: Cache vtk-data Repo
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
-      # Runners here should match the actual runners used by the different jobs in this file
-      # - For GitHub-hosted runners, only one runner needs to be specified since "enableCrossOsArchive" is enabled
-      # - For self-hosted runners, all runners must be specified explicitly.
-      runners-JSON: '["ubuntu-24.04","ubuntu-24.04-self-hosted","macos-15-self-hosted"]'
+      runs-on: "macos-15-self-hosted"
+
+  cache-vtk-data-windows-latest:
+    name: Cache vtk-data Repo
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "windows-latest"
+
+  cache-vtk-data-ubuntu-self-hosted:
+    name: Cache vtk-data Repo
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "ubuntu-24.04-self-hosted"
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-vtk-data
+    needs: cache-vtk-data-macOS-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -122,7 +133,7 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-vtk-data
+    needs: cache-vtk-data-ubuntu-self-hosted
     strategy:
       fail-fast: false
 
@@ -227,7 +238,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04-self-hosted
-    needs: cache-vtk-data
+    needs: cache-vtk-data-ubuntu-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -291,7 +302,7 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-vtk-data
+    needs: cache-vtk-data-windows-latest
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
