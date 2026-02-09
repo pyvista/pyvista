@@ -99,6 +99,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
+      - name: Print python versions
+        run: echo ${{ fromJSON(vars.PYTHON_VERSIONS) }}
+
       - name: Set Python PATH and create a virtual env
         if: runner.environment == 'self-hosted'
         run: |
@@ -185,6 +188,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Print python versions
+        run: echo ${{ fromJSON(vars.PYTHON_VERSIONS) }}
 
       - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
         with:
