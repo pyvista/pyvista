@@ -1844,21 +1844,21 @@ class MultiBlock(
 
         Load a dataset with nested blocks.
 
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         Get one of the blocks and extract its surface.
 
-        >>> block = multi[0][42]
+        >>> block = multi[0][3]
         >>> surface = block.extract_surface(algorithm=None)
 
         Replace the block.
 
-        >>> multi.replace((0, 42), surface)
+        >>> multi.replace((0, 3), surface)
 
         This is similar to replacing the block directly with indexing but the block
         name is also preserved.
 
-        >>> multi[0][42] = surface
+        >>> multi[0][3] = surface
 
         """
         if isinstance(index, Sequence) and not isinstance(index, str):
