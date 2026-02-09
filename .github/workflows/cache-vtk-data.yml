@@ -1,4 +1,4 @@
-name: Cache vtk-data Repo
+name: Cache vtk-data
 
 on:
   workflow_call:
@@ -28,7 +28,7 @@ jobs:
       - name: Set cache path dirname
         run: |
           # define a reusable variable for the folder name
-          echo "VTK_DATA_DIRNAME=vtk-data" >> "$GITHUB_ENV"
+          echo "CACHE_FOLDER_NAME=vtk-data" >> "$GITHUB_ENV"
 
       - name: Get vtk-data commit
         run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
@@ -37,7 +37,7 @@ jobs:
         id: restore
         uses: actions/cache/restore@v5
         with:
-          path: ${{ env.VTK_DATA_DIRNAME }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
@@ -47,12 +47,12 @@ jobs:
         with:
           persist-credentials: false
           repository: pyvista/vtk-data
-          path: ${{ env.VTK_DATA_DIRNAME }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
 
       - name: Save vtk-data cache
         if: steps.restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
-          path: ${{ env.VTK_DATA_DIRNAME }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true
