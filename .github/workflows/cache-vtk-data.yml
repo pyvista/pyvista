@@ -19,12 +19,9 @@ permissions:
 jobs:
   run: # Use generic name here since workflows that call this one should provide a better name.
     # Workflows that re-use this workflow must specify a runner label for which to cache the data
-    # Use a matrix so that the runner is included in the job name
-    strategy:
-      fail-fast: false
-      matrix:
-        runner-label: ["${{ inputs.runs-on }}"]
-    runs-on: ${{ matrix.runner-label }}
+
+    name: Cache VTK Data on ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on }}
 
     outputs:
       key: ${{ steps.restore.outputs.cache-primary-key }}
