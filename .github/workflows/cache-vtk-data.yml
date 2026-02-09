@@ -10,15 +10,16 @@ on:
     outputs:
       key:
         description: Cache key used for vtk-data
-        value: ${{ jobs.run.outputs.key }}
+        value: ${{ jobs.cache-vtk-data.outputs.key }}
 
 permissions:
   id-token: none
   contents: none
 
 jobs:
-  run: # Use generic name here since workflows that call this one should provide a better name.
+  cache-vtk-data:
     # Workflows that re-use this workflow must specify a runner label for which to cache the data
+    name: ${{ inputs.runs-on }}
     runs-on: ${{ inputs.runs-on }}
 
     outputs:
