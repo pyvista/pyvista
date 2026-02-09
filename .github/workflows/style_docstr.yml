@@ -15,7 +15,17 @@ permissions:
 
 jobs:
   docstringcheck:
-    runs-on: ubuntu-24.04-self-hosted-gpu
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04-self-hosted-gpu
+            python-version: "3.14" # Should be the latest version supported
+          - os: windows-latest
+            python-version: "3.10" # Should be the oldest version supported
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v6
         with:
@@ -24,8 +34,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - uses: actions/cache@v5
         with:
@@ -54,7 +64,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
+          python-version: 3.14
 
       - name: Install test dependencies
         run: |
