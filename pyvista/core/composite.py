@@ -2561,10 +2561,10 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_biplane`.
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         The dataset has eight nested multi-block blocks, so the block types
         only contains :class:`MultiBlock`.
@@ -2576,7 +2576,7 @@ class MultiBlock(
         only contains :class:`~pyvista.UnstructuredGrid`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
         return {type(block) for block in self}
@@ -2597,10 +2597,10 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_biplane`.
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         The dataset has eight nested multi-block blocks, so the block types
         only contains :class:`MultiBlock`.
@@ -2612,7 +2612,7 @@ class MultiBlock(
         only contains :class:`~pyvista.UnstructuredGrid`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
         return {type(block) for block in self.recursive_iterator()}
