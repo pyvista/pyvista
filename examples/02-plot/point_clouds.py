@@ -11,7 +11,6 @@ This example shows you how to plot point clouds using PyVista using both the
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -63,7 +62,14 @@ pv.plot(
 # array from 0-255.
 rgba = points - points.min(axis=0)
 rgba /= rgba.max(axis=0)
-pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos='xy', rgba=True)
+pv.plot(
+    points,
+    scalars=rgba,
+    render_points_as_spheres=True,
+    point_size=20,
+    cpos='xy',
+    rgba=True,
+)
 
 # %%
 # Point Cloud Plot Styles

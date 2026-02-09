@@ -41,11 +41,17 @@ pl.show()
 
 pl = pv.Plotter(shape=(1, 2), border_width=1)
 pl.add_mesh(
-    cube, scalars='scalars1', cmap='coolwarm', scalar_bar_args={'title': 'Cube 1: scalars1'}
+    cube,
+    scalars='scalars1',
+    cmap='coolwarm',
+    scalar_bar_args={'title': 'Cube 1: scalars1'},
 )  # Unique title
 pl.subplot(0, 1)
 pl.add_mesh(
-    second_cube, scalars='scalars1', cmap='coolwarm', scalar_bar_args={'title': 'Cube 2: scalars1'}
+    second_cube,
+    scalars='scalars1',
+    cmap='coolwarm',
+    scalar_bar_args={'title': 'Cube 2: scalars1'},
 )  # Unique title
 pl.show()
 
@@ -82,7 +88,9 @@ pl.show()
 
 # Plot the four scalar arrays - use one scalar bar for each row
 pl = pv.Plotter(shape=(2, 2), border_width=1)
-pl.add_mesh(cube, scalars='scalars1', cmap='coolwarm', scalar_bar_args={'title': 'Scalars 1 & 2'})
+pl.add_mesh(
+    cube, scalars='scalars1', cmap='coolwarm', scalar_bar_args={'title': 'Scalars 1 & 2'}
+)
 pl.camera.zoom(0.75)
 pl.subplot(0, 1)
 pl.add_mesh(

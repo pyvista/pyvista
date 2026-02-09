@@ -28,6 +28,7 @@ from typing_extensions import Unpack
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core._vtk_utilities import vtk_version_info
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -142,7 +143,7 @@ class MultiBlock(
 
     >>> for block in blocks:
     ...     # Do something with each dataset
-    ...     surf = block.extract_surface()
+    ...     surf = block.extract_surface(algorithm=None)
 
     """
 
@@ -151,7 +152,7 @@ class MultiBlock(
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = dict.fromkeys(
         ['.vtm', '.vtmb'], XMLMultiBlockDataWriter
     )
-    if _vtk.vtk_version_info >= (9, 4):
+    if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(
@@ -1848,7 +1849,7 @@ class MultiBlock(
         Get one of the blocks and extract its surface.
 
         >>> block = multi[0][42]
-        >>> surface = block.extract_geometry()
+        >>> surface = block.extract_surface(algorithm=None)
 
         Replace the block.
 
@@ -2460,7 +2461,7 @@ class MultiBlock(
             Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         Notes
@@ -2480,7 +2481,7 @@ class MultiBlock(
             elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface()
+                return block.extract_surface(algorithm=None)
 
         return self.generic_filter(block_filter, _skip_none=False)
 
@@ -2541,7 +2542,7 @@ class MultiBlock(
         --------
         as_polydata_blocks
             Convert all blocks to :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """

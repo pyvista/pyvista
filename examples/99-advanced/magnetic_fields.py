@@ -22,7 +22,6 @@ library.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -44,7 +43,8 @@ grid.point_data
 # original example.
 
 coils = [
-    pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False) for z in np.linspace(-8, 8, 16)
+    pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False)
+    for z in np.linspace(-8, 8, 16)
 ]
 coil_block = pv.MultiBlock(coils)
 coil_block.plot(render_lines_as_tubes=True, line_width=10)

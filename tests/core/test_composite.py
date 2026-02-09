@@ -13,12 +13,12 @@ import pyvista as pv
 from pyvista import ImageData
 from pyvista import MultiBlock
 from pyvista import PolyData
-from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
+from pyvista.core.errors import DeprecationError
 
 
 def test_multi_block_init_vtk():
@@ -556,7 +556,9 @@ def test_multi_io_erros(tmpdir):
 
 
 def test_extract_geometry(multiblock_all_with_nested_and_none):
-    geom = multiblock_all_with_nested_and_none.extract_geometry()
+    match = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
 
 
@@ -1066,12 +1068,12 @@ def test_multiblock_partitioned_zip(container):
         assert zipped_container[i][j] is zipped_list[i][j] is None
 
 
-def test_transform_filter_inplace_default_warns(multiblock_poly):
+def test_transform_filter_inplace_default_raises(multiblock_poly):
     expected_msg = (
         'The default value of `inplace` for the filter `MultiBlock.transform` '
         'will change in the future.'
     )
-    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+    with pytest.raises(DeprecationError, match=expected_msg):
         _ = multiblock_poly.transform(np.eye(4))
 
 

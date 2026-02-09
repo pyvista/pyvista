@@ -16,7 +16,6 @@ function that projects points to a plane.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
