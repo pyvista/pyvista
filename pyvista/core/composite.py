@@ -2632,15 +2632,15 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_biplane`.
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         Show the :attr:`nested_block_types`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         Since there is only one type, the dataset is homogeneous.
 
