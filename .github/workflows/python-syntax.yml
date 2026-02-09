@@ -1,0 +1,33 @@
+name: Syntax Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: none
+
+jobs:
+  compile:
+    name: Compile Python Files
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: [3.10, 3.11, 3.12, 3.13, 3.14]
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Compile Python files
+        run: |
+          python -m compileall -q doc examples examples_trame pyvista tests
