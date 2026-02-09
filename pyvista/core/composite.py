@@ -495,7 +495,7 @@ class MultiBlock(
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_exodus()
 
         The dataset has eight :class:`MultiBlock` blocks.
 
@@ -512,7 +512,7 @@ class MultiBlock(
         <generator object MultiBlock._recursive_iterator at ...>
 
         >>> len(list(iterator))
-        59
+        11
 
         Check if all blocks are :class:`~pyvista.DataSet` objects. Note that ``None``
         blocks are included by default, so this may not be ``True`` in all cases.
@@ -547,11 +547,11 @@ class MultiBlock(
         ... )
         >>> next(iterator)
         ('Element Blocks->Unnamed block ID: 1', UnstructuredGrid (...)
-          N Cells:    8
-          N Points:   27
-          X Bounds:   4.486e-01, 1.249e+00
-          Y Bounds:   1.372e+00, 1.872e+00
-          Z Bounds:   -6.351e-01, 3.649e-01
+          N Cells:    336
+          N Points:   400
+          X Bounds:   0.000e+00, 1.200e+01
+          Y Bounds:   0.000e+00, 3.500e+00
+          Z Bounds:   0.000e+00, 3.399e+00
           N Arrays:   6)
 
         Iterate through ids. The ids are returned as a tuple by default.
