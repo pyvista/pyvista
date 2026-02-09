@@ -43,7 +43,6 @@ jobs:
         with:
           path: vtk-data
           key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv

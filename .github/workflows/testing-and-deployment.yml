@@ -41,19 +41,19 @@ jobs:
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
   cache-vtk-data-macOS-self-hosted:
-    name: Cache vtk-data Repo
+    name: Cache vtk-data Repo (macOS self-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
 
   cache-vtk-data-windows-latest:
-    name: Cache vtk-data Repo
+    name: Cache vtk-data Repo (Windows)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "windows-latest"
 
   cache-vtk-data-ubuntu-self-hosted:
-    name: Cache vtk-data Repo
+    name: Cache vtk-data Repo (Linux self-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "ubuntu-24.04-self-hosted"
@@ -104,7 +104,6 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -190,7 +189,6 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -265,7 +263,6 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -326,7 +323,6 @@ jobs:
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
