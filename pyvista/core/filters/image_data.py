@@ -20,6 +20,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
@@ -3815,19 +3816,16 @@ class ImageDataFilters(DataSetFilters):
         # Deprecated on v0.45.0, estimated removal on v0.48.0
         if pad_singleton_dims is not None:
             if pad_singleton_dims:
-                warn_external(
+                msg = (
                     'Use of `pad_singleton_dims=True` is deprecated. '
-                    'Use `dimensionality="3D"` instead',
-                    PyVistaDeprecationWarning,
+                    'Use `dimensionality="3D"` instead'
                 )
-                dimensionality = '3D'
             else:
-                warn_external(
+                msg = (
                     'Use of `pad_singleton_dims=False` is deprecated. '
-                    'Use `dimensionality="preserve"` instead',
-                    PyVistaDeprecationWarning,
+                    'Use `dimensionality="preserve"` instead'
                 )
-                dimensionality = 'preserve'
+            raise DeprecationError(msg)
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]
