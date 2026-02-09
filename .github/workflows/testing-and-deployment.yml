@@ -50,13 +50,13 @@ jobs:
     name: Cache vtk-data Repo (GitHub-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
-      runs-on: "ubuntu-24.04"
+      runs-on: "ubuntu-22.04"
 
   cache-ubuntu-self-hosted:
     name: Cache vtk-data Repo (Linux self-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
-      runs-on: "ubuntu-24.04-self-hosted"
+      runs-on: "ubuntu-22.04-self-hosted"
 
   macOS:
     name: ${{ matrix.name }}
