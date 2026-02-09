@@ -508,7 +508,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
 
         >>> actor.rotation_from([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
         >>> actor.orientation
-        (0.0, -180.0, -89.99999999999999)
+        (0.0, -180.0, -90.0)
 
         """
         self.orientation = _rotation_matrix_as_orientation(rotation)  # type: ignore[arg-type]
