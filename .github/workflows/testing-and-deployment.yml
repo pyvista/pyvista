@@ -46,11 +46,11 @@ jobs:
     with:
       runs-on: "macos-15-self-hosted"
 
-  cache-windows:
-    name: Cache vtk-data Repo (Windows)
+  cache-github-hosted:
+    name: Cache vtk-data Repo (GitHub-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
-      runs-on: "windows-latest"
+      runs-on: "ubuntu-24.04"
 
   cache-ubuntu-self-hosted:
     name: Cache vtk-data Repo (Linux self-hosted)
@@ -302,7 +302,7 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-windows
+    needs: cache-github-hosted
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -325,7 +325,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
-          key: ${{ needs.cache-windows.outputs.key }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Set up headless display
