@@ -3,7 +3,7 @@ name: Cache vtk-data Repo
 on:
   workflow_call:
     inputs:
-      runs:
+      runs-on:
         description: "Runner to run cache on."
         required: true
         type: string
