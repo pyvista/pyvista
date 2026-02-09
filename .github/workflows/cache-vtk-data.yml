@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner-label: ${{ inputs.runs-on }}
+        runner-label: ["${{ inputs.runs-on }}"]
     runs-on: ${{ matrix.runner-label }}
 
     outputs:
