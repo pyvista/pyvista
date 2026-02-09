@@ -18,18 +18,7 @@ permissions:
 
 jobs:
   cache-vtk-data:
-    name: job # Avoid duplicating name since the calling workflow's job name is also used
-
-    #      fail-fast: false
-    #      matrix:
-    #        # Workflows that re-use this workflow must specify a matrix of runners to use
-    #        # For github-hosted runners:
-    #        #   - Only ONE runner needs to be specified, since we use "enableCrossOsArchive: true"
-    #        #   - E.g. if runner is "ubuntu-22.04", caching will also work for "windows-latest"
-    #        # For self-hosted runners:
-    #        #   - ALL runners must be specified
-    #        #   - E.g. use runner "macos-15-self-hosted,ubuntu-22.04-self-hosted" to enable caching for both runners
-
+    # Workflows that re-use this workflow must specify a runner label for which to cache the data
     runs-on: ${{ inputs.runs-on }}
 
     outputs:

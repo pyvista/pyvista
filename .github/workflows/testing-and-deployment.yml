@@ -40,19 +40,19 @@ permissions:
 jobs:
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
-  cache-vtk-data-macOS-self-hosted:
+  cache-macOS-self-hosted:
     name: Cache vtk-data Repo (macOS self-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
 
-  cache-vtk-data-windows-latest:
+  cache-windows:
     name: Cache vtk-data Repo (Windows)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "windows-latest"
 
-  cache-vtk-data-ubuntu-self-hosted:
+  cache-ubuntu-self-hosted:
     name: Cache vtk-data Repo (Linux self-hosted)
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -60,7 +60,7 @@ jobs:
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-vtk-data-macOS-self-hosted
+    needs: cache-macOS-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -103,7 +103,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -132,7 +132,7 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-vtk-data-ubuntu-self-hosted
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
 
@@ -188,7 +188,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -236,7 +236,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04-self-hosted
-    needs: cache-vtk-data-ubuntu-self-hosted
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -262,7 +262,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -299,7 +299,7 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-vtk-data-windows-latest
+    needs: cache-windows
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -322,7 +322,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.VTK_DATA_DIRNAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-windows.outputs.key }}
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
