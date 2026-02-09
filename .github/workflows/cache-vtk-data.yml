@@ -3,7 +3,7 @@ name: Cache vtk-data Repo
 on:
   workflow_call:
     inputs:
-      runners:
+      runners-JSON:
         description: "Comma-separated list of runner labels to run cache on."
         required: true
         type: string
