@@ -41,6 +41,11 @@ jobs:
   cache-vtk-data:
     name: Cache vtk-data Repo
     uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      # Runners here should match the actual runners used by the different jobs in this file
+      # - For GitHub-hosted runners, only one runner needs to be specified since "enableCrossOsArchive" is enabled
+      # - For self-hosted runners, all runners must be specified explicitly.
+      runners: "ubuntu-24.04,ubuntu-24.04-self-hosted,macos-15-self-hosted"
 
   macOS:
     name: ${{ matrix.name }}

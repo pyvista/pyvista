@@ -2,6 +2,11 @@ name: Cache vtk-data Repo
 
 on:
   workflow_call:
+    inputs:
+      runners:
+        description: "Comma-separated list of runner labels to run cache on."
+        required: true
+        type: string
     outputs:
       key:
         description: Cache key used for vtk-data
@@ -17,15 +22,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Need both self-hosted and github hosted to ensure cache is local to runners
-          # Runner labels must be added for every machine/OS
-          - runner-labels: "macos-15-self-hosted"
-          - runner-labels: "ubuntu-24.04-self-hosted-gpu"
-          - runner-labels: "ubuntu-22.04-self-hosted"
-          - runner-labels: "ubuntu-22.04"
-
-    runs-on: ${{ matrix.runner-labels }}
+        # Workflows that re-use this workflow must specify a matrix of runners to use
+        # For github-hosted runners:
+        #   - Only ONE runner needs to be specified, since we use "enableCrossOsArchive: true"
+        #   - E.g. if runner is "ubuntu-22.04", caching will also work for "windows-latest"
+        # For self-hosted runners:
+        #   - ALL runners must be specified
+        #   - E.g. use runner "macos-15-self-hosted,ubuntu-22.04-self-hosted" to enable caching for both runners
+        runner-label: ${{ fromJSON('["' + join('","', split(inputs.runners, ',')) + '"]') }}
+    runs-on: ${{ matrix.runner-label }}
 
     outputs:
       key: ${{ steps.restore.outputs.cache-primary-key }}
@@ -43,7 +48,7 @@ jobs:
         id: restore
         uses: actions/cache/restore@v5
         with:
-          path: vtk-data
+          path: ${{ env.VTK_DATA_DIRNAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
