@@ -8633,6 +8633,9 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 def download_biplane(load=True):  # noqa: FBT002
     """Download biplane dataset.
 
+    .. warning::
+        This dataset is known to cause segmentation faults on Windows.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8646,9 +8649,11 @@ def download_biplane(load=True):  # noqa: FBT002
 
     Examples
     --------
+    >>> import sys
     >>> from pyvista import examples
     >>> dataset = examples.download_biplane()
-    >>> dataset.plot(cpos='zy', zoom=1.5)
+    >>> if sys.platform != 'win32':  # segfaults on Windows
+    ...     dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
 
