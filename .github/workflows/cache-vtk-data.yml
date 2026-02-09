@@ -29,7 +29,7 @@ jobs:
         # For self-hosted runners:
         #   - ALL runners must be specified
         #   - E.g. use runner "macos-15-self-hosted,ubuntu-22.04-self-hosted" to enable caching for both runners
-        runner-label: ${{ fromJSON('["' + join('","', split(inputs.runners, ',')) + '"]') }}
+        runner-label: ${{ fromJSON(inputs.runners-JSON) }}
     runs-on: ${{ matrix.runner-label }}
 
     outputs:

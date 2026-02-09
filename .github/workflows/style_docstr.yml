@@ -19,7 +19,7 @@ jobs:
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       # Runner should match the actual runner used by the docstring job
-      runners: "ubuntu-24.04-self-hosted-gpu"
+      runners-JSON: '["ubuntu-24.04-self-hosted-gpu"]'
 
   docstringcheck:
     runs-on: ubuntu-24.04-self-hosted-gpu
