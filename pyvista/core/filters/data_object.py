@@ -1226,7 +1226,8 @@ class DataObjectFilters:
             volume = sizes.cell_data['Volume']
 
             # Cell has inverted face if negative area or volume
-            invalid_size = (area < 0) | (volume < 0)
+            tol = 1e-8
+            invalid_size = (area < -tol) | (volume < -tol)
             set_state('inverted_faces', invalid_size)
 
             # Check for degenerate cells
@@ -1239,13 +1240,13 @@ class DataObjectFilters:
                 # Fast path, we need only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
-                    is_degenerate = np.isclose(length, 0)
+                    is_degenerate = np.abs(length) <= tol
                     set_state('coincident_points', is_degenerate)
                 elif dimensionality == 2:
-                    is_degenerate = np.isclose(area, 0)
+                    is_degenerate = np.abs(area) <= tol
                     set_state('degenerate_faces', is_degenerate)
                 elif dimensionality == 3:
-                    is_degenerate = np.isclose(volume, 0)
+                    is_degenerate = np.abs(volume) <= tol
                     set_state('degenerate_faces', is_degenerate)
             else:
                 # Mixed cell dimensionality, need to consider separate cell types
