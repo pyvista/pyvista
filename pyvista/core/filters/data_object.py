@@ -1082,7 +1082,7 @@ class DataObjectFilters:
         - ``non_contiguous_edges`` (``0x08``): 2D cell's perimeter edges are not contiguous.
         - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
         - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
-          its :class:`~pyvista.CellType`.
+          its :class:`~pyvista.CellType`. Cells with negative volume have inverted faces.
         - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
         - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
           collocated vertices.
@@ -1097,6 +1097,9 @@ class DataObjectFilters:
         Refer to :vtk:`vtkCellValidator` for more details about each state.
 
         .. versionadded:: 0.47
+
+        .. versionchanged:: 0.48
+            ``inverted_faces`` now includes cells with negative volume.
 
         Returns
         -------
@@ -1187,7 +1190,9 @@ class DataObjectFilters:
         cell_validator.Update()
         output = _get_output(cell_validator)
 
-        def _process_output_arrays(mesh: DataSet):
+        def post_process(mesh: DataSet):
+            fix_validity_state(mesh)
+
             # Rename output scalars and make them active
             validity_state = mesh.cell_data['ValidityState']
             mesh.cell_data['validity_state'] = validity_state
@@ -1199,10 +1204,22 @@ class DataObjectFilters:
             for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
                 mesh.field_data[name] = np.where(validity_state & value)[0]
 
+        def fix_validity_state(mesh: DataSet):
+            state = mesh.cell_data['ValidityState']
+            # We consider negative area/volume to be equivalent to inverted face(s)
+            sizes = mesh.compute_cell_sizes(volume=True, length=False, area=True)
+            area = sizes.cell_data['Area']
+            volume = sizes.cell_data['Volume']
+
+            # Set bit if invalid
+            inverted_bit = _CELL_VALIDATOR_BIT_FIELD['inverted_faces']
+            invalid_size = (area < 0) | (volume < 0)
+            state[invalid_size] |= inverted_bit
+
         if isinstance(output, pv.DataSet):
-            _process_output_arrays(output)
+            post_process(output)
         else:
-            output.generic_filter(_process_output_arrays)
+            output.generic_filter(post_process)
         return output
 
     @_deprecate_positional_args(allowed=['trans'])

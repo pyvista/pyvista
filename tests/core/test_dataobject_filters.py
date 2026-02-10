@@ -1967,7 +1967,7 @@ def test_cell_validator_bitfield_values():
 
 
 @pytest.fixture
-def invalid_tetra():
+def invalid_tetra_missing_point():
     # Define tetra with one point missing
     cells = [3, 0, 1, 2]
     celltypes = [pv.CellType.TETRA]
@@ -1979,9 +1979,33 @@ def invalid_tetra():
     return pv.UnstructuredGrid(cells, celltypes, points)
 
 
+@pytest.fixture
+def invalid_tetra_inverted_faces():
+    # Regular tetra but with first two points swapped
+    cells = [4, 0, 1, 2, 3]
+    celltypes = [pv.CellType.TETRA]
+    points = [
+        [1.0, 1.0, 1.0],
+        [1.0, -1.0, -1.0],
+        [-1.0, 1.0, -1.0],
+        [-1.0, -1.0, 1.0],
+    ]
+    return pv.UnstructuredGrid(cells, celltypes, points)
+
+
 @pytest.mark.parametrize('as_composite', [True, False])
-def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
-    mesh = invalid_tetra.cast_to_multiblock() if as_composite else invalid_tetra
+def test_cell_validator_wrong_number_of_points(
+    invalid_tetra_missing_point, invalid_tetra_inverted_faces, as_composite
+):
+    # Use vtkAppend instead of pv.merge for consistent ordering
+    # since pyvista merge order changed in VTK 9.5.
+    append = _vtk.vtkAppendFilter()
+    append.AddInputData(invalid_tetra_missing_point)
+    append.AddInputData(invalid_tetra_inverted_faces)
+    append.Update()
+
+    invalid_input = pv.wrap(append.GetOutput())
+    mesh = invalid_input.cast_to_multiblock() if as_composite else invalid_input
     validated = mesh.cell_validator()
     assert type(validated) is type(mesh)
     single_mesh = validated[0] if as_composite else validated
@@ -1989,6 +2013,9 @@ def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
     for name in validator_array_names:
         if name == 'wrong_number_of_points':
             expected_cell_ids = [0]
+            assert single_mesh[name].tolist() == expected_cell_ids
+        elif name == 'inverted_faces':
+            expected_cell_ids = [1]
             assert single_mesh[name].tolist() == expected_cell_ids
         else:
             array = single_mesh.field_data[name]
