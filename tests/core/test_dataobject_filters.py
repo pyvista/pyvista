@@ -2023,12 +2023,21 @@ def test_cell_validator_invalid_tetra(
 
 
 def test_validate_mesh_degenerate_cells():
-    valid_tetra = examples.cells.Tetrahedron().translate((2, 2, 2))
+    def append_mixed_cells(dataset):
+        # Use append, not pv.merge, due to change in merge order in vtk 9.5
+        valid_tetra = examples.cells.Tetrahedron().translate((2, 2, 2))
+        valid_vertex = examples.cells.Vertex().translate((-2, -2, -2))
+        append = _vtk.vtkAppendFilter()
+        append.AddInputData(dataset)
+        append.AddInputData(valid_tetra)
+        append.AddInputData(valid_vertex)
+        append.Update()
+        return pv.wrap(append.GetOutput())
 
     # Line with coincident points
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     match = 'Mesh has 1 LINE cell with coincident points. Invalid cell id: [0]'
-    for mesh in [invalid_mesh, invalid_mesh + valid_tetra]:
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
             mesh.validate_mesh(action='error')
 
@@ -2036,14 +2045,14 @@ def test_validate_mesh_degenerate_cells():
     points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     match = 'Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
-    for mesh in [invalid_mesh, invalid_mesh + valid_tetra]:
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
             mesh.validate_mesh(action='error')
 
     # Degenerate voxel
     invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
     match = 'Mesh has 1 VOXEL cell with degenerate faces. Invalid cell id: [0]'
-    for mesh in [invalid_mesh, invalid_mesh + valid_tetra]:
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
             mesh.validate_mesh(action='error')
 

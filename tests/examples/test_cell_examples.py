@@ -22,19 +22,29 @@ def test_area_and_volume(cell_example):
     assert isinstance(mesh, pv.UnstructuredGrid)
     assert mesh.n_cells == 1
 
-    # Volume should be positive but returns zero or negative, see
-    if mesh.celltypes[0] == CellType.QUADRATIC_WEDGE:
-        # Volume should be positive but is negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+    # Volume should be positive but returns zero or negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+    cell_type = mesh.celltypes[0]
+    if cell_type == CellType.QUADRATIC_WEDGE:
         assert mesh.volume < 0
         return
-    elif mesh.celltypes[0] == CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (
+    elif cell_type == CellType.TRIQUADRATIC_HEXAHEDRON:
+        if pv.vtk_version_info >= (
+            9,
+            6,
+            0,
+        ):
+            # Regression in vtk 9.6.0
+            # Volume should be positive but is negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+            assert mesh.volume < 0
+        elif pv.vtk_version_info < (9, 4, 0):
+            assert mesh.volume == 0
+        return
+    elif cell_type == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON and pv.vtk_version_info < (
         9,
-        6,
+        4,
         0,
     ):
-        # Regression in vtk 9.6.0
-        # Volume should be positive but is negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-        assert mesh.volume < 0
+        assert mesh.volume == 0
         return
 
     # Test area and volume
