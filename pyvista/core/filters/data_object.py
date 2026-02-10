@@ -1087,13 +1087,13 @@ class DataObjectFilters:
         - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
         - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
           its :class:`~pyvista.CellType`. 2D cells with negative area, or 3D cells with negative
-          volume will have this state.
+          volume will also have this state.
         - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
         - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
           collocated vertices. 2D cells with zero area, or 3D cells with zero volume, will have
           this state.
         - ``coincident_points`` (``0x100``): Cell has duplicate coordinates or repeated use of
-          the same connectivity entry. 1D cells with zero length will have this state.
+          the same connectivity entry. 1D cells with zero length will also have this state.
 
         For convenience, a field data array for each state is also appended. The array names match
         the state names above, except for the ``'valid'`` state; instead, an array with
@@ -1104,8 +1104,12 @@ class DataObjectFilters:
 
         .. versionadded:: 0.47
 
-        .. versionchanged:: 0.48
-            ``inverted_faces`` now includes cells with negative volume.
+        .. versionchanged:: 0.47.1
+
+            - ``inverted_faces`` now includes cells with negative area or volume.
+            - ``degenerate_faces`` now includes 2D cells with zero area
+              and 3D cells with zero volume.
+            - ``coincident_points`` now includes 1D cells with zero length.
 
         Returns
         -------
@@ -1231,19 +1235,19 @@ class DataObjectFilters:
             # 3D cells are classified as having 'degenerate_faces' if volume is 0
             min_cell_dimensionality = mesh.min_cell_dimensionality
             max_cell_dimensionality = mesh.max_cell_dimensionality
-            if min_cell_dimensionality == max_cell_dimensionality:
-                # Fast path
-                if min_cell_dimensionality == 1:
+            if cell_dimensionality := (min_cell_dimensionality == max_cell_dimensionality):
+                # Fast path, we need only need to consider a single cell dimension
+                if cell_dimensionality == 1:
                     is_degenerate = np.isclose(length, 0)
                     set_state('coincident_points', is_degenerate)
-                elif min_cell_dimensionality == 2:
+                elif cell_dimensionality == 2:
                     is_degenerate = np.isclose(area, 0)
                     set_state('degenerate_faces', is_degenerate)
-                elif min_cell_dimensionality == 3:
+                elif cell_dimensionality == 3:
                     is_degenerate = np.isclose(volume, 0)
                     set_state('degenerate_faces', is_degenerate)
             else:
-                # Mixed cell dimensionality, need to separate cell types
+                # Mixed cell dimensionality, need to consider separate cell types
                 cell_types_1d = []
                 cell_types_2d = []
                 cell_types_3d = []
