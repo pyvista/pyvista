@@ -23,27 +23,17 @@ def test_area_and_volume(cell_example):
     assert mesh.n_cells == 1
 
     # Volume should be positive but returns zero or negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-    cell_type = mesh.celltypes[0]
-    if cell_type == CellType.QUADRATIC_WEDGE:
+    ctype = mesh.celltypes[0]
+    if ctype == CellType.QUADRATIC_WEDGE:
         assert mesh.volume < 0
         return
-    elif cell_type == CellType.TRIQUADRATIC_HEXAHEDRON:
-        if pv.vtk_version_info >= (
-            9,
-            6,
-            0,
-        ):
-            # Regression in vtk 9.6.0
-            # Volume should be positive but is negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+    elif ctype == CellType.TRIQUADRATIC_HEXAHEDRON:
+        if pv.vtk_version_info >= (9, 6, 0):
             assert mesh.volume < 0
         elif pv.vtk_version_info < (9, 4, 0):
             assert mesh.volume == 0
         return
-    elif cell_type == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON and pv.vtk_version_info < (
-        9,
-        4,
-        0,
-    ):
+    elif ctype == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON and pv.vtk_version_info < (9, 4, 0):
         assert mesh.volume == 0
         return
 
