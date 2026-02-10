@@ -1994,7 +1994,7 @@ def invalid_tetra_inverted_faces():
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
-def test_cell_validator_wrong_number_of_points(
+def test_cell_validator_invalid_tetra(
     invalid_tetra_missing_point, invalid_tetra_inverted_faces, as_composite
 ):
     # Use vtkAppend instead of pv.merge for consistent ordering
@@ -2011,7 +2011,7 @@ def test_cell_validator_wrong_number_of_points(
     single_mesh = validated[0] if as_composite else validated
     validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     for name in validator_array_names:
-        if name == 'wrong_number_of_points':
+        if name in ('wrong_number_of_points', 'degenerate_faces'):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
         elif name == 'inverted_faces':
@@ -2192,7 +2192,8 @@ def test_validate_mesh_distinct_cell_types(
     message = single_cell_invalid_point_references.validate_mesh().message
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
+        ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
     )
     assert message == expected
 
@@ -2200,7 +2201,9 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
+        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]\n'
+        ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]\n'
+        ' - Mesh has 1 QUAD cell with degenerate faces. Invalid cell id: [1]'
     )
     assert message == expected
 
@@ -2208,7 +2211,8 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]\n'
+        ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [1]'
     )
     assert message == expected
 

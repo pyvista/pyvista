@@ -1235,15 +1235,16 @@ class DataObjectFilters:
             # 3D cells are classified as having 'degenerate_faces' if volume is 0
             min_cell_dimensionality = mesh.min_cell_dimensionality
             max_cell_dimensionality = mesh.max_cell_dimensionality
-            if cell_dimensionality := (min_cell_dimensionality == max_cell_dimensionality):
+            if min_cell_dimensionality == max_cell_dimensionality:
                 # Fast path, we need only need to consider a single cell dimension
-                if cell_dimensionality == 1:
+                dimensionality = min_cell_dimensionality
+                if dimensionality == 1:
                     is_degenerate = np.isclose(length, 0)
                     set_state('coincident_points', is_degenerate)
-                elif cell_dimensionality == 2:
+                elif dimensionality == 2:
                     is_degenerate = np.isclose(area, 0)
                     set_state('degenerate_faces', is_degenerate)
-                elif cell_dimensionality == 3:
+                elif dimensionality == 3:
                     is_degenerate = np.isclose(volume, 0)
                     set_state('degenerate_faces', is_degenerate)
             else:
