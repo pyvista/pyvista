@@ -1086,12 +1086,14 @@ class DataObjectFilters:
         - ``non_contiguous_edges`` (``0x08``): 2D cell's perimeter edges are not contiguous.
         - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
         - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
-          its :class:`~pyvista.CellType`. Cells with negative volume have inverted faces.
+          its :class:`~pyvista.CellType`. 2D cells with negative area, or 3D cells with negative
+          volume will have this state.
         - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
         - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
-          collocated vertices.
+          collocated vertices. 2D cells with zero area, or 3D cells with zero volume, will have
+          this state.
         - ``coincident_points`` (``0x100``): Cell has duplicate coordinates or repeated use of
-          the same connectivity entry.
+          the same connectivity entry. 1D cells with zero length will have this state.
 
         For convenience, a field data array for each state is also appended. The array names match
         the state names above, except for the ``'valid'`` state; instead, an array with
