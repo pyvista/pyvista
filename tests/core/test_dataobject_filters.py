@@ -2022,6 +2022,32 @@ def test_cell_validator_wrong_number_of_points(
             assert array.shape == (0,)
 
 
+def test_validate_mesh_degenerate_cells():
+    valid_tetra = examples.cells.Tetrahedron().translate((2, 2, 2))
+
+    # Line with coincident points
+    invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    match = 'Mesh has 1 LINE cell with coincident points. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, invalid_mesh + valid_tetra]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
+
+    # Degenerate triangle
+    points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+    invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
+    match = 'Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, invalid_mesh + valid_tetra]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
+
+    # Degenerate voxel
+    invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
+    match = 'Mesh has 1 VOXEL cell with degenerate faces. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, invalid_mesh + valid_tetra]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
+
+
 def test_validate_mesh_invalid_point_references():
     # Cell has point indices > n_points
     grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()

@@ -28,6 +28,9 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
+from pyvista.core.celltype import _CELL_TYPES_1D
+from pyvista.core.celltype import _CELL_TYPES_2D
+from pyvista.core.celltype import _CELL_TYPES_3D
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -50,6 +53,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
+    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
@@ -1205,16 +1209,69 @@ class DataObjectFilters:
                 mesh.field_data[name] = np.where(validity_state & value)[0]
 
         def fix_validity_state(mesh: DataSet):
+            def set_state(state_name: str, logic_array: NumpyArray[bool]):
+                state[logic_array] |= _CELL_VALIDATOR_BIT_FIELD[state_name]
+
             state = mesh.cell_data['ValidityState']
-            # We consider negative area/volume to be equivalent to inverted face(s)
-            sizes = mesh.compute_cell_sizes(volume=True, length=False, area=True)
+
+            sizes = mesh.compute_cell_sizes(length=True, area=True, volume=True)
+            length = sizes.cell_data['Length']
             area = sizes.cell_data['Area']
             volume = sizes.cell_data['Volume']
 
-            # Set bit if invalid
-            inverted_bit = _CELL_VALIDATOR_BIT_FIELD['inverted_faces']
+            # Cell has inverted face if negative area or volume
             invalid_size = (area < 0) | (volume < 0)
-            state[invalid_size] |= inverted_bit
+            set_state('inverted_faces', invalid_size)
+
+            # Check for degenerate cells
+            # 1D cells are classified as having 'coincident_points' if length is 0
+            # 2D cells are classified as having 'degenerate_faces' if area is 0
+            # 3D cells are classified as having 'degenerate_faces' if volume is 0
+            min_cell_dimensionality = mesh.min_cell_dimensionality
+            max_cell_dimensionality = mesh.max_cell_dimensionality
+            if min_cell_dimensionality == max_cell_dimensionality:
+                # Fast path
+                if min_cell_dimensionality == 1:
+                    is_degenerate = np.isclose(length, 0)
+                    set_state('coincident_points', is_degenerate)
+                elif min_cell_dimensionality == 2:
+                    is_degenerate = np.isclose(area, 0)
+                    set_state('degenerate_faces', is_degenerate)
+                elif min_cell_dimensionality == 3:
+                    is_degenerate = np.isclose(volume, 0)
+                    set_state('degenerate_faces', is_degenerate)
+            else:
+                # Mixed cell dimensionality, need to separate cell types
+                cell_types_1d = []
+                cell_types_2d = []
+                cell_types_3d = []
+                for cell_type in mesh.distinct_cell_types:
+                    value = cell_type.value
+                    if value in _CELL_TYPES_1D:
+                        cell_types_1d.append(value)
+                    elif value in _CELL_TYPES_2D:
+                        cell_types_2d.append(value)
+                    elif value in _CELL_TYPES_3D:
+                        cell_types_3d.append(value)
+
+                ugrid = (
+                    mesh
+                    if isinstance(mesh, pv.UnstructuredGrid)
+                    else mesh.cast_to_unstructured_grid()
+                )
+                cell_types_array = ugrid.celltypes
+                if cell_types_1d:
+                    is_1d = np.isin(cell_types_array, cell_types_1d)
+                    is_degenerate = is_1d & np.isclose(length, 0)
+                    set_state('coincident_points', is_degenerate)
+                if cell_types_2d:
+                    is_2d = np.isin(cell_types_array, cell_types_2d)
+                    is_degenerate = is_2d & np.isclose(area, 0)
+                    set_state('degenerate_faces', is_degenerate)
+                if cell_types_3d:
+                    is_3d = np.isin(cell_types_array, cell_types_3d)
+                    is_degenerate = is_3d & np.isclose(volume, 0)
+                    set_state('degenerate_faces', is_degenerate)
 
         if isinstance(output, pv.DataSet):
             post_process(output)
