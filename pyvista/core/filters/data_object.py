@@ -140,7 +140,7 @@ _CELL_STATUS_INFO = _VTK_CELL_STATUS_INFO | _PYVISTA_CELL_STATUS_INFO
 
 
 class CellStatus(IntEnum):
-    """Cell status bits used by :meth:`~pyvista.DataObjectFilter.cell_validator`.
+    """Cell status bits used by :meth:`~pyvista.DataObjectFilters.cell_validator`.
 
     Most cell status values are used by :vtk:`vtkCellValidator` directly. Additional
     PyVista-exclusive values are also included.
