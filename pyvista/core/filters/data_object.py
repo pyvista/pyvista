@@ -173,9 +173,10 @@ class CellStatus(IntEnum):
 
 
 def _cell_status_docs_insert():
+    """Format CellStatus enum info for inserting into a docstring."""
     return '\n'.join(
         [
-            f'        - :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}'
+            f'        - :attr:`~pyvista.CellStatus.{status.name}` {status.__doc__}'
             for status in CellStatus
         ]
     ).lstrip()
@@ -921,6 +922,9 @@ class DataObjectFilters:
 
         .. versionadded:: 0.47
 
+        .. versionchanged:: 0.48
+            Include cell fields ``zero_size`` and ``negative_size``.
+
         Parameters
         ----------
         validation_fields : str | sequence[str], default: ('data', 'cells', 'points')
@@ -1185,11 +1189,11 @@ class DataObjectFilters:
 
         .. versionadded:: 0.47
 
-        .. versionadded:: 0.48
+        .. versionchanged:: 0.48
             Include cell status checks for
-            :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES`:,
-            :attr:`~pyvista.CellStatus.ZERO_SIZE`:,
-            :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`:
+            :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES`,
+            :attr:`~pyvista.CellStatus.ZERO_SIZE`,
+            :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
 
         .. versionchanged:: 0.48
             The ``'validity_state'`` array is now a 64-bit integer array. Previously, it was a
