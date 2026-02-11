@@ -117,6 +117,10 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         'degenerate_faces',
         'coincident_points',
         'invalid_point_references',
+        'zero_length',
+        'zero_area',
+        'zero_volume',
+        'negative_volume',
     ]
     _PointFields = Literal['unused_points', 'non_finite_points']
     _MemorySafeFields = Literal[
@@ -599,6 +603,10 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     degenerate_faces: list[int] | None = None
     coincident_points: list[int] | None = None
     invalid_point_references: list[int] | None = None
+    zero_length: list[int] | None = None
+    zero_area: list[int] | None = None
+    zero_volume: list[int] | None = None
+    negative_volume: list[int] | None = None
 
     # Point fields
     unused_points: list[int] | None = None
@@ -1157,12 +1165,16 @@ class DataObjectFilters:
          'inverted_faces',
          'non_planar_faces',
          'degenerate_faces',
-         'coincident_points']
+         'coincident_points',
+         'zero_length',
+         'zero_area',
+         'zero_volume',
+         'negative_volume']
 
         Show unique scalar values.
 
         >>> np.unique(validated.cell_data['validity_state'])
-        pyvista_ndarray([ 0, 16], dtype=int16)
+        pyvista_ndarray([ 0, 16])
 
         The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
         nonconvex state. We confirm this by printing the ``'non_convex'`` array, which shows there

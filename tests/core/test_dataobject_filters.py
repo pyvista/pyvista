@@ -1661,6 +1661,10 @@ def test_validate_mesh_report_str():
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
+        '    Zero length              : []\n'
+        '    Zero area                : []\n'
+        '    Zero volume              : []\n'
+        '    Negative volume          : []\n'
         'Invalid point ids:\n'
         '    Unused points            : []\n'
         '    Non-finite points        : []'
@@ -1694,6 +1698,10 @@ def test_validate_mesh_composite_report_str():
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
+        '    Zero length              : []\n'
+        '    Zero area                : []\n'
+        '    Zero volume              : []\n'
+        '    Negative volume          : []\n'
         'Blocks with invalid points:\n'
         '    Unused points            : []\n'
         '    Non-finite points        : []'
@@ -1730,6 +1738,10 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (1) : [0]\n'
+        '    Zero length                  : []\n'
+        '    Zero area                    : []\n'
+        '    Zero volume                  : []\n'
+        '    Negative volume              : []\n'
         'Invalid point ids:\n'
         '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
         '    Non-finite points (1)        : [20]'
@@ -1775,6 +1787,10 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (2) : [1, 2]\n'
+        '    Zero length                  : []\n'
+        '    Zero area                    : []\n'
+        '    Zero volume                  : []\n'
+        '    Negative volume              : []\n'
         'Blocks with invalid points:\n'
         '    Unused points (2)            : [1, 2]\n'
         '    Non-finite points (2)        : [1, 2]'
@@ -2209,8 +2225,8 @@ def test_validate_mesh_distinct_cell_types(
     message = single_cell_invalid_point_references.validate_mesh().message
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
-        # ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
+        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
     )
     assert message == expected
 
@@ -2218,9 +2234,9 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
-        # ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]\n'
-        # ' - Mesh has 1 QUAD cell with degenerate faces. Invalid cell id: [1]'
+        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]\n'
+        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]\n'
+        ' - Mesh has 1 QUAD cell with zero area. Invalid cell id: [1]'
     )
     assert message == expected
 
@@ -2228,8 +2244,8 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
-        # ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [1]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]\n'
+        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [1]'
     )
     assert message == expected
 
