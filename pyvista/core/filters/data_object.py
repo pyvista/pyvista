@@ -4787,10 +4787,11 @@ class _Crinkler:
 
 # Cannot use f-strings with docstrings, so we need to replace this
 placeholder = '{_cell_status_docs_insert()}'
-if placeholder in DataObjectFilters.cell_validator.__doc__:
-    DataObjectFilters.cell_validator.__doc__ = DataObjectFilters.cell_validator.__doc__.replace(
+method = DataObjectFilters.cell_validator
+if method.__doc__ is not None and placeholder in method.__doc__:
+    method.__doc__ = method.__doc__.replace(
         '{_cell_status_docs_insert()}', _cell_status_docs_insert()
     )
 else:
-    msg = 'cell_validator docs are missing the cell status placeholder.'
+    msg = f'{method.__name__!r} docs are missing the cell status placeholder.'
     raise RuntimeError(msg)
