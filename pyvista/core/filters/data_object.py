@@ -895,6 +895,10 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
+            Zero length              : []
+            Zero area                : []
+            Zero volume              : []
+            Negative volume          : []
         Invalid point ids:
             Unused points            : []
             Non-finite points        : []
@@ -930,6 +934,10 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
+            Zero length              : []
+            Zero area                : []
+            Zero volume              : []
+            Negative volume          : []
 
         >>> report.is_valid
         False
@@ -1019,6 +1027,10 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
+            Zero length              : []
+            Zero area                : []
+            Zero volume              : []
+            Negative volume          : []
         Blocks with invalid points:
             Unused points            : []
             Non-finite points        : []
