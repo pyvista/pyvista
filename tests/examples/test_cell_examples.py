@@ -62,7 +62,7 @@ def test_cell_is_valid(cell_example):
         cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
     ):
         # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-        assert invalid_fields == ('negative_volume',)
+        assert invalid_fields == ('negative_size',)
     else:
         assert not invalid_fields
 
