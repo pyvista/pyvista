@@ -8651,8 +8651,8 @@ def download_biplane(load=True):  # noqa: FBT002
     --------
     >>> import sys
     >>> from pyvista import examples
-    >>> dataset = examples.download_biplane()
     >>> if sys.platform != 'win32':  # segfaults on Windows
+    ...     dataset = examples.download_biplane()
     ...     dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
