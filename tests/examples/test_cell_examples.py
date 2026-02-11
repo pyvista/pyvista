@@ -57,14 +57,14 @@ def test_area_and_volume(cell_example):
 def test_cell_is_valid(cell_example):
     mesh = cell_example()
     invalid_fields = mesh.validate_mesh().invalid_fields
-    cell_type = next(mesh.cell).type
-    if cell_type == pv.CellType.QUADRATIC_WEDGE or (
-        cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
-    ):
-        # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-        assert invalid_fields == ('inverted_faces',)
-    else:
-        assert not invalid_fields
+    # cell_type = next(mesh.cell).type
+    # if cell_type == pv.CellType.QUADRATIC_WEDGE or (
+    #     cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
+    # ):
+    #     # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+    #     assert invalid_fields == ('inverted_faces',)
+    # else:
+    assert not invalid_fields
 
 
 def test_empty():

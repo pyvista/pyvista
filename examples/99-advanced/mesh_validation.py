@@ -131,7 +131,6 @@ assert report.invalid_fields == (
     'intersecting_edges',
     'inverted_faces',
     'non_planar_faces',
-    'degenerate_faces',
 )
 
 # %%
