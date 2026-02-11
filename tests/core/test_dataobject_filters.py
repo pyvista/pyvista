@@ -1967,7 +1967,7 @@ def test_cell_validator_bitfield_values():
     assert vtkCellStatus.WrongNumberOfPoints == CellStatus.WRONG_NUMBER_OF_POINTS
     assert vtkCellStatus.IntersectingEdges == CellStatus.INTERSECTING_EDGES
     assert vtkCellStatus.IntersectingFaces == CellStatus.INTERSECTING_FACES
-    assert vtkCellStatus.NoncontiguousEdges == vtkCellStatus.NoncontiguousEdges
+    assert vtkCellStatus.NoncontiguousEdges == CellStatus.NON_CONTIGUOUS_EDGES
     assert vtkCellStatus.Nonconvex == CellStatus.NON_CONVEX
     assert vtkCellStatus.FacesAreOrientedIncorrectly == CellStatus.INVERTED_FACES
     assert vtkCellStatus.NonPlanarFaces == CellStatus.NON_PLANAR_FACES

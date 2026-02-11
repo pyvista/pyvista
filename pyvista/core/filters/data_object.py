@@ -890,7 +890,7 @@ class DataObjectFilters:
 
         .. note::
           All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`,
-          and the field names correspond to :class:`~pyvista.CellStatus` values.
+          and the field names correspond to :class:`~pyvista.CellStatus` names.
 
         **Point validation fields**
 
@@ -1029,7 +1029,7 @@ class DataObjectFilters:
             Coincident points        : []
             Invalid point references : []
             Zero size                : []
-            Negative size.           : []
+            Negative size            : []
 
         >>> report.is_valid
         False
@@ -1119,7 +1119,7 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
-            Zero size.               : []
+            Zero size                : []
             Negative size            : []
         Blocks with invalid points:
             Unused points            : []
