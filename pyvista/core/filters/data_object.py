@@ -7,6 +7,7 @@ from collections.abc import Sized
 from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
+from enum import IntEnum
 import functools
 import itertools
 import re
@@ -53,7 +54,6 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
-    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
@@ -66,18 +66,30 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
 
 
-# Matches https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
-_CELL_VALIDATOR_BIT_FIELD = dict(
-    wrong_number_of_points=0x01,
-    intersecting_edges=0x02,
-    intersecting_faces=0x04,
-    non_contiguous_edges=0x08,
-    non_convex=0x10,
-    inverted_faces=0x20,
-    non_planar_faces=0x40,
-    degenerate_faces=0x80,
-    coincident_points=0x100,
-)
+# VTK cell validator uses a 16-bit status field.
+# PyVista extends this to 32 bits by using the upper 16 bits.
+_BIT_SHIFT = 16
+
+
+class CellStatusBit(IntEnum):
+    """Cell status bits used by :meth:`~pyvista.DataObjectFilter.cell_validator`."""
+
+    # VTK bits, values match https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
+    wrong_number_of_points = 0x01
+    intersecting_edges = 0x02
+    intersecting_faces = 0x04
+    non_contiguous_edges = 0x08
+    non_convex = 0x10
+    inverted_faces = 0x20
+    non_planar_faces = 0x40
+    degenerate_faces = 0x80
+    coincident_points = 0x100
+
+    # PyVista bits
+    zero_length = 0x01 << _BIT_SHIFT
+    zero_area = 0x02 << _BIT_SHIFT
+    zero_volume = 0x04 << _BIT_SHIFT
+    negative_volume = 0x08 << _BIT_SHIFT
 
 
 class _SENTINEL: ...
@@ -1201,24 +1213,22 @@ class DataObjectFilters:
         output = _get_output(cell_validator)
 
         def post_process(mesh: DataSet):
-            fix_validity_state(mesh)
-
-            # Rename output scalars and make them active
-            validity_state = mesh.cell_data['ValidityState']
+            # Make scalars 64-bit, rename, and make them active
+            # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
+            validity_state = mesh.cell_data['ValidityState'].astype(int)
             mesh.cell_data['validity_state'] = validity_state
             del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
 
+            set_pyvista_validity_state(mesh)
+
             # Extract indices of invalid cells and store as field data
             mesh.field_data['invalid'] = np.where(validity_state != 0)[0]
-            for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
-                mesh.field_data[name] = np.where(validity_state & value)[0]
+            for bit in CellStatusBit:
+                mesh.field_data[bit.name] = np.where(validity_state & bit.value)[0]
 
-        def fix_validity_state(mesh: DataSet):
-            def set_state(state_name: str, logic_array: NumpyArray[bool]):
-                state[logic_array] |= _CELL_VALIDATOR_BIT_FIELD[state_name]
-
-            state = mesh.cell_data['ValidityState']
+        def set_pyvista_validity_state(mesh: DataSet):
+            state = mesh.cell_data['validity_state']
 
             sizes = mesh.compute_cell_sizes(length=True, area=True, volume=True)
             length = sizes.cell_data['Length']
@@ -1227,8 +1237,8 @@ class DataObjectFilters:
 
             # Cell has inverted face if negative area or volume
             tol = 1e-8
-            invalid_size = (area < -tol) | (volume < -tol)
-            set_state('inverted_faces', invalid_size)
+            is_invalid = volume < -tol
+            state[is_invalid] |= CellStatusBit.negative_volume
 
             # Check for degenerate cells
             # 1D cells are classified as having 'coincident_points' if length is 0
@@ -1240,14 +1250,14 @@ class DataObjectFilters:
                 # Fast path, we need only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
-                    is_degenerate = np.abs(length) <= tol
-                    set_state('coincident_points', is_degenerate)
+                    is_invalid = np.abs(length) <= tol
+                    state[is_invalid] |= CellStatusBit.zero_length
                 elif dimensionality == 2:
-                    is_degenerate = np.abs(area) <= tol
-                    set_state('degenerate_faces', is_degenerate)
+                    is_invalid = np.abs(area) <= tol
+                    state[is_invalid] |= CellStatusBit.zero_area
                 elif dimensionality == 3:
-                    is_degenerate = np.abs(volume) <= tol
-                    set_state('degenerate_faces', is_degenerate)
+                    is_invalid = np.abs(volume) <= tol
+                    state[is_invalid] |= CellStatusBit.zero_volume
             else:
                 # Mixed cell dimensionality, need to consider separate cell types
                 cell_types_1d = []
@@ -1270,16 +1280,16 @@ class DataObjectFilters:
                 cell_types_array = ugrid.celltypes
                 if cell_types_1d:
                     is_1d = np.isin(cell_types_array, cell_types_1d)
-                    is_degenerate = is_1d & np.isclose(length, 0)
-                    set_state('coincident_points', is_degenerate)
+                    is_invalid = is_1d & np.isclose(length, 0)
+                    state[is_invalid] |= CellStatusBit.zero_length
                 if cell_types_2d:
                     is_2d = np.isin(cell_types_array, cell_types_2d)
-                    is_degenerate = is_2d & np.isclose(area, 0)
-                    set_state('degenerate_faces', is_degenerate)
+                    is_invalid = is_2d & np.isclose(area, 0)
+                    state[is_invalid] |= CellStatusBit.zero_area
                 if cell_types_3d:
                     is_3d = np.isin(cell_types_array, cell_types_3d)
-                    is_degenerate = is_3d & np.isclose(volume, 0)
-                    set_state('degenerate_faces', is_degenerate)
+                    is_invalid = is_3d & np.isclose(volume, 0)
+                    state[is_invalid] |= CellStatusBit.zero_volume
 
         if isinstance(output, pv.DataSet):
             post_process(output)

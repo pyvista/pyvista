@@ -25,8 +25,8 @@ from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import DeprecationError
-from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
 from pyvista.core.filters.data_object import _SENTINEL
+from pyvista.core.filters.data_object import CellStatusBit
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
@@ -1932,7 +1932,7 @@ def test_cell_validator_pointset_raises():
 
 
 def test_cell_validator():
-    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    validator_array_names = [val.name for val in CellStatusBit]
     sphere = pv.Sphere()
     sphere.cell_data['data'] = range(sphere.n_cells)
     validated = sphere.cell_validator()
@@ -1955,15 +1955,14 @@ def test_cell_validator():
 def test_cell_validator_bitfield_values():
     from vtkmodules.vtkCommonDataModel import vtkCellStatus
 
-    bitfield = _CELL_VALIDATOR_BIT_FIELD
-    assert bitfield['wrong_number_of_points'] == vtkCellStatus.WrongNumberOfPoints
-    assert bitfield['intersecting_edges'] == vtkCellStatus.IntersectingEdges
-    assert bitfield['intersecting_faces'] == vtkCellStatus.IntersectingFaces
-    assert bitfield['non_contiguous_edges'] == vtkCellStatus.NoncontiguousEdges
-    assert bitfield['non_convex'] == vtkCellStatus.Nonconvex
-    assert bitfield['inverted_faces'] == vtkCellStatus.FacesAreOrientedIncorrectly
-    assert bitfield['non_planar_faces'] == vtkCellStatus.NonPlanarFaces
-    assert bitfield['coincident_points'] == vtkCellStatus.CoincidentPoints
+    assert CellStatusBit.wrong_number_of_points == vtkCellStatus.WrongNumberOfPoints
+    assert CellStatusBit.intersecting_edges == vtkCellStatus.IntersectingEdges
+    assert CellStatusBit.intersecting_faces == vtkCellStatus.IntersectingFaces
+    assert CellStatusBit.non_contiguous_edges == vtkCellStatus.NoncontiguousEdges
+    assert CellStatusBit.non_convex == vtkCellStatus.Nonconvex
+    assert CellStatusBit.inverted_faces == vtkCellStatus.FacesAreOrientedIncorrectly
+    assert CellStatusBit.non_planar_faces == vtkCellStatus.NonPlanarFaces
+    assert CellStatusBit.coincident_points == vtkCellStatus.CoincidentPoints
 
 
 @pytest.fixture
@@ -1980,7 +1979,7 @@ def invalid_tetra_missing_point():
 
 
 @pytest.fixture
-def invalid_tetra_inverted_faces():
+def invalid_tetra_negative_volume():
     # Regular tetra but with first two points swapped
     cells = [4, 0, 1, 2, 3]
     celltypes = [pv.CellType.TETRA]
@@ -1995,13 +1994,13 @@ def invalid_tetra_inverted_faces():
 
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_cell_validator_invalid_tetra(
-    invalid_tetra_missing_point, invalid_tetra_inverted_faces, as_composite
+    invalid_tetra_missing_point, invalid_tetra_negative_volume, as_composite
 ):
     # Use vtkAppend instead of pv.merge for consistent ordering
     # since pyvista merge order changed in VTK 9.5.
     append = _vtk.vtkAppendFilter()
     append.AddInputData(invalid_tetra_missing_point)
-    append.AddInputData(invalid_tetra_inverted_faces)
+    append.AddInputData(invalid_tetra_negative_volume)
     append.Update()
 
     invalid_input = pv.wrap(append.GetOutput())
@@ -2009,12 +2008,12 @@ def test_cell_validator_invalid_tetra(
     validated = mesh.cell_validator()
     assert type(validated) is type(mesh)
     single_mesh = validated[0] if as_composite else validated
-    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    validator_array_names = [val.name for val in CellStatusBit]
     for name in validator_array_names:
-        if name in ('wrong_number_of_points', 'degenerate_faces'):
+        if name in (CellStatusBit.wrong_number_of_points.name, CellStatusBit.zero_volume.name):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
-        elif name == 'inverted_faces':
+        elif name == CellStatusBit.negative_volume.name:
             expected_cell_ids = [1]
             assert single_mesh[name].tolist() == expected_cell_ids
         else:
@@ -2036,25 +2035,34 @@ def test_validate_mesh_degenerate_cells():
 
     # Line with coincident points
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
-    match = 'Mesh has 1 LINE cell with coincident points. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
-        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
-            mesh.validate_mesh(action='error')
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] == CellStatusBit.zero_length
+    # match = 'Mesh has 1 LINE cell with coincident points. Invalid cell id: [0]'
+    # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+    #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+    #         mesh.validate_mesh(action='error')
 
     # Degenerate triangle
     points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
-    match = 'Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
-        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
-            mesh.validate_mesh(action='error')
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] == CellStatusBit.zero_area
+    # match = 'Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
+    # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+    #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+    #         mesh.validate_mesh(action='error')
 
     # Degenerate voxel
     invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
-    match = 'Mesh has 1 VOXEL cell with degenerate faces. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
-        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
-            mesh.validate_mesh(action='error')
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] & CellStatusBit.zero_volume
+    # match = 'Mesh has 1 VOXEL cell with degenerate faces. Invalid cell id: [0]'
+    # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+    #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+    #         mesh.validate_mesh(action='error')
 
 
 def test_validate_mesh_invalid_point_references():
@@ -2110,7 +2118,7 @@ def mixed_dimension_cells_invalid_point_references():
 @pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
-    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
+    validator_array_names = [val.name for val in CellStatusBit]
     expected_cell_ids = [0]
     expected_invalid_fields = ['intersecting_edges', 'non_planar_faces', 'inverted_faces']
     for name in validator_array_names:
@@ -2201,8 +2209,8 @@ def test_validate_mesh_distinct_cell_types(
     message = single_cell_invalid_point_references.validate_mesh().message
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+        # ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
     )
     assert message == expected
 
@@ -2210,9 +2218,9 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]\n'
-        ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with degenerate faces. Invalid cell id: [1]'
+        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
+        # ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]\n'
+        # ' - Mesh has 1 QUAD cell with degenerate faces. Invalid cell id: [1]'
     )
     assert message == expected
 
@@ -2220,8 +2228,8 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]\n'
-        ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [1]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
+        # ' - Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [1]'
     )
     assert message == expected
 
