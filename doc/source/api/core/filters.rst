@@ -16,11 +16,6 @@ available as callable methods directly from any PyVista dataset or multi-block.
 
    DataObjectFilters
 
-.. autosummary::
-   :toctree: _autosummary
-
-    CellStatus
-
 Dataset Filters
 ~~~~~~~~~~~~~~~
 The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.DataSet` making

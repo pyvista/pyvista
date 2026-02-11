@@ -15,6 +15,7 @@ import reprlib
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
+from typing import NamedTuple
 from typing import TypeVar
 from typing import cast
 from typing import get_args
@@ -67,32 +68,127 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
 
 
+class _CellStatusTuple(NamedTuple):
+    value: int
+    doc: str
+
+
+_VTK_CELL_STATUS_INFO = {
+    # VTK bits, values match vtkCellStatus
+    'VALID': _CellStatusTuple(
+        value=0x00,
+        doc='Cell is valid and has no issues.',
+    ),
+    'WRONG_NUMBER_OF_POINTS': _CellStatusTuple(
+        value=0x01,
+        doc='Cell does not have the minimum number of points needed to describe it.',
+    ),
+    'INTERSECTING_EDGES': _CellStatusTuple(
+        value=0x02,
+        doc='2D cell has two edges that intersect.',
+    ),
+    'INTERSECTING_FACES': _CellStatusTuple(
+        value=0x04,
+        doc='3D cell has two faces that intersect.',
+    ),
+    'NON_CONTIGUOUS_EDGES': _CellStatusTuple(
+        value=0x08,
+        doc="2D cell's perimeter edges are not contiguous.",
+    ),
+    'NON_CONVEX': _CellStatusTuple(
+        value=0x10,
+        doc='2D or 3D cell is not convex.',
+    ),
+    'INVERTED_FACES': _CellStatusTuple(
+        value=0x20,
+        doc='Cell face(s) do not point in the direction required by its '
+        ':class:`~pyvista.CellType`.',
+    ),
+    'NON_PLANAR_FACES': _CellStatusTuple(
+        value=0x40,
+        doc='Vertices for a face do not all lie in the same plane.',
+    ),
+    'DEGENERATE_FACES': _CellStatusTuple(
+        value=0x80,
+        doc='Face(s) collapse to a line or a point through repeated collocated vertices.',
+    ),
+    'COINCIDENT_POINTS': _CellStatusTuple(
+        value=0x100,
+        doc='Cell has duplicate coordinates or repeated use of the same connectivity entry.',
+    ),
+}
+
 # VTK cell validator uses a 16-bit status field.
 # PyVista extends this to 32 bits by using the upper 16 bits.
 _BIT_SHIFT = 16
+_PYVISTA_CELL_STATUS_INFO = {
+    'INVALID_POINT_REFERENCES': _CellStatusTuple(
+        value=0x01 << _BIT_SHIFT,
+        doc="Cell references points outside the mesh's :class:`~pyvista.DataSet.points` array.",
+    ),
+    'ZERO_LENGTH': _CellStatusTuple(
+        value=0x02 << _BIT_SHIFT,
+        doc='1D cell has zero length.',
+    ),
+    'ZERO_AREA': _CellStatusTuple(
+        value=0x04 << _BIT_SHIFT,
+        doc='2D cell has zero area.',
+    ),
+    'ZERO_VOLUME': _CellStatusTuple(
+        value=0x08 << _BIT_SHIFT,
+        doc='3D cell has zero volume.',
+    ),
+    'NEGATIVE_VOLUME': _CellStatusTuple(
+        value=0x10 << _BIT_SHIFT,
+        doc='3D cell has negative volume.',
+    ),
+}
+
+_CELL_STATUS_INFO = _VTK_CELL_STATUS_INFO | _PYVISTA_CELL_STATUS_INFO
 
 
 class CellStatus(IntEnum):
-    """Cell status bits used by :meth:`~pyvista.DataObjectFilter.cell_validator`."""
+    """Cell status bits used by :meth:`~pyvista.DataObjectFilter.cell_validator`.
 
-    # VTK bits, values match https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
-    VALID = 0x00
-    WRONG_NUMBER_OF_POINTS = 0x01
-    INTERSECTING_EDGES = 0x02
-    INTERSECTING_FACES = 0x04
-    NON_CONTIGUOUS_EDGES = 0x08
-    NON_CONVEX = 0x10
-    INVERTED_FACES = 0x20
-    NON_PLANAR_FACES = 0x40
-    DEGENERATE_FACES = 0x80
-    COINCIDENT_POINTS = 0x100
+    Most cell status values are used by :vtk:`vtkCellValidator` directly. Additional
+    PyVista-exclusive values are also included.
+
+    """
+
+    # VTK bits
+    VALID = _CELL_STATUS_INFO['VALID']
+    WRONG_NUMBER_OF_POINTS = _CELL_STATUS_INFO['WRONG_NUMBER_OF_POINTS']
+    INTERSECTING_EDGES = _CELL_STATUS_INFO['INTERSECTING_EDGES']
+    INTERSECTING_FACES = _CELL_STATUS_INFO['INTERSECTING_FACES']
+    NON_CONTIGUOUS_EDGES = _CELL_STATUS_INFO['NON_CONTIGUOUS_EDGES']
+    NON_CONVEX = _CELL_STATUS_INFO['NON_CONVEX']
+    INVERTED_FACES = _CELL_STATUS_INFO['INVERTED_FACES']
+    NON_PLANAR_FACES = _CELL_STATUS_INFO['NON_PLANAR_FACES']
+    DEGENERATE_FACES = _CELL_STATUS_INFO['DEGENERATE_FACES']
+    COINCIDENT_POINTS = _CELL_STATUS_INFO['COINCIDENT_POINTS']
 
     # PyVista bits
-    INVALID_POINT_REFERENCES = 0x01 << _BIT_SHIFT
-    ZERO_LENGTH = 0x02 << _BIT_SHIFT
-    ZERO_AREA = 0x04 << _BIT_SHIFT
-    ZERO_VOLUME = 0x08 << _BIT_SHIFT
-    NEGATIVE_VOLUME = 0x10 << _BIT_SHIFT
+    INVALID_POINT_REFERENCES = _CELL_STATUS_INFO['INVALID_POINT_REFERENCES']
+    ZERO_LENGTH = _CELL_STATUS_INFO['ZERO_LENGTH']
+    ZERO_AREA = _CELL_STATUS_INFO['ZERO_AREA']
+    ZERO_VOLUME = _CELL_STATUS_INFO['ZERO_VOLUME']
+    NEGATIVE_VOLUME = _CELL_STATUS_INFO['NEGATIVE_VOLUME']
+
+    def __new__(cls, value, _doc):
+        """Override method to include member documentation."""
+        obj = int.__new__(cls, value)
+        obj._value_ = value
+        obj.__doc__ = _doc
+        return obj
+
+
+def _cell_status_docs_insert():
+    return '\n'.join(
+        [
+            f'        - :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}'
+            for status in CellStatus
+        ]
+    ).lstrip()
 
 
 class _SENTINEL: ...
@@ -792,10 +888,15 @@ class DataObjectFilters:
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
           same connectivity entry.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
-          that can be indexed.
+          that can be indexed by :class:`~pyvista.DataSet.points`.
+        ``zero_length``': Ensure 1D cells dot not have zero length.
+        ``zero_area``: Ensure 2D cells do not have zero area.
+        ``zero_volume: Ensure 3D cells do not have zero volume.
+        ``negative_volume``: Ensure 3D cells have positive volume.
 
         .. note::
-          All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`.
+          All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`,
+          and the field names correspond to :class:`~pyvista.CellStatus` values.
 
         **Point validation fields**
 
@@ -1079,41 +1180,34 @@ class DataObjectFilters:
     def cell_validator(self: _DataSetOrMultiBlockType):  # type:ignore[misc]
         """Check the validity of each cell in this dataset.
 
-        Use :vtk:`vtkCellValidator` to determine the status of each cell. The status is encoded
-        as a bit field cell data array ``'validity_state'``. The cell states are:
+        The status of each cell is encoded as a bit field cell data array ``'validity_state'``.
+        The possible cell status values are:
 
-        - ``valid`` (``0x00``): Cell is valid and has no issues.
-        - ``wrong_number_of_points`` (``0x01``): Cell does not have the minimum number of points
-          needed to describe it.
-        - ``intersecting_edges`` (``0x02``): 2D cell has two edges that intersect.
-        - ``intersecting_faces`` (``0x04``): 3D cell has two faces that intersect.
-        - ``non_contiguous_edges`` (``0x08``): 2D cell's perimeter edges are not contiguous.
-        - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
-        - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
-          its :class:`~pyvista.CellType`. 2D cells with negative area, or 3D cells with negative
-          volume will also have this state.
-        - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
-        - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
-          collocated vertices. 2D cells with zero area, or 3D cells with zero volume, will have
-          this state.
-        - ``coincident_points`` (``0x100``): Cell has duplicate coordinates or repeated use of
-          the same connectivity entry. 1D cells with zero length will also have this state.
+        {_cell_status_docs_insert()}
 
-        For convenience, a field data array for each state is also appended. The array names match
-        the state names above, except for the ``'valid'`` state; instead, an array with
-        ``'invalid'`` cells is stored. Each field data array contains the indices of cells with
-        the specified state.
+        Internally, :vtk:`vtkCellValidator` is first used to determine the initial status of each
+        cell, then additional PyVista-exclusive checks are made and encoded in the validity state.
 
-        Refer to :vtk:`vtkCellValidator` for more details about each state.
+        For convenience, a field data array for each status is also appended:
+
+        - Each field data array contains the indices of cells with the specified status.
+        - The array names are lower-case versions of the status names above.
+        - The ``VALID`` state is excluded from the field data, and an array named ``'invalid'``
+          is included instead with cell ids for all invalid cells.
 
         .. versionadded:: 0.47
 
-        .. versionchanged:: 0.47.1
+        .. versionadded:: 0.48
+            Include cell status checks for
+            :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES`:,
+            :attr:`~pyvista.CellStatus.ZERO_LENGTH`:,
+            :attr:`~pyvista.CellStatus.ZERO_AREA`:,
+            :attr:`~pyvista.CellStatus.ZERO_VOLUME`:, and
+            :attr:`~pyvista.CellStatus.NEGATIVE_VOLUME`:
 
-            - ``inverted_faces`` now includes cells with negative area or volume.
-            - ``degenerate_faces`` now includes 2D cells with zero area
-              and 3D cells with zero volume.
-            - ``coincident_points`` now includes 1D cells with zero length.
+        .. versionchanged:: 0.48
+            The ``'validity_state'`` array is now a 64-bit integer array. Previously, it was a
+            16-bit array.
 
         Returns
         -------
@@ -4678,3 +4772,14 @@ class _Crinkler:
                 block.n_cells, dtype=_Crinkler.INT_DTYPE
             )
         return active_scalars_info
+
+
+# Cannot use f-strings with docstrings, so we need to replace this
+placeholder = '{_cell_status_docs_insert()}'
+if placeholder in DataObjectFilters.cell_validator.__doc__:
+    DataObjectFilters.cell_validator.__doc__ = DataObjectFilters.cell_validator.__doc__.replace(
+        '{_cell_status_docs_insert()}', _cell_status_docs_insert()
+    )
+else:
+    msg = 'cell_validator docs are missing the cell status placeholder.'
+    raise RuntimeError(msg)
