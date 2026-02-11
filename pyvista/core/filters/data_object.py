@@ -1239,7 +1239,7 @@ class DataObjectFilters:
             volume = sizes.cell_data['Volume']
 
             # NEGATIVE_VOLUME
-            tol = 1e-8
+            tol = 1e-6
             invalid_conn = volume < -tol
             state[invalid_conn] |= CellStatusBit.NEGATIVE_VOLUME
 
