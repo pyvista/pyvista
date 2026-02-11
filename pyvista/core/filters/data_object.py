@@ -1263,7 +1263,8 @@ class DataObjectFilters:
         >>> validated.field_data['non_convex']
         pyvista_ndarray([1013, 1532, 3250])
 
-        Check the status of cells explicitly using :class:`~pyvista.CellStatus`.
+        Check the status of cells explicitly using :class:`~pyvista.CellStatus`. For checking
+        is a cell is valid, use equality ``==``.
 
         >>> validity_state[0] == pv.CellStatus.VALID
         np.True_
@@ -1271,7 +1272,17 @@ class DataObjectFilters:
         >>> validity_state[1013] == pv.CellStatus.VALID
         np.False_
 
+        For checking for specific status bits, equality can also be used, but will only work if
+        the cell has exactly one status bit set.
+
         >>> validity_state[1013] == pv.CellStatus.NON_CONVEX
+        np.True_
+
+        In general though, checking the status with bit operators should be preferred.
+
+        >>> (
+        ...     validity_state[1013] & pv.CellStatus.NON_CONVEX
+        ... ) == pv.CellStatus.NON_CONVEX
         np.True_
 
         We can also show all invalid cells. This matches the nonconvex ids, which confirms
