@@ -2086,8 +2086,12 @@ def test_validate_mesh_degenerate_cells():
 
 
 def test_validate_mesh_invalid_point_references():
-    # Cell has point indices > n_points
-    grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
+    # Define mesh with a cell that has point indices > n_points
+    cells = [3, 0, 1, 2]
+    celltypes = [pv.CellType.TRIANGLE]
+    points = [0.0, 0.0, 0.0]
+    grid = pv.UnstructuredGrid(cells, celltypes, points)
+
     report = grid.validate_mesh('invalid_point_references')
     expected_cell_ids = [0]
     assert report.invalid_point_references == expected_cell_ids
