@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
+    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetType
@@ -86,10 +87,11 @@ class CellStatusBit(IntEnum):
     coincident_points = 0x100
 
     # PyVista bits
-    zero_length = 0x01 << _BIT_SHIFT
-    zero_area = 0x02 << _BIT_SHIFT
-    zero_volume = 0x04 << _BIT_SHIFT
-    negative_volume = 0x08 << _BIT_SHIFT
+    invalid_point_references = 0x01 << _BIT_SHIFT
+    zero_length = 0x02 << _BIT_SHIFT
+    zero_area = 0x04 << _BIT_SHIFT
+    zero_volume = 0x08 << _BIT_SHIFT
+    negative_volume = 0x10 << _BIT_SHIFT
 
 
 class _SENTINEL: ...
@@ -272,9 +274,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         # Validate cells
         if cell_fields:
-            summaries, validated = _MeshValidator._validate_cells(mesh, cell_fields)
-            if validated:
-                validated_mesh = validated  # Store the output from cell_validator
+            # We also store the output from cell_validator
+            summaries, validated_mesh = _MeshValidator._validate_cells(mesh, cell_fields)
             for summary in summaries:
                 field_summaries[summary.name] = summary
 
@@ -366,7 +367,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_cells(
         mesh: _DataSetType,
         validation_fields: tuple[_CellFields, ...],
-    ) -> tuple[list[_MeshValidator._FieldSummary], _DataSetType | None]:
+    ) -> tuple[list[_MeshValidator._FieldSummary], _DataSetType]:
         """Validate cells and only return summary objects for the requested fields."""
 
         def get_message(array_):
@@ -391,42 +392,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return ''
 
         summaries: list[_MeshValidator._FieldSummary] = []
-        validated_mesh = None
-        mutable_validation_fields = list(validation_fields)
-        if 'invalid_point_references' in mutable_validation_fields:
-            mutable_validation_fields.remove('invalid_point_references')
-            name = 'invalid_point_references'
-            array = _MeshValidator._find_cells_with_invalid_point_refs(mesh)
+        validated_mesh = mesh.cell_validator()
+        for name in validation_fields:
+            array = validated_mesh.field_data[name].tolist()
             msg = get_message(array)
             summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
             summaries.append(summary)
-
-        if mutable_validation_fields:
-            validated_mesh = mesh.cell_validator()
-            for name in mutable_validation_fields:
-                array = validated_mesh.field_data[name].tolist()
-                msg = get_message(array)
-                summary = _MeshValidator._FieldSummary(name=name, message=msg, values=array)
-                summaries.append(summary)
         return summaries, validated_mesh
-
-    @staticmethod
-    def _find_cells_with_invalid_point_refs(mesh: DataSet) -> list[int]:
-        """Return cell IDs that reference points that do not exist."""
-        if hasattr(mesh, 'dimensions'):
-            return []  # Cells are implicitly defined and cannot be invalid
-        grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-
-        # Find indices in the connectivity array that are invalid
-        conn = grid.cell_connectivity
-        invalid_indices = np.where((conn < 0) | (conn >= grid.n_points))[0]
-        if len(invalid_indices) == 0:
-            return []
-
-        # Map invalid connectivity indices back to cell IDs using offsets
-        # Each invalid index belongs to the cell whose start offset <= index < next offset
-        cell_ids = np.searchsorted(grid.offset, invalid_indices, side='right') - 1
-        return np.unique(cell_ids).tolist()
 
     @staticmethod
     def _invalid_cell_msg(
@@ -822,8 +794,7 @@ class DataObjectFilters:
           that can be indexed.
 
         .. note::
-          Other than ``invalid_point_references``, all cell fields are computed using
-          :meth:`~pyvista.DataObjectFilters.cell_validator`.
+          All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`.
 
         **Point validation fields**
 
@@ -1242,17 +1213,20 @@ class DataObjectFilters:
         def set_pyvista_validity_state(mesh: DataSet):
             state = mesh.cell_data['validity_state']
 
+            # We may need to cast to ugrid. Set variable for caching just in case.
+            ugrid: UnstructuredGrid | None = None
+
             sizes = mesh.compute_cell_sizes(length=True, area=True, volume=True)
             length = sizes.cell_data['Length']
             area = sizes.cell_data['Area']
             volume = sizes.cell_data['Volume']
 
-            # Cell has inverted face if negative area or volume
+            # NEGATIVE_VOLUME
             tol = 1e-8
-            is_invalid = volume < -tol
-            state[is_invalid] |= CellStatusBit.negative_volume
+            invalid_conn = volume < -tol
+            state[invalid_conn] |= CellStatusBit.negative_volume
 
-            # Check for degenerate cells
+            # ZERO_LENGTH, ZERO_AREA, ZERO_VOLUME
             # 1D cells are classified as having 'coincident_points' if length is 0
             # 2D cells are classified as having 'degenerate_faces' if area is 0
             # 3D cells are classified as having 'degenerate_faces' if volume is 0
@@ -1262,14 +1236,14 @@ class DataObjectFilters:
                 # Fast path, we need only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
-                    is_invalid = np.abs(length) <= tol
-                    state[is_invalid] |= CellStatusBit.zero_length
+                    invalid_conn = np.abs(length) <= tol
+                    state[invalid_conn] |= CellStatusBit.zero_length
                 elif dimensionality == 2:
-                    is_invalid = np.abs(area) <= tol
-                    state[is_invalid] |= CellStatusBit.zero_area
+                    invalid_conn = np.abs(area) <= tol
+                    state[invalid_conn] |= CellStatusBit.zero_area
                 elif dimensionality == 3:
-                    is_invalid = np.abs(volume) <= tol
-                    state[is_invalid] |= CellStatusBit.zero_volume
+                    invalid_conn = np.abs(volume) <= tol
+                    state[invalid_conn] |= CellStatusBit.zero_volume
             else:
                 # Mixed cell dimensionality, need to consider separate cell types
                 cell_types_1d = []
@@ -1292,16 +1266,39 @@ class DataObjectFilters:
                 cell_types_array = ugrid.celltypes
                 if cell_types_1d:
                     is_1d = np.isin(cell_types_array, cell_types_1d)
-                    is_invalid = is_1d & np.isclose(length, 0)
-                    state[is_invalid] |= CellStatusBit.zero_length
+                    invalid_conn = is_1d & np.isclose(length, 0)
+                    state[invalid_conn] |= CellStatusBit.zero_length
                 if cell_types_2d:
                     is_2d = np.isin(cell_types_array, cell_types_2d)
-                    is_invalid = is_2d & np.isclose(area, 0)
-                    state[is_invalid] |= CellStatusBit.zero_area
+                    invalid_conn = is_2d & np.isclose(area, 0)
+                    state[invalid_conn] |= CellStatusBit.zero_area
                 if cell_types_3d:
                     is_3d = np.isin(cell_types_array, cell_types_3d)
-                    is_invalid = is_3d & np.isclose(volume, 0)
-                    state[is_invalid] |= CellStatusBit.zero_volume
+                    invalid_conn = is_3d & np.isclose(volume, 0)
+                    state[invalid_conn] |= CellStatusBit.zero_volume
+
+            # INVALID_POINT_REFERENCES
+            if hasattr(mesh, 'dimensions'):
+                return None  # Cells are implicitly defined and cannot be invalid
+
+            ugrid = mesh.cast_to_unstructured_grid() if ugrid is None else ugrid
+
+            # Find invalid connectivity entries
+            conn = ugrid.cell_connectivity
+            n_cells = ugrid.n_cells
+            invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
+            if not np.any(invalid_conn):
+                return np.zeros(n_cells, dtype=bool)
+
+            # Map invalid connectivity indices to cell IDs
+            invalid_conn_ids = np.nonzero(invalid_conn)[0]
+            cell_ids = np.searchsorted(ugrid.offset, invalid_conn_ids, side='right') - 1
+
+            # Build per-cell boolean mask
+            is_invalid = np.zeros(n_cells, dtype=bool)
+            is_invalid[cell_ids] = True
+            state[is_invalid] |= CellStatusBit.invalid_point_references
+            return None
 
         if isinstance(output, pv.DataSet):
             post_process(output)
