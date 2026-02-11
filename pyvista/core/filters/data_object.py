@@ -72,10 +72,11 @@ if TYPE_CHECKING:
 _BIT_SHIFT = 16
 
 
-class CellStatusBit(IntEnum):
+class CellStatus(IntEnum):
     """Cell status bits used by :meth:`~pyvista.DataObjectFilter.cell_validator`."""
 
     # VTK bits, values match https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
+    VALID = 0x00
     WRONG_NUMBER_OF_POINTS = 0x01
     INTERSECTING_EDGES = 0x02
     INTERSECTING_FACES = 0x04
@@ -1157,7 +1158,8 @@ class DataObjectFilters:
 
         Show unique scalar values.
 
-        >>> np.unique(validated.cell_data['validity_state'])
+        >>> validity_state = validated.cell_data['validity_state']
+        >>> np.unique(validity_state)
         pyvista_ndarray([ 0, 16])
 
         The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
@@ -1166,6 +1168,17 @@ class DataObjectFilters:
 
         >>> validated.field_data['non_convex']
         pyvista_ndarray([1013, 1532, 3250])
+
+        Check the status of cells explicitly using :class:`~pyvista.CellStatus`.
+
+        >>> validity_state[0] == pv.CellStatus.VALID
+        np.True_
+
+        >>> validity_state[1013] == pv.CellStatus.VALID
+        np.False_
+
+        >>> validity_state[1013] == pv.CellStatus.NON_CONVEX
+        np.True_
 
         We can also show all invalid cells. This matches the nonconvex ids, which confirms
         these are the only invalid cells.
@@ -1228,8 +1241,10 @@ class DataObjectFilters:
 
             # Extract indices of invalid cells and store as field data
             mesh.field_data['invalid'] = np.where(validity_state != 0)[0]
-            for bit in CellStatusBit:
-                mesh.field_data[bit.name.lower()] = np.where(validity_state & bit.value)[0]
+            for status in CellStatus:
+                if status == CellStatus.VALID:
+                    continue
+                mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
 
         def set_pyvista_validity_state(mesh: DataSet):
             state = mesh.cell_data['validity_state']
@@ -1243,7 +1258,7 @@ class DataObjectFilters:
             volume = sizes.cell_data['Volume']
 
             # NEGATIVE_VOLUME
-            state[volume < -tolerance] |= CellStatusBit.NEGATIVE_VOLUME
+            state[volume < -tolerance] |= CellStatus.NEGATIVE_VOLUME
 
             # ZERO_LENGTH, ZERO_AREA, ZERO_VOLUME
             min_cell_dimensionality = mesh.min_cell_dimensionality
@@ -1252,11 +1267,11 @@ class DataObjectFilters:
                 # Fast path, we need only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
-                    state[is_zero(length)] |= CellStatusBit.ZERO_LENGTH
+                    state[is_zero(length)] |= CellStatus.ZERO_LENGTH
                 elif dimensionality == 2:
-                    state[is_zero(area)] |= CellStatusBit.ZERO_AREA
+                    state[is_zero(area)] |= CellStatus.ZERO_AREA
                 elif dimensionality == 3:
-                    state[is_zero(volume)] |= CellStatusBit.ZERO_VOLUME
+                    state[is_zero(volume)] |= CellStatus.ZERO_VOLUME
             else:
                 # Mixed cell dimensionality, need to consider separate cell types
                 cell_types_1d = []
@@ -1280,15 +1295,15 @@ class DataObjectFilters:
                 if cell_types_1d:
                     is_1d = np.isin(cell_types_array, cell_types_1d)
                     is_invalid = is_1d & is_zero(length)
-                    state[is_invalid] |= CellStatusBit.ZERO_LENGTH
+                    state[is_invalid] |= CellStatus.ZERO_LENGTH
                 if cell_types_2d:
                     is_2d = np.isin(cell_types_array, cell_types_2d)
                     is_invalid = is_2d & is_zero(area)
-                    state[is_invalid] |= CellStatusBit.ZERO_AREA
+                    state[is_invalid] |= CellStatus.ZERO_AREA
                 if cell_types_3d:
                     is_3d = np.isin(cell_types_array, cell_types_3d)
                     is_invalid = is_3d & is_zero(volume)
-                    state[is_invalid] |= CellStatusBit.ZERO_VOLUME
+                    state[is_invalid] |= CellStatus.ZERO_VOLUME
 
             # INVALID_POINT_REFERENCES
             if hasattr(mesh, 'dimensions'):
@@ -1311,7 +1326,7 @@ class DataObjectFilters:
             # Build per-cell boolean mask
             is_invalid = np.zeros(n_cells, dtype=bool)
             is_invalid[cell_ids] = True
-            state[is_invalid] |= CellStatusBit.INVALID_POINT_REFERENCES
+            state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
             return
 
         if isinstance(output, pv.DataSet):
