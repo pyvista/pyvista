@@ -1948,7 +1948,7 @@ def test_cell_validator_pointset_raises():
 
 
 def test_cell_validator():
-    validator_array_names = [val.name for val in CellStatusBit]
+    validator_array_names = [val.name.lower() for val in CellStatusBit]
     sphere = pv.Sphere()
     sphere.cell_data['data'] = range(sphere.n_cells)
     validated = sphere.cell_validator()
@@ -1971,14 +1971,14 @@ def test_cell_validator():
 def test_cell_validator_bitfield_values():
     from vtkmodules.vtkCommonDataModel import vtkCellStatus
 
-    assert CellStatusBit.wrong_number_of_points == vtkCellStatus.WrongNumberOfPoints
-    assert CellStatusBit.intersecting_edges == vtkCellStatus.IntersectingEdges
-    assert CellStatusBit.intersecting_faces == vtkCellStatus.IntersectingFaces
-    assert CellStatusBit.non_contiguous_edges == vtkCellStatus.NoncontiguousEdges
-    assert CellStatusBit.non_convex == vtkCellStatus.Nonconvex
-    assert CellStatusBit.inverted_faces == vtkCellStatus.FacesAreOrientedIncorrectly
-    assert CellStatusBit.non_planar_faces == vtkCellStatus.NonPlanarFaces
-    assert CellStatusBit.coincident_points == vtkCellStatus.CoincidentPoints
+    assert vtkCellStatus.WrongNumberOfPoints == CellStatusBit.WRONG_NUMBER_OF_POINTS
+    assert vtkCellStatus.IntersectingEdges == CellStatusBit.INTERSECTING_EDGES
+    assert vtkCellStatus.IntersectingFaces == CellStatusBit.INTERSECTING_FACES
+    assert vtkCellStatus.NoncontiguousEdges == vtkCellStatus.NoncontiguousEdges
+    assert vtkCellStatus.Nonconvex == CellStatusBit.NON_CONVEX
+    assert vtkCellStatus.FacesAreOrientedIncorrectly == CellStatusBit.INVERTED_FACES
+    assert vtkCellStatus.NonPlanarFaces == CellStatusBit.NON_PLANAR_FACES
+    assert vtkCellStatus.CoincidentPoints == CellStatusBit.COINCIDENT_POINTS
 
 
 @pytest.fixture
@@ -2024,12 +2024,15 @@ def test_cell_validator_invalid_tetra(
     validated = mesh.cell_validator()
     assert type(validated) is type(mesh)
     single_mesh = validated[0] if as_composite else validated
-    validator_array_names = [val.name for val in CellStatusBit]
+    validator_array_names = [val.name.lower() for val in CellStatusBit]
     for name in validator_array_names:
-        if name in (CellStatusBit.wrong_number_of_points.name, CellStatusBit.zero_volume.name):
+        if name in (
+            CellStatusBit.WRONG_NUMBER_OF_POINTS.name.lower(),
+            CellStatusBit.ZERO_VOLUME.name.lower(),
+        ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
-        elif name == CellStatusBit.negative_volume.name:
+        elif name == CellStatusBit.NEGATIVE_VOLUME.name.lower():
             expected_cell_ids = [1]
             assert single_mesh[name].tolist() == expected_cell_ids
         else:
@@ -2053,7 +2056,7 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == CellStatusBit.zero_length
+        assert state[0] == CellStatusBit.ZERO_LENGTH
     # match = 'Mesh has 1 LINE cell with coincident points. Invalid cell id: [0]'
     # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
     #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2064,7 +2067,7 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == CellStatusBit.zero_area
+        assert state[0] == CellStatusBit.ZERO_AREA
     # match = 'Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
     # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
     #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2074,7 +2077,7 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] & CellStatusBit.zero_volume
+        assert state[0] & CellStatusBit.ZERO_VOLUME
     # match = 'Mesh has 1 VOXEL cell with degenerate faces. Invalid cell id: [0]'
     # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
     #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2134,7 +2137,7 @@ def mixed_dimension_cells_invalid_point_references():
 @pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
-    validator_array_names = [val.name for val in CellStatusBit]
+    validator_array_names = [val.name.lower() for val in CellStatusBit]
     expected_cell_ids = [0]
     expected_invalid_fields = ['intersecting_edges', 'non_planar_faces', 'inverted_faces']
     for name in validator_array_names:
