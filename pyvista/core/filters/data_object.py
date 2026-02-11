@@ -1207,6 +1207,10 @@ class DataObjectFilters:
         cell_validator.SetInputData(self)
         cell_validator.Update()
         output = _get_output(cell_validator)
+        tolerance = cell_validator.GetTolerance()
+
+        def is_zero(array):
+            return np.abs(array) <= tolerance
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
@@ -1239,28 +1243,20 @@ class DataObjectFilters:
             volume = sizes.cell_data['Volume']
 
             # NEGATIVE_VOLUME
-            tol = 1e-6
-            invalid_conn = volume < -tol
-            state[invalid_conn] |= CellStatusBit.NEGATIVE_VOLUME
+            state[volume < -tolerance] |= CellStatusBit.NEGATIVE_VOLUME
 
             # ZERO_LENGTH, ZERO_AREA, ZERO_VOLUME
-            # 1D cells are classified as having 'coincident_points' if length is 0
-            # 2D cells are classified as having 'degenerate_faces' if area is 0
-            # 3D cells are classified as having 'degenerate_faces' if volume is 0
             min_cell_dimensionality = mesh.min_cell_dimensionality
             max_cell_dimensionality = mesh.max_cell_dimensionality
             if min_cell_dimensionality == max_cell_dimensionality:
                 # Fast path, we need only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
-                    invalid_conn = np.abs(length) <= tol
-                    state[invalid_conn] |= CellStatusBit.ZERO_LENGTH
+                    state[is_zero(length)] |= CellStatusBit.ZERO_LENGTH
                 elif dimensionality == 2:
-                    invalid_conn = np.abs(area) <= tol
-                    state[invalid_conn] |= CellStatusBit.ZERO_AREA
+                    state[is_zero(area)] |= CellStatusBit.ZERO_AREA
                 elif dimensionality == 3:
-                    invalid_conn = np.abs(volume) <= tol
-                    state[invalid_conn] |= CellStatusBit.ZERO_VOLUME
+                    state[is_zero(volume)] |= CellStatusBit.ZERO_VOLUME
             else:
                 # Mixed cell dimensionality, need to consider separate cell types
                 cell_types_1d = []
@@ -1283,21 +1279,22 @@ class DataObjectFilters:
                 cell_types_array = ugrid.celltypes
                 if cell_types_1d:
                     is_1d = np.isin(cell_types_array, cell_types_1d)
-                    invalid_conn = is_1d & np.isclose(length, 0)
-                    state[invalid_conn] |= CellStatusBit.ZERO_LENGTH
+                    is_invalid = is_1d & is_zero(length)
+                    state[is_invalid] |= CellStatusBit.ZERO_LENGTH
                 if cell_types_2d:
                     is_2d = np.isin(cell_types_array, cell_types_2d)
-                    invalid_conn = is_2d & np.isclose(area, 0)
-                    state[invalid_conn] |= CellStatusBit.ZERO_AREA
+                    is_invalid = is_2d & is_zero(area)
+                    state[is_invalid] |= CellStatusBit.ZERO_AREA
                 if cell_types_3d:
                     is_3d = np.isin(cell_types_array, cell_types_3d)
-                    invalid_conn = is_3d & np.isclose(volume, 0)
-                    state[invalid_conn] |= CellStatusBit.ZERO_VOLUME
+                    is_invalid = is_3d & is_zero(volume)
+                    state[is_invalid] |= CellStatusBit.ZERO_VOLUME
 
             # INVALID_POINT_REFERENCES
             if hasattr(mesh, 'dimensions'):
-                return  # Cells are implicitly defined and cannot be invalid
+                return  # Cell connectivity is explicitly defined and cannot be invalid
 
+            # Avoid casting a second time if we did so earlier
             ugrid = mesh.cast_to_unstructured_grid() if ugrid is None else ugrid
 
             # Find invalid connectivity entries
