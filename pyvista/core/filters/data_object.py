@@ -1211,7 +1211,11 @@ class DataObjectFilters:
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
-            validity_state = mesh.cell_data['ValidityState'].astype(int)
+            validity_state = np.array(
+                mesh.cell_data['ValidityState'],
+                dtype=np.int64,
+                copy=True,
+            )
             mesh.cell_data['validity_state'] = validity_state
             del mesh.cell_data['ValidityState']
             mesh.set_active_scalars('validity_state', preference='cell')
@@ -1292,7 +1296,7 @@ class DataObjectFilters:
 
             # INVALID_POINT_REFERENCES
             if hasattr(mesh, 'dimensions'):
-                return None  # Cells are implicitly defined and cannot be invalid
+                return  # Cells are implicitly defined and cannot be invalid
 
             ugrid = mesh.cast_to_unstructured_grid() if ugrid is None else ugrid
 
@@ -1301,7 +1305,7 @@ class DataObjectFilters:
             n_cells = ugrid.n_cells
             invalid_conn = (conn < 0) | (conn >= ugrid.n_points)
             if not np.any(invalid_conn):
-                return np.zeros(n_cells, dtype=bool)
+                return
 
             # Map invalid connectivity indices to cell IDs
             invalid_conn_ids = np.nonzero(invalid_conn)[0]
@@ -1311,7 +1315,7 @@ class DataObjectFilters:
             is_invalid = np.zeros(n_cells, dtype=bool)
             is_invalid[cell_ids] = True
             state[is_invalid] |= CellStatusBit.INVALID_POINT_REFERENCES
-            return None
+            return
 
         if isinstance(output, pv.DataSet):
             post_process(output)
