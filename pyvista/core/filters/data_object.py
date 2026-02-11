@@ -130,9 +130,9 @@ _PYVISTA_CELL_STATUS_INFO = {
         value=0x02 << _BIT_SHIFT,
         doc='1D, 2D, or 3D cell has zero length, area, or volume, respectively.',
     ),
-    'NEGATIVE_VOLUME': _CellStatusTuple(
+    'NEGATIVE_SIZE': _CellStatusTuple(
         value=0x10 << _BIT_SHIFT,
-        doc='3D cell has negative volume.',
+        doc='1D, 2D, or 3D cell has negative length, area, or volume, respectively.',
     ),
 }
 
@@ -162,7 +162,7 @@ class CellStatus(IntEnum):
     # PyVista bits
     INVALID_POINT_REFERENCES = _CELL_STATUS_INFO['INVALID_POINT_REFERENCES']
     ZERO_SIZE = _CELL_STATUS_INFO['ZERO_SIZE']
-    NEGATIVE_VOLUME = _CELL_STATUS_INFO['NEGATIVE_VOLUME']
+    NEGATIVE_SIZE = _CELL_STATUS_INFO['NEGATIVE_SIZE']
 
     def __new__(cls, value, _doc):
         """Override method to include member documentation."""
@@ -207,7 +207,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         'coincident_points',
         'invalid_point_references',
         'zero_size',
-        'negative_volume',
+        'negative_size',
     ]
     _PointFields = Literal['unused_points', 'non_finite_points']
     _MemorySafeFields = Literal[
@@ -500,7 +500,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
-        if cell_type and name_norm == 'zero size':
+        if cell_type and name_norm in ['zero size', 'negative size']:
             if cell_type in _CELL_TYPES_1D:
                 size = 'length'
             elif cell_type in _CELL_TYPES_2D:
@@ -670,7 +670,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     coincident_points: list[int] | None = None
     invalid_point_references: list[int] | None = None
     zero_size: list[int] | None = None
-    negative_volume: list[int] | None = None
+    negative_size: list[int] | None = None
 
     # Point fields
     unused_points: list[int] | None = None
@@ -991,10 +991,8 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
-            Zero length              : []
-            Zero area                : []
-            Zero volume              : []
-            Negative volume          : []
+            Zero size                : []
+            Negative size            : []
         Invalid point ids:
             Unused points            : []
             Non-finite points        : []
@@ -1030,10 +1028,8 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
-            Zero length              : []
-            Zero area                : []
-            Zero volume              : []
-            Negative volume          : []
+            Zero size                : []
+            Negative size.           : []
 
         >>> report.is_valid
         False
@@ -1123,10 +1119,8 @@ class DataObjectFilters:
             Degenerate faces         : []
             Coincident points        : []
             Invalid point references : []
-            Zero length              : []
-            Zero area                : []
-            Zero volume              : []
-            Negative volume          : []
+            Zero size.               : []
+            Negative size            : []
         Blocks with invalid points:
             Unused points            : []
             Non-finite points        : []
@@ -1194,10 +1188,8 @@ class DataObjectFilters:
         .. versionadded:: 0.48
             Include cell status checks for
             :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES`:,
-            :attr:`~pyvista.CellStatus.ZERO_LENGTH`:,
-            :attr:`~pyvista.CellStatus.ZERO_AREA`:,
-            :attr:`~pyvista.CellStatus.ZERO_VOLUME`:, and
-            :attr:`~pyvista.CellStatus.NEGATIVE_VOLUME`:
+            :attr:`~pyvista.CellStatus.ZERO_SIZE`:,
+            :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`:
 
         .. versionchanged:: 0.48
             The ``'validity_state'`` array is now a 64-bit integer array. Previously, it was a
@@ -1239,10 +1231,8 @@ class DataObjectFilters:
          'degenerate_faces',
          'coincident_points',
          'invalid_point_references',
-         'zero_length',
-         'zero_area',
-         'zero_volume',
-         'negative_volume']
+         'zero_size',
+         'negative_size']
 
         Show unique scalar values.
 
@@ -1356,10 +1346,12 @@ class DataObjectFilters:
             area = sizes.cell_data['Area']
             volume = sizes.cell_data['Volume']
 
-            # NEGATIVE_VOLUME
-            state[volume < -tolerance] |= CellStatus.NEGATIVE_VOLUME
+            # NEGATIVE_SIZE
+            state[length < -tolerance] |= CellStatus.NEGATIVE_SIZE
+            state[area < -tolerance] |= CellStatus.NEGATIVE_SIZE
+            state[volume < -tolerance] |= CellStatus.NEGATIVE_SIZE
 
-            # ZERO_LENGTH, ZERO_AREA, ZERO_VOLUME
+            # ZERO_SIZE
             min_cell_dimensionality = mesh.min_cell_dimensionality
             max_cell_dimensionality = mesh.max_cell_dimensionality
             if min_cell_dimensionality == max_cell_dimensionality:

@@ -1664,7 +1664,7 @@ def test_validate_mesh_report_str():
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
         '    Zero size                : []\n'
-        '    Negative volume          : []\n'
+        '    Negative size            : []\n'
         'Invalid point ids:\n'
         '    Unused points            : []\n'
         '    Non-finite points        : []'
@@ -1699,7 +1699,7 @@ def test_validate_mesh_composite_report_str():
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
         '    Zero size                : []\n'
-        '    Negative volume          : []\n'
+        '    Negative size            : []\n'
         'Blocks with invalid points:\n'
         '    Unused points            : []\n'
         '    Non-finite points        : []'
@@ -1737,7 +1737,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Coincident points            : []\n'
         '    Invalid point references (1) : [0]\n'
         '    Zero size                    : []\n'
-        '    Negative volume              : []\n'
+        '    Negative size                : []\n'
         'Invalid point ids:\n'
         '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
         '    Non-finite points (1)        : [20]'
@@ -1784,7 +1784,7 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Coincident points            : []\n'
         '    Invalid point references (2) : [1, 2]\n'
         '    Zero size                    : []\n'
-        '    Negative volume              : []\n'
+        '    Negative size                : []\n'
         'Blocks with invalid points:\n'
         '    Unused points (2)            : [1, 2]\n'
         '    Non-finite points (2)        : [1, 2]'
@@ -2024,12 +2024,21 @@ def test_cell_validator_invalid_tetra(
         ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
-        elif name == CellStatus.NEGATIVE_VOLUME.name.lower():
+        elif name == CellStatus.NEGATIVE_SIZE.name.lower():
             expected_cell_ids = [1]
             assert single_mesh[name].tolist() == expected_cell_ids
         else:
             array = single_mesh.field_data[name]
             assert array.shape == (0,)
+
+
+def test_validate_mesh_negative_volume(invalid_tetra_negative_volume):
+    message = invalid_tetra_negative_volume.validate_mesh().message
+    expected = (
+        'UnstructuredGrid mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TETRA cell with negative volume. Invalid cell id: [0]'
+    )
+    assert message == expected
 
 
 def test_validate_mesh_degenerate_cells():
