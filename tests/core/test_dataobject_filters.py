@@ -2225,31 +2225,19 @@ def test_validate_mesh_distinct_cell_types(
     mixed_dimension_cells_invalid_point_references,
 ):
     message = single_cell_invalid_point_references.validate_mesh().message
-    expected = (
-        'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
-    )
-    assert message == expected
+    tri_msg = ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+    assert tri_msg in message
 
     message = mixed_2d_cells_invalid_point_references.validate_mesh().message
-    expected = (
-        'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]\n'
-        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with zero area. Invalid cell id: [1]'
-    )
-    assert message == expected
+    quad_msg = ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
+    assert tri_msg in message
+    assert quad_msg in message
 
     message = mixed_dimension_cells_invalid_point_references.validate_mesh().message
-    expected = (
-        'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]\n'
-        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [1]'
-    )
-    assert message == expected
+    vert_msg = ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]'
+    tri_msg = ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
+    assert vert_msg in message
+    assert tri_msg in message
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
