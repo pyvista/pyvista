@@ -1663,9 +1663,7 @@ def test_validate_mesh_report_str():
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
-        '    Zero length              : []\n'
-        '    Zero area                : []\n'
-        '    Zero volume              : []\n'
+        '    Zero size                : []\n'
         '    Negative volume          : []\n'
         'Invalid point ids:\n'
         '    Unused points            : []\n'
@@ -1700,9 +1698,7 @@ def test_validate_mesh_composite_report_str():
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
-        '    Zero length              : []\n'
-        '    Zero area                : []\n'
-        '    Zero volume              : []\n'
+        '    Zero size                : []\n'
         '    Negative volume          : []\n'
         'Blocks with invalid points:\n'
         '    Unused points            : []\n'
@@ -1740,9 +1736,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (1) : [0]\n'
-        '    Zero length                  : []\n'
-        '    Zero area                    : []\n'
-        '    Zero volume                  : []\n'
+        '    Zero size                    : []\n'
         '    Negative volume              : []\n'
         'Invalid point ids:\n'
         '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
@@ -1789,9 +1783,7 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (2) : [1, 2]\n'
-        '    Zero length                  : []\n'
-        '    Zero area                    : []\n'
-        '    Zero volume                  : []\n'
+        '    Zero size                    : []\n'
         '    Negative volume              : []\n'
         'Blocks with invalid points:\n'
         '    Unused points (2)            : [1, 2]\n'
@@ -2028,7 +2020,7 @@ def test_cell_validator_invalid_tetra(
     for name in CELL_STATUS_ARRAY_NAMES:
         if name in (
             CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
-            CellStatus.ZERO_VOLUME.name.lower(),
+            CellStatus.ZERO_SIZE.name.lower(),
         ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
@@ -2056,32 +2048,32 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == CellStatus.ZERO_LENGTH
-    # match = 'Mesh has 1 LINE cell with coincident points. Invalid cell id: [0]'
-    # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
-    #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
-    #         mesh.validate_mesh(action='error')
+        assert state[0] == CellStatus.ZERO_SIZE
+    match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
 
     # Degenerate triangle
     points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == CellStatus.ZERO_AREA
-    # match = 'Mesh has 1 TRIANGLE cell with degenerate faces. Invalid cell id: [0]'
-    # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
-    #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
-    #         mesh.validate_mesh(action='error')
+        assert state[0] == CellStatus.ZERO_SIZE
+    match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
 
     # Degenerate voxel
     invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] & CellStatus.ZERO_VOLUME
-    # match = 'Mesh has 1 VOXEL cell with degenerate faces. Invalid cell id: [0]'
-    # for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
-    #     with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
-    #         mesh.validate_mesh(action='error')
+        assert state[0] & CellStatus.ZERO_SIZE
+    match = 'Mesh has 1 VOXEL cell with zero volume. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
 
 
 def test_validate_mesh_invalid_point_references():

@@ -126,17 +126,9 @@ _PYVISTA_CELL_STATUS_INFO = {
         value=0x01 << _BIT_SHIFT,
         doc="Cell references points outside the mesh's :class:`~pyvista.DataSet.points` array.",
     ),
-    'ZERO_LENGTH': _CellStatusTuple(
+    'ZERO_SIZE': _CellStatusTuple(
         value=0x02 << _BIT_SHIFT,
-        doc='1D cell has zero length.',
-    ),
-    'ZERO_AREA': _CellStatusTuple(
-        value=0x04 << _BIT_SHIFT,
-        doc='2D cell has zero area.',
-    ),
-    'ZERO_VOLUME': _CellStatusTuple(
-        value=0x08 << _BIT_SHIFT,
-        doc='3D cell has zero volume.',
+        doc='1D, 2D, or 3D cell has zero length, area, or volume, respectively.',
     ),
     'NEGATIVE_VOLUME': _CellStatusTuple(
         value=0x10 << _BIT_SHIFT,
@@ -169,9 +161,7 @@ class CellStatus(IntEnum):
 
     # PyVista bits
     INVALID_POINT_REFERENCES = _CELL_STATUS_INFO['INVALID_POINT_REFERENCES']
-    ZERO_LENGTH = _CELL_STATUS_INFO['ZERO_LENGTH']
-    ZERO_AREA = _CELL_STATUS_INFO['ZERO_AREA']
-    ZERO_VOLUME = _CELL_STATUS_INFO['ZERO_VOLUME']
+    ZERO_SIZE = _CELL_STATUS_INFO['ZERO_SIZE']
     NEGATIVE_VOLUME = _CELL_STATUS_INFO['NEGATIVE_VOLUME']
 
     def __new__(cls, value, _doc):
@@ -216,9 +206,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         'degenerate_faces',
         'coincident_points',
         'invalid_point_references',
-        'zero_length',
-        'zero_area',
-        'zero_volume',
+        'zero_size',
         'negative_volume',
     ]
     _PointFields = Literal['unused_points', 'non_finite_points']
@@ -512,6 +500,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
+        if cell_type and name_norm == 'zero size':
+            if cell_type in _CELL_TYPES_1D:
+                size = 'length'
+            elif cell_type in _CELL_TYPES_2D:
+                size = 'area'
+            else:
+                size = 'volume'
+            name_norm = name_norm.replace('size', size)
+
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
             before = f' {name_norm} '
@@ -672,9 +669,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     degenerate_faces: list[int] | None = None
     coincident_points: list[int] | None = None
     invalid_point_references: list[int] | None = None
-    zero_length: list[int] | None = None
-    zero_area: list[int] | None = None
-    zero_volume: list[int] | None = None
+    zero_size: list[int] | None = None
     negative_volume: list[int] | None = None
 
     # Point fields
@@ -889,10 +884,9 @@ class DataObjectFilters:
           same connectivity entry.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
           that can be indexed by :class:`~pyvista.DataSet.points`.
-        ``zero_length``': Ensure 1D cells dot not have zero length.
-        ``zero_area``: Ensure 2D cells do not have zero area.
-        ``zero_volume: Ensure 3D cells do not have zero volume.
-        ``negative_volume``: Ensure 3D cells have positive volume.
+        - ``zero_size``': Ensure 1D, 2D, and 3D cells dot not have zero length, area, or volume,
+          respectively.
+        - ``negative_volume``: Ensure 3D cells have positive volume.
 
         .. note::
           All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`,
@@ -1372,11 +1366,11 @@ class DataObjectFilters:
                 # Fast path, we need only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
-                    state[is_zero(length)] |= CellStatus.ZERO_LENGTH
+                    state[is_zero(length)] |= CellStatus.ZERO_SIZE
                 elif dimensionality == 2:
-                    state[is_zero(area)] |= CellStatus.ZERO_AREA
+                    state[is_zero(area)] |= CellStatus.ZERO_SIZE
                 elif dimensionality == 3:
-                    state[is_zero(volume)] |= CellStatus.ZERO_VOLUME
+                    state[is_zero(volume)] |= CellStatus.ZERO_SIZE
             else:
                 # Mixed cell dimensionality, need to consider separate cell types
                 cell_types_1d = []
@@ -1400,15 +1394,15 @@ class DataObjectFilters:
                 if cell_types_1d:
                     is_1d = np.isin(cell_types_array, cell_types_1d)
                     is_invalid = is_1d & is_zero(length)
-                    state[is_invalid] |= CellStatus.ZERO_LENGTH
+                    state[is_invalid] |= CellStatus.ZERO_SIZE
                 if cell_types_2d:
                     is_2d = np.isin(cell_types_array, cell_types_2d)
                     is_invalid = is_2d & is_zero(area)
-                    state[is_invalid] |= CellStatus.ZERO_AREA
+                    state[is_invalid] |= CellStatus.ZERO_SIZE
                 if cell_types_3d:
                     is_3d = np.isin(cell_types_array, cell_types_3d)
                     is_invalid = is_3d & is_zero(volume)
-                    state[is_invalid] |= CellStatus.ZERO_VOLUME
+                    state[is_invalid] |= CellStatus.ZERO_SIZE
 
             # INVALID_POINT_REFERENCES
             if hasattr(mesh, 'dimensions'):
