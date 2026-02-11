@@ -174,12 +174,9 @@ class CellStatus(IntEnum):
 
 def _cell_status_docs_insert():
     """Format CellStatus enum info for inserting into a docstring."""
-    return '\n'.join(
-        [
-            f'        - :attr:`~pyvista.CellStatus.{status.name}` {status.__doc__}'
-            for status in CellStatus
-        ]
-    ).lstrip()
+    return '\n' + '\n'.join(
+        [f'- :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}' for status in CellStatus]
+    )
 
 
 class _SENTINEL: ...
