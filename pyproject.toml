@@ -48,6 +48,7 @@ jupyter = [
   'nest-asyncio2',
   'trame-client>=2.12.7',
   'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
+  'trame-vtk != 2.10.3, != 2.11.*',
   'trame-vtk>=2.5.8, <2.10.3', # Unpin when https://github.com/Kitware/trame-vtk/issues/101 is closed
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
