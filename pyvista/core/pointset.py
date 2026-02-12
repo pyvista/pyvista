@@ -847,7 +847,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             return
 
         # filename
-        opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
+        opt_kwarg = ['faces', 'lines']
         if isinstance(var_inp, (str, Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
