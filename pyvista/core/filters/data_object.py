@@ -845,13 +845,13 @@ class DataObjectFilters:
 
         **Data validation fields**
 
-        Fields specific to :attr:`~pyvista.DataSet.point_data` and
-        :attr:`~pyvista.DataSet.cell_data` arrays.
+        Fields specific to :attr:`~pyvista.DataSet.cell_data` and
+        :attr:`~pyvista.DataSet.point_data` arrays.
 
-        - ``point_data_wrong_length``: Ensure the length of each point data array matches
-          :attr:`~pyvista.DataSet.n_points`.
         - ``cell_data_wrong_length``: Ensure the length of each cell data array matches
           :attr:`~pyvista.DataSet.n_cells`.
+        - ``point_data_wrong_length``: Ensure the length of each point data array matches
+          :attr:`~pyvista.DataSet.n_points`.
 
         .. note::
             When setting new arrays using PyVista's API, similar array validation checks are
