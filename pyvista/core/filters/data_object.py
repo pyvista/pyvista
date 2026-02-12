@@ -721,7 +721,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     @property
     def invalid_fields(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
         """Return any field names which have values."""
-        return tuple(sorted(f.name for f in fields(self) if getattr(self, f.name)))
+        return tuple(f.name for f in fields(self) if getattr(self, f.name))
 
     def __getitem__(self, index: int) -> _MeshValidationReport[_DataSetType] | None:
         subreports: tuple[_MeshValidationReport[_DataSetType] | None, ...] | None = (
