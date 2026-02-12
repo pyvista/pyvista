@@ -33,7 +33,15 @@ from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 
-CELL_STATUS_ARRAY_NAMES = [val.name.lower() for val in pv.CellStatus if val != pv.CellStatus.VALID]
+# CellStatus sorted by lower-case names, excluding VALID state
+CELL_STATUS_ARRAY_NAMES = [
+    val.name.lower()
+    for val in sorted(
+        pv.CellStatus,
+        key=lambda v: v.name.lower(),
+    )
+    if val != pv.CellStatus.VALID
+]
 
 
 @pytest.mark.parametrize('return_clipped', [True, False])
@@ -1650,24 +1658,24 @@ def test_validate_mesh_report_str():
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
-        '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []\n'
+        '    Unused points            : []\n'
         'Invalid cell ids:\n'
-        '    Wrong number of points   : []\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
         '    Intersecting edges       : []\n'
         '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Negative size            : []\n'
         '    Non-contiguous edges     : []\n'
         '    Non-convex               : []\n'
-        '    Inverted faces           : []\n'
         '    Non-planar faces         : []\n'
-        '    Degenerate faces         : []\n'
-        '    Coincident points        : []\n'
-        '    Invalid point references : []\n'
-        '    Zero size                : []\n'
-        '    Negative size            : []\n'
-        'Invalid point ids:\n'
-        '    Unused points            : []\n'
-        '    Non-finite points        : []'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []'
     )
     assert actual == expected
 
@@ -1685,24 +1693,24 @@ def test_validate_mesh_composite_report_str():
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
         'Blocks with invalid data arrays:\n'
-        '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
+        'Blocks with invalid points:\n'
+        '    Non-finite points        : []\n'
+        '    Unused points            : []\n'
         'Blocks with invalid cells:\n'
-        '    Wrong number of points   : []\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
         '    Intersecting edges       : []\n'
         '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Negative size            : []\n'
         '    Non-contiguous edges     : []\n'
         '    Non-convex               : []\n'
-        '    Inverted faces           : []\n'
         '    Non-planar faces         : []\n'
-        '    Degenerate faces         : []\n'
-        '    Coincident points        : []\n'
-        '    Invalid point references : []\n'
-        '    Zero size                : []\n'
-        '    Negative size            : []\n'
-        'Blocks with invalid points:\n'
-        '    Unused points            : []\n'
-        '    Non-finite points        : []'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []'
     )
     assert actual == expected
 
@@ -1720,27 +1728,27 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Cell types                   : {TRIANGLE}\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
-        "    Invalid fields (3)           : ('invalid_point_references', "
-        "'unused_points', 'non_finite_points')\n"
+        "    Invalid fields (3)           : ('non_finite_points', 'unused_points', "
+        "'invalid_point_references')\n"
         'Invalid data arrays:\n'
-        '    Point data wrong length      : []\n'
         '    Cell data wrong length       : []\n'
+        '    Point data wrong length      : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points (1)        : [20]\n'
+        '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
         'Invalid cell ids:\n'
-        '    Wrong number of points       : []\n'
+        '    Coincident points            : []\n'
+        '    Degenerate faces             : []\n'
         '    Intersecting edges           : []\n'
         '    Intersecting faces           : []\n'
+        '    Invalid point references (1) : [0]\n'
+        '    Inverted faces               : []\n'
+        '    Negative size                : []\n'
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
-        '    Inverted faces               : []\n'
         '    Non-planar faces             : []\n'
-        '    Degenerate faces             : []\n'
-        '    Coincident points            : []\n'
-        '    Invalid point references (1) : [0]\n'
-        '    Zero size                    : []\n'
-        '    Negative size                : []\n'
-        'Invalid point ids:\n'
-        '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
-        '    Non-finite points (1)        : [20]'
+        '    Wrong number of points       : []\n'
+        '    Zero size                    : []'
     )
     assert actual == expected
 
@@ -1767,27 +1775,27 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    N Blocks                     : 3\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
-        "    Invalid fields (3)           : ('invalid_point_references', "
-        "'unused_points', 'non_finite_points')\n"
+        "    Invalid fields (3)           : ('non_finite_points', 'unused_points', "
+        "'invalid_point_references')\n"
         'Blocks with invalid data arrays:\n'
-        '    Point data wrong length      : []\n'
         '    Cell data wrong length       : []\n'
+        '    Point data wrong length      : []\n'
+        'Blocks with invalid points:\n'
+        '    Non-finite points (2)        : [1, 2]\n'
+        '    Unused points (2)            : [1, 2]\n'
         'Blocks with invalid cells:\n'
-        '    Wrong number of points       : []\n'
+        '    Coincident points            : []\n'
+        '    Degenerate faces             : []\n'
         '    Intersecting edges           : []\n'
         '    Intersecting faces           : []\n'
+        '    Invalid point references (2) : [1, 2]\n'
+        '    Inverted faces               : []\n'
+        '    Negative size                : []\n'
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
-        '    Inverted faces               : []\n'
         '    Non-planar faces             : []\n'
-        '    Degenerate faces             : []\n'
-        '    Coincident points            : []\n'
-        '    Invalid point references (2) : [1, 2]\n'
-        '    Zero size                    : []\n'
-        '    Negative size                : []\n'
-        'Blocks with invalid points:\n'
-        '    Unused points (2)            : [1, 2]\n'
-        '    Non-finite points (2)        : [1, 2]'
+        '    Wrong number of points       : []\n'
+        '    Zero size                    : []'
     )
     assert actual == expected
 
@@ -1797,20 +1805,22 @@ def test_validate_mesh_composite_message(invalid_nested_multiblock):
     actual = report.message
     expected = (
         'MultiBlock mesh is not valid due to the following problems:\n'
-        " - Block id 1 'poly_root' PolyData mesh is not valid due to the "
-        'following problems:\n'
-        '   - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
+        " - Block id 1 'poly_root' PolyData mesh is not valid due to the following "
+        'problems:\n'
         '   - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
         'ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '   - Mesh has 1 non-finite point. Invalid point id: [20]\n'
-        " - Block id 2 'nested' MultiBlock mesh is not valid due to the "
-        'following problems:\n'
+        '   - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell '
+        'id: [0]\n'
+        " - Block id 2 'nested' MultiBlock mesh is not valid due to the following "
+        'problems:\n'
         "   - Block id 0 'poly_nested' PolyData mesh is not valid due to the "
         'following problems:\n'
-        '     - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        '     - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
-        'ids: [2, 3, 4, 5, 6, 7, ...]\n'
-        '     - Mesh has 1 non-finite point. Invalid point id: [20]'
+        '     - Mesh has 19 unused points not referenced by any cell(s). Invalid '
+        'point ids: [2, 3, 4, 5, 6, 7, ...]\n'
+        '     - Mesh has 1 non-finite point. Invalid point id: [20]\n'
+        '     - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell '
+        'id: [0]'
     )
     assert actual == expected
 
@@ -1863,8 +1873,8 @@ def test_validate_mesh_str_filtered():
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
-        '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
         'Invalid point ids:\n'
         '    Unused points            : []'
     )
@@ -1884,8 +1894,8 @@ def test_validate_mesh_str_filtered():
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
-        '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
         'Invalid cell ids:\n'
         '    Invalid point references : []'
     )
@@ -1908,8 +1918,8 @@ def test_validate_mesh_pointset(ant):
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
-        '    Point data wrong length  : []\n'
         '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
         'Invalid point ids:\n'
         '    Non-finite points        : []'
     )
@@ -1929,8 +1939,8 @@ def test_validate_mesh_pointset(ant):
         '    Is valid                 : True\n'
         '    Invalid fields           : ()\n'
         'Invalid data arrays:\n'
-        '    Point data wrong length  : []\n'
-        '    Cell data wrong length   : []'
+        '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []'
     )
     assert actual == expected
 
