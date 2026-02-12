@@ -859,6 +859,11 @@ class DataObjectFilters:
             They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
             meshes.
 
+        **Point validation fields**
+
+        - ``unused_points``: Ensure all points are referenced by at least one cell.
+        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
+
         **Cell validation fields**
 
         - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
@@ -883,11 +888,6 @@ class DataObjectFilters:
         .. note::
           All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`,
           and the field names correspond to :class:`~pyvista.CellStatus` names.
-
-        **Point validation fields**
-
-        - ``unused_points``: Ensure all points are referenced by at least one cell.
-        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
 
         For each field, its value is:
 
