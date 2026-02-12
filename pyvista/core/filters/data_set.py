@@ -3377,7 +3377,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         max_steps: int = 2000,
         terminal_speed: float = 1e-12,
         max_error: float = 1e-6,
-        max_time: float | None = None,
         compute_vorticity: bool = True,  # noqa: FBT001, FBT002
         rotation_scale: float = 1.0,
         interpolator_type: Literal['point', 'cell', 'p', 'c'] = 'point',
@@ -3442,13 +3441,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         max_error : float, 1e-6
             Maximum error tolerated throughout streamline integration.
-
-        max_time : float, optional
-            Specify the maximum length of a streamline expressed in physical length.
-
-            .. deprecated:: 0.45.0
-               ``max_time`` parameter is deprecated. Use ``max_length`` instead.
-                It will be removed in v0.48. Default for ``max_time`` changed in v0.45.0.
 
         compute_vorticity : bool, default: True
             Vorticity computation at streamline points. Necessary for generating
@@ -3516,19 +3508,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             self.set_active_vectors(vectors)
         elif vectors is None:
             set_default_active_vectors(self)
-
-        if max_time is not None:
-            if max_length is not None:
-                warn_external(
-                    '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
-                    PyVistaDeprecationWarning,
-                )
-            else:
-                warn_external(
-                    '``max_time`` parameter is deprecated.  It will be removed in v0.48',
-                    PyVistaDeprecationWarning,
-                )
-                max_length = max_time
 
         if max_length is None:
             max_length = 4.0 * self.GetLength()

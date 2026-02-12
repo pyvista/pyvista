@@ -829,16 +829,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         self,
         var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
         faces: CellArrayLike | None = None,
-        n_faces: int | None = None,
         lines: CellArrayLike | None = None,
-        n_lines: int | None = None,
         strips: CellArrayLike | None = None,
-        n_strips: int | None = None,
         deep: bool = False,  # noqa: FBT001, FBT002
         force_ext: str | None = None,
         force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
-        n_verts: int | None = None,
         *,
         validate: bool | _MeshValidationOptions = False,
     ) -> None:
@@ -916,17 +912,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         if validate:
             self._validate_mesh(validate)
-
-        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (  # type: ignore[assignment]
-            ('n_verts', n_verts),
-            ('n_strips', n_strips),
-            ('n_faces', n_faces),
-            ('n_lines', n_lines),
-        ):
-            if v is not None:
-                msg = f'PolyData constructor parameter `{k}` is deprecated and no longer used.'
-                raise TypeError(msg)
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
