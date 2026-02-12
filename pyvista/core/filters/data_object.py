@@ -839,7 +839,7 @@ class DataObjectFilters:
 
         This method returns a ``MeshValidationReport`` dataclass with information about the
         validity of a mesh. The dataclass contains validation fields which are specific to the
-        mesh's data, cells, and points. By default, all validation fields below are checked and
+        mesh's data, points, and cells. By default, all validation fields below are checked and
         included in the report. Optionally, only a subset of fields may be requested, and a
         warning or error may be raised if the mesh is not valid.
 
@@ -861,29 +861,30 @@ class DataObjectFilters:
 
         **Point validation fields**
 
-        - ``unused_points``: Ensure all points are referenced by at least one cell.
         - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
+        - ``unused_points``: Ensure all points are referenced by at least one cell.
 
         **Cell validation fields**
 
-        - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
-          describe it.
-        - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.
-        - ``intersecting_faces``: Ensure two faces of a 3D cell do not intersect.
-        - ``non_contiguous_edges``: Ensure edges around the perimeter of a 2D cell are contiguous.
-        - ``non_convex``: Ensure all 2D and 3D cells are convex.
-        - ``inverted_faces``: Ensure the faces of a cell point in the direction required by its
-          :class:`~pyvista.CellType`.
-        - ``non_planar_faces``: Ensure vertices for a face all lie in the same plane.
-        - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
-          collocated vertices.
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
           same connectivity entry.
+        - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
+          collocated vertices.
+        - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.
+        - ``intersecting_faces``: Ensure two faces of a 3D cell do not intersect.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
           that can be indexed by :class:`~pyvista.DataSet.points`.
+        - ``inverted_faces``: Ensure the faces of a cell point in the direction required by its
+          :class:`~pyvista.CellType`.
+        - ``negative_size``: Ensure 1D, 2D, and 3D cells have positive length, area, and volume,
+          respectively.
+        - ``non_contiguous_edges``: Ensure edges around the perimeter of a 2D cell are contiguous.
+        - ``non_convex``: Ensure all 2D and 3D cells are convex.
+        - ``non_planar_faces``: Ensure vertices for a face all lie in the same plane.
+        - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
+          describe it.
         - ``zero_size``': Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
           respectively.
-        - ``negative_volume``: Ensure 3D cells have positive volume.
 
         .. note::
           All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`,
