@@ -136,8 +136,6 @@ _PYVISTA_CELL_STATUS_INFO = {
     ),
 }
 
-_CELL_STATUS_INFO = _VTK_CELL_STATUS_INFO | _PYVISTA_CELL_STATUS_INFO
-
 
 class CellStatus(IntEnum):
     """Cell status bits used by :meth:`~pyvista.DataObjectFilters.cell_validator`.
@@ -148,21 +146,21 @@ class CellStatus(IntEnum):
     """
 
     # VTK bits
-    VALID = _CELL_STATUS_INFO['VALID']
-    WRONG_NUMBER_OF_POINTS = _CELL_STATUS_INFO['WRONG_NUMBER_OF_POINTS']
-    INTERSECTING_EDGES = _CELL_STATUS_INFO['INTERSECTING_EDGES']
-    INTERSECTING_FACES = _CELL_STATUS_INFO['INTERSECTING_FACES']
-    NON_CONTIGUOUS_EDGES = _CELL_STATUS_INFO['NON_CONTIGUOUS_EDGES']
-    NON_CONVEX = _CELL_STATUS_INFO['NON_CONVEX']
-    INVERTED_FACES = _CELL_STATUS_INFO['INVERTED_FACES']
-    NON_PLANAR_FACES = _CELL_STATUS_INFO['NON_PLANAR_FACES']
-    DEGENERATE_FACES = _CELL_STATUS_INFO['DEGENERATE_FACES']
-    COINCIDENT_POINTS = _CELL_STATUS_INFO['COINCIDENT_POINTS']
+    VALID = _VTK_CELL_STATUS_INFO['VALID']
+    WRONG_NUMBER_OF_POINTS = _VTK_CELL_STATUS_INFO['WRONG_NUMBER_OF_POINTS']
+    INTERSECTING_EDGES = _VTK_CELL_STATUS_INFO['INTERSECTING_EDGES']
+    INTERSECTING_FACES = _VTK_CELL_STATUS_INFO['INTERSECTING_FACES']
+    NON_CONTIGUOUS_EDGES = _VTK_CELL_STATUS_INFO['NON_CONTIGUOUS_EDGES']
+    NON_CONVEX = _VTK_CELL_STATUS_INFO['NON_CONVEX']
+    INVERTED_FACES = _VTK_CELL_STATUS_INFO['INVERTED_FACES']
+    NON_PLANAR_FACES = _VTK_CELL_STATUS_INFO['NON_PLANAR_FACES']
+    DEGENERATE_FACES = _VTK_CELL_STATUS_INFO['DEGENERATE_FACES']
+    COINCIDENT_POINTS = _VTK_CELL_STATUS_INFO['COINCIDENT_POINTS']
 
     # PyVista bits
-    INVALID_POINT_REFERENCES = _CELL_STATUS_INFO['INVALID_POINT_REFERENCES']
-    ZERO_SIZE = _CELL_STATUS_INFO['ZERO_SIZE']
-    NEGATIVE_SIZE = _CELL_STATUS_INFO['NEGATIVE_SIZE']
+    INVALID_POINT_REFERENCES = _PYVISTA_CELL_STATUS_INFO['INVALID_POINT_REFERENCES']
+    ZERO_SIZE = _PYVISTA_CELL_STATUS_INFO['ZERO_SIZE']
+    NEGATIVE_SIZE = _PYVISTA_CELL_STATUS_INFO['NEGATIVE_SIZE']
 
     def __new__(cls, value, _doc):
         """Override method to include member documentation."""
@@ -170,13 +168,6 @@ class CellStatus(IntEnum):
         obj._value_ = value
         obj.__doc__ = _doc
         return obj
-
-
-def _cell_status_docs_insert():
-    """Format CellStatus enum info for inserting into a docstring."""
-    return '\n' + '\n'.join(
-        [f'- :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}' for status in CellStatus]
-    )
 
 
 class _SENTINEL: ...
@@ -882,7 +873,7 @@ class DataObjectFilters:
           same connectivity entry.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
           that can be indexed by :class:`~pyvista.DataSet.points`.
-        - ``zero_size``': Ensure 1D, 2D, and 3D cells dot not have zero length, area, or volume,
+        - ``zero_size``': Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
           respectively.
         - ``negative_volume``: Ensure 3D cells have positive volume.
 
@@ -1181,7 +1172,7 @@ class DataObjectFilters:
 
         - Each field data array contains the indices of cells with the specified status.
         - The array names are lower-case versions of the status names above.
-        - The ``VALID`` state is excluded from the field data, and an array named ``'invalid'``
+        - The ``VALID`` status is excluded from the field data, and an array named ``'invalid'``
           is included instead with cell ids for all invalid cells.
 
         .. versionadded:: 0.47
@@ -1235,7 +1226,7 @@ class DataObjectFilters:
          'zero_size',
          'negative_size']
 
-        Show unique scalar values.
+        There are many arrays, but most are empty. Show unique scalar values.
 
         >>> validity_state = validated.cell_data['validity_state']
         >>> np.unique(validity_state)
@@ -1310,6 +1301,8 @@ class DataObjectFilters:
         cell_validator.SetInputData(self)
         cell_validator.Update()
         output = _get_output(cell_validator)
+
+        # Tolerance for float equality checks. This is on the order of 1e-7,
         tolerance = cell_validator.GetTolerance()
 
         def is_zero(array):
@@ -1356,7 +1349,7 @@ class DataObjectFilters:
             min_cell_dimensionality = mesh.min_cell_dimensionality
             max_cell_dimensionality = mesh.max_cell_dimensionality
             if min_cell_dimensionality == max_cell_dimensionality:
-                # Fast path, we need only need to consider a single cell dimension
+                # Fast path, we only need to consider a single cell dimension
                 dimensionality = min_cell_dimensionality
                 if dimensionality == 1:
                     state[is_zero(length)] |= CellStatus.ZERO_SIZE
@@ -4772,7 +4765,16 @@ class _Crinkler:
         return active_scalars_info
 
 
-# Cannot use f-strings with docstrings, so we need to replace this
+def _cell_status_docs_insert():
+    """Format CellStatus enum info for inserting into a docstring."""
+    return '\n' + '\n'.join(
+        [f'- :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}' for status in CellStatus]
+    )
+
+
+# `cell_validator` has a placeholder in its docstring that we need to replace.
+# This is done so we can copy the CellStatus docs into cell_validator. And we
+# cannot use f-strings with docstrings, so we insert the docs here.`
 placeholder = '{_cell_status_docs_insert()}'
 method = DataObjectFilters.cell_validator
 if method.__doc__ is not None:

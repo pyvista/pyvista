@@ -25,15 +25,15 @@ from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import DeprecationError
+from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
-from pyvista.core.filters.data_object import CellStatus
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 
-CELL_STATUS_ARRAY_NAMES = [val.name.lower() for val in CellStatus if val != CellStatus.VALID]
+CELL_STATUS_ARRAY_NAMES = [val.name.lower() for val in pv.CellStatus if val != pv.CellStatus.VALID]
 
 
 @pytest.mark.parametrize('return_clipped', [True, False])
@@ -1961,17 +1961,40 @@ def test_cell_validator():
 
 
 @pytest.mark.needs_vtk_version(9, 6, 0)
-def test_cell_validator_bitfield_values():
+def test_cell_status():
     from vtkmodules.vtkCommonDataModel import vtkCellStatus
 
-    assert vtkCellStatus.WrongNumberOfPoints == CellStatus.WRONG_NUMBER_OF_POINTS
-    assert vtkCellStatus.IntersectingEdges == CellStatus.INTERSECTING_EDGES
-    assert vtkCellStatus.IntersectingFaces == CellStatus.INTERSECTING_FACES
-    assert vtkCellStatus.NoncontiguousEdges == CellStatus.NON_CONTIGUOUS_EDGES
-    assert vtkCellStatus.Nonconvex == CellStatus.NON_CONVEX
-    assert vtkCellStatus.FacesAreOrientedIncorrectly == CellStatus.INVERTED_FACES
-    assert vtkCellStatus.NonPlanarFaces == CellStatus.NON_PLANAR_FACES
-    assert vtkCellStatus.CoincidentPoints == CellStatus.COINCIDENT_POINTS
+    expected_pyvista_values = list(pv.CellStatus)
+    expected_vtk_values = list(vars(vtkCellStatus).values())
+
+    # Map VTK enum members PyVista enum members
+    VTK_TO_CELL_STATUS = {
+        vtkCellStatus.Valid: pv.CellStatus.VALID,
+        vtkCellStatus.WrongNumberOfPoints: pv.CellStatus.WRONG_NUMBER_OF_POINTS,
+        vtkCellStatus.IntersectingEdges: pv.CellStatus.INTERSECTING_EDGES,
+        vtkCellStatus.IntersectingFaces: pv.CellStatus.INTERSECTING_FACES,
+        vtkCellStatus.NoncontiguousEdges: pv.CellStatus.NON_CONTIGUOUS_EDGES,
+        vtkCellStatus.Nonconvex: pv.CellStatus.NON_CONVEX,
+        vtkCellStatus.FacesAreOrientedIncorrectly: pv.CellStatus.INVERTED_FACES,
+        vtkCellStatus.NonPlanarFaces: pv.CellStatus.NON_PLANAR_FACES,
+        vtkCellStatus.DegenerateFaces: pv.CellStatus.DEGENERATE_FACES,
+        vtkCellStatus.CoincidentPoints: pv.CellStatus.COINCIDENT_POINTS,
+    }
+
+    for vtk_val, pyvista_val in VTK_TO_CELL_STATUS.items():
+        assert vtk_val == pyvista_val
+
+        assert vtk_val in expected_vtk_values
+        assert pyvista_val in expected_pyvista_values
+
+        expected_vtk_values.remove(vtk_val)
+        expected_pyvista_values.remove(pyvista_val)
+
+    # Ensure all values are accounted for and we're not missing any
+    assert expected_vtk_values == []
+    # There should only be pyvista-only status values
+    pyvista_specific_values = [info.value for info in _PYVISTA_CELL_STATUS_INFO.values()]
+    assert expected_pyvista_values == pyvista_specific_values
 
 
 @pytest.fixture
@@ -2019,12 +2042,12 @@ def test_cell_validator_invalid_tetra(
     single_mesh = validated[0] if as_composite else validated
     for name in CELL_STATUS_ARRAY_NAMES:
         if name in (
-            CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
-            CellStatus.ZERO_SIZE.name.lower(),
+            pv.CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
+            pv.CellStatus.ZERO_SIZE.name.lower(),
         ):
             expected_cell_ids = [0]
             assert single_mesh[name].tolist() == expected_cell_ids
-        elif name == CellStatus.NEGATIVE_SIZE.name.lower():
+        elif name == pv.CellStatus.NEGATIVE_SIZE.name.lower():
             expected_cell_ids = [1]
             assert single_mesh[name].tolist() == expected_cell_ids
         else:
@@ -2057,7 +2080,7 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == CellStatus.ZERO_SIZE
+        assert state[0] == pv.CellStatus.ZERO_SIZE
     match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2068,7 +2091,7 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] == CellStatus.ZERO_SIZE
+        assert state[0] == pv.CellStatus.ZERO_SIZE
     match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
@@ -2078,7 +2101,7 @@ def test_validate_mesh_degenerate_cells():
     invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
-        assert state[0] & CellStatus.ZERO_SIZE
+        assert state[0] & pv.CellStatus.ZERO_SIZE
     match = 'Mesh has 1 VOXEL cell with zero volume. Invalid cell id: [0]'
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
