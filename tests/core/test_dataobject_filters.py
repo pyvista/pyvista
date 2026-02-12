@@ -25,13 +25,15 @@ from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import DeprecationError
-from pyvista.core.filters.data_object import _CELL_VALIDATOR_BIT_FIELD
+from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
+
+CELL_STATUS_ARRAY_NAMES = [val.name.lower() for val in pv.CellStatus if val != pv.CellStatus.VALID]
 
 
 @pytest.mark.parametrize('return_clipped', [True, False])
@@ -1661,6 +1663,8 @@ def test_validate_mesh_report_str():
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
+        '    Zero size                : []\n'
+        '    Negative size            : []\n'
         'Invalid point ids:\n'
         '    Unused points            : []\n'
         '    Non-finite points        : []'
@@ -1694,6 +1698,8 @@ def test_validate_mesh_composite_report_str():
         '    Degenerate faces         : []\n'
         '    Coincident points        : []\n'
         '    Invalid point references : []\n'
+        '    Zero size                : []\n'
+        '    Negative size            : []\n'
         'Blocks with invalid points:\n'
         '    Unused points            : []\n'
         '    Non-finite points        : []'
@@ -1730,6 +1736,8 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (1) : [0]\n'
+        '    Zero size                    : []\n'
+        '    Negative size                : []\n'
         'Invalid point ids:\n'
         '    Unused points (19)           : [2, 3, 4, 5, 6, 7, ...]\n'
         '    Non-finite points (1)        : [20]'
@@ -1775,6 +1783,8 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Degenerate faces             : []\n'
         '    Coincident points            : []\n'
         '    Invalid point references (2) : [1, 2]\n'
+        '    Zero size                    : []\n'
+        '    Negative size                : []\n'
         'Blocks with invalid points:\n'
         '    Unused points (2)            : [1, 2]\n'
         '    Non-finite points (2)        : [1, 2]'
@@ -1932,42 +1942,63 @@ def test_cell_validator_pointset_raises():
 
 
 def test_cell_validator():
-    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     sphere = pv.Sphere()
     sphere.cell_data['data'] = range(sphere.n_cells)
     validated = sphere.cell_validator()
     assert validated.active_scalars_name == 'validity_state'
     assert isinstance(validated, pv.PolyData)
-    assert validated.field_data.keys() == ['invalid', *validator_array_names]
+    assert validated.field_data.keys() == ['invalid', *CELL_STATUS_ARRAY_NAMES]
     assert validated.array_names == [
         'validity_state',
         'invalid',
-        *validator_array_names,
+        *CELL_STATUS_ARRAY_NAMES,
         'Normals',
         'data',
     ]
-    for name in validator_array_names:
+    for name in CELL_STATUS_ARRAY_NAMES:
         array = validated.field_data[name]
         assert array.shape == (0,)
 
 
 @pytest.mark.needs_vtk_version(9, 6, 0)
-def test_cell_validator_bitfield_values():
+def test_cell_status():
     from vtkmodules.vtkCommonDataModel import vtkCellStatus
 
-    bitfield = _CELL_VALIDATOR_BIT_FIELD
-    assert bitfield['wrong_number_of_points'] == vtkCellStatus.WrongNumberOfPoints
-    assert bitfield['intersecting_edges'] == vtkCellStatus.IntersectingEdges
-    assert bitfield['intersecting_faces'] == vtkCellStatus.IntersectingFaces
-    assert bitfield['non_contiguous_edges'] == vtkCellStatus.NoncontiguousEdges
-    assert bitfield['non_convex'] == vtkCellStatus.Nonconvex
-    assert bitfield['inverted_faces'] == vtkCellStatus.FacesAreOrientedIncorrectly
-    assert bitfield['non_planar_faces'] == vtkCellStatus.NonPlanarFaces
-    assert bitfield['coincident_points'] == vtkCellStatus.CoincidentPoints
+    expected_pyvista_values = list(pv.CellStatus)
+    expected_vtk_values = list(vars(vtkCellStatus).values())
+
+    # Map VTK enum members PyVista enum members
+    VTK_TO_CELL_STATUS = {
+        vtkCellStatus.Valid: pv.CellStatus.VALID,
+        vtkCellStatus.WrongNumberOfPoints: pv.CellStatus.WRONG_NUMBER_OF_POINTS,
+        vtkCellStatus.IntersectingEdges: pv.CellStatus.INTERSECTING_EDGES,
+        vtkCellStatus.IntersectingFaces: pv.CellStatus.INTERSECTING_FACES,
+        vtkCellStatus.NoncontiguousEdges: pv.CellStatus.NON_CONTIGUOUS_EDGES,
+        vtkCellStatus.Nonconvex: pv.CellStatus.NON_CONVEX,
+        vtkCellStatus.FacesAreOrientedIncorrectly: pv.CellStatus.INVERTED_FACES,
+        vtkCellStatus.NonPlanarFaces: pv.CellStatus.NON_PLANAR_FACES,
+        vtkCellStatus.DegenerateFaces: pv.CellStatus.DEGENERATE_FACES,
+        vtkCellStatus.CoincidentPoints: pv.CellStatus.COINCIDENT_POINTS,
+    }
+
+    for vtk_val, pyvista_val in VTK_TO_CELL_STATUS.items():
+        assert vtk_val == pyvista_val
+
+        assert vtk_val in expected_vtk_values
+        assert pyvista_val in expected_pyvista_values
+
+        expected_vtk_values.remove(vtk_val)
+        expected_pyvista_values.remove(pyvista_val)
+
+    # Ensure all values are accounted for and we're not missing any
+    assert expected_vtk_values == []
+    # There should only be pyvista-only status values
+    pyvista_specific_values = [info.value for info in _PYVISTA_CELL_STATUS_INFO.values()]
+    assert expected_pyvista_values == pyvista_specific_values
 
 
 @pytest.fixture
-def invalid_tetra():
+def invalid_tetra_missing_point():
     # Define tetra with one point missing
     cells = [3, 0, 1, 2]
     celltypes = [pv.CellType.TETRA]
@@ -1979,25 +2010,111 @@ def invalid_tetra():
     return pv.UnstructuredGrid(cells, celltypes, points)
 
 
+@pytest.fixture
+def invalid_tetra_negative_volume():
+    # Regular tetra but with first two points swapped
+    cells = [4, 0, 1, 2, 3]
+    celltypes = [pv.CellType.TETRA]
+    points = [
+        [1.0, 1.0, 1.0],
+        [1.0, -1.0, -1.0],
+        [-1.0, 1.0, -1.0],
+        [-1.0, -1.0, 1.0],
+    ]
+    return pv.UnstructuredGrid(cells, celltypes, points)
+
+
 @pytest.mark.parametrize('as_composite', [True, False])
-def test_cell_validator_wrong_number_of_points(invalid_tetra, as_composite):
-    mesh = invalid_tetra.cast_to_multiblock() if as_composite else invalid_tetra
+def test_cell_validator_invalid_tetra(
+    invalid_tetra_missing_point, invalid_tetra_negative_volume, as_composite
+):
+    # Use vtkAppend instead of pv.merge for consistent ordering
+    # since pyvista merge order changed in VTK 9.5.
+    append = _vtk.vtkAppendFilter()
+    append.AddInputData(invalid_tetra_missing_point)
+    append.AddInputData(invalid_tetra_negative_volume)
+    append.Update()
+
+    invalid_input = pv.wrap(append.GetOutput())
+    mesh = invalid_input.cast_to_multiblock() if as_composite else invalid_input
     validated = mesh.cell_validator()
     assert type(validated) is type(mesh)
     single_mesh = validated[0] if as_composite else validated
-    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
-    for name in validator_array_names:
-        if name == 'wrong_number_of_points':
+    for name in CELL_STATUS_ARRAY_NAMES:
+        if name in (
+            pv.CellStatus.WRONG_NUMBER_OF_POINTS.name.lower(),
+            pv.CellStatus.ZERO_SIZE.name.lower(),
+        ):
             expected_cell_ids = [0]
+            assert single_mesh[name].tolist() == expected_cell_ids
+        elif name == pv.CellStatus.NEGATIVE_SIZE.name.lower():
+            expected_cell_ids = [1]
             assert single_mesh[name].tolist() == expected_cell_ids
         else:
             array = single_mesh.field_data[name]
             assert array.shape == (0,)
 
 
+def test_validate_mesh_negative_volume(invalid_tetra_negative_volume):
+    message = invalid_tetra_negative_volume.validate_mesh().message
+    expected = (
+        'UnstructuredGrid mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TETRA cell with negative volume. Invalid cell id: [0]'
+    )
+    assert message == expected
+
+
+def test_validate_mesh_degenerate_cells():
+    def append_mixed_cells(dataset):
+        # Use append, not pv.merge, due to change in merge order in vtk 9.5
+        valid_tetra = examples.cells.Tetrahedron().translate((2, 2, 2))
+        valid_vertex = examples.cells.Vertex().translate((-2, -2, -2))
+        append = _vtk.vtkAppendFilter()
+        append.AddInputData(dataset)
+        append.AddInputData(valid_tetra)
+        append.AddInputData(valid_vertex)
+        append.Update()
+        return pv.wrap(append.GetOutput())
+
+    # Line with coincident points
+    invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] == pv.CellStatus.ZERO_SIZE
+    match = 'Mesh has 1 LINE cell with zero length. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
+
+    # Degenerate triangle
+    points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+    invalid_mesh = pv.PolyData(points, faces=[3, 0, 1, 2])
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] == pv.CellStatus.ZERO_SIZE
+    match = 'Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
+
+    # Degenerate voxel
+    invalid_mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(1.0, 1.0, 0.0))
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        state = mesh.cell_validator()['validity_state']
+        assert state[0] & pv.CellStatus.ZERO_SIZE
+    match = 'Mesh has 1 VOXEL cell with zero volume. Invalid cell id: [0]'
+    for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
+        with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+            mesh.validate_mesh(action='error')
+
+
 def test_validate_mesh_invalid_point_references():
-    # Cell has point indices > n_points
-    grid = pv.PolyData([[0.0, 0.0, 0.0]], faces=[3, 0, 1, 2]).cast_to_unstructured_grid()
+    # Define mesh with a cell that has point indices > n_points
+    cells = [3, 0, 1, 2]
+    celltypes = [pv.CellType.TRIANGLE]
+    points = [0.0, 0.0, 0.0]
+    grid = pv.UnstructuredGrid(cells, celltypes, points)
+
     report = grid.validate_mesh('invalid_point_references')
     expected_cell_ids = [0]
     assert report.invalid_point_references == expected_cell_ids
@@ -2048,10 +2165,9 @@ def mixed_dimension_cells_invalid_point_references():
 @pytest.mark.needs_vtk_version(9, 6, 0)
 def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
     validated = invalid_hexahedron.cell_validator()
-    validator_array_names = list(_CELL_VALIDATOR_BIT_FIELD.keys())
     expected_cell_ids = [0]
     expected_invalid_fields = ['intersecting_edges', 'non_planar_faces', 'inverted_faces']
-    for name in validator_array_names:
+    for name in CELL_STATUS_ARRAY_NAMES:
         if name in expected_invalid_fields:
             assert validated[name].tolist() == expected_cell_ids, name
         else:
@@ -2137,27 +2253,19 @@ def test_validate_mesh_distinct_cell_types(
     mixed_dimension_cells_invalid_point_references,
 ):
     message = single_cell_invalid_point_references.validate_mesh().message
-    expected = (
-        'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
-    )
-    assert message == expected
+    tri_msg = ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+    assert tri_msg in message
 
     message = mixed_2d_cells_invalid_point_references.validate_mesh().message
-    expected = (
-        'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
-    )
-    assert message == expected
+    quad_msg = ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
+    assert tri_msg in message
+    assert quad_msg in message
 
     message = mixed_dimension_cells_invalid_point_references.validate_mesh().message
-    expected = (
-        'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
-    )
-    assert message == expected
+    vert_msg = ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]'
+    tri_msg = ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
+    assert vert_msg in message
+    assert tri_msg in message
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
