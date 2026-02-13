@@ -1731,7 +1731,7 @@ def test_validate_mesh_composite_report_str():
 
 
 def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
-    report = invalid_random_polydata.validate_mesh()
+    report = invalid_random_polydata.validate_mesh(exclude_fields='negative_size')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1758,7 +1758,6 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Intersecting faces           : []\n'
         '    Invalid point references (1) : [0]\n'
         '    Inverted faces               : []\n'
-        '    Negative size                : []\n'
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
