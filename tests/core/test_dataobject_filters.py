@@ -1562,6 +1562,21 @@ def test_validate_mesh_default_fields():
     assert report1 == report2
 
 
+def test_validate_mesh_exclude_fields():
+    mesh = pv.PolyData()
+    exclude = str(mesh.validate_mesh(exclude_fields='cells'))
+    include = str(mesh.validate_mesh(['data', 'points']))
+    assert exclude == include
+
+    exclude = str(mesh.validate_mesh(exclude_fields=['cells', 'points', 'cell_data_wrong_length']))
+    include = str(mesh.validate_mesh('point_data_wrong_length'))
+    assert exclude == include
+
+    match = 'validation_fields and exclude_fields cannot both be set.'
+    with pytest.raises(ValueError, match=match):
+        mesh.validate_mesh('points', exclude_fields='cells')
+
+
 def test_validate_mesh_message(sphere_with_invalid_arrays):
     assert pv.PolyData().validate_mesh().message is None
     assert sphere_with_invalid_arrays.validate_mesh().message
@@ -1681,7 +1696,8 @@ def test_validate_mesh_report_str():
 
 
 def test_validate_mesh_composite_report_str():
-    report = pv.Sphere().cast_to_multiblock().validate_mesh()
+    multi = pv.Sphere().cast_to_multiblock()
+    report = multi.validate_mesh()
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1716,7 +1732,7 @@ def test_validate_mesh_composite_report_str():
 
 
 def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
-    report = invalid_random_polydata.validate_mesh()
+    report = invalid_random_polydata.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1743,12 +1759,10 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Intersecting faces           : []\n'
         '    Invalid point references (1) : [0]\n'
         '    Inverted faces               : []\n'
-        '    Negative size                : []\n'
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
-        '    Wrong number of points       : []\n'
-        '    Zero size                    : []'
+        '    Wrong number of points       : []'
     )
     assert actual == expected
 
@@ -1765,7 +1779,7 @@ def invalid_nested_multiblock(invalid_random_polydata):
 
 
 def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
-    report = invalid_nested_multiblock.validate_mesh()
+    report = invalid_nested_multiblock.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1790,18 +1804,17 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Intersecting faces           : []\n'
         '    Invalid point references (2) : [1, 2]\n'
         '    Inverted faces               : []\n'
-        '    Negative size                : []\n'
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
-        '    Wrong number of points       : []\n'
-        '    Zero size                    : []'
+        '    Wrong number of points       : []'
     )
     assert actual == expected
 
 
 def test_validate_mesh_composite_message(invalid_nested_multiblock):
-    report = invalid_nested_multiblock.validate_mesh()
+    multi = invalid_nested_multiblock
+    report = multi.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = report.message
     expected = (
         'MultiBlock mesh is not valid due to the following problems:\n'
@@ -2262,20 +2275,29 @@ def test_validate_mesh_distinct_cell_types(
     mixed_2d_cells_invalid_point_references,
     mixed_dimension_cells_invalid_point_references,
 ):
-    message = single_cell_invalid_point_references.validate_mesh().message
-    tri_msg = ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
-    assert tri_msg in message
+    kwargs = dict(exclude_fields=['negative_size', 'zero_size'])
+    message = single_cell_invalid_point_references.validate_mesh(**kwargs).message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
+    )
+    assert expected == message
 
-    message = mixed_2d_cells_invalid_point_references.validate_mesh().message
-    quad_msg = ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
-    assert tri_msg in message
-    assert quad_msg in message
+    message = mixed_2d_cells_invalid_point_references.validate_mesh(**kwargs).message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
+        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
+    )
+    assert expected == message
 
-    message = mixed_dimension_cells_invalid_point_references.validate_mesh().message
-    vert_msg = ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]'
-    tri_msg = ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
-    assert vert_msg in message
-    assert tri_msg in message
+    message = mixed_dimension_cells_invalid_point_references.validate_mesh(**kwargs).message
+    expected = (
+        'PolyData mesh is not valid due to the following problems:\n'
+        ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
+    )
+    assert expected == message
 
 
 @pytest.mark.parametrize('as_grid', [True, False])
