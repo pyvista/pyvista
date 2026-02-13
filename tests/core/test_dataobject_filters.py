@@ -1696,7 +1696,8 @@ def test_validate_mesh_report_str():
 
 
 def test_validate_mesh_composite_report_str():
-    report = pv.Sphere().cast_to_multiblock().validate_mesh()
+    multi = pv.Sphere().cast_to_multiblock()
+    report = multi.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
