@@ -1562,6 +1562,21 @@ def test_validate_mesh_default_fields():
     assert report1 == report2
 
 
+def test_validate_mesh_exclude_fields():
+    mesh = pv.PolyData()
+    exclude = str(mesh.validate_mesh(exclude_fields='cells'))
+    include = str(mesh.validate_mesh(['data', 'points']))
+    assert exclude == include
+
+    exclude = str(mesh.validate_mesh(exclude_fields=['cells', 'points', 'cell_data_wrong_length']))
+    include = str(mesh.validate_mesh('point_data_wrong_length'))
+    assert exclude == include
+
+    match = 'validation_fields and exclude_fields cannot both be set.'
+    with pytest.raises(ValueError, match=match):
+        mesh.validate_mesh('points', exclude_fields='cells')
+
+
 def test_validate_mesh_message(sphere_with_invalid_arrays):
     assert pv.PolyData().validate_mesh().message is None
     assert sphere_with_invalid_arrays.validate_mesh().message

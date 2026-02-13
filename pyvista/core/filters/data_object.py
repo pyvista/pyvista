@@ -66,6 +66,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
+    _T = TypeVar('_T')
 
 
 class _CellStatusTuple(NamedTuple):
@@ -228,10 +229,19 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def __init__(
         self,
         mesh: _DataSetOrMultiBlockType,
-        validation_fields: _AllValidationOptions
-        | Sequence[_AllValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
+        validation_fields: _AllValidationOptions | Sequence[_AllValidationOptions] | None = None,
+        exclude_fields: _AllValidationOptions | Sequence[_AllValidationOptions] | None = None,
     ) -> None:
-        data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(validation_fields)
+        if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
+            validation_fields = [
+                *_MeshValidator._allowed_data_fields,
+                *_MeshValidator._allowed_point_fields,
+            ]
+            validation_fields.remove('unused_points')
+
+        data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
+            validation_fields, exclude_fields
+        )
         self._validation_report = _MeshValidator._generate_report(
             mesh, data_fields=data_fields, point_fields=point_fields, cell_fields=cell_fields
         )
@@ -239,6 +249,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     @staticmethod
     def _validate_fields(
         validation_fields,
+        exclude_fields,
     ) -> tuple[tuple[_DataFields, ...], tuple[_PointFields, ...], tuple[_CellFields, ...]]:
         # Validate inputs
         allowed_data_fields = _MeshValidator._allowed_data_fields
@@ -248,12 +259,17 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields_to_validate: list[_MeshValidator._PointFields] = []
         cell_fields_to_validate: list[_MeshValidator._CellFields] = []
 
-        if validation_fields == _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS:
+        if validation_fields is not None and exclude_fields is not None:
+            msg = 'validation_fields and exclude_fields cannot both be set.'
+            raise ValueError(msg)
+        elif validation_fields is None and exclude_fields is None:
             # Default values, no need to validate
             data_fields_to_validate.extend(allowed_data_fields)
             point_fields_to_validate.extend(allowed_point_fields)
             cell_fields_to_validate.extend(allowed_cell_fields)
         else:
+            if exclude_fields is not None:
+                validation_fields = exclude_fields
             allowed_fields_or_groups = (
                 *allowed_data_fields,
                 *allowed_point_fields,
@@ -299,6 +315,16 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     )
                     raise RuntimeError(msg)
 
+        if exclude_fields:
+
+            def exclude(left: Sequence[_T], right: Sequence[_T]) -> Sequence[_T]:
+                return [val for val in left if val not in right]
+
+            return (
+                tuple(exclude(allowed_data_fields, data_fields_to_validate)),
+                tuple(exclude(allowed_point_fields, point_fields_to_validate)),
+                tuple(exclude(allowed_cell_fields, cell_fields_to_validate)),
+            )
         return (
             tuple(data_fields_to_validate),
             tuple(point_fields_to_validate),
@@ -834,6 +860,8 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
+        *,
+        exclude_fields: _MeshValidationOptions | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
@@ -940,6 +968,13 @@ class DataObjectFilters:
         action : 'warn' | 'error', optional
             Issue a warning or raise an error if the mesh is not valid for the specified fields.
             By default, no action is taken.
+
+        exclude_fields : str | sequence[str], optional
+            Select which field(s) to exclude from the validation report. This is similar to
+            using ``validation_fields``, but is subtractive instead of additive. All data, point,
+            and cell fields are `included` by default, and no fields are excluded.
+
+            .. versionadded:: 0.48
 
         Returns
         -------
@@ -1141,15 +1176,10 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
-        input_fields = (
-            _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS
-            if validation_fields is None
-            else validation_fields
-        )
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-        report = _MeshValidator(self, input_fields).validation_report
+        report = _MeshValidator(self, validation_fields, exclude_fields).validation_report
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)
