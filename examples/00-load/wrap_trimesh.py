@@ -19,10 +19,9 @@ of more than one module.
 from __future__ import annotations
 
 import numpy as np
+import pyvista as pv
 import trimesh
 import vtk
-
-import pyvista as pv
 
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
@@ -86,8 +85,8 @@ print(tmesh.face_attributes.keys())
 print(tmesh.metadata)
 
 # %%
-# Use :func:`~pyvista.from_trimesh` to convert it back to a :class:`~pyvista.PolyData` mesh.
-# This is the same as using :func:`~pyvista.wrap`.
+# Use :func:`~pyvista.from_trimesh` to convert it back to a :class:`~pyvista.PolyData`
+# mesh. This is the same as using :func:`~pyvista.wrap`.
 pvmesh = pv.from_trimesh(tmesh)
 
 # %%
@@ -99,7 +98,8 @@ print(pvmesh.point_data.keys())
 print(pvmesh.cell_data.keys())
 
 # %%
-# and field data, including field data stored in the :attr:`~pyvista.DataObject.user_dict`:
+# and field data, including field data stored in the
+# :attr:`~pyvista.DataObject.user_dict`:
 print(pvmesh.field_data.keys())
 print(pvmesh.user_dict)
 

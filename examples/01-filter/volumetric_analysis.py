@@ -12,7 +12,6 @@ Calculate mass properties such as the volume or area of datasets
 from __future__ import annotations
 
 import numpy as np
-
 from pyvista import examples
 
 # %%

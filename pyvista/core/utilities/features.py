@@ -198,7 +198,9 @@ def _voxelize_legacy(
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_geometry()  # filter preserves topology
+    surface = mesh.extract_surface(
+        algorithm=None, pass_cellid=False, pass_pointid=False
+    )  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'
@@ -411,7 +413,9 @@ def voxelize_volume(  # noqa: PLR0917
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_geometry()  # filter preserves topology
+    surface = mesh.extract_surface(
+        algorithm=None, pass_cellid=False, pass_pointid=False
+    )  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'
@@ -896,7 +900,7 @@ def sample_function(  # noqa: PLR0917
     for a full example using this function.
 
     """
-    # internal import to avoide circular dependency
+    # internal import to avoid circular dependency
     from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()

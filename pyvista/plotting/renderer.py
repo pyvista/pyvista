@@ -20,6 +20,8 @@ from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
@@ -133,6 +135,7 @@ def make_legend_face(face) -> PolyData:
 
     def normalize(poly):
         norm_poly = poly.copy()  # Avoid mutating input
+        norm_poly.clear_data()
 
         # Center data
         norm_poly.points -= np.array(norm_poly.center)
@@ -308,9 +311,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = value
 
 
-class Renderer(
-    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer
-):
+class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -1253,7 +1254,7 @@ class Renderer(
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
         box=None,
-        box_args=None,
+        box_args=None,  # noqa: ARG002
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1296,12 +1297,17 @@ class Renderer(
             See :func:`pyvista.create_axes_orientation_box` for details.
 
             .. deprecated:: 0.43.0
-                The is deprecated. Use `add_box_axes` method instead.
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
             :func:`pyvista.create_axes_orientation_box`.
+
+            .. deprecated:: 0.43.0
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
@@ -1364,40 +1370,23 @@ class Renderer(
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
-        if box is None:
-            box = self._theme.axes.box
+
         if box:
-            warn_external(
-                '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-                PyVistaDeprecationWarning,
-            )
-            if box_args is None:
-                box_args = {}
-            self.axes_actor = create_axes_orientation_box(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **box_args,
-            )
-        else:
-            self.axes_actor = create_axes_marker(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **kwargs,
-            )
+            msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+            raise DeprecationError(msg)
+
+        self.axes_actor = create_axes_marker(
+            label_color=color,
+            line_width=line_width,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            labels_off=labels_off,
+            **kwargs,
+        )
         axes_widget = self.add_orientation_widget(
             self.axes_actor,
             interactive=interactive,
@@ -4577,7 +4566,7 @@ class Renderer(
             if pv.vtk_version_info >= (9, 4):
                 legend_scale.SetLabelModeToCoordinates()
             else:
-                legend_scale.SetLabelModeToXYCoordinates()
+                legend_scale.SetLabelModeToXYCoordinates()  # type: ignore[attr-defined]
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)

@@ -1280,7 +1280,8 @@ def test_axes():
     pl.show()
 
 
-def test_box_axes(verify_image_cache):
+@pytest.mark.skip_check_gc
+def test_box_axes_deprecated(verify_image_cache):
     """Test deprecated function and make sure we remove it by v0.48."""
     verify_image_cache.skip = True
 
@@ -1288,40 +1289,14 @@ def test_box_axes(verify_image_cache):
 
     def _test_add_axes_box():
         pl.add_axes(box=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Calling this should raise an error'
-            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
             raise RuntimeError(msg)
 
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
+    match_str = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+    with pytest.raises(DeprecationError, match=re.escape(match_str)):
         _test_add_axes_box()
     pl.close()
-
-
-def test_box_axes_color_box():
-    pl = pv.Plotter()
-
-    def _test_add_axes_color_box():
-        pl.add_axes(box=True, box_args={'color_box': True})
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this function'
-            raise RuntimeError(msg)
-
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
-        _test_add_axes_color_box()
-    pl.add_mesh(pv.Sphere())
-    pl.show()
 
 
 def test_add_box_axes():
@@ -4909,7 +4884,7 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    if pv.vtk_version_info > (9, 6, 0) and orient_faces is False:
+    if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
         # This bug was fixed in VTK 9.6
         pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -5370,7 +5345,7 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
     grid = cell_example()
     if next(grid.cell).dimension == 2:
         # Ensure normals of 2D cells point in z-direction for consistency
-        normal = grid.extract_geometry().cell_normals.mean(axis=0)
+        normal = grid.extract_surface(algorithm=None).cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
 
@@ -5414,3 +5389,33 @@ def test_hidden_cells_mixin(mesh_type):
     pl.add_mesh(hide_then_cast.unhide_cells(), show_edges=True)
 
     pl.show()
+
+
+@pytest.mark.parametrize('data', ['point', 'cell'])
+def test_hide_cells(data):
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    if data == 'cell':
+        grid.cell_data['scalars'] = range(grid.n_cells)
+        clim_max = grid.n_cells
+    else:
+        grid.point_data['scalars'] = range(grid.n_points)
+        clim_max = grid.n_points
+
+    kwargs = dict(show_edges=True, show_grid=True, clim=[0, clim_max])
+
+    grid.plot(**kwargs)
+
+    grid = grid.hide_cells(range(60, 120))
+    grid.plot(**kwargs)
+
+    grid = grid.cast_to_unstructured_grid()
+    grid.plot(**kwargs)
+
+
+def test_hide_cells_no_scalars():
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    grid = grid.hide_cells(range(80, 120))
+    grid = grid.cast_to_unstructured_grid()
+    # Test plotting still works with ghost cells active
+    assert grid.active_scalars_name is None
+    grid.plot(color='w', show_edges=True, show_grid=True)

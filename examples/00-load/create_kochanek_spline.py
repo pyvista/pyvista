@@ -15,7 +15,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -43,7 +42,9 @@ pl = pv.Plotter(shape=(3, 5))
 
 c = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
-    kochanek_spline = pv.KochanekSpline(points, continuity=[c[i], c[i], c[i]], n_points=1000)
+    kochanek_spline = pv.KochanekSpline(
+        points, continuity=[c[i], c[i], c[i]], n_points=1000
+    )
     pl.subplot(0, i)
     pl.add_text('c = ' + str(c[i]))
     pl.add_mesh(kochanek_spline, color='k', point_size=10)
