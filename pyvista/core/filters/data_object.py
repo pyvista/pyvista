@@ -1038,6 +1038,13 @@ class DataObjectFilters:
         >>> mesh = examples.download_cow()
         >>> report = mesh.validate_mesh('cells')
 
+        Alternatively, use ``exclude_fields`` to `remove` fields from the report instead.
+        For example, excluding ``data`` and ``points`` is the same as including ``cells``.
+
+        >>> report_excluded = mesh.validate_mesh(exclude_fields=['data', 'points'])
+        >>> report_excluded == report
+        True
+
         Show the report. Note that only cell validation fields are reported (array and point
         fields are omitted).
 
