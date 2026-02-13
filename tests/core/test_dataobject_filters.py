@@ -1761,8 +1761,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
-        '    Wrong number of points       : []\n'
-        '    Zero size                    : []'
+        '    Wrong number of points       : []'
     )
     assert actual == expected
 
@@ -1807,8 +1806,7 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
-        '    Wrong number of points       : []\n'
-        '    Zero size                    : []'
+        '    Wrong number of points       : []'
     )
     assert actual == expected
 
@@ -2279,8 +2277,7 @@ def test_validate_mesh_distinct_cell_types(
     message = single_cell_invalid_point_references.validate_mesh(**kwargs).message
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]'
     )
     assert expected == message
 
@@ -2288,9 +2285,7 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]\n'
-        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [0]\n'
-        ' - Mesh has 1 QUAD cell with zero area. Invalid cell id: [1]'
+        ' - Mesh has 1 QUAD cell with invalid point references. Invalid cell id: [1]'
     )
     assert expected == message
 
@@ -2298,8 +2293,7 @@ def test_validate_mesh_distinct_cell_types(
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
         ' - Mesh has 1 POLY_VERTEX cell with invalid point references. Invalid cell id: [0]\n'
-        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]\n'
-        ' - Mesh has 1 TRIANGLE cell with zero area. Invalid cell id: [1]'
+        ' - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell id: [1]'
     )
     assert expected == message
 
