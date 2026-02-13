@@ -181,39 +181,42 @@ _NestedStrings = str | Sequence['_NestedStrings']
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _ActionOptions = Literal['warn', 'error']
     _DataFields = Literal[
-        'point_data_wrong_length',
         'cell_data_wrong_length',
+        'point_data_wrong_length',
+    ]
+    _PointFields = Literal[
+        'non_finite_points',
+        'unused_points',
     ]
     _CellFields = Literal[
-        'wrong_number_of_points',
+        'coincident_points',
+        'degenerate_faces',
         'intersecting_edges',
         'intersecting_faces',
+        'invalid_point_references',
+        'inverted_faces',
+        'negative_size',
         'non_contiguous_edges',
         'non_convex',
-        'inverted_faces',
         'non_planar_faces',
-        'degenerate_faces',
-        'coincident_points',
-        'invalid_point_references',
+        'wrong_number_of_points',
         'zero_size',
-        'negative_size',
     ]
-    _PointFields = Literal['unused_points', 'non_finite_points']
     _MemorySafeFields = Literal[
+        'cell_data_wrong_length',
         'invalid_point_references',
         'point_data_wrong_length',
-        'cell_data_wrong_length',
     ]
-    _DefaultFieldGroups = Literal['data', 'cells', 'points']
+    _DefaultFieldGroups = Literal['data', 'points', 'cells']
     _OtherFieldGroups = Literal['memory_safe']
     _AllValidationOptions = (
-        _DataFields | _CellFields | _PointFields | _DefaultFieldGroups | _OtherFieldGroups
+        _DataFields | _PointFields | _CellFields | _DefaultFieldGroups | _OtherFieldGroups
     )
     _DEFAULT_MESH_VALIDATION_ARGS = get_args(_DefaultFieldGroups)
 
     _allowed_data_fields = get_args(_DataFields)
-    _allowed_cell_fields = get_args(_CellFields)
     _allowed_point_fields = get_args(_PointFields)
+    _allowed_cell_fields = get_args(_CellFields)
     _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
 
     @dataclass
@@ -228,33 +231,33 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         validation_fields: _AllValidationOptions
         | Sequence[_AllValidationOptions] = _DEFAULT_MESH_VALIDATION_ARGS,
     ) -> None:
-        data_fields, cell_fields, point_fields = _MeshValidator._validate_fields(validation_fields)
+        data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(validation_fields)
         self._validation_report = _MeshValidator._generate_report(
-            mesh, data_fields=data_fields, cell_fields=cell_fields, point_fields=point_fields
+            mesh, data_fields=data_fields, point_fields=point_fields, cell_fields=cell_fields
         )
 
     @staticmethod
     def _validate_fields(
         validation_fields,
-    ) -> tuple[tuple[_DataFields, ...], tuple[_CellFields, ...], tuple[_PointFields, ...]]:
+    ) -> tuple[tuple[_DataFields, ...], tuple[_PointFields, ...], tuple[_CellFields, ...]]:
         # Validate inputs
         allowed_data_fields = _MeshValidator._allowed_data_fields
-        allowed_cell_fields = _MeshValidator._allowed_cell_fields
         allowed_point_fields = _MeshValidator._allowed_point_fields
+        allowed_cell_fields = _MeshValidator._allowed_cell_fields
         data_fields_to_validate: list[_MeshValidator._DataFields] = []
-        cell_fields_to_validate: list[_MeshValidator._CellFields] = []
         point_fields_to_validate: list[_MeshValidator._PointFields] = []
+        cell_fields_to_validate: list[_MeshValidator._CellFields] = []
 
         if validation_fields == _MeshValidator._DEFAULT_MESH_VALIDATION_ARGS:
             # Default values, no need to validate
             data_fields_to_validate.extend(allowed_data_fields)
-            cell_fields_to_validate.extend(allowed_cell_fields)
             point_fields_to_validate.extend(allowed_point_fields)
+            cell_fields_to_validate.extend(allowed_cell_fields)
         else:
             allowed_fields_or_groups = (
                 *allowed_data_fields,
-                *allowed_cell_fields,
                 *allowed_point_fields,
+                *allowed_cell_fields,
                 *_MeshValidator._allowed_field_groups,
             )
             if isinstance(validation_fields, str):
@@ -279,16 +282,16 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             for field_or_group in input_fields:
                 if field_or_group == 'data':
                     data_fields_to_validate.extend(allowed_data_fields)
-                elif field_or_group == 'cells':
-                    cell_fields_to_validate.extend(allowed_cell_fields)
                 elif field_or_group == 'points':
                     point_fields_to_validate.extend(allowed_point_fields)
+                elif field_or_group == 'cells':
+                    cell_fields_to_validate.extend(allowed_cell_fields)
                 elif field_or_group in allowed_data_fields:
                     data_fields_to_validate.append(field_or_group)
-                elif field_or_group in allowed_cell_fields:
-                    cell_fields_to_validate.append(field_or_group)
                 elif field_or_group in allowed_point_fields:
                     point_fields_to_validate.append(field_or_group)
+                elif field_or_group in allowed_cell_fields:
+                    cell_fields_to_validate.append(field_or_group)
                 else:  # pragma: no cover
                     msg = (
                         f'Something went wrong! Invalid field or group {field_or_group}. '
@@ -298,8 +301,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         return (
             tuple(data_fields_to_validate),
-            tuple(cell_fields_to_validate),
             tuple(point_fields_to_validate),
+            tuple(cell_fields_to_validate),
         )
 
     @staticmethod
@@ -307,8 +310,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         mesh: _DataSetOrMultiBlockType,
         *,
         data_fields: tuple[_DataFields, ...],
-        cell_fields: tuple[_CellFields, ...],
         point_fields: tuple[_PointFields, ...],
+        cell_fields: tuple[_CellFields, ...],
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
             # Ignore any warnings caused by wrapping alg outputs
@@ -320,15 +323,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 return _MeshValidator._validate_dataset(  # type: ignore[return-value]
                     mesh,
                     data_fields=data_fields,
-                    cell_fields=cell_fields,
                     point_fields=point_fields,
+                    cell_fields=cell_fields,
                 )
             else:
                 return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
                     mesh,
                     data_fields=data_fields,
-                    cell_fields=cell_fields,
                     point_fields=point_fields,
+                    cell_fields=cell_fields,
                 )
 
     @staticmethod
@@ -336,8 +339,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         mesh: _DataSetType,
         *,
         data_fields: tuple[_DataFields, ...],
-        cell_fields: tuple[_CellFields, ...],
         point_fields: tuple[_PointFields, ...],
+        cell_fields: tuple[_CellFields, ...],
     ) -> _MeshValidationReport[_DataSetType]:
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
@@ -346,16 +349,16 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             for summary in _MeshValidator._validate_data(mesh, data_fields):
                 field_summaries[summary.name] = summary
 
+        # Validate points
+        if point_fields:
+            for summary in _MeshValidator._validate_points(mesh, point_fields):
+                field_summaries[summary.name] = summary
+
         # Validate cells
         if cell_fields:
             # We also store the output from cell_validator
             summaries, validated_mesh = _MeshValidator._validate_cells(mesh, cell_fields)
             for summary in summaries:
-                field_summaries[summary.name] = summary
-
-        # Validate points
-        if point_fields:
-            for summary in _MeshValidator._validate_points(mesh, point_fields):
                 field_summaries[summary.name] = summary
 
         message_body: list[str] = []
@@ -381,8 +384,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         mesh: _MultiBlockType,
         *,
         data_fields: tuple[_DataFields, ...],
-        cell_fields: tuple[_CellFields, ...],
         point_fields: tuple[_PointFields, ...],
+        cell_fields: tuple[_CellFields, ...],
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
 
@@ -397,8 +400,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 report = _MeshValidator._generate_report(
                     block,
                     data_fields=data_fields,
-                    cell_fields=cell_fields,
                     point_fields=point_fields,
+                    cell_fields=cell_fields,
                 )
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
@@ -412,8 +415,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         dataclass_fields: dict[str, Sequence[int | str]] = {}
         for field in [
             *data_fields,
-            *cell_fields,
             *point_fields,
+            *cell_fields,
         ]:
             invalid_block_ids: list[int] = []
             for i, report in enumerate(reports):  # type: ignore[assignment]
@@ -644,26 +647,26 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
 
     # Data fields
-    point_data_wrong_length: list[str] | None = None
     cell_data_wrong_length: list[str] | None = None
-
-    # Cell fields
-    wrong_number_of_points: list[int] | None = None
-    intersecting_edges: list[int] | None = None
-    intersecting_faces: list[int] | None = None
-    non_contiguous_edges: list[int] | None = None
-    non_convex: list[int] | None = None
-    inverted_faces: list[int] | None = None
-    non_planar_faces: list[int] | None = None
-    degenerate_faces: list[int] | None = None
-    coincident_points: list[int] | None = None
-    invalid_point_references: list[int] | None = None
-    zero_size: list[int] | None = None
-    negative_size: list[int] | None = None
+    point_data_wrong_length: list[str] | None = None
 
     # Point fields
-    unused_points: list[int] | None = None
     non_finite_points: list[int] | None = None
+    unused_points: list[int] | None = None
+
+    # Cell fields
+    coincident_points: list[int] | None = None
+    degenerate_faces: list[int] | None = None
+    intersecting_edges: list[int] | None = None
+    intersecting_faces: list[int] | None = None
+    invalid_point_references: list[int] | None = None
+    inverted_faces: list[int] | None = None
+    negative_size: list[int] | None = None
+    non_contiguous_edges: list[int] | None = None
+    non_convex: list[int] | None = None
+    non_planar_faces: list[int] | None = None
+    wrong_number_of_points: list[int] | None = None
+    zero_size: list[int] | None = None
 
     def __post_init__(
         self,
@@ -815,8 +818,8 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         emit_mesh_info()
         emit_group('Report summary', summary_fields)
         emit_group(data_text, _MeshValidator._allowed_data_fields)
-        emit_group(cell_text, _MeshValidator._allowed_cell_fields)
         emit_group(point_text, _MeshValidator._allowed_point_fields)
+        emit_group(cell_text, _MeshValidator._allowed_cell_fields)
 
         return '\n'.join(lines)
 
@@ -832,23 +835,23 @@ class DataObjectFilters:
         validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
-        """Validate this mesh's array data, cells, and points.
+        """Validate this mesh's array data, points, and cells.
 
         This method returns a ``MeshValidationReport`` dataclass with information about the
         validity of a mesh. The dataclass contains validation fields which are specific to the
-        mesh's data, cells, and points. By default, all validation fields below are checked and
+        mesh's data, points, and cells. By default, all validation fields below are checked and
         included in the report. Optionally, only a subset of fields may be requested, and a
         warning or error may be raised if the mesh is not valid.
 
         **Data validation fields**
 
-        Fields specific to :attr:`~pyvista.DataSet.point_data` and
-        :attr:`~pyvista.DataSet.cell_data` arrays.
+        Fields specific to :attr:`~pyvista.DataSet.cell_data` and
+        :attr:`~pyvista.DataSet.point_data` arrays.
 
-        - ``point_data_wrong_length``: Ensure the length of each point data array matches
-          :attr:`~pyvista.DataSet.n_points`.
         - ``cell_data_wrong_length``: Ensure the length of each cell data array matches
           :attr:`~pyvista.DataSet.n_cells`.
+        - ``point_data_wrong_length``: Ensure the length of each point data array matches
+          :attr:`~pyvista.DataSet.n_points`.
 
         .. note::
             When setting new arrays using PyVista's API, similar array validation checks are
@@ -856,35 +859,36 @@ class DataObjectFilters:
             They are most useful for validating `newly` loaded or :func:`wrapped <pyvista.wrap>`
             meshes.
 
+        **Point validation fields**
+
+        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
+        - ``unused_points``: Ensure all points are referenced by at least one cell.
+
         **Cell validation fields**
 
-        - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
-          describe it.
-        - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.
-        - ``intersecting_faces``: Ensure two faces of a 3D cell do not intersect.
-        - ``non_contiguous_edges``: Ensure edges around the perimeter of a 2D cell are contiguous.
-        - ``non_convex``: Ensure all 2D and 3D cells are convex.
-        - ``inverted_faces``: Ensure the faces of a cell point in the direction required by its
-          :class:`~pyvista.CellType`.
-        - ``non_planar_faces``: Ensure vertices for a face all lie in the same plane.
-        - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
-          collocated vertices.
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
           same connectivity entry.
+        - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
+          collocated vertices.
+        - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.
+        - ``intersecting_faces``: Ensure two faces of a 3D cell do not intersect.
         - ``invalid_point_references``: Ensure all points referenced by cells are valid point ids
           that can be indexed by :class:`~pyvista.DataSet.points`.
-        - ``zero_size``': Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
+        - ``inverted_faces``: Ensure the faces of a cell point in the direction required by its
+          :class:`~pyvista.CellType`.
+        - ``negative_size``: Ensure 1D, 2D, and 3D cells have positive length, area, and volume,
           respectively.
-        - ``negative_volume``: Ensure 3D cells have positive volume.
+        - ``non_contiguous_edges``: Ensure edges around the perimeter of a 2D cell are contiguous.
+        - ``non_convex``: Ensure all 2D and 3D cells are convex.
+        - ``non_planar_faces``: Ensure vertices for a face all lie in the same plane.
+        - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
+          describe it.
+        - ``zero_size``: Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
+          respectively.
 
         .. note::
           All cell fields are computed using :meth:`~pyvista.DataObjectFilters.cell_validator`,
           and the field names correspond to :class:`~pyvista.CellStatus` names.
-
-        **Point validation fields**
-
-        - ``unused_points``: Ensure all points are referenced by at least one cell.
-        - ``non_finite_points``: Ensure all points have real values (i.e. no ``NaN`` or ``Inf``).
 
         For each field, its value is:
 
@@ -913,19 +917,23 @@ class DataObjectFilters:
         .. versionchanged:: 0.48
             Include cell fields ``zero_size`` and ``negative_size``.
 
+        .. versionchanged:: 0.48
+            Report fields are now sorted in alphabetical order. Point fields are also reported
+            before cell fields.
+
         Parameters
         ----------
         validation_fields : str | sequence[str], default: ('data', 'cells', 'points')
-            Select which field(s) to include in the validation report. All data, cell, and point
+            Select which field(s) to include in the validation report. All data, point, and cell
             fields are included by default. Specify individual fields by name, or use group name(s)
             to include multiple related validation fields:
 
             - ``'data'`` to include all data fields
-            - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields
+            - ``'cells'`` to include all cell fields
             - ``'memory_safe'`` to include all fields that, if invalid, may cause a segmentation
-              fault and crash Python. This option includes ``point_data_wrong_length``,
-              ``cell_data_wrong_length``, and ``invalid_point_references``.
+              fault and crash Python. This option includes ``cell_data_wrong_length``,
+              ``point_data_wrong_length``, and ``invalid_point_references``.
 
             Fields that are excluded from the report will have a value of ``None``.
 
@@ -970,24 +978,24 @@ class DataObjectFilters:
             Is valid                 : True
             Invalid fields           : ()
         Invalid data arrays:
-            Point data wrong length  : []
             Cell data wrong length   : []
+            Point data wrong length  : []
+        Invalid point ids:
+            Non-finite points        : []
+            Unused points            : []
         Invalid cell ids:
-            Wrong number of points   : []
+            Coincident points        : []
+            Degenerate faces         : []
             Intersecting edges       : []
             Intersecting faces       : []
+            Invalid point references : []
+            Inverted faces           : []
+            Negative size            : []
             Non-contiguous edges     : []
             Non-convex               : []
-            Inverted faces           : []
             Non-planar faces         : []
-            Degenerate faces         : []
-            Coincident points        : []
-            Invalid point references : []
+            Wrong number of points   : []
             Zero size                : []
-            Negative size            : []
-        Invalid point ids:
-            Unused points            : []
-            Non-finite points        : []
 
         Load a mesh with invalid cells, e.g. :func:`~pyvista.examples.downloads.download_cow`
         and validate it. Use ``'cells'`` to only validate the cells specifically.
@@ -1010,18 +1018,18 @@ class DataObjectFilters:
             Is valid                 : False
             Invalid fields (1)       : ('non_convex',)
         Invalid cell ids:
-            Wrong number of points   : []
+            Coincident points        : []
+            Degenerate faces         : []
             Intersecting edges       : []
             Intersecting faces       : []
+            Invalid point references : []
+            Inverted faces           : []
+            Negative size            : []
             Non-contiguous edges     : []
             Non-convex (3)           : [1013, 1532, 3250]
-            Inverted faces           : []
             Non-planar faces         : []
-            Degenerate faces         : []
-            Coincident points        : []
-            Invalid point references : []
+            Wrong number of points   : []
             Zero size                : []
-            Negative size            : []
 
         >>> report.is_valid
         False
@@ -1063,10 +1071,10 @@ class DataObjectFilters:
         Report summary:
             Is valid                 : True
             Invalid fields           : ()
-        Invalid cell ids:
-            Intersecting edges       : []
         Invalid point ids:
             Unused points            : []
+        Invalid cell ids:
+            Intersecting edges       : []
 
         Even though other fields are invalid (i.e. ``non_convex``), for `these` specific
         validation fields the mesh is considered valid.
@@ -1098,24 +1106,24 @@ class DataObjectFilters:
             Is valid                 : False
             Invalid fields (1)       : ('non_convex',)
         Blocks with invalid data arrays:
-            Point data wrong length  : []
             Cell data wrong length   : []
+            Point data wrong length  : []
+        Blocks with invalid points:
+            Non-finite points        : []
+            Unused points            : []
         Blocks with invalid cells:
-            Wrong number of points   : []
+            Coincident points        : []
+            Degenerate faces         : []
             Intersecting edges       : []
             Intersecting faces       : []
+            Invalid point references : []
+            Inverted faces           : []
+            Negative size            : []
             Non-contiguous edges     : []
             Non-convex (1)           : [0]
-            Inverted faces           : []
             Non-planar faces         : []
-            Degenerate faces         : []
-            Coincident points        : []
-            Invalid point references : []
+            Wrong number of points   : []
             Zero size                : []
-            Negative size            : []
-        Blocks with invalid points:
-            Unused points            : []
-            Non-finite points        : []
 
         The report message still contains specifics about the invalid cell ids though.
 
@@ -1213,18 +1221,18 @@ class DataObjectFilters:
         >>> validated.array_names  # doctest: +NORMALIZE_WHITESPACE
         ['validity_state',
          'invalid',
-         'wrong_number_of_points',
+         'coincident_points',
+         'degenerate_faces',
          'intersecting_edges',
          'intersecting_faces',
+         'invalid_point_references',
+         'inverted_faces',
+         'negative_size',
          'non_contiguous_edges',
          'non_convex',
-         'inverted_faces',
          'non_planar_faces',
-         'degenerate_faces',
-         'coincident_points',
-         'invalid_point_references',
-         'zero_size',
-         'negative_size']
+         'wrong_number_of_points',
+         'zero_size']
 
         There are many arrays, but most are empty. Show unique scalar values.
 
@@ -1324,7 +1332,7 @@ class DataObjectFilters:
 
             # Extract indices of invalid cells and store as field data
             mesh.field_data['invalid'] = np.where(validity_state != 0)[0]
-            for status in CellStatus:
+            for status in sorted(CellStatus, key=lambda s: s.name):
                 if status == CellStatus.VALID:
                     continue
                 mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
@@ -4767,8 +4775,14 @@ class _Crinkler:
 
 def _cell_status_docs_insert():
     """Format CellStatus enum info for inserting into a docstring."""
+    # Sort by name, but ensure VALID is the first value.
+    statuses = sorted(
+        CellStatus,
+        key=lambda s: (s is not CellStatus.VALID, s.name),
+    )
+
     return '\n' + '\n'.join(
-        [f'- :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}' for status in CellStatus]
+        f'- :attr:`~pyvista.CellStatus.{status.name}`: {status.__doc__}' for status in statuses
     )
 
 
