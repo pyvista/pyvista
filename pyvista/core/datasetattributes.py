@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 
     from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
+    from ._typing_core import NumberType
     from ._typing_core import NumpyArray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
@@ -250,7 +251,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return self.get_array(key)
 
     def __setitem__(
-        self: Self, key: str, value: ArrayLike[Any]
+        self: Self,
+        key: str,
+        value: ArrayLike[Any] | NumberType,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
@@ -489,7 +492,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return narray
 
     @_deprecate_positional_args(allowed=['data', 'name'])
-    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:  # noqa: FBT001, FBT002
+    def set_array(
+        self: Self,
+        data: ArrayLike[float] | NumberType,
+        name: str,
+        deep_copy: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -503,8 +511,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        data : ArrayLike[float]
-            Array of data.
+        data : ArrayLike[float] | NumberType
+            Array of data or constant value
 
         name : str
             Name to assign to the data.  If this name already exists,
@@ -529,6 +537,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         >>> mesh.point_data.set_array(data, 'my-data')
         >>> mesh.point_data['my-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+
+        Add a constant point array to a mesh using a single value
+
+        >>> mesh.point_data.set_array(1, 'my-data2')
+        >>> mesh.point_data['my-data2']
+        pyvista_ndarray([1, 1, 1, 1, 1, 1, 1, 1])
 
         Add a cell array to a mesh.
 
@@ -556,7 +570,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @_deprecate_positional_args(allowed=['scalars', 'name'])
     def set_scalars(
         self: Self,
-        scalars: ArrayLike[float],
+        scalars: ArrayLike[float] | NumberType,
         name: str = 'scalars',
         deep_copy: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
@@ -572,8 +586,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        scalars : ArrayLike[float]
-            Array of data.
+        scalars : ArrayLike[float] | NumberType
+            Array of data or constant value.
 
         name : str, default: 'scalars'
             Name to assign the scalars.
@@ -692,7 +706,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: npt.ArrayLike,
+        data: npt.ArrayLike | NumberType,
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
