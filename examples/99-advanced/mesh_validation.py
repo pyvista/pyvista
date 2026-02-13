@@ -45,6 +45,7 @@ quad = pv.PolyData(points, faces)
 # convex.
 report = quad.validate_mesh()
 print(report.is_valid)
+# %%
 print(report.invalid_fields)
 
 # sphinx_gallery_start_ignore
@@ -63,6 +64,7 @@ plot_cell(quad, 'xy')
 triangles = quad.triangulate()
 report = triangles.validate_mesh()
 print(report.is_valid)
+# %%
 plot_cell(triangles, 'xy')
 
 # sphinx_gallery_start_ignore
@@ -86,6 +88,7 @@ polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
 # the normals all point outward and the cell is valid.
 report = polyhedron.validate_mesh()
 print(report.is_valid)
+# %%
 plot_cell(polyhedron, show_normals=True)
 
 # sphinx_gallery_start_ignore
@@ -108,7 +111,9 @@ invalid_polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points
 # pointing inward.
 report = invalid_polyhedron.validate_mesh()
 print(report.is_valid)
+# %%
 print(report.invalid_fields)
+# %%
 plot_cell(invalid_polyhedron, show_normals=True)
 
 # sphinx_gallery_start_ignore
@@ -123,6 +128,7 @@ _ci_assert(report.invalid_fields == ('inverted_faces',))
 # properties.
 valid_centroid = polyhedron.cell_centers().points[0].tolist()
 print(valid_centroid)
+# %%
 invalid_centroid = invalid_polyhedron.cell_centers().points[0].tolist()
 print(invalid_centroid)
 
@@ -155,6 +161,7 @@ hexahedron = pv.UnstructuredGrid(cells, celltype, points)
 # ordering is incorrect.
 report = hexahedron.validate_mesh()
 print(report.is_valid)
+# %%
 plot_cell(hexahedron)
 
 # sphinx_gallery_start_ignore
@@ -193,6 +200,7 @@ celltype = [pv.CellType.HEXAHEDRON]
 hexahedron = pv.UnstructuredGrid(cells, celltype, points)
 report = hexahedron.validate_mesh()
 print(report.is_valid)
+# %%
 plot_cell(hexahedron)
 
 # sphinx_gallery_start_ignore
@@ -208,6 +216,7 @@ _ci_assert(report.is_valid)
 grid = pv.UnstructuredGrid()
 grid.points = [[0.0, 0.0, 0.0]]
 print(grid.n_points)
+# %%
 print(grid.n_cells)
 
 # sphinx_gallery_start_ignore
@@ -219,6 +228,7 @@ _ci_assert(grid.n_cells == 0)
 # This mesh is not considered valid.
 report = grid.validate_mesh()
 print(report.is_valid)
+# %%
 print(report.invalid_fields)
 
 # sphinx_gallery_start_ignore
@@ -231,6 +241,7 @@ _ci_assert(report.invalid_fields == ('unused_points',))
 # unused point is removed.
 poly = grid.extract_surface(algorithm=None)
 print(poly.n_points)
+# %%
 print(poly.n_cells)
 
 # sphinx_gallery_start_ignore
@@ -246,6 +257,7 @@ cells = [1, 0]
 celltypes = [pv.CellType.VERTEX]
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 print(grid.n_points)
+# %%
 print(grid.n_cells)
 
 # sphinx_gallery_start_ignore
@@ -257,6 +269,7 @@ _ci_assert(grid.n_cells == 1)
 # This time, the point is properly processed by the filter and is retained.
 poly = grid.extract_surface(algorithm=None)
 print(poly.n_points)
+# %%
 print(poly.n_cells)
 
 # sphinx_gallery_start_ignore
