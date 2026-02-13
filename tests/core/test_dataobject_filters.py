@@ -1697,7 +1697,7 @@ def test_validate_mesh_report_str():
 
 def test_validate_mesh_composite_report_str():
     multi = pv.Sphere().cast_to_multiblock()
-    report = multi.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
+    report = multi.validate_mesh()
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1813,7 +1813,8 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
 
 
 def test_validate_mesh_composite_message(invalid_nested_multiblock):
-    report = invalid_nested_multiblock.validate_mesh()
+    multi = invalid_nested_multiblock
+    report = multi.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = report.message
     expected = (
         'MultiBlock mesh is not valid due to the following problems:\n'
