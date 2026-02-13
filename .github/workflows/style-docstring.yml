@@ -12,14 +12,24 @@ permissions:
 
 jobs:
   cache-vtk-data:
-    name: Cache vtk-data (ubuntu-24.04-self-hosted-gpu)
+    name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       # Runner should match the actual runner used by the docstring job
       runs-on: "ubuntu-24.04-self-hosted-gpu"
 
   docstringcheck:
-    runs-on: ubuntu-24.04-self-hosted-gpu
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04-self-hosted-gpu
+            python-version: "3.14" # Should be the latest version supported
+          - os: windows-latest
+            python-version: "3.10" # Should be the oldest version supported
+
+    runs-on: ${{ matrix.os }}
+
     needs: cache-vtk-data
     env:
       TOX_COLORED: "yes"
@@ -33,10 +43,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
-      - name: Setup headless display
+      - name: Setup headless display on Windows
+        if: runner.os == 'Windows'
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Restore vtk-data cache

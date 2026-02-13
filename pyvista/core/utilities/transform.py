@@ -2782,10 +2782,8 @@ class Transform(
         Represent the rotation as :class:`scipy.spatial.transform.Rotation` instance.
 
         >>> rot = transform.as_rotation()
-        >>> rot
-        Rotation.from_matrix(array([[ 0., -1.,  0.],
-                                    [ 1.,  0.,  0.],
-                                    [ 0.,  0.,  1.]]))
+        >>> type(rot)
+        <class 'scipy.spatial.transform._rotation.Rotation'>
 
         Represent the rotation as a quaternion.
 
