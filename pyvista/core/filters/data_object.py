@@ -213,7 +213,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _AllValidationOptions = (
         _DataFields | _PointFields | _CellFields | _DefaultFieldGroups | _OtherFieldGroups
     )
-    _DEFAULT_MESH_VALIDATION_ARGS = get_args(_DefaultFieldGroups)
 
     _allowed_data_fields = get_args(_DataFields)
     _allowed_point_fields = get_args(_PointFields)
