@@ -239,7 +239,7 @@ def build_url(
     if server_proxy_enabled is None:
         server_proxy_enabled = pv.global_theme.trame.server_proxy_enabled
     if server_proxy_enabled:
-        if server_proxy_prefix is None:
+        if server_proxy_prefix is None:  # pragma: no cover
             server_proxy_prefix = pv.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
         prefix = server_proxy_prefix or ''
