@@ -38,6 +38,7 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
 from .utilities.misc import abstract_class
+from .utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -512,7 +513,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         """
         alg = _vtk.vtkRectilinearGridToPointSet()
         alg.SetInputData(self)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
 
@@ -990,7 +991,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """
         alg = _vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     def cast_to_rectilinear_grid(self: Self) -> RectilinearGrid:

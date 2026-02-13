@@ -30,6 +30,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
+from pyvista.core.utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -310,7 +311,7 @@ if vtk_version_info < (9, 3):
                 Capsule surface.
 
             """
-            self.Update()
+            _update_alg(self)
             return wrap(self.GetOutput())
 
 
@@ -568,7 +569,7 @@ class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
             Cone surface.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -831,7 +832,7 @@ class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSourc
             Cylinder surface.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -890,7 +891,7 @@ class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSour
             Line mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -1075,7 +1076,7 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
-                self.Update()
+                _update_alg(self)
                 out = self.GetOutput()
             else:
                 # 3D case, apply filters
@@ -1087,7 +1088,7 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
 
                 tri_filter = _vtk.vtkTriangleFilter()
                 tri_filter.SetInputConnection(extrude.GetOutputPort())
-                tri_filter.Update()
+                _update_alg(tri_filter)
                 out = tri_filter.GetOutput()
 
             # Modify output object
@@ -1355,7 +1356,7 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
             Cube surface.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
     @property
@@ -1581,7 +1582,7 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
             Line mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -1700,7 +1701,7 @@ class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
             Line mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -1988,7 +1989,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             Sphere surface.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -2172,7 +2173,7 @@ class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkRegularPolygon
             Polygon surface.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -2273,7 +2274,7 @@ class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonic
             PlatonicSolid surface.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -2485,7 +2486,7 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
             Plane mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
     @property
@@ -2687,7 +2688,7 @@ class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
             Plane mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -2799,7 +2800,7 @@ class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSour
             Plane mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -3098,7 +3099,7 @@ class SuperquadricSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSuperquad
             Plane mesh.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 

@@ -26,44 +26,13 @@ Examples
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import cast
 
 import pyvista as pv
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
     from pyvista.core import _vtk_core as _vtk
-
-
-def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
-    """Update an algorithm with or without a progress bar."""
-    # Get the status of the alg update using GetExecutive
-    # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
-    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
-        to_be_updated: Any = alg
-    else:
-        try:
-            to_be_updated = alg.GetExecutive()
-        except AttributeError:
-            # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
-            to_be_updated = alg
-
-    # Do the update
-    if progress_bar:
-        with ProgressMonitor(alg, message=message):
-            status = to_be_updated.Update()
-    else:
-        status = to_be_updated.Update()
-
-    if status is not None and status == 0:
-        # There was an error with the update. Re-run so we can catch it and
-        # raise it as a proper Python error.
-        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
-        # with VTK observers can be slow.
-        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
-            alg.Update()
 
 
 def _get_output(
@@ -112,5 +81,4 @@ __all__ = [
     'StructuredGridFilters',
     'UnstructuredGridFilters',
     '_get_output',
-    '_update_alg',
 ]

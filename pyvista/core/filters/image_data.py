@@ -24,7 +24,6 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
@@ -32,6 +31,7 @@ from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
     from typing import Any
@@ -2264,7 +2264,7 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageFlip()
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
-        alg.Update()
+        _update_alg(alg)
         return cast('pv.ImageData', wrap(alg.GetOutput()))
 
     @_deprecate_positional_args
@@ -3123,7 +3123,7 @@ class ImageDataFilters(DataSetFilters):
                 filter_.ConsistencyOn()
                 filter_.AutoOrientNormalsOn()
                 filter_.NonManifoldTraversalOn()
-                filter_.Update()
+                _update_alg(filter_)
                 oriented = wrap(filter_.GetOutput())
                 output.points = oriented.points
                 output.faces = oriented.faces

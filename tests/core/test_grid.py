@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
+import platform
 import re
 from typing import TYPE_CHECKING
 import weakref
@@ -1381,14 +1382,34 @@ def test_gaussian_smooth():
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells(ind, hexbeam):
-    grid_copy = hexbeam.remove_cells(ind)
+    # Ignore VTK error emitted when using bool type indices for VTK < 9.4
+    if (
+        isinstance(ind, np.ndarray)
+        and platform.system() == 'Linux'
+        and pv.vtk_version_info < (9, 4, 0)
+    ):
+        with pv.vtk_verbosity('off'):
+            grid_copy = hexbeam.remove_cells(ind)
+    else:
+        grid_copy = hexbeam.remove_cells(ind)
     assert grid_copy.n_cells < hexbeam.n_cells
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells_not_inplace(ind, hexbeam):
     grid_copy = hexbeam.copy()  # copy to protect
-    grid_w_removed = grid_copy.remove_cells(ind)
+
+    # Ignore VTK error emitted when using bool type indices for VTK < 9.4
+    if (
+        isinstance(ind, np.ndarray)
+        and platform.system() == 'Linux'
+        and pv.vtk_version_info < (9, 4, 0)
+    ):
+        with pv.vtk_verbosity('off'):
+            grid_w_removed = grid_copy.remove_cells(ind)
+    else:
+        grid_w_removed = grid_copy.remove_cells(ind)
+
     assert grid_w_removed.n_cells < hexbeam.n_cells
     assert grid_copy.n_cells == hexbeam.n_cells
 

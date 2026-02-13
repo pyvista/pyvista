@@ -13,11 +13,11 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -248,7 +248,7 @@ class CompositeFilters(DataObjectFilters):
     def _composite_geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
-        gf.Update()
+        _update_alg(gf)
         return wrap(gf.GetOutputDataObject(0))
 
     @_deprecate_positional_args
@@ -305,7 +305,7 @@ class CompositeFilters(DataObjectFilters):
             alg.AddInputData(single_block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
-        alg.Update()
+        _update_alg(alg)
         return wrap(alg.GetOutputDataObject(0))
 
     @_deprecate_positional_args

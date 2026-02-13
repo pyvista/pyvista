@@ -15,6 +15,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.state_manager import _update_alg
 
 
 def _padded_bins(mesh, density):
@@ -900,9 +901,6 @@ def sample_function(  # noqa: PLR0917
     for a full example using this function.
 
     """
-    # internal import to avoid circular dependency
-    from pyvista.core.filters import _update_alg  # noqa: PLC0415
-
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
     samp.SetSampleDimensions(dim)  # type: ignore[call-overload]

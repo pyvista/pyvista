@@ -622,16 +622,16 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
-def test_texture_map_to_plane():
-    dataset = examples.load_airplane()
+def test_texture_map_to_plane(airplane):
+    dataset = airplane
     # Automatically decide plane
     out = dataset.texture_map_to_plane(inplace=False, progress_bar=True)
     assert isinstance(out, type(dataset))
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
-    point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
-    point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
+    point_u = (bnds.x_max, bnds.y_min, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_max, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
@@ -718,10 +718,11 @@ def test_glyph(datasets, sphere):
     sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
     # tries to orient but multiple orientation vectors are possible
-    with pytest.warns(
-        UserWarning, match=r'It is unclear which one to use. orient will be set to False'
-    ):
-        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
+    with pytest.warns(pv.VTKExecutionWarning, match='Turning indexing off: no data to index with'):
+        with pytest.warns(
+            UserWarning, match=r'It is unclear which one to use. orient will be set to False'
+        ):
+            assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     with pytest.raises(TypeError):
         # wrong type for the glyph
@@ -1574,7 +1575,7 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pv.ImageData(dimensions=[5, 5, 5], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
+    source = pv.ImageData(dimensions=[20, 20, 20], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
@@ -2704,7 +2705,8 @@ def test_select_interior_points_raises(sphere, plane):
 
 @pytest.mark.parametrize('method', ['cell_locator', 'signed_distance'])
 def test_select_interior_points_empty_mesh(method):
-    out = pv.PolyData().select_interior_points(pv.PolyData(), method=method)
+    with pv.vtk_message_policy('off'):
+        out = pv.PolyData().select_interior_points(pv.PolyData(), method=method)
     assert isinstance(out, pv.PolyData)
     assert out.array_names == ['selected_points']
     assert out['selected_points'].size == 0

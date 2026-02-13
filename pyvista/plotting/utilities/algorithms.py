@@ -13,6 +13,7 @@ from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
@@ -59,8 +60,10 @@ def algorithm_to_mesh_handler(
         else:
             algo = mesh_or_algo
             output = algo.GetOutputPort(port)
-        algo.Update()  # NOTE: this could be expensive... but we need it to get the mesh
-        #                      for legacy implementation. This can be refactored.
+        # NOTE: this could be expensive... but we need it to get the mesh
+        # for legacy implementation. This can be refactored.
+        _update_alg(algo)
+
         mesh = wrap(algo.GetOutputDataObject(port))
         if mesh is None:
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase

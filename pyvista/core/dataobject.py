@@ -15,6 +15,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -952,7 +953,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
 
             reader.ReadFromInputStringOn()  # type: ignore[unreachable]
             reader.SetInputString(vtk_serialized)
-            reader.Update()
+            _update_alg(reader)
 
         elif pickle_format.lower() == 'legacy':
             reader = vtkDataSetReader()
@@ -961,7 +962,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]
             elif isinstance(vtk_serialized, str):
                 reader.SetInputString(vtk_serialized)
-            reader.Update()
+            _update_alg(reader)
 
         mesh = wrap(reader.GetOutput())
 
