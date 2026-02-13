@@ -1731,7 +1731,7 @@ def test_validate_mesh_composite_report_str():
 
 
 def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
-    report = invalid_random_polydata.validate_mesh(exclude_fields='negative_size')
+    report = invalid_random_polydata.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1779,7 +1779,7 @@ def invalid_nested_multiblock(invalid_random_polydata):
 
 
 def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
-    report = invalid_nested_multiblock.validate_mesh(exclude_fields='negative_size')
+    report = invalid_nested_multiblock.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -2275,7 +2275,7 @@ def test_validate_mesh_distinct_cell_types(
     mixed_2d_cells_invalid_point_references,
     mixed_dimension_cells_invalid_point_references,
 ):
-    kwargs = dict(exclude_fields='negative_size')
+    kwargs = dict(exclude_fields=['negative_size', 'zero_size'])
     message = single_cell_invalid_point_references.validate_mesh(**kwargs).message
     expected = (
         'PolyData mesh is not valid due to the following problems:\n'
