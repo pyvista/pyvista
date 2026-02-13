@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
+import os
+
+import matplotlib as mpl
 import pytest
 
 import pyvista as pv
+
+
+@pytest.fixture(autouse=True, scope='session')
+def matplotlib_headless():
+    """Use a non-interactive Matplotlib backend to avoid Tk issues on Windows CI."""
+    if 'CI' in os.environ:
+        mpl.use('Agg')
 
 
 @pytest.fixture(autouse=True)

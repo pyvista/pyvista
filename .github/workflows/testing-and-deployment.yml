@@ -38,50 +38,32 @@ permissions:
   id-token: none
 
 jobs:
-  cache-vtk-data:
-    name: Cache vtk-data Repo
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # need both self-hosted and github hosted to ensure cache is local to runners
-          - runner-labels: "ubuntu-22.04-self-hosted"
-          - runner-labels: "ubuntu-22.04"
+  # Cache vtk-data for each runner separately
+  # Runner labels should match the actual runners used by the different jobs in this file
 
-    runs-on: ${{ matrix.runner-labels }}
-    outputs:
-      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
-    steps:
-      - name: Get vtk-data commit
-        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+  # GitHub-hosted runners can re-use the cache across OS's.
+  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
+  cache-github-hosted:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
 
-      - name: Test if the example data cache exists
-        id: restore-cache-vtk-data
-        uses: actions/cache/restore@v5
-        with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
-          lookup-only: true
-
-      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
-        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        uses: actions/checkout@v6
-        with:
-          repository: pyvista/vtk-data
-          path: ${{ env.CACHE_FOLDER_NAME }}
-
-      - name: Create the example data cache
-        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        id: save-cache-vtk-data
-        uses: actions/cache/save@v5
-        with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
-          enableCrossOsArchive: true
+  # For self-hosted runners, we need to cache each runner separately
+  cache-macOS-self-hosted:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "macos-15-self-hosted"
+  cache-ubuntu-self-hosted:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "ubuntu-22.04-self-hosted"
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-vtk-data
+    needs: cache-macOS-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -123,11 +105,11 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-      - name: Restore example data cache
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -157,7 +139,7 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-vtk-data
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
 
@@ -209,11 +191,11 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Cache example data
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -262,7 +244,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04-self-hosted
-    needs: cache-vtk-data
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -284,11 +266,11 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Cache example data
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -326,7 +308,7 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-vtk-data
+    needs: cache-github-hosted
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -345,11 +327,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Cache example data
+      - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Set up headless display
