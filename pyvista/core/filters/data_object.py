@@ -835,7 +835,7 @@ class DataObjectFilters:
         validation_fields: _MeshValidationOptions | None = None,
         action: _MeshValidator._ActionOptions | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
-        """Validate this mesh's array data, cells, and points.
+        """Validate this mesh's array data, points, and cells.
 
         This method returns a ``MeshValidationReport`` dataclass with information about the
         validity of a mesh. The dataclass contains validation fields which are specific to the
@@ -883,7 +883,7 @@ class DataObjectFilters:
         - ``non_planar_faces``: Ensure vertices for a face all lie in the same plane.
         - ``wrong_number_of_points``: Ensure each cell has the minimum number of points needed to
           describe it.
-        - ``zero_size``': Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
+        - ``zero_size``: Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
           respectively.
 
         .. note::
@@ -924,16 +924,16 @@ class DataObjectFilters:
         Parameters
         ----------
         validation_fields : str | sequence[str], default: ('data', 'cells', 'points')
-            Select which field(s) to include in the validation report. All data, cell, and point
+            Select which field(s) to include in the validation report. All data, point, and cell
             fields are included by default. Specify individual fields by name, or use group name(s)
             to include multiple related validation fields:
 
             - ``'data'`` to include all data fields
-            - ``'cells'`` to include all cell fields
             - ``'points'`` to include all point fields
+            - ``'cells'`` to include all cell fields
             - ``'memory_safe'`` to include all fields that, if invalid, may cause a segmentation
-              fault and crash Python. This option includes ``point_data_wrong_length``,
-              ``cell_data_wrong_length``, and ``invalid_point_references``.
+              fault and crash Python. This option includes ``cell_data_wrong_length``,
+              ``point_data_wrong_length``, and ``invalid_point_references``.
 
             Fields that are excluded from the report will have a value of ``None``.
 
