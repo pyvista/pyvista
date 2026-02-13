@@ -34,14 +34,10 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .filters import DataObjectFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
-from .filters.data_object import _MeshValidationOptions
-from .filters.data_object import _MeshValidationReport
-from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
@@ -74,7 +70,7 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
-
+    from .filters.data_object import _MeshValidationOptions
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -554,23 +550,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     def cell_validator(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
-
-    @wraps(DataObjectFilters.validate_mesh)
-    def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
-        self: Self,
-        validation_fields: _MeshValidationOptions | None = None,
-        *args,
-        **kwargs,
-    ) -> _MeshValidationReport[Self]:
-        """Wrap validate_mesh with cell-related fields removed."""
-        if validation_fields is None:
-            fields: list[_MeshValidator._AllValidationOptions] = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            fields.remove('unused_points')
-            return DataSet.validate_mesh(self, fields, *args, **kwargs)
-        return DataSet.validate_mesh(self, validation_fields, *args, **kwargs)
 
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
