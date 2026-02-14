@@ -178,39 +178,39 @@ _ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: P
 
 _NestedStrings = str | Sequence['_NestedStrings']
 
+_ActionOptions = Literal['warn', 'error']
+_DataFields = Literal[
+    'cell_data_wrong_length',
+    'point_data_wrong_length',
+]
+_PointFields = Literal[
+    'non_finite_points',
+    'unused_points',
+]
+_CellFields = Literal[
+    'coincident_points',
+    'degenerate_faces',
+    'intersecting_edges',
+    'intersecting_faces',
+    'invalid_point_references',
+    'inverted_faces',
+    'negative_size',
+    'non_contiguous_edges',
+    'non_convex',
+    'non_planar_faces',
+    'wrong_number_of_points',
+    'zero_size',
+]
+_MemorySafeFields = Literal[
+    'cell_data_wrong_length',
+    'invalid_point_references',
+    'point_data_wrong_length',
+]
+_DefaultFieldGroups = Literal['data', 'points', 'cells']
+_OtherFieldGroups = Literal['memory_safe']
+
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
-    _ActionOptions = Literal['warn', 'error']
-    _DataFields = Literal[
-        'cell_data_wrong_length',
-        'point_data_wrong_length',
-    ]
-    _PointFields = Literal[
-        'non_finite_points',
-        'unused_points',
-    ]
-    _CellFields = Literal[
-        'coincident_points',
-        'degenerate_faces',
-        'intersecting_edges',
-        'intersecting_faces',
-        'invalid_point_references',
-        'inverted_faces',
-        'negative_size',
-        'non_contiguous_edges',
-        'non_convex',
-        'non_planar_faces',
-        'wrong_number_of_points',
-        'zero_size',
-    ]
-    _MemorySafeFields = Literal[
-        'cell_data_wrong_length',
-        'invalid_point_references',
-        'point_data_wrong_length',
-    ]
-    _DefaultFieldGroups = Literal['data', 'points', 'cells']
-    _OtherFieldGroups = Literal['memory_safe']
-
     _allowed_data_fields = get_args(_DataFields)
     _allowed_point_fields = get_args(_PointFields)
     _allowed_cell_fields = get_args(_CellFields)
@@ -255,9 +255,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         allowed_data_fields = _MeshValidator._allowed_data_fields
         allowed_point_fields = _MeshValidator._allowed_point_fields
         allowed_cell_fields = _MeshValidator._allowed_cell_fields
-        data_fields_to_validate: list[_MeshValidator._DataFields] = []
-        point_fields_to_validate: list[_MeshValidator._PointFields] = []
-        cell_fields_to_validate: list[_MeshValidator._CellFields] = []
+        data_fields_to_validate: list[_DataFields] = []
+        point_fields_to_validate: list[_PointFields] = []
+        cell_fields_to_validate: list[_CellFields] = []
 
         if validation_fields is not None and exclude_fields is not None:
             msg = 'validation_fields and exclude_fields cannot both be set.'
@@ -290,7 +290,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 input_fields.remove('memory_safe')
                 memory_safe_fields = (
                     field
-                    for field in get_args(_MeshValidator._MemorySafeFields)
+                    for field in get_args(_MemorySafeFields)
                     if field not in validation_fields
                 )
                 input_fields.extend(memory_safe_fields)
@@ -658,11 +658,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
 
 _LiteralMeshValidationFields = (
-    _MeshValidator._DataFields
-    | _MeshValidator._PointFields
-    | _MeshValidator._CellFields
-    | _MeshValidator._DefaultFieldGroups
-    | _MeshValidator._OtherFieldGroups
+    _DataFields | _PointFields | _CellFields | _DefaultFieldGroups | _OtherFieldGroups
 )
 # Document the input fields
 MeshValidationFields = _LiteralMeshValidationFields | CellStatus
@@ -866,7 +862,7 @@ class DataObjectFilters:
     def validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         validation_fields: _NestedMeshValidationFields | None = None,
-        action: _MeshValidator._ActionOptions | None = None,
+        action: _ActionOptions | None = None,
         *,
         exclude_fields: _NestedMeshValidationFields | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
@@ -1198,10 +1194,10 @@ class DataObjectFilters:
             if fields is None:
                 return None
             elif isinstance(fields, CellStatus):
-                return cast('_MeshValidator._CellFields', fields.name.lower())
+                return cast('_CellFields', fields.name.lower())
             elif isinstance(fields, Sequence) and not isinstance(fields, str):  # type: ignore[redundant-expr]
                 return [
-                    cast('_MeshValidator._CellFields', field.name.lower())
+                    cast('_CellFields', field.name.lower())
                     if isinstance(field, CellStatus)
                     else field
                     for field in fields
@@ -1209,7 +1205,7 @@ class DataObjectFilters:
             return fields
 
         if action is not None:
-            allowed = get_args(_MeshValidator._ActionOptions)
+            allowed = get_args(_ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
 
         report = _MeshValidator(
