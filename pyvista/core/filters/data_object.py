@@ -657,13 +657,32 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         return self._validation_report
 
 
-_LiteralMeshValidationFields = (
-    _MeshValidator._DataFields
-    | _MeshValidator._PointFields
-    | _MeshValidator._CellFields
-    | _MeshValidator._DefaultFieldGroups
-    | _MeshValidator._OtherFieldGroups
-)
+_LiteralMeshValidationFields = Literal[
+    # data
+    'cell_data_wrong_length',
+    'point_data_wrong_length',
+    # points
+    'non_finite_points',
+    'unused_points',
+    # cells
+    'coincident_points',
+    'degenerate_faces',
+    'intersecting_edges',
+    'intersecting_faces',
+    'invalid_point_references',
+    'inverted_faces',
+    'negative_size',
+    'non_contiguous_edges',
+    'non_convex',
+    'non_planar_faces',
+    'wrong_number_of_points',
+    'zero_size',
+    # field groups
+    'data',
+    'points',
+    'cells',
+    'memory_safe',
+]
 # Document the input fields
 MeshValidationFields = _LiteralMeshValidationFields | CellStatus
 # Create alias for reuse/export to other modules
