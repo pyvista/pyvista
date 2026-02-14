@@ -136,6 +136,11 @@ plot_cell(hexahedron)
 print(report.invalid_fields)
 
 # %%
+# Note that the invalid fields may differ across VTK versions or even operating systems.
+# If a cell is invalid, there are sometimes multiple inter-related issues that may be
+# reported.
+
+# %%
 # From the plot above, we can visually confirm these issues since some faces appear to
 # intersect, and others appear to be "folded" and hence there are non-planar. To
 # investigate the ``'inverted_faces'`` problem further, let's plot the cell again with
