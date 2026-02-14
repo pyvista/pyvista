@@ -225,8 +225,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def __init__(
         self,
         mesh: _DataSetOrMultiBlockType,
-        validation_fields: _NestedMeshValidationFields | None = None,
-        exclude_fields: _NestedMeshValidationFields | None = None,
+        validation_fields: _LiteralMeshValidationFields
+        | Sequence[_LiteralMeshValidationFields]
+        | None = None,
+        exclude_fields: _LiteralMeshValidationFields
+        | Sequence[_LiteralMeshValidationFields]
+        | None = None,
     ) -> None:
         if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
             validation_fields = [
@@ -653,13 +657,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         return self._validation_report
 
 
-MeshValidationFields = (
+_LiteralMeshValidationFields = (
     _MeshValidator._DataFields
     | _MeshValidator._PointFields
     | _MeshValidator._CellFields
     | _MeshValidator._DefaultFieldGroups
     | _MeshValidator._OtherFieldGroups
 )
+# Document the input fields
+MeshValidationFields = _LiteralMeshValidationFields | CellStatus
 # Create alias for reuse/export to other modules
 _NestedMeshValidationFields = MeshValidationFields | Sequence[MeshValidationFields]
 
@@ -1184,10 +1190,32 @@ class DataObjectFilters:
         [1013, 1532, 3250]
 
         """
+
+        def _convert_cell_status(
+            fields: _NestedMeshValidationFields | None,
+        ) -> _LiteralMeshValidationFields | Sequence[_LiteralMeshValidationFields] | None:
+            """Convert any CellStatus enums to strings."""
+            if fields is None:
+                return None
+            elif isinstance(fields, CellStatus):
+                return cast('_MeshValidator._CellFields', fields.name.lower())
+            elif isinstance(fields, Sequence) and not isinstance(fields, str):  # type: ignore[redundant-expr]
+                return [
+                    cast('_MeshValidator._CellFields', field.name.lower())
+                    if isinstance(field, CellStatus)
+                    else field
+                    for field in fields
+                ]
+            return fields
+
         if action is not None:
             allowed = get_args(_MeshValidator._ActionOptions)
             _validation.check_contains(allowed, must_contain=action, name='action')
-        report = _MeshValidator(self, validation_fields, exclude_fields).validation_report
+
+        report = _MeshValidator(
+            self, _convert_cell_status(validation_fields), _convert_cell_status(exclude_fields)
+        ).validation_report
+
         if action is not None and (message := report.message) is not None:
             if action == 'warn':
                 warn_external(message, pv.InvalidMeshWarning)

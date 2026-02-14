@@ -180,6 +180,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*CellsLike'),
     (r'py:.*', '.*ShapeLike'),
     (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*MeshValidationFields'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
     (r'py:.*', '.*_PolyDataType'),
