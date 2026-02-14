@@ -7571,6 +7571,103 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         return cast('_vtk.vtkActor', actor)
 
+    def add_dimension_line(
+        self,
+        pointa,
+        pointb,
+        offset,
+        font_size=None,
+        text_color=None,
+        shape_color='grey',
+    ):
+        """Add a dimension line of a PyVista or VTK dataset to the scene.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Length 3 coordinate of the start of the line.
+
+        pointb : sequence[float]
+            Length 3 coordinate of the end of the line.
+
+        offset : sequence[float]
+            Offset vector for dimension line.
+
+        font_size : float, optional
+            Sets the size of the title font.
+
+        text_color : ColorLike, optional
+            Color of text. Either a string, RGB sequence, or hex color string.
+
+            * ``text_color='white'``
+            * ``text_color='w'``
+            * ``text_color=[1.0, 1.0, 1.0]``
+            * ``text_color='#FFFFFF'``
+
+        shape_color : ColorLike, default: "grey"
+            Color of label shape.  Either a string, rgb
+            sequence, or hex color string.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> pointa = [1.0, 0.0, 0.0]
+        >>> pointb = [1.0, 1.0, 0.0]
+        >>> pointc = [0.0, 1.0, 0.0]
+        >>> rectangle = pyvista.Rectangle([pointa, pointb, pointc])
+        >>> plotter = pyvista.Plotter()
+        >>> _ = plotter.add_mesh(rectangle, show_edges=True, line_width=5)
+        >>> _ = plotter.add_dimension_line(
+        ...     pointa, pointb, [0.1, 0.0, 0.0], shape_color="white"
+        ... )
+        >>> _ = plotter.add_dimension_line(
+        ...     pointb, pointc, [0.0, 0.1, 0.0], shape_color="white"
+        ... )
+        >>> plotter.show()
+        """
+
+        # Define the lines
+        pointa = np.asarray(pointa)
+        pointb = np.asarray(pointb)
+        offset = np.asarray(offset)
+        pointc = pointa + offset
+        pointd = pointb + offset
+        lines = np.array([pointc, pointd])
+
+        # Create multiple lines and set the offset vector
+        mlines = pyvista.MultipleLines(lines)
+        mlines["Normal"] = np.array([offset, offset])
+
+        # Create extension lines
+        arrows = mlines.glyph(geom=pyvista.Line(), scale="Normal", factor=1.0, orient="Normal")
+
+        # Define the midpoints between pointa and pointb
+        pointe = (pointc + pointd) / 2.0
+
+        # Define the label for the line
+        labels = np.array([str(np.linalg.norm(pointb - pointa))])
+
+        # Add the label and line to the plot
+        # text = self.add_point_labels(
+        #     points=pointe, labels=labels, shape_color=shape_color, text_color=text_color
+        # )
+        _ = self.add_point_labels(
+            points=pointe,
+            labels=labels,
+            shape_color=shape_color,
+            text_color=text_color,
+        )
+        # lines = self.add_lines(lines, color="black", width=2)
+        _ = self.add_lines(lines, color="black", width=2)
+
+        # Add the arrow to the plot
+        # mesh = self.add_mesh(arrows, color="black")
+        _ = self.add_mesh(arrows, color="black")
+
+        # TODO Once each Actor corresponds to a MultiBlock, return the merged Actor.
+        # blocks = pyvista.MultiBlock([text, lines, mesh])
+        # actor = blocks.combine()
+
     @property
     def meshes(
         self,
