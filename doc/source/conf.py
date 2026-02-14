@@ -129,6 +129,7 @@ extensions = [
 autodoc_type_aliases = {
     'CameraPositionOptions': 'pyvista.CameraPositionOptions',
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
+    'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
