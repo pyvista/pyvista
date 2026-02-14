@@ -180,6 +180,10 @@ class GPUInfo:
         content += '\n'
         return content
 
+    def __str__(self):
+        """Return string representation of GPUInfo."""
+        return f'GPUInfo(vendor={self.vendor}, renderer={self.renderer}, version={self.version})'
+
 
 @_deprecate_positional_args
 class Report(scooby.Report):
