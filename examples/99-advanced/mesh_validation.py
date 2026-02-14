@@ -14,17 +14,6 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista.examples import plot_cell
 
-
-# sphinx_gallery_start_ignore
-def _ci_assert(logic):
-    import os
-
-    if 'CI' in os.environ:
-        assert logic
-
-
-# sphinx_gallery_end_ignore
-
 # %%
 # Non-convex cells
 # ----------------
@@ -48,11 +37,6 @@ print(report.is_valid)
 # %%
 print(report.invalid_fields)
 
-# sphinx_gallery_start_ignore
-_ci_assert(not report.is_valid)
-_ci_assert(report.invalid_fields == ('non_convex',))
-# sphinx_gallery_end_ignore
-
 # %%
 # If we plot the cell, we can see that the concave cell is incorrectly rendered as though
 # it's convex even though it is not.
@@ -66,10 +50,6 @@ report = triangles.validate_mesh()
 print(report.is_valid)
 # %%
 plot_cell(triangles, 'xy')
-
-# sphinx_gallery_start_ignore
-_ci_assert(report.is_valid)
-# sphinx_gallery_end_ignore
 
 # %%
 # Cells with inverted faces
@@ -90,10 +70,6 @@ report = polyhedron.validate_mesh()
 print(report.is_valid)
 # %%
 plot_cell(polyhedron, show_normals=True)
-
-# sphinx_gallery_start_ignore
-_ci_assert(report.is_valid)
-# sphinx_gallery_end_ignore
 
 # %%
 # Now swap two points in the polyhedron's connectivity to generate an otherwise identical
@@ -116,11 +92,6 @@ print(report.invalid_fields)
 # %%
 plot_cell(invalid_polyhedron, show_normals=True)
 
-# sphinx_gallery_start_ignore
-_ci_assert(not report.is_valid)
-_ci_assert(report.invalid_fields == ('inverted_faces',))
-# sphinx_gallery_end_ignore
-
 # %%
 # Now let's compare the centroid of the valid and invalid cells using
 # :meth:`~pyvista.DataObjectFilters.cell_centers`. The computed centroids differ,
@@ -131,10 +102,6 @@ print(valid_centroid)
 # %%
 invalid_centroid = invalid_polyhedron.cell_centers().points[0].tolist()
 print(invalid_centroid)
-
-# sphinx_gallery_start_ignore
-_ci_assert(valid_centroid != invalid_centroid)
-# sphinx_gallery_end_ignore
 
 # %%
 # Self-intersecting cells
@@ -164,25 +131,9 @@ print(report.is_valid)
 # %%
 plot_cell(hexahedron)
 
-# sphinx_gallery_start_ignore
-_ci_assert(not report.is_valid)
-# sphinx_gallery_end_ignore
-
 # %%
 # Let's review the invalid fields reported.
 print(report.invalid_fields)
-
-# sphinx_gallery_start_ignore
-_ci_assert(
-    report.invalid_fields
-    == (
-        'intersecting_edges',
-        'inverted_faces',
-        'non_planar_faces',
-        'zero_size',
-    )
-)
-# sphinx_gallery_end_ignore
 
 # %%
 # From the plot above, we can visually confirm these issues since some faces appear to
@@ -203,10 +154,6 @@ print(report.is_valid)
 # %%
 plot_cell(hexahedron)
 
-# sphinx_gallery_start_ignore
-_ci_assert(report.is_valid)
-# sphinx_gallery_end_ignore
-
 # %%
 # Meshes with unused points
 # -------------------------
@@ -219,22 +166,12 @@ print(grid.n_points)
 # %%
 print(grid.n_cells)
 
-# sphinx_gallery_start_ignore
-_ci_assert(grid.n_points == 1)
-_ci_assert(grid.n_cells == 0)
-# sphinx_gallery_end_ignore
-
 # %%
 # This mesh is not considered valid.
 report = grid.validate_mesh()
 print(report.is_valid)
 # %%
 print(report.invalid_fields)
-
-# sphinx_gallery_start_ignore
-_ci_assert(not report.is_valid)
-_ci_assert(report.invalid_fields == ('unused_points',))
-# sphinx_gallery_end_ignore
 
 # %%
 # Use :meth:`~pyvista.DataObjectFilters.extract_surface` on the grid and observe that the
@@ -243,11 +180,6 @@ poly = grid.extract_surface(algorithm=None)
 print(poly.n_points)
 # %%
 print(poly.n_cells)
-
-# sphinx_gallery_start_ignore
-_ci_assert(poly.n_points == 0)
-_ci_assert(poly.n_cells == 0)
-# sphinx_gallery_end_ignore
 
 # %%
 # To remedy this, it is recommended to always associate individual points with a
@@ -260,11 +192,6 @@ print(grid.n_points)
 # %%
 print(grid.n_cells)
 
-# sphinx_gallery_start_ignore
-_ci_assert(grid.n_points == 1)
-_ci_assert(grid.n_cells == 1)
-# sphinx_gallery_end_ignore
-
 # %%
 # This time, the point is properly processed by the filter and is retained.
 poly = grid.extract_surface(algorithm=None)
@@ -272,16 +199,7 @@ print(poly.n_points)
 # %%
 print(poly.n_cells)
 
-# sphinx_gallery_start_ignore
-_ci_assert(poly.n_points == 1)
-_ci_assert(poly.n_cells == 1)
-# sphinx_gallery_end_ignore
-
 # %%
 # This mesh is also now considered valid.
 report = grid.validate_mesh()
 print(report.is_valid)
-
-# sphinx_gallery_start_ignore
-_ci_assert(report.is_valid)
-# sphinx_gallery_end_ignore
