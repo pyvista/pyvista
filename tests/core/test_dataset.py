@@ -27,6 +27,13 @@ if TYPE_CHECKING:
 
     from pyvista.core.dataset import DataSet
 
+HIDDEN_CELL_MESH_TYPES = [
+    pv.ImageData,
+    pv.StructuredGrid,
+    pv.ExplicitStructuredGrid,
+    pv.UnstructuredGrid,
+]
+
 
 def test_invalid_copy_from(hexbeam):
     with pytest.raises(TypeError):
@@ -1676,3 +1683,59 @@ def test_has_nonlinear_cells():
 
     assert not pv.UnstructuredGrid().has_nonlinear_cells
     assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells
+
+
+def _cast_hidden_cells_mesh(mesh, mesh_type):
+    if mesh_type is pv.ImageData:
+        out = mesh.copy()
+    elif mesh_type is pv.StructuredGrid:
+        out = mesh.cast_to_structured_grid()
+    elif mesh_type is pv.ExplicitStructuredGrid:
+        out = mesh.cast_to_explicit_structured_grid()
+    elif mesh_type is pv.UnstructuredGrid:
+        # Ensure we have hexahedron cells
+        out = mesh.cast_to_unstructured_grid()
+    assert out is not mesh
+    assert type(out) is mesh_type
+    return out
+
+
+@pytest.mark.parametrize('mesh_type', HIDDEN_CELL_MESH_TYPES)
+def test_hidden_cells_mixin(mesh_type):
+    single_cell = pv.ImageData(dimensions=(2, 2, 2))
+
+    single_cell_cast = _cast_hidden_cells_mesh(single_cell, mesh_type)
+    assert not single_cell_cast.has_hidden_cells
+    assert single_cell_cast.hidden_cell_ids.tolist() == []
+    assert single_cell_cast.hidden_cell_ids.dtype == 'int'
+    assert single_cell_cast.visible_bounds == pv.BoundsTuple(
+        x_min=0.0, x_max=1.0, y_min=0.0, y_max=1.0, z_min=0.0, z_max=1.0
+    )
+
+    hidden = single_cell_cast.hide_cells(0)
+    assert type(hidden) is mesh_type
+    assert hidden.has_hidden_cells
+    assert hidden.hidden_cell_ids.tolist() == [0]
+    assert hidden.hidden_cell_ids.dtype == 'int'
+    assert hidden.visible_bounds == pv.BoundsTuple(
+        x_min=1e299, x_max=-1e299, y_min=1e299, y_max=-1e299, z_min=1e299, z_max=-1e299
+    )
+    assert hidden.n_cells == 1
+
+    # Test hide all cells by default
+    hidden_no_args = single_cell_cast.hide_cells()
+    assert hidden_no_args == hidden
+
+    ugrid_hidden = hidden.cast_to_unstructured_grid()
+    assert ugrid_hidden.hidden_cell_ids.tolist() == [0]
+    assert pv.CellType.EMPTY_CELL not in ugrid_hidden.celltypes
+
+    # Test hidden cells are preserved with merge filter
+    merged = hidden.merge(ugrid_hidden)
+    assert merged.has_hidden_cells
+    assert merged.hidden_cell_ids.tolist() == [0, 1]
+
+    # Test reversed merge order
+    merged = ugrid_hidden.merge(hidden)
+    assert merged.has_hidden_cells
+    assert merged.hidden_cell_ids.tolist() == [0, 1]
