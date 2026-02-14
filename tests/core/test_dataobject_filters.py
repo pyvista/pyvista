@@ -1577,6 +1577,17 @@ def test_validate_mesh_exclude_fields():
         mesh.validate_mesh('points', exclude_fields='cells')
 
 
+def test_validate_mesh_cell_status():
+    mesh = pv.PolyData()
+    report_enum = mesh.validate_mesh(pv.CellStatus.DEGENERATE_FACES)
+    report_str = mesh.validate_mesh('degenerate_faces')
+    assert str(report_enum) == str(report_str)
+
+    report_enum = mesh.validate_mesh(['unused_points', pv.CellStatus.DEGENERATE_FACES])
+    report_str = mesh.validate_mesh(['unused_points', 'degenerate_faces'])
+    assert str(report_enum) == str(report_str)
+
+
 def test_validate_mesh_message(sphere_with_invalid_arrays):
     assert pv.PolyData().validate_mesh().message is None
     assert sphere_with_invalid_arrays.validate_mesh().message

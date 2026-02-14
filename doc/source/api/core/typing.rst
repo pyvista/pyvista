@@ -117,3 +117,11 @@ Jupyter backend to use.
 .. currentmodule:: pyvista
 
 .. autodata:: JupyterBackendOptions
+
+pyvista.MeshValidationFields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Field options for :meth:`~pyvista.DataObjectFilters.validate_mesh`.
+
+.. currentmodule:: pyvista
+
+.. autodata:: MeshValidationFields
