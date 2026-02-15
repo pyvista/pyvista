@@ -864,7 +864,7 @@ class DataObjectFilters:
         validation_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         action: _ActionOptions | None = None,
         *,
-        exclude_fields: MeshValidationFields | None = None,
+        exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
