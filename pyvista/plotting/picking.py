@@ -232,9 +232,8 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         """
         mesh = self.get_mesh()
         pid = mesh.find_closest_point(picked_point)
-        picked = pv.PolyData(mesh.points[pid])
-        picked.point_data['vtkOriginalPointIds'] = np.array([pid])
-        return picked
+        picked = mesh.extract_points(pid, adjacent_cells=False, include_cells=False)
+        return picked.cast_to_poly_points()
 
     def __call__(self, picked_point, picker):
         """Perform the pick."""
