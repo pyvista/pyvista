@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
+from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
@@ -23,6 +24,11 @@ from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .opts import ElementType
 from .opts import PickerType
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from pyvista.core.pointset import PolyData
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',
