@@ -655,6 +655,7 @@ def test_element_picking(mode):
 
 def test_element_picking_point_preserves_data():
     """Test that point picking with element handler preserves point data."""
+
     class Tracker:
         def __init__(self):
             self.last_picked = None
@@ -702,7 +703,9 @@ def test_element_picking_point_preserves_data():
     assert 0 <= original_id < mesh.n_points
 
     # Verify the point data values match the original mesh
-    assert tracker.last_picked.point_data['test_data'][0] == mesh.point_data['test_data'][original_id]
+    assert (
+        tracker.last_picked.point_data['test_data'][0] == mesh.point_data['test_data'][original_id]
+    )
     assert np.isclose(
         tracker.last_picked.point_data['test_scalars'][0],
         mesh.point_data['test_scalars'][original_id],
