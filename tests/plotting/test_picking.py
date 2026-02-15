@@ -653,6 +653,62 @@ def test_element_picking(mode):
         assert tracker.last_picked.n_points == 1
 
 
+def test_element_picking_point_preserves_data():
+    """Test that point picking with element handler preserves point data."""
+    class Tracker:
+        def __init__(self):
+            self.last_picked = None
+
+        def __call__(self, picked):
+            self.last_picked = picked
+
+    tracker = Tracker()
+
+    # Create a mesh with point data
+    mesh = pv.Sphere()
+    mesh.point_data['test_data'] = np.arange(mesh.n_points)
+    mesh.point_data['test_scalars'] = mesh.points[:, 0]  # x-coordinates
+
+    pl = pv.Plotter(window_size=(100, 100))
+    pl.add_mesh(mesh)
+    pl.enable_element_picking(
+        mode='point',
+        show_message=True,
+        left_clicking=True,
+        callback=tracker,
+    )
+    pl.show(auto_close=False)
+
+    # Simulate the pick
+    width, height = pl.window_size
+    pl.iren._mouse_left_button_click(width // 2, height // 2)
+
+    pl.close()
+
+    # Verify the picked point exists and is a PolyData
+    assert tracker.last_picked is not None
+    assert isinstance(tracker.last_picked, pv.PolyData)
+    assert tracker.last_picked.n_points == 1
+
+    # Verify point data is preserved
+    assert 'test_data' in tracker.last_picked.point_data
+    assert 'test_scalars' in tracker.last_picked.point_data
+    assert tracker.last_picked.point_data['test_data'].size == 1
+    assert tracker.last_picked.point_data['test_scalars'].size == 1
+
+    # Verify vtkOriginalPointIds is present
+    assert 'vtkOriginalPointIds' in tracker.last_picked.point_data
+    original_id = tracker.last_picked.point_data['vtkOriginalPointIds'][0]
+    assert 0 <= original_id < mesh.n_points
+
+    # Verify the point data values match the original mesh
+    assert tracker.last_picked.point_data['test_data'][0] == mesh.point_data['test_data'][original_id]
+    assert np.isclose(
+        tracker.last_picked.point_data['test_scalars'][0],
+        mesh.point_data['test_scalars'][original_id],
+    )
+
+
 @pytest.mark.filterwarnings(
     'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
 )
