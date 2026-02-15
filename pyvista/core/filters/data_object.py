@@ -861,10 +861,10 @@ class DataObjectFilters:
 
     def validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        validation_fields: _NestedMeshValidationFields | None = None,
+        validation_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         action: _ActionOptions | None = None,
         *,
-        exclude_fields: _NestedMeshValidationFields | None = None,
+        exclude_fields: MeshValidationFields | None = None,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
