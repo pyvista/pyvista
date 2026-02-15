@@ -216,7 +216,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return edge
 
-    def get_point(self, picked_point):
+    def get_point(self, picked_point: Sequence[float]) -> PolyData:
         """Get the picked point of the picked mesh.
 
         Parameters
