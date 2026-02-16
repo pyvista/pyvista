@@ -129,6 +129,7 @@ extensions = [
 autodoc_type_aliases = {
     'CameraPositionOptions': 'pyvista.CameraPositionOptions',
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
+    'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
@@ -179,6 +180,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*CellsLike'),
     (r'py:.*', '.*ShapeLike'),
     (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*MeshValidationFields'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
     (r'py:.*', '.*_PolyDataType'),
