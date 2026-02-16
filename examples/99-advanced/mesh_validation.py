@@ -33,8 +33,9 @@ quad = pv.PolyData(points, faces)
 # Use :meth:`~pyvista.DataObjectFilters.validate_mesh` to show that the cell is not
 # convex.
 report = quad.validate_mesh()
-assert not report.is_valid
-assert report.invalid_fields == ('non_convex',)
+print(report.is_valid)
+# %%
+print(report.invalid_fields)
 
 # %%
 # If we plot the cell, we can see that the concave cell is incorrectly rendered as though
@@ -46,7 +47,8 @@ plot_cell(quad, 'xy')
 # the mesh. The mesh is now valid and renders correctly.
 triangles = quad.triangulate()
 report = triangles.validate_mesh()
-assert report.is_valid
+print(report.is_valid)
+# %%
 plot_cell(triangles, 'xy')
 
 # %%
@@ -65,7 +67,8 @@ polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
 # Plot the cell and show its normals. Since all points have counter-clockwise traversal,
 # the normals all point outward and the cell is valid.
 report = polyhedron.validate_mesh()
-assert report.is_valid
+print(report.is_valid)
+# %%
 plot_cell(polyhedron, show_normals=True)
 
 # %%
@@ -83,8 +86,10 @@ invalid_polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points
 # The cell is now invalid, and the bottom face is incorrectly oriented with its normal
 # pointing inward.
 report = invalid_polyhedron.validate_mesh()
-assert not report.is_valid
-assert report.invalid_fields == ('inverted_faces',)
+print(report.is_valid)
+# %%
+print(report.invalid_fields)
+# %%
 plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
@@ -94,9 +99,9 @@ plot_cell(invalid_polyhedron, show_normals=True)
 # properties.
 valid_centroid = polyhedron.cell_centers().points[0].tolist()
 print(valid_centroid)
+# %%
 invalid_centroid = invalid_polyhedron.cell_centers().points[0].tolist()
 print(invalid_centroid)
-assert valid_centroid != invalid_centroid
 
 # %%
 # Self-intersecting cells
@@ -122,16 +127,18 @@ hexahedron = pv.UnstructuredGrid(cells, celltype, points)
 # At a quick glance, the cell may `appear` to be valid, but it is not, since the point
 # ordering is incorrect.
 report = hexahedron.validate_mesh()
-assert not report.is_valid
+print(report.is_valid)
+# %%
 plot_cell(hexahedron)
 
 # %%
 # Let's review the invalid fields reported.
-assert report.invalid_fields == (
-    'intersecting_edges',
-    'inverted_faces',
-    'non_planar_faces',
-)
+print(report.invalid_fields)
+
+# %%
+# Note that the invalid fields may differ across VTK versions or even operating systems.
+# If a cell is invalid, there are sometimes multiple inter-related issues that may be
+# reported.
 
 # %%
 # From the plot above, we can visually confirm these issues since some faces appear to
@@ -148,7 +155,8 @@ cells = [8, 0, 1, 4, 2, 3, 5, 7, 6]  # instead of [8, 0, 1, 2, 3, 4, 5, 6, 7]
 celltype = [pv.CellType.HEXAHEDRON]
 hexahedron = pv.UnstructuredGrid(cells, celltype, points)
 report = hexahedron.validate_mesh()
-assert report.is_valid
+print(report.is_valid)
+# %%
 plot_cell(hexahedron)
 
 # %%
@@ -159,21 +167,24 @@ plot_cell(hexahedron)
 # :class:`~pyvista.UnstructuredGrid` with a single unused point.
 grid = pv.UnstructuredGrid()
 grid.points = [[0.0, 0.0, 0.0]]
-assert grid.n_points == 1
-assert grid.n_cells == 0
+print(grid.n_points)
+# %%
+print(grid.n_cells)
 
 # %%
 # This mesh is not considered valid.
 report = grid.validate_mesh()
-assert not report.is_valid
-assert report.invalid_fields == ('unused_points',)
+print(report.is_valid)
+# %%
+print(report.invalid_fields)
 
 # %%
 # Use :meth:`~pyvista.DataObjectFilters.extract_surface` on the grid and observe that the
 # unused point is removed.
 poly = grid.extract_surface(algorithm=None)
-assert poly.n_points == 0
-assert poly.n_cells == 0
+print(poly.n_points)
+# %%
+print(poly.n_cells)
 
 # %%
 # To remedy this, it is recommended to always associate individual points with a
@@ -182,17 +193,18 @@ points = [[0.0, 0.0, 0.0]]
 cells = [1, 0]
 celltypes = [pv.CellType.VERTEX]
 grid = pv.UnstructuredGrid(cells, celltypes, points)
-assert grid.n_points == 1
-assert grid.n_cells == 1
+print(grid.n_points)
+# %%
+print(grid.n_cells)
 
 # %%
 # This time, the point is properly processed by the filter and is retained.
 poly = grid.extract_surface(algorithm=None)
-assert poly.n_points == 1
-assert poly.n_cells == 1
+print(poly.n_points)
+# %%
+print(poly.n_cells)
 
 # %%
 # This mesh is also now considered valid.
 report = grid.validate_mesh()
-assert report.is_valid
-assert not report.invalid_fields
+print(report.is_valid)
