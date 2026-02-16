@@ -3244,7 +3244,6 @@ def test_ssao_pass_from_helper(verify_image_cache):
 
 
 @pytest.mark.skip_windows
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_many_multi_pass(verify_image_cache):
     verify_image_cache.high_variance_test = True
 
