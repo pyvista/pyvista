@@ -466,7 +466,7 @@ def _update_alg(
     if progress_bar:
         from pyvista.core.utilities.observers import ProgressMonitor  # noqa: PLC0415
 
-        msg = message if message else ''
+        msg = message or ''
         with ProgressMonitor(alg, message=msg):
             status = vtk_message_policy._call_function(func)
     else:
