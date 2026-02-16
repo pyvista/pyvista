@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
-    from .filters.data_object import _MeshValidationOptions
+    from .filters.data_object import _NestedMeshValidationFields
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
@@ -90,7 +90,7 @@ class MultiBlock(
     *args : dict, optional
         Data object dictionary.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -156,7 +156,7 @@ class MultiBlock(
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(
-        self: MultiBlock, *args, validate: bool | _MeshValidationOptions = False, **kwargs
+        self: MultiBlock, *args, validate: bool | _NestedMeshValidationFields = False, **kwargs
     ) -> None:
         """Initialize multi block."""
         super().__init__()
