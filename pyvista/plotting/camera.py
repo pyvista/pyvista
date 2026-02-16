@@ -13,6 +13,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .helpers import view_vectors
@@ -652,7 +653,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(planes)
-        frustum_source.Update()
+        _update_alg(frustum_source)
 
         return pv.wrap(frustum_source.GetOutput())
 

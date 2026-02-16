@@ -37,7 +37,6 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
@@ -45,6 +44,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
@@ -4642,7 +4642,7 @@ class DataObjectFilters:
             # ensure all necessary base stats are computed for all cell types and for
             # all 'Size' measures
             mesh_quality.SetTriangleQualityMeasureToShapeAndSize()
-            mesh_quality.Update()
+            _update_alg(mesh_quality)
 
             alg.SetInputDataObject(mesh_quality.GetOutput())
         else:

@@ -30,7 +30,6 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -45,6 +44,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
@@ -177,7 +177,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         icp.SetMaximumNumberOfIterations(max_iterations)
         icp.SetCheckMeanDistance(check_mean_distance)
         icp.SetStartByMatchingCentroids(start_by_matching_centroids)
-        icp.Update()
+        _update_alg(icp)
         matrix = pv.array_from_vtkmatrix(icp.GetMatrix())
         if return_matrix:
             return self.transform(matrix, inplace=False), matrix
@@ -3349,7 +3349,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             point_source.SetNumberOfPoints(n_points)
             alg = point_source
 
-        alg.Update()
+        _update_alg(alg)
         input_source = cast('pv.DataSet', wrap(alg.GetOutput()))
 
         output = self.streamlines_from_source(
@@ -6401,7 +6401,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetNumberOfPartitions(n_partitions)
         alg.SetPreservePartitionsInOutput(True)
         alg.SetGenerateGlobalCellIds(generate_global_id)
-        alg.Update()
+        _update_alg(alg)
 
         # pyvista does not yet support vtkPartitionedDataSet
         part = alg.GetOutput()

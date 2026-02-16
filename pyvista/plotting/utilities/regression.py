@@ -13,6 +13,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
@@ -40,7 +41,7 @@ def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
     ec = _vtk.vtkImageExtractComponents()
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
-    ec.Update()
+    _update_alg(ec)
     vtk_image: _vtk.vtkImageData = ec.GetOutput()
     return pv.wrap(vtk_image)
 
@@ -106,7 +107,7 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     """
     # Update filter and grab pixels
     imfilter.Modified()
-    imfilter.Update()
+    _update_alg(imfilter)
     image = cast('ImageData | None', wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))
@@ -278,7 +279,7 @@ def compare_images(  # noqa: PLR0917
         img_diff.SetImageData(im2_proc)
         img_diff.AllowShiftOff()  # vastly increases compute time when enabled
         # img_diff.AveragingOff()  # increases compute time
-        img_diff.Update()
+        _update_alg(img_diff)
         return img_diff.GetThresholdedError()
 
     # unlikely but possible

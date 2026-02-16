@@ -8,6 +8,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.state_manager import _update_alg
 
 from .helpers import wrap
 
@@ -136,7 +137,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
             The output image.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -231,7 +232,7 @@ class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageM
             The output image.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -381,7 +382,7 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
           The output image.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -582,7 +583,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
             The output image.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -748,7 +749,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
           The output image.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())
 
 
@@ -872,5 +873,5 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
             The output image.
 
         """
-        self.Update()
+        _update_alg(self)
         return wrap(self.GetOutput())

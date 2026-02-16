@@ -17,6 +17,7 @@ from pyvista.core import _vtk_core as _vtk
 
 from .geometric_sources import translate
 from .helpers import wrap
+from .state_manager import _update_alg
 
 if TYPE_CHECKING:
     from pyvista import PolyData
@@ -1473,7 +1474,7 @@ def surface_from_para(  # noqa: PLR0917
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
     para_source.SetGenerateTextureCoordinates(texture_coordinates)
-    para_source.Update()
+    _update_alg(para_source)
     surf = wrap(para_source.GetOutput())
     if clean:
         surf = surf.clean(

@@ -62,7 +62,8 @@ def is_all_floats(iterable: Iterable):
 def try_init_object(class_, kwargs):
     # Init object but skip if abstract
     try:
-        instance = class_(**kwargs)
+        with pv.vtk_verbosity('off'):
+            instance = class_(**kwargs)
     except VTKVersionError:
         pytest.skip('VTK Version not supported.')
     except TypeError as e:

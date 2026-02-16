@@ -98,7 +98,8 @@ def try_init_pyvista_object(class_):
     # Init object but skip if abstract
     kwargs = get_default_class_init_kwargs(class_)
     try:
-        instance = class_(**kwargs)
+        with pv.vtk_verbosity('off'):
+            instance = class_(**kwargs)
     except (ImportError, VTKVersionError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:

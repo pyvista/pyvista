@@ -6,6 +6,7 @@ from abc import ABC
 from abc import abstractmethod
 import contextlib
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
@@ -14,11 +15,18 @@ from typing import final
 from typing import get_args
 from typing import overload
 
+import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core import _vtk_utilities
+from pyvista.core.utilities.observers import VtkErrorCatcher
 
 if TYPE_CHECKING:
+    from typing import Protocol
+
     from typing_extensions import Self
+
+    class _Updatable(Protocol):
+        def Update(self) -> None | bool: ...  # noqa: N802
 
 
 T = TypeVar('T')
@@ -131,10 +139,10 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
         self._original_state = None  # Reset
 
     @overload
-    def __call__(self: Self, state: None) -> T: ...
+    def __call__(self: Self) -> T: ...
     @overload
-    def __call__(self: Self, state: T) -> Self: ...
-    def __call__(self: Self, state: T | None = None) -> Self | T:
+    def __call__(self: Self, state: T, **kwargs) -> Self: ...
+    def __call__(self: Self, state: T | None = None, **kwargs) -> Self | T:
         """Call the context manager."""
         if state is None:
             return self._state
@@ -142,7 +150,7 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
         self._validate_state(state)
 
         # Create new instance and store the local state to be restored when exiting
-        output = self.__class__()
+        output = self.__class__(**kwargs)
         output._original_state = self._state
         output._state = state
         return output
@@ -307,6 +315,170 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
 
 vtk_snake_case = _vtkSnakeCase()
+
+
+_VTKMessagePolicyOptions = Literal['mixed', 'warning', 'error', 'off']
+
+
+class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
+    """Context manager to control access to VTK's pythonic snake_case API.
+
+    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
+    of `GetOutputPort`. These can easily be confused for PyVista attributes
+    which also use a snake_case convention. This class controls access to vtk's
+    new interface.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    state : 'allow' | 'warning' | 'error'
+        Allow or disallow the use of VTK's pythonic snake_case API with
+        PyVista-wrapped VTK classes.
+
+        - 'allow': Allow accessing VTK-defined snake_case attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+          attributes.
+        - 'error': Raise a ``PyVistaAttributeError`` when accessing
+          VTK-defined snake_case attributes.
+
+    Examples
+    --------
+    Get the current access state for VTK's snake_case api.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_snake_case()
+    'error'
+
+    The following will raise an error because the `information` property is defined
+    by :vtk:`vtkDataObject` and is not part of PyVista's API.
+
+    >>> # pv.PolyData().information
+
+    Allow use of VTK's snake_case attributes. No warning or error is raised.
+
+    >>> _ = pv.vtk_snake_case('allow')
+    >>> pv.PolyData().information
+    <vtkmodules.vtkCommonCore.vtkInformation...
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.vtk_snake_case('error')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.vtk_snake_case('allow'):
+    ...     _ = pv.PolyData().information
+
+    >>> pv.vtk_snake_case()
+    'error'
+
+    """
+
+    send_to_logging: bool = False
+
+    _error_catcher = VtkErrorCatcher()
+
+    def __init__(self, *, send_to_logging: bool | None = None) -> None:
+        super().__init__()
+        if send_to_logging is not None:
+            self.send_to_logging = send_to_logging
+
+    @property
+    def _state(self) -> _VTKMessagePolicyOptions:
+        import pyvista as pv  # noqa: PLC0415
+
+        return pv._VTK_MESSAGE_POLICY_STATE
+
+    @_state.setter
+    def _state(self, state: _VTKMessagePolicyOptions) -> None:
+        import pyvista as pv  # noqa: PLC0415
+
+        pv._VTK_MESSAGE_POLICY_STATE = state
+        if state == 'off':
+            self._error_catcher._stop_observing()
+        else:
+            self._error_catcher._start_observing()
+
+    def _call_function(self, func, *args, **kwargs):  # noqa: ANN001, ANN202
+        import pyvista as pv  # noqa: PLC0415
+
+        if pv.vtk_verbosity() == 'off':
+            return func(*args, **kwargs)
+        with pv.VtkErrorCatcher(
+            raise_errors=False, emit_warnings=False, send_to_logging=self.send_to_logging
+        ) as catcher:
+            output = func(*args, **kwargs)
+            warning_msg = catcher._runtime_warning_message
+            error_msg = catcher._runtime_error_message
+
+            message_policy = pv._VTK_MESSAGE_POLICY_STATE
+            preamble = (
+                f'The following VTK event(s) were detected by PyVista while calling {func}:\n'
+            )
+            if message_policy == 'warning':
+                # Combine messages and emit warning
+                message = f'{warning_msg}\n{error_msg}'.strip()
+                if message:
+                    catcher._emit_warning(preamble + message)
+            elif message_policy == 'error':
+                # Combine messages and raise error
+                message = f'{warning_msg}\n{error_msg}'.strip()
+                if message:
+                    catcher._raise_error(preamble + message)
+            elif message_policy == 'mixed':
+                # Emit warnings as warnings
+                if warning_msg:
+                    catcher._emit_warning(preamble + warning_msg)
+                # Raise errors as errors
+                if error_msg:
+                    catcher._raise_error(preamble + error_msg)
+
+                # def emit_warning(self, msg) -> None:
+                #     """Parse different event types and passes them to logging."""
+                #     msg = f'The following VTK event was detected by PyVista:\n{msg}'
+                #     warnings.warn(msg, pyvista.VTKRuntimeWarning)
+        return output
+
+
+vtk_message_policy = _VTKMessagePolicy()
+
+
+def _update_alg(
+    alg: _Updatable, *, progress_bar: bool = False, message: str | None = None
+) -> None:
+    """Update an algorithm with or without a progress bar."""
+    # Get the status of the alg update using GetExecutive
+    # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
+    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
+        to_be_updated: Any = alg
+    else:
+        try:
+            to_be_updated = alg.GetExecutive()
+        except AttributeError:
+            # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
+            to_be_updated = alg
+
+    # Do the update
+    func = to_be_updated.Update
+    if progress_bar:
+        from pyvista.core.utilities.observers import ProgressMonitor  # noqa: PLC0415
+
+        msg = message or ''
+        with ProgressMonitor(alg, message=msg):
+            status = vtk_message_policy._call_function(func)
+    else:
+        status = vtk_message_policy._call_function(func)
+
+    if status is not None and status == 0:
+        # There was an error with the update. Re-run so we can catch it and
+        # raise it as a proper Python error.
+        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
+        # with VTK observers can be slow.
+        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
+            func()
 
 
 _AllowNewAttributesOptions = Literal['private', True, False]

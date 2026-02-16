@@ -38,7 +38,6 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
-from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -75,6 +74,7 @@ from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.core.utilities.transform import Transform
 from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
@@ -564,6 +564,7 @@ def test_voxelize_fit_bounds(function, uniform):
     assert np.isclose(vox.bounds.z_max, uniform.bounds.z_max)
 
 
+@pytest.mark.skip_catch_vtk_errors
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
@@ -930,9 +931,11 @@ def test_update_alg_raises():
     from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
 
     reader = vtkXMLPolyDataReader()
+
     reader.SetFileName('this_file_does_not_exist.vtp')
-    with pytest.raises(pv.VTKExecutionError):
-        _update_alg(reader)
+    with pv.vtk_message_policy('off'):
+        with pytest.raises(pv.VTKExecutionError):
+            _update_alg(reader)
 
 
 def test_axis_angle_rotation():

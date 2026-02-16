@@ -468,6 +468,14 @@ def test_make_tri_mesh(sphere):
     assert np.allclose(sphere.faces, mesh.faces)
 
 
+@pytest.fixture
+def _modifies_wrappers():
+    default_wrappers = pv._wrappers.copy()
+    yield
+    pv._wrappers = default_wrappers  # always reset back to default
+
+
+@pytest.mark.usefixtures('_modifies_wrappers')
 def test_wrappers():
     vtk_data = _vtk.vtkPolyData()
     pv_data = pv.wrap(vtk_data)
@@ -476,34 +484,28 @@ def test_wrappers():
     class Foo(pv.PolyData):
         """A user defined subclass of pv.PolyData."""
 
-    default_wrappers = pv._wrappers.copy()
-    # Use try...finally to set and reset _wrappers
-    try:
-        pv._wrappers['vtkPolyData'] = Foo
+    pv._wrappers['vtkPolyData'] = Foo
 
-        pv_data = pv.wrap(vtk_data)
-        assert isinstance(pv_data, Foo)
+    pv_data = pv.wrap(vtk_data)
+    assert isinstance(pv_data, Foo)
 
-        tri_data = pv_data.delaunay_2d()
+    tri_data = pv_data.delaunay_2d()
 
-        assert isinstance(tri_data, Foo)
+    assert isinstance(tri_data, Foo)
 
-        image = pv.ImageData()
-        surface = image.extract_surface(algorithm=None)
+    image = pv.ImageData()
+    surface = image.extract_surface(algorithm=None)
 
-        assert isinstance(surface, Foo)
+    assert isinstance(surface, Foo)
 
-        surface.delaunay_2d(inplace=True)
-        assert isinstance(surface, Foo)
+    surface.delaunay_2d(inplace=True)
+    assert isinstance(surface, Foo)
 
-        sphere = pv.Sphere()
-        assert isinstance(sphere, Foo)
+    sphere = pv.Sphere()
+    assert isinstance(sphere, Foo)
 
-        circle = pv.Circle()
-        assert isinstance(circle, Foo)
-
-    finally:
-        pv._wrappers = default_wrappers  # always reset back to default
+    circle = pv.Circle()
+    assert isinstance(circle, Foo)
 
 
 def test_wrap_no_copy():

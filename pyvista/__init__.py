@@ -79,6 +79,8 @@ DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
 
+_VTK_MESSAGE_POLICY_STATE: Literal['mixed', 'warning', 'error', 'off'] = 'warning'
+
 # Allow setting new private -- but not public -- attributes by default
 _ALLOW_NEW_ATTRIBUTES_MODE: Literal['private', True, False] = 'private'
 

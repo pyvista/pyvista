@@ -53,7 +53,7 @@ class _BasePyVistaView:
         for renderer in self._plotter().renderers:  # type: ignore[union-attr]
             if not renderer.camera.is_set:
                 renderer.camera_position = renderer.get_default_cam_pos()
-                renderer.ResetCamera()
+                renderer._reset_camera()
 
     def _post_initialize(self):
         if self._server.running:  # type: ignore[attr-defined]

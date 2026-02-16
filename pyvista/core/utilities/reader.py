@@ -26,6 +26,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core.utilities.state_manager import _update_alg
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -290,8 +291,6 @@ class BaseReader(_FileIOBase):
             PyVista Dataset.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
-
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
@@ -304,7 +303,7 @@ class BaseReader(_FileIOBase):
         return data
 
     def _update_information(self) -> None:
-        self.reader.UpdateInformation()
+        pv.vtk_message_policy._call_function(self.reader.UpdateInformation)
 
     def _set_defaults(self) -> None:
         """Set defaults on reader, if needed."""
@@ -2877,8 +2876,6 @@ class GaussianCubeReader(BaseReader):
             Output as a grid if ``True``, otherwise return the polydata.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
-
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = (
             wrap(self.reader.GetGridOutput()) if grid else wrap(self.reader.GetOutputDataObject(0))
@@ -3066,7 +3063,7 @@ class ParticleReader(BaseReader):
         else:
             msg = f'Invalid endian: {endian}.'
             raise ValueError(msg)
-        self.reader.Update()
+        _update_alg(self.reader)
 
 
 class ProStarReader(BaseReader):
@@ -3141,7 +3138,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         )()
 
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
-        global_extractor.Update()
+        _update_alg(global_extractor)
 
         return wrap(global_extractor.GetOutputDataObject(0))
 

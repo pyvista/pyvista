@@ -28,6 +28,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .actor import Actor
@@ -2332,7 +2333,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         else:
             box = _vtk.vtkCubeSource()
         box.SetBounds(self.bounds)
-        box.Update()
+        _update_alg(box)
         box_object = wrap(box.GetOutput())
         self._bounding_box = box
         self._box_object = box_object
@@ -3098,15 +3099,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         if bounds is not None:
-            self.ResetCamera(*bounds)
+            self._reset_camera(*bounds)
         else:
-            self.ResetCamera()
+            self._reset_camera()
 
         self.reset_camera_clipping_range()
 
         if render:
             self.parent.render()
         self.Modified()
+
+    def _reset_camera(self, *args, **kwargs):
+        return pv.vtk_message_policy._call_function(self.ResetCamera, *args, **kwargs)
 
     def isometric_view(self) -> None:
         """Reset the camera to a default isometric view.

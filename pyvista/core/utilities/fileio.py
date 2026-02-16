@@ -26,6 +26,7 @@ from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.state_manager import _update_alg
 
 from .observers import Observer
 
@@ -516,7 +517,7 @@ def read_exodus(  # noqa: PLR0917
 
         reader.SetSideSetArrayStatus(name, 1)
 
-    reader.Update()
+    _update_alg(reader)
     return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 

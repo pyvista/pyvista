@@ -258,8 +258,9 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     match = re.escape(
         'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
     )
-    with pytest.raises(TypeError, match=match):
-        pl.add_point_labels(points=np.array([0.0, 0.0, 0.0]), labels=['foo'])
+    with pv.vtk_verbosity('off'):
+        with pytest.raises(TypeError, match=match):
+            pl.add_point_labels(points=np.array([0.0, 0.0, 0.0]), labels=['foo'])
 
 
 def test_add_point_labels_label_not_found_raises():
