@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
+from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
@@ -24,6 +25,11 @@ from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .opts import ElementType
 from .opts import PickerType
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from pyvista.core.pointset import PolyData
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',
@@ -217,7 +223,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return edge
 
-    def get_point(self, picked_point):
+    def get_point(self, picked_point: Sequence[float]) -> PolyData:
         """Get the picked point of the picked mesh.
 
         Parameters
@@ -233,9 +239,8 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         """
         mesh = self.get_mesh()
         pid = mesh.find_closest_point(picked_point)
-        picked = pv.PolyData(mesh.points[pid])
-        picked.point_data['vtkOriginalPointIds'] = np.array([pid])
-        return picked
+        picked = mesh.extract_points(pid, adjacent_cells=False, include_cells=False)
+        return picked.cast_to_poly_points()
 
     def __call__(self, picked_point, picker):
         """Perform the pick."""

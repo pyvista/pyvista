@@ -1280,7 +1280,8 @@ def test_axes():
     pl.show()
 
 
-def test_box_axes(verify_image_cache):
+@pytest.mark.skip_check_gc
+def test_box_axes_deprecated(verify_image_cache):
     """Test deprecated function and make sure we remove it by v0.48."""
     verify_image_cache.skip = True
 
@@ -1288,40 +1289,14 @@ def test_box_axes(verify_image_cache):
 
     def _test_add_axes_box():
         pl.add_axes(box=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Calling this should raise an error'
-            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
             raise RuntimeError(msg)
 
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
+    match_str = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+    with pytest.raises(DeprecationError, match=re.escape(match_str)):
         _test_add_axes_box()
     pl.close()
-
-
-def test_box_axes_color_box():
-    pl = pv.Plotter()
-
-    def _test_add_axes_color_box():
-        pl.add_axes(box=True, box_args={'color_box': True})
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this function'
-            raise RuntimeError(msg)
-
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
-        _test_add_axes_color_box()
-    pl.add_mesh(pv.Sphere())
-    pl.show()
 
 
 def test_add_box_axes():

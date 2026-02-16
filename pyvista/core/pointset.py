@@ -34,14 +34,10 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .filters import DataObjectFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
-from .filters.data_object import _MeshValidationOptions
-from .filters.data_object import _MeshValidationReport
-from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
@@ -75,7 +71,7 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
-
+    from .filters.data_object import _NestedMeshValidationFields
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -304,7 +300,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -335,7 +331,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         deep: bool = False,  # noqa: FBT001, FBT002
         force_float: bool = True,  # noqa: FBT001, FBT002
         *,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the pointset."""
         super().__init__()
@@ -556,23 +552,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    @wraps(DataObjectFilters.validate_mesh)
-    def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
-        self: Self,
-        validation_fields: _MeshValidationOptions | None = None,
-        *args,
-        **kwargs,
-    ) -> _MeshValidationReport[Self]:
-        """Wrap validate_mesh with cell-related fields removed."""
-        if validation_fields is None:
-            fields: list[_MeshValidator._AllValidationOptions] = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            fields.remove('unused_points')
-            return DataSet.validate_mesh(self, fields, *args, **kwargs)
-        return DataSet.validate_mesh(self, validation_fields, *args, **kwargs)
-
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
@@ -696,7 +675,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_verts : int, optional
         Deprecated. Not used.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -841,7 +820,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
         *,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -1981,7 +1960,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -2034,7 +2013,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(
-        self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False, **kwargs
+        self,
+        *args,
+        deep: bool = False,
+        validate: bool | _NestedMeshValidationFields = False,
+        **kwargs,
     ) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
@@ -2731,7 +2714,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Whether to deep copy a StructuredGrid object.
         Default is ``False``.  Keyword only.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -2797,7 +2780,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         z=None,
         *args,
         deep: bool = False,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:
         """Initialize the structured grid."""
@@ -3154,7 +3137,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -3203,7 +3186,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         '.vtk': UnstructuredGridWriter,
     }
 
-    def __init__(self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False):
+    def __init__(
+        self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False
+    ):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)

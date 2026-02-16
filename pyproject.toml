@@ -14,6 +14,7 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.14',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
@@ -47,7 +48,8 @@ jupyter = [
   'nest-asyncio2',
   'trame-client>=2.12.7',
   'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
-  'trame-vtk>=2.5.8',
+  'trame-vtk != 2.10.3, != 2.11.*',
+  'trame-vtk>=2.5.8, <2.10.3', # Pin indefinitely to avoid breakages
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
 ]
