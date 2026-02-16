@@ -622,8 +622,8 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
-def test_texture_map_to_plane():
-    dataset = examples.load_airplane()
+def test_texture_map_to_plane(airplane):
+    dataset = airplane
     # Automatically decide plane
     out = dataset.texture_map_to_plane(inplace=False, progress_bar=True)
     assert isinstance(out, type(dataset))
@@ -632,6 +632,15 @@ def test_texture_map_to_plane():
     origin = bnds[0::2]
     point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
     point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
+    with pytest.raises(ValueError, match='Bad plane definition'):
+        dataset.texture_map_to_plane(
+            origin=origin,
+            point_u=point_u,
+            point_v=point_v,
+            progress_bar=True,
+        )
+    point_u = (bnds.x_max, bnds.y_min, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_max, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
