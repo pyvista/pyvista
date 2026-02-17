@@ -109,6 +109,7 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
+    'sphinx.ext.mathjax',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
