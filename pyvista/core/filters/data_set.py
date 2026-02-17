@@ -1602,7 +1602,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alg.SetOrigin(*origin)  # BOTTOM LEFT CORNER
             alg.SetPoint1(*point_u)  # BOTTOM RIGHT CORNER
             alg.SetPoint2(*point_v)  # TOP LEFT CORNER
-
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message='Texturing Map to Plane')
         output = _get_output(alg)
