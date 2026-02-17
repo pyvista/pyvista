@@ -5167,9 +5167,10 @@ class ImageDataFilters(DataSetFilters):
                 - ``[0, float('inf')]`` to select values greater than or equal to zero.
                 - ``[float('-inf'), 0]`` to select values less than or equal to zero.
 
-        fill_value : float | VectorLike[float], default: 0
+        fill_value : float | VectorLike[float] | None, default: 0
             Value used to fill the image. Can be a single value or a multi-component
-            vector. Non-selected parts of the image will have this value.
+            vector. Non-selected parts of the image will have this value. Set this to ``None``
+            to use the input array's original values unmodified as the fill.
 
         replacement_value : float | VectorLike[float], optional
             Replacement value for the output array. Can be a single value or a
@@ -5370,6 +5371,25 @@ class ImageDataFilters(DataSetFilters):
         fill_value,
         replacement_value,
     ):
+        # For special cases where we have a single range and don't have multi-component scalars
+        # use image_threshold since it's much faster
+        if (
+            array.ndim == 1
+            and association == FieldAssociation.POINT
+            and not invert
+            and values is None
+            and len(ranges) == 1
+        ):
+            values = None if values is None else values[0]
+            ranges = None if ranges is None else ranges[0]
+            return self.image_threshold(
+                values or ranges,
+                in_value=replacement_value,
+                out_value=fill_value,
+                scalars=array_name,
+                preference=association,
+            )
+
         id_mask = self._apply_component_logic_to_array(
             values=values,
             ranges=ranges,
@@ -5383,7 +5403,11 @@ class ImageDataFilters(DataSetFilters):
             'pv.pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
         )
-        array_out = np.full_like(input_array, fill_value=fill_value)
+        array_out = (
+            input_array.copy()
+            if fill_value is None
+            else np.full_like(input_array, fill_value=fill_value)
+        )
         replacement_values = (
             input_array[id_mask] if replacement_value is None else replacement_value
         )

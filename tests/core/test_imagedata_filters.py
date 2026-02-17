@@ -1466,6 +1466,27 @@ def test_select_values(uniform):
     assert np.allclose(selected.active_scalars, uniform.active_scalars)
 
 
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+def test_select_values_like_threshold(
+    frog_tissues,
+    replacement_value,
+    fill_value,
+):
+    rng = frog_tissues.get_data_range()
+
+    selected = frog_tissues.select_values(
+        ranges=rng,
+        replacement_value=replacement_value,
+        fill_value=fill_value,
+    )
+    thresholded = frog_tissues.image_threshold(
+        rng, in_value=replacement_value, out_value=fill_value
+    )
+
+    assert selected == thresholded
+
+
 def test_select_values_split(uniform):
     unique_values = np.unique(uniform.active_scalars)
     selected = uniform.select_values(values=unique_values, split=True)
