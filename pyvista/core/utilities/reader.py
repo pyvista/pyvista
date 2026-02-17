@@ -3868,6 +3868,10 @@ class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
         self.set_active_time_value(self.time_values[time_point])
 
 
+class FidesReader(BaseReader):
+    """FidesReader for Read ADIOS2 streams using Fides data model."""
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
