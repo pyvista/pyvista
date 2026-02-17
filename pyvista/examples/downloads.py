@@ -8173,6 +8173,9 @@ def download_room_cff(load=True):  # noqa: FBT002
 
 
 def _dataset_room_cff_files_func():
+    if pyvista.vtk_version_info < (9, 3, 0):
+        msg = 'This example requires VTK 9.3.0 or newer.'
+        raise VTKVersionError(msg)
     cas = _SingleFileDownloadableDatasetLoader('FLUENTCFF/room.cas.h5')
     dat = _DownloadableFile('FLUENTCFF/room.dat.h5')
     return cas, dat

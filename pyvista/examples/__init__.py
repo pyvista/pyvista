@@ -9,3 +9,4 @@ from . import vrml as vrml
 from .cells import plot_cell as plot_cell
 from .downloads import *
 from .examples import *
+from .load import load as load

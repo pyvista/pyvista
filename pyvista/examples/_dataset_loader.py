@@ -36,6 +36,8 @@ from collections.abc import Sequence
 import functools
 import os
 from pathlib import Path
+import sys
+from types import FunctionType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
@@ -51,6 +53,12 @@ from pyvista.core.utilities.fileio import get_ext
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+# Modules for which dataset loaders have been written
+def _SUPPORTED_MODULES():  # noqa: N802
+    return [pv.examples.examples, pv.examples.downloads, pv.examples.planets]
+
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -835,3 +843,25 @@ def _get_unique_dataset_type(
         dataset_types[type(dataset)] = None
     output = tuple(dataset_types.keys())
     return output[0] if len(output) == 1 else output
+
+
+def _get_dataset_loader(dataset: str | FunctionType):
+    def prepend_name(name):
+        return '_dataset_' + name
+
+    if isinstance(dataset, FunctionType):
+        dataset_name = dataset.__name__.removeprefix('load_').removeprefix('download_')
+        module = sys.modules[dataset.__module__]
+        loader_name = prepend_name(dataset_name)
+    else:
+        loader_name = prepend_name(dataset)
+        module = None
+        for m in _SUPPORTED_MODULES():
+            if getattr(m, loader_name, None):
+                module = m
+                break
+        if module is None:
+            msg = f'Example {dataset!r} could not be loaded, and may not exist.'
+            raise ValueError(msg)
+
+    return getattr(module, loader_name)
