@@ -7589,6 +7589,65 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
         ]
 
+    def _repr_html_(self) -> str | None:
+        """Return HTML representation for Jupyter notebooks.
+
+        This method is called automatically by Jupyter when a Plotter
+        instance is the last expression in a cell, enabling automatic
+        display without calling show().
+
+        Returns
+        -------
+        str | None
+            HTML representation of the plotter, or None if not in Jupyter.
+
+        """
+        # Check if we're in a Jupyter environment
+        try:
+            from IPython import get_ipython
+            if get_ipython() is None:
+                return None
+        except ImportError:
+            return None
+
+        # Import jupyter notebook handler
+        from pyvista.jupyter.notebook import handle_plotter
+
+        # Get the current jupyter backend from theme
+        jupyter_backend = self._theme.jupyter_backend
+
+        # If backend is 'none', don't display anything
+        if jupyter_backend.lower() == 'none':
+            return None
+
+        # Handle the plotter display
+        try:
+            display_obj = handle_plotter(self, backend=jupyter_backend)
+            
+            # Convert the display object to HTML
+            if hasattr(display_obj, '_repr_html_'):
+                return display_obj._repr_html_()
+            elif hasattr(display_obj, 'data'):
+                # For static images, we need to convert to HTML
+                import base64
+                from io import BytesIO
+                
+                # Save image to bytes
+                buffer = BytesIO()
+                display_obj.save(buffer, format='PNG')
+                buffer.seek(0)
+                
+                # Encode as base64
+                img_data = base64.b64encode(buffer.read()).decode()
+                
+                # Return HTML img tag
+                return f'<img src="data:image/png;base64,{img_data}" />'
+            else:
+                return None
+        except Exception:
+            # If anything goes wrong, fail silently
+            return None
+
 
 # Tracks created plotters.  This is the end of the module as we need to
 # define ``BasePlotter`` before including it in the type definition.
