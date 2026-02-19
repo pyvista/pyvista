@@ -18,7 +18,6 @@ First, define the ray triangle intersection method.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 
@@ -114,7 +113,9 @@ if inter:
     point = tri.points[0] * a + tri.points[1] * b + tri.points[2] * c
 
     pl = pv.Plotter()
-    pl.add_text(f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26)
+    pl.add_text(
+        f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26
+    )
     pl.add_mesh(tri)
     _ = pl.add_arrows(
         np.array([start]),
@@ -123,8 +124,15 @@ if inter:
         color='r',
         style='wireframe',
     )
-    pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True, color='b')
-    pl.add_point_labels(tri, [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'], font_size=40)
+    pl.add_points(
+        np.array([point]), point_size=20, render_points_as_spheres=True, color='b'
+    )
+    pl.add_point_labels(
+        tri,
+        [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'],
+        font_size=40,
+        always_visible=True,
+    )
     pl.show_bounds()
     pl.camera_position = 'xy'
     pl.show()

@@ -159,7 +159,7 @@ def _deprecate_positional_args(
                 if i > max_args_to_print:
                     has_too_many_to_print = True
                     break
-                if name in ['cls', 'self', *(allowed if allowed else [])]:
+                if name in ['cls', 'self', *(allowed or [])]:
                     current_kind = sig.parameters[name].kind
                     new_kind = (
                         current_kind

@@ -19,12 +19,21 @@ permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      # Runner should match the actual runner used by the build job
+      runs-on: "ubuntu-24.04-self-hosted-gpu"
+
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
+    needs: cache-vtk-data
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
+      PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
     steps:
       - uses: actions/checkout@v6
         with:
@@ -45,6 +54,13 @@ jobs:
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
+
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
+        with:
+          path: vtk-data
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv

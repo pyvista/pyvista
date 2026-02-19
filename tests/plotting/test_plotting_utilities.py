@@ -13,6 +13,7 @@ from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 from pyvista.report import _get_render_window_class
+from tests.conftest import PILLOW_VERSION_INFO
 
 HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
@@ -164,7 +165,12 @@ def test_gif_reader(gif_file):
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):
-        data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
+        pillow_get_data = (
+            Image.Image.get_flattened_data
+            if PILLOW_VERSION_INFO >= (12, 1)
+            else Image.Image.getdata
+        )
+        data = np.array(pillow_get_data(frame.convert('RGB')), dtype=np.uint8)
         data_name = f'frame{i}'
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])

@@ -11,6 +11,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
@@ -33,9 +34,7 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class _BaseMapper(
-    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper
-):
+class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
     def __init__(self, theme=None, **kwargs) -> None:
@@ -790,10 +789,10 @@ class _DataSetMapper(_BaseMapper):
 
         >>> mesh = examples.download_tri_quadratic_hexahedron()
         >>> surface_sep = mesh.separate_cells().extract_surface(
-        ...     nonlinear_subdivision=4
+        ...     algorithm=None, nonlinear_subdivision=4
         ... )
         >>> edges = surface_sep.extract_feature_edges()
-        >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
+        >>> surface = mesh.extract_surface(algorithm=None, nonlinear_subdivision=4)
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(surface, smooth_shading=True, split_sharp_edges=True)

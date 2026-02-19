@@ -3296,8 +3296,8 @@ class PointCloudCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         pointset_names = DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
-        vertex_polydata_filter = (
-            lambda poly: isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
+        vertex_polydata_filter = lambda poly: (
+            isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
         )
         vertex_polydata_names = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
         return sorted(list(pointset_names) + list(vertex_polydata_names))
@@ -3312,9 +3312,8 @@ class SurfaceMeshCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        surface_polydata_filter = (
-            lambda poly: isinstance(poly, pv.PolyData)
-            and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
+        surface_polydata_filter = lambda poly: (
+            isinstance(poly, pv.PolyData) and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
         )
         surface_polydata_names = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
         return sorted(surface_polydata_names)
@@ -3353,8 +3352,11 @@ class ImageData3DCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        image_3d_filter = lambda img: isinstance(img, pv.ImageData) and not np.any(
-            np.array(img.dimensions) == 1,
+        image_3d_filter = lambda img: (
+            isinstance(img, pv.ImageData)
+            and not np.any(
+                np.array(img.dimensions) == 1,
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
 
@@ -3368,8 +3370,11 @@ class ImageData2DCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        image_2d_filter = lambda img: isinstance(img, pv.ImageData) and np.any(
-            np.array(img.dimensions) == 1,
+        image_2d_filter = lambda img: (
+            isinstance(img, pv.ImageData)
+            and np.any(
+                np.array(img.dimensions) == 1,
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
 
@@ -3456,9 +3461,11 @@ class MiscCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        misc_dataset_filter = lambda obj: not isinstance(
-            obj,
-            (pv.MultiBlock, pv.Texture, pv.DataSet),
+        misc_dataset_filter = lambda obj: (
+            not isinstance(
+                obj,
+                (pv.MultiBlock, pv.Texture, pv.DataSet),
+            )
         )
         return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
 

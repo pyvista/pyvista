@@ -15,7 +15,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
@@ -52,7 +51,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
-    from .filters.data_object import _MeshValidationOptions
+    from .filters.data_object import _NestedMeshValidationFields
 
 
 @abstract_class
@@ -136,7 +135,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         Whether to deep copy a :vtk:`vtkRectilinearGrid` object.
         Default is ``False``.  Keyword only.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -178,7 +177,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         *args,
         check_duplicates: bool = False,
         deep: bool = False,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -565,7 +564,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.45
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -647,7 +646,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
         *,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""
         super().__init__()
@@ -1032,13 +1031,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         if np.allclose(np.abs(direction), np.eye(3)):
             sign = np.diagonal(direction)
         else:
-            sign = np.array((1.0, 1.0, 1.0))
             msg = (
-                'The direction matrix is not a diagonal matrix and cannot be used when casting to '
-                'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
-                'instead.'
+                'Rectilinear grid does not support off-axis rotations.\n'
+                'Consider removing off-axis rotations from the `direction_matrix`, '
+                'or casting to StructuredGrid instead.'
             )
-            warn_external(msg, RuntimeWarning)
+            raise ValueError(msg)
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
