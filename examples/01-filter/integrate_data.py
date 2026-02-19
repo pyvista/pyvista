@@ -11,7 +11,7 @@ Integrate data over a surface using the
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 # %%
@@ -29,18 +29,20 @@ inlet_surface['normal_velocity'] = -1 * inlet_surface['velocity'][:, 2]
 # %%
 # The velocity in the inlet is shown.
 
-plotter = pyvista.Plotter()
-plotter.add_mesh(boundary, color='grey', opacity=0.25)
-plotter.add_mesh(
+pl = pv.Plotter()
+pl.add_mesh(boundary, color='grey', opacity=0.25)
+pl.add_mesh(
     inlet_surface,
     scalars='normal_velocity',
     component=2,
     scalar_bar_args=dict(vertical=True, title_font_size=16),
     lighting=False,
 )
-plotter.add_axes()
-plotter.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
-plotter.show()
+pl.add_axes()
+pl.camera_position = pv.CameraPosition(
+    position=(10, 9.5, -43), focal_point=(87.0, 73.5, 123.0), viewup=(-0.5, -0.7, 0.5)
+)
+pl.show()
 
 # %%
 # The total flow rate is calculated using the
@@ -56,7 +58,9 @@ integrated_data['normal_velocity']
 # %%
 # An additional ``Area`` or ``Volume`` array is added.
 print(f'Original arrays: {inlet_surface.array_names}')
-new_arrays = [name for name in integrated_data.array_names if name not in inlet_surface.array_names]
+new_arrays = [
+    name for name in integrated_data.array_names if name not in inlet_surface.array_names
+]
 print(f'New arrays      : {new_arrays}')
 
 # %%

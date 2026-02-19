@@ -1,4 +1,4 @@
-"""Wrappers for vtkDataObjects.
+"""Wrappers for :vtk:`vtkDataObject`.
 
 The data objects does not have any sort of spatial reference.
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
@@ -21,7 +21,7 @@ from .utilities.arrays import row_array
 
 
 class Table(DataObject, _vtk.vtkTable):
-    """Wrapper for the ``vtkTable`` class.
+    """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
@@ -35,7 +35,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):
+    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
         """Initialize the table."""
         super().__init__()
         if len(args) == 1:
@@ -302,8 +302,8 @@ class Table(DataObject, _vtk.vtkTable):
                 """Format array information for printing (internal helper)."""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
+                dl = pv.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pv.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
                 dtype = None if arr is None else arr.dtype
                 return row.format(key, dtype, ncomp, dl, dh)
@@ -335,7 +335,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         """
         try:
-            import pandas as pd
+            import pandas as pd  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Install ``pandas`` to use this feature.'
             raise ImportError(msg)

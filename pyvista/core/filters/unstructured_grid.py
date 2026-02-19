@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from functools import wraps
+from typing import TYPE_CHECKING
 
+import numpy as np
+
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -12,17 +16,20 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
 
+if TYPE_CHECKING:
+    from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
+
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @wraps(PolyDataFilters.delaunay_2d)
+    @wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
     def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @wraps(PolyDataFilters.reconstruct_surface)
+    @wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
     def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
@@ -54,14 +61,15 @@ class UnstructuredGridFilters(DataSetFilters):
         _update_alg(alg)
         return _get_output(alg)
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
         tolerance=0,
-        remove_unused_points: bool = True,
-        produce_merge_map: bool = True,
-        average_point_data: bool = True,
+        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
+        produce_merge_map: bool = True,  # noqa: FBT001, FBT002
+        average_point_data: bool = True,  # noqa: FBT001, FBT002
         merging_array_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
@@ -70,8 +78,7 @@ class UnstructuredGridFilters(DataSetFilters):
         modify the topology of the input dataset, nor change the types of
         cells. It may however, renumber the cell connectivity ids.
 
-        This filter implements `vtkStaticCleanUnstructuredGrid
-        <https://vtk.org/doc/nightly/html/classvtkStaticCleanUnstructuredGrid.html>`_
+        This filter implements :vtk:`vtkStaticCleanUnstructuredGrid`.
 
         Parameters
         ----------
@@ -112,6 +119,14 @@ class UnstructuredGridFilters(DataSetFilters):
         UnstructuredGrid
             Cleaned unstructured grid.
 
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
+        :meth:`~pyvista.DataObjectFilters.cell_quality`
+        :meth:`~pyvista.DataObjectFilters.cell_validator`
+        :meth:`~pyvista.DataObjectFilters.validate_mesh`
+
         Examples
         --------
         Demonstrate cleaning an UnstructuredGrid and show how it can be used to
@@ -140,7 +155,7 @@ class UnstructuredGridFilters(DataSetFilters):
 
         """
         try:
-            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
+            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid  # noqa: PLC0415
         except ImportError:  # pragma no cover
             msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
             raise VTKVersionError(msg) from None
@@ -154,5 +169,81 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
-        _update_alg(alg, progress_bar, 'Cleaning Unstructured Grid')
+        _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg)
+
+    def remove_unused_points(  # type: ignore[misc]
+        self: _UnstructuredGridType,
+        *,
+        inplace: bool = False,
+    ) -> _UnstructuredGridType:
+        """Remove points which are not used by any cells.
+
+        Unlike :meth:`clean`, this filter does `not` merge points.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.remove_unused_points
+
+        Returns
+        -------
+        UnstructuredGrid
+            Mesh with unused points removed.
+
+        Examples
+        --------
+        Create :class:`~pyvista.UnstructuredGrid` with three points. The first two points are
+        coincident and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point
+        is "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> cells = [1, 0, 1, 1]
+        >>> celltypes = [pv.CellType.VERTEX, pv.CellType.VERTEX]
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
+        >>> grid
+        UnstructuredGrid (...)
+          N Cells:    2
+          N Points:   3
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> grid = grid.remove_unused_points()
+        >>> grid
+        UnstructuredGrid (...)
+          N Cells:    2
+          N Points:   2
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
+        """
+        if self.is_empty:
+            return self if inplace else self.copy()
+
+        out = self.copy()
+
+        # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
+        cell_array = out.GetCells()
+        cell_array.InsertNextCell(1)
+
+        # Extract all the cells, except for the dummy cell
+        out = out.extract_cells(np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False)
+
+        if inplace:
+            self.copy_from(out)
+            return self
+        return out

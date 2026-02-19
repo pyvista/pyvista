@@ -8,13 +8,15 @@ from weakref import proxy
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
 
 
-class Renderers:
+class Renderers(_NoNewAttrMixin):
     """Organize Renderers for ``pyvista.Plotter``.
 
     Parameters
@@ -48,7 +50,8 @@ class Renderers:
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         shape=(1, 1),
@@ -85,7 +88,7 @@ class Renderers:
                 rangem = range(m)  # type: ignore[assignment]
 
             if splitting_position is None:
-                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
+                splitting_position = pv.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
                 xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
@@ -93,14 +96,24 @@ class Renderers:
                 xsplit = splitting_position
 
             for i in rangen:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = Renderer(
+                    self._plotter,
+                    border=border,
+                    border_color=border_color,
+                    border_width=border_width,
+                )
                 if '|' in shape:
                     arenderer.viewport = (0, i / n, xsplit, (i + 1) / n)
                 else:
                     arenderer.viewport = (i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = Renderer(
+                    self._plotter,
+                    border=border,
+                    border_color=border_color,
+                    border_width=border_width,
+                )
                 if '|' in shape:
                     arenderer.viewport = (xsplit, i / m, 1, (i + 1) / m)
                 else:
@@ -209,7 +222,12 @@ class Renderers:
                     nb_rows = 1
                     nb_cols = 1
                 if nb_rows is not None:
-                    renderer = Renderer(self._plotter, border, border_color, border_width)
+                    renderer = Renderer(
+                        self._plotter,
+                        border=border,
+                        border_color=border_color,
+                        border_width=border_width,
+                    )
                     x0 = col_off[col]
                     y0 = row_off[row + nb_rows]
                     x1 = col_off[col + nb_cols]  # type: ignore[operator]
@@ -229,7 +247,9 @@ class Renderers:
         ]
 
         # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
+        self._shadow_renderer = Renderer(
+            self._plotter, border=border, border_color=border_color, border_width=border_width
+        )
         self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
@@ -326,7 +346,7 @@ class Renderers:
 
         Returns
         -------
-        numpy.ndarray or numpy.int64
+        output : numpy.ndarray | numpy.int64
             2D location on the plotting grid.
 
         """
@@ -359,7 +379,7 @@ class Renderers:
 
         Returns
         -------
-        tuple[int] | tuple[int, int]
+        output : tuple[int] | tuple[int, int]
             Shape of the renderers.
 
         """
@@ -389,7 +409,8 @@ class Renderers:
             raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
-    def set_chart_interaction(self, interactive, toggle: bool = False):
+    @_deprecate_positional_args(allowed=['interactive'])
+    def set_chart_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001, FBT002
         """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
@@ -421,7 +442,9 @@ class Renderers:
         interactive_scene, interactive_charts = None, []
         if self.active_renderer.has_charts:
             interactive_scene = self.active_renderer._charts._scene
-            interactive_charts = self.active_renderer.set_chart_interaction(interactive, toggle)
+            interactive_charts = self.active_renderer.set_chart_interaction(
+                interactive, toggle=toggle
+            )
         # Disable chart interaction for other renderers
         for renderer in self:
             if renderer is not self.active_renderer:
@@ -481,7 +504,7 @@ class Renderers:
             self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
-        renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
+        renderer = BackgroundRenderer(self._plotter, image_path, scale=scale, view_port=view_port)
         renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
@@ -544,14 +567,15 @@ class Renderers:
         """
         return self._shadow_renderer
 
-    def set_background(
+    @_deprecate_positional_args(allowed=['color'])
+    def set_background(  # noqa: PLR0917
         self,
         color,
         top=None,
         right=None,
         side=None,
         corner=None,
-        all_renderers: bool = True,
+        all_renderers: bool = True,  # noqa: FBT001, FBT002
     ):
         """Set the background color.
 
@@ -595,11 +619,11 @@ class Renderers:
         Set the background color to black.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> plotter.set_background('black')
-        >>> plotter.background_color
+        >>> pl = pv.Plotter()
+        >>> pl.set_background('black')
+        >>> pl.background_color
         Color(name='black', hex='#000000ff', opacity=255)
-        >>> plotter.close()
+        >>> pl.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.
@@ -624,10 +648,11 @@ class Renderers:
                 corner=corner,
             )
 
-    def set_color_cycler(self, color_cycler, all_renderers: bool = True):
+    @_deprecate_positional_args(allowed=['color_cycler'])
+    def set_color_cycler(self, color_cycler, all_renderers: bool = True):  # noqa: FBT001, FBT002
         """Set or reset the color cycler.
 
-        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`
         call to set the default color of the dataset being plotted.
 
         When setting, the value must be either a list of color-like objects,
@@ -636,7 +661,8 @@ class Renderers:
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.

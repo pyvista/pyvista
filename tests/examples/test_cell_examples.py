@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from pytest_cases import parametrize
 
-import pyvista
+import pyvista as pv
 from pyvista import CellType
 from pyvista.examples import cells
 
@@ -16,20 +16,26 @@ cell_example_functions = [
 ]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 @parametrize('cell_example', cell_example_functions)
 def test_area_and_volume(cell_example):
     mesh = cell_example()
-    assert isinstance(mesh, pyvista.UnstructuredGrid)
+    assert isinstance(mesh, pv.UnstructuredGrid)
     assert mesh.n_cells == 1
 
-    if mesh.celltypes[0] in [
-        pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
-        pyvista.CellType.TRIQUADRATIC_HEXAHEDRON,
-    ]:
-        pytest.xfail(
-            'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
-        )
+    # Volume should be positive but returns zero or negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+    ctype = mesh.celltypes[0]
+    if ctype == CellType.QUADRATIC_WEDGE:
+        assert mesh.volume < 0
+        return
+    elif ctype == CellType.TRIQUADRATIC_HEXAHEDRON:
+        if pv.vtk_version_info >= (9, 6, 0):
+            assert mesh.volume < 0
+        elif pv.vtk_version_info < (9, 4, 0):
+            assert mesh.volume == 0
+        return
+    elif ctype == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON and pv.vtk_version_info < (9, 4, 0):
+        assert mesh.volume == 0
+        return
 
     # Test area and volume
     dim = mesh.GetCell(0).GetCellDimension()
@@ -44,6 +50,21 @@ def test_area_and_volume(cell_example):
     else:
         assert np.isclose(area, 0.0)
         assert np.isclose(volume, 0.0)
+
+
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='vtkCellValidator output differs')
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_valid(cell_example):
+    mesh = cell_example()
+    invalid_fields = mesh.validate_mesh().invalid_fields
+    cell_type = next(mesh.cell).type
+    if cell_type == pv.CellType.QUADRATIC_WEDGE or (
+        cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
+    ):
+        # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+        assert invalid_fields == ('negative_size',)
+    else:
+        assert not invalid_fields
 
 
 def test_empty():
@@ -103,7 +124,7 @@ def test_polygon():
     assert grid.n_points == 6
 
 
-def test_Quadrilateral():
+def test_quadrilateral():
     grid = cells.Quadrilateral()
     assert grid.celltypes[0] == CellType.QUAD
     assert grid.n_cells == 1
@@ -241,7 +262,6 @@ def test_triquadratic_hexahedron():
     assert grid.n_points == 27
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_triquadratic_pyramid():
     grid = cells.TriQuadraticPyramid()
     assert grid.celltypes[0] == CellType.TRIQUADRATIC_PYRAMID

@@ -5,6 +5,7 @@ import importlib.util
 import itertools
 import re
 
+import cmcrameri
 import cmocean
 import colorcet
 import matplotlib as mpl
@@ -12,15 +13,17 @@ from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
+from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
+from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
-COLORMAPS = ['Greys']
+COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
 if importlib.util.find_spec('cmocean'):
     COLORMAPS.append('algae')
@@ -29,15 +32,18 @@ if importlib.util.find_spec('cmocean'):
 if importlib.util.find_spec('colorcet'):
     COLORMAPS.append('fire')
 
+if importlib.util.find_spec('cmcrameri'):
+    COLORMAPS.append('batlow')
+
 
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
-    assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
+    assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
 
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
 def test_color_scheme_to_cycler_raises(scheme):
-    with pytest.raises(ValueError, match=f'Color scheme not understood: {scheme}'):
+    with pytest.raises(TypeError, match=f'Color scheme not understood: {scheme}'):
         color_scheme_to_cycler(scheme=scheme)
 
 
@@ -70,7 +76,7 @@ def test_color():
         assert pv.Color(h_prefix + h) == i_rgba
     # Check dict
     for channels in itertools.product(*pv.Color.CHANNEL_NAMES):
-        dct = dict(zip(channels, i_rgba))
+        dct = dict(zip(channels, i_rgba, strict=True))
         assert pv.Color(dct) == i_rgba
     # Check opacity
     for opacity in (i_opacity, f_opacity, h_opacity):
@@ -95,7 +101,7 @@ def test_color():
     assert pv.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
     # Check iteration and indexing
     c = pv.Color(i_rgba)
-    assert all(ci == fi for ci, fi in zip(c, f_rgba))
+    assert all(ci == fi for ci, fi in zip(c, f_rgba, strict=True))
     for i, cnames in enumerate(pv.Color.CHANNEL_NAMES):
         assert c[i] == f_rgba[i]
         assert all(c[i] == c[cname] for cname in cnames)
@@ -135,7 +141,7 @@ def test_color_invalid_opacity(opacity):
         {'invalid_name': 100},
     ],
 )
-def test_color_invalid_color(color):
+def test_color_invalid_values(color):
     match = (
         'Must be a string, rgb(a) sequence, or hex color string.  For example:'
         "\n\t\tcolor='white'"
@@ -146,6 +152,12 @@ def test_color_invalid_color(color):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Color(color)
+
+
+def test_color_invalid_type():
+    match = 'color must be an instance of'
+    with pytest.raises(TypeError, match=match):
+        pv.Color(range(3))
 
 
 @pytest.mark.parametrize('delimiter', ['-', '_', ' '])
@@ -173,21 +185,21 @@ def pytest_generate_tests(metafunc):
         color_names = list(CSS4_COLORS.keys())
         color_values = list(CSS4_COLORS.values())
 
-        test_cases = zip(color_names, color_values)
+        test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('css4_color', test_cases, ids=color_names)
 
     if 'tab_color' in metafunc.fixturenames:
         color_names = list(TABLEAU_COLORS.keys())
         color_values = list(TABLEAU_COLORS.values())
 
-        test_cases = zip(color_names, color_values)
+        test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('tab_color', test_cases, ids=color_names)
 
     if 'vtk_color' in metafunc.fixturenames:
         color_names = list(pv.plotting.colors._VTK_COLORS.keys())
         color_values = list(pv.plotting.colors._VTK_COLORS.values())
 
-        test_cases = zip(color_names, color_values)
+        test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('vtk_color', test_cases, ids=color_names)
 
     if 'color_synonym' in metafunc.fixturenames:
@@ -195,6 +207,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
+@pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
@@ -206,6 +219,7 @@ def test_css4_colors(css4_color):
         assert alt_name in pv.plotting.colors._CSS_COLORS
 
 
+@pytest.mark.skip_check_gc
 def test_tab_colors(tab_color):
     # Test value
     name, value = tab_color
@@ -215,6 +229,7 @@ def test_tab_colors(tab_color):
     assert name in pv.plotting.colors._TABLEAU_COLORS
 
 
+@pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
 
@@ -232,7 +247,7 @@ def test_vtk_colors(vtk_color):
     name = vtk_synonyms.get(name, name)
 
     # Get expected hex value from vtkNamedColors
-    color3ub = vtk.vtkNamedColors().GetColor3ub(name)
+    color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
@@ -241,6 +256,7 @@ def test_vtk_colors(vtk_color):
     assert value.lower() == expected_hex
 
 
+@pytest.mark.skip_check_gc
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
@@ -252,15 +268,53 @@ def test_unique_colors():
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
 
-def test_colorcet_cmaps_allowed():
+@pytest.fixture
+def reset_matplotlib_cmaps():
+    # Need to unregister all 3rd-party cmaps
+    for cmap in list(mpl.colormaps):
+        try:
+            mpl.colormaps.unregister(cmap)
+        except (ValueError, AttributeError):
+            continue
+
+
+def maybe_xfail_mpl():
+    missing_colormaps = {'berlin', 'vanimo', 'managua', 'okabe_ito'}
+    if not missing_colormaps.issubset(mpl.colormaps):
+        pytest.xfail(
+            reason=f'Older Matplotlib is missing colormaps: {missing_colormaps}.',
+        )
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_matplotlib_allowed():
+    maybe_xfail_mpl()
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(colorcet.cm.keys())
+    actual = set(mpl.colormaps)
+    expected = set(_MATPLOTLIB_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_colorcet_required():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(colorcet.cm.keys()) - set(mpl.colormaps)
     expected = set(_COLORCET_CMAPS)
     assert actual == expected
 
 
-def test_cmocean_cmaps_allowed():
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(cmocean.cm.cmap_d.keys())
+    actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
     expected = set(_CMOCEAN_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_cmcrameri_required():
+    maybe_xfail_mpl()
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
+    expected = set(_CMCRAMERI_CMAPS)
     assert actual == expected

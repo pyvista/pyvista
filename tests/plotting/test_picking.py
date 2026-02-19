@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import _vtk
 from pyvista.plotting.errors import PyVistaPickingError
 
 if TYPE_CHECKING:
@@ -25,73 +26,129 @@ def test_single_cell_picking():
         def __init__(self):
             self.called = False
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args, **kwargs):  # noqa: ARG002
             self.called = True
 
-    plotter = pv.Plotter(
+    pl = pv.Plotter(
         window_size=(width, height),
     )
 
     callback = PickCallback()
-    plotter.enable_cell_picking(
+    pl.enable_cell_picking(
         start=False,
         show=True,
         callback=callback,
         through=False,  # Single cell visible picking
     )
-    plotter.add_mesh(sphere)
-    plotter.show(auto_close=False)  # must start renderer first
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)  # must start renderer first
 
-    width, height = plotter.window_size
-    plotter.iren._mouse_move(width // 2, height // 2)
-    plotter.iren._simulate_keypress('p')
+    width, height = pl.window_size
+    pl.iren._mouse_move(width // 2, height // 2)
+    pl.iren._simulate_keypress('p')
 
-    plotter.close()
+    pl.close()
 
     assert callback.called
-    assert isinstance(plotter.picked_cells, pv.UnstructuredGrid)
-    assert plotter.picked_cells.n_cells == 1
+    assert isinstance(pl.picked_cells, pv.UnstructuredGrid)
+    assert pl.picked_cells.n_cells == 1
 
 
-@pytest.mark.parametrize('through', [False, True])
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
+def test_picked_cells_attribute():
+    """Test the `picked_cells` attribute when selecting through multiple cells."""
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), pickable=True)
+    pl.add_mesh(pv.Sphere().translate((1, 0, 0)), pickable=True)
+    pl.add_mesh(pv.Sphere().translate((2, 0, 0)), pickable=True)
+    pl.enable_cell_picking(through=True)
+    pl.view_xy()
+    pl.show(auto_close=False)  # must start renderer first
+
+    width, height = pl.window_size
+
+    pl.iren._simulate_keypress('r')
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(width // 2, height)
+
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
+    assert len(pl.picked_cells) == 2
+
+    pl.iren._mouse_left_button_press(width // 2, 0)
+    pl.iren._mouse_left_button_release(width, height)
+
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
+    assert len(pl.picked_cells) == 2
+
+    pl.iren._mouse_left_button_press(width // 3, 0)
+    pl.iren._mouse_left_button_release(2 * width // 3, height)
+
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
+    assert len(pl.picked_cells) == 3
+
+    pl.iren._mouse_left_button_press(0, 0)
+    pl.iren._mouse_left_button_release(width // 6, height)
+
+    assert isinstance(pl.picked_cells, pv.UnstructuredGrid)
+
+
+@pytest.mark.parametrize(
+    'through',
+    [
+        False,
+        pytest.param(
+            True,
+            marks=pytest.mark.filterwarnings(
+                'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'  # noqa: E501
+            ),
+        ),
+    ],
+)
 def test_multi_cell_picking(through):
     cube = pv.Cube()
 
     # Test with algorithm source to make sure connections work with picking
-    src = vtk.vtkSphereSource()
+    src = _vtk.vtkSphereSource()
     src.SetCenter((1, 0, 0))
-    mapper = vtk.vtkDataSetMapper()
+    mapper = _vtk.vtkDataSetMapper()
     mapper.SetInputConnection(src.GetOutputPort())
-    actor = vtk.vtkActor()
+    actor = _vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.SetPickable(True)
 
-    plotter = pv.Plotter(window_size=(1024, 768))
-    plotter.add_mesh(cube, pickable=True)
-    plotter.add_actor(actor)
-    plotter.enable_cell_picking(
+    pl = pv.Plotter(window_size=(1024, 768))
+    pl.add_mesh(cube, pickable=True)
+    pl.add_actor(actor)
+    pl.enable_cell_picking(
         color='blue',
         through=through,
         start=True,
         show=True,
         show_frustum=True,
     )
-    plotter.show(auto_close=False)  # must start renderer first
+    pl.show(auto_close=False)  # must start renderer first
 
     # simulate the pick (169, 113, 875, 684)
-    plotter.iren._mouse_left_button_press(169, 113)
-    plotter.iren._mouse_move(875, 684)
-    plotter.iren._mouse_left_button_release()
+    pl.iren._mouse_left_button_press(169, 113)
+    pl.iren._mouse_move(875, 684)
+    pl.iren._mouse_left_button_release()
 
-    assert plotter.get_pick_position() == (169, 113, 875, 684)
+    assert pl.get_pick_position() == (169, 113, 875, 684)
 
-    plotter.close()
+    pl.close()
 
-    assert isinstance(plotter.picked_cells, pv.MultiBlock)
+    assert isinstance(pl.picked_cells, pv.MultiBlock)
     # Selection should return 2 submeshes
-    assert len(plotter.picked_cells) == 2
+    assert len(pl.picked_cells) == 2
 
-    merged = plotter.picked_cells.combine()
+    assert all('original_cell_ids' in b.cell_data for b in pl.picked_cells)
+    if through:
+        assert all('orig_extract_id' in b.cell_data for b in pl.picked_cells)
+
+    merged = pl.picked_cells.combine()
     n_sphere_cells = pv.wrap(src.GetOutput()).n_cells
     if through:
         # all cells should have been selected
@@ -210,6 +267,9 @@ def test_disable_picking(sphere, left_clicking):
     pl.disable_picking()  # ensure it can safely be called twice
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
 def test_cell_picking_interactive():
     n_cells = []
 
@@ -229,9 +289,46 @@ def test_cell_picking_interactive():
     pl.iren._mouse_left_button_release(width, height)
 
     assert n_cells[0]
-    assert pl.picked_cell
+    assert pl.picked_cells
+    assert 'original_cell_ids' in pl.picked_cells.cell_data
+    assert 'orig_extract_id' in pl.picked_cells.cell_data
 
 
+def test_cell_picking_warning():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.enable_cell_picking(through=True)
+    pl.show(auto_close=False, interactive=False)
+
+    width, height = pl.window_size
+
+    # simulate "r" keypress
+    pl.iren._simulate_keypress('r')
+    pl.iren._mouse_left_button_press(width // 2, height // 2)
+
+    pattern = re.escape(
+        'The `orig_extract_id` cell data has been deprecated and will be renamed to `original_cell_ids in a future version of PyVista.'  # noqa: E501
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=pattern):
+        pl.iren._mouse_left_button_release(width, height)
+
+    if pv.version_info >= (0, 49):
+        pytest.fail('Rename `orig_extract_id` cell data to `original_cell_ids.')
+
+    assert pl.picked_cells
+    assert 'original_cell_ids' in pl.picked_cells.cell_data
+    assert 'orig_extract_id' in pl.picked_cells.cell_data
+
+
+def test_picked_cell_warning():
+    pl = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match='Use the `picked_cells` attribute instead'):
+        _ = pl.picked_cell
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
 def test_cell_picking_interactive_subplot():
     n_cells = []
 
@@ -299,7 +396,6 @@ def test_point_picking(left_clicking):
     assert picked
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0, reason='Hardware picker unavailable for VTK<9.2')
 @pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
@@ -319,7 +415,9 @@ def test_point_picking_window(pickable_window):
     sphere.translate([-1, -1, 0], inplace=True)
     pl.add_mesh(sphere, pickable=True)
 
-    pl.camera_position = [(0.0, 0.0, 8.5), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl.camera_position = pv.CameraPosition(
+        position=(0.0, 0.0, 8.5), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+    )
 
     tracker = Tracker()
     pl.enable_point_picking(
@@ -357,7 +455,7 @@ def test_path_picking():
     pl.add_mesh(sphere)
     pl.enable_path_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
     )
     # simulate the pick
     renderer = pl.renderer
@@ -379,7 +477,7 @@ def test_geodesic_picking():
     pl.add_mesh(sphere)
     pl.enable_geodesic_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
         show_path=True,
         keep_order=True,
     )
@@ -406,7 +504,7 @@ def test_horizon_picking():
     pl.add_mesh(sphere)
     pl.enable_horizon_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
         show_horizon=True,
     )
     # simulate the pick
@@ -424,7 +522,8 @@ def test_horizon_picking():
     pl.close()
 
 
-def test_fly_to_right_click(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_right_click(sphere):
     point = []
 
     def callback(click_point):
@@ -444,7 +543,8 @@ def test_fly_to_right_click(verify_image_cache, sphere):
     pl.close()
 
 
-def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_right_click_multi_render(sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     point = []
 
@@ -464,7 +564,8 @@ def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
     pl.close()
 
 
-def test_fly_to_mouse_position(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_mouse_position(sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -481,11 +582,11 @@ def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
     pl = pv.Plotter()
     width, height = pl.window_size
-    actor, mapper = pl.add_composite(multiblock_poly)
+    _actor, mapper = pl.add_composite(multiblock_poly)
 
     picked_blocks = []
 
-    def turn_blue(index, dataset):
+    def turn_blue(index, dataset):  # noqa: ARG001
         mapper.block_attr[index].color = 'blue'
         picked_blocks.append(index)
 
@@ -505,6 +606,7 @@ def test_block_picking(multiblock_poly):
 
 
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
+@pytest.mark.skip_check_gc("vtkDataArray not gc'd with 'point' mode on Python 3.14 vtk dev wheels")
 def test_element_picking(mode):
     class Tracker:
         def __init__(self):
@@ -516,25 +618,25 @@ def test_element_picking(mode):
     tracker = Tracker()
 
     mesh = pv.Wavelet()
-    plotter = pv.Plotter(
+    pl = pv.Plotter(
         window_size=(100, 100),
     )
-    plotter.add_mesh(mesh)
-    plotter.enable_element_picking(
+    pl.add_mesh(mesh)
+    pl.enable_element_picking(
         mode=mode,
         show_message=True,
         left_clicking=True,
         callback=tracker,
     )
     # must show to activate the interactive renderer (for left_clicking)
-    plotter.show(auto_close=False)
+    pl.show(auto_close=False)
 
     # simulate the pick
-    width, height = plotter.window_size
+    width, height = pl.window_size
 
-    plotter.iren._mouse_left_button_click(width // 2, height // 2)
+    pl.iren._mouse_left_button_click(width // 2, height // 2)
 
-    plotter.close()
+    pl.close()
 
     assert tracker.last_picked is not None
 
@@ -551,6 +653,68 @@ def test_element_picking(mode):
         assert tracker.last_picked.n_points == 1
 
 
+def test_element_picking_point_preserves_data():
+    """Test that point picking with element handler preserves point data."""
+
+    class Tracker:
+        def __init__(self):
+            self.last_picked = None
+
+        def __call__(self, picked):
+            self.last_picked = picked
+
+    tracker = Tracker()
+
+    # Create a mesh with point data
+    mesh = pv.Sphere()
+    mesh.point_data['test_data'] = np.arange(mesh.n_points)
+    mesh.point_data['test_scalars'] = mesh.points[:, 0]  # x-coordinates
+
+    pl = pv.Plotter(window_size=(100, 100))
+    pl.add_mesh(mesh)
+    pl.enable_element_picking(
+        mode='point',
+        show_message=True,
+        left_clicking=True,
+        callback=tracker,
+    )
+    pl.show(auto_close=False)
+
+    # Simulate the pick
+    width, height = pl.window_size
+    pl.iren._mouse_left_button_click(width // 2, height // 2)
+
+    pl.close()
+
+    # Verify the picked point exists and is a PolyData
+    assert tracker.last_picked is not None
+    assert isinstance(tracker.last_picked, pv.PolyData)
+    assert tracker.last_picked.n_points == 1
+
+    # Verify point data is preserved
+    assert 'test_data' in tracker.last_picked.point_data
+    assert 'test_scalars' in tracker.last_picked.point_data
+    assert tracker.last_picked.point_data['test_data'].size == 1
+    assert tracker.last_picked.point_data['test_scalars'].size == 1
+
+    # Verify vtkOriginalPointIds is present
+    assert 'vtkOriginalPointIds' in tracker.last_picked.point_data
+    original_id = tracker.last_picked.point_data['vtkOriginalPointIds'][0]
+    assert 0 <= original_id < mesh.n_points
+
+    # Verify the point data values match the original mesh
+    assert (
+        tracker.last_picked.point_data['test_data'][0] == mesh.point_data['test_data'][original_id]
+    )
+    assert np.isclose(
+        tracker.last_picked.point_data['test_scalars'][0],
+        mesh.point_data['test_scalars'][original_id],
+    )
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The `orig_extract_id` cell data has been deprecated:pyvista.PyVistaDeprecationWarning'
+)
 def test_switch_picking_type():
     pl = pv.Plotter()
     width, height = pl.window_size
@@ -611,3 +775,55 @@ def test_picker_raises(picker, mocker: MockerFixture):
         pl.enable_surface_point_picking(picker=picker)
 
     m.assert_called_once_with(picker)
+
+
+def test_block_picking_across_four_subplots():
+    """Test block picking on a 2x2 subplot layout with a MultiBlock of two spheres."""
+    sphere1 = pv.Sphere(center=(-1.0, 0.0, 0.0), radius=0.5)
+    sphere2 = pv.Sphere(center=(1.0, 0.0, 0.0), radius=0.5)
+    blocks = pv.MultiBlock([sphere1, sphere2])
+
+    # Record each block index picked up
+    picked = []
+
+    def callback(index, dataset):  # noqa: ARG001
+        picked.append(index)
+
+    pl = pv.Plotter(shape=(2, 2), window_size=[400, 400])
+    for row in range(2):
+        for col in range(2):
+            pl.subplot(row, col)
+            pl.add_composite(blocks, color='w', pickable=True)
+
+    pl.enable_block_picking(callback, side='left')
+
+    # Using camera_position to ensure consistent view for testing
+    camera_position = pv.CameraPosition(
+        position=(3.0, 3.0, 3.0),
+        focal_point=(0.0, 0.0, 0.0),
+        viewup=(0.0, 0.0, 1.0),
+    )
+
+    pl.show(
+        auto_close=False,
+        cpos=camera_position,
+    )
+
+    # Using hard-coded click positions to ensure consistent testing
+    click_coords = [
+        [45, 266],
+        [147, 326],
+        [245, 263],
+        [352, 321],
+        [44, 59],
+        [147, 121],
+        [243, 60],
+        [349, 125],
+    ]
+
+    for x, y in click_coords:
+        pl.iren._mouse_left_button_click(x, y)
+    pl.close()
+
+    expected = [2, 1] * 4
+    assert picked == expected, f'Picked indices {picked}, but expected {expected}'

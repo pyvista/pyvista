@@ -12,14 +12,15 @@ Decimate a mesh
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
 mesh = examples.download_face()
 
 # Define a camera position that shows this mesh properly
-cpos = [(0.4, -0.07, -0.31), (0.05, -0.13, -0.06), (-0.1, 1, 0.08)]
+cpos = pv.CameraPosition(
+    position=(0.4, -0.07, -0.31), focal_point=(0.05, -0.13, -0.06), viewup=(-0.1, 1, 0.08)
+)
 dargs = dict(show_edges=True, color=True)
 
 # Preview the mesh

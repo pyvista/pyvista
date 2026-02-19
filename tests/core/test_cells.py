@@ -4,12 +4,15 @@ from types import GeneratorType
 
 import numpy as np
 import pytest
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.celltype import _CELL_TYPES_0D
+from pyvista.core.celltype import _CELL_TYPES_1D
+from pyvista.core.celltype import _CELL_TYPES_2D
+from pyvista.core.celltype import _CELL_TYPES_3D
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -174,7 +177,7 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_cell_type(cell, type_):
     assert cell.type == type_
 
@@ -184,22 +187,22 @@ def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims, strict=True), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces, strict=True), ids=cell_ids)
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges, strict=True), ids=cell_ids)
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
@@ -278,8 +281,12 @@ def test_cell_faces(cell):
 @pytest.mark.parametrize('grid', grids, ids=ids)
 def test_cell_bounds(grid):
     assert isinstance(grid.get_cell(0).bounds, tuple)
-    assert all(bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2]))
-    assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
+    assert all(
+        bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2], strict=True)
+    )
+    assert all(
+        bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2], strict=True)
+    )
 
 
 @pytest.mark.parametrize('grid', grids, ids=ids)
@@ -300,12 +307,12 @@ def test_cell_center_value():
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 
@@ -425,7 +432,7 @@ def test_set_shallow_regular_cells():
 def test_numpy_to_idarr_bool():
     mask = np.ones(10, np.bool_)
     idarr = numpy_to_idarr(mask)
-    assert np.allclose(mask.nonzero()[0], vtk_to_numpy(idarr))
+    assert np.allclose(mask.nonzero()[0], _vtk.vtk_to_numpy(idarr))
 
 
 def test_cell_types():
@@ -496,28 +503,44 @@ def test_cell_types():
         'BEZIER_PYRAMID',
     ]
     for cell_type in cell_types:
-        if hasattr(vtk, 'VTK_' + cell_type):
-            assert getattr(pv.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
+        if hasattr(_vtk, 'VTK_' + cell_type):
+            assert getattr(pv.CellType, cell_type) == getattr(_vtk, 'VTK_' + cell_type)
 
 
 def test_n_cells_deprecated():
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+    with pytest.raises(
+        TypeError,
+        match=r'CellArray parameter `n_cells` is deprecated and no longer used\.',
+    ):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], n_cells=1)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert `n_cells` deprecation warning to error'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `n_cells` constructor kwarg'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `n_cells` constructor kwarg'
+        raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('deep', [True, False])
 def test_deep_deprecated(deep: bool):
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+    with pytest.raises(
+        TypeError,
+        match=r'CellArray parameter `deep` is deprecated and no longer used\.',
+    ):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert `deep` deprecation warning to error'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `deep` constructor kwarg'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `deep` constructor kwarg'
+        raise RuntimeError(msg)
+
+
+def test_cell_type_dimensions():
+    get_dimension = (
+        _vtk.vtkCellTypeUtilities.GetDimension
+        if pv.vtk_version_info >= (9, 6, 0)
+        else _vtk.vtkCellTypes.GetDimension
+    )
+    for cell_type in _CELL_TYPES_0D:
+        assert get_dimension(cell_type) == 0
+    for cell_type in _CELL_TYPES_1D:
+        assert get_dimension(cell_type) == 1
+    for cell_type in _CELL_TYPES_2D:
+        assert get_dimension(cell_type) == 2
+    for cell_type in _CELL_TYPES_3D:
+        assert get_dimension(cell_type) == 3

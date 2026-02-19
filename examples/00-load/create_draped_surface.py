@@ -93,17 +93,17 @@ grid['values'] = data.ravel(order='F')
 # And now we can plot it, process it, or do anything, because it is a PyVista
 # mesh and the possibilities are endless with PyVista.
 
-cpos = [
-    (1217002.366883762, 345363.80666238244, 3816.828857791056),
-    (1216322.4753436751, 344033.0310674846, 3331.052985309526),
-    (-0.17716571330686096, -0.25634368781817973, 0.9502106207279767),
-]
+cpos = pv.CameraPosition(
+    position=(1217002.366883762, 345363.80666238244, 3816.828857791056),
+    focal_point=(1216322.4753436751, 344033.0310674846, 3331.052985309526),
+    viewup=(-0.17716571330686096, -0.25634368781817973, 0.9502106207279767),
+)
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
-p = pv.Plotter()
-p.add_mesh(grid, cmap='seismic', clim=[-1, 1])
-p.add_mesh(pv.PolyData(path), color='orange')
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(grid, cmap='seismic', clim=[-1, 1])
+pl.add_mesh(pv.PolyData(path), color='orange')
+pl.show(cpos=cpos)
 # %%
 # .. tags:: load

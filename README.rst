@@ -52,6 +52,9 @@ Status badges
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
+.. |nix| image:: https://img.shields.io/badge/nix-unstable-blue.svg?logo=nixos&logoColor=white
+   :target: https://search.nixos.org/packages?channel=unstable&show=python3Packages.pyvista&query=pyvista
+
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
@@ -80,7 +83,7 @@ Status badges
   :target: https://github.com/prettier/prettier
   :alt: prettier
 
-.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.10+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
@@ -109,30 +112,30 @@ Status badges
     :target: https://pypi.org/project/pyvista
     :alt: Python versions
 
-+----------------------+------------------------------------------------+
-| Deployment           | |pypi| |pyversions| |conda| |Packaging status| |
-+----------------------+------------------------------------------------+
-| Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
-+----------------------+------------------------------------------------+
-| Metrics              | |codacy| |codecov|                             |
-+----------------------+------------------------------------------------+
-| Activity             | |PyPIact| |condaact|                           |
-+----------------------+------------------------------------------------+
-| Citation             | |joss| |zenodo|                                |
-+----------------------+------------------------------------------------+
-| License              | |MIT|                                          |
-+----------------------+------------------------------------------------+
-| Community            | |slack| |discuss| |Good first issue|           |
-|                      | |GitHub Repo stars|                            |
-+----------------------+------------------------------------------------+
-| Formatter            | |prettier|                                     |
-+----------------------+------------------------------------------------+
-| Linter               | |Ruff|                                         |
-+----------------------+------------------------------------------------+
-| Affiliated           | |NumFOCUS Affiliated|                          |
-+----------------------+------------------------------------------------+
-| Mentioned            | |Awesome Scientific Computing|                 |
-+----------------------+------------------------------------------------+
++----------------------+------------------------------------------------------+
+| Deployment           | |pypi| |pyversions| |conda| |nix| |Packaging status| |
++----------------------+------------------------------------------------------+
+| Build Status         | |GH-CI| |python| |pre-commit.ci status|              |
++----------------------+------------------------------------------------------+
+| Metrics              | |codacy| |codecov|                                   |
++----------------------+------------------------------------------------------+
+| Activity             | |PyPIact| |condaact|                                 |
++----------------------+------------------------------------------------------+
+| Citation             | |joss| |zenodo|                                      |
++----------------------+------------------------------------------------------+
+| License              | |MIT|                                                |
++----------------------+------------------------------------------------------+
+| Community            | |slack| |discuss| |Good first issue|                 |
+|                      | |GitHub Repo stars|                                  |
++----------------------+------------------------------------------------------+
+| Formatter            | |prettier|                                           |
++----------------------+------------------------------------------------------+
+| Linter               | |Ruff|                                               |
++----------------------+------------------------------------------------------+
+| Affiliated           | |NumFOCUS Affiliated|                                |
++----------------------+------------------------------------------------------+
+| Mentioned            | |Awesome Scientific Computing|                       |
++----------------------+------------------------------------------------------+
 
 
 Highlights
@@ -188,7 +191,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.9::
+using ``pip`` on Python >= 3.10::
 
     pip install pyvista
 
@@ -300,17 +303,12 @@ BibTex:
 Professional Support
 ====================
 
-While PyVista is an Open Source project with a big community, you might be looking for professional support.
-This section aims to list companies with VTK/PyVista expertise who can help you with your software project.
+PyVista is a community-driven Open Source project, but many users and organizations rely on it in production workflows, research pipelines, and custom visualization systems. If you need expert guidance, development help, or guaranteed support, there are several ways to engage with the people who build and maintain PyVista.
 
-+---------------+-----------------------------------------+
-| Company Name  | Kitware Inc.                            |
-+---------------+-----------------------------------------+
-| Description   | Kitware is dedicated to build solutions |
-|               | for our customers based on our          |
-|               | well-established open source platforms. |
-+---------------+-----------------------------------------+
-| Expertise     | CMake, VTK, PyVista, ParaView, Trame    |
-+---------------+-----------------------------------------+
-| Contact       | https://www.kitware.com/contact/        |
-+---------------+-----------------------------------------+
+For general inquiries, reach out to info@pyvista.org and we can help connect you with the right community experts for your 3D visualization or analysis needs.
+
+If you are looking for professional services (consulting, custom development, feature design, integration support, or training), consider sponsoring PyVista's core developers through the “Sponsor this project” section on GitHub. Sponsorship not only provides direct access to experts but also helps sustain critical maintenance and ongoing feature work that keeps PyVista reliable and modern.
+
+More details can be found in the discussion post: https://github.com/pyvista/pyvista/discussions/4033
+
+Sponsoring a developer supports both your project and the health of the PyVista ecosystem, ensuring continued improvements, long-term stability, and expert help when you need it.

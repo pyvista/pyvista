@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import os
+import re
 
 from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import matplotlib as mpl
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import colors
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
+from pyvista.plotting import _vtk
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
@@ -25,20 +28,20 @@ def default_theme():
 
 @pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
 def test_theme_trame_raises(default_theme: pv.themes.Theme, trame):
-    with pytest.raises(TypeError, match='Configuration type must be `_TrameConfig`.'):
+    with pytest.raises(TypeError, match=r'Configuration type must be `_TrameConfig`.'):
         default_theme.trame = trame
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(image_scale=st.integers().filter(lambda x: x < 1))
 def test_theme_image_scale_raises(default_theme: pv.themes.Theme, image_scale):
-    with pytest.raises(ValueError, match='Scale factor must be a positive integer.'):
+    with pytest.raises(ValueError, match=r'Scale factor must be a positive integer.'):
         default_theme.image_scale = image_scale
 
 
 @pytest.mark.parametrize('lighting_params', [1, None, object(), True, pv.Sphere()])
 def test_theme_lightning_params_raises(default_theme: pv.themes.Theme, lighting_params):
-    with pytest.raises(TypeError, match='Configuration type must be `_LightingConfig`.'):
+    with pytest.raises(TypeError, match=r'Configuration type must be `_LightingConfig`.'):
         default_theme.lighting_params = lighting_params
 
 
@@ -84,7 +87,7 @@ def test_depth_silhouette_eq(default_theme):
     assert my_theme.silhouette != 1
 
 
-def test_depth_silhouette_opacity_outside_clamp(default_theme):
+def test_depth_silhouette_opacity_outside_clamp():
     my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
@@ -144,7 +147,7 @@ def test_color_str():
 
 def test_font():
     font = pv.parse_font_family('times')
-    assert font == vtk.VTK_TIMES
+    assert font == _vtk.VTK_TIMES
     with pytest.raises(ValueError):  # noqa: PT011
         pv.parse_font_family('not a font')
 
@@ -178,7 +181,7 @@ def test_font_label_size(default_theme):
 
 
 def test_font_fmt(default_theme):
-    fmt = '%.6e'
+    fmt = '{:.6e}'
     default_theme.font.fmt = fmt
     assert default_theme.font.fmt == fmt
 
@@ -187,7 +190,7 @@ def test_axes_eq(default_theme):
     assert default_theme.axes == pv.plotting.themes.Theme().axes
 
     theme = pv.plotting.themes.Theme()
-    theme.axes.box = True
+    theme.axes.box = not default_theme.axes.box
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
 
@@ -358,15 +361,22 @@ def test_camera_parallel_scale(default_theme):
     assert pl2.parallel_scale == 2.0
 
 
-def test_cmap(default_theme):
-    cmap = 'jet'
+@pytest.mark.parametrize('cmap', ['jet', mpl.colormaps['jet'], ['red', 'green', 'blue']])
+def test_cmap(default_theme, cmap):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a color map'):
+
+def test_cmap_raises(default_theme):
+    match = "Invalid colormap 'not a color map'"
+    with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
-    with pytest.raises(ValueError, match='Invalid color map'):
+    match = (
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>, "
+        "<class 'matplotlib.colors.Colormap'>). Got <class 'NoneType'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
 
 
@@ -447,7 +457,7 @@ def test_repr(default_theme):
     # of the key in the repr or the key length is increased
     for line in rep.splitlines():
         if ':' in line:
-            pref, *rest = line.split(':', 1)
+            pref, *_rest = line.split(':', 1)
             assert pref.endswith(' '), f'Key str too long or need to raise key length:\n{pref!r}'
 
 
@@ -483,22 +493,45 @@ def test_theme_eq():
 
 
 def test_plotter_set_theme():
-    # test that the plotter theme is set to the new theme
+    """Test that the plotter theme is set to the new theme"""
+
     my_theme = pv.plotting.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pv.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pv.global_theme.color != pl.theme.color
 
+
+def test_plotter_theme_attribute_setter():
+    """Test when a theme is set as a plotter attribute"""
+    my_theme = pv.themes.Theme()
+    my_theme.color = [1.0, 0.0, 0.0]
+
     pl = pv.Plotter()
-    assert pl.theme == pv.global_theme
-    pl.theme = my_theme
+    match = (
+        'Assigning a theme for a plotter instance is deprecated '
+        'and will removed in a future version of PyVista. '
+        'Set the theme when initializing the plotter instance instead.'
+    )
+
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pl.theme = my_theme
+
+    if pyvista.version_info >= (0, 49):
+        pytest.fail('Turn the warning to error')
+
+    if pyvista.version_info >= (0, 50):
+        pytest.fail('Remove the `theme` setter')
+
+    assert pl.theme.color == my_theme.color
+
     assert pl.theme != pv.global_theme
     assert pl.theme == my_theme
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -511,7 +544,8 @@ def test_load_theme(tmpdir, default_theme):
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -582,7 +616,8 @@ def test_below_range_color(default_theme):
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
-def test_user_logo(default_theme, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_user_logo(default_theme):
     default_theme.logo_file = download_file('vtk.png')
     pl = pv.Plotter()
     pl.add_logo_widget()

@@ -4,32 +4,31 @@
 Plotting with VTK Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass a ``vtkAlgorithm`` to the ``Plotter`` for dynamic visualizations.
+Pass a :vtk:`vtkAlgorithm` to the ``Plotter`` for dynamic visualizations.
 
 .. note::
     By "dynamic visualization" we mean that as the input data/source
     changes, so will the visualization in real time.
 
-A ``vtkAlgorithm`` is the superclass for all sources, filters, and sinks
+A :vtk:`vtkAlgorithm` is the superclass for all sources, filters, and sinks
 in VTK. It defines a generalized interface for executing data processing
 algorithms. Pipeline connections are associated with input and output
 ports that are independent of the type of data passing through the
 connections.
 
-We can connect the output port of a ``vtkAlgorithm`` to PyVista's rendering
+We can connect the output port of a :vtk:`vtkAlgorithm` to PyVista's rendering
 pipeline when adding data to the scene through methods like
 :func:`add_mesh() <pyvista.Plotter.add_mesh>`.
 
-This example will walk through using a few ``vtkAlgorithm`` filters directly
+This example will walk through using a few :vtk:`vtkAlgorithm` filters directly
 and passing them to PyVista for dynamic visualization.
 """
 
 from __future__ import annotations
 
-import vtk
-
 import pyvista as pv
 from pyvista import examples
+import vtk
 
 # sphinx_gallery_start_ignore
 # widgets do not currently work in interactive examples
@@ -37,10 +36,10 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Use ``vtkConeSource`` as a source algorithm. This source will dynamically
+# Use :vtk:`vtkConeSource` as a source algorithm. This source will dynamically
 # create a cone object depending on the instances's parameters. In this
 # example, we will connect a callback to set the cone source algorithm's
-# resolution via ``vtkConeSource.SetResolution()``.
+# resolution via :vtk:`vtkConeSource.SetResolution`.
 algo = pv.ConeSource()
 
 
@@ -51,16 +50,16 @@ def update_resolution(value):
 
 
 # %%
-# Pass the ``vtkConeSource`` (a ``vtkAlgorithm`` subclass) directly to the
+# Pass the :vtk:`vtkConeSource` (a :vtk:`vtkAlgorithm` subclass) directly to the
 # plotter and connect a slider widget to our callback that adjusts the
 # resolution.
-p = pv.Plotter()
-p.add_mesh(algo, color='red')
-p.add_slider_widget(update_resolution, [5, 100], title='Resolution')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(algo, color='red')
+pl.add_slider_widget(update_resolution, [5, 100], title='Resolution')
+pl.show()
 
 # %%
-# Here is another example using ``vtkRegularPolygonSource``.
+# Here is another example using :vtk:`vtkRegularPolygonSource`.
 poly_source = vtk.vtkRegularPolygonSource()
 poly_source.GeneratePolygonOff()
 poly_source.SetRadius(5.0)
@@ -73,17 +72,17 @@ def update_n_sides(value):
     poly_source.SetNumberOfSides(res)
 
 
-p = pv.Plotter()
-p.add_mesh_clip_box(poly_source, color='red')
-p.add_slider_widget(update_n_sides, [3, 25], title='N Sides')
-p.view_xy()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_clip_box(poly_source, color='red')
+pl.add_slider_widget(update_n_sides, [3, 25], title='N Sides')
+pl.view_xy()
+pl.show()
 
 
 # %%
 # Filter Pipeline
 # +++++++++++++++
-# We can do this with any ``vtkAlgorithm`` subclass for dynamically generating
+# We can do this with any :vtk:`vtkAlgorithm` subclass for dynamically generating
 # or filtering data. Here is an example of executing a pipeline of VTK filters
 # together.
 
@@ -112,8 +111,8 @@ contour.SetNumberOfContours(1)
 contour.SetValue(0, 0.95 * splatter.GetRadius())
 
 # Use PyVista to plot output of contour filter
-p = pv.Plotter(notebook=0)
-p.add_mesh(mesh, style='wireframe')
-p.add_mesh(contour, color=True)
-p.add_slider_widget(splatter.SetRadius, [0.01, 0.05])
-p.show()
+pl = pv.Plotter(notebook=0)
+pl.add_mesh(mesh, style='wireframe')
+pl.add_mesh(contour, color=True)
+pl.add_slider_widget(splatter.SetRadius, [0.01, 0.05])
+pl.show()

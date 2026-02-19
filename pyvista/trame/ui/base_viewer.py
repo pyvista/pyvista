@@ -1,4 +1,3 @@
-# ruff: noqa: D102,D103,D107
 """PyVista Trame Base Viewer class.
 
 This base class defines methods to manipulate a PyVista Plotter.
@@ -13,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from trame.app import get_server
 
-import pyvista
+import pyvista as pv
 
 if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
@@ -68,7 +67,7 @@ class BaseViewer:
         """Get a set of all associate trame views for this viewer."""
         return self._html_views
 
-    def update(self, **kwargs):
+    def update(self, **kwargs):  # noqa: ARG002
         """Update all associated views.
 
         Parameters
@@ -80,7 +79,7 @@ class BaseViewer:
         for view in self._html_views:
             view.update()
 
-    def push_camera(self, **kwargs):
+    def push_camera(self, **kwargs):  # noqa: ARG002
         """Push camera to all associated views.
 
         Parameters
@@ -92,7 +91,7 @@ class BaseViewer:
         for view in self._html_views:
             view.push_camera()
 
-    def reset_camera(self, **kwargs):
+    def reset_camera(self, **kwargs):  # noqa: ARG002
         """Reset camera for all associated views.
 
         Parameters
@@ -104,7 +103,7 @@ class BaseViewer:
         for view in self._html_views:
             view.reset_camera()
 
-    def update_image(self, **kwargs):
+    def update_image(self, **kwargs):  # noqa: ARG002
         """Update image for all associated views.
 
         Parameters
@@ -116,7 +115,7 @@ class BaseViewer:
         for view in self._html_views:
             view.update_image()
 
-    def update_camera(self, **kwargs):
+    def update_camera(self, **kwargs):  # noqa: ARG002
         """Update image and camera for all associated views.
 
         Parameters
@@ -177,7 +176,7 @@ class BaseViewer:
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
             for actor in renderer.actors.values():
-                if isinstance(actor, pyvista.Actor):
+                if isinstance(actor, pv.Actor):
                     actor.prop.show_edges = value
         self.update()
 
@@ -232,12 +231,13 @@ class BaseViewer:
                 renderer.hide_axes()
         for view in self._html_views:
             if view.set_widgets:
-                # VtkRemoteView does not have set_widgets function, but VtkRemoteLocalView and VtkLocalView do.
+                # VtkRemoteView does not have set_widgets function, but
+                # VtkRemoteLocalView and VtkLocalView do.
                 view.set_widgets(
                     [
                         ren.axes_widget
                         for ren in self.plotter.renderers
-                        if hasattr(ren, 'axes_widget')
+                        if ren.axes_widget is not None
                     ],
                 )
         self.update()
@@ -257,7 +257,7 @@ class BaseViewer:
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
-        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
+        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pv.Actor)}
 
     def screenshot(self):
         """Take screenshot and add attachament.

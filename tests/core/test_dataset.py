@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
+import math
 import re
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core import dataset
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core import dataset as dataset_module
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -29,93 +28,93 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import DataSet
 
 
-def test_invalid_copy_from(grid):
+def test_invalid_copy_from(hexbeam):
     with pytest.raises(TypeError):
-        grid.copy_from(pv.Plane())
+        hexbeam.copy_from(pv.Plane())
 
 
-def test_memory_address(grid):
-    assert isinstance(grid.memory_address, str)
-    assert 'Addr' in grid.memory_address
+def test_memory_address(hexbeam):
+    assert isinstance(hexbeam.memory_address, str)
+    assert 'Addr' in hexbeam.memory_address
 
 
-def test_point_data(grid):
+def test_point_data(hexbeam):
     key = 'test_array_points'
-    grid[key] = np.arange(grid.n_points)
-    assert key in grid.point_data
+    hexbeam[key] = np.arange(hexbeam.n_points)
+    assert key in hexbeam.point_data
 
-    orig_value = grid.point_data[key][0] / 1.0
-    grid.point_data[key][0] += 1
-    assert orig_value == grid.point_data[key][0] - 1
+    orig_value = hexbeam.point_data[key][0] / 1.0
+    hexbeam.point_data[key][0] += 1
+    assert orig_value == hexbeam.point_data[key][0] - 1
 
-    del grid.point_data[key]
-    assert key not in grid.point_data
+    del hexbeam.point_data[key]
+    assert key not in hexbeam.point_data
 
-    grid.point_data[key] = np.arange(grid.n_points)
-    assert key in grid.point_data
+    hexbeam.point_data[key] = np.arange(hexbeam.n_points)
+    assert key in hexbeam.point_data
 
-    assert np.allclose(grid[key], np.arange(grid.n_points))
+    assert np.allclose(hexbeam[key], np.arange(hexbeam.n_points))
 
-    grid.clear_point_data()
-    assert len(grid.point_data.keys()) == 0
+    hexbeam.clear_point_data()
+    assert len(hexbeam.point_data.keys()) == 0
 
-    grid.point_data['list'] = np.arange(grid.n_points).tolist()
-    assert isinstance(grid.point_data['list'], np.ndarray)
-    assert np.allclose(grid.point_data['list'], np.arange(grid.n_points))
+    hexbeam.point_data['list'] = np.arange(hexbeam.n_points).tolist()
+    assert isinstance(hexbeam.point_data['list'], np.ndarray)
+    assert np.allclose(hexbeam.point_data['list'], np.arange(hexbeam.n_points))
 
 
-def test_point_data_bad_value(grid):
+def test_point_data_bad_value(hexbeam):
     with pytest.raises(TypeError):
-        grid.point_data['new_array'] = None
+        hexbeam.point_data['new_array'] = None
 
     match = (
         "Invalid array shape. Array 'new_array' has length (98) but a length of (99) was expected."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid.point_data['new_array'] = np.arange(grid.n_points - 1)
+        hexbeam.point_data['new_array'] = np.arange(hexbeam.n_points - 1)
 
 
-def test_ipython_key_completions(grid):
-    assert isinstance(grid._ipython_key_completions_(), list)
+def test_ipython_key_completions(hexbeam):
+    assert isinstance(hexbeam._ipython_key_completions_(), list)
 
 
-def test_cell_data(grid):
+def test_cell_data(hexbeam):
     key = 'test_array_cells'
-    grid[key] = np.arange(grid.n_cells)
-    assert key in grid.cell_data
+    hexbeam[key] = np.arange(hexbeam.n_cells)
+    assert key in hexbeam.cell_data
 
-    orig_value = grid.cell_data[key][0] / 1.0
-    grid.cell_data[key][0] += 1
-    assert orig_value == grid.cell_data[key][0] - 1
+    orig_value = hexbeam.cell_data[key][0] / 1.0
+    hexbeam.cell_data[key][0] += 1
+    assert orig_value == hexbeam.cell_data[key][0] - 1
 
-    del grid.cell_data[key]
-    assert key not in grid.cell_data
+    del hexbeam.cell_data[key]
+    assert key not in hexbeam.cell_data
 
-    grid.cell_data[key] = np.arange(grid.n_cells)
-    assert key in grid.cell_data
+    hexbeam.cell_data[key] = np.arange(hexbeam.n_cells)
+    assert key in hexbeam.cell_data
 
-    assert np.allclose(grid[key], np.arange(grid.n_cells))
+    assert np.allclose(hexbeam[key], np.arange(hexbeam.n_cells))
 
-    grid.cell_data['list'] = np.arange(grid.n_cells).tolist()
-    assert isinstance(grid.cell_data['list'], np.ndarray)
-    assert np.allclose(grid.cell_data['list'], np.arange(grid.n_cells))
-
-
-def test_cell_array_range(grid):
-    rng = range(grid.n_cells)
-    grid.cell_data['tmp'] = rng
-    assert np.allclose(rng, grid.cell_data['tmp'])
+    hexbeam.cell_data['list'] = np.arange(hexbeam.n_cells).tolist()
+    assert isinstance(hexbeam.cell_data['list'], np.ndarray)
+    assert np.allclose(hexbeam.cell_data['list'], np.arange(hexbeam.n_cells))
 
 
-def test_cell_data_bad_value(grid):
+def test_cell_array_range(hexbeam):
+    rng = range(hexbeam.n_cells)
+    hexbeam.cell_data['tmp'] = rng
+    assert np.allclose(rng, hexbeam.cell_data['tmp'])
+
+
+def test_cell_data_bad_value(hexbeam):
     with pytest.raises(TypeError):
-        grid.cell_data['new_array'] = None
+        hexbeam.cell_data['new_array'] = None
 
     match = (
         "Invalid array shape. Array 'new_array' has length (39) but a length of (40) was expected."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
+        hexbeam.cell_data['new_array'] = np.arange(hexbeam.n_cells - 1)
 
 
 @pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1), (0, 0)])
@@ -161,115 +160,112 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
         assert data['new_array'].shape == (0,)
     else:
         # Expect error for all other cases
-        with pytest.raises(ValueError, match='Invalid array shape.'):
+        with pytest.raises(ValueError, match=r'Invalid array shape.'):
             data['new_array'] = empty_array
 
 
 def test_point_cell_data_single_scalar_no_exception_raised():
-    try:
-        m = pv.PolyData([0, 0, 0.0])
-        m.point_data['foo'] = 1
-        m.cell_data['bar'] = 1
-        m['baz'] = 1
-    except Exception as e:
-        pytest.fail(f'Unexpected exception raised: {e}')
+    m = pv.PolyData([0, 0, 0.0])
+    m.point_data['foo'] = 1
+    m.cell_data['bar'] = 1
+    m['baz'] = 1
 
 
-def test_field_data(grid):
+def test_field_data(hexbeam):
     key = 'test_array_field'
     # Add array of length not equal to n_cells or n_points
-    n = grid.n_cells // 3
-    grid.field_data[key] = np.arange(n)
-    assert key in grid.field_data
-    assert np.allclose(grid.field_data[key], np.arange(n))
-    assert np.allclose(grid[key], np.arange(n))
+    n = hexbeam.n_cells // 3
+    hexbeam.field_data[key] = np.arange(n)
+    assert key in hexbeam.field_data
+    assert np.allclose(hexbeam.field_data[key], np.arange(n))
+    assert np.allclose(hexbeam[key], np.arange(n))
 
-    orig_value = grid.field_data[key][0] / 1.0
-    grid.field_data[key][0] += 1
-    assert orig_value == grid.field_data[key][0] - 1
+    orig_value = hexbeam.field_data[key][0] / 1.0
+    hexbeam.field_data[key][0] += 1
+    assert orig_value == hexbeam.field_data[key][0] - 1
 
-    assert key in grid.array_names
+    assert key in hexbeam.array_names
 
-    del grid.field_data[key]
-    assert key not in grid.field_data
+    del hexbeam.field_data[key]
+    assert key not in hexbeam.field_data
 
-    grid.field_data['list'] = np.arange(n).tolist()
-    assert isinstance(grid.field_data['list'], np.ndarray)
-    assert np.allclose(grid.field_data['list'], np.arange(n))
+    hexbeam.field_data['list'] = np.arange(n).tolist()
+    assert isinstance(hexbeam.field_data['list'], np.ndarray)
+    assert np.allclose(hexbeam.field_data['list'], np.arange(n))
 
     foo = np.arange(n) * 5
-    grid.add_field_data(foo, 'foo')
-    assert isinstance(grid.field_data['foo'], np.ndarray)
-    assert np.allclose(grid.field_data['foo'], foo)
+    hexbeam.add_field_data(foo, 'foo')
+    assert isinstance(hexbeam.field_data['foo'], np.ndarray)
+    assert np.allclose(hexbeam.field_data['foo'], foo)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.set_active_scalars('foo')
+        hexbeam.set_active_scalars('foo')
 
 
-def test_field_data_string(grid):
+def test_field_data_string(hexbeam):
     # test `mesh.field_data`
     field_name = 'foo'
     field_value = 'bar'
-    grid.field_data[field_name] = field_value
-    returned = grid.field_data[field_name]
+    hexbeam.field_data[field_name] = field_value
+    returned = hexbeam.field_data[field_name]
     assert returned == field_value
     assert isinstance(returned, str)
 
     # test `mesh.add_field_data`
     field_name = 'eggs'
     field_value = 'ham'
-    grid.add_field_data(array=field_value, name=field_name)
-    returned = grid.field_data[field_name]
+    hexbeam.add_field_data(array=field_value, name=field_name)
+    returned = hexbeam.field_data[field_name]
     assert returned == field_value
     assert isinstance(returned, str)
 
     # test `mesh[name] = data`
     field_name = 'baz'
-    field_value = 'a' * grid.n_points
-    grid[field_name] = field_value
-    returned = grid.field_data[field_name]
+    field_value = 'a' * hexbeam.n_points
+    hexbeam[field_name] = field_value
+    returned = hexbeam.field_data[field_name]
     assert returned == field_value
     assert isinstance(returned, str)
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
-def test_add_field_data(grid, field):
-    grid.add_field_data(field, 'foo')
-    assert isinstance(grid.field_data['foo'], np.ndarray)
-    assert np.allclose(grid.field_data['foo'], field)
+def test_add_field_data(hexbeam, field):
+    hexbeam.add_field_data(field, 'foo')
+    assert isinstance(hexbeam.field_data['foo'], np.ndarray)
+    assert np.allclose(hexbeam.field_data['foo'], field)
 
 
-def test_modify_field_data(grid):
+def test_modify_field_data(hexbeam):
     field = range(4)
-    grid.add_field_data(range(5), 'foo')
-    grid.add_field_data(field, 'foo')
-    assert np.allclose(grid.field_data['foo'], field)
+    hexbeam.add_field_data(range(5), 'foo')
+    hexbeam.add_field_data(field, 'foo')
+    assert np.allclose(hexbeam.field_data['foo'], field)
 
     field = range(8)
-    grid.field_data['foo'] = field
-    assert np.allclose(grid.field_data['foo'], field)
+    hexbeam.field_data['foo'] = field
+    assert np.allclose(hexbeam.field_data['foo'], field)
 
 
-def test_active_scalars_cell(grid):
-    grid.add_field_data(range(5), 'foo')
-    del grid.point_data['sample_point_scalars']
-    del grid.point_data['VTKorigID']
-    assert grid.active_scalars_info[1] == 'sample_cell_scalars'
+def test_active_scalars_cell(hexbeam):
+    hexbeam.add_field_data(range(5), 'foo')
+    del hexbeam.point_data['sample_point_scalars']
+    del hexbeam.point_data['VTKorigID']
+    assert hexbeam.active_scalars_info[1] == 'sample_cell_scalars'
 
 
-def test_field_data_bad_value(grid):
+def test_field_data_bad_value(hexbeam):
     with pytest.raises(TypeError):
-        grid.field_data['new_array'] = None
+        hexbeam.field_data['new_array'] = None
 
 
-def test_copy(grid):
-    grid_copy = grid.copy(deep=True)
+def test_copy(hexbeam):
+    grid_copy = hexbeam.copy(deep=True)
     grid_copy.points[0] = np.nan
-    assert not np.any(np.isnan(grid.points[0]))
+    assert not np.any(np.isnan(hexbeam.points[0]))
 
-    grid_copy_shallow = grid.copy(deep=False)
+    grid_copy_shallow = hexbeam.copy(deep=False)
     grid_copy.points[0] += 0.1
-    assert np.all(grid_copy_shallow.points[0] == grid.points[0])
+    assert np.all(grid_copy_shallow.points[0] == hexbeam.points[0])
 
 
 def test_copy_metadata(globe):
@@ -311,70 +307,70 @@ def test_set_points():
     dataset.points = pv.vtk_points(points)
 
 
-def test_make_points_double(grid):
-    grid.points = grid.points.astype(np.float32)
-    assert grid.points.dtype == np.float32
-    grid.points_to_double()
-    assert grid.points.dtype == np.double
+def test_make_points_double(hexbeam):
+    hexbeam.points = hexbeam.points.astype(np.float32)
+    assert hexbeam.points.dtype == np.float32
+    hexbeam.points_to_double()
+    assert hexbeam.points.dtype == np.double
 
 
-def test_invalid_points(grid):
+def test_invalid_points(hexbeam):
     with pytest.raises(TypeError):
-        grid.points = None
+        hexbeam.points = None
 
 
-def test_points_np_bool(grid):
-    bool_arr = np.zeros(grid.n_points, np.bool_)
-    grid.point_data['bool_arr'] = bool_arr
+def test_points_np_bool(hexbeam):
+    bool_arr = np.zeros(hexbeam.n_points, np.bool_)
+    hexbeam.point_data['bool_arr'] = bool_arr
     bool_arr[:] = True
-    assert grid.point_data['bool_arr'].all()
-    assert grid.point_data['bool_arr'].all()
-    assert grid.point_data['bool_arr'].dtype == np.bool_
+    assert hexbeam.point_data['bool_arr'].all()
+    assert hexbeam.point_data['bool_arr'].all()
+    assert hexbeam.point_data['bool_arr'].dtype == np.bool_
 
 
-def test_cells_np_bool(grid):
-    bool_arr = np.zeros(grid.n_cells, np.bool_)
-    grid.cell_data['bool_arr'] = bool_arr
+def test_cells_np_bool(hexbeam):
+    bool_arr = np.zeros(hexbeam.n_cells, np.bool_)
+    hexbeam.cell_data['bool_arr'] = bool_arr
     bool_arr[:] = True
-    assert grid.cell_data['bool_arr'].all()
-    assert grid.cell_data['bool_arr'].all()
-    assert grid.cell_data['bool_arr'].dtype == np.bool_
+    assert hexbeam.cell_data['bool_arr'].all()
+    assert hexbeam.cell_data['bool_arr'].all()
+    assert hexbeam.cell_data['bool_arr'].dtype == np.bool_
 
 
-def test_field_np_bool(grid):
-    bool_arr = np.zeros(grid.n_cells // 3, np.bool_)
-    grid.field_data['bool_arr'] = bool_arr
+def test_field_np_bool(hexbeam):
+    bool_arr = np.zeros(hexbeam.n_cells // 3, np.bool_)
+    hexbeam.field_data['bool_arr'] = bool_arr
     bool_arr[:] = True
-    assert grid.field_data['bool_arr'].all()
-    assert grid.field_data['bool_arr'].all()
-    assert grid.field_data['bool_arr'].dtype == np.bool_
+    assert hexbeam.field_data['bool_arr'].all()
+    assert hexbeam.field_data['bool_arr'].all()
+    assert hexbeam.field_data['bool_arr'].dtype == np.bool_
 
 
-def test_cells_uint8(grid):
-    arr = np.zeros(grid.n_cells, np.uint8)
-    grid.cell_data['arr'] = arr
-    arr[:] = np.arange(grid.n_cells)
-    assert np.allclose(grid.cell_data['arr'], np.arange(grid.n_cells))
+def test_cells_uint8(hexbeam):
+    arr = np.zeros(hexbeam.n_cells, np.uint8)
+    hexbeam.cell_data['arr'] = arr
+    arr[:] = np.arange(hexbeam.n_cells)
+    assert np.allclose(hexbeam.cell_data['arr'], np.arange(hexbeam.n_cells))
 
 
-def test_points_uint8(grid):
-    arr = np.zeros(grid.n_points, np.uint8)
-    grid.point_data['arr'] = arr
-    arr[:] = np.arange(grid.n_points)
-    assert np.allclose(grid.point_data['arr'], np.arange(grid.n_points))
+def test_points_uint8(hexbeam):
+    arr = np.zeros(hexbeam.n_points, np.uint8)
+    hexbeam.point_data['arr'] = arr
+    arr[:] = np.arange(hexbeam.n_points)
+    assert np.allclose(hexbeam.point_data['arr'], np.arange(hexbeam.n_points))
 
 
-def test_field_uint8(grid):
-    n = grid.n_points // 3
+def test_field_uint8(hexbeam):
+    n = hexbeam.n_points // 3
     arr = np.zeros(n, np.uint8)
-    grid.field_data['arr'] = arr
+    hexbeam.field_data['arr'] = arr
     arr[:] = np.arange(n)
-    assert np.allclose(grid.field_data['arr'], np.arange(n))
+    assert np.allclose(hexbeam.field_data['arr'], np.arange(n))
 
 
-def test_bitarray_points(grid):
-    n = grid.n_points
-    vtk_array = vtk.vtkBitArray()
+def test_bitarray_points(hexbeam):
+    n = hexbeam.n_points
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -383,13 +379,13 @@ def test_bitarray_points(grid):
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
-    grid.GetPointData().AddArray(vtk_array)
-    assert np.allclose(grid.point_data['bint_arr'], np_array)
+    hexbeam.GetPointData().AddArray(vtk_array)
+    assert np.allclose(hexbeam.point_data['bint_arr'], np_array)
 
 
-def test_bitarray_cells(grid):
-    n = grid.n_cells
-    vtk_array = vtk.vtkBitArray()
+def test_bitarray_cells(hexbeam):
+    n = hexbeam.n_cells
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -398,13 +394,13 @@ def test_bitarray_cells(grid):
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
-    grid.GetCellData().AddArray(vtk_array)
-    assert np.allclose(grid.cell_data['bint_arr'], np_array)
+    hexbeam.GetCellData().AddArray(vtk_array)
+    assert np.allclose(hexbeam.cell_data['bint_arr'], np_array)
 
 
-def test_bitarray_field(grid):
-    n = grid.n_cells // 3
-    vtk_array = vtk.vtkBitArray()
+def test_bitarray_field(hexbeam):
+    n = hexbeam.n_cells // 3
+    vtk_array = _vtk.vtkBitArray()
     np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
@@ -413,31 +409,31 @@ def test_bitarray_field(grid):
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
-    grid.GetFieldData().AddArray(vtk_array)
-    assert np.allclose(grid.field_data['bint_arr'], np_array)
+    hexbeam.GetFieldData().AddArray(vtk_array)
+    assert np.allclose(hexbeam.field_data['bint_arr'], np_array)
 
 
-def test_html_repr(grid):
+def test_html_repr(hexbeam):
     """This just tests to make sure no errors are thrown on the HTML
     representation method for DataSet.
     """
-    assert grid._repr_html_() is not None
+    assert hexbeam._repr_html_() is not None
 
 
-def test_html_repr_string_scalar(grid):
+def test_html_repr_string_scalar(hexbeam):
     array_data = 'data'
     array_name = 'name'
-    grid.add_field_data(array_data, array_name)
-    assert grid._repr_html_() is not None
+    hexbeam.add_field_data(array_data, array_name)
+    assert hexbeam._repr_html_() is not None
 
 
 @pytest.mark.parametrize('html', [True, False])
 @pytest.mark.parametrize('display', [True, False])
-def test_print_repr(grid, display, html):
+def test_print_repr(hexbeam, display, html):
     """This just tests to make sure no errors are thrown on the text friendly
     representation method for DataSet.
     """
-    result = grid.head(display=display, html=html)
+    result = hexbeam.head(display=display, html=html)
     assert isinstance(result, str)
     if display and html:
         assert result == ''
@@ -445,27 +441,27 @@ def test_print_repr(grid, display, html):
         assert result != ''
 
 
-def test_invalid_vector(grid):
+def test_invalid_vector(hexbeam):
     with pytest.raises(ValueError):  # noqa: PT011
-        grid['vectors'] = np.empty(10)
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        grid['vectors'] = np.empty((3, 2))
+        hexbeam['vectors'] = np.empty(10)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid['vectors'] = np.empty((3, 3))
+        hexbeam['vectors'] = np.empty((3, 2))
+
+    with pytest.raises(ValueError):  # noqa: PT011
+        hexbeam['vectors'] = np.empty((3, 3))
 
 
-def test_no_texture_coordinates(grid):
-    assert grid.active_texture_coordinates is None
+def test_no_texture_coordinates(hexbeam):
+    assert hexbeam.active_texture_coordinates is None
 
 
-def test_no_arrows(grid):
-    assert grid.arrows is None
+def test_no_arrows(hexbeam):
+    assert hexbeam.arrows is None
 
 
 def test_arrows():
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
 
     # make cool swirly pattern
     vectors = np.vstack(
@@ -507,16 +503,16 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
     mocker.patch.object(pv.DataSet, 'active_vectors_name')
     m.ndim = 1
 
-    sphere = pv.Sphere(radius=3.14)
-    with pytest.raises(ValueError, match='Active vectors are not vectors.'):
+    sphere = pv.Sphere(radius=math.pi)
+    with pytest.raises(ValueError, match=r'Active vectors are not vectors.'):
         sphere.arrows  # noqa: B018
 
 
 def test_set_active_scalars_raises(mocker: MockerFixture):
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
     sphere.point_data[(f := 'foo')] = 1
 
-    m = mocker.patch.object(dataset, 'get_array_association')
+    m = mocker.patch.object(dataset_module, 'get_array_association')
     m.return_value = 1
 
     with pytest.raises(
@@ -527,21 +523,23 @@ def test_set_active_scalars_raises(mocker: MockerFixture):
 
 
 def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
     sphere.point_data[(f := 'foo')] = 1
 
     m = mocker.patch.object(sphere, 'GetPointData')
     m().SetActiveScalars.return_value = -1
 
     match = re.escape(
-        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the active scalars'
+        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the '
+        f'active scalars'
     )
     with pytest.raises(ValueError, match=match):
         sphere.set_active_scalars(f)
 
 
 def active_component_consistency_check(grid, component_type, field_association='point'):
-    """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
+    # Tests if the active component (scalars, vectors, tensors) actually reflects
+    # the underlying VTK dataset
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
 
@@ -554,148 +552,148 @@ def active_component_consistency_check(grid, component_type, field_association='
         f'Get{vtk_component_type}',
     )()
 
-    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
+    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, _vtk.vtk_to_numpy(vtk_arr))
 
 
-def test_set_active_vectors(grid):
-    vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
-    grid.point_data['vector_arr'] = vector_arr
-    grid.active_vectors_name = 'vector_arr'
-    active_component_consistency_check(grid, 'vectors', 'point')
-    assert grid.active_vectors_name == 'vector_arr'
-    assert np.allclose(grid.active_vectors, vector_arr)
+def test_set_active_vectors(hexbeam):
+    vector_arr = np.arange(hexbeam.n_points * 3).reshape([hexbeam.n_points, 3])
+    hexbeam.point_data['vector_arr'] = vector_arr
+    hexbeam.active_vectors_name = 'vector_arr'
+    active_component_consistency_check(hexbeam, 'vectors', 'point')
+    assert hexbeam.active_vectors_name == 'vector_arr'
+    assert np.allclose(hexbeam.active_vectors, vector_arr)
 
-    grid.active_vectors_name = None
-    assert grid.active_vectors_name is None
-    active_component_consistency_check(grid, 'vectors', 'point')
-
-
-def test_set_active_tensors(grid):
-    tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
-    grid.point_data['tensor_arr'] = tensor_arr
-    grid.active_tensors_name = 'tensor_arr'
-    active_component_consistency_check(grid, 'tensors', 'point')
-    assert grid.active_tensors_name == 'tensor_arr'
-    assert np.allclose(grid.active_tensors, tensor_arr)
-
-    grid.active_tensors_name = None
-    assert grid.active_tensors_name is None
-    active_component_consistency_check(grid, 'tensors', 'point')
+    hexbeam.active_vectors_name = None
+    assert hexbeam.active_vectors_name is None
+    active_component_consistency_check(hexbeam, 'vectors', 'point')
 
 
-def test_set_texture_coordinates(grid):
+def test_set_active_tensors(hexbeam):
+    tensor_arr = np.arange(hexbeam.n_points * 9).reshape([hexbeam.n_points, 9])
+    hexbeam.point_data['tensor_arr'] = tensor_arr
+    hexbeam.active_tensors_name = 'tensor_arr'
+    active_component_consistency_check(hexbeam, 'tensors', 'point')
+    assert hexbeam.active_tensors_name == 'tensor_arr'
+    assert np.allclose(hexbeam.active_tensors, tensor_arr)
+
+    hexbeam.active_tensors_name = None
+    assert hexbeam.active_tensors_name is None
+    active_component_consistency_check(hexbeam, 'tensors', 'point')
+
+
+def test_set_texture_coordinates(hexbeam):
     with pytest.raises(TypeError):
-        grid.active_texture_coordinates = [1, 2, 3]
+        hexbeam.active_texture_coordinates = [1, 2, 3]
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.active_texture_coordinates = np.empty(10)
+        hexbeam.active_texture_coordinates = np.empty(10)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.active_texture_coordinates = np.empty((3, 3))
+        hexbeam.active_texture_coordinates = np.empty((3, 3))
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.active_texture_coordinates = np.empty((grid.n_points, 1))
+        hexbeam.active_texture_coordinates = np.empty((hexbeam.n_points, 1))
 
 
-def test_set_active_vectors_fail(grid):
+def test_set_active_vectors_fail(hexbeam):
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.set_active_vectors('not a vector')
+        hexbeam.set_active_vectors('not a vector')
 
-    active_component_consistency_check(grid, 'vectors', 'point')
-    vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
-    grid.point_data['vector_arr'] = vector_arr
-    grid.active_vectors_name = 'vector_arr'
-    active_component_consistency_check(grid, 'vectors', 'point')
+    active_component_consistency_check(hexbeam, 'vectors', 'point')
+    vector_arr = np.arange(hexbeam.n_points * 3).reshape([hexbeam.n_points, 3])
+    hexbeam.point_data['vector_arr'] = vector_arr
+    hexbeam.active_vectors_name = 'vector_arr'
+    active_component_consistency_check(hexbeam, 'vectors', 'point')
 
-    grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        grid.set_active_vectors('scalar_arr')
-
-    assert grid.active_vectors_name == 'vector_arr'
-    active_component_consistency_check(grid, 'vectors', 'point')
-
-
-def test_set_active_tensors_fail(grid):
-    with pytest.raises(ValueError):  # noqa: PT011
-        grid.set_active_tensors('not a tensor')
-
-    active_component_consistency_check(grid, 'tensors', 'point')
-    tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
-    grid.point_data['tensor_arr'] = tensor_arr
-    grid.active_tensors_name = 'tensor_arr'
-    active_component_consistency_check(grid, 'tensors', 'point')
-
-    grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
-    grid.point_data['vector_arr'] = np.zeros([grid.n_points, 3])
+    hexbeam.point_data['scalar_arr'] = np.zeros([hexbeam.n_points])
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.set_active_tensors('scalar_arr')
+        hexbeam.set_active_vectors('scalar_arr')
+
+    assert hexbeam.active_vectors_name == 'vector_arr'
+    active_component_consistency_check(hexbeam, 'vectors', 'point')
+
+
+def test_set_active_tensors_fail(hexbeam):
+    with pytest.raises(ValueError):  # noqa: PT011
+        hexbeam.set_active_tensors('not a tensor')
+
+    active_component_consistency_check(hexbeam, 'tensors', 'point')
+    tensor_arr = np.arange(hexbeam.n_points * 9).reshape([hexbeam.n_points, 9])
+    hexbeam.point_data['tensor_arr'] = tensor_arr
+    hexbeam.active_tensors_name = 'tensor_arr'
+    active_component_consistency_check(hexbeam, 'tensors', 'point')
+
+    hexbeam.point_data['scalar_arr'] = np.zeros([hexbeam.n_points])
+    hexbeam.point_data['vector_arr'] = np.zeros([hexbeam.n_points, 3])
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.set_active_tensors('vector_arr')
+        hexbeam.set_active_tensors('scalar_arr')
 
-    assert grid.active_tensors_name == 'tensor_arr'
-    active_component_consistency_check(grid, 'tensors', 'point')
+    with pytest.raises(ValueError):  # noqa: PT011
+        hexbeam.set_active_tensors('vector_arr')
+
+    assert hexbeam.active_tensors_name == 'tensor_arr'
+    active_component_consistency_check(hexbeam, 'tensors', 'point')
 
 
-def test_set_active_scalars(grid):
-    arr = np.arange(grid.n_cells)
-    grid.cell_data['tmp'] = arr
-    grid.set_active_scalars('tmp')
-    assert np.allclose(grid.active_scalars, arr)
+def test_set_active_scalars(hexbeam):
+    arr = np.arange(hexbeam.n_cells)
+    hexbeam.cell_data['tmp'] = arr
+    hexbeam.set_active_scalars('tmp')
+    assert np.allclose(hexbeam.active_scalars, arr)
     # Make sure we can set no active scalars
-    grid.set_active_scalars(None)
-    assert grid.GetPointData().GetScalars() is None
-    assert grid.GetCellData().GetScalars() is None
+    hexbeam.set_active_scalars(None)
+    assert hexbeam.GetPointData().GetScalars() is None
+    assert hexbeam.GetCellData().GetScalars() is None
 
 
-def test_set_active_scalars_name(grid):
-    point_keys = list(grid.point_data.keys())
-    grid.active_scalars_name = point_keys[0]
-    grid.active_scalars_name = None
+def test_set_active_scalars_name(hexbeam):
+    point_keys = list(hexbeam.point_data.keys())
+    hexbeam.active_scalars_name = point_keys[0]
+    hexbeam.active_scalars_name = None
 
 
-def test_rename_array_point(grid):
-    point_keys = list(grid.point_data.keys())
+def test_rename_array_point(hexbeam):
+    point_keys = list(hexbeam.point_data.keys())
     old_name = point_keys[0]
-    orig_vals = grid[old_name].copy()
+    orig_vals = hexbeam[old_name].copy()
     new_name = 'point changed'
-    grid.set_active_scalars(old_name, preference='point')
-    grid.rename_array(old_name, new_name, preference='point')
-    assert new_name in grid.point_data
-    assert old_name not in grid.point_data
-    assert new_name == grid.active_scalars_name
-    assert np.array_equal(orig_vals, grid[new_name])
+    hexbeam.set_active_scalars(old_name, preference='point')
+    hexbeam.rename_array(old_name, new_name, preference='point')
+    assert new_name in hexbeam.point_data
+    assert old_name not in hexbeam.point_data
+    assert new_name == hexbeam.active_scalars_name
+    assert np.array_equal(orig_vals, hexbeam[new_name])
 
 
-def test_rename_array_cell(grid):
-    cell_keys = list(grid.cell_data.keys())
+def test_rename_array_cell(hexbeam):
+    cell_keys = list(hexbeam.cell_data.keys())
     old_name = cell_keys[0]
-    orig_vals = grid[old_name].copy()
+    orig_vals = hexbeam[old_name].copy()
     new_name = 'cell changed'
-    grid.rename_array(old_name, new_name)
-    assert new_name in grid.cell_data
-    assert old_name not in grid.cell_data
-    assert np.array_equal(orig_vals, grid[new_name])
+    hexbeam.rename_array(old_name, new_name)
+    assert new_name in hexbeam.cell_data
+    assert old_name not in hexbeam.cell_data
+    assert np.array_equal(orig_vals, hexbeam[new_name])
 
 
-def test_rename_array_field(grid):
-    grid.field_data['fieldfoo'] = np.array([8, 6, 7])
-    field_keys = list(grid.field_data.keys())
+def test_rename_array_field(hexbeam):
+    hexbeam.field_data['fieldfoo'] = np.array([8, 6, 7])
+    field_keys = list(hexbeam.field_data.keys())
     old_name = field_keys[0]
-    orig_vals = grid[old_name].copy()
+    orig_vals = hexbeam[old_name].copy()
     new_name = 'cell changed'
-    grid.rename_array(old_name, new_name)
-    assert new_name in grid.field_data
-    assert old_name not in grid.field_data
-    assert np.array_equal(orig_vals, grid[new_name])
+    hexbeam.rename_array(old_name, new_name)
+    assert new_name in hexbeam.field_data
+    assert old_name not in hexbeam.field_data
+    assert np.array_equal(orig_vals, hexbeam[new_name])
 
 
 def test_rename_array_raises(mocker: MockerFixture):
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
 
-    m = mocker.patch.object(dataset, 'get_array_association')
+    m = mocker.patch.object(dataset_module, 'get_array_association')
     m.return_value = None
     f = 'foo'
 
@@ -717,8 +715,8 @@ def test_rename_array_doesnt_delete():
     was_deleted = [False]
 
     def on_delete(*_):
-        # Would be easier to throw an exception here but even though the exception gets printed to stderr
-        # pytest reports the test passing. See #5246 .
+        # Would be easier to throw an exception here but even though the exception gets printed to
+        # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
 
     mesh.point_data['orig'].VTKObject.AddObserver('DeleteEvent', on_delete)
@@ -728,9 +726,9 @@ def test_rename_array_doesnt_delete():
     assert (mesh.point_data['renamed'] == 1).all()
 
 
-def test_change_name_fail(grid):
+def test_change_name_fail(hexbeam):
     with pytest.raises(KeyError):
-        grid.rename_array('not a key', '')
+        hexbeam.rename_array('not a key', '')
 
 
 def test_get_cell_array_fail():
@@ -739,46 +737,46 @@ def test_get_cell_array_fail():
         sphere.cell_data[None]
 
 
-def test_get_item(grid):
+def test_get_item(hexbeam):
     with pytest.raises(KeyError):
-        grid[0]
+        hexbeam[0]
 
 
-def test_set_item(grid):
+def test_set_item(hexbeam):
     with pytest.raises(TypeError):
-        grid['tmp'] = None
+        hexbeam['tmp'] = None
 
     # field data
     with pytest.raises(ValueError):  # noqa: PT011
-        grid['bad_field'] = range(5)
+        hexbeam['bad_field'] = range(5)
 
 
-def test_set_item_range(grid):
-    rng = range(grid.n_points)
-    grid['pt_rng'] = rng
-    assert np.allclose(grid['pt_rng'], rng)
+def test_set_item_range(hexbeam):
+    rng = range(hexbeam.n_points)
+    hexbeam['pt_rng'] = rng
+    assert np.allclose(hexbeam['pt_rng'], rng)
 
 
-def test_str(grid):
-    assert 'UnstructuredGrid' in str(grid)
+def test_str(hexbeam):
+    assert 'UnstructuredGrid' in str(hexbeam)
 
 
-def test_set_cell_vectors(grid):
-    arr = np.random.default_rng().random((grid.n_cells, 3))
-    grid.cell_data['_cell_vectors'] = arr
-    grid.set_active_vectors('_cell_vectors')
-    assert grid.active_vectors_name == '_cell_vectors'
-    assert np.allclose(grid.active_vectors, arr)
+def test_set_cell_vectors(hexbeam):
+    arr = np.random.default_rng().random((hexbeam.n_cells, 3))
+    hexbeam.cell_data['_cell_vectors'] = arr
+    hexbeam.set_active_vectors('_cell_vectors')
+    assert hexbeam.active_vectors_name == '_cell_vectors'
+    assert np.allclose(hexbeam.active_vectors, arr)
 
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pv.axis_rotation(np.empty((3, 3)), 0, inplace=False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pv.axis_rotation(p, 1, False, axis='x')
+    p_out = pv.axis_rotation(p, 1, inplace=False, axis='x')
     assert not np.allclose(p, p_out)
 
 
@@ -856,10 +854,10 @@ def test_handle_array_with_null_name():
     assert len(fdata) == 1
 
 
-def test_add_point_array_list(grid):
-    rng = range(grid.n_points)
-    grid.point_data['tmp'] = rng
-    assert np.allclose(grid.point_data['tmp'], rng)
+def test_add_point_array_list(hexbeam):
+    rng = range(hexbeam.n_points)
+    hexbeam.point_data['tmp'] = rng
+    assert np.allclose(hexbeam.point_data['tmp'], rng)
 
 
 def test_shallow_copy_back_propagation():
@@ -869,21 +867,21 @@ def test_shallow_copy_back_propagation():
     Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
     """
     # Case 1
-    points = vtk.vtkPoints()
+    points = _vtk.vtkPoints()
     points.InsertNextPoint(0.0, 0.0, 0.0)
     points.InsertNextPoint(1.0, 0.0, 0.0)
     points.InsertNextPoint(2.0, 0.0, 0.0)
-    original = vtk.vtkPolyData()
+    original = _vtk.vtkPolyData()
     original.SetPoints(points)
     wrapped = pv.PolyData(original, deep=False)
     wrapped.points[:] = 2.8
-    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    orig_points = _vtk.vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
     # Case 2
-    original = vtk.vtkPolyData()
+    original = _vtk.vtkPolyData()
     wrapped = pv.PolyData(original, deep=False)
     wrapped.points = np.random.default_rng().random((5, 3))
-    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    orig_points = _vtk.vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
 
 
@@ -974,10 +972,10 @@ def test_find_cells_along_line():
 
 def test_find_cells_along_line_raises():
     mesh = pv.Cube()
-    with pytest.raises(TypeError, match='Point A must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point A must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0], [0, 0, 1])
 
-    with pytest.raises(TypeError, match='Point B must be a length three tuple of floats.'):
+    with pytest.raises(TypeError, match=r'Point B must be a length three tuple of floats.'):
         mesh.find_cells_along_line([0, 0, -1], [0, 0])
 
 
@@ -986,23 +984,18 @@ def test_find_cells_intersecting_line():
     linea = [0, 0, 0.0]
     lineb = [0.0, 0, 1.0]
 
-    if pv.vtk_version_info >= (9, 2, 0):
-        indices = mesh.find_cells_intersecting_line(linea, lineb)
-        assert len(indices) == 1
+    indices = mesh.find_cells_intersecting_line(linea, lineb)
+    assert len(indices) == 1
 
-        # test tolerance
-        indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
-        assert len(indices) == 2
+    # test tolerance
+    indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
+    assert len(indices) == 2
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
-
-    else:
-        with pytest.raises(VTKVersionError):
-            indices = mesh.find_cells_intersecting_line(linea, lineb)
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
 
 
 def test_find_cells_within_bounds():
@@ -1035,21 +1028,21 @@ def test_find_cells_within_bounds_raises():
     mesh = pv.Cube()
     with pytest.raises(
         TypeError,
-        match='Bounds must be a length six tuple of floats.',
+        match=r'Bounds must be a length six tuple of floats.',
     ):
         mesh.find_cells_within_bounds([0, 0])
 
 
-def test_setting_points_by_different_types(grid):
-    grid_copy = grid.copy()
-    grid.points = grid_copy.points
-    assert np.array_equal(grid.points, grid_copy.points)
+def test_setting_points_by_different_types(hexbeam):
+    grid_copy = hexbeam.copy()
+    hexbeam.points = grid_copy.points
+    assert np.array_equal(hexbeam.points, grid_copy.points)
 
-    grid.points = np.array(grid_copy.points)
-    assert np.array_equal(grid.points, grid_copy.points)
+    hexbeam.points = np.array(grid_copy.points)
+    assert np.array_equal(hexbeam.points, grid_copy.points)
 
-    grid.points = grid_copy.points.tolist()
-    assert np.array_equal(grid.points, grid_copy.points)
+    hexbeam.points = grid_copy.points.tolist()
+    assert np.array_equal(hexbeam.points, grid_copy.points)
 
     pgrid = pv.PolyData([0.0, 0.0, 0.0])
     pgrid.points = [1.0, 1.0, 1.0]
@@ -1072,7 +1065,7 @@ def test_no_active():
         pdata.point_data[None]
 
 
-def test_get_data_range(grid):
+def test_get_data_range(hexbeam):
     # Test with blank mesh
     mesh = pv.Sphere()
     mesh.clear_data()
@@ -1082,39 +1075,49 @@ def test_get_data_range(grid):
         rng = mesh.get_data_range('some data')
 
     # Test with some data
-    grid.active_scalars_name = 'sample_point_scalars'
-    rng = grid.get_data_range()  # active scalars
+    hexbeam.active_scalars_name = 'sample_point_scalars'
+    rng = hexbeam.get_data_range()  # active scalars
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
-    rng = grid.get_data_range('sample_point_scalars', preference='point')
+    rng = hexbeam.get_data_range('sample_point_scalars', preference='point')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
-    rng = grid.get_data_range('sample_cell_scalars', preference='cell')
+    rng = hexbeam.get_data_range('sample_cell_scalars', preference='cell')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
 
 
-def test_actual_memory_size(grid):
-    size = grid.actual_memory_size
+def test_get_data_range_bool():
+    mesh = pv.ImageData(dimensions=(2, 1, 1))
+    mesh['data'] = [True, False]
+    assert mesh['data'].dtype == bool
+    rng = mesh.get_data_range()
+    assert rng[0].dtype == bool
+    assert rng[1].dtype == bool
+    assert rng == (np.bool_(False), np.bool_(True))
+
+
+def test_actual_memory_size(hexbeam):
+    size = hexbeam.actual_memory_size
     assert isinstance(size, int)
     assert size >= 0
 
 
-def test_copy_structure(grid):
-    classname = grid.__class__.__name__
+def test_copy_structure(hexbeam):
+    classname = hexbeam.__class__.__name__
     copy = eval(f'pv.{classname}')()
-    copy.copy_structure(grid)
-    assert copy.n_cells == grid.n_cells
-    assert copy.n_points == grid.n_points
+    copy.copy_structure(hexbeam)
+    assert copy.n_cells == hexbeam.n_cells
+    assert copy.n_points == hexbeam.n_points
     assert len(copy.field_data) == 0
     assert len(copy.cell_data) == 0
     assert len(copy.point_data) == 0
 
 
 def test_copy_structure_self(datasets):
-    for dataset in datasets:  # noqa: F402
+    for dataset in datasets:
         copied = dataset.copy()
         assert copied is not dataset
 
@@ -1124,15 +1127,15 @@ def test_copy_structure_self(datasets):
         assert copied.n_cells == dataset.n_cells
 
 
-def test_copy_attributes(grid):
-    classname = grid.__class__.__name__
+def test_copy_attributes(hexbeam):
+    classname = hexbeam.__class__.__name__
     copy = eval(f'pv.{classname}')()
-    copy.copy_attributes(grid)
+    copy.copy_attributes(hexbeam)
     assert copy.n_cells == 0
     assert copy.n_points == 0
-    assert copy.field_data.keys() == grid.field_data.keys()
-    assert copy.cell_data.keys() == grid.cell_data.keys()
-    assert copy.point_data.keys() == grid.point_data.keys()
+    assert copy.field_data.keys() == hexbeam.field_data.keys()
+    assert copy.cell_data.keys() == hexbeam.cell_data.keys()
+    assert copy.point_data.keys() == hexbeam.point_data.keys()
 
 
 def test_point_is_inside_cell():
@@ -1184,7 +1187,6 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
@@ -1202,7 +1204,6 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
@@ -1240,10 +1241,6 @@ def test_cast_to_poly_points_implicit(uniform):
 
 
 def test_partition(hexbeam):
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            hexbeam.partition(2)
-        return
     # split as composite
     n_part = 2
     out = hexbeam.partition(n_part)
@@ -1257,7 +1254,7 @@ def test_partition(hexbeam):
 
 
 def test_explode(datasets):
-    for dataset in datasets:  # noqa: F402
+    for dataset in datasets:
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
         assert out.n_points > dataset.n_points
@@ -1301,7 +1298,7 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface()
+    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface(algorithm=None)
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
 
@@ -1326,20 +1323,20 @@ ids = list(map(type, grids))
 ids_cells = list(map(type, grids_cells))
 
 
-def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
-    for dataset in datasets_vtk9:  # noqa: F402
+def test_raises_cell_neighbors_explicit_structured_grid(datasets_vtk9):
+    for dataset in datasets_vtk9:
         with pytest.raises(TypeError):
             _ = dataset.cell_neighbors(0)
 
 
-def test_raises_point_neighbors_ind_overflow(grid):
+def test_raises_point_neighbors_ind_overflow(hexbeam):
     with pytest.raises(IndexError):
-        _ = grid.point_neighbors(grid.n_points)
+        _ = hexbeam.point_neighbors(hexbeam.n_points)
 
 
-def test_raises_cell_neighbors_connections(grid):
+def test_raises_cell_neighbors_connections(hexbeam):
     with pytest.raises(ValueError, match='got "topological"'):
-        _ = grid.cell_neighbors(0, 'topological')
+        _ = hexbeam.cell_neighbors(0, 'topological')
 
 
 @pytest.mark.parametrize('grid', grids, ids=ids)
@@ -1360,6 +1357,14 @@ def test_point_cell_ids(grid: DataSet, i0):
     others = [i for i in range(grid.n_cells) if i not in cell_ids]
     for c in others:
         assert i0 not in grid.get_cell(c).point_ids
+
+
+def test_point_cell_ids_order():
+    resolution = 10
+    mesh = pv.Sphere(theta_resolution=resolution)
+    expected_ids = list(range(resolution))
+    actual_ids = mesh.point_cell_ids(0)
+    assert actual_ids == expected_ids
 
 
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
@@ -1401,8 +1406,7 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     # Check that all the neighbors cells share at least one edge with the
     # current cell
     current_points = set()
-    for e in cell.edges:
-        current_points.add(frozenset(e.point_ids))
+    current_points.update(frozenset(e.point_ids) for e in cell.edges)
 
     for i in cell_ids:
         neighbor_points = set()
@@ -1442,8 +1446,7 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     # Check that all the neighbors cells share at least one face with the
     # current cell
     current_points = set()
-    for f in cell.faces:
-        current_points.add(frozenset(f.point_ids))
+    current_points.update(frozenset(f.point_ids) for f in cell.faces)
 
     for i in cell_ids:
         neighbor_points = set()
@@ -1529,23 +1532,147 @@ def mesh():
     return examples.load_globe()
 
 
-def test_active_t_coords_deprecated(mesh):
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        t_coords = mesh.active_t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.active_t_coords = t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-
-
-def test_active_array_info_deprecated(mesh):
+def test_active_array_info_deprecated():
     match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this deprecated class'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove this deprecated class'
+        raise RuntimeError(msg)
+
+
+def test_dimensionality():
+    mesh = pv.PointSet([[0.0, 0.0, 0.0]])
+    assert mesh.dimensionality == 0
+    assert mesh.max_cell_dimensionality == 0
+    assert mesh.min_cell_dimensionality == 0
+
+    mesh = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    assert mesh.dimensionality == 1
+    assert mesh.max_cell_dimensionality == 0
+    assert mesh.min_cell_dimensionality == 0
+
+    mesh = pv.ImageData(dimensions=(100, 100, 1))
+    assert mesh.dimensionality == 2
+    assert mesh.max_cell_dimensionality == 2
+    assert mesh.min_cell_dimensionality == 2
+
+    mesh = pv.Plane().rotate_vector((1, 2, 3), 30)
+    assert mesh.dimensionality == 2
+    assert mesh.max_cell_dimensionality == 2
+    assert mesh.min_cell_dimensionality == 2
+
+    mesh = pv.Cube()
+    assert mesh.dimensionality == 3
+    assert mesh.max_cell_dimensionality == 2
+    assert mesh.min_cell_dimensionality == 2
+
+    strip = examples.cells.TriangleStrip().extract_surface(algorithm=None)
+    assert strip.dimensionality == 2
+    assert strip.max_cell_dimensionality == 2
+    assert strip.min_cell_dimensionality == 2
+
+    line = examples.cells.Line().extract_surface(algorithm=None)
+    assert line.dimensionality == 1
+    assert line.max_cell_dimensionality == 1
+    assert line.min_cell_dimensionality == 1
+
+    vertex = examples.cells.Vertex().extract_surface(algorithm=None)
+    assert vertex.dimensionality == 0
+    assert vertex.max_cell_dimensionality == 0
+    assert vertex.min_cell_dimensionality == 0
+
+    mixed = strip + line + vertex
+    assert isinstance(mixed, pv.PolyData)
+    assert mixed.dimensionality == 2
+    assert mixed.max_cell_dimensionality == 2
+    assert mixed.min_cell_dimensionality == 0
+
+    mixed_grid = mixed.cast_to_unstructured_grid()
+    assert isinstance(mixed_grid, pv.UnstructuredGrid)
+    assert mixed_grid.dimensionality == 2
+    assert mixed_grid.max_cell_dimensionality == 2
+    assert mixed_grid.min_cell_dimensionality == 0
+
+
+@pytest.mark.parametrize('empty', [True, False])
+def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
+    for mesh in datasets_plus_pointset:
+        test_mesh = type(mesh)() if empty else mesh
+        min_dimensionality = test_mesh.min_cell_dimensionality
+        max_dimensionality = test_mesh.max_cell_dimensionality
+        assert min_dimensionality <= max_dimensionality, type(test_mesh)
+
+        expected_rank = 0 if empty else 3
+        assert test_mesh.dimensionality == expected_rank, type(test_mesh)
+
+
+def test_distinct_cell_types_unstructured_grid():
+    wedge = pv.examples.cells.Wedge()
+    quad = pv.examples.cells.Quadrilateral()
+    mesh = pv.merge([wedge, wedge.translate((1.0, 1.0, 1.0)), quad.translate((2.0, 2.0, 2.0))])
+
+    distinct_cell_types = mesh.distinct_cell_types
+    assert isinstance(distinct_cell_types, set)
+    assert all(isinstance(val, pv.CellType) for val in distinct_cell_types)
+    assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
+
+
+def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
+    for dataset in datasets_plus_pointset:
+        distinct_cell_types = dataset.distinct_cell_types
+        assert all(isinstance(celltype, pv.CellType) for celltype in distinct_cell_types)
+        if dataset.n_cells == 0:
+            assert distinct_cell_types == set()
+        else:
+            assert len(distinct_cell_types) > 0, type(dataset)
+
+
+@pytest.mark.parametrize('dimensions', [(0, 0, 0), (1, 1, 1), (2, 1, 1), (2, 2, 1), (2, 2, 2)])
+def test_distinct_cell_types_dimensions(dimensions):
+    def assert_distinct_cell_types(mesh_):
+        expected = {mesh_.get_cell(0).type} if mesh_.n_cells > 0 else set()
+        actual = mesh_.distinct_cell_types
+        assert actual == expected, type(mesh_)
+
+    image = pv.ImageData(dimensions=dimensions)
+    assert_distinct_cell_types(image)
+
+    rectilinear = image.cast_to_rectilinear_grid()
+    assert_distinct_cell_types(rectilinear)
+
+    structured = image.cast_to_structured_grid()
+    assert_distinct_cell_types(structured)
+
+
+def test_structured_grid_dimensionality():
+    cell_dimension = 2
+    cell_types = {pv.CellType.QUAD}
+
+    curvilinear = examples.load_structured()
+    assert isinstance(curvilinear, pv.StructuredGrid)
+    assert curvilinear.dimensionality == 3
+    assert curvilinear.distinct_cell_types == cell_types
+    assert curvilinear.max_cell_dimensionality == cell_dimension
+    assert curvilinear.min_cell_dimensionality == cell_dimension
+
+    linear = pv.ImageData(dimensions=(10, 10, 1)).cast_to_structured_grid()
+    assert isinstance(linear, pv.StructuredGrid)
+    assert linear.dimensionality == cell_dimension
+    assert linear.distinct_cell_types == cell_types
+    assert linear.max_cell_dimensionality == cell_dimension
+    assert linear.min_cell_dimensionality == cell_dimension
+
+
+def test_has_nonlinear_cells():
+    linear = examples.cells.Hexahedron()
+    assert not linear.has_nonlinear_cells
+
+    nonlinear = examples.cells.QuadraticHexahedron()
+    assert nonlinear.has_nonlinear_cells
+
+    mixed = linear + nonlinear
+    assert mixed.has_nonlinear_cells
+
+    assert not pv.UnstructuredGrid().has_nonlinear_cells
+    assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells

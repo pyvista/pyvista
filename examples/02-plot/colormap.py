@@ -13,7 +13,6 @@ from __future__ import annotations
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -107,9 +106,9 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # must have Colorcet installed in your Python environment:
 # ``pip install colorcet``
 
-p = pv.Plotter(shape=(2, 2), border=False)
-p.subplot(0, 0)
-p.add_mesh(
+pl = pv.Plotter(shape=(2, 2), border=False)
+pl.subplot(0, 0)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='fire',
@@ -117,8 +116,8 @@ p.add_mesh(
     scalar_bar_args={'title': 'Colorcet Fire'},
 )
 
-p.subplot(0, 1)
-p.add_mesh(
+pl.subplot(0, 1)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='fire',
@@ -126,8 +125,8 @@ p.add_mesh(
     scalar_bar_args={'title': 'Colorcet Fire (No Lighting)'},
 )
 
-p.subplot(1, 0)
-p.add_mesh(
+pl.subplot(1, 0)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='hot',
@@ -135,8 +134,8 @@ p.add_mesh(
     scalar_bar_args={'title': 'Matplotlib Hot'},
 )
 
-p.subplot(1, 1)
-p.add_mesh(
+pl.subplot(1, 1)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='hot',
@@ -144,6 +143,6 @@ p.add_mesh(
     scalar_bar_args={'title': 'Matplotlib Hot (No Lighting)'},
 )
 
-p.show()
+pl.show()
 # %%
 # .. tags:: plot

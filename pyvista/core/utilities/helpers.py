@@ -11,18 +11,22 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import TypeIs
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
 from .fileio import from_meshio
+from .fileio import from_trimesh
 from .fileio import is_meshio_mesh
+from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
-    from meshio import Mesh
-    from trimesh import Trimesh
+    import meshio
+    import trimesh
 
     from pyvista import DataObject
     from pyvista import DataSet
@@ -39,8 +43,22 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.wrappers import _WrappableVTKDataObjectType
 
-    from ..wrappers import _WrappableVTKDataObjectType
+_NORMALS = {
+    'x': [1, 0, 0],
+    'y': [0, 1, 0],
+    'z': [0, 0, 1],
+    '-x': [-1, 0, 0],
+    '-y': [0, -1, 0],
+    '-z': [0, 0, -1],
+}
+_NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
+
+
+def _warn_if_invalid_data(obj: DataObject):
+    if pv.vtk_version_info >= (9, 3, 0) and hasattr(obj, 'validate_mesh'):
+        obj.validate_mesh('data', action='warn')
 
 
 # vtkDataSet overloads
@@ -88,15 +106,14 @@ def wrap(dataset: None) -> None: ...
 
 # Third-party meshes
 @overload
-def wrap(dataset: Trimesh) -> PolyData: ...
-# TODO: Support meshio overload
-# @overload
-# def wrap(dataset: Mesh) -> UnstructuredGrid: ...
-def wrap(
+def wrap(dataset: trimesh.Trimesh) -> PolyData: ...
+@overload
+def wrap(dataset: meshio.Mesh) -> UnstructuredGrid: ...
+def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
-    | Trimesh
-    | Mesh
+    | trimesh.Trimesh
+    | meshio.Mesh
     | _vtk.vtkAbstractArray
     | NumpyArray[float]
     | None,
@@ -107,13 +124,18 @@ def wrap(
 
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
-    * 3D :class:`trimesh.Trimesh` mesh.
-    * 3D :class:`meshio.Mesh` mesh.
+    * 3D :class:`trimesh.Trimesh` mesh using :func:`~pyvista.from_trimesh`.
+    * 3D :class:`meshio.Mesh` mesh using :func:`~pyvista.from_meshio`.
 
     .. versionchanged:: 0.38.0
         If the passed object is already a wrapped PyVista object, then
         this is no-op and will return that object directly. In previous
         versions of PyVista, this would perform a shallow copy.
+
+    .. versionchanged:: 0.47
+
+        If wrapping a ``Trimesh`` object, any arrays are now wrapped directly
+        (no copies).
 
     Parameters
     ----------
@@ -193,21 +215,21 @@ def wrap(
     if dataset is None:
         return None
 
-    if isinstance(dataset, tuple(pyvista._wrappers.values())):
+    if isinstance(dataset, tuple(pv._wrappers.values())):
         # Return object if it is already wrapped
         return cast('DataObject', dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
-    if isinstance(dataset, (np.ndarray, pyvista.pyvista_ndarray)):
+    if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
         if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pyvista.PolyData(dataset)
+            return pv.PolyData(dataset)
         if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
-            return pyvista.PolyData(dataset)
+            return pv.PolyData(dataset)
         elif dataset.ndim == 3:
-            mesh = pyvista.ImageData(dimensions=dataset.shape)
-            if isinstance(dataset, pyvista.pyvista_ndarray):
+            mesh = pv.ImageData(dimensions=dataset.shape)
+            if isinstance(dataset, pv.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.asarray(dataset)
             mesh['values'] = dataset.ravel(order='F')
@@ -219,49 +241,35 @@ def wrap(
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
-        return pyvista.pyvista_ndarray(dataset)
+        return pv.pyvista_ndarray(dataset)
 
     # Check if a dataset is a VTK type
     if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
-            return pyvista._wrappers[key](dataset)
+            wrapped_vtk: DataObject = pv._wrappers[key](dataset)
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
-        return None  # pragma: no cover
+        else:
+            # Warn if data arrays are invalid
+            _warn_if_invalid_data(wrapped_vtk)
+            return wrapped_vtk
 
     # wrap meshio
     if is_meshio_mesh(dataset):
-        return from_meshio(dataset)
+        return from_meshio(cast('meshio.Mesh', dataset))
 
     # wrap trimesh
-    if dataset.__class__.__name__ == 'Trimesh':
-        # trimesh doesn't pad faces
-        dataset = cast('Trimesh', dataset)
-        polydata = pyvista.PolyData.from_regular_faces(
-            np.asarray(dataset.vertices),
-            faces=dataset.faces,
-        )
-        # If the Trimesh object has uv, pass them to the PolyData
-        if hasattr(dataset.visual, 'uv'):
-            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
-        return polydata
+    if is_trimesh_mesh(dataset):
+        return from_trimesh(cast('trimesh.Trimesh', dataset))
 
     # otherwise, flag tell the user we can't wrap this object
     msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'
     raise NotImplementedError(msg)
 
 
-@overload
-def is_pyvista_dataset(
-    obj: pyvista.DataSet | pyvista.MultiBlock,
-) -> Literal[True]: ...
-@overload
-def is_pyvista_dataset(
-    obj: Any,
-) -> Literal[False]: ...
-def is_pyvista_dataset(obj: Any) -> bool:
+def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDataSet]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -275,11 +283,11 @@ def is_pyvista_dataset(obj: Any) -> bool:
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
+    return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
-    """Return a _vtk.vtkPlane.
+    """Return a :vtk:`vtkPlane`.
 
     Parameters
     ----------
@@ -291,21 +299,64 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
     Returns
     -------
-    vtk.vtkPlane
+    :vtk:`vtkPlane`
         VTK plane.
 
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal_ = _validation.validate_array3(normal, dtype_out=float)
+    normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
     normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane
 
 
-def axis_rotation(
-    points: NumpyArray[float], angle: float, inplace: bool = False, deg: bool = True, axis='z'
+def _validate_plane_origin_and_normal(  # noqa: PLR0917
+    mesh: DataObject,
+    origin: VectorLike[float] | None,
+    normal: VectorLike[float] | _NormalsLiteral | None,
+    plane: PolyData | None,
+    default_normal: _NormalsLiteral,
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    def _get_origin_and_normal_from_plane(
+        plane_: PolyData,
+    ) -> tuple[NumpyArray[float], NumpyArray[float]]:
+        _validation.check_instance(plane_, pv.PolyData, name='plane')
+
+        if (dimensionality := plane_.dimensionality) != 2:
+            msg = (
+                f'The plane mesh must be planar. Got a non-planar mesh with dimensionality of '
+                f'{dimensionality}.'
+            )
+            raise ValueError(msg)
+        origin = plane_.points.mean(axis=0)
+        normal = plane_.point_normals.mean(axis=0)
+        return origin, normal
+
+    if plane is not None:
+        if normal is not None or origin is not None:
+            msg = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+            raise ValueError(msg)
+        origin_, normal_ = _get_origin_and_normal_from_plane(plane)
+    else:
+        normal = default_normal if normal is None else normal
+        normal = _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        normal_ = _validation.validate_array3(normal, dtype_out=float, name='normal')
+
+        # find center of data if origin not specified
+        origin = mesh.center if origin is None else origin
+        origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
+    return origin_, normal_
+
+
+@_deprecate_positional_args(allowed=['points', 'angle'])
+def axis_rotation(  # noqa: PLR0917
+    points: NumpyArray[float],
+    angle: float,
+    inplace: bool = False,  # noqa: FBT001, FBT002
+    deg: bool = True,  # noqa: FBT001, FBT002
+    axis='z',
 ):
     """Rotate points by angle about an axis.
 

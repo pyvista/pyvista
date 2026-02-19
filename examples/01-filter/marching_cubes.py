@@ -16,7 +16,6 @@ for providing examples.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -32,9 +31,10 @@ def spider_cage(x, y, z):
     x2 = x * x
     y2 = y * y
     x2_y2 = x2 + y2
-    return (np.sqrt((x2 - y2) ** 2 / x2_y2 + 3 * (z * np.sin(a)) ** 2) - 3) ** 2 + 6 * (
-        np.sqrt((x * y) ** 2 / x2_y2 + (z * np.cos(a)) ** 2) - 1.5
-    ) ** 2
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return (
+            np.sqrt((x2 - y2) ** 2 / x2_y2 + 3 * (z * np.sin(a)) ** 2) - 3
+        ) ** 2 + 6 * (np.sqrt((x * y) ** 2 / x2_y2 + (z * np.cos(a)) ** 2) - 1.5) ** 2
 
 
 # create a uniform grid to sample the function with

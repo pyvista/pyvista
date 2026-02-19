@@ -27,13 +27,13 @@ from pyvista import examples
 
 vol = examples.download_brain()
 
-p = pv.Plotter()
-p.add_mesh_clip_plane(vol)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_clip_plane(vol)
+pl.show()
 
 # %%
 # After interacting with the scene, the clipped mesh is available as:
-p.plane_clipped_meshes
+pl.plane_clipped_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -43,12 +43,12 @@ p.plane_clipped_meshes
 # %%
 # Or you could slice a mesh using the plane widget:
 
-p = pv.Plotter()
-p.add_mesh_slice(vol)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_slice(vol)
+pl.show()
 # %%
 # After interacting with the scene, the slice is available as:
-p.plane_sliced_meshes
+pl.plane_sliced_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -66,20 +66,20 @@ from pyvista import examples
 
 mesh = examples.download_carotid()
 
-p = pv.Plotter()
-p.add_mesh(mesh.contour(8).extract_largest(), opacity=0.5)
+pl = pv.Plotter()
+pl.add_mesh(mesh.contour(8).extract_largest(), opacity=0.5)
 
 
 def my_plane_func(normal, origin):
     slc = mesh.slice(normal=normal, origin=origin)
     arrows = slc.glyph(orient='vectors', scale='scalars', factor=0.01)
-    p.add_mesh(arrows, name='arrows')
+    pl.add_mesh(arrows, name='arrows')
 
 
-p.add_plane_widget(my_plane_func)
-p.show_grid()
-p.add_axes()
-p.show()
+pl.add_plane_widget(my_plane_func)
+pl.show_grid()
+pl.add_axes()
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -93,16 +93,16 @@ p.show()
 # programmatically set the normal vector on which we want to translate the
 # plane and we disable the arrow to prevent its rotation.
 
-p = pv.Plotter()
-p.add_mesh_slice(vol, normal=(1, 1, 1), normal_rotation=False)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_slice(vol, normal=(1, 1, 1), normal_rotation=False)
+pl.show()
 
 # %%
 # The vector is also forcibly disabled anytime the ``assign_to_axis`` argument
 # is set.
-p = pv.Plotter()
-p.add_mesh_slice(vol, assign_to_axis='z')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_slice(vol, assign_to_axis='z')
+pl.show()
 
 
 # %%
@@ -112,9 +112,11 @@ p.show()
 # we can have continuous slicing by using the ``InteractionEvent`` observer.
 import vtk
 
-p = pv.Plotter()
-p.add_mesh_slice(vol, assign_to_axis='z', interaction_event=vtk.vtkCommand.InteractionEvent)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh_slice(
+    vol, assign_to_axis='z', interaction_event=vtk.vtkCommand.InteractionEvent
+)
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this continuously via

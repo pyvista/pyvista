@@ -11,14 +11,13 @@ This example uses :class:`pyvista.UnstructuredGrid`.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import CellType
 
 # %%
 # An unstructured grid can be created directly from NumPy arrays.
 # This is useful when creating a grid from scratch or copying it from another
-# format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
+# format. See :vtk:`vtkUnstructuredGrid`
 # for available cell types and their descriptions.
 
 # Contains information on the points composing each cell.

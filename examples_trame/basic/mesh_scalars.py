@@ -38,14 +38,14 @@ pl.view_xy()
 
 
 @state.change('scalars')
-def set_scalars(scalars=mesh.active_scalars_name, **kwargs):
+def set_scalars(scalars=mesh.active_scalars_name, **kwargs):  # noqa: ARG001
     actor.mapper.array_name = scalars
     actor.mapper.scalar_range = mesh.get_data_range(scalars)
     ctrl.view_update()
 
 
 @state.change('log_scale')
-def set_log_scale(log_scale=False, **kwargs):
+def set_log_scale(*, log_scale=False, **kwargs):  # noqa: ARG001
     actor.mapper.lookup_table.log_scale = log_scale
     ctrl.view_update()
 

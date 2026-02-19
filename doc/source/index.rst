@@ -72,13 +72,13 @@ might want to use PyVista:
    :include-source: false
    :force_static:
 
-   import pyvista
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.background = 'white'
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.anti_aliasing = 'fxaa'
+   import pyvista as pv
+   pv.set_jupyter_backend('static')
+   pv.global_theme.background = 'white'
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.smooth_shading = True
+   pv.global_theme.anti_aliasing = 'fxaa'
 
 
 Maps and Geoscience
@@ -120,15 +120,15 @@ the points directly.
     :context:
 
     import numpy as np
-    import pyvista
+    import pyvista as pv
 
     rng = np.random.default_rng(seed=0)
     point_cloud = rng.random((100, 3))
-    pdata = pyvista.PolyData(point_cloud)
+    pdata = pv.PolyData(point_cloud)
     pdata['orig_sphere'] = np.arange(100)
 
     # create many spheres from the point cloud
-    sphere = pyvista.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
+    sphere = pv.Sphere(radius=0.02, phi_resolution=10, theta_resolution=10)
     pc = pdata.glyph(scale=False, geom=sphere, orient=False)
     pc.plot(cmap='Reds')
 
@@ -141,7 +141,7 @@ Generate a spline from an array of NumPy points.
     :context:
 
     import numpy as np
-    import pyvista
+    import pyvista as pv
 
     # Make the xyz points
     theta = np.linspace(-10 * np.pi, 10 * np.pi, 100)
@@ -151,7 +151,7 @@ Generate a spline from an array of NumPy points.
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
 
-    spline = pyvista.Spline(points, 500).tube(radius=0.1)
+    spline = pv.Spline(points, 500).tube(radius=0.1)
     spline.plot(scalars='arc_length', show_scalar_bar=False)
 
 
@@ -162,17 +162,17 @@ Subtract a sphere from a cube mesh.
 .. pyvista-plot::
     :context:
 
-    import pyvista
+    import pyvista as pv
     import numpy as np
 
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
-        grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
+        grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
         surf = grid.extract_surface().triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations
-    sphere = pyvista.Sphere(radius=0.65, center=(0, 0, 0))
+    sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
     cube = make_cube()
 
     # Perform a boolean difference
@@ -208,15 +208,14 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 #. Click ``Request language`` and fill form.
 #. Wait acceptance by transifex pyvista translation maintainers.
 #. (After acceptance) Translate on transifex.
-#. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
+#. We can host the translated document using `atsphinx-mini18n`_.
 #. Translation is backed up in `pyvista-doc-translations`_.
 
 Details can be found here: https://help.transifex.com/en/
 
 .. _`pyvista translation page`: https://app.transifex.com/signin/?next=/tkoyama010/pyvista-doc/
 .. _Transifex: https://app.transifex.com/signin/?next=/home/
-.. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
-.. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
+.. _atsphinx-mini18n: https://atsphinx.github.io/mini18n/en/
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 
@@ -291,20 +290,15 @@ Status
 Professional Support
 ********************
 
-While PyVista is an Open Source project with a big community, you might be looking for professional support.
-This section aims to list companies with VTK/PyVista expertise who can help you with your software project.
+PyVista is a community-driven Open Source project, but many users and organizations rely on it in production workflows, research pipelines, and custom visualization systems. If you need expert guidance, development help, or guaranteed support, there are several ways to engage with the people who build and maintain PyVista.
 
-+---------------+-----------------------------------------+
-| Company Name  | Kitware Inc.                            |
-+---------------+-----------------------------------------+
-| Description   | Kitware is dedicated to build solutions |
-|               | for our customers based on our          |
-|               | well-established open source platforms. |
-+---------------+-----------------------------------------+
-| Expertise     | CMake, VTK, PyVista, ParaView, Trame    |
-+---------------+-----------------------------------------+
-| Contact       | https://www.kitware.com/contact/        |
-+---------------+-----------------------------------------+
+For general inquiries, reach out to info@pyvista.org and we can help connect you with the right community experts for your 3D visualization or analysis needs.
+
+If you are looking for professional services (consulting, custom development, feature design, integration support, or training), consider sponsoring PyVista's core developers through the “Sponsor this project” section on GitHub. Sponsorship not only provides direct access to experts but also helps sustain critical maintenance and ongoing feature work that keeps PyVista reliable and modern.
+
+More details can be found in the discussion post: https://github.com/pyvista/pyvista/discussions/4033
+
+Sponsoring a developer supports both your project and the health of the PyVista ecosystem, ensuring continued improvements, long-term stability, and expert help when you need it.
 
 
 Project Index

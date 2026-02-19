@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import faulthandler
 import functools
 from importlib import metadata
 from inspect import BoundArguments
@@ -8,25 +9,31 @@ from inspect import Signature
 import os
 import platform
 import re
-from typing import Optional
-from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
+import PIL
 import pytest
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
-from pyvista.core._vtk_core import VersionInfo
+from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
-pyvista.OFF_SCREEN = True
+pv.OFF_SCREEN = True
 
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
 )
+PILLOW_VERSION_INFO = VersionInfo(
+    major=int(PIL.__version__.split('.')[0]),
+    minor=int(PIL.__version__.split('.')[1]),
+    micro=int(PIL.__version__.split('.')[2]),
+)
+
+faulthandler.enable()
 
 
 def flaky_test(
@@ -63,7 +70,10 @@ def flaky_test(
                 func_name = test_function.__name__
                 module_name = test_function.__module__
                 error_name = e.__class__.__name__
-                msg = f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}'
+                msg = (
+                    f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - '
+                    f'{module_name}::{func_name} - {error_name}'
+                )
                 if i == times - 1:
                     print(msg)
                     raise  # Re-raise the last failure if all retries fail
@@ -77,11 +87,11 @@ def flaky_test(
 
 @pytest.fixture
 def global_variables_reset():
-    tmp_screenshots = pyvista.ON_SCREENSHOT
-    tmp_figurepath = pyvista.FIGURE_PATH
+    tmp_screenshots = pv.ON_SCREENSHOT
+    tmp_figurepath = pv.FIGURE_PATH
     yield
-    pyvista.ON_SCREENSHOT = tmp_screenshots
-    pyvista.FIGURE_PATH = tmp_figurepath
+    pv.ON_SCREENSHOT = tmp_screenshots
+    pv.FIGURE_PATH = tmp_figurepath
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -98,20 +108,28 @@ def set_mpl():
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Default is to allow new 'private' attributes for downstream packages,
+    # but for PyVista itself we enforce no new attributes
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+
     yield
 
-    pyvista.vtk_snake_case('error')
-    assert pyvista.vtk_snake_case() == 'error'
+    pv.vtk_snake_case('error')
+    assert pv.vtk_snake_case() == 'error'
 
-    pyvista.vtk_verbosity('info')
-    assert pyvista.vtk_verbosity() == 'info'
+    pv.vtk_verbosity('info')
+    assert pv.vtk_verbosity() == 'info'
 
-    pyvista.PICKLE_FORMAT = 'vtk'
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
+
+    pv.PICKLE_FORMAT = 'vtk'
 
 
 @pytest.fixture
 def cube():
-    return pyvista.Cube()
+    return pv.Cube()
 
 
 @pytest.fixture
@@ -150,11 +168,6 @@ def hexbeam():
 
 
 @pytest.fixture
-def grid():
-    return pyvista.UnstructuredGrid(examples.hexbeamfile)
-
-
-@pytest.fixture
 def tetbeam():
     return examples.load_tetbeam()
 
@@ -166,12 +179,12 @@ def struct_grid():
         np.arange(-10, 10, 2, dtype=np.float32),
         np.arange(-10, 10, 2, dtype=np.float32),
     )
-    return pyvista.StructuredGrid(x, y, z)
+    return pv.StructuredGrid(x, y, z)
 
 
 @pytest.fixture
 def plane():
-    return pyvista.Plane(direction=(0, 0, -1))
+    return pv.Plane(direction=(0, 0, -1))
 
 
 @pytest.fixture
@@ -187,7 +200,7 @@ def random_hills():
 @pytest.fixture
 def tri_cylinder():
     """Triangulated cylinder"""
-    return pyvista.Cylinder().triangulate()
+    return pv.Cylinder().triangulate()
 
 
 @pytest.fixture
@@ -202,25 +215,30 @@ def datasets():
 
 
 @pytest.fixture
+def datasets_plus_pointset(datasets, ant):
+    return [*datasets, ant.cast_to_pointset()]
+
+
+@pytest.fixture
 def multiblock_poly():
     # format and order of data (including missing) is intentional
-    mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
+    mesh_a = pv.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
     mesh_a['data_a'] = mesh_a.points[:, 0] * 10
     mesh_a['data_b'] = mesh_a.points[:, 1] * 10
     mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
     mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
 
-    mesh_b = pyvista.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
+    mesh_b = pv.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
     mesh_b['data_a'] = mesh_b.points[:, 0] * 10
     mesh_b['data_b'] = mesh_b.points[:, 1] * 10
     mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
     mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
 
-    mesh_c = pyvista.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
+    mesh_c = pv.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
     mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
     mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
 
-    mblock = pyvista.MultiBlock()
+    mblock = pv.MultiBlock()
     mblock.append(mesh_a)
     mblock.append(mesh_b)
     mblock.append(mesh_c)
@@ -238,38 +256,38 @@ def datasets_vtk9():
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
-    return pyvista.PointSet(points)
+    return pv.PointSet(points)
 
 
 @pytest.fixture
 def multiblock_all(datasets):
     """Return datasets fixture combined in a pyvista multiblock."""
-    return pyvista.MultiBlock(datasets)
+    return pv.MultiBlock(datasets)
 
 
 @pytest.fixture
 def multiblock_all_with_nested_and_none(datasets, multiblock_all):
     """Return datasets fixture combined in a pyvista multiblock."""
     multiblock_all.append(None)
-    return pyvista.MultiBlock([*datasets, None, multiblock_all])
+    return pv.MultiBlock([*datasets, None, multiblock_all.copy()])
 
 
 @pytest.fixture
 def noise_2d():
     freq = [10, 5, 0]
-    noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
-    return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
+    noise = pv.perlin_noise(1, freq, (0, 0, 0))
+    return pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
 
 
 @pytest.fixture
 def texture():
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
-    pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
-    mesh = pyvista.Sphere()
+    pl = pv.Plotter(window_size=(300, 200), lighting=None)
+    mesh = pv.Sphere()
     pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
     pl.background_color = 'w'
-    return pyvista.Texture(pl.screenshot())
+    return pv.Texture(pl.screenshot())
 
 
 @pytest.fixture
@@ -281,38 +299,16 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
-def pytest_configure(config: pytest.Config):
-    """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
-    warnings = config.getini('filterwarnings')
-
-    if pyvista.vtk_version_info < (9, 1):
-        warnings.append(
-            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
-        )
-
-
-def marker_names(item: pytest.Item):
-    return [marker.name for marker in item.iter_markers()]
-
-
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
-    test_downloads = config.getoption('--test_downloads')
-
-    for item in items:
-        # skip all tests that need downloads
-        if not test_downloads:
-            if 'needs_download' in marker_names(item):
-                skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
-                item.add_marker(skip_downloads)
-
-
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
     try:
         bounds = sig.bind(*item_mark.args, **item_mark.kwargs)
     except TypeError as e:
-        msg = f'Marker `{item_mark.name}` called with incorrect arguments.\nSignature should be: @pytest.mark.{item_mark.name}{sig}'
+        msg = (
+            f'Marker `{item_mark.name}` called with incorrect arguments.\n'
+            f'Signature should be: @pytest.mark.{item_mark.name}{sig}'
+        )
         raise ValueError(msg) from e
     else:
         bounds.apply_defaults()
@@ -340,7 +336,10 @@ def _get_min_max_vtk_version(
 
     # Distinguish scenarios from positional arguments
     if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['at_least'] is not None):
-        msg = f'Cannot specify both *args and `at_least` keyword argument to `{item_mark.name}` marker.'
+        msg = (
+            f'Cannot specify both *args and `at_least` keyword argument to '
+            f'`{item_mark.name}` marker.'
+        )
         raise ValueError(msg)
 
     if len(args) > 0:
@@ -351,7 +350,10 @@ def _get_min_max_vtk_version(
     _max = bounds.arguments['less_than']
 
     if _max is None and _min is None:
-        msg = f'Need to specify either `at_least` or `less_than` keyword arguments to `{item_mark.name}` marker.'
+        msg = (
+            f'Need to specify either `at_least` or `less_than` keyword arguments to '
+            f'`{item_mark.name}` marker.'
+        )
         raise ValueError(msg)
 
     return _pad_version(_min), _pad_version(_max), bounds
@@ -362,33 +364,33 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
-
+    needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
-    for item_mark in item.iter_markers('needs_vtk_version'):
+    for item_mark in item.iter_markers(needs_vtk_version):
         sig = Signature(
             [
                 Parameter(
                     'args',
                     kind=Parameter.VAR_POSITIONAL,
-                    annotation=Union[int, tuple[int]],
+                    annotation=int | tuple[int],
                 ),
                 Parameter(
                     'at_least',
                     kind=Parameter.KEYWORD_ONLY,
-                    annotation=Optional[tuple[int]],
+                    annotation=tuple[int] | None,
                     default=None,
                 ),
                 Parameter(
                     'less_than',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Optional[tuple[int]],
+                    annotation=tuple[int] | None,
                 ),
                 Parameter(
                     'reason',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Optional[str],
+                    annotation=str | None,
                 ),
             ]
         )
@@ -396,7 +398,16 @@ def pytest_runtest_setup(item: pytest.Item):
         _min = (_min,) if isinstance(_min, int) else _min
         _max = (_max,) if isinstance(_max, int) else _max
 
-        curr_version = pyvista.vtk_version_info
+        if (_min is not None and _min <= pv._MIN_SUPPORTED_VTK_VERSION) or (
+            _max is not None and _max <= pv._MIN_SUPPORTED_VTK_VERSION
+        ):
+            msg = (
+                f'The {needs_vtk_version!r} marker is no longer necessary\n'
+                f'and can be removed from test {item}.'
+            )
+            raise pv.VTKVersionError(msg)
+
+        curr_version = pv.vtk_version_info
 
         if _max is None and curr_version < _min:
             reason = item_mark.kwargs.get(
@@ -467,13 +478,13 @@ def pytest_runtest_setup(item: pytest.Item):
                     p := 'processor',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Union[str, None],
+                    annotation=str | None,
                 ),
                 Parameter(
                     m := 'machine',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Union[str, None],
+                    annotation=str | None,
                 ),
             ]
         )
@@ -490,8 +501,12 @@ def pytest_runtest_setup(item: pytest.Item):
         if should_skip:
             pytest.skip(bounds.arguments[r])
 
+    test_downloads = item.config.getoption(flag := '--test_downloads')
+    if item.get_closest_marker('needs_download') and not test_downloads:
+        pytest.skip(f'Downloads not enabled with {flag}')
 
-def pytest_report_header(config):
+
+def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}

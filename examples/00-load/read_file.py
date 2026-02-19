@@ -41,9 +41,9 @@ cpos = mesh.plot()
 # You can also take a screenshot without creating an interactive plot window
 # using the ``Plotter``:
 
-plotter = pv.Plotter(off_screen=True)
-plotter.add_mesh(mesh)
-plotter.show(screenshot='myscreenshot.png')
+pl = pv.Plotter(off_screen=True)
+pl.add_mesh(mesh)
+pl.show(screenshot='myscreenshot.png')
 
 
 # %%
@@ -67,7 +67,11 @@ mesh.faces.reshape(-1, 4)[:, 1:]  # triangular faces
 # %%
 # Example STL file:
 mesh = examples.download_cad_model()
-cpos = [(107.0, 68.5, 204.0), (128.0, 86.5, 223.5), (0.45, 0.36, -0.8)]
+cpos = pv.CameraPosition(
+    position=(107.0, 68.5, 204.0),
+    focal_point=(128.0, 86.5, 223.5),
+    viewup=(0.45, 0.36, -0.8),
+)
 mesh.plot(cpos=cpos)
 
 # %%
@@ -85,7 +89,9 @@ mesh.plot(cpos=[-1, 2, -5], show_edges=True)
 # %%
 # Example VTK file
 mesh = examples.download_bunny_coarse()
-cpos = [(0.2, 0.3, 0.9), (0, 0, 0), (0, 1, 0)]
+cpos = pv.CameraPosition(
+    position=(0.2, 0.3, 0.9), focal_point=(0, 0, 0), viewup=(0, 1, 0)
+)
 mesh.plot(cpos=cpos, show_edges=True, color=True)
 # %%
 # .. tags:: load

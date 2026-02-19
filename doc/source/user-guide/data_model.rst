@@ -25,15 +25,15 @@ required: the data's geometry, which describes where the data is
 positioned in space and what its values are, and its topology, which
 describes how points in the dataset are connected to one another.
 
-At the top level, we have `vtkDataObject`_, which are just "blobs" of
+At the top level, we have :vtk:`vtkDataObject`, which are just "blobs" of
 data without geometry or topology. These contain arrays of
-`vtkFieldData`_. Under this are `vtkDataSet`_, which add geometry and
-topology to `vtkDataObject`_. Associated with every point or cell in
+:vtk:`vtkFieldData`. Under this are :vtk:`vtkDataSet`, which add geometry and
+topology to :vtk:`vtkDataObject`. Associated with every point or cell in
 the dataset is a specific value. Since these values must be positioned
-and connected in space, they are held in the `vtkDataArray`_ class,
+and connected in space, they are held in the :vtk:`vtkDataArray` class,
 which are simply memory buffers on the heap. In PyVista, 99% of the
-time we interact with `vtkDataSet`_ objects rather than with
-`vtkDataObject`_ objects. PyVista uses the same data types as VTK, but
+time we interact with :vtk:`vtkDataSet` objects rather than with
+:vtk:`vtkDataObject` objects. PyVista uses the same data types as VTK, but
 structures them in a more pythonic manner for ease of use.
 
 If you'd like some background for how VTK structures its data, see
@@ -62,14 +62,14 @@ consider a single cell within a |PolyData|:
    :include-source: false
    :force_static:
 
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
    points = [[.2, 0, 0], [1.3, 0, 0], [1, 1.2, 0], [0, 1, 0]]
    cells = [4, 0, 1, 2, 3]
-   mesh = pyvista.PolyData(points, cells)
+   mesh = pv.PolyData(points, cells)
 
-   pl = pyvista.Plotter()
+   pl = pv.Plotter()
    pl.add_mesh(mesh, show_edges=False)
    pl.add_mesh(mesh.extract_feature_edges(), line_width=5, color='k')
    pl.add_point_labels(mesh.points, [f'Point {i}' for i in range(4)], font_size=20, point_size=20)
@@ -87,7 +87,6 @@ shapes. The most important dataset classes are shown below:
    :context:
    :include-source: false
 
-
    from pyvista import demos
    demos.plot_datasets()
 
@@ -96,7 +95,7 @@ Here, the above datasets are ordered from most (5) to least complex
 |UnstructuredGrid|, but the
 |UnstructuredGrid| class takes the most amount of
 memory to store since they must account for every individual point and
-cell . On the other hand, since `vtkImageData`_
+cell . On the other hand, since :vtk:`vtkImageData`
 (|ImageData|) is uniformly spaced, a few integers and
 floats can describe the shape, so it takes the least amount of memory
 to store.
@@ -147,7 +146,7 @@ done with:
    >>> vtk_array.SetValue(8, 0)
    >>> print(vtk_array)
 
-PyVista supports creating objects directly from the `vtkDataArray`_
+PyVista supports creating objects directly from the :vtk:`vtkDataArray`
 class, but there's a better, and more pythonic alternative by using
 :class:`numpy.ndarray`.
 
@@ -174,8 +173,8 @@ representation of the data. For example:
 
 .. jupyter-execute::
 
-   >>> import pyvista
-   >>> wrapped = pyvista.wrap(vtk_array)
+   >>> import pyvista as pv
+   >>> wrapped = pv.wrap(vtk_array)
    >>> wrapped
 
 Note that when wrapping the underlying VTK array, we actually perform
@@ -221,9 +220,9 @@ containing just the three points:
 
 .. jupyter-execute::
 
-   >>> from_vtk = pyvista.PolyData(vtk_array)
-   >>> from_np = pyvista.PolyData(np_points)
-   >>> from_list = pyvista.PolyData(points)
+   >>> from_vtk = pv.PolyData(vtk_array)
+   >>> from_np = pv.PolyData(np_points)
+   >>> from_list = pv.PolyData(points)
 
 These point meshes all contain three points and are effectively
 identical. Let's show this by accessing the underlying points array
@@ -248,9 +247,9 @@ can see the entire process.
 .. pyvista-plot::
    :context:
 
-   >>> import pyvista
+   >>> import pyvista as pv
    >>> points = [[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]]
-   >>> mesh = pyvista.PolyData(points)
+   >>> mesh = pv.PolyData(points)
    >>> mesh.plot(show_bounds=True, cpos='xy', point_size=20)
 
 We'll get into PyVista's data classes and attributes later, but for
@@ -299,7 +298,7 @@ representation that this geometry contains three points and one cell
 
 .. jupyter-execute::
 
-   >>> mesh = pyvista.PolyData(points, cells)
+   >>> mesh = pv.PolyData(points, cells)
    >>> mesh
 
 Let's also plot this:
@@ -307,7 +306,7 @@ Let's also plot this:
 .. pyvista-plot::
    :context:
 
-   >>> mesh = pyvista.PolyData(points, [3, 0, 1, 2])
+   >>> mesh = pv.PolyData(points, [3, 0, 1, 2])
    >>> mesh.plot(cpos='xy', show_edges=True)
 
 While we're at it, let's annotate this plot to describe this mesh.
@@ -316,7 +315,7 @@ While we're at it, let's annotate this plot to describe this mesh.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
    >>> label_coords = mesh.points + [0, 0, 0.01]
    >>> pl.add_point_labels(
@@ -398,7 +397,7 @@ a simple mesh containing four isometric cells by starting with a
 
 .. jupyter-execute::
 
-   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
+   >>> grid = pv.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
    >>> ugrid
 
@@ -408,14 +407,14 @@ Let's also plot this basic mesh:
    :context:
    :include-source: False
 
-   >>> grid = pyvista.ImageData(dimensions=(3, 3, 1))
+   >>> grid = pv.ImageData(dimensions=(3, 3, 1))
    >>> ugrid = grid.cast_to_unstructured_grid()
 
 .. pyvista-plot::
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
@@ -493,7 +492,7 @@ assigned.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
    >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
@@ -569,7 +568,7 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
    :context:
    :force_static:
 
-   >>> pl = pyvista.Plotter()
+   >>> pl = pv.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
@@ -677,7 +676,7 @@ Vectors, Texture Coords, and Normals Attributes
 Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.DataSet.active_scalars>`:
 
 * :attr:`active_normals <pyvista.DataSet.active_normals>`
-* :attr:`active_t_coords <pyvista.DataSet.active_t_coords>`
+* :attr:`active_texture_coordinates <pyvista.DataSet.active_texture_coordinates>`
 * :attr:`active_vectors <pyvista.DataSet.active_vectors>`
 
 
@@ -694,8 +693,8 @@ it will be computed.
 
 Active Texture Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :attr:`active_t_coords
-<pyvista.DataSet.active_t_coords>` array is used for
+The :attr:`active_texture_coordinates
+<pyvista.DataSet.active_texture_coordinates>` array is used for
 rendering textures. See :ref:`texture_example` for examples using
 this array.
 
@@ -724,12 +723,6 @@ with the geometry as these vectors represent quantities with direction.
    will transform any array with three components, so multi-component
    scalar arrays like RGB arrays will have to be discarded after
    transformation.
-
-.. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
-.. _vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html
-.. _vtkFieldData: https://vtk.org/doc/nightly/html/classvtkFieldData.html
-.. _vtkDataObject: https://vtk.org/doc/nightly/html/classvtkDataObject.html
-.. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 
 .. |PolyData| replace:: :class:`PolyData <pyvista.PolyData>`
 .. |UnstructuredGrid| replace:: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`

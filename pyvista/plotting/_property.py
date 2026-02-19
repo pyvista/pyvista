@@ -1,20 +1,22 @@
-"""Wrapper for vtkProperty."""
+"""Wrapper for :vtk:`vtkProperty`."""
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import vtk_version_info
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _check_range
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
 from .opts import InterpolationType
 
 
-@no_new_attr
-class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
-    """Wrap vtkProperty and expose it pythonically.
+class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
+    """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.
 
@@ -86,10 +88,14 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
-    render_points_as_spheres : bool, default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+    render_points_as_spheres : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+
         Render points as spheres rather than dots.
 
-    render_lines_as_tubes : bool, default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+    render_lines_as_tubes : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+
         Show lines as thick tubes rather than flat lines.  Control
         the width with ``line_width``.
 
@@ -158,7 +164,8 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     _theme = None
     _color_set = None
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['theme'])
+    def __init__(  # noqa: PLR0917
         self,
         theme=None,
         interpolation=None,
@@ -182,11 +189,11 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         edge_opacity=None,
     ):
         """Initialize this property."""
-        self._theme = pyvista.themes.Theme()
+        self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pyvista.global_theme)
+            self._theme.load_theme(pv.global_theme)
         else:
             self._theme.load_theme(theme)
 
@@ -245,10 +252,9 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         if culling is not None:
             self.culling = culling
         if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
-            import warnings
-
-            warnings.warn(
-                '`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+            warn_external(
+                '`edge_opacity` cannot be used under VTK v9.3.0. '
+                'Try installing VTK v9.3.0 or newer.',
                 UserWarning,
             )
         if edge_opacity is None:
@@ -1179,7 +1185,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -1188,7 +1194,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     @anisotropy.setter
     def anisotropy(self, value: float):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -1219,11 +1225,11 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        from pyvista import examples  # avoid circular import
+        from pyvista import examples  # avoid circular import  # noqa: PLC0415
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
-        pl = pyvista.Plotter(**kwargs)
+        pl = pv.Plotter(**kwargs)
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
@@ -1255,7 +1261,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
-        from pyvista.core.errors import VTKVersionError
+        from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
         props = [
             f'{type(self).__name__} ({hex(id(self))})',

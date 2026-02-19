@@ -2,7 +2,7 @@ Cells
 =====
 
 The cell :class:`pyvista.Cell` class is the PyVista representation of the
-`vtkGenericCell <https://vtk.org/doc/nightly/html/classvtkGenericCell.html>`_ and can be used to inspect a :class:`pyvista.DataSet`'s cells, faces, and edges.
+:vtk:`vtkGenericCell` and can be used to inspect a :class:`pyvista.DataSet`'s cells, faces, and edges.
 
 .. note::
    While methods and classes are quite effective at inspecting and plotting
@@ -17,9 +17,9 @@ Here's a quick example to demonstrate the usage of :func:`pyvista.DataSet.get_ce
    :hide-code:
 
    # jupyterlab boiler plate setup
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
 
 .. jupyter-execute::
 

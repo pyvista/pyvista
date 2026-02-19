@@ -18,7 +18,6 @@ that noise.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -103,7 +102,9 @@ pl.show()
 low_pass = sampled_fft.low_pass(1.0, 1.0, 1.0).rfft()
 low_pass['scalars'] = np.real(low_pass.active_scalars)
 warped_low_pass = low_pass.warp_by_scalar()
-warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False)
+warped_low_pass.plot(
+    show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False
+)
 
 
 # %%
@@ -122,7 +123,9 @@ warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise',
 high_pass = sampled_fft.high_pass(1.0, 1.0, 1.0).rfft()
 high_pass['scalars'] = np.real(high_pass.active_scalars)
 warped_high_pass = high_pass.warp_by_scalar()
-warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False)
+warped_high_pass.plot(
+    show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False
+)
 
 
 # %%
@@ -165,7 +168,9 @@ def warp_low_pass_noise(cfreq, scalar_ptp=None):
 
     # on the right: scale to fixed warped height
     output_scaled = output.copy()
-    output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
+    output_scaled['scalars_warp'] = (
+        output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
+    )
     warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
     warped_scaled.active_scalars_name = 'scalars'
     # push center back to xy plane due to peaks near 0 frequency
@@ -177,26 +182,26 @@ def warp_low_pass_noise(cfreq, scalar_ptp=None):
 
 
 # Initialize the plotter and plot off-screen to save the animation as a GIF.
-plotter = pv.Plotter(notebook=False, off_screen=True)
-plotter.open_gif('low_pass.gif', fps=8)
+pl = pv.Plotter(notebook=False, off_screen=True)
+pl.open_gif('low_pass.gif', fps=8)
 
 # add the initial mesh
 init_mesh = warp_low_pass_noise(1e-2)
-plotter.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
-plotter.camera.zoom(1.3)
+pl.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
+pl.camera.zoom(1.3)
 
 for freq in np.geomspace(1e-2, 10, 25):
-    plotter.clear()
+    pl.clear()
     mesh = warp_low_pass_noise(freq)
-    plotter.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
-    plotter.add_text(f'Cutoff Frequency: {freq:.2f}', color='black')
-    plotter.write_frame()
+    pl.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
+    pl.add_text(f'Cutoff Frequency: {freq:.2f}', color='black')
+    pl.write_frame()
 
 # write the last frame a few times to "pause" the gif
 for _ in range(10):
-    plotter.write_frame()
+    pl.write_frame()
 
-plotter.close()
+pl.close()
 
 
 # %%

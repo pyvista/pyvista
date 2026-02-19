@@ -1,43 +1,59 @@
+# Reference:
+#   - https://github.com/actions/cache
+#   - https://github.com/actions/checkout
+#   - https://github.com/lycheeverse/lychee-action
+#   - https://github.com/peter-evans/create-issue-from-file
+
 name: LinkCheck - All files 🔗
 
 on:
   schedule:
     - cron: "0 5 * * 0" # Runs at 05:00 on Sunday.
   workflow_dispatch:
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  id-token: none
+defaults:
+  run:
+    shell: bash -l {0}
 
 jobs:
-  doc:
-    name: Check Links
-    runs-on: ubuntu-22.04
-    env:
-      PYVISTA_OFF_SCREEN: "True"
-      ALLOW_PLOTTING: true
-      SHELLOPTS: "errexit:pipefail"
+  linkcheck:
+    runs-on: "ubuntu-22.04"
+
+    permissions:
+      issues: write # required for peter-evans/create-issue-from-file
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - name: "Cache Lychee"
+        uses: actions/cache@v5
         with:
-          python-version: "3.13"
-          cache: "pip"
+          path: .lycheecache
+          key: cache-lychee
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - name: "Run Lychee"
+        id: lychee
+        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0
         with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
-          version: 3.0
+          args: "."
+          fail: false
 
-      - name: Install PyVista and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
+      - name: "Report Failure"
+        if: steps.lychee.outputs.exit_code != 0
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710
+        with:
+          title: "chore: linkcheck failure"
+          content-filepath: ./lychee/out.md
+          labels: |
+            documentation
 
-      - name: LinkCheck
-        run: make -C doc linkcheck SPHINXOPTS="--color"
+      - name: "Exit Action"
+        if: steps.lychee.outputs.exit_code != 0
+        run: exit {{ steps.lychee.outputs.exit_code }}

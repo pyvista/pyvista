@@ -1,4 +1,4 @@
-"""Tests for tinypages build using sphinx extensions."""
+"""Tests for tinypages build using pyvista's plot_directive extension."""
 
 from __future__ import annotations
 
@@ -26,7 +26,8 @@ ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
-def test_tinypages(tmp_path, ename, evalue):
+@pytest.mark.skip_check_gc
+def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     # sanitise the environment namespace
     for hook in ENVIRONMENT_HOOKS:
         os.environ.pop(hook, None)
@@ -53,6 +54,7 @@ def test_tinypages(tmp_path, ename, evalue):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
+
     proc = Popen(
         cmd,
         stdout=PIPE,
@@ -62,12 +64,7 @@ def test_tinypages(tmp_path, ename, evalue):
         encoding='utf8',
     )
     out, err = proc.communicate()
-
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    if err:
-        if err.strip() != 'vtkDebugLeaks has found no leaks.':
-            pytest.fail(f'sphinx build emitted the following warnings:\n{err}')
 
     assert html_dir.is_dir()
 
@@ -78,9 +75,17 @@ def test_tinypages(tmp_path, ename, evalue):
     assert plot_file(1, 0, 0).exists() == expected
     assert plot_file(2, 0, 0).exists() == expected
     assert plot_file(4, 0, 0).exists() == expected
+    assert plot_file(21, 0, 0).exists() == expected
+    assert plot_file(22, 0, 0).exists() == expected
+    assert plot_file(24, 0, 0).exists() == expected
+    assert plot_file(25, 0, 0).exists() == expected
     assert plot_file(8, 0, 0, 'png').exists() == expected
     assert plot_file(9, 0, 0, 'png').exists() == expected
     assert plot_file(9, 1, 0, 'png').exists() == expected
+    assert plot_file(23, 0, 0, 'gif').exists() == expected
+
+    # verify a figure is *not* generated when show isn't called
+    assert not plot_file(20, 0, 0).exists()
 
     # test skip directive
     assert not plot_file(10, 0, 0).exists()
@@ -126,3 +131,49 @@ def test_tinypages(tmp_path, ename, evalue):
     mpl_figure_file = html_dir / f'some_plots-{plt_num}.png'
     assert mpl_figure_file.exists
     assert b'This is a matplotlib plot.' in html_contents
+
+
+@pytest.mark.skip_windows('path issues on Azure Windows CI')
+@pytest.mark.skip_mac('Apple Silicon issues with "buildPipelineState failed"')
+@pytest.mark.skip_check_gc
+def test_parallel(tmp_path: Path) -> None:
+    """Ensure that labeling image serial fails."""
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
+    cmd = [
+        sys.executable,
+        '-msphinx',
+        '-W',
+        '-b',
+        'html',
+        '-j2',
+        '-d',
+        str(doctree_dir),
+        str(Path(__file__).parent / 'tinypages'),
+        str(html_dir),
+    ]
+    proc = Popen(
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, 'MPLBACKEND': ''},
+        encoding='utf8',
+    )
+    out, err = proc.communicate()
+
+    assert 'pyvista_plot_use_counter' in err
+    assert 'cannot be enabled for parallel builds' in err
+
+    proc = Popen(
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        env={**os.environ, 'MPLBACKEND': '', 'PYVISTA_PLOT_USE_COUNTER': 'false'},
+        encoding='utf8',
+    )
+    out, err = proc.communicate()
+    assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+
+    assert len(list(html_dir.glob('**/*.png'))) == 27

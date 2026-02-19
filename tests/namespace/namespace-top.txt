@@ -79,7 +79,6 @@ MultiBlock, <class 'pyvista.core.composite.MultiBlock'>
 MultiBlockPlot3DReader, <class 'pyvista.utilities.reader.MultiBlockPlot3DReader'>
 MultipleLines, <function MultipleLines at 0x1641c0430>
 NIFTIReader, <class 'pyvista.utilities.reader.NIFTIReader'>
-NORMALS, {'x': [1, 0, 0], 'y': [0, 1, 0], 'z': [0, 0, 1], '-x': [-1, 0, 0], '-y': [0, -1, 0], '-z': [0, 0, -1]}
 NRRDReader, <class 'pyvista.utilities.reader.NRRDReader'>
 OBJReader, <class 'pyvista.utilities.reader.OBJReader'>
 OFF_SCREEN, False
@@ -144,6 +143,8 @@ SLCReader, <class 'pyvista.utilities.reader.SLCReader'>
 STLReader, <class 'pyvista.utilities.reader.STLReader'>
 Scraper, <class 'pyvista.utilities.sphinx_gallery.Scraper'>
 SegYReader, <class 'pyvista.utilities.reader.SegYReader'>
+SeriesDataSet, <class 'pyvista.utilities.reader.SeriesDataSet'>
+SeriesReader, <class 'pyvista.utilities.reader.SeriesReader'>
 Sphere, <function Sphere at 0x1641c0280>
 Spline, <function Spline at 0x1641c18b0>
 StructuredGrid, <class 'pyvista.core.pointset.StructuredGrid'>
@@ -317,7 +318,6 @@ set_error_output_file, <function set_error_output_file at 0x163f438b0>
 set_jupyter_backend, <function set_jupyter_backend at 0x1645b2f70>
 set_pickle_format, <function set_pickle_format at 0x163f3e3a0>
 set_plot_theme, <function set_plot_theme at 0x1647a4670>
-set_vtkwriter_mode, <function set_vtkwriter_mode at 0x163f3e5e0>
 # sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/pyvista/utilities/sphinx_gallery.py'>
 start_xvfb, <function start_xvfb at 0x1641c8ca0>
 surface_from_para, <function surface_from_para at 0x1641c8670>

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -14,8 +16,16 @@ from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
+if TYPE_CHECKING:
+    from pyvista import DataSet
+    from pyvista import PolyData
+    from pyvista.core._typing_core import NumpyArray
 
-def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
+
+@_deprecate_positional_args
+def prepare_smooth_shading(  # noqa: PLR0917
+    mesh: DataSet, scalars, texture, split_sharp_edges, feature_angle, preference
+) -> tuple[PolyData, NumpyArray[float]]:
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with Phong shading to have active normals.
@@ -54,7 +64,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         Always a surface as we need to compute point normals.
 
     """
-    is_polydata = isinstance(mesh, pyvista.PolyData)
+    is_polydata = isinstance(mesh, pv.PolyData)
     indices_array = None
 
     has_scalars = scalars is not None
@@ -70,6 +80,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     # extract surface if not already a surface
     if not is_polydata:
         mesh = mesh.extract_surface(
+            algorithm=None,
             pass_pointid=use_points or texture is not None,
             pass_cellid=not use_points,
         )
@@ -98,10 +109,11 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
 
-    return mesh, scalars
+    return mesh, scalars  # type: ignore[return-value]
 
 
-def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):
+@_deprecate_positional_args
+def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):  # noqa: PLR0917
     """Process opacity.
 
     This function accepts an opacity string or array and always
@@ -150,9 +162,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn('Opacity scalars contain values over 1')
+                warn_external('Opacity scalars contain values over 1')  # pragma: no cover
             if np.any(opacity < 0):
-                warnings.warn('Opacity scalars contain values less than 0')
+                warn_external('Opacity scalars contain values less than 0')  # pragma: no cover
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
@@ -179,6 +191,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
 
 
 def _common_arg_parser(
+    *,
     dataset,
     theme,
     n_colors,
@@ -197,6 +210,7 @@ def _common_arg_parser(
     texture,
     rgb,
     style,
+    remove_existing_actor=None,
     **kwargs,
 ):
     """Parse arguments in common between add_volume, composite, and mesh."""
@@ -239,9 +253,11 @@ def _common_arg_parser(
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
-        remove_existing_actor = False
-    else:
-        # check if this actor already exists
+        # Default to False when no name is provided
+        if remove_existing_actor is None:  # pragma: no cover
+            remove_existing_actor = False
+    # Default to True when a name is provided (for backwards compatibility)
+    elif remove_existing_actor is None:
         remove_existing_actor = True
 
     nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)

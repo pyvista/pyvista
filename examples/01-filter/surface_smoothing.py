@@ -32,11 +32,11 @@ vol.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
 # %%
 # Extract the outer surface of the volume using the
-# :func:`pyvista.DataSetFilters.extract_geometry` filter and then apply the
+# :func:`~pyvista.DataObjectFilters.extract_surface` filter and then apply the
 # smoothing filter:
 
 # Get the out surface as PolyData
-surf = vol.extract_geometry()
+surf = vol.extract_surface(algorithm=None)
 # Smooth the surface
 smooth = surf.smooth()
 smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
@@ -77,7 +77,8 @@ pl.show()
 # <pyvista.PolyDataFilters.smooth>`. In this example, you can see how Taubin
 # smoothing maintains the volume relative to the original mesh.
 #
-# Also, note that the number of iterations can be reduced to get the same approximate amount of smoothing. This is because Taubin smoothing is more efficient.
+# Also, note that the number of iterations can be reduced to get the same approximate
+# amount of smoothing. This is because Taubin smoothing is more efficient.
 
 smooth_w_taubin = surf.smooth_taubin(n_iter=50, pass_band=0.05)
 

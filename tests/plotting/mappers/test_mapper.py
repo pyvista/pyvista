@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.mapper import DataSetMapper
 
 
@@ -33,9 +33,9 @@ def test_bounds(dataset_mapper):
 
 
 def test_lookup_table(dataset_mapper):
-    assert isinstance(dataset_mapper.lookup_table, vtk.vtkLookupTable)
+    assert isinstance(dataset_mapper.lookup_table, _vtk.vtkLookupTable)
 
-    table = vtk.vtkLookupTable()
+    table = _vtk.vtkLookupTable()
 
     dataset_mapper.lookup_table = table
     assert dataset_mapper.lookup_table is table
@@ -71,11 +71,6 @@ def test_array_name(dataset_mapper):
     name = 'scalars'
     dataset_mapper.array_name = name
     assert dataset_mapper.array_name == name
-
-
-def test_do_not_set_attributes(dataset_mapper):
-    with pytest.raises(AttributeError, match='cannot be added to type'):
-        dataset_mapper.not_an_attribute = None
 
 
 def test_copy(dataset_mapper, sphere):

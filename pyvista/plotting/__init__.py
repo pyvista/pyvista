@@ -7,6 +7,7 @@ from pyvista._plot import plot as plot
 
 from . import _vtk as _vtk
 from ._property import Property as Property
+from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart
 from ._typing import ColorLike as ColorLike
 from .actor import Actor as Actor
@@ -33,6 +34,7 @@ from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
 from .cube_axes_actor import CubeAxesActor as CubeAxesActor
 from .errors import InvalidCameraError as InvalidCameraError
 from .errors import RenderWindowUnavailable as RenderWindowUnavailable
+from .follower import Follower as Follower
 from .helpers import plot_arrows as plot_arrows
 from .helpers import plot_compare_four as plot_compare_four
 from .lights import Light as Light
@@ -92,7 +94,7 @@ class QtDeprecationError(Exception):  # numpydoc ignore=PR01
     See https://github.com/pyvista/pyvistaqt
 """
 
-    def __init__(self, feature_name):
+    def __init__(self, feature_name: str) -> None:
         """Empty init."""
         Exception.__init__(self, self.message.format(*[feature_name] * 4))
 
@@ -100,7 +102,7 @@ class QtDeprecationError(Exception):  # numpydoc ignore=PR01
 class BackgroundPlotter:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""  # noqa: D404
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
         """Empty init."""
         msg = 'BackgroundPlotter'
         raise QtDeprecationError(msg)
@@ -109,7 +111,7 @@ class BackgroundPlotter:  # numpydoc ignore=PR01
 class QtInteractor:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""  # noqa: D404
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
         """Empty init."""
         msg = 'QtInteractor'
         raise QtDeprecationError(msg)

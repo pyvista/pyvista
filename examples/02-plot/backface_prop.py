@@ -23,7 +23,6 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -48,13 +47,13 @@ meshes.plot(color='aquamarine', backface_params=backface_params, smooth_shading=
 # :class:`pyvista.Actor` class.
 
 catalan = pv.ParametricCatalanMinimal()
-plotter = pv.Plotter()
-actor = plotter.add_mesh(catalan, color='dodgerblue', smooth_shading=True)
+pl = pv.Plotter()
+actor = pl.add_mesh(catalan, color='dodgerblue', smooth_shading=True)
 bprop = actor.backface_prop
 bprop.color = 'forestgreen'
 bprop.specular = 1.0
 bprop.specular_power = 50.0
-plotter.show()
+pl.show()
 
 
 # %%
@@ -63,7 +62,9 @@ plotter.show()
 # where the face properties are discontinuous.
 
 henneberg = pv.ParametricHenneberg().scale(0.25, inplace=False)
-klein = pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
+klein = (
+    pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
+)
 meshes = henneberg + klein
 
 backface_params = dict(color='mediumseagreen', specular=1.0, specular_power=50.0)
@@ -80,13 +81,15 @@ meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
 
 mobius = pv.ParametricMobius().rotate_z(-90, inplace=False)
 backface_params = dict(opacity=0.5)
-plotter = pv.Plotter()
-plotter.add_mesh(mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True)
-plotter.open_gif('mobius_semiopaque.gif')
+pl = pv.Plotter()
+pl.add_mesh(
+    mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True
+)
+pl.open_gif('mobius_semiopaque.gif')
 
 viewup = [0, 0, 1]
-orbit = plotter.generate_orbital_path(n_points=24, shift=0.0, viewup=viewup)
-plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
+orbit = pl.generate_orbital_path(n_points=24, shift=0.0, viewup=viewup)
+pl.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
 
 # %%

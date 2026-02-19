@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
+from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -226,7 +226,8 @@ def test_table_cmap_list(lut):
     assert lut.n_values == 3
 
 
-def test_table_values_update(lut, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_table_values_update(lut):
     lut.cmap = 'Greens'
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
     assert lut.values.max() == 255
@@ -235,7 +236,7 @@ def test_table_values_update(lut, skip_check_gc):
 
 def test_to_tf(lut):
     tf = lut.to_color_tf()
-    assert isinstance(tf, vtk.vtkColorTransferFunction)
+    assert isinstance(tf, _vtk.vtkColorTransferFunction)
 
 
 def test_map_value(lut):
@@ -251,7 +252,8 @@ def test_call(lut):
     assert lut.map_value(0.5) == lut.map_value(0.5)
 
 
-def test_custom_opacity(lut, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
     assert not np.array_equiv(lut.values[:, -1], 255)
@@ -277,5 +279,5 @@ def test_custom_opacity(lut, skip_check_gc):
 @pytest.mark.parametrize('clamping', [True, False])
 def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
-    assert isinstance(tf, vtk.vtkPiecewiseFunction)
+    assert isinstance(tf, _vtk.vtkPiecewiseFunction)
     assert tf.GetClamping() == int(clamping)

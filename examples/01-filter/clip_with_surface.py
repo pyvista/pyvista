@@ -26,7 +26,9 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-surface = pv.Cone(direction=(0, 0, -1), height=3.0, radius=1, resolution=50, capping=False)
+surface = pv.Cone(
+    direction=(0, 0, -1), height=3.0, radius=1, resolution=50, capping=False
+)
 
 # Make a gridded dataset
 n = 51
@@ -34,11 +36,11 @@ xx = yy = zz = 1 - np.linspace(0, n, n) * 2 / (n - 1)
 dataset = pv.RectilinearGrid(xx, yy, zz)
 
 # Preview the problem
-p = pv.Plotter()
-p.add_mesh(surface, color='w', label='Surface')
-p.add_mesh(dataset, color='gold', show_edges=True, opacity=0.75, label='To Clip')
-p.add_legend()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(surface, color='w', label='Surface')
+pl.add_mesh(dataset, color='gold', show_edges=True, opacity=0.75, label='To Clip')
+pl.add_legend()
+pl.show()
 
 
 # %%
@@ -52,9 +54,9 @@ dataset.compute_implicit_distance(surface, inplace=True)
 inner = dataset.threshold(0.0, scalars='implicit_distance', invert=True)
 outer = dataset.threshold(0.0, scalars='implicit_distance', invert=False)
 
-p = pv.Plotter()
-p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
-p.add_mesh(
+pl = pv.Plotter()
+pl.add_mesh(surface, color='w', label='Surface', opacity=0.75)
+pl.add_mesh(
     inner,
     scalars='implicit_distance',
     show_edges=True,
@@ -63,13 +65,13 @@ p.add_mesh(
     clim=[-1, 1],
     cmap='bwr',
 )
-p.add_legend()
-p.show()
+pl.add_legend()
+pl.show()
 
 # %%
-p = pv.Plotter()
-p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
-p.add_mesh(
+pl = pv.Plotter()
+pl.add_mesh(surface, color='w', label='Surface', opacity=0.75)
+pl.add_mesh(
     outer,
     scalars='implicit_distance',
     show_edges=True,
@@ -78,8 +80,8 @@ p.add_mesh(
     clim=[-1, 1],
     cmap='bwr',
 )
-p.add_legend()
-p.show()
+pl.add_legend()
+pl.show()
 
 
 # %%
@@ -89,11 +91,11 @@ p.show()
 clipped = dataset.clip_surface(surface, invert=False)
 
 # Visualize the results
-p = pv.Plotter()
-p.add_mesh(surface, color='w', opacity=0.75, label='Surface')
-p.add_mesh(clipped, color='gold', show_edges=True, label='clipped', opacity=0.75)
-p.add_legend()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(surface, color='w', opacity=0.75, label='Surface')
+pl.add_mesh(clipped, color='gold', show_edges=True, label='clipped', opacity=0.75)
+pl.add_legend()
+pl.show()
 
 
 # %%

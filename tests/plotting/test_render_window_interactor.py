@@ -10,7 +10,15 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting.render_window_interactor import InteractorStyleImage
+from pyvista.plotting.render_window_interactor import InteractorStyleJoystickActor
+from pyvista.plotting.render_window_interactor import InteractorStyleJoystickCamera
+from pyvista.plotting.render_window_interactor import InteractorStyleRubberBand2D
+from pyvista.plotting.render_window_interactor import InteractorStyleRubberBandPick
+from pyvista.plotting.render_window_interactor import InteractorStyleTerrain
+from pyvista.plotting.render_window_interactor import InteractorStyleTrackballActor
+from pyvista.plotting.render_window_interactor import InteractorStyleTrackballCamera
+from pyvista.plotting.render_window_interactor import InteractorStyleZoom
 from tests.plotting.test_plotting import skip_windows_mesa
 
 if TYPE_CHECKING:
@@ -27,7 +35,7 @@ def test_track_click_position_raises(callback):
     match = re.escape(
         'Invalid callback provided, it should be either ``None`` or a callable.',
     )
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         pl.track_click_position(callback=callback)
 
 
@@ -46,7 +54,8 @@ def test_process_events_raises(mocker: MockerFixture):
     m.GetInitialized.return_value = False
 
     with pytest.raises(
-        RuntimeError, match='Render window interactor must be initialized before processing events.'
+        RuntimeError,
+        match=r'Render window interactor must be initialized before processing events.',
     ):
         pl.iren.process_events()
 
@@ -66,7 +75,6 @@ def test_picker_raises(picker, mocker: MockerFixture):
     m.assert_called_once_with(picker)
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_observers():
     pl = pv.Plotter()
 
@@ -168,10 +176,10 @@ def test_track_click_position_multi_render():
 def test_track_click_position():
     events = []
 
-    def single_click_callback(mouse_position):
+    def single_click_callback(mouse_position):  # noqa: ARG001
         events.append('single')
 
-    def double_click_callback(mouse_position):
+    def double_click_callback(mouse_position):  # noqa: ARG001
         events.append('double')
 
     pl = pv.Plotter()
@@ -202,10 +210,6 @@ def test_track_click_position():
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
-@pytest.mark.needs_vtk_version(
-    (9, 2),
-    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.',
-)
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)
@@ -217,7 +221,7 @@ def test_timer():
     delay = 5 * duration  # Extra time we wait for the timers to fire at least once
     events = []
 
-    def on_timer(obj, event):
+    def on_timer(obj, event):  # noqa: ARG001
         # TimerEvent callback
         events.append(event)
 
@@ -283,7 +287,8 @@ def test_poked_subplot_loc():
 
 
 @pytest.mark.skip_plotting
-def test_poked_subplot_context(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_poked_subplot_context():
     pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
     pl.iren._mouse_left_button_press(200, 600)
@@ -305,16 +310,6 @@ def test_poked_subplot_context(verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_plotting
-def test_add_pick_observer():
-    with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
-        pl = pv.Plotter()
-        pl.iren.add_pick_obeserver(empty_callback)
-    pl = pv.Plotter()
-    pl.iren.add_pick_observer(empty_callback)
-
-
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:
@@ -348,3 +343,54 @@ def test_enable_custom_trackball_style():
 def test_enable_2d_style():
     pl = pv.Plotter()
     pl.enable_2d_style()
+
+
+def test_enable_interactors():
+    mapping = {
+        'enable_trackball_style': InteractorStyleTrackballCamera,
+        'enable_custom_trackball_style': InteractorStyleTrackballCamera,
+        'enable_2d_style': InteractorStyleTrackballCamera,
+        'enable_trackball_actor_style': InteractorStyleTrackballActor,
+        'enable_image_style': InteractorStyleImage,
+        'enable_joystick_style': InteractorStyleJoystickCamera,
+        'enable_joystick_actor_style': InteractorStyleJoystickActor,
+        'enable_zoom_style': InteractorStyleZoom,
+        'enable_terrain_style': InteractorStyleTerrain,
+        'enable_rubber_band_style': InteractorStyleRubberBandPick,
+        'enable_rubber_band_2d_style': InteractorStyleRubberBand2D,
+    }
+
+    pl = pv.Plotter()
+
+    # check that all "enable_*_style" methods on plotter are in the mapping and vice versa
+    attrs = dir(pl)
+    attrs_enable_style = {
+        attr for attr in attrs if attr.startswith('enable_') and attr.endswith('_style')
+    }
+
+    check_set = set(mapping.keys())
+    assert attrs_enable_style == check_set
+
+    # do the same for methods on the RenderWindowInteractor
+    attrs = dir(pl.iren)
+    attrs_enable_style = {
+        attr for attr in attrs if attr.startswith('enable_') and attr.endswith('_style')
+    }
+    check_set = set(mapping.keys())
+    assert attrs_enable_style == check_set
+
+    # check that the method gives the right class
+    for attr, class_ in mapping.items():
+        print(attr, class_)
+        getattr(pl, attr)()
+        assert isinstance(pl.iren.style, class_)
+
+    for attr, class_ in mapping.items():
+        getattr(pl.iren, attr)()
+        assert isinstance(pl.iren.style, class_)
+
+
+def test_setting_custom_style():
+    pl = pv.Plotter()
+    pl.iren.style = _vtk.vtkInteractorStyleJoystickActor()
+    assert isinstance(pl.iren.style, _vtk.vtkInteractorStyleJoystickActor)

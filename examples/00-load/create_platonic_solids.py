@@ -4,7 +4,7 @@
 Platonic Solids
 ~~~~~~~~~~~~~~~
 
-PyVista wraps the ``vtk.vtkPlatonicSolidSource`` filter as
+PyVista wraps the :vtk:`vtkPlatonicSolidSource` filter as
 :func:`pyvista.PlatonicSolid`.
 """
 
@@ -15,7 +15,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -48,7 +47,10 @@ centers = [
     (-1, 2, 0),
 ]
 
-solids = [pv.PlatonicSolid(kind, radius=0.4, center=center) for kind, center in zip(kinds, centers)]
+solids = [
+    pv.PlatonicSolid(kind, radius=0.4, center=center)
+    for kind, center in zip(kinds, centers, strict=True)
+]
 
 # download and align teapotahedron
 teapot = examples.download_teapot()
@@ -68,21 +70,21 @@ solids.append(teapot)
 #    work well, which can be manually resized without issue.
 
 
-p = pv.Plotter(window_size=[1000, 1000])
+pl = pv.Plotter(window_size=[1000, 1000])
 for ind, solid in enumerate(solids):
     # only use smooth shading for the teapot
     smooth_shading = ind == len(solids) - 1
-    p.add_mesh(
+    pl.add_mesh(
         solid,
         color='silver',
         smooth_shading=smooth_shading,
         specular=1.0,
         specular_power=10,
     )
-p.view_vector((5.0, 2, 3))
-p.add_floor('-z', lighting=True, color='lightblue', pad=1.0)
-p.enable_shadows()
-p.show()
+pl.view_vector((5.0, 2, 3))
+pl.add_floor('-z', lighting=True, color='lightblue', pad=1.0)
+pl.enable_shadows()
+pl.show()
 
 # %%
 # The Platonic solids come with cell scalars that index each face of the

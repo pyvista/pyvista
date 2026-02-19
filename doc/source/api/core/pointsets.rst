@@ -16,13 +16,13 @@ combinations of all possible cell types:
    :hide-code:
 
    # jupyterlab boiler plate setup
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 .. jupyter-execute::
    :hide-code:
@@ -51,26 +51,25 @@ data:
    demos.plot_datasets('StructuredGrid')
 
 
-The :class:`pyvista.PointSet` (as of ``vtk==9.1.0``) is a concrete class for
-storing a set of points.
+The :class:`pyvista.PointSet` is a concrete class for storing a set of points.
 
 .. jupyter-execute::
    :hide-code:
 
    import numpy as np
-   import pyvista
+   import pyvista as pv
    rng = np.random.default_rng(0)
    points = rng.random((10, 3))
-   pset = pyvista.PointSet(points)
+   pset = pv.PointSet(points)
    pset.plot(color='red')
 
 
 **Class Descriptions**
 
 The following table describes PyVista's point set classes. These
-classes inherit all methods from their corresponding VTK `vtkPointSet`_,
-`vtkPolyData`_, `vtkUnstructuredGrid`_, `vtkStructuredGrid`_, and
-`vtkExplicitStructuredGrid`_ superclasses.
+classes inherit all methods from their corresponding VTK :vtk:`vtkPointSet`,
+:vtk:`vtkPolyData`, :vtk:`vtkUnstructuredGrid`, :vtk:`vtkStructuredGrid`, and
+:vtk:`vtkExplicitStructuredGrid` superclasses.
 
 .. autosummary::
    :toctree: _autosummary
@@ -80,12 +79,6 @@ classes inherit all methods from their corresponding VTK `vtkPointSet`_,
    pyvista.UnstructuredGrid
    pyvista.StructuredGrid
    pyvista.ExplicitStructuredGrid
-
-.. _vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
-.. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
-.. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html
-.. _vtkExplicitStructuredGrid: https://vtk.org/doc/nightly/html/classvtkExplicitStructuredGrid.html
 
 
 PolyData Creation
@@ -97,8 +90,8 @@ A :class:`pyvista.PolyData` object can be initialized with:
 
 .. jupyter-execute::
 
-    import pyvista
-    mesh = pyvista.PolyData()
+    import pyvista as pv
+    mesh = pv.PolyData()
 
 This creates an mesh, which you can then add
 
@@ -124,11 +117,11 @@ these can be loaded with:
 
 .. jupyter-execute::
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     # Load mesh
-    mesh = pyvista.PolyData(examples.planefile)
+    mesh = pv.PolyData(examples.planefile)
     mesh
 
 This mesh can then be written to a .vtk file using:
@@ -143,7 +136,7 @@ These meshes are identical.
 
     import numpy as np
 
-    mesh_from_vtk = pyvista.PolyData('plane.vtk')
+    mesh_from_vtk = pv.PolyData('plane.vtk')
     print(np.allclose(mesh_from_vtk.points, mesh.points))
 
 
@@ -160,15 +153,15 @@ and plots the meshes with various colors.
 
 .. jupyter-execute::
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     # load and shrink airplane
-    airplane = pyvista.PolyData(examples.planefile)
+    airplane = pv.PolyData(examples.planefile)
     airplane.points /= 10 # shrink by 10x
 
     # rotate and translate ant so it is on the plane
-    ant = pyvista.PolyData(examples.antfile)
+    ant = pv.PolyData(examples.antfile)
     ant.rotate_x(90, inplace=True)
     ant.translate([90, 60, 15], inplace=True)
 
@@ -177,19 +170,19 @@ and plots the meshes with various colors.
     ant_copy.translate([30, 0, -10], inplace=True)
 
     # Create plotter object
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    pl = pv.Plotter()
+    pl.add_mesh(ant, color='r')
+    pl.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position. Add a
     # scalar bar associated with this mesh
     plane_scalars = airplane.points[:, 1]
-    plotter.add_mesh(airplane, scalars=plane_scalars,
+    pl.add_mesh(airplane, scalars=plane_scalars,
                      scalar_bar_args={'title': 'Airplane Y\nLocation'})
 
     # Add annotation text
-    plotter.add_text('Ants and Plane Example')
-    plotter.show()
+    pl.add_text('Ants and Plane Example')
+    pl.show()
 
 Unstructured Grid Creation
 --------------------------
@@ -219,7 +212,7 @@ initializing.
 .. jupyter-execute::
 
    >>> import numpy as np
-   >>> import pyvista
+   >>> import pyvista as pv
    >>> from pyvista import CellType
    >>> cells = np.array(
    ...     [8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -254,7 +247,7 @@ initializing.
    ...     dtype=np.float32,
    ... )
    >>> points = np.vstack((cell1, cell2))
-   >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+   >>> grid = pv.UnstructuredGrid(cells, cell_type, points)
    >>> grid
 
 We can plot this with colors with:
@@ -353,9 +346,9 @@ A simple plot can be created by using:
 
     # Camera position.
     # it's hard-coded in this example
-    cpos = [(11.9151, 6.1139, 3.61249),
-            (0.0, 0.375, 2.0),
-            (-0.4254, 0.9024, -0.0678)]
+    cpos = pv.CameraPosition(position=(11.9151, 6.1139, 3.61249),
+                             focal_point=(0.0, 0.375, 2.0),
+                             viewup=(-0.4254, 0.9024, -0.0678))
 
     grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos=cpos)
 
@@ -365,13 +358,13 @@ A more complex plot can be created using:
     :context:
 
     # plot this displaced beam
-    plotter = pv.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1],
+    pl = pv.Plotter()
+    pl.add_mesh(grid, scalars=d[:, 1],
                      scalar_bar_args={'title': 'Y Displacement'},
                      rng=[-d.max(), d.max()])
-    plotter.add_axes()
-    plotter.camera_position = cpos
-    plotter.show()
+    pl.add_axes()
+    pl.camera_position = cpos
+    pl.show()
 
 
 You can animate the motion of the beam by updating the positions and
@@ -394,29 +387,29 @@ scalars of the grid copied to the plotting object. Here is a full example:
     grid['Y Displacement'] = d[:, 1]
 
     # use hardcoded camera position
-    cpos = [(11.915, 6.114, 3.612),
-            (0.0, 0.375, 2.0),
-            (-0.425, 0.902, -0.0679)]
+    cpos = pv.CameraPosition(position=(11.915, 6.114, 3.612),
+                             focal_point=(0.0, 0.375, 2.0),
+                             viewup=(-0.425, 0.902, -0.0679))
 
-    plotter = pv.Plotter(window_size=(800, 600))
-    plotter.add_mesh(grid, scalars='Y Displacement',
+    pl = pv.Plotter(window_size=(800, 600))
+    pl.add_mesh(grid, scalars='Y Displacement',
                      show_edges=True, rng=[-d.max(), d.max()],
                      interpolate_before_map=True)
-    plotter.add_axes()
-    plotter.camera_position = cpos
+    pl.add_axes()
+    pl.camera_position = cpos
 
     # open movie file. A mp4 file can be written instead. Requires ``moviepy``
-    plotter.open_gif('beam.gif')  # or beam.mp4
+    pl.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
     for phase in np.linspace(0, 2*np.pi, 20):
         grid.points = pts + d * np.cos(phase)
         grid['Y Displacement'] = d[:, 1] * np.cos(phase)
-        plotter.write_frame()
+        pl.write_frame()
 
     # close the plotter when complete
-    plotter.close()
+    pl.close()
 
 
 You can also render the beam as a wire-frame object:
@@ -425,22 +418,22 @@ You can also render the beam as a wire-frame object:
    :context:
 
    # Animate plot as a wire-frame
-   plotter = pv.Plotter(window_size=(800, 600))
-   plotter.add_mesh(grid, scalars='Y Displacement',
+   pl = pv.Plotter(window_size=(800, 600))
+   pl.add_mesh(grid, scalars='Y Displacement',
                     show_edges=True,
                     rng=[-d.max(), d.max()], interpolate_before_map=True,
                     style='wireframe')
-   plotter.add_axes()
-   plotter.camera_position = cpos
+   pl.add_axes()
+   pl.camera_position = cpos
 
-   plotter.open_gif('beam_wireframe.gif')
+   pl.open_gif('beam_wireframe.gif')
    for phase in np.linspace(0, 2*np.pi, 20):
        grid.points = pts + d * np.cos(phase)
        grid['Y Displacement'] = d[:, 1] * np.cos(phase)
-       plotter.write_frame()
+       pl.write_frame()
 
    # close the plotter when complete
-   plotter.close()
+   pl.close()
 
 
 Adding Labels to a Plot
@@ -469,20 +462,21 @@ item in the list to a string.
     grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
     # Create plotting class and add the unstructured grid
-    plotter = pv.Plotter()
-    plotter.add_mesh(grid, show_edges=True, color='lightblue')
+    pl = pv.Plotter()
+    pl.add_mesh(grid, show_edges=True, color='lightblue')
 
     # Add labels to points on the yz plane (where x == 0)
     points = grid.points
     mask = points[:, 0] == 0
-    plotter.add_point_labels(points[mask], points[mask].tolist())
+    pl.add_point_labels(points[mask], points[mask].tolist())
 
-    plotter.camera_position = [
-                    (-1.4643015810492384, 1.5603923627830638, 3.16318236536270),
-                    (0.05268120500967251, 0.639442034364944, 1.204095304165153),
-                    (0.2364061044392675, 0.9369426029156169, -0.25739213784721)]
+    pl.camera_position = pv.CameraPosition(
+        position=(-1.4643015810492384, 1.5603923627830638, 3.16318236536270),
+        focal_point=(0.05268120500967251, 0.639442034364944, 1.204095304165153),
+        viewup=(0.2364061044392675, 0.9369426029156169, -0.25739213784721)
+    )
 
-    plotter.show()
+    pl.show()
 
 
 This example is similar and shows how labels can be combined with a
@@ -495,18 +489,18 @@ scalar bar to show the exact value of certain points.
     values = grid.points[:, 2]
 
     # Create plotting class and add the unstructured grid
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
     # color mesh according to z value
-    plotter.add_mesh(grid, scalars=values,
+    pl.add_mesh(grid, scalars=values,
                      scalar_bar_args={'title': 'Z Position'},
                      show_edges=True)
 
     # Add labels to points on the yz plane (where x == 0)
     mask = grid.points[:, 0] == 0
-    plotter.add_point_labels(points[mask], values[mask].tolist(), font_size=24)
+    pl.add_point_labels(points[mask], values[mask].tolist(), font_size=24)
 
     # add some text to the plot
-    plotter.add_text('Example showing plot labels')
+    pl.add_text('Example showing plot labels')
 
-    plotter.view_vector((-6, -3, -4), (0.,-1., 0.))
-    plotter.show()
+    pl.view_vector((-6, -3, -4), (0.,-1., 0.))
+    pl.show()

@@ -1,4 +1,4 @@
-trame>=2.5.2,<3.9.1
-trame-server>=3.2.6,<3.5.0
-trame-vtk>=2.8.13,<2.9.0
-trame-vuetify>=2.3.1,<3.0.2
+trame>=2.5.2,<3.12.1
+trame-server>=3.2.6,<3.11.0
+trame-vtk>=2.8.13,<2.11.0
+trame-vuetify>=2.3.1,<3.2.1

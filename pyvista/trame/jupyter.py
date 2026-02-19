@@ -5,12 +5,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import warnings
+from typing import TYPE_CHECKING
+from typing import Concatenate
+from typing import Literal
 
 from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
+
+from pyvista._warn_external import warn_external
 
 try:
     from ipywidgets.widgets import HTML
@@ -18,11 +22,20 @@ except ImportError:
     HTML = object
 
 
-import pyvista
+import pyvista as pv
 from pyvista.trame.ui import UI_TITLE
 from pyvista.trame.ui import get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR
 from pyvista.trame.views import get_server
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from IPython.display import IFrame
+
+    from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.trame.ui.vuetify2 import Viewer
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
@@ -37,7 +50,8 @@ You can use the following snippet to launch the server:
 """
 JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
-Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
+Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the
+`'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
     pyvista.set_jupyter_backend('trame')
@@ -64,7 +78,7 @@ class TrameJupyterServerDownError(RuntimeError):
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
-        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE)
+        warn_external(JUPYTER_SERVER_DOWN_MESSAGE)  # pragma: no cover
         # and Error
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
@@ -90,6 +104,7 @@ class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
             'src': src,
             'class': 'pyvista',
             'style': f'width: {width}; height: {height}; {border}',
+            'scrolling': 'no',
         }
 
         iframe_attrs_str = ' '.join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
@@ -124,7 +139,10 @@ class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
         border = 'border: 1px solid rgb(221,221,221);'
-        value = f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; height: {height}; {border}"></iframe>'
+        value = (
+            f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; '
+            f'height: {height}; {border}"></iframe>'
+        )
         super().__init__(value, **kwargs)
         self._src = src
 
@@ -152,7 +170,9 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
 
     wslink_backend : str, optional
         The wslink backend that the server should use
-        ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
+        ``aiohttp`` by default, ``jupyter`` if the
+        `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_
+        is used.
 
     **kwargs : dict, optional
         Any additional keyword arguments to pass to ``pyvista.trame.views.get_server``.
@@ -165,16 +185,16 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
 
     """
     if server is None:
-        server = pyvista.global_theme.trame.jupyter_server_name
+        server = pv.global_theme.trame.jupyter_server_name
     if isinstance(server, str):
         server = get_server(server, **kwargs)
     if port is None:
-        port = pyvista.global_theme.trame.jupyter_server_port
+        port = pv.global_theme.trame.jupyter_server_port
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
         host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
     if (
-        wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled
+        wslink_backend is None and pv.global_theme.trame.jupyter_extension_enabled
     ):  # pragma: no cover
         wslink_backend = 'jupyter'
 
@@ -217,14 +237,13 @@ def build_url(
     """Build the URL for the iframe."""
     params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
-        server_proxy_enabled = pyvista.global_theme.trame.server_proxy_enabled
+        server_proxy_enabled = pv.global_theme.trame.server_proxy_enabled
     if server_proxy_enabled:
         if server_proxy_prefix is None:
-            server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
+            server_proxy_prefix = pv.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
-        src = (
-            f'{server_proxy_prefix if server_proxy_prefix else ""}{_server.port}/index.html{params}'
-        )
+        prefix = server_proxy_prefix or ''  # pragma: no cover
+        src = f'{prefix}{_server.port}/index.html{params}'
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'
     logger.debug(src)
@@ -262,19 +281,20 @@ def initialize(
 
 
 def show_trame(
-    plotter,
-    mode=None,
-    name=None,
-    server_proxy_enabled=None,
-    server_proxy_prefix=None,
-    jupyter_extension_enabled=None,
-    collapse_menu=False,
-    add_menu=True,
-    add_menu_items=None,
-    default_server_rendering=True,
-    handler=None,
+    plotter: Plotter,
+    mode: JupyterBackendOptions | None = None,
+    name: str | None = None,
+    server_proxy_enabled: bool | None = None,
+    server_proxy_prefix: str | None = None,
+    jupyter_extension_enabled: bool | None = None,
+    collapse_menu: bool = False,
+    add_menu: bool = True,
+    add_menu_items: Callable[[Literal['trame', 'server', 'client'], bool, bool], None]
+    | None = None,
+    default_server_rendering: bool = True,
+    handler: Callable[Concatenate[Viewer, str, ...], IFrame] | None = None,
     **kwargs,
-):
+) -> EmbeddableWidget | IFrame | Widget:
     """Run and display the trame application in jupyter's event loop.
 
     Parameters
@@ -337,9 +357,9 @@ def show_trame(
                 return IFrame(src, '75%', '500px')
 
 
-            p = pyvista.Plotter(notebook=True)
-            _ = p.add_mesh(mesh)
-            iframe = p.show(
+            pl = pv.Plotter(notebook=True)
+            _ = pl.add_mesh(mesh)
+            iframe = pl.show(
                 jupyter_backend='trame',
                 jupyter_kwargs=dict(handler=handler),
                 return_viewer=True,
@@ -354,7 +374,7 @@ def show_trame(
 
     Returns
     -------
-    ipywidgets.widgets.HTML or handler result
+    output : ipywidgets.widgets.HTML or handler result
         Returns a HTML IFrame widget or the result of the passed handler.
 
     """
@@ -362,11 +382,11 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if plotter._window_size_unset:
-        dw, dh = '99%', '600px'
+        dw, dh = '100%', '600px'
     else:
-        dw, dh = plotter.window_size
-        dw = f'{dw}px'
-        dh = f'{dh}px'
+        width, height = plotter.window_size
+        dw = f'{width}px'
+        dh = f'{height}px'
     kwargs.setdefault('width', dw)
     kwargs.setdefault('height', dh)
 
@@ -374,10 +394,10 @@ def show_trame(
         return EmbeddableWidget(plotter, **kwargs)
 
     if jupyter_extension_enabled is None:
-        jupyter_extension_enabled = pyvista.global_theme.trame.jupyter_extension_enabled
+        jupyter_extension_enabled = pv.global_theme.trame.jupyter_extension_enabled
 
     if name is None:
-        server = get_server(name=pyvista.global_theme.trame.jupyter_server_name)
+        server = get_server(name=pv.global_theme.trame.jupyter_server_name)
     else:
         server = get_server(name=name)
     if name is None and not server.running:
@@ -403,7 +423,7 @@ def show_trame(
     )
 
     if jupyter_extension_enabled:  # pragma: no cover
-        from trame_client.ui.core import iframe_url_builder_jupyter_extension
+        from trame_client.ui.core import iframe_url_builder_jupyter_extension  # noqa: PLC0415
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
         src = iframe_attrs['src']
@@ -448,19 +468,20 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     """
     try:
-        import nest_asyncio
+        import nest_asyncio2  # noqa: PLC0415
     except ImportError:
-        msg = """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
-
-    from pyvista.trame.jupyter import launch_server
-    await launch_server().ready
-"""
+        msg = (
+            'Please install `nest_asyncio2` to automagically launch the trame server '
+            'without await. Or, to avoid `nest_asyncio2` run:\n\n'
+            'from pyvista.trame.jupyter import launch_server\n'
+            'await launch_server().ready'
+        )
         raise ImportError(msg)
 
     async def launch_it():
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this
-    nest_asyncio.apply()
+    nest_asyncio2.apply()
 
     return asyncio.run(launch_it())

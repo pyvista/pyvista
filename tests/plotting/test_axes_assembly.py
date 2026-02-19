@@ -23,15 +23,95 @@ def planes_assembly():
     return pv.PlanesAssembly()
 
 
+def test_axes_assembly_shaft_length(axes_assembly):
+    val = 0.8
+    assert axes_assembly.shaft_length == (val, val, val)
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[0], val)
+
+    val = 1.0
+    axes_assembly.shaft_length = val
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[0], val)
+
+
+def test_axes_assembly_tip_length(axes_assembly):
+    val = 0.2
+    assert axes_assembly.tip_length == (val, val, val)
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[0], val)
+
+    val = 1.0
+    axes_assembly.tip_length = val
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[0], val)
+
+
+def test_axes_assembly_shaft_radius(axes_assembly):
+    val = 0.025
+    assert axes_assembly.shaft_radius == (val, val, val)
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[1], val * 2)
+
+    val = 1.0
+    axes_assembly.shaft_radius = val
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[1], val * 2)
+
+
+def test_axes_assembly_tip_radius(axes_assembly):
+    val = 0.1
+    assert axes_assembly.tip_radius == (val, val, val)
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[1], val * 2)
+
+    val = 1.0
+    axes_assembly.tip_radius = val
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[1], val * 2)
+
+
+def test_axes_assembly_shaft_type(axes_assembly):
+    assert axes_assembly.shaft_type == 'cylinder'
+    dataset = axes_assembly._shaft_actors[0].mapper.dataset.copy()
+    axes_assembly.shaft_type = 'sphere'
+    dataset_new = axes_assembly._shaft_actors[0].mapper.dataset.copy()
+    assert dataset != dataset_new
+
+
+def test_axes_assembly_tip_type(axes_assembly):
+    assert axes_assembly.tip_type == 'cone'
+    dataset = axes_assembly._tip_actors[0].mapper.dataset.copy()
+    axes_assembly.tip_type = 'sphere'
+    dataset_new = axes_assembly._tip_actors[0].mapper.dataset.copy()
+    assert dataset != dataset_new
+
+
+@pytest.mark.parametrize('scale_mode', ['default', 'anti_distortion'])
+def test_axes_assembly_scale_mode(axes_assembly, scale_mode):
+    tip_actors = axes_assembly._tip_actors
+    shaft_actors = axes_assembly._shaft_actors
+    axes_assembly.scale_mode = scale_mode
+    assert axes_assembly.scale_mode == scale_mode
+    scale = (0.2, 1.1, 2.0)
+    axes_assembly.scale = scale
+    x_size = shaft_actors[0].bounds_size[0] + tip_actors[0].bounds_size[0]
+    y_size = shaft_actors[1].bounds_size[1] + tip_actors[1].bounds_size[1]
+    z_size = shaft_actors[2].bounds_size[2] + tip_actors[2].bounds_size[2]
+    assert (x_size, y_size, z_size) == scale
+
+
+def test_axes_assembly_symmetric_bounds():
+    asymmetric_bounds = pv.AxesAssembly().bounds
+    assert np.allclose(asymmetric_bounds, (-0.1, 1.0, -0.1, 1.0, -0.1, 1.0))
+    symmetric_bounds = pv.AxesAssembly(symmetric_bounds=True).bounds
+    assert np.allclose(symmetric_bounds, (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'symmetric_bounds'"):
+        pv.AxesAssemblySymmetric(symmetric_bounds=True)
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        '  Shaft radius:               0.025',
+        '  Shaft radius:               (0.025, 0.025, 0.025)',
         '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        '  Tip radius:                 0.1',
+        '  Tip radius:                 (0.1, 0.1, 0.1)',
         '  Tip length:                 (0.2, 0.2, 0.2)',
         '  Symmetric:                  False',
         '  Symmetric bounds:           False',
@@ -221,7 +301,10 @@ def test_axes_assembly_z_label_init(axes_assembly):
 
 
 def test_axes_assembly_labels_raises():
-    match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+    match = (
+        "Cannot initialize '{}' and 'labels' properties together. "
+        'Specify one or the other, not both.'
+    )
     with pytest.raises(ValueError, match=match.format('x_label')):
         pv.AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
     with pytest.raises(ValueError, match=match.format('y_label')):
@@ -451,7 +534,10 @@ def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
     ]
     assert np.allclose(actual_rgb, expected_rgb)
 
-    color1, color2 = tuple(np.array(float_rgb) * 10 / 255), tuple(np.array(float_rgb) * 40 / 255)
+    color1, color2 = (
+        tuple(np.array(float_rgb) * 10 / 255),
+        tuple(np.array(float_rgb) * 40 / 255),
+    )
     axes_assembly.set_actor_prop('color', [color1, color2], axis=0)
     val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
@@ -557,11 +643,17 @@ def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', 0.0, axis='a')
 
-    match = "Number of values (3) in [1, 2, 3] must match the number of actors (2) for axis '0' and part 'all'"
+    match = (
+        "Number of values (3) in [1, 2, 3] must match the number of actors (2) for axis '0' "
+        "and part 'all'"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', [1, 2, 3], axis=0)
 
-    match = "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' and part 'shaft'"
+    match = (
+        "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' "
+        "and part 'shaft'"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', [0, 1], part='shaft')
 
@@ -711,8 +803,7 @@ def test_planes_assembly_label_size_init():
 
 
 def test_planes_assembly_camera(planes_assembly):
-    with pytest.raises(ValueError, match='Camera has not been set.'):
-        _ = planes_assembly.camera
+    assert planes_assembly.camera is None
 
     camera = pv.Camera()
     planes_assembly.camera = camera

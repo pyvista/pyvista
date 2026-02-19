@@ -38,7 +38,7 @@ sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500
 # value of the Perlin noise.  This is necessary to the terrain its shape.
 
 mesh = sampled.warp_by_scalar('scalars')
-mesh = mesh.extract_surface()
+mesh = mesh.extract_surface(algorithm=None)
 
 # clean and smooth a little to reduce Perlin noise artifacts
 mesh = mesh.smooth(n_iter=100, inplace=False, relaxation_factor=1)
@@ -77,8 +77,18 @@ pl.show()
 # Show the terrain with custom lighting and shadows
 
 pl = pv.Plotter(lighting=None)
-pl.add_light(pv.Light((3, 1, 0.5), show_actor=True, positional=True, cone_angle=90, intensity=1.2))
-pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim)
+pl.add_light(
+    pv.Light(
+        position=(3, 1, 0.5),
+        show_actor=True,
+        positional=True,
+        cone_angle=90,
+        intensity=1.2,
+    )
+)
+pl.add_mesh(
+    mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim
+)
 pl.enable_shadows = True
 pl.show()
 # %%

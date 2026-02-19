@@ -32,11 +32,11 @@ mesh = examples.download_cad_model()
 edges = mesh.extract_feature_edges(45)
 
 # Render the edge lines on top of the original mesh.  Zoom in to provide a better figure.
-p = pv.Plotter()
-p.add_mesh(mesh, color=True)
-p.add_mesh(edges, color='red', line_width=5)
-p.camera.zoom(1.5)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, color=True)
+pl.add_mesh(edges, color='red', line_width=5)
+pl.camera.zoom(1.5)
+pl.show()
 
 
 # %%
@@ -46,11 +46,13 @@ p.show()
 mesh = examples.download_cow()
 edges = mesh.extract_feature_edges(20)
 
-p = pv.Plotter()
-p.add_mesh(mesh, color=True)
-p.add_mesh(edges, color='red', line_width=5)
-p.camera_position = [(9.5, 3.0, 5.5), (2.5, 1, 0), (0, 1, 0)]
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, color=True)
+pl.add_mesh(edges, color='red', line_width=5)
+pl.camera_position = pv.CameraPosition(
+    position=(9.5, 3.0, 5.5), focal_point=(2.5, 1, 0), viewup=(0, 1, 0)
+)
+pl.show()
 
 
 # %%
@@ -70,12 +72,18 @@ mesh.n_open_edges
 # %%
 # And we can extract those edges with the ``boundary_edges`` option of
 # :func:`pyvista.DataSetFilters.extract_feature_edges`:
-edges = mesh.extract_feature_edges(boundary_edges=True, feature_edges=False, manifold_edges=False)
+edges = mesh.extract_feature_edges(
+    boundary_edges=True, feature_edges=False, manifold_edges=False
+)
 
-p = pv.Plotter()
-p.add_mesh(mesh, color=True)
-p.add_mesh(edges, color='red', line_width=5)
-p.camera_position = [(-0.2, -0.13, 0.12), (-0.015, 0.10, -0.0), (0.28, 0.26, 0.9)]
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, color=True)
+pl.add_mesh(edges, color='red', line_width=5)
+pl.camera_position = pv.CameraPosition(
+    position=(-0.2, -0.13, 0.12),
+    focal_point=(-0.015, 0.10, -0.0),
+    viewup=(0.28, 0.26, 0.9),
+)
+pl.show()
 # %%
 # .. tags:: filter

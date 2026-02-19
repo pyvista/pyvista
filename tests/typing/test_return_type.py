@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista import _vtk
+from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
@@ -82,7 +82,7 @@ def get_property_return_type(prop: property):
 
 
 def test_bounds_tuple(class_with_bounds):
-    if _vtk.is_vtk_attribute(class_with_bounds, 'bounds'):
+    if is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
 
     # Define kwargs as required for some cases.
@@ -105,8 +105,34 @@ def test_bounds_tuple(class_with_bounds):
     assert return_type == 'BoundsTuple'
 
 
+def test_bounds_size(class_with_bounds):
+    if is_vtk_attribute(class_with_bounds, 'bounds'):
+        pytest.skip('bounds is defined by vtk, not pyvista.')
+    elif class_with_bounds.__name__.endswith('Source'):
+        pytest.skip('Source objects use bounds as setters.')
+
+    # Define kwargs as required for some cases.
+    kwargs = {}
+    if class_with_bounds is pv.CubeAxesActor:
+        kwargs['camera'] = pv.Camera()
+    elif class_with_bounds is pv.Renderer:
+        kwargs['parent'] = pv.Plotter()
+
+    instance = try_init_object(class_with_bounds, kwargs)
+
+    # Test type at runtime
+    bounds_size = instance.bounds_size
+    assert len(bounds_size) == 3
+    assert isinstance(bounds_size, tuple)
+    assert is_all_floats(bounds_size)
+
+    # Test type annotations
+    return_type = get_property_return_type(class_with_bounds.bounds_size)
+    assert return_type == 'tuple[float, float, float]'
+
+
 def test_center_tuple(class_with_center):
-    if _vtk.is_vtk_attribute(class_with_center, 'center'):
+    if is_vtk_attribute(class_with_center, 'center'):
         pytest.skip('center is defined by vtk, not pyvista.')
 
     # Define kwargs as required for some cases.
@@ -127,3 +153,14 @@ def test_center_tuple(class_with_center):
     # Test type annotations
     return_type = get_property_return_type(class_with_center.center)
     assert return_type == 'tuple[float, float, float]'
+
+
+def test_bounds_tuple_repr_scientific_notation():
+    actual = repr(pv.UnstructuredGrid().extract_cells(0).bounds)
+    expected = """BoundsTuple(x_min =  1e+299,
+            x_max = -1e+299,
+            y_min =  1e+299,
+            y_max = -1e+299,
+            z_min =  1e+299,
+            z_max = -1e+299)"""
+    assert actual == expected

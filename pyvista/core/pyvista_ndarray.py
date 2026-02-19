@@ -8,9 +8,12 @@ from typing import cast
 
 import numpy as np
 
+from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
+
 from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
+from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from typing import Any
@@ -23,17 +26,17 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
-    """A ndarray which references the owning dataset and the underlying vtkArray.
+class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
+    """A ndarray which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
     Parameters
     ----------
-    array : ArrayLike or vtk.vtkAbstractArray
+    array : ArrayLike or :vtk:`vtkAbstractArray`
         Array like.
 
-    dataset : pyvista.DataSet
+    dataset : DataSet
         Input dataset.
 
     association : pyvista.core.utilities.arrays.FieldAssociation
@@ -70,7 +73,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'pyvista_ndarray got an invalid type {type(array)}. '
                 'Expected an Iterable or vtk.vtkAbstractArray'
             )
@@ -103,7 +106,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:
+    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:  # type: ignore[override]
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -119,7 +122,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204
+    def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
@@ -131,4 +134,4 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    __getattr__ = _vtk.VTKArray.__getattr__
+    __getattr__ = VTKObjectWrapperCheckSnakeCase.__getattr__

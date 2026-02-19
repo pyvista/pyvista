@@ -1,4 +1,4 @@
-"""Container to mimic ``vtkMultiBlockDataSet`` objects.
+"""Container to mimic :vtk:`vtkMultiBlockDataSet` objects.
 
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
@@ -13,6 +13,7 @@ import itertools
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
 from typing import Union
@@ -20,11 +21,14 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core._vtk_utilities import vtk_version_info
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -42,18 +46,25 @@ from .utilities.arrays import parse_field_choice
 from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
+from .utilities.misc import _BoundsSizeMixin
+from .utilities.writer import HDFWriter
+from .utilities.writer import XMLMultiBlockDataWriter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyvista import PolyData
+    from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
+    from .filters.data_object import _NestedMeshValidationFields
+    from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
 
 class MultiBlock(
+    _BoundsSizeMixin,
     CompositeFilters,
     DataObject,
     MutableSequence,  # type: ignore[type-arg]
@@ -61,8 +72,7 @@ class MultiBlock(
 ):
     """A composite class to hold many data sets which can be iterated over.
 
-    This wraps/extends the `vtkMultiBlockDataSet
-    <https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html>`_ class
+    This wraps/extends the :vtk:`vtkMultiBlockDataSet` class
     so that we can easily plot these data sets and use the composite in a
     Pythonic manner.
 
@@ -79,6 +89,13 @@ class MultiBlock(
     ----------
     *args : dict, optional
         Data object dictionary.
+
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
+        Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
+        initialization. Set this to ``True`` to validate all fields, or specify any
+        combination of fields allowed by ``validate_mesh``.
+
+        .. versionadded:: 0.47
 
     **kwargs : dict, optional
         See :func:`pyvista.read` for additional options.
@@ -126,15 +143,21 @@ class MultiBlock(
 
     >>> for block in blocks:
     ...     # Do something with each dataset
-    ...     surf = block.extract_surface()
+    ...     surf = block.extract_surface(algorithm=None)
 
     """
 
-    plot = pyvista._plot.plot
+    plot = pv._plot.plot
 
-    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = dict.fromkeys(
+        ['.vtm', '.vtmb'], XMLMultiBlockDataWriter
+    )
+    if vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self: MultiBlock, *args, **kwargs) -> None:
+    def __init__(
+        self: MultiBlock, *args, validate: bool | _NestedMeshValidationFields = False, **kwargs
+    ) -> None:
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)
@@ -170,6 +193,9 @@ class MultiBlock(
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
+        if validate:
+            self._validate_mesh(validate)
+
     def wrap_nested(self: MultiBlock) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
@@ -182,7 +208,7 @@ class MultiBlock(
                 self.SetBlock(i, wrap(block))
 
     def _items(self) -> Iterable[tuple[str | None, _TypeMultiBlockLeaf]]:
-        yield from zip(self.keys(), self)
+        yield from zip(self.keys(), self, strict=True)
 
     _OrderLiteral = Literal['nested_first', 'nested_last']
 
@@ -469,7 +495,7 @@ class MultiBlock(
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_exodus()
 
         The dataset has eight :class:`MultiBlock` blocks.
 
@@ -486,7 +512,7 @@ class MultiBlock(
         <generator object MultiBlock._recursive_iterator at ...>
 
         >>> len(list(iterator))
-        59
+        11
 
         Check if all blocks are :class:`~pyvista.DataSet` objects. Note that ``None``
         blocks are included by default, so this may not be ``True`` in all cases.
@@ -521,11 +547,11 @@ class MultiBlock(
         ... )
         >>> next(iterator)
         ('Element Blocks->Unnamed block ID: 1', UnstructuredGrid (...)
-          N Cells:    8
-          N Points:   27
-          X Bounds:   4.486e-01, 1.249e+00
-          Y Bounds:   1.372e+00, 1.872e+00
-          Z Bounds:   -6.351e-01, 3.649e-01
+          N Cells:    336
+          N Points:   400
+          X Bounds:   0.000e+00, 1.200e+01
+          Y Bounds:   0.000e+00, 3.500e+00
+          Z Bounds:   0.000e+00, 3.399e+00
           N Arrays:   6)
 
         Iterate through ids. The ids are returned as a tuple by default.
@@ -573,7 +599,9 @@ class MultiBlock(
 
         """
         _validation.check_contains(
-            ['ids', 'names', 'blocks', 'items', 'all'], must_contain=contents, name='contents'
+            ['ids', 'names', 'blocks', 'items', 'all'],
+            must_contain=contents,
+            name='contents',
         )
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
@@ -639,7 +667,7 @@ class MultiBlock(
             other_ids = []
             other_names = []
             other_blocks = []
-            for id_, name, block in zip(ids, names, self):
+            for id_, name, block in zip(ids, names, self, strict=True):
                 if isinstance(block, MultiBlock):
                     multi_ids.append(id_)
                     multi_names.append(name)
@@ -658,7 +686,7 @@ class MultiBlock(
                 blocks = [*multi_blocks, *other_blocks]
 
         # Iterate through ids, names, blocks
-        for id_, name, block in zip(ids, names, blocks):
+        for id_, name, block in zip(ids, names, blocks, strict=True):
             if (skip_none and block is None) or (
                 skip_empty and (block is not None and block.is_empty)
             ):
@@ -876,7 +904,9 @@ class MultiBlock(
 
         """
         _validation.check_contains(
-            ['prepend', 'preserve'], must_contain=field_data_mode, name='field_data_mode'
+            ['prepend', 'preserve'],
+            must_contain=field_data_mode,
+            name='field_data_mode',
         )
         _validation.check_contains(
             ['prepend', 'preserve', 'flat', 'nested'],
@@ -895,7 +925,7 @@ class MultiBlock(
             nested_field_data = nested_multi.field_data
             if prepend_names:
                 # Add the field data to a temp mesh so we can rename the arrays
-                temp_mesh = pyvista.ImageData()
+                temp_mesh = pv.ImageData()
                 temp_field_data = temp_mesh.field_data
                 for old_name in nested_field_data:
                     new_name = f'{block_name}{separator}{old_name}'
@@ -914,8 +944,10 @@ class MultiBlock(
                     ) -> NoReturn:
                         index_fmt = _format_nested_index(index_)
                         msg = (
-                            f"The root user dict cannot be updated with data from nested MultiBlock at index {index_fmt} with name '{block_name_}'.\n"
-                            f"The key '{duplicate_key}' already exists in the root user dict and would be overwritten."
+                            f'The root user dict cannot be updated with data from nested '
+                            f"MultiBlock at index {index_fmt} with name '{block_name_}'.\n"
+                            f"The key '{duplicate_key}' already exists in the root user dict "
+                            f'and would be overwritten.'
                         )
                         raise ValueError(msg)
 
@@ -951,7 +983,8 @@ class MultiBlock(
                     # Duplicate keys - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
-                        f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt} with name '{block_name}'\n"
+                        f"The field data array '{array_name}' from nested MultiBlock "
+                        f"at index {index_fmt} with name '{block_name}'\n"
                         f"also exists in the root MultiBlock's field data and cannot be moved."
                     )
                     if not prepend_names:
@@ -961,10 +994,15 @@ class MultiBlock(
                 else:
                     # Copy the field data
                     array = field_data_to_copy[array_name]
-                    if field_data_mode != 'prepend':
-                        # Remove prepended names
-                        array_name = array_name.split(separator)[-1]
-                    root_field_data._update_array(array_name, array, bool(copy))
+                    # Remove prepended names
+                    short_array_name = (
+                        array_name.split(separator)[-1]
+                        if field_data_mode != 'prepend'
+                        else array_name
+                    )
+                    root_field_data._update_array(
+                        name=short_array_name, array=array, copy=bool(copy)
+                    )
 
             if copy is None:
                 nested_field_data.clear()
@@ -1096,8 +1134,14 @@ class MultiBlock(
         >>> flat.n_blocks
         3
 
-        >>> type(flat[0]), type(flat[1]), type(flat[2])
-        (<class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.grid.ImageData'>, <class 'NoneType'>)
+        >>> (
+        ...     type(flat[0]),
+        ...     type(flat[1]),
+        ...     type(flat[2]),
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        (<class 'pyvista.core.pointset.PolyData'>,
+         <class 'pyvista.core.grid.ImageData'>,
+         <class 'NoneType'>)
 
         By default, the block names are preserved.
 
@@ -1120,8 +1164,14 @@ class MultiBlock(
         between this ordering of blocks and the default ordering returned earlier.
 
         >>> flat = nested.flatten(order='nested_last')
-        >>> type(flat[0]), type(flat[1]), type(flat[2])
-        (<class 'NoneType'>, <class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>)
+        >>> (
+        ...     type(flat[0]),
+        ...     type(flat[1]),
+        ...     type(flat[2]),
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        (<class 'NoneType'>,
+         <class 'pyvista.core.grid.ImageData'>,
+         <class 'pyvista.core.pointset.PolyData'>)
 
         """
         _validation.check_contains(
@@ -1164,8 +1214,10 @@ class MultiBlock(
                     # Duplicate block name - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
-                        f"Block at index {index_fmt} with name '{name}' cannot be flattened. Another block \n"
-                        "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
+                        f"Block at index {index_fmt} with name '{name}' "
+                        f'cannot be flattened. Another block \n'
+                        'with the same name already exists. '
+                        "Use `name_mode='reset'` or `check_duplicate_keys=False`."
                     )
                     raise ValueError(msg)
             output_multi.append(block, None if reset_name else name)
@@ -1196,7 +1248,7 @@ class MultiBlock(
         True
 
         """
-        return any(isinstance(block, pyvista.MultiBlock) for block in self)
+        return any(isinstance(block, pv.MultiBlock) for block in self)
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
@@ -1239,7 +1291,12 @@ class MultiBlock(
         ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=2.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  2.5,
+                    y_min = -0.5,
+                    y_max =  2.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         # apply reduction of min and max over each block
@@ -1258,7 +1315,10 @@ class MultiBlock(
 
     @property
     def center(self: MultiBlock) -> tuple[float, float, float]:
-        """Return the center of the bounding box.
+        """Set or return the center of the bounding box.
+
+        .. versionchanged:: 0.47
+            Center can now be set.
 
         Returns
         -------
@@ -1279,6 +1339,11 @@ class MultiBlock(
 
         """
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
+
+    @center.setter
+    def center(self, center: VectorLike[float]) -> None:
+        valid_center = _validation.validate_array3(center, name='center')
+        self.translate(valid_center - self.center, inplace=True)
 
     @property
     def length(self: MultiBlock) -> float:
@@ -1365,10 +1430,11 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
+    @_deprecate_positional_args(allowed=['name'])
     def get_data_range(  # type: ignore[override]
         self: MultiBlock,
         name: str | None,
-        allow_missing: bool = False,
+        allow_missing: bool = False,  # noqa: FBT001, FBT002
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
@@ -1552,7 +1618,7 @@ class MultiBlock(
         """
         # Code based on collections.abc
         if isinstance(datasets, MultiBlock):
-            for key, data in zip(datasets.keys(), datasets):
+            for key, data in zip(datasets.keys(), datasets, strict=True):
                 self.append(data, key)
         else:
             for v in datasets:
@@ -1578,7 +1644,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pyvista.MultiBlock or None
+        output : pyvista.DataSet | pyvista.MultiBlock | None
             Dataset from the given index if it exists.
 
         See Also
@@ -1622,7 +1688,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pyvista.MultiBlock or None
+        output : pyvista.DataSet | pyvista.MultiBlock | None
             Dataset from the given index if it exists.
 
         See Also
@@ -1680,7 +1746,9 @@ class MultiBlock(
         if name is None:
             return
         index = (
-            self.get_index_by_name(index) if isinstance(index, str) else range(self.n_blocks)[index]
+            self.get_index_by_name(index)
+            if isinstance(index, str)
+            else range(self.n_blocks)[index]
         )
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
@@ -1776,21 +1844,21 @@ class MultiBlock(
 
         Load a dataset with nested blocks.
 
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         Get one of the blocks and extract its surface.
 
-        >>> block = multi[0][42]
-        >>> surface = block.extract_geometry()
+        >>> block = multi[0][3]
+        >>> surface = block.extract_surface(algorithm=None)
 
         Replace the block.
 
-        >>> multi.replace((0, 42), surface)
+        >>> multi.replace((0, 3), surface)
 
         This is similar to replacing the block directly with indexing but the block
         name is also preserved.
 
-        >>> multi[0][42] = surface
+        >>> multi[0][3] = surface
 
         """
         if isinstance(index, Sequence) and not isinstance(index, str):
@@ -1808,7 +1876,7 @@ class MultiBlock(
         # Navigate through the indices except the last one
         target: _TypeMultiBlockLeaf = self
         for ind in indices[:-1]:
-            if target is None or isinstance(target, pyvista.DataSet):
+            if target is None or isinstance(target, pv.DataSet):
                 msg = f'Invalid indices {indices}.'
                 raise IndexError(msg)
             target = target[ind]
@@ -1874,7 +1942,7 @@ class MultiBlock(
                 elif d is None:
                     del self[index_iter[-1] + 1]  # delete next entry
                 else:
-                    self[idx] = d  #
+                    self[idx] = d
             return
         else:
             i = index
@@ -1934,10 +2002,17 @@ class MultiBlock(
         if not self.keys() == other.keys():
             return False
 
-        return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
+        return not any(
+            self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other, strict=True)
+        )
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def insert(
-        self: MultiBlock, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None
+        self: MultiBlock,
+        index: int,
+        dataset: _TypeMultiBlockLeaf,
+        name: str | None = None,
     ) -> None:
         """Insert data before index.
 
@@ -1989,7 +2064,7 @@ class MultiBlock(
 
         Returns
         -------
-        pyvista.DataSet or pyvista.MultiBlock
+        output : pyvista.DataSet | pyvista.MultiBlock
             Dataset from the given index that was removed.
 
         Examples
@@ -2043,7 +2118,8 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    def clean(self: MultiBlock, empty: bool = True) -> None:
+    @_deprecate_positional_args
+    def clean(self: MultiBlock, empty: bool = True) -> None:  # noqa: FBT001, FBT002
         """Remove any null blocks in place.
 
         Parameters
@@ -2103,7 +2179,7 @@ class MultiBlock(
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
 
         fmt += '</table>\n'
@@ -2133,7 +2209,7 @@ class MultiBlock(
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 
@@ -2145,15 +2221,19 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
+    @_deprecate_positional_args(allowed=['ido'])
     def copy_meta_from(
-        self: MultiBlock, ido: MultiBlock, deep: bool
+        self: MultiBlock,
+        ido: MultiBlock,
+        deep: bool,  # noqa: FBT001
     ) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
 
-    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the multiblock.
 
         Parameters
@@ -2186,17 +2266,20 @@ class MultiBlock(
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self, deep)
+        newobject.copy_meta_from(self, deep=deep)
         return newobject
 
+    @_deprecate_positional_args(allowed=['to_copy'])
     def shallow_copy(  # type: ignore[override]
-        self: MultiBlock, to_copy: _vtk.vtkMultiBlockDataSet, recursive: bool = False
+        self: MultiBlock,
+        to_copy: _vtk.vtkMultiBlockDataSet,
+        recursive: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
         ----------
-        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+        to_copy : MultiBlock | :vtk:`vtkMultiBlockDataSet`
             Data object to perform a shallow copy from.
 
         recursive : bool, default: False
@@ -2205,7 +2288,7 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+        if pv.vtk_version_info >= (9, 3):  # pragma: no cover
             self.CompositeShallowCopy(to_copy)
         else:
             self.ShallowCopy(to_copy)
@@ -2220,7 +2303,7 @@ class MultiBlock(
                 if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
                     block_to_copy = cast('MultiBlock', new_object.GetBlock(i))
                     this_object_.replace(i, block_to_copy)
-                    _replace_nested_multiblocks(cast('MultiBlock', this_object_[i]), block_to_copy)
+                    _replace_nested_multiblocks(cast('MultiBlock', this_block), block_to_copy)
 
         if not recursive:
             _replace_nested_multiblocks(self, to_copy)
@@ -2230,7 +2313,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+        to_copy : MultiBlock | :vtk:`vtkMultiBlockDataSet`
             MultiBlock to perform a deep copy from.
 
         """
@@ -2242,7 +2325,7 @@ class MultiBlock(
         def _set_name_for_none_blocks(
             this_object_: MultiBlock, new_object_: _vtk.vtkMultiBlockDataSet
         ) -> None:
-            new_object_ = pyvista.wrap(new_object_)
+            new_object_ = pv.wrap(new_object_)
             for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
@@ -2251,11 +2334,12 @@ class MultiBlock(
 
         _set_name_for_none_blocks(self, to_copy)
 
+    @_deprecate_positional_args(allowed=['name'])
     def set_active_scalars(
         self: MultiBlock,
         name: str | None,
         preference: PointLiteral | CellLiteral = 'cell',
-        allow_missing: bool = False,
+        allow_missing: bool = False,  # noqa: FBT001, FBT002
     ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
@@ -2296,12 +2380,12 @@ class MultiBlock(
                 if isinstance(block, MultiBlock):
                     field, scalars = block.set_active_scalars(
                         name,
-                        preference,
+                        preference=preference,
                         allow_missing=allow_missing,
                     )
                 else:
                     try:
-                        field, scalars_out = block.set_active_scalars(name, preference)
+                        field, scalars_out = block.set_active_scalars(name, preference=preference)
                         if scalars_out is None:
                             field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
                         else:
@@ -2309,7 +2393,7 @@ class MultiBlock(
                     except KeyError:
                         if not allow_missing:
                             raise
-                        block.set_active_scalars(None, preference)
+                        block.set_active_scalars(None, preference=preference)
                         field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
 
                 if field != FieldAssociation.NONE:
@@ -2355,7 +2439,8 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:
+    @_deprecate_positional_args
+    def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
@@ -2376,7 +2461,7 @@ class MultiBlock(
             Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         Notes
@@ -2390,17 +2475,18 @@ class MultiBlock(
         # Define how to process each block
         def block_filter(block: DataSet | None) -> PolyData:
             if block is None:
-                return pyvista.PolyData()
-            elif isinstance(block, pyvista.PointSet):
+                return pv.PolyData()
+            elif isinstance(block, pv.PointSet):
                 return block.cast_to_polydata(deep=True)
-            elif isinstance(block, pyvista.PolyData):
+            elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface()
+                return block.extract_surface(algorithm=None)
 
         return self.generic_filter(block_filter, _skip_none=False)
 
-    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:
+    @_deprecate_positional_args
+    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
         .. versionadded:: 0.45
@@ -2432,8 +2518,8 @@ class MultiBlock(
         # Define how to process each block
         def block_filter(block: DataSet | None) -> DataSet:
             if block is None:
-                return pyvista.UnstructuredGrid()
-            elif isinstance(block, pyvista.UnstructuredGrid):
+                return pv.UnstructuredGrid()
+            elif isinstance(block, pv.UnstructuredGrid):
                 return block.copy(deep=False) if copy else block
             else:
                 return block.cast_to_unstructured_grid()
@@ -2456,11 +2542,11 @@ class MultiBlock(
         --------
         as_polydata_blocks
             Convert all blocks to :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
-        return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
+        return all(isinstance(block, pv.PolyData) for block in self.recursive_iterator())
 
     @property
     def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01
@@ -2474,10 +2560,11 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         The dataset has eight nested multi-block blocks, so the block types
         only contains :class:`MultiBlock`.
@@ -2489,7 +2576,7 @@ class MultiBlock(
         only contains :class:`~pyvista.UnstructuredGrid`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
         return {type(block) for block in self}
@@ -2509,10 +2596,11 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         The dataset has eight nested multi-block blocks, so the block types
         only contains :class:`MultiBlock`.
@@ -2524,7 +2612,7 @@ class MultiBlock(
         only contains :class:`~pyvista.UnstructuredGrid`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
         return {type(block) for block in self.recursive_iterator()}
@@ -2543,15 +2631,16 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         Show the :attr:`nested_block_types`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         Since there is only one type, the dataset is homogeneous.
 
@@ -2575,7 +2664,8 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_mug`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_mug`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_mug()
@@ -2595,6 +2685,7 @@ class MultiBlock(
 
     def _activate_plotting_scalars(
         self: MultiBlock,
+        *,
         scalars_name: str,
         preference: PointLiteral | CellLiteral,
         component: int | None,
@@ -2604,7 +2695,7 @@ class MultiBlock(
         # set the active scalars
         field, scalars = self.set_active_scalars(
             scalars_name,
-            preference,
+            preference=preference,
             allow_missing=True,
         )
 
@@ -2706,7 +2797,9 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
-    def _get_consistent_active_scalars(self: MultiBlock) -> tuple[str | None, str | None]:
+    def _get_consistent_active_scalars(
+        self: MultiBlock,
+    ) -> tuple[str | None, str | None]:
         """Get if there are any consistent active scalars."""
         point_names = set()
         cell_names = set()

@@ -26,7 +26,7 @@ within Jupyter:
     sphere.plot(jupyter_backend='trame')
 
     # long example
-    plotter = pv.Plotter(notebook=True)
+    pl = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
     plotter.show(jupyter_backend='trame')
 
@@ -129,7 +129,7 @@ Trame Jupyter Extension
 
 `Trame Jupyter Extension <https://github.com/Kitware/trame-jupyter-extension/>`_
 enables the trame server and client to communicate over the existing
-`Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/stable/comms.html>`_
+`Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/4.x/comms.html>`_
 infrastructure, instead of creating a separate WebSocket connection.
 
 Using this extension removes the need for a secondary web server and thus
@@ -203,9 +203,4 @@ Other Considerations
 ++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
 
-If you do not have GPU acceleration, alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available:
-
-.. code-block:: bash
-
-    pip uninstall vtk -y
-    pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
+If you do not have GPU acceleration, alternatively, an offscreen version using OSMesa libraries. As of VTK 9.5+, this is supported out of the box.

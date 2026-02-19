@@ -23,7 +23,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 from pyvista.examples import cells as example_cells
 from pyvista.examples import plot_cell
@@ -132,10 +131,10 @@ example_cells.plot_cell(pyrmaid)
 # cells in a single plot.
 
 
-def add_cell_helper(pl, text, grid, subplot, cpos=None):
+def add_cell_helper(pl, *, text, grid, subplot, cpos=None):
     """Add a single cell to a plotter with fancy plotting."""
     pl.subplot(*subplot)
-    pl.add_text(text, 'lower_edge', color='k', font_size=8)
+    pl.add_text(text, position='lower_edge', color='k', font_size=8)
     pl.add_mesh(grid, opacity=0.5, color='lightblue', line_width=5)
     edges = grid.extract_all_edges()
     if edges.n_cells:
@@ -160,54 +159,116 @@ def add_cell_helper(pl, text, grid, subplot, cpos=None):
 
 
 pl = pv.Plotter(shape=(4, 4))
-add_cell_helper(pl, f'VERTEX ({pv.CellType.VERTEX})', example_cells.Vertex(), (0, 0))
-add_cell_helper(pl, f'POLY_VERTEX ({pv.CellType.POLY_VERTEX})', example_cells.PolyVertex(), (0, 1))
-add_cell_helper(pl, f'LINE ({pv.CellType.LINE})', example_cells.Line(), (0, 2))
-add_cell_helper(pl, f'POLY_LINE ({pv.CellType.POLY_LINE})', example_cells.PolyLine(), (0, 3))
+add_cell_helper(
+    pl,
+    text=f'VERTEX ({pv.CellType.VERTEX})',
+    grid=example_cells.Vertex(),
+    subplot=(0, 0),
+)
+add_cell_helper(
+    pl,
+    text=f'POLY_VERTEX ({pv.CellType.POLY_VERTEX})',
+    grid=example_cells.PolyVertex(),
+    subplot=(0, 1),
+)
+add_cell_helper(
+    pl,
+    text=f'LINE ({pv.CellType.LINE})',
+    grid=example_cells.Line(),
+    subplot=(0, 2),
+)
+add_cell_helper(
+    pl,
+    text=f'POLY_LINE ({pv.CellType.POLY_LINE})',
+    grid=example_cells.PolyLine(),
+    subplot=(0, 3),
+)
 
 add_cell_helper(
     pl,
-    f'TRIANGLE ({pv.CellType.TRIANGLE})',
-    example_cells.Triangle(),
-    (1, 0),
+    text=f'TRIANGLE ({pv.CellType.TRIANGLE})',
+    grid=example_cells.Triangle(),
+    subplot=(1, 0),
     cpos='xy',
 )
 add_cell_helper(
     pl,
-    f'TRIANGLE_STRIP ({pv.CellType.TRIANGLE_STRIP})',
-    example_cells.TriangleStrip().rotate_z(90, inplace=False),
-    (1, 1),
+    text=f'TRIANGLE_STRIP ({pv.CellType.TRIANGLE_STRIP})',
+    grid=example_cells.TriangleStrip().rotate_z(90, inplace=False),
+    subplot=(1, 1),
     cpos='xy',
 )
-add_cell_helper(pl, f'POLYGON ({pv.CellType.POLYGON})', example_cells.Polygon(), (1, 2), cpos='xy')
-add_cell_helper(pl, f'PIXEL ({pv.CellType.PIXEL})', example_cells.Pixel(), (1, 3), cpos='xy')
+add_cell_helper(
+    pl,
+    text=f'POLYGON ({pv.CellType.POLYGON})',
+    grid=example_cells.Polygon(),
+    subplot=(1, 2),
+    cpos='xy',
+)
+add_cell_helper(
+    pl,
+    text=f'PIXEL ({pv.CellType.PIXEL})',
+    grid=example_cells.Pixel(),
+    subplot=(1, 3),
+    cpos='xy',
+)
 
 # make irregular
 quad_grid = example_cells.Quadrilateral()
 quad_grid.points += rng.random((4, 3)) * 0.5
 
-add_cell_helper(pl, f'QUAD ({pv.CellType.QUAD})', quad_grid, (2, 0))
-add_cell_helper(pl, f'TETRA ({pv.CellType.TETRA})', example_cells.Tetrahedron(), (2, 1))
-add_cell_helper(pl, f'VOXEL ({pv.CellType.VOXEL})', example_cells.Voxel(), (2, 2))
+add_cell_helper(
+    pl,
+    text=f'QUAD ({pv.CellType.QUAD})',
+    grid=quad_grid,
+    subplot=(2, 0),
+)
+add_cell_helper(
+    pl,
+    text=f'TETRA ({pv.CellType.TETRA})',
+    grid=example_cells.Tetrahedron(),
+    subplot=(2, 1),
+)
+add_cell_helper(
+    pl,
+    text=f'VOXEL ({pv.CellType.VOXEL})',
+    grid=example_cells.Voxel(),
+    subplot=(2, 2),
+)
 
 # make irregular
 hex_grid = example_cells.Hexahedron()
 hex_grid.points += rng.random((8, 3)) * 0.4
-add_cell_helper(pl, f'HEXAHEDRON ({pv.CellType.HEXAHEDRON})', hex_grid, (2, 3))
-
-add_cell_helper(pl, f'WEDGE ({pv.CellType.WEDGE})', example_cells.Wedge(), (3, 0))
-add_cell_helper(pl, f'PYRAMID ({pv.CellType.PYRAMID})', example_cells.Pyramid(), (3, 1))
 add_cell_helper(
     pl,
-    f'PENTAGONAL_PRISM ({pv.CellType.PENTAGONAL_PRISM})',
-    example_cells.PentagonalPrism(),
-    (3, 2),
+    text=f'HEXAHEDRON ({pv.CellType.HEXAHEDRON})',
+    grid=hex_grid,
+    subplot=(2, 3),
+)
+
+add_cell_helper(
+    pl,
+    text=f'WEDGE ({pv.CellType.WEDGE})',
+    grid=example_cells.Wedge(),
+    subplot=(3, 0),
 )
 add_cell_helper(
     pl,
-    f'HEXAGONAL_PRISM ({pv.CellType.HEXAGONAL_PRISM})',
-    example_cells.HexagonalPrism(),
-    (3, 3),
+    text=f'PYRAMID ({pv.CellType.PYRAMID})',
+    grid=example_cells.Pyramid(),
+    subplot=(3, 1),
+)
+add_cell_helper(
+    pl,
+    text=f'PENTAGONAL_PRISM ({pv.CellType.PENTAGONAL_PRISM})',
+    grid=example_cells.PentagonalPrism(),
+    subplot=(3, 2),
+)
+add_cell_helper(
+    pl,
+    text=f'HEXAGONAL_PRISM ({pv.CellType.HEXAGONAL_PRISM})',
+    grid=example_cells.HexagonalPrism(),
+    subplot=(3, 3),
 )
 
 pl.background_color = 'w'

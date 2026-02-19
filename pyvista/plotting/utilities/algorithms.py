@@ -1,4 +1,4 @@
-"""Internal vtkAlgorithm support helpers."""
+"""Internal :vtk:`vtkAlgorithm` support helpers."""
 
 from __future__ import annotations
 
@@ -7,29 +7,35 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
+    from pyvista import DataSet
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
 
-def algorithm_to_mesh_handler(mesh_or_algo, port=0):
-    """Handle vtkAlgorithms where mesh objects are expected.
+def algorithm_to_mesh_handler(
+    mesh_or_algo, port=0
+) -> tuple[DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None]:
+    """Handle :vtk:`vtkAlgorithms` where mesh objects are expected.
 
-    This is a convenience method to handle vtkAlgorithms when passed to methods
-    that expect a :class:`pyvista.DataSet`. This method will check if the passed
-    object is a ``vtk.vtkAlgorithm`` or ``vtk.vtkAlgorithmOutput`` and if so,
+    This is a convenience method to handle :vtk:`vtkAlgorithms` when passed to methods
+    that expect a :class:`~pyvista.DataSet`. This method will check if the passed
+    object is a :vtk:`vtkAlgorithm` or :vtk:`vtkAlgorithmOutput` and if so,
     return that algorithm's output dataset (mesh) as the mesh to be used by the
     calling function.
 
     Parameters
     ----------
-    mesh_or_algo : pyvista.DataSet | vtk.vtkAlgorithm | vtk.vtkAlgorithmOutput
-        The input to be used as a data set (mesh) or vtkAlgorithm object.
+    mesh_or_algo : DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
+        The input to be used as a data set (mesh) or :vtk:`vtkAlgorithm` object.
 
     port : int, default: 0
         If the input (``mesh_or_algo``) is an algorithm, this specifies which output
@@ -40,7 +46,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
     mesh : pyvista.DataSet
         The resulting mesh data set from the input.
 
-    algorithm : vtk.vtkAlgorithm or vtk.vtkAlgorithmOutput or None
+    algorithm : :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput` | None
         If an algorithm is passed, it will be returned. Otherwise returns ``None``.
 
     """
@@ -70,14 +76,14 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
 
 
 def set_algorithm_input(alg, inp, port=0):
-    """Set the input to a vtkAlgorithm.
+    """Set the input to a :vtk:`vtkAlgorithm`.
 
     Parameters
     ----------
-    alg : vtk.vtkAlgorithm
+    alg : :vtk:`vtkAlgorithm`
         The algorithm whose input is being set.
 
-    inp : vtk.vtkAlgorithm | vtk.vtkAlgorithmOutput | vtk.vtkDataObject
+    inp : :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput` | :vtk:`vtkDataObject`
         The input to the algorithm.
 
     port : int, default: 0
@@ -92,7 +98,7 @@ def set_algorithm_input(alg, inp, port=0):
         alg.SetInputDataObject(port, inp)
 
 
-class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
+class PreserveTypeAlgorithmBase(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type.
 
     Parameters
@@ -116,11 +122,11 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
     def GetInputData(self, inInfo, port, idx):
         """Get input data object.
 
-        This will convert ``vtkPointSet`` to ``vtkPolyData``.
+        This will convert :vtk:`vtkPointSet` to :vtk:`vtkPolyData`.
 
         Parameters
         ----------
-        inInfo : vtk.vtkInformation
+        inInfo : :vtk:`vtkInformation`
             The information object associated with the input port.
 
         port : int
@@ -131,12 +137,12 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
 
         Returns
         -------
-        _vtk.vtkDataObject
+        :vtk:`vtkDataObject`
             The input data object.
 
         """
         inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
-        if isinstance(inp, pyvista.PointSet):
+        if isinstance(inp, pv.PointSet):
             return inp.cast_to_polydata()
         return inp
 
@@ -146,13 +152,13 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
 
         Parameters
         ----------
-        _request : vtk.vtkInformation
+        _request : :vtk:`vtkInformation`
             The request object for the filter.
 
-        inInfo : vtk.vtkInformationVector
+        inInfo : :vtk:`vtkInformationVector`
             The input information vector for the filter.
 
-        outInfo : vtk.vtkInformationVector
+        outInfo : :vtk:`vtkInformationVector`
             The output information vector for the filter.
 
         Returns
@@ -204,11 +210,11 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
         Parameters
         ----------
-        _request : vtk.vtkInformation
+        _request : :vtk:`vtkInformation`
             The request object.
-        inInfo : vtk.vtkInformationVector
+        inInfo : :vtk:`vtkInformationVector`
             Information about the input data.
-        outInfo : vtk.vtkInformationVector
+        outInfo : :vtk:`vtkInformationVector`
             Information about the output data.
 
         Returns
@@ -230,7 +236,9 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class PointSetToPolyDataAlgorithm(
+    _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
+):
     """Algorithm to cast PointSet to PolyData.
 
     This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
@@ -252,11 +260,11 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
 
         Parameters
         ----------
-        _request : vtk.vtkInformation
+        _request : :vtk:`vtkInformation`
             Information associated with the request.
-        inInfo : vtk.vtkInformationVector
+        inInfo : :vtk:`vtkInformationVector`
             Information about the input data.
-        outInfo : vtk.vtkInformationVector
+        outInfo : :vtk:`vtkInformationVector`
             Information about the output data.
 
         Returns
@@ -297,7 +305,8 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, point_ids: bool = True, cell_ids: bool = True):
+    @_deprecate_positional_args
+    def __init__(self, point_ids: bool = True, cell_ids: bool = True):  # noqa: FBT001, FBT002
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
@@ -311,11 +320,11 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
         Parameters
         ----------
-        _request : vtk.vtkInformation
+        _request : :vtk:`vtkInformation`
             Information associated with the request.
-        inInfo : vtk.vtkInformationVector
+        inInfo : :vtk:`vtkInformationVector`
             Information about the input data.
-        outInfo : vtk.vtkInformationVector
+        outInfo : :vtk:`vtkInformationVector`
             Information about the output data.
 
         Returns
@@ -346,7 +355,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class CrinkleAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
     def __init__(self):
@@ -361,11 +370,11 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
 
         Parameters
         ----------
-        _request : vtk.vtkInformation
+        _request : :vtk:`vtkInformation`
             The request information associated with the algorithm.
-        inInfo : vtk.vtkInformationVector
+        inInfo : :vtk:`vtkInformationVector`
             Information vector describing the input data.
-        outInfo : vtk.vtkInformationVector
+        outInfo : :vtk:`vtkInformationVector`
             Information vector where the output data should be placed.
 
         Returns
@@ -386,8 +395,9 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
         return 1
 
 
-def outline_algorithm(inp, generate_faces: bool = False):
-    """Add vtkOutlineFilter to pipeline.
+@_deprecate_positional_args(allowed=['inp'])
+def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT002
+    """Add :vtk:`vtkOutlineFilter` to pipeline.
 
     Parameters
     ----------
@@ -398,7 +408,7 @@ def outline_algorithm(inp, generate_faces: bool = False):
 
     Returns
     -------
-    vtk.vtkOutlineFilter
+    :vtk:`vtkOutlineFilter`
         Outline filter applied to the input data.
 
     """
@@ -408,10 +418,14 @@ def outline_algorithm(inp, generate_faces: bool = False):
     return alg
 
 
-def extract_surface_algorithm(
-    inp, pass_pointid: bool = False, pass_cellid: bool = False, nonlinear_subdivision=1
+@_deprecate_positional_args(allowed=['inp'])
+def extract_surface_algorithm(  # noqa: PLR0917
+    inp,
+    pass_pointid: bool = False,  # noqa: FBT001, FBT002
+    pass_cellid: bool = False,  # noqa: FBT001, FBT002
+    nonlinear_subdivision=1,
 ):
-    """Add vtkDataSetSurfaceFilter to pipeline.
+    """Add :vtk:`vtkDataSetSurfaceFilter` to pipeline.
 
     Parameters
     ----------
@@ -426,7 +440,7 @@ def extract_surface_algorithm(
 
     Returns
     -------
-    vtk.vtkDataSetSurfaceFilter
+    :vtk:`vtkDataSetSurfaceFilter`
         Surface filter applied to the input data.
 
     """
@@ -453,7 +467,7 @@ def active_scalars_algorithm(inp, name, preference='point'):
 
     Returns
     -------
-    vtk.vtkAlgorithm
+    :vtk:`vtkAlgorithm`
         Active scalars filter applied to the input data.
 
     """
@@ -475,7 +489,7 @@ def pointset_to_polydata_algorithm(inp):
 
     Returns
     -------
-    vtk.vtkAlgorithm
+    :vtk:`vtkAlgorithm`
         Filter that casts the input PointSet to PolyData.
 
     """
@@ -484,7 +498,8 @@ def pointset_to_polydata_algorithm(inp):
     return alg
 
 
-def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):
+@_deprecate_positional_args(allowed=['inp'])
+def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):  # noqa: FBT001, FBT002
     """Add a filter that adds point and/or cell IDs.
 
     Parameters
@@ -529,7 +544,8 @@ def crinkle_algorithm(clip, source):
     return alg
 
 
-def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
+@_deprecate_positional_args(allowed=['inp'])
+def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):  # noqa: FBT001, FBT002
     """Add a filter that converts cell data to point data.
 
     Parameters
@@ -541,8 +557,8 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
 
     Returns
     -------
-    vtk.vtkCellDataToPointData
-        The vtkCellDataToPointData filter.
+    :vtk:`vtkCellDataToPointData`
+        The :vtk:`vtkCellDataToPointData` filter.
 
     """
     alg = _vtk.vtkCellDataToPointData()
@@ -551,7 +567,8 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
     return alg
 
 
-def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):
+@_deprecate_positional_args(allowed=['inp'])
+def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):  # noqa: FBT001, FBT002
     """Add a filter that converts point data to cell data.
 
     Parameters
@@ -563,8 +580,8 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):
 
     Returns
     -------
-    vtk.vtkPointDataToCellData
-        ``vtkPointDataToCellData`` algorithm.
+    :vtk:`vtkPointDataToCellData`
+        :vtk:`vtkPointDataToCellData` algorithm.
 
     """
     alg = _vtk.vtkPointDataToCellData()
@@ -578,12 +595,12 @@ def triangulate_algorithm(inp):
 
     Parameters
     ----------
-    inp : vtk.vtkDataObject
+    inp : :vtk:`vtkDataObject`
         The input data to be triangulated.
 
     Returns
     -------
-    vtk.vtkTriangleFilter
+    :vtk:`vtkTriangleFilter`
         The triangle filter that has been applied to the input data.
 
     """
@@ -599,14 +616,14 @@ def decimation_algorithm(inp, target_reduction):
 
     Parameters
     ----------
-    inp : vtk.vtkDataObject
+    inp : :vtk:`vtkDataObject`
         The input data to be decimated.
     target_reduction : float
         The target reduction amount, as a fraction of the original data.
 
     Returns
     -------
-    vtk.vtkQuadricDecimation
+    :vtk:`vtkQuadricDecimation`
         The decimation algorithm that has been applied to the input data.
 
     """
