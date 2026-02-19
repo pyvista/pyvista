@@ -8,7 +8,6 @@ and visualizes the results using PyVista.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # Create a random number generator
@@ -64,10 +63,18 @@ sampled_cloud = pv.PolyData(sampled_points)
 
 plotter = pv.Plotter()
 plotter.add_mesh(
-    cloud, color='blue', point_size=5, render_points_as_spheres=True, label='Original Points'
+    cloud,
+    color='blue',
+    point_size=5,
+    render_points_as_spheres=True,
+    label='Original Points',
 )
 plotter.add_mesh(
-    sampled_cloud, color='red', point_size=10, render_points_as_spheres=True, label='Sampled Points'
+    sampled_cloud,
+    color='red',
+    point_size=10,
+    render_points_as_spheres=True,
+    label='Sampled Points',
 )
 plotter.add_legend()
 plotter.show()
