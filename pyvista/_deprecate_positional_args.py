@@ -4,7 +4,6 @@ from functools import wraps
 import inspect
 from inspect import Parameter
 from inspect import Signature
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import TypeVar
