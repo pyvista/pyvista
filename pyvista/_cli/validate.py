@@ -15,8 +15,7 @@ from .utils import _console_error
 from .utils import _converter_files
 
 fields_help = """
-Field(s) to validate. Specify ``data``, ``points``, or ``cells`` to validate all data, point,
-and/or cell fields, respectively. Alternatively, specify individual field(s):
+Field(s) to validate. Specify individual field(s) or group(s) of fields:
 
 **Data fields**
 
@@ -49,6 +48,15 @@ and/or cell fields, respectively. Alternatively, specify individual field(s):
   describe it.
 - ``zero_size``: Ensure 1D, 2D, and 3D cells have non-zero length, area, and volume,
   respectively.
+
+**Field groups**
+
+- ``data``: Validate all data fields.
+- ``points``: Validate all point fields.
+- ``cells``: Validate all cell fields.
+- ``memory_safe``: Validate all fields that, if invalid, may cause a segmentation
+  fault and crash Python. Includes ``cell_data_wrong_length``,
+  ``point_data_wrong_length``, and ``invalid_point_references``.
 """
 exclude_help = """
 Field(s) to exclude from the validation. This is similar to using FIELDS, but is subtractive

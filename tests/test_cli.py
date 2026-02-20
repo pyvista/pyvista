@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from itertools import chain
 import os
 from pathlib import Path
 import shlex
@@ -10,6 +11,7 @@ import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import get_args
 
 import pytest
 from pytest_cases import case
@@ -23,6 +25,7 @@ from rich.console import Console
 import pyvista as pv
 from pyvista.__main__ import app
 from pyvista.__main__ import main
+from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -378,6 +381,26 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
     assert '│ Failed to validate PolyData mesh read from path' in out, out
     assert '│ validation_fields and exclude_fields cannot both be set.' in out, out
     assert e.value.code == 1
+
+
+@pytest.mark.parametrize(
+    'field', chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields))
+)
+def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
+    # Test that all fields specified in the annotations work
+    main(f'validate {tmp_ant_file!s} {field}')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
+
+    # Test that all fields are documented
+    main(f'validate {tmp_ant_file!s} --help')
+    out = capsys.readouterr().out
+    if f'• {field}:' not in out:
+        pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
 
 
 @pytest.fixture
