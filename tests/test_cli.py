@@ -383,6 +383,7 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
     assert e.value.code == 1
 
 
+@pytest.mark.skip_windows  # file path issues
 @pytest.mark.parametrize(
     'field', chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields))
 )
