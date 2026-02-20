@@ -1593,6 +1593,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
         else:
+            s_axis = np.array(point_u) - origin
+            t_axis = np.array(point_v) - origin
+            if np.dot(s_axis, s_axis) == 0.0 or np.dot(t_axis, t_axis) == 0.0:
+                msg = 'Bad plane definition'
+                raise ValueError(msg)
+
             alg.SetOrigin(*origin)  # BOTTOM LEFT CORNER
             alg.SetPoint1(*point_u)  # BOTTOM RIGHT CORNER
             alg.SetPoint2(*point_v)  # TOP LEFT CORNER
