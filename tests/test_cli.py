@@ -267,6 +267,29 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+def test_convert_help(capsys: pytest.CaptureFixture):
+    main('convert --help')
+
+    expected = textwrap.dedent(
+        """\
+            Usage: pyvista convert FILE-IN FILE-OUT
+
+            Convert a mesh file to another format.
+
+            Sample usage:
+            ```bash
+            pyvista convert foo.abc bar.xyz
+            Saved: bar.xyz
+
+            pyvista convert foo.abc .xyz
+            Saved: foo.xyz
+            ```
+  """
+    )
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(f'validate {str(tmp_ant_file)!r}')
     out = capsys.readouterr().out
@@ -355,29 +378,6 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
     assert '│ Failed to validate PolyData mesh read from path' in out, out
     assert '│ validation_fields and exclude_fields cannot both be set.' in out, out
     assert e.value.code == 1
-
-
-@pytest.mark.usefixtures('patch_app_console')
-def test_convert_help(capsys: pytest.CaptureFixture):
-    main('convert --help')
-
-    expected = textwrap.dedent(
-        """\
-            Usage: pyvista convert FILE-IN FILE-OUT
-
-            Convert a mesh file to another format.
-
-            Sample usage:
-            ```bash
-            pyvista convert foo.abc bar.xyz
-            Saved: bar.xyz
-
-            pyvista convert foo.abc .xyz
-            Saved: foo.xyz
-            ```
-  """
-    )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
 
 
 @pytest.fixture
