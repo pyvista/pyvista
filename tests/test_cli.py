@@ -388,13 +388,13 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
 )
 def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     # Test that all fields specified in the annotations work
-    main(shlex.split(f'validate {tmp_ant_file!s} {field}', posix=True))
+    main(f'validate {tmp_ant_file!s} {field}')
 
     # Discard captured output to clean up test output
     capsys.readouterr()
 
     # Test that all fields are documented
-    main(shlex.split(f'validate {tmp_ant_file!s} --help', posix=True))
+    main(f'validate {tmp_ant_file!s} --help')
     out = capsys.readouterr().out
     if f'• {field}:' not in out:
         pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
