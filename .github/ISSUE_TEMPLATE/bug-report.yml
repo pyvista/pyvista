@@ -58,8 +58,8 @@ body:
     attributes:
       label: Dataset Information
       description: |
-        - If a custom dataset is needed to reproduce the bug, upload the dataset here or provide a download link.
-        - In addition, use the `validate_mesh` filter on it and paste the output below.
+        If a custom dataset is needed to reproduce the bug, upload the dataset here or provide a download link.
+        In addition, use the `validate_mesh` filter on it and paste the output below.
 
         For a dataset 'file.vtk', run python code:
 
