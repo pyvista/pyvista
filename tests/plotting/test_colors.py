@@ -4,6 +4,7 @@ import colorsys
 import importlib.util
 import itertools
 import re
+from typing import get_args
 
 import cmcrameri
 import cmocean
@@ -16,12 +17,15 @@ import pytest
 
 import pyvista as pv
 from pyvista.plotting import _vtk
+from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
+
+_ALL_COLORS_ARGS = get_args(_ALL_COLORS_LITERAL)
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
@@ -207,6 +211,10 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
+def assert_color_in_annotations(name: str):
+    assert name in _ALL_COLORS_ARGS, f'Color {name} is missing from type annotations.'
+
+
 @pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
@@ -217,6 +225,7 @@ def test_css4_colors(css4_color):
     if name not in pv.plotting.colors._CSS_COLORS:
         alt_name = pv.plotting.colors.color_synonyms[name]
         assert alt_name in pv.plotting.colors._CSS_COLORS
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
@@ -227,11 +236,13 @@ def test_tab_colors(tab_color):
 
     # Test name
     assert name in pv.plotting.colors._TABLEAU_COLORS
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
+    assert_color_in_annotations(name)
 
     # Some pyvista colors are technically not valid VTK colors. We need to map their
     # synonym manually for the tests
@@ -260,12 +271,20 @@ def test_vtk_colors(vtk_color):
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
+    assert_color_in_annotations(color_synonym)
 
 
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hexcolors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
+
+
+@pytest.mark.skip_check_gc
+@pytest.mark.parametrize('color_annotation', _ALL_COLORS_ARGS)
+def test_color_annotations(color_annotation):
+    color = pv.Color(color_annotation)
+    assert isinstance(color, pv.Color)
 
 
 @pytest.fixture
