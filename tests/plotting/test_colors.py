@@ -202,6 +202,13 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('vtk_color', test_cases, ids=color_names)
 
+    if 'paraview_color' in metafunc.fixturenames:
+        color_names = list(pv.plotting.colors._PARAVIEW_COLORS.keys())
+        color_values = list(pv.plotting.colors._PARAVIEW_COLORS.values())
+
+        test_cases = zip(color_names, color_values, strict=True)
+        metafunc.parametrize('paraview_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
@@ -245,14 +252,31 @@ def test_vtk_colors(vtk_color):
         'light_viridian': 'viridian_light',
     }
     name = vtk_synonyms.get(name, name)
+    expected_hex = _vtk_named_color_as_hex(name)
+    assert value.lower() == expected_hex
 
+
+def _vtk_named_color_as_hex(name: str) -> str:
     # Get expected hex value from vtkNamedColors
     color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
-    expected_hex = pv.Color(int_rgb).hex_rgb
+    return pv.Color(int_rgb).hex_rgb
 
+
+@pytest.mark.skip_check_gc
+@pytest.mark.needs_vtk_version(9, 6, 99)  # >= 9.7.0
+def test_paraview_colors(paraview_color):
+    name, value = paraview_color
+
+    # Map PyVista color names to names used by vtkNamedColors
+    paraview_map = {
+        'paraview_background': 'ParaViewBlueGrayBkg',
+        'paraview_background_warm': 'ParaViewWarmGrayBkg',
+    }
+    name = paraview_map[name]
+    expected_hex = _vtk_named_color_as_hex(name)
     assert value.lower() == expected_hex
 
 
