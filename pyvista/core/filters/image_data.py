@@ -4781,7 +4781,7 @@ class ImageDataFilters(DataSetFilters):
 
         Use a reference image to control the resampling instead. Here we load two
         images with different dimensions:
-        :func:`~pyvista.examples.downloads.download_puppy` and
+        :func:`~pyvista.examples.downloads.download_bird` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
         >>> bird = examples.download_bird()
