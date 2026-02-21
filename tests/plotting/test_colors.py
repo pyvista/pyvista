@@ -20,6 +20,7 @@ from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
+from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
@@ -164,7 +165,7 @@ def test_color_invalid_type():
 def test_color_name_delimiter(delimiter):
     name = f'medium{delimiter}spring{delimiter}green'
     c = pv.Color(name)
-    assert c.name == name.replace(delimiter, '')
+    assert c.name == name.replace(delimiter, '_')
 
 
 def test_color_hls():
@@ -210,7 +211,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('paraview_color', test_cases, ids=color_names)
 
     if 'color_synonym' in metafunc.fixturenames:
-        synonyms = list(pv.colors.color_synonyms.keys())
+        synonyms = list(pv.colors._formatted_color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
@@ -218,12 +219,15 @@ def pytest_generate_tests(metafunc):
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
-    assert pv.Color(name).hex_rgb.lower() == value.lower()
+    color = pv.Color(name)
+    assert color.hex_rgb.lower() == value.lower()
 
     # Test name
-    if name not in pv.plotting.colors._CSS_COLORS:
-        alt_name = pv.plotting.colors.color_synonyms[name]
-        assert alt_name in pv.plotting.colors._CSS_COLORS
+    assert color.name in pv.plotting.colors._CSS_COLORS
+
+    if _format_color_name(color.name) != name:
+        # Must be a synonym
+        assert name in pv.plotting.colors._formatted_color_synonyms
 
 
 @pytest.mark.skip_check_gc
@@ -287,7 +291,7 @@ def test_color_synonyms(color_synonym):
 
 
 def test_unique_colors():
-    duplicates = np.rec.find_duplicate(pv.hexcolors.values())
+    duplicates = np.rec.find_duplicate(pv.hex_colors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import warnings
+
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk as _vtk
 from ._property import Property as Property
@@ -27,7 +30,7 @@ from .colors import PARAVIEW_BACKGROUND as PARAVIEW_BACKGROUND
 from .colors import Color as Color
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
-from .colors import hexcolors as hexcolors
+from .colors import hex_colors as hex_colors
 from .composite_mapper import BlockAttributes as BlockAttributes
 from .composite_mapper import CompositeAttributes as CompositeAttributes
 from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
@@ -82,6 +85,13 @@ from .utilities.sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scr
 from .volume import Volume as Volume
 from .volume_property import VolumeProperty as VolumeProperty
 from .widgets import WidgetHelper as WidgetHelper
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        'ignore',
+        category=PyVistaDeprecationWarning,
+    )
+    from .colors import hexcolors as hexcolors
 
 
 class QtDeprecationError(Exception):  # numpydoc ignore=PR01

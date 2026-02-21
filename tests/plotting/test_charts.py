@@ -801,7 +801,9 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ['#fa09b6', '0xa53a8d', '#b02239f0', '0xcee6927f']
-    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ''])
+    colors = itertools.chain(
+        pv.hex_colors, pv.plotting.colors._formatted_color_synonyms, [*hex_colors, '']
+    )
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
