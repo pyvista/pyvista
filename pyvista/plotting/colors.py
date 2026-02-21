@@ -1869,8 +1869,8 @@ class Color(_NoNewAttrMixin):
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
-        The name is always formatted as a lower case string without
-        any delimiters.
+        The name is always formatted as a lower case string with
+        underscore delimiters between words.
 
         See :ref:`named_colors` for a list of supported colors.
 
@@ -1886,7 +1886,7 @@ class Color(_NoNewAttrMixin):
         >>> import pyvista as pv
         >>> c = pv.Color('darkblue', default_opacity=0.5)
         >>> c
-        Color(name='darkblue', hex='#00008b80', opacity=128)
+        Color(name='dark_blue', hex='#00008b80', opacity=128)
 
         When creating a new ``Color``, the name may be delimited with a space,
         hyphen, underscore, or written as a single word.
@@ -1897,10 +1897,10 @@ class Color(_NoNewAttrMixin):
 
         >>> c = pv.Color('DarkBlue', default_opacity=0.5)
 
-        However, the name is always standardized as a single lower-case word.
+        However, the name is always standardized as lower-case with an underscore between words.
 
         >>> c
-        Color(name='darkblue', hex='#00008b80', opacity=128)
+        Color(name='dark_blue', hex='#00008b80', opacity=128)
 
         """
         return self._name
