@@ -61,6 +61,7 @@ ColorLike = Union[
     Sequence[float],
     NumpyArray[float],
     dict[str, int | float | str],
+    str,
     'Color',
     _vtk.vtkColor3ub,
     _ALL_COLORS_LITERAL,

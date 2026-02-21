@@ -25,7 +25,7 @@ from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
-_ALL_COLORS_ARGS = get_args(_ALL_COLORS_LITERAL)
+_ALL_COLORS_ARGS = sorted(get_args(_ALL_COLORS_LITERAL))
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
