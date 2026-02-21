@@ -22,10 +22,11 @@ from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
+from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
-_ALL_COLORS_ARGS = sorted(get_args(_ALL_COLORS_LITERAL))
+_ALL_COLORS_ARGS = sorted([_format_color_name(name) for name in get_args(_ALL_COLORS_LITERAL)])
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
@@ -212,7 +213,8 @@ def pytest_generate_tests(metafunc):
 
 
 def assert_color_in_annotations(name: str):
-    assert name in _ALL_COLORS_ARGS, f'Color {name} is missing from type annotations.'
+    msg = f'Color {name} is missing from type annotations.'
+    assert _format_color_name(name) in _ALL_COLORS_ARGS, msg
 
 
 @pytest.mark.skip_check_gc
