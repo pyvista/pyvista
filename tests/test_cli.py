@@ -296,6 +296,27 @@ def test_convert_help(capsys: pytest.CaptureFixture):
 def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(f'validate {str(tmp_ant_file)!r}')
     out = capsys.readouterr().out
+    expected = "PolyData mesh 'ant.ply' is valid!\n"
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} -r')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type           : PolyData\n'
+        '    N Points       : 486\n'
+        '    N Cells        : 912\n'
+        '    Cell types     : {TRIANGLE}\n'
+        'Report summary:\n'
+        '    Is valid       : True\n'
+        '    Invalid fields : ()\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report fields')
+    out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'

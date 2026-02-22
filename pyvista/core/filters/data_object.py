@@ -179,6 +179,7 @@ _ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: P
 _NestedStrings = str | Sequence['_NestedStrings']
 
 _ActionOptions = Literal['warn', 'error']
+_ReportBodyOptions = Literal['fields', 'message']
 _DataFields = Literal[
     'cell_data_wrong_length',
     'point_data_wrong_length',
@@ -402,6 +403,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             _mesh=validated_mesh,
             _message=message_structure,
             _subreports=None,
+            _report_body=None,
             **dataclass_fields,  # type: ignore[arg-type]
         )
 
@@ -459,6 +461,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             _mesh=validated_mesh,
             _message=message,
             _subreports=tuple(reports),
+            _report_body=None,
             **dataclass_fields,  # type: ignore[arg-type]
         )
 
@@ -674,6 +677,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     _mesh: InitVar[_DataSetOrMultiBlockType]
     _message: InitVar[_NestedStrings | None]
     _subreports: InitVar[tuple[_MeshValidationReport[DataSet] | None, ...] | None]
+    _report_body: InitVar[_ReportBodyOptions | None]
 
     # Data fields
     cell_data_wrong_length: list[str] | None = None
@@ -702,10 +706,12 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         _mesh: _DataSetOrMultiBlockType,
         _message: _NestedStrings | None,
         _subreports: tuple[_MeshValidationReport[DataSet] | None, ...] | None,
+        _report_body: _ReportBodyOptions | None,
     ) -> None:
         object.__setattr__(self, '_mesh', _mesh)
         object.__setattr__(self, '_message', _message)
         object.__setattr__(self, '_subreports', _subreports)
+        object.__setattr__(self, '_report_body', _report_body)
 
     @property
     def mesh(self) -> _DataSetOrMultiBlockType:
@@ -752,6 +758,13 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         """Return any field names which have values."""
         return tuple(f.name for f in fields(self) if getattr(self, f.name))
 
+    def _set_body(self, val):
+        object.__setattr__(self, '_report_body', val)
+        if self._subreports is not None:  # type: ignore[attr-defined]
+            for subreport in self._subreports:  # type: ignore[attr-defined]
+                if subreport is not None:
+                    subreport._set_body(val)
+
     def __getitem__(self, index: int) -> _MeshValidationReport[_DataSetType] | None:
         subreports: tuple[_MeshValidationReport[_DataSetType] | None, ...] | None = (
             self._subreports  # type: ignore[attr-defined]
@@ -771,11 +784,14 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     def __str__(self) -> str:
         """Include all validation results in a printable string."""
         summary_fields = ['is_valid', 'invalid_fields']
-        dataset_fields = [f.name for f in fields(self)]
+        report_fields = summary_fields.copy()
+        if self._report_body == 'fields':  # type: ignore[attr-defined]
+            dataset_fields = [f.name for f in fields(self)]
+            report_fields.extend(dataset_fields)
 
         def compute_label_width() -> int:
             max_width = 0
-            for name in [*summary_fields, *dataset_fields]:
+            for name in report_fields:
                 width = len(name)
                 if (value := getattr(self, name)) and isinstance(value, Sized):
                     num_digits = len(str(len(value)))
@@ -793,10 +809,13 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         lines.append(title)
         lines.append('-' * len(title))
 
+        def append_group_name(name):
+            lines.append(f'{name}:')
+
         def emit_group(name: str, field_names: Sequence[str]) -> None:
             if all(getattr(self, field) is None for field in field_names):
                 return
-            lines.append(f'{name}:')
+            append_group_name(name)
             for field in field_names:
                 value = getattr(self, field)
                 if value is not None or field in summary_fields:
@@ -846,9 +865,13 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
         emit_mesh_info()
         emit_group('Report summary', summary_fields)
-        emit_group(data_text, _MeshValidator._allowed_data_fields)
-        emit_group(point_text, _MeshValidator._allowed_point_fields)
-        emit_group(cell_text, _MeshValidator._allowed_cell_fields)
+        if self._report_body == 'fields':  # type: ignore[attr-defined]
+            emit_group(data_text, _MeshValidator._allowed_data_fields)
+            emit_group(point_text, _MeshValidator._allowed_point_fields)
+            emit_group(cell_text, _MeshValidator._allowed_cell_fields)
+        elif self._report_body == 'message' and self.message is not None:  # type: ignore[attr-defined]
+            append_group_name('Error message')
+            lines.extend(f'{indent}{line}' for line in self.message.split('\n'))
 
         return '\n'.join(lines)
 
@@ -865,6 +888,7 @@ class DataObjectFilters:
         action: _ActionOptions | None = None,
         *,
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
+        report_body: Literal['fields', 'message'] = 'fields',
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
@@ -976,6 +1000,18 @@ class DataObjectFilters:
             Select which field(s) to exclude from the validation report. This is similar to
             using ``validation_fields``, but is subtractive instead of additive. All data, point,
             and cell fields are `included` by default, and no fields are excluded.
+
+            .. versionadded:: 0.48
+
+        report_body : 'fields' | 'message', optional
+            Contents to show in the body of the report.
+
+            - ``'fields'``: Show all validated fields. A list of any/all invalid ids are shown.
+            - ``'message'``: Show the error message as the body of the report (if any).
+
+            Using ``'fields'`` as the body is more explicit in terms of showing `which` fields
+            have been validated. Using ``'message'`` is typically visually more compact though,
+            and the message includes additional cell type-specific information.
 
             .. versionadded:: 0.48
 
@@ -1217,6 +1253,7 @@ class DataObjectFilters:
                 warn_external(message, pv.InvalidMeshWarning)
             else:  # action == 'error':
                 raise pv.InvalidMeshError(message)
+        report._set_body(report_body)
         return report
 
     def _validate_mesh(  # type: ignore[misc]
