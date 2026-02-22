@@ -23,10 +23,13 @@ from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import _format_color_name
+from pyvista.plotting.colors import _formatted_hex_colors
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
+from pyvista.plotting.colors import hex_colors
 
-_ALL_COLORS_ARGS = sorted(get_args(_ALL_COLORS_LITERAL))
+_ALL_ANNOTATED_COLORS = sorted(get_args(_ALL_COLORS_LITERAL))
+_FORMATED_TO_DELIMITED = dict(zip(_formatted_hex_colors, hex_colors, strict=True))
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
@@ -220,11 +223,11 @@ def pytest_generate_tests(metafunc):
 
 
 def assert_color_in_annotations(name: str, invert: bool = False):
-    msg = f'Color {name} is missing from type annotations.'
+    msg = f'Color {name!r} is missing from type annotations.'
     if invert:
-        assert name not in _ALL_COLORS_ARGS, msg
+        assert name not in _ALL_ANNOTATED_COLORS, msg
     else:
-        assert name in _ALL_COLORS_ARGS, msg
+        assert name in _ALL_ANNOTATED_COLORS, msg
 
 
 @pytest.mark.skip_check_gc
@@ -240,6 +243,11 @@ def test_css4_colors(css4_color):
     if _format_color_name(color.name) != name:
         # Must be a synonym
         assert name in pv.plotting.colors._formatted_color_synonyms
+    else:
+        # Test non-synonyms are included in annotations
+        delimited_name = _FORMATED_TO_DELIMITED[name]
+        assert _format_color_name(delimited_name) == name  # Sanity check
+        assert_color_in_annotations(delimited_name)
 
 
 @pytest.mark.skip_check_gc
@@ -293,9 +301,10 @@ def test_paraview_colors(paraview_color):
         'paraview_background': 'ParaViewBlueGrayBkg',
         'paraview_background_warm': 'ParaViewWarmGrayBkg',
     }
-    name = paraview_map[name]
-    expected_hex = _vtk_named_color_as_hex(name)
+    vtk_color_name = paraview_map[name]
+    expected_hex = _vtk_named_color_as_hex(vtk_color_name)
     assert value.lower() == expected_hex
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
@@ -315,7 +324,7 @@ def test_unique_colors():
 
 
 @pytest.mark.skip_check_gc
-@pytest.mark.parametrize('color_annotation', _ALL_COLORS_ARGS)
+@pytest.mark.parametrize('color_annotation', _ALL_ANNOTATED_COLORS)
 def test_color_annotations(color_annotation):
     color = pv.Color(color_annotation)
     assert isinstance(color, pv.Color)

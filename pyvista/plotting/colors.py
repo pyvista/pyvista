@@ -185,7 +185,7 @@ _CSS_COLORS = {
     'salmon': '#fa8072',
     'sandy_brown': '#f4a460',
     'sea_green': '#2e8b57',
-    'sea_shell': '#fff5ee',
+    'seashell': '#fff5ee',
     'sienna': '#a0522d',
     'silver': '#c0c0c0',
     'sky_blue': '#87ceeb',
@@ -368,7 +368,7 @@ _ALL_COLORS_LITERAL = Literal[
     # CSS colors
     'alice_blue',
     'antique_white',
-    'aqua_marine',
+    'aquamarine',
     'azure',
     'beige',
     'bisque',
@@ -518,6 +518,7 @@ _ALL_COLORS_LITERAL = Literal[
     'tab:cyan',
     # ParaView colors
     'paraview_background',
+    'paraview_background_warm',
     # VTK colors
     'alizarin_crimson',
     'aureoline_yellow',
