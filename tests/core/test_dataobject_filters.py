@@ -1969,6 +1969,43 @@ def test_validate_mesh_pointset(ant):
     assert actual == expected
 
 
+def test_validate_mesh_report_body(invalid_tetra_negative_volume):
+    report = pv.PolyData().validate_mesh(report_body='message')
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type           : PolyData\n'
+        '    N Points       : 0\n'
+        '    N Cells        : 0\n'
+        '    Cell types     : set()\n'
+        'Report summary:\n'
+        '    Is valid       : True\n'
+        '    Invalid fields : ()'
+    )
+    actual = str(report)
+    assert actual == expected
+
+    report = invalid_tetra_negative_volume.validate_mesh(report_body='message')
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type               : UnstructuredGrid\n'
+        '    N Points           : 4\n'
+        '    N Cells            : 1\n'
+        '    Cell types         : {TETRA}\n'
+        'Report summary:\n'
+        '    Is valid           : False\n'
+        "    Invalid fields (1) : ('negative_size',)\n"
+        'Error message:\n'
+        '    UnstructuredGrid mesh is not valid due to the following problems:\n'
+        '     - Mesh has 1 TETRA cell with negative volume. Invalid cell id: [0]'
+    )
+    actual = str(report)
+    assert actual == expected
+
+
 def test_cell_validator_pointset_raises():
     match = 'Cell operations are not supported'
     with pytest.raises(pv.PointSetCellOperationError, match=match):
