@@ -143,7 +143,7 @@ def _validate(
 ) -> None:
     mesh = mesh_path[0].mesh  # type: ignore[attr-defined]
     path = mesh_path[0].path  # type: ignore[attr-defined]
-    report_body = report[0] if report else ['message']
+    report_body = report[0] if report else 'message'
     class_name = mesh.__class__.__name__
     try:
         out = pv.DataObjectFilters.validate_mesh(
@@ -156,10 +156,10 @@ def _validate(
         if report is not None:
             # Print the full report
             app.console.print(str(out))
-        elif (msg := out.message) is not None:
+        elif (message := out.message) is not None:
             # Only print the error message
-            msg = msg.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
-            app.console.print(msg)
+            message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
+            app.console.print(message)
         else:
             # Mesh is valid
             app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
