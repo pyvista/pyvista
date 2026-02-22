@@ -27,9 +27,9 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 
     Some color names are not internally consistent. For example,
 
-    - ``'darkgray'`` is lighter than ``'gray'``,
-    - ``'lightpink'`` is darker than ``'pink'``, and
-    - ``'cadmiumyellow'`` is classified as an ``Orange`` color.
+    - ``'dark_gray'`` is lighter than ``'gray'``,
+    - ``'light_pink'`` is darker than ``'pink'``, and
+    - ``'cadmium_yellow'`` is classified as an ``Orange`` color.
 
 .. seealso::
 
