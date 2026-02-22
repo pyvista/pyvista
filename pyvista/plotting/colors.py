@@ -220,7 +220,10 @@ _TABLEAU_COLORS = {
     'tab:olive': '#bcbd22',
     'tab:cyan': '#17becf',
 }
-_PARAVIEW_COLORS = {'paraview_background': '#52576e'}
+_PARAVIEW_COLORS = {
+    'paraview_background': '#54596d',
+    'paraview_background_warm': '#625d5a',
+}
 
 # Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
 # The vtk colors are only partially supported:
@@ -324,6 +327,7 @@ _color_synonyms = {
     'lightslategrey': 'lightslategray',
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
+    'paraview_warm': 'paraview_background_warm',
     'slategrey': 'slategray',
     'lightgoldenrod': 'lightgoldenrodyellow',
 }

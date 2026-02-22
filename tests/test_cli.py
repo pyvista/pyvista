@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from itertools import chain
 import os
 from pathlib import Path
 import shlex
@@ -10,6 +11,7 @@ import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import get_args
 
 import pytest
 from pytest_cases import case
@@ -23,6 +25,7 @@ from rich.console import Console
 import pyvista as pv
 from pyvista.__main__ import app
 from pyvista.__main__ import main
+from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -60,6 +63,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         │ plot         Plot one or more mesh files in an interactive window  │
         │              that can be customized with various options.          │
         │ report       Generate a PyVista software environment report.       │
+        │ validate     Validate a mesh's array data, points, and cells.      │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
@@ -79,11 +83,13 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     │ plot         Plot one or more mesh files in an interactive window  │
     │              that can be customized with various options.          │
     │ report       Generate a PyVista software environment report.       │
+    │ validate     Validate a mesh's array data, points, and cells.      │
     │ --help (-h)  Display this message and exit.                        │
     │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown command "foo". Available commands: report, convert, plot.  │
+    │ Unknown command "foo". Available commands: report, convert, plot,  │
+    │ validate.                                                          │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -284,6 +290,118 @@ def test_convert_help(capsys: pytest.CaptureFixture):
   """
     )
     assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    main(f'validate {str(tmp_ant_file)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 912\n'
+        '    Cell types               : {TRIANGLE}\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []\n'
+        '    Unused points            : []\n'
+        'Invalid cell ids:\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Negative size            : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Non-planar faces         : []\n'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_help(capsys: pytest.CaptureFixture):
+    main('validate --help')
+    out = capsys.readouterr().out
+    usage = (
+        'Usage: pyvista validate MESH-PATH [FIELDS...] [--exclude FIELDS...]\n'
+        '\n'
+        "Validate a mesh's array data, points, and cells.\n"
+    )
+    assert usage in out, out
+
+    assert '│ * MESH-PATH --mesh-path  -' in out, out
+    assert 'Mesh to validate.' in out, out
+    assert '│ FIELDS --fields          -' in out, out
+    assert 'Field(s) to validate.' in out, out
+    assert '│ --exclude -e             -' in out, out
+    assert 'Field(s) to exclude' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(tmp_ant_file)!r} foo')
+
+    out = capsys.readouterr().out
+    expected = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for "FIELDS": unable to convert "foo" into           │\n'
+        '│ Literal[cell_data_wrong_length,                                    │\n'
+        '│ point_data_wrong_length]|Literal[non_finite_points,                │\n'
+        '│ unused_points]|Literal[coincident_points, degenerate_faces,        │\n'
+        '│ intersecting_edges, intersecting_faces, invalid_point_references,  │\n'
+        '│ inverted_faces, negative_size, non_contiguous_edges, non_convex,   │\n'
+        '│ non_planar_faces, wrong_number_of_points, zero_size]|Literal[data, │\n'
+        '│ points, cells]|Literal[memory_safe].                               │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert expected in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(tmp_ant_file)!r} points -e cells')
+
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert '│ Failed to validate PolyData mesh read from path' in out, out
+    assert '│ validation_fields and exclude_fields cannot both be set.' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.skip_windows  # file path issues
+@pytest.mark.parametrize(
+    'field', chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields))
+)
+def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
+    # Test that all fields specified in the annotations work
+    main(f'validate {tmp_ant_file!s} {field}')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
+
+    # Test that all fields are documented
+    main(f'validate {tmp_ant_file!s} --help')
+    out = capsys.readouterr().out
+    if f'• {field}:' not in out:
+        pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
 
 
 @pytest.fixture
@@ -806,6 +924,7 @@ def test_help(capsys: pytest.CaptureFixture):
         │ plot         Plot one or more mesh files in an interactive window  │
         │              that can be customized with various options.          │
         │ report       Generate a PyVista software environment report.       │
+        │ validate     Validate a mesh's array data, points, and cells.      │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
