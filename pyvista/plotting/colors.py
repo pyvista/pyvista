@@ -1881,6 +1881,11 @@ class Color(_NoNewAttrMixin):
 
         See :ref:`named_colors` for a list of supported colors.
 
+        .. versionchanged:: 0.48
+
+            Multi-word names are now delimited with ``_`` e.g. ``'alice_blue'`` instead of
+            ``'aliceblue'``.
+
         Returns
         -------
         output : str | None
