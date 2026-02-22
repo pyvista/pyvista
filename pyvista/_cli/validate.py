@@ -86,16 +86,14 @@ def _converter_report(
 ) -> list[_ReportBodyOptions]:
     values: list[str] = [t.value for t in tokens]
     n_values = len(values)
-    if n_values == 0:
-        return ['message']
-    elif n_values == 1:
-        value = values[0]
-        allowed = get_args(_ReportBodyOptions)
-        if value in allowed:
-            return cast('list[_ReportBodyOptions]', [value])
-        msg = f'expected one of {str(allowed)[1:-1]}. Got {value!r}'
+    if n_values > 1:
+        msg = f'Invalid value for {tokens[0].keyword}: accepts 0 or 1 arguments. Got {n_values}.'
         raise ValueError(msg)
-    msg = f'Invalid value for {tokens[0].keyword}: accepts 0 or 1 arguments. Got {n_values}.'
+    value = values[0]
+    allowed = get_args(_ReportBodyOptions)
+    if value in allowed:
+        return cast('list[_ReportBodyOptions]', [value])
+    msg = f'expected one of {str(allowed)[1:-1]} or no value. Got {value!r}.'
     raise ValueError(msg)
 
 
@@ -160,6 +158,7 @@ def _validate(
             app.console.print(str(out))
         elif (msg := out.message) is not None:
             # Only print the error message
+            msg = msg.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
             app.console.print(msg)
         else:
             # Mesh is valid

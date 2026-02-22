@@ -193,19 +193,30 @@ class CasesConvert:
 
 
 @pytest.fixture
-def tmp_ant_file(tmp_path):
-    """Return a temp path to the ant file for tests."""
-    src = Path(pv.examples.antfile)
-    dst = tmp_path / src.name
-    shutil.copy(src, dst)
-
-    # Change cwd to tmp_path temporarily
+def tmp_example_dir(tmp_path):
+    """Change cwd to tmp_path for the duration of the test."""
     old_cwd = Path.cwd()
+    os.chdir(tmp_path)
     try:
-        os.chdir(tmp_path)
-        yield dst
+        yield tmp_path
     finally:
         os.chdir(old_cwd)
+
+
+@pytest.fixture
+def tmp_ant_file(tmp_example_dir):
+    src = Path(pv.examples.antfile)
+    dst = tmp_example_dir / src.name
+    shutil.copy(src, dst)
+    return dst
+
+
+@pytest.fixture
+def tmp_cow_file(tmp_example_dir):
+    src = Path(pv.examples.download_cow(load=False))
+    dst = tmp_example_dir / src.name
+    shutil.copy(src, dst)
+    return dst
 
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
@@ -349,6 +360,45 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
         '    Zero size                : []\n'
     )
     assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
+    main(f'validate {str(tmp_cow_file)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "PolyData mesh 'cow.vtp' is not valid due to the following problems:\n"
+        ' - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
+        '3250]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    command = f'validate {str(tmp_ant_file)!r} -r foo'
+    with pytest.raises(SystemExit) as e:
+        main(command)
+    out = capsys.readouterr().out
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        "│ Invalid value for -r: expected one of 'fields', 'message' or no    │\n"
+        "│ value. Got 'foo'.                                                  │\n"
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in out
+    assert e.value.code == 1
+
+    with pytest.raises(SystemExit) as e:
+        main(command + ' bar')
+    out = capsys.readouterr().out
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for -r: accepts 0 or 1 arguments. Got 2.             │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in out
+    assert e.value.code == 1
 
 
 @pytest.mark.usefixtures('patch_app_console')
