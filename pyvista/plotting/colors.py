@@ -304,7 +304,7 @@ hex_colors = _CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS
 _formatted_hex_colors = _format_color_dict(hex_colors)
 
 
-def _get_deprecate_hexcolors():
+def _get_deprecated_hexcolors():
     msg = (
         "'hexcolors' is deprecated; use 'hex_colors' instead. "
         'The color names in `hex_colors` are delimited with `_`.'
@@ -321,7 +321,7 @@ def _get_deprecate_hexcolors():
 
 def __getattr__(name: str):
     if name == 'hexcolors':
-        return _get_deprecate_hexcolors()
+        return _get_deprecated_hexcolors()
     if pv.version_info >= (0, 52):  # pragma: no cover
         msg = 'Remove colors.__getattr__.'
         raise RuntimeError(msg)

@@ -110,9 +110,9 @@ def __getattr__(name):
     import inspect  # noqa: PLC0415
 
     if name == 'hexcolors':
-        from pyvista.plotting.colors import _get_deprecate_hexcolors  # noqa: PLC0415
+        from pyvista.plotting.colors import _get_deprecated_hexcolors  # noqa: PLC0415
 
-        return _get_deprecate_hexcolors()
+        return _get_deprecated_hexcolors()
 
     allow = {
         'demos',
