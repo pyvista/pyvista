@@ -760,8 +760,8 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     def _set_body(self, val):
         object.__setattr__(self, '_report_body', val)
-        if self._subreports is not None:
-            for subreport in self._subreports:
+        if self._subreports is not None:  # type: ignore[attr-defined]
+            for subreport in self._subreports:  # type: ignore[attr-defined]
                 if subreport is not None:
                     subreport._set_body(val)
 
@@ -785,7 +785,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         """Include all validation results in a printable string."""
         summary_fields = ['is_valid', 'invalid_fields']
         report_fields = summary_fields.copy()
-        if self._report_body == 'fields':
+        if self._report_body == 'fields':  # type: ignore[attr-defined]
             dataset_fields = [f.name for f in fields(self)]
             report_fields.extend(dataset_fields)
 
@@ -865,11 +865,11 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
         emit_mesh_info()
         emit_group('Report summary', summary_fields)
-        if self._report_body == 'fields':
+        if self._report_body == 'fields':  # type: ignore[attr-defined]
             emit_group(data_text, _MeshValidator._allowed_data_fields)
             emit_group(point_text, _MeshValidator._allowed_point_fields)
             emit_group(cell_text, _MeshValidator._allowed_cell_fields)
-        elif self._report_body == 'message' and self.message is not None:
+        elif self._report_body == 'message' and self.message is not None:  # type: ignore[attr-defined]
             append_group_name('Error message')
             lines.extend(f'{indent}{line}' for line in self.message.split('\n'))
 
