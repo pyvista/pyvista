@@ -356,7 +356,7 @@ _formatted_color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in color_synonyms.items()
 }
 
-matplotlib_default_colors = list(_TABLEAU_COLORS.keys())
+matplotlib_default_colors = list(_TABLEAU_COLORS.values())
 
 COLOR_SCHEMES = {
     'spectrum': {

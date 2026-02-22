@@ -125,11 +125,11 @@ def test_axes_assembly_repr(axes_assembly):
         "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
         '  Y Color:                                     ',
-        "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "      Shaft                   Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
+        "      Tip                     Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
         '  Z Color:                                     ',
-        "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "      Shaft                   Color(name='medium_blue', hex='#0000cdff', opacity=255)",
+        "      Tip                     Color(name='medium_blue', hex='#0000cdff', opacity=255)",
         '  Position:                   (0.0, 0.0, 0.0)',
         '  Orientation:                (0.0, -0.0, 0.0)',
         '  Origin:                     (0.0, 0.0, 0.0)',
@@ -215,10 +215,10 @@ def _config_axes_theme():
 def test_axes_assembly_theme(axes_assembly):
     assert axes_assembly.x_color[0].name == 'tomato'
     assert axes_assembly.x_color[1].name == 'tomato'
-    assert axes_assembly.y_color[0].name == 'seagreen'
-    assert axes_assembly.y_color[1].name == 'seagreen'
-    assert axes_assembly.z_color[0].name == 'mediumblue'
-    assert axes_assembly.z_color[1].name == 'mediumblue'
+    assert axes_assembly.y_color[0].name == 'sea_green'
+    assert axes_assembly.y_color[1].name == 'sea_green'
+    assert axes_assembly.z_color[0].name == 'medium_blue'
+    assert axes_assembly.z_color[1].name == 'medium_blue'
 
     pv.global_theme.axes.x_color = 'black'
     pv.global_theme.axes.y_color = 'white'
