@@ -304,20 +304,27 @@ hex_colors = _CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS
 _formatted_hex_colors = _format_color_dict(hex_colors)
 
 
+def _get_deprecate_hexcolors():
+    msg = (
+        "'hexcolors' is deprecated; use 'hex_colors' instead. "
+        'The color names in `hex_colors` are delimited with `_`.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if pv.version_info >= (0, 51):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove hexcolors.'
+        raise RuntimeError(msg)
+    return _formatted_hex_colors
+
+
 def __getattr__(name: str):
     if name == 'hexcolors':
-        msg = (
-            "'hexcolors' is deprecated; use 'hex_colors' instead. "
-            'The color names in `hex_colors` are delimited with `_`.'
-        )
-        warn_external(msg, PyVistaDeprecationWarning)
-        if pv.version_info >= (0, 51):  # pragma: no cover
-            msg = 'Convert this deprecation warning into an error.'
-            raise RuntimeError(msg)
-        if pv.version_info >= (0, 52):  # pragma: no cover
-            msg = 'Remove hexcolors.'
-            raise RuntimeError(msg)
-        return _formatted_hex_colors
+        return _get_deprecate_hexcolors()
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove colors.__getattr__.'
+        raise RuntimeError(msg)
     msg = f'module {__name__!r} has no attribute {name!r}'
     raise AttributeError(msg)
 

@@ -346,3 +346,16 @@ def test_cmaps_cmcrameri_required():
     actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
     expected = set(_CMCRAMERI_CMAPS)
     assert actual == expected
+
+
+def test_hexcolors_deprecated():
+    msg = (
+        "'hexcolors' is deprecated; use 'hex_colors' instead. "
+        'The color names in `hex_colors` are delimited with `_`.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.colors.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.hexcolors
