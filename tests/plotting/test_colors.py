@@ -26,7 +26,7 @@ from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
-_ALL_COLORS_ARGS = sorted([_format_color_name(name) for name in get_args(_ALL_COLORS_LITERAL)])
+_ALL_COLORS_ARGS = sorted(get_args(_ALL_COLORS_LITERAL))
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
@@ -169,7 +169,7 @@ def test_color_invalid_type():
 def test_color_name_delimiter(delimiter):
     name = f'medium{delimiter}spring{delimiter}green'
     c = pv.Color(name)
-    assert c.name == name.replace(delimiter, '')
+    assert c.name == name.replace(delimiter, '_')
 
 
 def test_color_hls():
@@ -219,22 +219,27 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
-def assert_color_in_annotations(name: str):
+def assert_color_in_annotations(name: str, invert: bool = False):
     msg = f'Color {name} is missing from type annotations.'
-    assert _format_color_name(name) in _ALL_COLORS_ARGS, msg
+    if invert:
+        assert name not in _ALL_COLORS_ARGS, msg
+    else:
+        assert name in _ALL_COLORS_ARGS, msg
 
 
 @pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
-    assert pv.Color(name).hex_rgb.lower() == value.lower()
+    color = pv.Color(name)
+    assert color.hex_rgb.lower() == value.lower()
 
     # Test name
-    if name not in pv.plotting.colors._CSS_COLORS:
-        alt_name = pv.plotting.colors.color_synonyms[name]
-        assert alt_name in pv.plotting.colors._CSS_COLORS
-    assert_color_in_annotations(name)
+    assert color.name in pv.plotting.colors._CSS_COLORS
+
+    if _format_color_name(color.name) != name:
+        # Must be a synonym
+        assert name in pv.plotting.colors._formatted_color_synonyms
 
 
 @pytest.mark.skip_check_gc
@@ -297,11 +302,14 @@ def test_paraview_colors(paraview_color):
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
-    assert_color_in_annotations(color_synonym)
+    assert color.name != color_synonym
+    # Test that synonyms are NOT included in annotations
+    # Since this leads to confusing double entries for the same color
+    assert_color_in_annotations(color_synonym, invert=True)
 
 
 def test_unique_colors():
-    duplicates = np.rec.find_duplicate(pv.hexcolors.values())
+    duplicates = np.rec.find_duplicate(pv.hex_colors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
@@ -363,3 +371,16 @@ def test_cmaps_cmcrameri_required():
     actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
     expected = set(_CMCRAMERI_CMAPS)
     assert actual == expected
+
+
+def test_hexcolors_deprecated():
+    msg = (
+        "'hexcolors' is deprecated; use 'hex_colors' instead. "
+        'The color names in `hex_colors` are delimited with `_`.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.colors.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.hexcolors
