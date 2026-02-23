@@ -1055,7 +1055,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type           : PolyData
             N Points       : 842
             N Cells        : 1680
@@ -1070,7 +1070,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : PolyData
             N Points                 : 842
             N Cells                  : 1680
@@ -1117,7 +1117,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
@@ -1173,7 +1173,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
@@ -1205,7 +1205,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type               : MultiBlock
             N Blocks           : 1
         Report summary:
@@ -1224,7 +1224,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : MultiBlock
             N Blocks                 : 1
         Report summary:

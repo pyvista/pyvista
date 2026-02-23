@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Annotated
+from typing import cast
 from typing import get_args
 
 from cyclopts import Parameter
@@ -12,6 +13,7 @@ import pyvista as pv
 from pyvista.core.celltype import CellType
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from pyvista.core.filters.data_object import _MeshValidator
+from pyvista.core.filters.data_object import _ReportBodyOptions
 from pyvista.core.utilities.reader import _mesh_types
 
 from .app import app
@@ -21,6 +23,9 @@ from .utils import _converter_files
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Sequence
+
+    from cyclopts import Token
 
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
@@ -70,13 +75,55 @@ exclude_help = """
 Field(s) to exclude from the validation. This is similar to using FIELDS, but is subtractive
 instead of additive.
 """
+report_help = """
+Show report. Control the body of the report with:
+- ``fields`` to show all validation fields.
+- ``message`` to show the error message (if any).
+
+``message`` is used by default if no tokens are passed.
+"""
 
 
-def _format_color(text: str, names: Iterable[str], style: str) -> str:
-    """Highlight all occurrences of `names` in `text` using Rich style markup."""
-    for name in names:
-        text = text.replace(name, f'[{style}]{name}[/{style}]')
-    return text
+def _converter_report(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_ReportBodyOptions]:
+    values: list[str] = [t.value for t in tokens]
+    n_values = len(values)
+    if n_values > 1:
+        msg = f'Invalid value for {tokens[0].keyword}: accepts 0 or 1 arguments. Got {n_values}.'
+        raise ValueError(msg)
+    value = values[0]
+    allowed = get_args(_ReportBodyOptions)
+    if value in allowed:
+        return cast('list[_ReportBodyOptions]', [value])
+    msg = f'expected one of {str(allowed)[1:-1]} or no value. Got {value!r}.'
+    raise ValueError(msg)
+
+
+def _color_output(string: str) -> str:
+    def _format_color(text: str, names: Iterable[str], style: str) -> str:
+        """Highlight all occurrences of `names` in `text` using Rich style markup."""
+        for name in names:
+            text = text.replace(name, f'[{style}]{name}[/{style}]')
+        return text
+
+    # Highlight cell types in yellow
+    cell_names = {celltype.name for celltype in CellType}
+    string = _format_color(string, cell_names, 'yellow')
+
+    # Highlight mesh types in purple
+    mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
+    string = _format_color(string, mesh_names, 'purple')
+
+    # Make section headings bold
+    section_headings = _MeshValidator._SECTION_HEADINGS
+    string = _format_color(string, section_headings, 'bold')
+
+    # Highlight invalid fields in message as red
+    # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
+    norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
+    return _format_color(string, norm_field_names, 'red')
 
 
 @app.command(
@@ -111,36 +158,36 @@ def _validate(
             help=exclude_help,
         ),
     ] = None,
+    report: Annotated[
+        list[_ReportBodyOptions] | None,
+        Parameter(
+            name='report',
+            consume_multiple=True,
+            converter=_converter_report,
+            show_default=False,
+            negative=[],
+            help=report_help,
+        ),
+    ] = None,
 ) -> None:
     mesh = mesh_path[0].mesh  # type: ignore[attr-defined]
     path = mesh_path[0].path  # type: ignore[attr-defined]
+    report_body = report[0] if report else 'message'
+    class_name = mesh.__class__.__name__
     try:
-        report = pv.DataObjectFilters.validate_mesh(
-            mesh, validation_fields=fields, exclude_fields=exclude
+        out = pv.DataObjectFilters.validate_mesh(
+            mesh, validation_fields=fields, exclude_fields=exclude, report_body=report_body
         )
     except Exception as e:  # noqa: BLE001
-        msg = (
-            f'Failed to validate {mesh.__class__.__name__} mesh read from path {str(path)!r}\n{e}'
-        )
+        msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
         _console_error(app=app, message=msg)
     else:
-        report_string = str(report)
-
-        # Highlight cell types in yellow
-        cell_names = {celltype.name for celltype in CellType}
-        report_string = _format_color(report_string, cell_names, 'yellow')
-
-        # Highlight mesh types in purple
-        mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
-        report_string = _format_color(report_string, mesh_names, 'purple')
-
-        # Make section headings bold
-        section_headings = _MeshValidator._SECTION_HEADINGS
-        report_string = _format_color(report_string, section_headings, 'bold')
-
-        # Highlight invalid fields in message as red
-        # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
-        norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
-        report_string = _format_color(report_string, norm_field_names, 'red')
-
-        app.console.print(report_string, markup=True)
+        if report is not None:
+            app.console.print(_color_output(str(out)))
+        elif (message := out.message) is not None:
+            # Only print the error message
+            message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
+            app.console.print(_color_output(message))
+        else:
+            # Mesh is valid
+            app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
