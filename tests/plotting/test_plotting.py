@@ -5385,5 +5385,5 @@ def test_connectivity_cmap():
     medium = pv.Sphere(center=(-2, 0, 0), phi_resolution=15, theta_resolution=15)
     small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
     mesh = large + medium + small
-    conn = mesh.connectivity('all')
-    conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+    connected = mesh.connectivity('all')
+    connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)
