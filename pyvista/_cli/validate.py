@@ -109,4 +109,4 @@ def _validate(
         )
         _console_error(app=app, message=msg)
     else:
-        print(report)  # noqa: T201
+        report._pprint()
