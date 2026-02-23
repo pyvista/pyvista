@@ -326,19 +326,42 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     )
     assert out == expected
 
+    main(f'validate {str(tmp_ant_file)!r} -r message')
+    out = capsys.readouterr().out
+    assert out == expected
+
     main(f'validate {str(tmp_ant_file)!r} --report fields')
     out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
         'Mesh:\n'
-        '    Type           : PolyData\n'
-        '    N Points       : 486\n'
-        '    N Cells        : 912\n'
-        '    Cell types     : {TRIANGLE}\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 912\n'
+        '    Cell types               : {TRIANGLE}\n'
         'Report summary:\n'
-        '    Is valid       : True\n'
-        '    Invalid fields : ()\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []\n'
+        '    Unused points            : []\n'
+        'Invalid cell ids:\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Negative size            : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Non-planar faces         : []\n'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []\n'
     )
     assert out == expected
 
