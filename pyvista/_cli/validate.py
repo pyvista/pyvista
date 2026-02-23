@@ -132,7 +132,7 @@ def _validate(
     report: Annotated[
         list[_ReportBodyOptions] | None,
         Parameter(
-            name=('report', '-r'),
+            name='report',
             consume_multiple=True,
             converter=_converter_report,
             show_default=False,

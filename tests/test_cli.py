@@ -310,7 +310,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     expected = "PolyData mesh 'ant.ply' is valid!\n"
     assert out == expected
 
-    main(f'validate {str(tmp_ant_file)!r} -r')
+    main(f'validate {str(tmp_ant_file)!r} --report')
     out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
@@ -326,7 +326,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     )
     assert out == expected
 
-    main(f'validate {str(tmp_ant_file)!r} -r message')
+    main(f'validate {str(tmp_ant_file)!r} --report message')
     out = capsys.readouterr().out
     assert out == expected
 
@@ -380,14 +380,14 @@ def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture
 
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
-    command = f'validate {str(tmp_ant_file)!r} -r foo'
+    command = f'validate {str(tmp_ant_file)!r} --report foo'
     with pytest.raises(SystemExit) as e:
         main(command)
     out = capsys.readouterr().out
     message = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
-        "│ Invalid value for -r: expected one of 'fields', 'message' or no    │\n"
-        "│ value. Got 'foo'.                                                  │\n"
+        "│ Invalid value for --report: expected one of 'fields', 'message' or │\n"
+        "│ no value. Got 'foo'.                                               │\n"
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert message in out
@@ -398,7 +398,7 @@ def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture
     out = capsys.readouterr().out
     message = (
         '╭─ Error ────────────────────────────────────────────────────────────╮\n'
-        '│ Invalid value for -r: accepts 0 or 1 arguments. Got 2.             │\n'
+        '│ Invalid value for --report: accepts 0 or 1 arguments. Got 2.       │\n'
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert message in out
