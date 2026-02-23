@@ -5376,3 +5376,14 @@ def test_hide_cells_no_scalars():
     # Test plotting still works with ghost cells active
     assert grid.active_scalars_name == _vtk.vtkDataSetAttributes.GhostArrayName()
     grid.plot(color='w', show_edges=True, show_grid=True)
+
+
+@pytest.mark.skip_check_gc
+def test_connectivity_cmap():
+    # Test case described in https://github.com/pyvista/pyvista/issues/8252
+    large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
+    medium = pv.Sphere(center=(-2, 0, 0), phi_resolution=15, theta_resolution=15)
+    small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
+    mesh = large + medium + small
+    connected = mesh.connectivity('all')
+    connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)
