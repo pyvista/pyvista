@@ -871,6 +871,8 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                     no_wrap=True,
                 )
                 table.add_column()
+                if content is None:
+                    ...
                 for key, value in content.items():
                     if isinstance(value, str):
                         render_value = Text(value, style='yellow')
@@ -959,8 +961,8 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             lines.append(Text(report_tree['title'], style='bold magenta underline'))
             lines.append(Text(''))
             for name, content in report_tree['sections'].items():  # type: ignore[index]
-                # if isinstance(content, dict):
-                build_pretty_section(name, content)
+                if content is not None:
+                    build_pretty_section(name, content)
 
             return lines
 
