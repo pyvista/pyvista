@@ -55,6 +55,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -8122,6 +8123,89 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         output_volume.direction_matrix = reference_volume.direction_matrix
 
         return output_volume
+
+    def fast_splat(  # type: ignore[misc]
+        self: DataSet,
+        bounds: BoundsTuple | None = None,
+        kernel_dimensions: tuple[int, int, int] = (10, 10, 10),
+        splat_dimensions: tuple[int, int, int] = (100, 100, 100),
+        *,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Splat points into a uniform 3D grid using a predefined kernel.
+
+        Creates a 3D image by placing ("splatting") the kernel at the location
+        of every point in a dataset. The result is similar to painting each
+        point into space, where the brightness or intensity around each point
+        spreads out according to the kernel shape and density.
+
+        This filter is a wrapper around :vtk:`vtkFastSplatter`.
+
+        Parameters
+        ----------
+        bounds : pyvista.BoundsTuple, optional
+            Bounds of the output. By default uses the same bounds as the input.
+        kernel_dimensions : tuple[int, int, int], default: (50, 50, 50)
+            Dimensions of the kernel in ``(i, j, k)``.
+        splat_dimensions : tuple[int, int, int], default: (100, 100, 100)
+            Density of the output image in ``(i, j, k)``.
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The splatted image data.
+
+        Examples
+        --------
+        Fast splat the Stanford bunny.
+
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> mesh = examples.download_bunny()
+            >>> splatted = mesh.fast_splat()
+            >>> cpos = [
+            ...     (0.1034, 0.2228, 0.3012),
+            ...     (-0.03056, 0.1053, 0.01183),
+            ...     (-0.1873, 0.9374, -0.2936),
+            ... ]
+            >>> splatted.plot(
+            ...     opacity='sigmoid_7', show_scalar_bar=False, cpos=cpos, volume=True
+            ... )
+
+            Note how increasing the density of the kernel "spreads" out the
+            output splat image:
+
+            >>> splatted = mesh.fast_splat(kernel_dimensions=(30, 30, 30))
+            >>> splatted.plot(
+            ...     opacity='sigmoid_20', show_scalar_bar=False, cpos=cpos, volume=True
+            ... )
+
+        """
+        # build kernel image
+        x = np.linspace(-1, 1, kernel_dimensions[0])
+        y = np.linspace(-1, 1, kernel_dimensions[1])
+        z = np.linspace(-1, 1, kernel_dimensions[2])
+        xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
+        kernel = (1 - np.abs(xv)) * (1 - np.abs(yv)) * (1 - np.abs(zv))
+        kernel = np.clip(kernel, 0, 1)
+
+        kernel_image = pv.ImageData(dimensions=kernel_dimensions)
+        kernel_image.point_data['values'] = kernel.ravel(order='F')
+
+        alg = _vtk.vtkFastSplatter()
+        alg.SetInputData(0, self)
+        alg.SetInputData(1, kernel_image)
+        if bounds:
+            alg.SetModelBounds(bounds)
+        alg.SetOutputDimensions(splat_dimensions)
+
+        _update_alg(alg, progress_bar=progress_bar, message='Splatting mesh')
+        return _get_output(alg)
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
