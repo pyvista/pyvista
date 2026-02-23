@@ -218,8 +218,10 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _allowed_cell_fields = get_args(_CellFields)
     _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
 
-    _SECTION_HEADINGS: ClassVar[set[str]] = set()  # Used to colorize output
-    _NORMALIZED_FIELD_NAMES: ClassVar[set[str]] = set()  # Used to colorize output
+    # Define variables to output that may be colorized
+    _SECTION_HEADINGS: ClassVar[set[str]] = set()
+    _NORMALIZED_FIELD_NAMES: ClassVar[set[str]] = set()
+    _REPORT_TITLE = 'Mesh Validation Report'
 
     @dataclass
     class _FieldSummary:
@@ -669,28 +671,37 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @staticmethod
     def _colorize_output(string: str) -> str:
-        def _format_color(text: str, names: Iterable[str], style: str) -> str:
-            """Highlight all occurrences of `names` in `text` using Rich style markup."""
-            for name in names:
-                text = text.replace(name, f'[{style}]{name}[/{style}]')
+        def _format_style(text: str, items: Iterable[str], style: str) -> str:
+            """Stylize text using Rich markup."""
+            for item in items:
+                text = text.replace(item, f'[{style}]{item}[/{style}]')
             return text
 
         # Highlight cell types in yellow
         cell_names = {celltype.name for celltype in CellType}
-        string = _format_color(string, cell_names, 'yellow')
+        string = _format_style(string, cell_names, 'yellow')
 
         # Highlight mesh types in purple
         mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
-        string = _format_color(string, mesh_names, 'purple')
+        string = _format_style(string, mesh_names, 'purple')
 
         # Make section headings bold
         section_headings = _MeshValidator._SECTION_HEADINGS
-        string = _format_color(string, section_headings, 'bold')
+        string = _format_style(string, section_headings, 'bold')
+
+        # Make report title bold
+        title = _MeshValidator._REPORT_TITLE
+        string = _format_style(string, [title], 'bold')
+
+        # Make title underline bold
+        underline = '-' * len(title)
+        new_underline = '━' * len(title)
+        string = string.replace(underline, new_underline)
 
         # Highlight invalid fields in message as red
         # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
         norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
-        return _format_color(string, norm_field_names, 'red')
+        return _format_style(string, norm_field_names, 'red')
 
 
 _LiteralMeshValidationFields = (
@@ -838,7 +849,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         label_width = compute_label_width()
         lines: list[str] = []
 
-        title = 'Mesh Validation Report'
+        title = _MeshValidator._REPORT_TITLE
         lines.append(title)
         lines.append('-' * len(title))
 
