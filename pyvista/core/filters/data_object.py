@@ -49,6 +49,7 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import Any
     from typing import ClassVar
 
     from pyvista import CellType
@@ -801,21 +802,29 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
             return max_width
 
+        report_tree: dict[Literal['title', 'sections'], str | dict[str, dict[str, Any]]] = dict(
+            title='Mesh Validation Report', sections={}
+        )
+
         indent = ' ' * 4
         label_width = compute_label_width()
         lines: list[str] = []
 
-        title = 'Mesh Validation Report'
-        lines.append(title)
-        lines.append('-' * len(title))
+        def print_title(title):
+            lines.append(title)
+            lines.append('-' * len(title))
 
-        def append_group_name(name):
-            lines.append(f'{name}:')
+        def insert_section(name, value):
+            report_tree['sections'][name] = value  # type: ignore[index]
 
-        def emit_group(name: str, field_names: Sequence[str]) -> None:
+        def print_section_name(name):
+            return lines.append(f'{name}:')
+
+        def insert_field_section(name: str, field_names: Sequence[str]):
             if all(getattr(self, field) is None for field in field_names):
+                insert_section(name, None)
                 return
-            append_group_name(name)
+            contents = {}
             for field in field_names:
                 value = getattr(self, field)
                 if value is not None or field in summary_fields:
@@ -828,32 +837,44 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                     except TypeError:
                         pass
 
-                    lines.append(
-                        f'{indent}{label + n_values:<{label_width}} : {reprlib.repr(value)}'
-                    )
+                    contents[f'{label + n_values}'] = value
+            insert_section(name, contents)
 
-        def emit_mesh_info() -> None:
-            lines.append('Mesh:')
-            for key, value in mesh_items.items():
-                lines.append(f'{indent}{key:<{label_width}} : {value}')
+        def print_section(name: str) -> None:
+            content = report_tree['sections'][name]  # type: ignore[index]
+            if isinstance(content, dict):
+                print_section_name(name)
+                for key, value in content.items():
+                    if isinstance(value, str):
+                        value_fmt = value
+                    elif isinstance(value, set):
+                        # Use a list to preserve order, but we format it to look like a set
+                        value_sorted = sorted(
+                            val.name if isinstance(val, IntEnum) else val for val in value
+                        )
+                        value_fmt = (
+                            str(set())
+                            if len(value_sorted) == 0
+                            else str(value_sorted)
+                            .replace('[', '{')
+                            .replace(']', '}')
+                            .replace("'", '')
+                        )
+                    else:
+                        value_fmt = reprlib.repr(value)
+
+                    lines.append(f'{indent}{key:<{label_width}} : {value_fmt}')
+
+        def print_message(msg: str):
+            lines.extend(f'{indent}{line}' for line in msg.split('\n'))
 
         mesh = self.mesh
-        mesh_items: dict[str, str | int] = {'Type': mesh.__class__.__name__}
+        mesh_items: dict[str, str | int | set[CellType]] = {'Type': mesh.__class__.__name__}
         # Set report content based on mesh type
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
             mesh_items['N Cells'] = mesh.n_cells
-            # Use a list to preserve order, but we format it to look like a set
-            cell_types = sorted(mesh.distinct_cell_types)
-            cell_types_fmt = (
-                str(set())
-                if len(cell_types) == 0
-                else str([celltype.name for celltype in cell_types])
-                .replace('[', '{')
-                .replace(']', '}')
-                .replace("'", '')
-            )
-            mesh_items['Cell types'] = cell_types_fmt
+            mesh_items['Cell types'] = mesh.distinct_cell_types
             data_text = 'Invalid data arrays'
             cell_text = 'Invalid cell ids'
             point_text = 'Invalid point ids'
@@ -863,15 +884,25 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             cell_text = 'Blocks with invalid cells'
             point_text = 'Blocks with invalid points'
 
-        emit_mesh_info()
-        emit_group('Report summary', summary_fields)
+        print_title(report_tree['title'])
+        insert_section('Mesh', mesh_items)
+        print_section('Mesh')
+        insert_field_section('Report summary', summary_fields)
+        print_section('Report summary')
         if self._report_body == 'fields':  # type: ignore[attr-defined]
-            emit_group(data_text, _MeshValidator._allowed_data_fields)
-            emit_group(point_text, _MeshValidator._allowed_point_fields)
-            emit_group(cell_text, _MeshValidator._allowed_cell_fields)
-        elif self._report_body == 'message' and self.message is not None:  # type: ignore[attr-defined]
-            append_group_name('Error message')
-            lines.extend(f'{indent}{line}' for line in self.message.split('\n'))
+            insert_field_section(data_text, _MeshValidator._allowed_data_fields)
+            print_section(data_text)
+
+            insert_field_section(point_text, _MeshValidator._allowed_point_fields)
+            print_section(point_text)
+
+            insert_field_section(cell_text, _MeshValidator._allowed_cell_fields)
+            print_section(cell_text)
+
+        elif self._report_body == 'message' and (message := self.message) is not None:  # type: ignore[attr-defined]
+            insert_section('Error message', message)
+            print_section_name('Error message')
+            print_message(message)
 
         return '\n'.join(lines)
 
@@ -1094,7 +1125,7 @@ class DataObjectFilters:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
-            Cell types               : {TRIANGLE, POLYGON, QUAD}
+            Cell types               : {POLYGON, QUAD, TRIANGLE}
         Report summary:
             Is valid                 : False
             Invalid fields (1)       : ('non_convex',)
@@ -1148,7 +1179,7 @@ class DataObjectFilters:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
-            Cell types               : {TRIANGLE, POLYGON, QUAD}
+            Cell types               : {POLYGON, QUAD, TRIANGLE}
         Report summary:
             Is valid                 : True
             Invalid fields           : ()
