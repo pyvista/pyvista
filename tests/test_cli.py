@@ -371,7 +371,7 @@ def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture
     main(f'validate {str(tmp_cow_file)!r}')
     out = capsys.readouterr().out
     expected = (
-        "PolyData mesh 'cow.vtp' is not valid due to the following problems:\n"
+        "PolyData mesh 'cow.vtp' is not valid:\n"
         ' - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
         '3250]\n'
     )

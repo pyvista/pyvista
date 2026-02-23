@@ -661,7 +661,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @staticmethod
     def _create_message_header(obj: object) -> str:
-        return f'{obj.__class__.__name__} mesh is not valid due to the following problems:'
+        return f'{obj.__class__.__name__} mesh is not valid:'
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
@@ -1188,7 +1188,7 @@ class DataObjectFilters:
         ``action`` keyword is set for emitting warnings or raising errors.
 
         >>> print(report.message)
-        PolyData mesh is not valid due to the following problems:
+        PolyData mesh is not valid:
          - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
         Show a validation report for cells with intersecting edges and unused points only.
@@ -1238,8 +1238,8 @@ class DataObjectFilters:
             Is valid           : False
             Invalid fields (1) : ('non_convex',)
         Error message:
-            MultiBlock mesh is not valid due to the following problems:
-             - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
+            MultiBlock mesh is not valid:
+             - Block id 0 'Block-00' PolyData mesh is not valid:
                - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
         Validate again but show the fields in report body.
