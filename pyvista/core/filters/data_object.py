@@ -846,7 +846,6 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             insert_section(name, contents)
 
         def build_pretty_section(name: str, content: str | dict[str, Any]) -> None:
-            # Case 1: message-only section
             if isinstance(content, str):
                 table = Table(
                     show_header=False,
@@ -867,12 +866,11 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                 table.add_column(
                     width=label_width,
                     no_wrap=True,
-                    style='bold',
                 )
                 table.add_column()
                 for key, value in content.items():
                     if isinstance(value, str):
-                        render_value = value
+                        render_value = Text(value, style='yellow')
                     elif isinstance(value, set):
                         render_value = format_set(value)
                     else:
@@ -881,7 +879,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
             panel = Panel(
                 table,
-                title=name,
+                title=Text(name, style='magenta'),
                 title_align='left',
                 box=box.SIMPLE,
                 padding=(0, 4),
@@ -956,7 +954,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
         if pretty:
             lines.append(Text(report_tree['title'], style='bold magenta underline'))
-
+            lines.append(Text(''))
             for name, content in report_tree['sections'].items():  # type: ignore[index]
                 # if isinstance(content, dict):
                 build_pretty_section(name, content)
@@ -980,15 +978,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     def _pprint(self):
         from rich.console import Console  # noqa: PLC0415
         from rich.console import Group  # noqa: PLC0415
-        from rich.theme import Theme  # noqa: PLC0415
 
-        theme = Theme(
-            {
-                'repr.str': 'yellow',
-            }
-        )
         lines = self._lines(pretty=True)
-        console = Console(theme=theme)
+        console = Console()
         console.print(Group(*lines))
 
 
