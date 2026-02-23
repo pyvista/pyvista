@@ -217,6 +217,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _allowed_cell_fields = get_args(_CellFields)
     _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
 
+    _SECTION_HEADINGS: ClassVar[set[str]] = set()  # Used by validate CLI for coloring output
+    _NORMALIZED_FIELD_NAMES: ClassVar[set[str]] = set()  # Used by validate CLI for coloring output
+
     @dataclass
     class _FieldSummary:
         name: str
@@ -529,6 +532,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 size = 'volume'
             name_norm = name_norm.replace('size', size)
+        _MeshValidator._NORMALIZED_FIELD_NAMES.add(name_norm)
 
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -566,6 +570,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'Mesh has {n_arrays} {kind} array{s} with incorrect length '
                 '(length must be {expected}). Invalid array{s}: {details}'
             )
+            _MeshValidator._NORMALIZED_FIELD_NAMES.add('incorrect length')
             details = join_limited(
                 [f'{name!r} ({length})' for name, length in invalid_arrays.items()]
             )
@@ -629,7 +634,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if not array:
                 return ''
             name_norm = _MeshValidator._normalize_field_name(name_)
+            _MeshValidator._NORMALIZED_FIELD_NAMES.add(name_norm)
             name_norm = name_norm.removesuffix('s')
+            _MeshValidator._NORMALIZED_FIELD_NAMES.add(name_norm)
             n_ids = len(array)
             s = 's' if n_ids > 1 else ''
             return (
@@ -639,7 +646,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         summaries: list[_MeshValidator._FieldSummary] = []
         for name, func, info in [
-            ('unused_points', get_unused_point_ids, ' not referenced by any cell(s)'),
+            ('unused_points', get_unused_point_ids, ' not referenced by any cell'),
             ('non_finite_points', get_non_finite_point_ids, ''),
         ]:
             if name in validation_fields:
@@ -810,7 +817,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         lines.append('-' * len(title))
 
         def append_group_name(name):
-            lines.append(f'{name}:')
+            heading = f'{name}:'
+            lines.append(heading)
+            _MeshValidator._SECTION_HEADINGS.add(heading)
 
         def emit_group(name: str, field_names: Sequence[str]) -> None:
             if all(getattr(self, field) is None for field in field_names):
@@ -833,7 +842,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                     )
 
         def emit_mesh_info() -> None:
-            lines.append('Mesh:')
+            append_group_name('Mesh info')
             for key, value in mesh_items.items():
                 lines.append(f'{indent}{key:<{label_width}} : {value}')
 

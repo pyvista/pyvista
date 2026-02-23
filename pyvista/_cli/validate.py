@@ -2,17 +2,25 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Annotated
+from typing import get_args
 
 from cyclopts import Parameter
 
 import pyvista as pv
-from pyvista.core.filters.data_object import _LiteralMeshValidationFields  # noqa: TC001
+from pyvista.core.celltype import CellType
+from pyvista.core.filters.data_object import _LiteralMeshValidationFields
+from pyvista.core.filters.data_object import _MeshValidator
+from pyvista.core.utilities.reader import _mesh_types
 
 from .app import app
 from .utils import HELP_FORMATTER
 from .utils import _console_error
 from .utils import _converter_files
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
@@ -64,6 +72,13 @@ instead of additive.
 """
 
 
+def _format_color(text: str, names: Iterable[str], style: str) -> str:
+    """Highlight all occurrences of `names` in `text` using Rich style markup."""
+    for name in names:
+        text = text.replace(name, f'[{style}]{name}[/{style}]')
+    return text
+
+
 @app.command(
     usage=f'Usage: [bold]{pv.__name__} validate MESH-PATH [FIELDS...] [--exclude FIELDS...]',
     help_formatter=HELP_FORMATTER,
@@ -109,4 +124,23 @@ def _validate(
         )
         _console_error(app=app, message=msg)
     else:
-        print(report)  # noqa: T201
+        report_string = str(report)
+
+        # Highlight cell types in yellow
+        cell_names = {celltype.name for celltype in CellType}
+        report_string = _format_color(report_string, cell_names, 'yellow')
+
+        # Highlight mesh types in purple
+        mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
+        report_string = _format_color(report_string, mesh_names, 'purple')
+
+        # Make section headings bold
+        section_headings = _MeshValidator._SECTION_HEADINGS
+        report_string = _format_color(report_string, section_headings, 'bold')
+
+        # Highlight invalid fields in message as red
+        # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
+        norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
+        report_string = _format_color(report_string, norm_field_names, 'red')
+
+        app.console.print(report_string, markup=True)
