@@ -158,7 +158,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
           N Values:                   256
           Above Range Color:          None
           Below Range Color:          None
-          NAN Color:                  Color(name='darkgray', hex='#a9a9a9ff', opacity=255)
+          NAN Color:                  Color(name='dark_gray', hex='#a9a9a9ff', opacity=255)
           Log Scale:                  False
           Color Map:                  "bwr"
 

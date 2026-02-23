@@ -822,7 +822,7 @@ class _AxesConfig(_ThemeConfig):
     Color(name='tomato', hex='#ff6347ff', opacity=255)
 
     >>> pv.global_theme.axes.y_color
-    Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+    Color(name='sea_green', hex='#2e8b57ff', opacity=255)
 
     >>> pv.global_theme.axes.z_color
     Color(name='blue', hex='#0000ffff', opacity=255)
@@ -905,7 +905,7 @@ class _AxesConfig(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.y_color
-        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+        Color(name='sea_green', hex='#2e8b57ff', opacity=255)
 
         Change the default color.
 
