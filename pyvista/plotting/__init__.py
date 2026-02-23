@@ -25,9 +25,10 @@ from .charts import ChartMPL as ChartMPL
 from .charts import ChartPie as ChartPie
 from .colors import PARAVIEW_BACKGROUND as PARAVIEW_BACKGROUND
 from .colors import Color as Color
+from .colors import __getattr__  # noqa: F401
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
-from .colors import hexcolors as hexcolors
+from .colors import hex_colors as hex_colors
 from .composite_mapper import BlockAttributes as BlockAttributes
 from .composite_mapper import CompositeAttributes as CompositeAttributes
 from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
