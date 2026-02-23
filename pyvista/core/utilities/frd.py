@@ -1,18 +1,24 @@
 from __future__ import annotations
 
+import pathlib
 import re
-from typing import Dict, List, Tuple, Any
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import numpy as np
 
 import pyvista as pv
 from pyvista.core.pointset import UnstructuredGrid
-from pyvista.core.utilities.reader import BaseReader, BaseVTKReader, TimeReader
-
+from pyvista.core.utilities.reader import BaseReader
+from pyvista.core.utilities.reader import BaseVTKReader
+from pyvista.core.utilities.reader import TimeReader
 
 # ---------------------------------------------------------------------------
 # Low-level, VTK-style reader
 # ---------------------------------------------------------------------------
+
 
 class _FRDVTKReader(BaseVTKReader):
     """VTK-style reader for CalculiX FRD ASCII result files.
@@ -23,41 +29,51 @@ class _FRDVTKReader(BaseVTKReader):
     """
 
     # Compiled regex to fix scientific notation formatting issues
-    _SCIENTIFIC_RE = re.compile(r"(?<![EeDd])-")
+    _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
 
     # CalculiX element type -> VTK cell type
-    CCX_TO_VTK_TYPE: Dict[int, int] = {
-        1: 12,   # he8  -> VTK_HEXAHEDRON
-        2: 13,   # pe6  -> VTK_WEDGE
-        3: 10,   # te4  -> VTK_TETRA
-        4: 25,   # he20 -> VTK_QUADRATIC_HEXAHEDRON
-        5: 13,   # pe15 -> VTK_WEDGE (degraded; pe15 not native to base VTK)
-        6: 24,   # te10 -> VTK_QUADRATIC_TETRA
-        7: 5,    # tr3  -> VTK_TRIANGLE
-        8: 22,   # tr6  -> VTK_QUADRATIC_TRIANGLE
-        9: 9,    # qu4  -> VTK_QUAD
+    CCX_TO_VTK_TYPE: dict[int, int] = {
+        1: 12,  # he8  -> VTK_HEXAHEDRON
+        2: 13,  # pe6  -> VTK_WEDGE
+        3: 10,  # te4  -> VTK_TETRA
+        4: 25,  # he20 -> VTK_QUADRATIC_HEXAHEDRON
+        5: 13,  # pe15 -> VTK_WEDGE (degraded; pe15 not native to base VTK)
+        6: 24,  # te10 -> VTK_QUADRATIC_TETRA
+        7: 5,  # tr3  -> VTK_TRIANGLE
+        8: 22,  # tr6  -> VTK_QUADRATIC_TRIANGLE
+        9: 9,  # qu4  -> VTK_QUAD
         10: 23,  # qu8  -> VTK_QUADRATIC_QUAD
-        11: 3,   # be2  -> VTK_LINE
+        11: 3,  # be2  -> VTK_LINE
         12: 21,  # be3  -> VTK_QUADRATIC_EDGE
     }
 
-    NODES_PER_ELEM: Dict[int, int] = {
-        1: 8, 2: 6, 3: 4, 4: 20, 5: 15, 6: 10,
-        7: 3, 8: 6, 9: 4, 10: 8, 11: 2, 12: 3,
+    NODES_PER_ELEM: dict[int, int] = {
+        1: 8,
+        2: 6,
+        3: 4,
+        4: 20,
+        5: 15,
+        6: 10,
+        7: 3,
+        8: 6,
+        9: 4,
+        10: 8,
+        11: 2,
+        12: 3,
     }
 
     def __init__(self) -> None:
         super().__init__()
         # Geometry
-        self._nodes: Dict[int, List[float]] = {}
-        self._elements: List[List[int]] = []
-        self._cell_types: List[int] = []
+        self._nodes: dict[int, list[float]] = {}
+        self._elements: list[list[int]] = []
+        self._cell_types: list[int] = []
 
         # Time-step data: time_value -> { result_name -> { node_id -> [values] } }
-        self._results_by_step: Dict[float, Dict[str, Dict[int, List[float]]]] = {}
-        
+        self._results_by_step: dict[float, dict[str, dict[int, list[float]]]] = {}
+
         # Time steps
-        self._time_steps: List[float] = []
+        self._time_steps: list[float] = []
         self._active_time_point: int = 0
         self._output_time: object = object()
 
@@ -78,25 +94,19 @@ class _FRDVTKReader(BaseVTKReader):
         self._output = None
         self._output_time = object()
 
-        with open(self._filename, "r", errors="replace") as fh:
+        with pathlib.Path(self._filename).open(errors='replace') as fh:
             self._parse_lines(fh)
-            
+
         self._time_steps = sorted(self._results_by_step.keys())
 
     def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
         """Return an UnstructuredGrid for the currently active time step."""
-        target_time = (
-            self._time_steps[self._active_time_point]
-            if self._time_steps
-            else None
-        )
+        target_time = self._time_steps[self._active_time_point] if self._time_steps else None
         if self._output is None or self._output_time != target_time:
             if not self._nodes:
                 self.Update()
             step_data = (
-                self._results_by_step.get(target_time, {})
-                if target_time is not None
-                else {}
+                self._results_by_step.get(target_time, {}) if target_time is not None else {}
             )
             self._output = self._build_grid(step_data)
             self._output_time = target_time
@@ -110,25 +120,40 @@ class _FRDVTKReader(BaseVTKReader):
     @classmethod
     def _fix_scientific(cls, line: str) -> str:
         """Insert a space before a bare ``-`` sign adjacent to a number."""
-        return cls._SCIENTIFIC_RE.sub(" -", line)
+        return cls._SCIENTIFIC_RE.sub(' -', line)
 
     @staticmethod
-    def _parse_100cl_header(line: str) -> Tuple[int, float]:
+    def _parse_100cl_header(line: str) -> tuple[int, float]:
         parts = line.split()
         try:
             return int(parts[1]), float(parts[2])
         except (IndexError, ValueError):
             return -1, 0.0
 
-    def _permute_nodes(self, node_ids: List[int], etype: int) -> List[int]:
+    def _permute_nodes(self, node_ids: list[int], etype: int) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
         if etype == 4 and len(node_ids) == 20:
             return [
-                node_ids[0],  node_ids[1],  node_ids[2],  node_ids[3],
-                node_ids[4],  node_ids[5],  node_ids[6],  node_ids[7],
-                node_ids[8],  node_ids[9],  node_ids[10], node_ids[11],
-                node_ids[16], node_ids[17], node_ids[18], node_ids[19],
-                node_ids[12], node_ids[13], node_ids[14], node_ids[15],
+                node_ids[0],
+                node_ids[1],
+                node_ids[2],
+                node_ids[3],
+                node_ids[4],
+                node_ids[5],
+                node_ids[6],
+                node_ids[7],
+                node_ids[8],
+                node_ids[9],
+                node_ids[10],
+                node_ids[11],
+                node_ids[16],
+                node_ids[17],
+                node_ids[18],
+                node_ids[19],
+                node_ids[12],
+                node_ids[13],
+                node_ids[14],
+                node_ids[15],
             ]
 
         if etype == 7 and len(node_ids) == 3:
@@ -146,10 +171,7 @@ class _FRDVTKReader(BaseVTKReader):
             corners = node_ids[:4]
             mids = node_ids[4:]
             p = [self._nodes[n] for n in corners]
-            area = sum(
-                p[i][0] * p[(i + 1) % 4][1] - p[(i + 1) % 4][0] * p[i][1]
-                for i in range(4)
-            )
+            area = sum(p[i][0] * p[(i + 1) % 4][1] - p[(i + 1) % 4][0] * p[i][1] for i in range(4))
             if area < 0:
                 corners = [corners[0], corners[3], corners[2], corners[1]]
                 if mids:
@@ -166,11 +188,11 @@ class _FRDVTKReader(BaseVTKReader):
         """Main loop dispatching to block-specific parsers."""
         for line in fh:
             s = line.strip()
-            if s.startswith("2C"):
+            if s.startswith('2C'):
                 self._parse_nodes(fh)
-            elif s.startswith("3C"):
+            elif s.startswith('3C'):
                 self._parse_elements(fh)
-            elif s.startswith("100"):
+            elif s.startswith('100'):
                 _step_id, step_time = self._parse_100cl_header(s)
                 self._parse_results(fh, step_time)
 
@@ -178,7 +200,7 @@ class _FRDVTKReader(BaseVTKReader):
         """Parse 2C node block."""
         for line in fh:
             s = line.strip()
-            if s.startswith("-3"):
+            if s.startswith('-3'):
                 return
             try:
                 parts = self._fix_scientific(s).split()
@@ -190,16 +212,16 @@ class _FRDVTKReader(BaseVTKReader):
     def _parse_elements(self, fh: Any) -> None:
         """Parse 3C element block."""
         needed = 0
-        node_ids: List[int] = []
+        node_ids: list[int] = []
         etype = None
         vtk_type = None
 
         for line in fh:
             s = line.strip()
-            if s.startswith("-3"):
+            if s.startswith('-3'):
                 return
 
-            if s.startswith("-1"):
+            if s.startswith('-1'):
                 parts = s.split()
                 try:
                     etype = int(parts[2])
@@ -215,7 +237,7 @@ class _FRDVTKReader(BaseVTKReader):
                 vtk_type = self.CCX_TO_VTK_TYPE[etype]
                 node_ids = []
 
-            elif s.startswith("-2") and etype is not None:
+            elif s.startswith('-2') and etype is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
                 if len(node_ids) >= needed:
                     final_nodes = node_ids[:needed]
@@ -230,29 +252,27 @@ class _FRDVTKReader(BaseVTKReader):
             self._results_by_step[step_time] = {}
 
         step_bucket = self._results_by_step[step_time]
-        name = "Unknown"
+        name = 'Unknown'
 
         for line in fh:
             s = line.strip()
-            if s.startswith("-4"):
+            if s.startswith('-4'):
                 parts = s.split()
                 if len(parts) >= 2:
                     name = parts[1]
-            elif s.startswith("-5"):
+            elif s.startswith('-5'):
                 continue
-            elif s.startswith("-1"):
+            elif s.startswith('-1'):
                 # Pass the first data line and iterator down to collect data
                 self._parse_result_data(s, fh, name, step_bucket)
                 return
-            elif s.startswith("-3"):
+            elif s.startswith('-3'):
                 return
 
-    def _parse_result_data(
-        self, first_line: str, fh: Any, name: str, step_bucket: Dict
-    ) -> None:
+    def _parse_result_data(self, first_line: str, fh: Any, name: str, step_bucket: dict) -> None:
         """Parse -1 records until -3 sentinel is hit."""
-        data: Dict[int, List[float]] = {}
-        
+        data: dict[int, list[float]] = {}
+
         # Process the very first line passed from _parse_results
         try:
             parts = self._fix_scientific(first_line).split()
@@ -263,9 +283,9 @@ class _FRDVTKReader(BaseVTKReader):
         # Continue with the rest of the file iterator
         for line in fh:
             s = line.strip()
-            if s.startswith("-3"):
+            if s.startswith('-3'):
                 break
-            if s.startswith("-1"):
+            if s.startswith('-1'):
                 try:
                     parts = self._fix_scientific(s).split()
                     data[int(parts[1])] = [float(x) for x in parts[2:]]
@@ -286,14 +306,12 @@ class _FRDVTKReader(BaseVTKReader):
         xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
 
         vmises = np.sqrt(
-            0.5 * (
-                (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2
-                + 6.0 * (xy ** 2 + yz ** 2 + zx ** 2)
-            )
+            0.5
+            * ((xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2 + 6.0 * (xy**2 + yz**2 + zx**2))
         )
         trace = xx + yy + zz
-        grid.point_data[f"{base_name}_vMises"] = vmises
-        grid.point_data[f"{base_name}_sgMises"] = np.where(
+        grid.point_data[f'{base_name}_vMises'] = vmises
+        grid.point_data[f'{base_name}_sgMises'] = np.where(
             trace != 0, np.sign(trace) * vmises, vmises
         )
         self._compute_principals(grid, base_name, tensor)
@@ -306,20 +324,17 @@ class _FRDVTKReader(BaseVTKReader):
 
         k = np.sqrt(2.0) / 3.0
         vmises_strain = k * np.sqrt(
-            (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2
-            + 6.0 * (xy ** 2 + yz ** 2 + zx ** 2)
+            (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2 + 6.0 * (xy**2 + yz**2 + zx**2)
         )
         volumetric = xx + yy + zz
-        grid.point_data[f"{base_name}_vMises"] = vmises_strain
-        grid.point_data[f"{base_name}_sgMises"] = np.where(
+        grid.point_data[f'{base_name}_vMises'] = vmises_strain
+        grid.point_data[f'{base_name}_sgMises'] = np.where(
             volumetric != 0, np.sign(volumetric) * vmises_strain, vmises_strain
         )
         self._compute_principals(grid, base_name, tensor)
 
     @staticmethod
-    def _compute_principals(
-        grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
-    ) -> None:
+    def _compute_principals(grid: UnstructuredGrid, base_name: str, tensor: np.ndarray) -> None:
         n = tensor.shape[0]
         mat = np.zeros((n, 3, 3))
         mat[:, 0, 0] = tensor[:, 0]
@@ -330,26 +345,25 @@ class _FRDVTKReader(BaseVTKReader):
         mat[:, 0, 2] = mat[:, 2, 0] = tensor[:, 5]
 
         eigvals = np.linalg.eigvalsh(mat)
-        grid.point_data[f"{base_name}_PS3"] = eigvals[:, 0]
-        grid.point_data[f"{base_name}_PS2"] = eigvals[:, 1]
-        grid.point_data[f"{base_name}_PS1"] = eigvals[:, 2]
+        grid.point_data[f'{base_name}_PS3'] = eigvals[:, 0]
+        grid.point_data[f'{base_name}_PS2'] = eigvals[:, 1]
+        grid.point_data[f'{base_name}_PS1'] = eigvals[:, 2]
 
     # ------------------------------------------------------------------
     # Grid assembly
     # ------------------------------------------------------------------
 
-    def _build_grid(
-        self, step_data: Dict[str, Dict[int, List[float]]]
-    ) -> UnstructuredGrid:
+    def _build_grid(self, step_data: dict[str, dict[int, list[float]]]) -> UnstructuredGrid:
         if not self._nodes:
-            raise ValueError("No nodes found in FRD file -- cannot build grid.")
+            msg = 'No nodes found in FRD file -- cannot build grid.'
+            raise ValueError(msg)
 
         sorted_ids = sorted(self._nodes)
         node_map = {nid: idx for idx, nid in enumerate(sorted_ids)}
         points = np.array([self._nodes[n] for n in sorted_ids], dtype=float)
 
-        cells: List[int] = []
-        types: List[int] = []
+        cells: list[int] = []
+        types: list[int] = []
         for conn, ctype in zip(self._elements, self._cell_types):
             try:
                 vtk_ids = [node_map[n] for n in conn]
@@ -365,9 +379,7 @@ class _FRDVTKReader(BaseVTKReader):
             points,
         )
 
-        grid.point_data["Original_Node_ID"] = np.array(
-            [str(nid) for nid in sorted_ids]
-        )
+        grid.point_data['Original_Node_ID'] = np.array([str(nid) for nid in sorted_ids])
 
         n_points = len(points)
         for name, data in step_data.items():
@@ -389,9 +401,9 @@ class _FRDVTKReader(BaseVTKReader):
                 grid.point_data[name] = arr
 
                 upper = name.upper()
-                if "STRESS" in upper and n_components == 6:
+                if 'STRESS' in upper and n_components == 6:
                     self._compute_derived_stress(grid, name, arr)
-                elif "STRAIN" in upper and n_components == 6:
+                elif 'STRAIN' in upper and n_components == 6:
                     self._compute_derived_strain(grid, name, arr)
 
         return grid
@@ -400,6 +412,7 @@ class _FRDVTKReader(BaseVTKReader):
 # ---------------------------------------------------------------------------
 # Public PyVista reader
 # ---------------------------------------------------------------------------
+
 
 class FRDReader(BaseReader, TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``)."""
@@ -424,22 +437,23 @@ class FRDReader(BaseReader, TimeReader):
         return self.reader._time_steps[time_point]
 
     @property
-    def time_values(self) -> List[float]:
+    def time_values(self) -> list[float]:
         return list(self.reader._time_steps)
 
     def set_active_time_point(self, time_point: int) -> None:
         n = self.number_time_points
         if not 0 <= time_point < n:
+            msg = f'time_point {time_point} is out of range (file has {n} time point(s)).'
             raise IndexError(
-                f"time_point {time_point} is out of range "
-                f"(file has {n} time point(s))."
+                msg
             )
         self.reader._active_time_point = time_point
 
     def set_active_time_value(self, time_value: float) -> None:
         steps = self.reader._time_steps
         if not steps:
-            raise RuntimeError("No time steps found in the FRD file.")
+            msg = 'No time steps found in the FRD file.'
+            raise RuntimeError(msg)
         idx = int(np.argmin(np.abs(np.array(steps) - time_value)))
         self.reader._active_time_point = idx
 
@@ -465,7 +479,8 @@ class FRDReader(BaseReader, TimeReader):
 
 try:
     from pyvista.core.utilities.reader import CLASS_READERS_MAP
-    if ".frd" not in CLASS_READERS_MAP:
-        CLASS_READERS_MAP[".frd"] = FRDReader
+
+    if '.frd' not in CLASS_READERS_MAP:
+        CLASS_READERS_MAP['.frd'] = FRDReader
 except ImportError:
     pass
