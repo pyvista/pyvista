@@ -218,7 +218,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('paraview_color', test_cases, ids=color_names)
 
     if 'color_synonym' in metafunc.fixturenames:
-        synonyms = list(pv.colors.color_synonyms.keys())
+        synonyms = list(pv.colors._formatted_color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
