@@ -33,6 +33,7 @@ from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import _CELL_TYPES_1D
 from pyvista.core.celltype import _CELL_TYPES_2D
 from pyvista.core.celltype import _CELL_TYPES_3D
+from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -45,13 +46,13 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.reader import _mesh_types
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
-    from pyvista import CellType
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
@@ -217,8 +218,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _allowed_cell_fields = get_args(_CellFields)
     _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
 
-    _SECTION_HEADINGS: ClassVar[set[str]] = set()  # Used by validate CLI for coloring output
-    _NORMALIZED_FIELD_NAMES: ClassVar[set[str]] = set()  # Used by validate CLI for coloring output
+    _SECTION_HEADINGS: ClassVar[set[str]] = set()  # Used to colorize output
+    _NORMALIZED_FIELD_NAMES: ClassVar[set[str]] = set()  # Used to colorize output
 
     @dataclass
     class _FieldSummary:
@@ -665,6 +666,31 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         return self._validation_report
+
+    @staticmethod
+    def _colorize_output(string: str) -> str:
+        def _format_color(text: str, names: Iterable[str], style: str) -> str:
+            """Highlight all occurrences of `names` in `text` using Rich style markup."""
+            for name in names:
+                text = text.replace(name, f'[{style}]{name}[/{style}]')
+            return text
+
+        # Highlight cell types in yellow
+        cell_names = {celltype.name for celltype in CellType}
+        string = _format_color(string, cell_names, 'yellow')
+
+        # Highlight mesh types in purple
+        mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
+        string = _format_color(string, mesh_names, 'purple')
+
+        # Make section headings bold
+        section_headings = _MeshValidator._SECTION_HEADINGS
+        string = _format_color(string, section_headings, 'bold')
+
+        # Highlight invalid fields in message as red
+        # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
+        norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
+        return _format_color(string, norm_field_names, 'red')
 
 
 _LiteralMeshValidationFields = (

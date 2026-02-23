@@ -10,11 +10,9 @@ from typing import get_args
 from cyclopts import Parameter
 
 import pyvista as pv
-from pyvista.core.celltype import CellType
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
 from pyvista.core.filters.data_object import _MeshValidator
 from pyvista.core.filters.data_object import _ReportBodyOptions
-from pyvista.core.utilities.reader import _mesh_types
 
 from .app import app
 from .utils import HELP_FORMATTER
@@ -22,7 +20,6 @@ from .utils import _console_error
 from .utils import _converter_files
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from collections.abc import Sequence
 
     from cyclopts import Token
@@ -101,31 +98,6 @@ def _converter_report(
     raise ValueError(msg)
 
 
-def _color_output(string: str) -> str:
-    def _format_color(text: str, names: Iterable[str], style: str) -> str:
-        """Highlight all occurrences of `names` in `text` using Rich style markup."""
-        for name in names:
-            text = text.replace(name, f'[{style}]{name}[/{style}]')
-        return text
-
-    # Highlight cell types in yellow
-    cell_names = {celltype.name for celltype in CellType}
-    string = _format_color(string, cell_names, 'yellow')
-
-    # Highlight mesh types in purple
-    mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
-    string = _format_color(string, mesh_names, 'purple')
-
-    # Make section headings bold
-    section_headings = _MeshValidator._SECTION_HEADINGS
-    string = _format_color(string, section_headings, 'bold')
-
-    # Highlight invalid fields in message as red
-    # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
-    norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
-    return _format_color(string, norm_field_names, 'red')
-
-
 @app.command(
     usage=f'Usage: [bold]{pv.__name__} validate MESH-PATH [FIELDS...] [--exclude FIELDS...]',
     help_formatter=HELP_FORMATTER,
@@ -183,11 +155,11 @@ def _validate(
         _console_error(app=app, message=msg)
     else:
         if report is not None:
-            app.console.print(_color_output(str(out)))
+            app.console.print(_MeshValidator._colorize_output(str(out)))
         elif (message := out.message) is not None:
-            # Only print the error message
-            message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
-            app.console.print(_color_output(message))
+            # Only print the error message and show the file name
+            message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid', 1)
+            app.console.print(_MeshValidator._colorize_output(message))
         else:
             # Mesh is valid
             app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
