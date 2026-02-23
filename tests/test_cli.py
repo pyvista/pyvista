@@ -314,7 +314,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
-        '----------------------\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
         '    Type           : PolyData\n'
         '    N Points       : 486\n'
@@ -334,7 +334,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
-        '----------------------\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
         'Mesh info:\n'
         '    Type                     : PolyData\n'
         '    N Points                 : 486\n'
