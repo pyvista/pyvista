@@ -1,377 +1,471 @@
 from __future__ import annotations
 
-import pathlib
 import re
+from typing import Dict, List, Tuple, Any
 
 import numpy as np
 
+import pyvista as pv
 from pyvista.core.pointset import UnstructuredGrid
+from pyvista.core.utilities.reader import BaseReader, BaseVTKReader, TimeReader
 
 
-class FRDReader:
-    """FRD Reader for CalculiX files.
-    Supports 1D, 2D and 3D elements, including HEX20 with correct VTK node permutation.
-    Calculates derived fields: vMises, Signed vMises, and Principal Stresses/Strains.
+# ---------------------------------------------------------------------------
+# Low-level, VTK-style reader
+# ---------------------------------------------------------------------------
+
+class _FRDVTKReader(BaseVTKReader):
+    """VTK-style reader for CalculiX FRD ASCII result files.
+
+    This class mirrors the interface expected by :class:`BaseVTKReader` so
+    that :class:`FRDReader` can delegate to it in exactly the same way as
+    other de-novo readers (e.g. ``SeriesReader``).
     """
 
-    # Mapping CalculiX element indices to VTK cell types
-    CCX_TO_VTK_TYPE = {
-        1: 12,  # he8
-        2: 13,  # pe6
-        3: 10,  # te4
-        4: 25,  # he20 (Quadratic Hexahedron)
-        5: 13,  # pe15 (Mapped to wedge)
-        6: 24,  # te10 (Quadratic Tetra)
-        7: 5,  # tr3
-        8: 22,  # tr6
-        9: 9,  # qu4
-        10: 23,  # qu8
-        11: 3,  # be2
-        12: 21,  # be3
+    # Compiled regex to fix scientific notation formatting issues
+    _SCIENTIFIC_RE = re.compile(r"(?<![EeDd])-")
+
+    # CalculiX element type -> VTK cell type
+    CCX_TO_VTK_TYPE: Dict[int, int] = {
+        1: 12,   # he8  -> VTK_HEXAHEDRON
+        2: 13,   # pe6  -> VTK_WEDGE
+        3: 10,   # te4  -> VTK_TETRA
+        4: 25,   # he20 -> VTK_QUADRATIC_HEXAHEDRON
+        5: 13,   # pe15 -> VTK_WEDGE (degraded; pe15 not native to base VTK)
+        6: 24,   # te10 -> VTK_QUADRATIC_TETRA
+        7: 5,    # tr3  -> VTK_TRIANGLE
+        8: 22,   # tr6  -> VTK_QUADRATIC_TRIANGLE
+        9: 9,    # qu4  -> VTK_QUAD
+        10: 23,  # qu8  -> VTK_QUADRATIC_QUAD
+        11: 3,   # be2  -> VTK_LINE
+        12: 21,  # be3  -> VTK_QUADRATIC_EDGE
     }
 
-    # Number of nodes expected for each CalculiX element type
-    NODES_PER_ELEM = {1: 8, 2: 6, 3: 4, 4: 20, 5: 15, 6: 10, 7: 3, 8: 6, 9: 4, 10: 8, 11: 2, 12: 3}
+    NODES_PER_ELEM: Dict[int, int] = {
+        1: 8, 2: 6, 3: 4, 4: 20, 5: 15, 6: 10,
+        7: 3, 8: 6, 9: 4, 10: 8, 11: 2, 12: 3,
+    }
 
-    def __init__(self, filename):
-        self.filename = filename
-        self.nodes = {}
-        self.elements = []
-        self.cell_types = []
-        self.raw_results = {}
-        self.result_counter = {}
+    def __init__(self) -> None:
+        super().__init__()
+        # Geometry
+        self._nodes: Dict[int, List[float]] = {}
+        self._elements: List[List[int]] = []
+        self._cell_types: List[int] = []
 
-    def read(self):
-        """Read the file and return a grid with attached results."""
-        with pathlib.Path(self.filename).open(errors='replace') as f:
-            lines = f.readlines()
-        self._parse_lines(lines)
-        return self._build_grid()
+        # Time-step data: time_value -> { result_name -> { node_id -> [values] } }
+        self._results_by_step: Dict[float, Dict[str, Dict[int, List[float]]]] = {}
+        
+        # Time steps
+        self._time_steps: List[float] = []
+        self._active_time_point: int = 0
+        self._output_time: object = object()
 
-    def _fix_line(self, line):
-        """Fixes CalculiX scientific notation (e.g., adds space before negative exponents if missing)."""
-        return re.sub(r'(?<![EeDd])-', ' -', line)
+    def SetFileName(self, filename: str) -> None:  # noqa: N802
+        self._filename = filename
 
-    def _permute_nodes(self, node_ids, etype):
-        """Reorders node IDs to match VTK standards.
-        Crucial for HEX20 and surface elements (winding order).
-        """
+    def UpdateInformation(self) -> None:  # noqa: N802
+        pass
+
+    def Update(self) -> None:  # noqa: N802
+        """Parse the file using a memory-efficient iterator approach."""
+        self._nodes.clear()
+        self._elements.clear()
+        self._cell_types.clear()
+        self._results_by_step.clear()
+        self._time_steps.clear()
+        self._active_time_point = 0
+        self._output = None
+        self._output_time = object()
+
+        with open(self._filename, "r", errors="replace") as fh:
+            self._parse_lines(fh)
+            
+        self._time_steps = sorted(self._results_by_step.keys())
+
+    def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
+        """Return an UnstructuredGrid for the currently active time step."""
+        target_time = (
+            self._time_steps[self._active_time_point]
+            if self._time_steps
+            else None
+        )
+        if self._output is None or self._output_time != target_time:
+            if not self._nodes:
+                self.Update()
+            step_data = (
+                self._results_by_step.get(target_time, {})
+                if target_time is not None
+                else {}
+            )
+            self._output = self._build_grid(step_data)
+            self._output_time = target_time
+
+        return self._output
+
+    # ------------------------------------------------------------------
+    # Parsing helpers
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _fix_scientific(cls, line: str) -> str:
+        """Insert a space before a bare ``-`` sign adjacent to a number."""
+        return cls._SCIENTIFIC_RE.sub(" -", line)
+
+    @staticmethod
+    def _parse_100cl_header(line: str) -> Tuple[int, float]:
+        parts = line.split()
+        try:
+            return int(parts[1]), float(parts[2])
+        except (IndexError, ValueError):
+            return -1, 0.0
+
+    def _permute_nodes(self, node_ids: List[int], etype: int) -> List[int]:
+        """Reorder node IDs from CalculiX to VTK conventions."""
         if etype == 4 and len(node_ids) == 20:
             return [
-                node_ids[0],
-                node_ids[1],
-                node_ids[2],
-                node_ids[3],
-                node_ids[4],
-                node_ids[5],
-                node_ids[6],
-                node_ids[7],
-                node_ids[8],
-                node_ids[9],
-                node_ids[10],
-                node_ids[11],
-                node_ids[16],
-                node_ids[17],
-                node_ids[18],
-                node_ids[19],
-                node_ids[12],
-                node_ids[13],
-                node_ids[14],
-                node_ids[15],
+                node_ids[0],  node_ids[1],  node_ids[2],  node_ids[3],
+                node_ids[4],  node_ids[5],  node_ids[6],  node_ids[7],
+                node_ids[8],  node_ids[9],  node_ids[10], node_ids[11],
+                node_ids[16], node_ids[17], node_ids[18], node_ids[19],
+                node_ids[12], node_ids[13], node_ids[14], node_ids[15],
             ]
 
-        # TR3: Ensure Counter-Clockwise
         if etype == 7 and len(node_ids) == 3:
-            p = [self.nodes[n] for n in node_ids]
-            A = (
+            p = [self._nodes[n] for n in node_ids]
+            area = (
                 p[0][0] * (p[1][1] - p[2][1])
                 + p[1][0] * (p[2][1] - p[0][1])
                 + p[2][0] * (p[0][1] - p[1][1])
             )
-            if A < 0:
+            if area < 0:
                 return [node_ids[0], node_ids[2], node_ids[1]]
             return node_ids
 
-        # QU4: Ensure Counter-Clockwise
-        if etype == 9 and len(node_ids) == 4:
-            p = [self.nodes[n] for n in node_ids]
-            A = 0
-            for i in range(4):
-                x1, y1 = p[i][0], p[i][1]
-                x2, y2 = p[(i + 1) % 4][0], p[(i + 1) % 4][1]
-                A += x1 * y2 - x2 * y1
-            if A < 0:
-                return [node_ids[0], node_ids[3], node_ids[2], node_ids[1]]
-            return node_ids
-
-        # QU8: Reorder if winding is reversed
-        if etype == 10 and len(node_ids) == 8:
-            corners = node_ids[0:4]
-            mids = node_ids[4:8]
-            p = [self.nodes[n] for n in corners]
-            A = 0
-            for i in range(4):
-                x1, y1 = p[i][0], p[i][1]
-                x2, y2 = p[(i + 1) % 4][0], p[(i + 1) % 4][1]
-                A += x1 * y2 - x2 * y1
-            if A < 0:
+        if etype in (9, 10):
+            corners = node_ids[:4]
+            mids = node_ids[4:]
+            p = [self._nodes[n] for n in corners]
+            area = sum(
+                p[i][0] * p[(i + 1) % 4][1] - p[(i + 1) % 4][0] * p[i][1]
+                for i in range(4)
+            )
+            if area < 0:
                 corners = [corners[0], corners[3], corners[2], corners[1]]
-                mids = [mids[0], mids[3], mids[2], mids[1]]
+                if mids:
+                    mids = [mids[0], mids[3], mids[2], mids[1]]
             return corners + mids
 
         return node_ids
 
-    def _parse_lines(self, lines):
-        i = 0
-        total = len(lines)
-        while i < total:
-            line = lines[i].strip()
-            if line.startswith('2C'):
-                i = self._parse_nodes(lines, i)
-            elif line.startswith('3C'):
-                i = self._parse_elements(lines, i)
-            elif line.startswith('100'):
-                i = self._parse_results(lines, i)
-            else:
-                i += 1
+    # ------------------------------------------------------------------
+    # Block parsers (Memory efficient iterators)
+    # ------------------------------------------------------------------
 
-    def _parse_nodes(self, lines, i):
-        i += 1
-        while i < len(lines):
-            s = lines[i].strip()
-            if s.startswith('-3'):
-                return i
+    def _parse_lines(self, fh: Any) -> None:
+        """Main loop dispatching to block-specific parsers."""
+        for line in fh:
+            s = line.strip()
+            if s.startswith("2C"):
+                self._parse_nodes(fh)
+            elif s.startswith("3C"):
+                self._parse_elements(fh)
+            elif s.startswith("100"):
+                _step_id, step_time = self._parse_100cl_header(s)
+                self._parse_results(fh, step_time)
+
+    def _parse_nodes(self, fh: Any) -> None:
+        """Parse 2C node block."""
+        for line in fh:
+            s = line.strip()
+            if s.startswith("-3"):
+                return
             try:
-                p = self._fix_line(s).split()
-                nid = int(p[1])
-                self.nodes[nid] = [float(p[2]), float(p[3]), float(p[4])]
-            except:
+                parts = self._fix_scientific(s).split()
+                nid = int(parts[1])
+                self._nodes[nid] = [float(parts[2]), float(parts[3]), float(parts[4])]
+            except (ValueError, IndexError):
                 pass
-            i += 1
-        return i
 
-    def _parse_elements(self, lines, i):
-        i += 1
-        while i < len(lines):
-            s = lines[i].strip()
-            if s.startswith('-3'):
-                return i
-            if s.startswith('-1'):
+    def _parse_elements(self, fh: Any) -> None:
+        """Parse 3C element block."""
+        needed = 0
+        node_ids: List[int] = []
+        etype = None
+        vtk_type = None
+
+        for line in fh:
+            s = line.strip()
+            if s.startswith("-3"):
+                return
+
+            if s.startswith("-1"):
                 parts = s.split()
                 try:
                     etype = int(parts[2])
-                except:
-                    i += 1
+                except (ValueError, IndexError):
+                    etype = None
                     continue
 
                 if etype not in self.CCX_TO_VTK_TYPE:
-                    i += 1
+                    etype = None
                     continue
 
                 needed = self.NODES_PER_ELEM[etype]
                 vtk_type = self.CCX_TO_VTK_TYPE[etype]
                 node_ids = []
-                j = i + 1
 
-                while j < len(lines):
-                    t = lines[j].strip()
-                    if t.startswith('-3'):
-                        break
-                    if t.startswith('-2'):
-                        p = t.split()
-                        node_ids.extend(int(x) for x in p[1:])
-                    j += 1
-                    if len(node_ids) >= needed:
-                        break
+            elif s.startswith("-2") and etype is not None:
+                node_ids.extend(int(x) for x in s.split()[1:])
+                if len(node_ids) >= needed:
+                    final_nodes = node_ids[:needed]
+                    final_nodes = self._permute_nodes(final_nodes, etype)
+                    self._elements.append(final_nodes)
+                    self._cell_types.append(vtk_type)
+                    etype = None  # Wait for the next -1 record
 
-                node_ids = node_ids[:needed]
-                if len(node_ids) == needed:
-                    node_ids = self._permute_nodes(node_ids, etype)
-                    self.elements.append(node_ids)
-                    self.cell_types.append(vtk_type)
-                i = j
-                continue
-            i += 1
-        return i
+    def _parse_results(self, fh: Any, step_time: float) -> None:
+        """Parse 100CL result block."""
+        if step_time not in self._results_by_step:
+            self._results_by_step[step_time] = {}
 
-    def _parse_results(self, lines, i):
-        name = 'Unknown'
-        t = i + 1
-        found = False
-        while t < len(lines):
-            s = lines[t].strip()
-            if s.startswith('-1'):
-                break
-            if not s.startswith('100'):
+        step_bucket = self._results_by_step[step_time]
+        name = "Unknown"
+
+        for line in fh:
+            s = line.strip()
+            if s.startswith("-4"):
                 parts = s.split()
-                for c in parts:
-                    try:
-                        float(c)
-                        isnum = True
-                    except:
-                        isnum = False
-                    if not isnum and len(c) > 1:
-                        name = c
-                        found = True
-                        break
-            if found:
-                break
-            t += 1
-
-        if name not in self.result_counter:
-            self.result_counter[name] = 0
-            final = name
-        else:
-            self.result_counter[name] += 1
-            final = f'{name}_{self.result_counter[name]}'
-
-        data = {}
-        i = t
-        while i < len(lines):
-            s = lines[i].strip()
-            if s.startswith('-3'):
-                break
-            if s.startswith('-1'):
-                try:
-                    p = self._fix_line(s).split()
-                    nid = int(p[1])
-                    vals = [float(x) for x in p[2:]]
-                    data[nid] = vals
-                except:
-                    pass
-            i += 1
-        self.raw_results[final] = data
-        return i
-
-    # -------------------------------------------------------------------------
-    # Calculation Methods (vMises, Principal, etc.)
-    # -------------------------------------------------------------------------
-    def _compute_derived_stress(self, grid, base_name, tensor):
-        """Compute vMises, sgMises, PS1-3 for Stress."""
-        xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
-        xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
-
-        # Von Mises Stress
-        vmises = np.sqrt(
-            0.5
-            * ((xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2 + 6.0 * (xy**2 + yz**2 + zx**2))
-        )
-        grid.point_data[f'{base_name}_vMises'] = vmises
-
-        # Signed Von Mises (Sign of the first invariant / trace)
-        trace = xx + yy + zz
-        sg_mises = np.sign(trace) * vmises
-        # Handle zero trace case to preserve magnitude
-        sg_mises[trace == 0] = vmises[trace == 0]
-        grid.point_data[f'{base_name}_sgMises'] = sg_mises
-
-        self._compute_principals(grid, base_name, tensor)
-
-    def _compute_derived_strain(self, grid, base_name, tensor):
-        """Compute vMises Strain (equivalent) & Signed Strain."""
-        xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
-        xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
-
-        # Coefficient for effective strain (CalculiX convention)
-        k = np.sqrt(2.0) / 3.0
-
-        vmises_strain = k * np.sqrt(
-            (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2 + 6.0 * (xy**2 + yz**2 + zx**2)
-        )
-        grid.point_data[f'{base_name}_vMises'] = vmises_strain
-
-        # Signed based on volumetric strain (trace)
-        volumetric = xx + yy + zz
-        sg_vmises_strain = np.sign(volumetric) * vmises_strain
-        sg_vmises_strain[volumetric == 0] = vmises_strain[volumetric == 0]
-
-        grid.point_data[f'{base_name}_sgMises'] = sg_vmises_strain
-
-        self._compute_principals(grid, base_name, tensor)
-
-    def _compute_principals(self, grid, base_name, tensor):
-        """Helper to compute Principal Values (PS1, PS2, PS3)."""
-        xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
-        xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
-
-        n_points = tensor.shape[0]
-        # Construct symmetric tensor matrices for all points
-        mat = np.zeros((n_points, 3, 3))
-        mat[:, 0, 0] = xx
-        mat[:, 1, 1] = yy
-        mat[:, 2, 2] = zz
-        mat[:, 0, 1] = xy
-        mat[:, 1, 0] = xy
-        mat[:, 1, 2] = yz
-        mat[:, 2, 1] = yz
-        mat[:, 0, 2] = zx
-        mat[:, 2, 0] = zx
-
-        # Calculate eigenvalues (eigh is for Hermitian/Symmetric matrices)
-        eigvals = np.linalg.eigvalsh(mat)
-
-        # Sort is usually ascending in numpy: PS3(min), PS2, PS1(max)
-        grid.point_data[f'{base_name}_PS3'] = eigvals[:, 0]  # Min
-        grid.point_data[f'{base_name}_PS2'] = eigvals[:, 1]  # Mid
-        grid.point_data[f'{base_name}_PS1'] = eigvals[:, 2]  # Max
-
-    # -------------------------------------------------------------------------
-    # Grid Construction
-    # -------------------------------------------------------------------------
-    def _build_grid(self):
-        if not self.nodes:
-            msg = 'No nodes found.'
-            raise ValueError(msg)
-
-        sorted_ids = sorted(self.nodes.keys())
-        node_map = {nid: idx for idx, nid in enumerate(sorted_ids)}
-        points = np.array([self.nodes[n] for n in sorted_ids])
-
-        cells = []
-        types = []
-
-        for conn, t in zip(self.elements, self.cell_types):
-            try:
-                idx = [node_map[n] for n in conn]
-                cells.append(len(idx))
-                cells.extend(idx)
-                types.append(t)
-            except:
+                if len(parts) >= 2:
+                    name = parts[1]
+            elif s.startswith("-5"):
                 continue
+            elif s.startswith("-1"):
+                # Pass the first data line and iterator down to collect data
+                self._parse_result_data(s, fh, name, step_bucket)
+                return
+            elif s.startswith("-3"):
+                return
+
+    def _parse_result_data(
+        self, first_line: str, fh: Any, name: str, step_bucket: Dict
+    ) -> None:
+        """Parse -1 records until -3 sentinel is hit."""
+        data: Dict[int, List[float]] = {}
+        
+        # Process the very first line passed from _parse_results
+        try:
+            parts = self._fix_scientific(first_line).split()
+            data[int(parts[1])] = [float(x) for x in parts[2:]]
+        except (ValueError, IndexError):
+            pass
+
+        # Continue with the rest of the file iterator
+        for line in fh:
+            s = line.strip()
+            if s.startswith("-3"):
+                break
+            if s.startswith("-1"):
+                try:
+                    parts = self._fix_scientific(s).split()
+                    data[int(parts[1])] = [float(x) for x in parts[2:]]
+                except (ValueError, IndexError):
+                    pass
+
+        if data:
+            step_bucket[name] = data
+
+    # ------------------------------------------------------------------
+    # Derived field computation
+    # ------------------------------------------------------------------
+
+    def _compute_derived_stress(
+        self, grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
+    ) -> None:
+        xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
+        xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
+
+        vmises = np.sqrt(
+            0.5 * (
+                (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2
+                + 6.0 * (xy ** 2 + yz ** 2 + zx ** 2)
+            )
+        )
+        trace = xx + yy + zz
+        grid.point_data[f"{base_name}_vMises"] = vmises
+        grid.point_data[f"{base_name}_sgMises"] = np.where(
+            trace != 0, np.sign(trace) * vmises, vmises
+        )
+        self._compute_principals(grid, base_name, tensor)
+
+    def _compute_derived_strain(
+        self, grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
+    ) -> None:
+        xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
+        xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
+
+        k = np.sqrt(2.0) / 3.0
+        vmises_strain = k * np.sqrt(
+            (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2
+            + 6.0 * (xy ** 2 + yz ** 2 + zx ** 2)
+        )
+        volumetric = xx + yy + zz
+        grid.point_data[f"{base_name}_vMises"] = vmises_strain
+        grid.point_data[f"{base_name}_sgMises"] = np.where(
+            volumetric != 0, np.sign(volumetric) * vmises_strain, vmises_strain
+        )
+        self._compute_principals(grid, base_name, tensor)
+
+    @staticmethod
+    def _compute_principals(
+        grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
+    ) -> None:
+        n = tensor.shape[0]
+        mat = np.zeros((n, 3, 3))
+        mat[:, 0, 0] = tensor[:, 0]
+        mat[:, 1, 1] = tensor[:, 1]
+        mat[:, 2, 2] = tensor[:, 2]
+        mat[:, 0, 1] = mat[:, 1, 0] = tensor[:, 3]
+        mat[:, 1, 2] = mat[:, 2, 1] = tensor[:, 4]
+        mat[:, 0, 2] = mat[:, 2, 0] = tensor[:, 5]
+
+        eigvals = np.linalg.eigvalsh(mat)
+        grid.point_data[f"{base_name}_PS3"] = eigvals[:, 0]
+        grid.point_data[f"{base_name}_PS2"] = eigvals[:, 1]
+        grid.point_data[f"{base_name}_PS1"] = eigvals[:, 2]
+
+    # ------------------------------------------------------------------
+    # Grid assembly
+    # ------------------------------------------------------------------
+
+    def _build_grid(
+        self, step_data: Dict[str, Dict[int, List[float]]]
+    ) -> UnstructuredGrid:
+        if not self._nodes:
+            raise ValueError("No nodes found in FRD file -- cannot build grid.")
+
+        sorted_ids = sorted(self._nodes)
+        node_map = {nid: idx for idx, nid in enumerate(sorted_ids)}
+        points = np.array([self._nodes[n] for n in sorted_ids], dtype=float)
+
+        cells: List[int] = []
+        types: List[int] = []
+        for conn, ctype in zip(self._elements, self._cell_types):
+            try:
+                vtk_ids = [node_map[n] for n in conn]
+            except KeyError:
+                continue
+            cells.append(len(vtk_ids))
+            cells.extend(vtk_ids)
+            types.append(ctype)
 
         grid = UnstructuredGrid(
-            np.array(cells, dtype=np.int64), np.array(types, dtype=np.uint8), points
+            np.array(cells, dtype=np.int64),
+            np.array(types, dtype=np.uint8),
+            points,
         )
 
-        # IMPORTANT: Persist original Node IDs for labeling/verification
-        original_ids_str = np.array([str(nid) for nid in sorted_ids])
-        grid.point_data['Original_Node_ID'] = original_ids_str
+        grid.point_data["Original_Node_ID"] = np.array(
+            [str(nid) for nid in sorted_ids]
+        )
 
-        # Attach results and calculate derived fields
-        for name, d in self.raw_results.items():
-            if not d:
+        n_points = len(points)
+        for name, data in step_data.items():
+            if not data:
                 continue
-            first = next(iter(d.values()))
-            nc = len(first)
+            n_components = len(next(iter(data.values())))
 
-            if nc == 1:
-                arr = np.zeros(len(points))
-                for nid, v in d.items():
+            if n_components == 1:
+                arr = np.zeros(n_points)
+                for nid, vals in data.items():
                     if nid in node_map:
-                        arr[node_map[nid]] = v[0]
+                        arr[node_map[nid]] = vals[0]
                 grid.point_data[name] = arr
             else:
-                arr = np.zeros((len(points), nc))
-                for nid, v in d.items():
+                arr = np.zeros((n_points, n_components))
+                for nid, vals in data.items():
                     if nid in node_map:
-                        arr[node_map[nid]] = v
+                        arr[node_map[nid]] = vals
                 grid.point_data[name] = arr
 
-                # Automatically calculate Stress/Strain invariants
-                if 'STRESS' in name.upper() and nc == 6:
+                upper = name.upper()
+                if "STRESS" in upper and n_components == 6:
                     self._compute_derived_stress(grid, name, arr)
-
-                if 'STRAIN' in name.upper() and nc == 6:
+                elif "STRAIN" in upper and n_components == 6:
                     self._compute_derived_strain(grid, name, arr)
 
         return grid
+
+
+# ---------------------------------------------------------------------------
+# Public PyVista reader
+# ---------------------------------------------------------------------------
+
+class FRDReader(BaseReader, TimeReader):
+    """Reader for CalculiX FRD ASCII result files (``.frd``)."""
+
+    _class_reader = _FRDVTKReader
+
+    def __init__(self, path: str) -> None:
+        super().__init__(path)
+        self._reader: _FRDVTKReader = self._class_reader()
+        self._reader.SetFileName(self.path)
+        self._reader.Update()
+
+    @property
+    def reader(self) -> _FRDVTKReader:
+        return self._reader
+
+    @property
+    def number_time_points(self) -> int:
+        return len(self.reader._time_steps)
+
+    def time_point_value(self, time_point: int) -> float:
+        return self.reader._time_steps[time_point]
+
+    @property
+    def time_values(self) -> List[float]:
+        return list(self.reader._time_steps)
+
+    def set_active_time_point(self, time_point: int) -> None:
+        n = self.number_time_points
+        if not 0 <= time_point < n:
+            raise IndexError(
+                f"time_point {time_point} is out of range "
+                f"(file has {n} time point(s))."
+            )
+        self.reader._active_time_point = time_point
+
+    def set_active_time_value(self, time_value: float) -> None:
+        steps = self.reader._time_steps
+        if not steps:
+            raise RuntimeError("No time steps found in the FRD file.")
+        idx = int(np.argmin(np.abs(np.array(steps) - time_value)))
+        self.reader._active_time_point = idx
+
+    @property
+    def active_time_value(self) -> float:
+        steps = self.reader._time_steps
+        if not steps:
+            return 0.0
+        return steps[self.reader._active_time_point]
+
+    @active_time_value.setter
+    def active_time_value(self, value: float) -> None:
+        self.set_active_time_value(value)
+
+    def read(self) -> UnstructuredGrid:
+        return self.reader.GetOutput()
+
+
+# ---------------------------------------------------------------------------
+# PyVista Native Registration
+# ---------------------------------------------------------------------------
+# This allows using pv.read('my_file.frd') directly
+
+try:
+    from pyvista.core.utilities.reader import CLASS_READERS_MAP
+    if ".frd" not in CLASS_READERS_MAP:
+        CLASS_READERS_MAP[".frd"] = FRDReader
+except ImportError:
+    pass
