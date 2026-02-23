@@ -322,6 +322,9 @@ def test_unique_colors():
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
+    assert len(pv.hex_colors) == len(_ALL_ANNOTATED_COLORS)
+    assert set(pv.hex_colors.keys()) == set(_ALL_ANNOTATED_COLORS)
+
 
 @pytest.mark.skip_check_gc
 @pytest.mark.parametrize('color_annotation', _ALL_ANNOTATED_COLORS)
