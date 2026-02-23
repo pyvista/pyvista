@@ -821,6 +821,9 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
         lines: list[Any] = []
 
+        def append_group_name(name):
+            lines.append(f'{name}:')
+
         def insert_section(name: str, value: Any):
             report_tree['sections'][name] = value  # type: ignore[index]
 
