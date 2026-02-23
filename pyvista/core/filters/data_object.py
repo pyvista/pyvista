@@ -888,7 +888,7 @@ class DataObjectFilters:
         action: _ActionOptions | None = None,
         *,
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
-        report_body: _ReportBodyOptions = 'fields',
+        report_body: _ReportBodyOptions = 'message',
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
@@ -970,11 +970,13 @@ class DataObjectFilters:
         .. versionadded:: 0.47
 
         .. versionchanged:: 0.48
-            Include cell fields ``zero_size`` and ``negative_size``.
 
-        .. versionchanged:: 0.48
-            Report fields are now sorted in alphabetical order. Point fields are also reported
-            before cell fields.
+            - Include cell fields ``zero_size`` and ``negative_size``.
+            - Report fields are now sorted in alphabetical order. Point fields are also reported
+              before cell fields.
+            - The body of the report now shows the error message instead of validation fields,
+              i.e. the default value of ``report_body`` is now ``'message'`` instead of
+              ``'fields'``.
 
         Parameters
         ----------
@@ -1038,8 +1040,24 @@ class DataObjectFilters:
         >>> report.is_valid
         True
 
-        Print the full report.
+        Print the report. By default, the report is relatively minimal, and only includes
+        an error message if the mesh is invalid.
 
+        >>> print(report)
+        Mesh Validation Report
+        ----------------------
+        Mesh:
+            Type           : PolyData
+            N Points       : 842
+            N Cells        : 1680
+            Cell types     : {TRIANGLE}
+        Report summary:
+            Is valid       : True
+            Invalid fields : ()
+
+        Use ``report_body`` to explicitly show the validated fields.
+
+        >>> report = mesh.validate_mesh(report_body='fields')
         >>> print(report)
         Mesh Validation Report
         ----------------------
@@ -1075,7 +1093,7 @@ class DataObjectFilters:
         and validate it. Use ``'cells'`` to only validate the cells specifically.
 
         >>> mesh = examples.download_cow()
-        >>> report = mesh.validate_mesh('cells')
+        >>> report = mesh.validate_mesh('cells', report_body='fields')
 
         Alternatively, use ``exclude_fields`` to `remove` fields from the report instead.
         For example, excluding ``data`` and ``points`` is the same as including ``cells``.
@@ -1140,7 +1158,9 @@ class DataObjectFilters:
 
         Show a validation report for cells with intersecting edges and unused points only.
 
-        >>> report = mesh.validate_mesh(['intersecting_edges', 'unused_points'])
+        >>> report = mesh.validate_mesh(
+        ...     ['intersecting_edges', 'unused_points'], report_body='fields'
+        ... )
         >>> print(report)
         Mesh Validation Report
         ----------------------
@@ -1173,10 +1193,25 @@ class DataObjectFilters:
 
         >>> multi = mesh.cast_to_multiblock()
         >>> report = multi.validate_mesh()
+        >>> print(report)
+        Mesh Validation Report
+        ----------------------
+        Mesh:
+            Type               : MultiBlock
+            N Blocks           : 1
+        Report summary:
+            Is valid           : False
+            Invalid fields (1) : ('non_convex',)
+        Error message:
+            MultiBlock mesh is not valid due to the following problems:
+             - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
+               - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
+        Validate again but show the fields in report body.
         Instead of reporting problems with specific arrays, point ids, or cell ids, the errors
         are reported by block id. Here, block id ``0`` is reported as having non-convex cells.
 
+        >>> report = multi.validate_mesh(report_body='fields')
         >>> print(report)
         Mesh Validation Report
         ----------------------
@@ -1206,14 +1241,7 @@ class DataObjectFilters:
             Wrong number of points   : []
             Zero size                : []
 
-        The report message still contains specifics about the invalid cell ids though.
-
-        >>> print(report.message)
-        MultiBlock mesh is not valid due to the following problems:
-         - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
-           - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
-
-        And subreports for each block can be accessed with indexing.
+        Subreports for each block can be accessed with indexing.
 
         >>> len(report)
         1
