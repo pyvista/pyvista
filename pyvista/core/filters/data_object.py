@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from collections.abc import Sized
 from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
@@ -782,10 +781,17 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             raise TypeError(msg)
         return len(subreports)
 
-    def __str__(self) -> str:
-        """Include all validation results in a printable string."""
+    def _lines(self, *, pretty: bool) -> str:
+
+        from rich import box  # noqa: PLC0415
+        from rich.panel import Panel  # noqa: PLC0415
+        from rich.pretty import Pretty  # noqa: PLC0415
+        from rich.table import Table  # noqa: PLC0415
+        from rich.text import Text  # noqa: PLC0415
+
         summary_fields = ['is_valid', 'invalid_fields']
         report_fields = summary_fields.copy()
+
         if self._report_body == 'fields':  # type: ignore[attr-defined]
             dataset_fields = [f.name for f in fields(self)]
             report_fields.extend(dataset_fields)
@@ -794,31 +800,29 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             max_width = 0
             for name in report_fields:
                 width = len(name)
-                if (value := getattr(self, name)) and isinstance(value, Sized):
-                    num_digits = len(str(len(value)))
-                    len_space_plus_brackets = 3  # Value will be printed inside two brackets
-                    width += num_digits + len_space_plus_brackets
+                value = getattr(self, name, None)
+                if value and hasattr(value, '__len__'):
+                    try:
+                        length = len(value)
+                        if length:
+                            width += len(str(length)) + 3  # " (N)"
+                    except TypeError:
+                        pass
                 max_width = max(max_width, width)
-
             return max_width
-
-        report_tree: dict[Literal['title', 'sections'], str | dict[str, dict[str, Any]]] = dict(
-            title='Mesh Validation Report', sections={}
-        )
 
         indent = ' ' * 4
         label_width = compute_label_width()
-        lines: list[str] = []
 
-        def print_title(title):
-            lines.append(title)
-            lines.append('-' * len(title))
+        report_tree: dict[
+            Literal['title', 'sections'],
+            str | dict[str, dict[str, Any]],
+        ] = {'title': 'Mesh Validation Report', 'sections': {}}
 
-        def insert_section(name, value):
+        lines: list[Any] = []
+
+        def insert_section(name: str, value: Any):
             report_tree['sections'][name] = value  # type: ignore[index]
-
-        def print_section_name(name):
-            return lines.append(f'{name}:')
 
         def insert_field_section(name: str, field_names: Sequence[str]):
             if all(getattr(self, field) is None for field in field_names):
@@ -837,36 +841,88 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                     except TypeError:
                         pass
 
-                    contents[f'{label + n_values}'] = value
+                    contents[f'{label}{n_values}'] = value
+
             insert_section(name, contents)
 
-        def print_section(name: str) -> None:
-            content = report_tree['sections'][name]  # type: ignore[index]
-            if isinstance(content, dict):
-                print_section_name(name)
+        def build_pretty_section(name: str, content: str | dict[str, Any]) -> None:
+            # Case 1: message-only section
+            if isinstance(content, str):
+                table = Table(
+                    show_header=False,
+                    box=None,
+                    pad_edge=False,
+                    expand=True,
+                )
+                table.add_column()
+                table.add_row(content)
+            else:
+                table = Table(
+                    show_header=False,
+                    box=None,
+                    pad_edge=False,
+                    expand=False,
+                )
+
+                table.add_column(
+                    width=label_width,
+                    no_wrap=True,
+                    style='bold',
+                )
+                table.add_column()
+                for key, value in content.items():
+                    if isinstance(value, str):
+                        render_value = value
+                    elif isinstance(value, set):
+                        render_value = format_set(value)
+                    else:
+                        render_value = Pretty(value)
+                    table.add_row(key, render_value)
+
+            panel = Panel(
+                table,
+                title=name,
+                title_align='left',
+                box=box.SIMPLE,
+                padding=(0, 4),
+            )
+
+            lines.append(panel)
+
+        def format_set(set_):
+            # Sort by enum name (or value if not enum)
+            items = sorted(val.name if hasattr(val, 'name') else val for val in set_)
+
+            if not items:
+                return Text('{}', style='none') if pretty else str(set())
+
+            if not pretty:
+                return '{' + ', '.join(str(item) for item in items) + '}'
+
+            # Pretty mode: build renderable
+            text = Text('{')
+            for i, item in enumerate(items):
+                if i > 0:
+                    text.append(', ')
+                text.append(str(item), style='yellow')
+            text.append('}')
+            return text
+
+        def build_plain_section(name: str, content: str | dict[str, Any], out_lines: list[str]):
+            out_lines.append(f'{name}:')
+            if isinstance(content, str):
+                out_lines.extend(f'{indent}{line}' for line in content.splitlines())
+                return
+            elif isinstance(content, dict):
                 for key, value in content.items():
                     if isinstance(value, str):
                         value_fmt = value
                     elif isinstance(value, set):
-                        # Use a list to preserve order, but we format it to look like a set
-                        value_sorted = sorted(
-                            val.name if isinstance(val, IntEnum) else val for val in value
-                        )
-                        value_fmt = (
-                            str(set())
-                            if len(value_sorted) == 0
-                            else str(value_sorted)
-                            .replace('[', '{')
-                            .replace(']', '}')
-                            .replace("'", '')
-                        )
+                        value_fmt = format_set(value)
                     else:
                         value_fmt = reprlib.repr(value)
 
-                    lines.append(f'{indent}{key:<{label_width}} : {value_fmt}')
-
-        def print_message(msg: str):
-            lines.extend(f'{indent}{line}' for line in msg.split('\n'))
+                    out_lines.append(f'{indent}{key:<{label_width}} : {value_fmt}')
 
         mesh = self.mesh
         mesh_items: dict[str, str | int | set[CellType]] = {'Type': mesh.__class__.__name__}
@@ -884,27 +940,56 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             cell_text = 'Blocks with invalid cells'
             point_text = 'Blocks with invalid points'
 
-        print_title(report_tree['title'])
         insert_section('Mesh', mesh_items)
-        print_section('Mesh')
         insert_field_section('Report summary', summary_fields)
-        print_section('Report summary')
+
         if self._report_body == 'fields':  # type: ignore[attr-defined]
-            insert_field_section(data_text, _MeshValidator._allowed_data_fields)
-            print_section(data_text)
+            insert_field_section(data_text, _MeshValidator._allowed_data_fields)  # type: ignore[attr-defined]
+            insert_field_section(point_text, _MeshValidator._allowed_point_fields)  # type: ignore[attr-defined]
+            insert_field_section(cell_text, _MeshValidator._allowed_cell_fields)  # type: ignore[attr-defined]
 
-            insert_field_section(point_text, _MeshValidator._allowed_point_fields)
-            print_section(point_text)
-
-            insert_field_section(cell_text, _MeshValidator._allowed_cell_fields)
-            print_section(cell_text)
-
-        elif self._report_body == 'message' and (message := self.message) is not None:  # type: ignore[attr-defined]
+        elif (
+            self._report_body == 'message'  # type: ignore[attr-defined]
+            and (message := self.message) is not None
+        ):
             insert_section('Error message', message)
-            print_section_name('Error message')
-            print_message(message)
 
-        return '\n'.join(lines)
+        if pretty:
+            lines.append(Text(report_tree['title'], style='bold magenta underline'))
+
+            for name, content in report_tree['sections'].items():  # type: ignore[index]
+                # if isinstance(content, dict):
+                build_pretty_section(name, content)
+
+            return lines
+
+        plain_lines: list[str] = []
+        title = report_tree['title']
+        plain_lines.append(title)
+        plain_lines.append('-' * len(title))
+
+        for name, content in report_tree['sections'].items():  # type: ignore[index]
+            if content is not None:
+                build_plain_section(name, content, plain_lines)
+
+        return plain_lines
+
+    def __str__(self):
+        return '\n'.join(self._lines(pretty=False))
+
+    def _pprint(self):
+        from rich.console import Console  # noqa: PLC0415
+        from rich.console import Group  # noqa: PLC0415
+        from rich.theme import Theme  # noqa: PLC0415
+
+        theme = Theme(
+            {
+                'repr.str': 'yellow',
+            }
+        )
+        lines = self._lines(pretty=True)
+        console = Console(theme=theme)
+        console.print(Group(*lines))
 
 
 @abstract_class
