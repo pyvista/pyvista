@@ -1670,7 +1670,7 @@ def invalid_random_polydata():
 
 
 def test_validate_mesh_report_str():
-    report = pv.Sphere().validate_mesh()
+    report = pv.Sphere().validate_mesh(report_body='fields')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1708,7 +1708,7 @@ def test_validate_mesh_report_str():
 
 def test_validate_mesh_composite_report_str():
     multi = pv.Sphere().cast_to_multiblock()
-    report = multi.validate_mesh()
+    report = multi.validate_mesh(report_body='fields')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1743,7 +1743,9 @@ def test_validate_mesh_composite_report_str():
 
 
 def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
-    report = invalid_random_polydata.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
+    report = invalid_random_polydata.validate_mesh(
+        exclude_fields=['negative_size', 'zero_size'], report_body='fields'
+    )
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1790,7 +1792,9 @@ def invalid_nested_multiblock(invalid_random_polydata):
 
 
 def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
-    report = invalid_nested_multiblock.validate_mesh(exclude_fields=['negative_size', 'zero_size'])
+    report = invalid_nested_multiblock.validate_mesh(
+        exclude_fields=['negative_size', 'zero_size'], report_body='fields'
+    )
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1883,7 +1887,7 @@ def test_validate_mesh_composite_subreports(invalid_nested_multiblock):
 
 
 def test_validate_mesh_str_filtered():
-    report = pv.PolyData().validate_mesh(['data', 'unused_points'])
+    report = pv.PolyData().validate_mesh(['data', 'unused_points'], report_body='fields')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1904,7 +1908,7 @@ def test_validate_mesh_str_filtered():
     )
     assert actual == expected
 
-    report = pv.PolyData().validate_mesh(['memory_safe'])
+    report = pv.PolyData().validate_mesh(['memory_safe'], report_body='fields')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1928,7 +1932,7 @@ def test_validate_mesh_str_filtered():
 
 def test_validate_mesh_pointset(ant):
     pset = ant.cast_to_pointset()
-    report = pset.validate_mesh()
+    report = pset.validate_mesh(report_body='fields')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'
@@ -1949,7 +1953,7 @@ def test_validate_mesh_pointset(ant):
     )
     assert actual == expected
 
-    report = pset.validate_mesh('data')
+    report = pset.validate_mesh('data', report_body='fields')
     actual = str(report)
     expected = (
         'Mesh Validation Report\n'

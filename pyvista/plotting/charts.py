@@ -25,8 +25,8 @@ from . import _vtk
 from .colors import COLOR_SCHEMES
 from .colors import SCHEME_NAMES
 from .colors import Color
-from .colors import color_synonyms
-from .colors import hexcolors
+from .colors import _formatted_color_synonyms
+from .colors import _formatted_hex_colors
 
 if TYPE_CHECKING:
     from ._typing import Chart
@@ -3292,7 +3292,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         # to be able to find the largest match first (e.g. find 'darkred' and '--' first instead
         # of 'red' and '-')
         colors = sorted(
-            itertools.chain(hexcolors.keys(), color_synonyms.keys()),
+            itertools.chain(_formatted_hex_colors.keys(), _formatted_color_synonyms.keys()),
             key=len,
             reverse=True,
         )
