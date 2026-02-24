@@ -220,7 +220,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     # Define variables to output that may be colorized
     _SECTION_HEADINGS: ClassVar[set[str]] = set()
-    _NORMALIZED_FIELD_NAMES: ClassVar[set[str]] = set()
+    _NORMALIZED_MESSAGE_FIELD_NAMES: ClassVar[set[str]] = set()
     _REPORT_TITLE = 'Mesh Validation Report'
 
     @dataclass
@@ -535,7 +535,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 size = 'volume'
             name_norm = name_norm.replace('size', size)
-        _MeshValidator._NORMALIZED_FIELD_NAMES.add(name_norm)
+        _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
 
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -573,7 +573,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'Mesh has {n_arrays} {kind} array{s} with incorrect length '
                 '(length must be {expected}). Invalid array{s}: {details}'
             )
-            _MeshValidator._NORMALIZED_FIELD_NAMES.add('incorrect length')
+            _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add('incorrect length')
             details = join_limited(
                 [f'{name!r} ({length})' for name, length in invalid_arrays.items()]
             )
@@ -637,9 +637,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if not array:
                 return ''
             name_norm = _MeshValidator._normalize_field_name(name_)
-            _MeshValidator._NORMALIZED_FIELD_NAMES.add(name_norm)
+            _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
             name_norm = name_norm.removesuffix('s')
-            _MeshValidator._NORMALIZED_FIELD_NAMES.add(name_norm)
+            _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
             n_ids = len(array)
             s = 's' if n_ids > 1 else ''
             return (
@@ -670,7 +670,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         return self._validation_report
 
     @staticmethod
-    def _colorize_output(string: str) -> str:
+    def _colorize_output(string: str, invalid_fields: tuple[str] | None = None) -> str:
         def _format_style(text: str, items: Iterable[str], style: str) -> str:
             """Stylize text using Rich markup."""
             for item in items:
@@ -700,8 +700,16 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         # Highlight invalid fields in message as red
         # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
-        norm_field_names = sorted(_MeshValidator._NORMALIZED_FIELD_NAMES)[::-1]
-        return _format_style(string, norm_field_names, 'red')
+        norm_field_names = sorted(_MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES)[::-1]
+        string = _format_style(string, norm_field_names, 'red')
+
+        # Highlight invalid reported fields in red:
+        if invalid_fields:
+            norm_field_names = [
+                _MeshValidator._normalize_field_name(name).capitalize() for name in invalid_fields
+            ]
+            string = _format_style(string, norm_field_names, 'red')
+        return string
 
 
 _LiteralMeshValidationFields = (

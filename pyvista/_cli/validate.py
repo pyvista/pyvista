@@ -155,7 +155,8 @@ def _validate(
         _console_error(app=app, message=msg)
     else:
         if report is not None:
-            app.console.print(_MeshValidator._colorize_output(str(out)))
+            invalid_fields = out.invalid_fields if report_body == 'fields' else None
+            app.console.print(_MeshValidator._colorize_output(str(out), invalid_fields))
         elif (message := out.message) is not None:
             # Only print the error message and show the file name
             message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid', 1)
