@@ -6156,6 +6156,141 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
         return _get_output(alg)
 
+    @_deprecate_positional_args
+    def infer_scalars_with_onnx(  # type: ignore[misc]  # noqa: PLR0917  # pragma: no cover
+        self: _DataSetType,
+        model_path: str,
+        input_parameters: Sequence[float] | np.ndarray,
+        output_array_name: str = 'onnx_inference',
+        field_association: Literal['point', 'cell'] = 'cell',
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ):
+        """Run ONNX model inference on a dataset.
+
+        This filter uses ONNX Runtime to run machine learning model inference
+        directly within a VTK pipeline. The dataset acts as a container for the
+        inference output, which can be point data or cell data. Network inputs
+        are provided as a vector of parameters.
+
+        This feature requires VTK 9.6.0 or later with ONNX Runtime support enabled.
+
+        Parameters
+        ----------
+        model_path : str
+            Path to the ONNX model file (.onnx).
+
+        input_parameters : sequence or numpy.ndarray
+            Input parameters for the ONNX model. These are passed as a vector
+            to the model for inference.
+
+        output_array_name : str, default: 'onnx_inference'
+            Name of the output array to be added to the dataset.
+
+        field_association : str, default: 'cell'
+            Whether to store the inference output as point data or cell data.
+            Must be either 'point' or 'cell'.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with inference results added as point or cell data.
+            Return type matches input.
+
+        Examples
+        --------
+        Run inference on a mesh using a trained ONNX model for stress prediction.
+        This example demonstrates a typical surrogate modeling workflow where a
+        neural network predicts Von Mises Stress based on material properties.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> # Define material and loading parameters
+        >>> # [Poisson ratio, Young's modulus (Pa), Applied force (N)]
+        >>> params = np.array([0.3, 200e9, 1000.0])  # doctest:+SKIP
+        >>> # Run inference (requires a trained ONNX model)
+        >>> result = mesh.infer_scalars_with_onnx(  # doctest:+SKIP
+        ...     model_path='stress_model.onnx',
+        ...     input_parameters=params,
+        ...     output_array_name='von_mises_stress',
+        ...     field_association='cell',
+        ... )
+        >>> result.plot(scalars='von_mises_stress', cmap='jet')  # doctest:+SKIP
+
+        Parameter study: explore how stress varies with Poisson ratio.
+
+        >>> poisson_ratios = np.linspace(0.2, 0.4, 100)  # doctest:+SKIP
+        >>> max_stresses = []  # doctest:+SKIP
+        >>> for ratio in poisson_ratios:  # doctest:+SKIP
+        ...     params = np.array([ratio, 200e9, 1000.0])
+        ...     result = mesh.infer_scalars_with_onnx(
+        ...         model_path='stress_model.onnx',
+        ...         input_parameters=params,
+        ...         output_array_name='stress',
+        ...     )
+        ...     max_stresses.append(result['stress'].max())
+
+        Notes
+        -----
+        This feature wraps VTK's ONNX Runtime integration, enabling fast
+        machine learning inference for surrogate models, inverse problems,
+        and parameter studies. ONNX models can be trained in PyTorch,
+        TensorFlow, or other frameworks and exported to ONNX format.
+
+        Typical speedups: traditional FEA simulation (~10s) vs ONNX inference
+        (~5ms) = 2000x faster, enabling real-time parameter exploration and
+        inverse problem solving.
+
+        See Also
+        --------
+        :ref:`onnx_inference_example` : Full example demonstrating ONNX inference workflow.
+
+        References
+        ----------
+        .. [1] https://www.kitware.com/enhance-your-paraview-and-vtk-pipelines-with-artificial-neural-networks/
+        .. [2] ONNX: https://onnx.ai/
+        .. [3] ONNX Runtime: https://onnxruntime.ai/
+
+        """
+        try:
+            alg = _vtk.vtkONNXInference()  # type: ignore[attr-defined]
+        except AttributeError as e:
+            msg = (
+                'ONNX Runtime support is not available in this VTK build. '
+                'This feature requires VTK 9.6.0 or later compiled with ONNX Runtime support.'
+            )
+            raise VTKVersionError(msg) from e
+
+        # Validate inputs
+        if field_association not in ('point', 'cell'):
+            msg = "field_association must be either 'point' or 'cell'"
+            raise ValueError(msg)
+
+        input_parameters = _validation.validate_array(input_parameters)
+
+        # Set up the ONNX filter
+        alg.SetInputData(self)
+        alg.SetModelFileName(model_path)
+
+        # Set input parameters
+        for i, param in enumerate(input_parameters):
+            alg.SetInputParameter(i, float(param))
+
+        # Set output configuration
+        alg.SetOutputArrayName(output_array_name)
+
+        if field_association == 'point':
+            alg.SetFieldAssociation(_vtk.vtkDataObject.POINT)
+        else:
+            alg.SetFieldAssociation(_vtk.vtkDataObject.CELL)
+
+        _update_alg(alg, progress_bar=progress_bar, message='Running ONNX Inference')
+        return _get_output(alg)
+
     @_deprecate_positional_args(allowed=['shrink_factor'])
     def shrink(  # type: ignore[misc]
         self: _DataSetType,
