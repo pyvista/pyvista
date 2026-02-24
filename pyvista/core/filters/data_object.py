@@ -670,7 +670,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         return self._validation_report
 
     @staticmethod
-    def _colorize_output(string: str, invalid_fields: tuple[str] | None = None) -> str:
+    def _colorize_output(string: str, invalid_fields: tuple[str, ...] | None = None) -> str:
         def _format_style(text: str, items: Iterable[str], style: str) -> str:
             """Stylize text using Rich markup."""
             for item in items:
