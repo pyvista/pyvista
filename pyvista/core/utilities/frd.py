@@ -3,13 +3,10 @@ from __future__ import annotations
 import pathlib
 import re
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
+from typing import ClassVar
 
 import numpy as np
 
-import pyvista as pv
 from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.utilities.reader import BaseReader
 from pyvista.core.utilities.reader import BaseVTKReader
@@ -32,7 +29,7 @@ class _FRDVTKReader(BaseVTKReader):
     _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
 
     # CalculiX element type -> VTK cell type
-    CCX_TO_VTK_TYPE: dict[int, int] = {
+    CCX_TO_VTK_TYPE: ClassVar[dict[int, int]] = {
         1: 12,  # he8  -> VTK_HEXAHEDRON
         2: 13,  # pe6  -> VTK_WEDGE
         3: 10,  # te4  -> VTK_TETRA
@@ -47,7 +44,7 @@ class _FRDVTKReader(BaseVTKReader):
         12: 21,  # be3  -> VTK_QUADRATIC_EDGE
     }
 
-    NODES_PER_ELEM: dict[int, int] = {
+    NODES_PER_ELEM: ClassVar[dict[int, int]] = {
         1: 8,
         2: 6,
         3: 4,
@@ -76,6 +73,7 @@ class _FRDVTKReader(BaseVTKReader):
         self._time_steps: list[float] = []
         self._active_time_point: int = 0
         self._output_time: object = object()
+        self._output: UnstructuredGrid | None = None
 
     def SetFileName(self, filename: str) -> None:  # noqa: N802
         self._filename = filename
@@ -102,6 +100,7 @@ class _FRDVTKReader(BaseVTKReader):
     def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
         """Return an UnstructuredGrid for the currently active time step."""
         target_time = self._time_steps[self._active_time_point] if self._time_steps else None
+        
         if self._output is None or self._output_time != target_time:
             if not self._nodes:
                 self.Update()
@@ -111,6 +110,7 @@ class _FRDVTKReader(BaseVTKReader):
             self._output = self._build_grid(step_data)
             self._output_time = target_time
 
+        assert self._output is not None
         return self._output
 
     # ------------------------------------------------------------------
@@ -213,8 +213,8 @@ class _FRDVTKReader(BaseVTKReader):
         """Parse 3C element block."""
         needed = 0
         node_ids: list[int] = []
-        etype = None
-        vtk_type = None
+        etype: int | None = None
+        vtk_type: int | None = None
 
         for line in fh:
             s = line.strip()
@@ -237,7 +237,7 @@ class _FRDVTKReader(BaseVTKReader):
                 vtk_type = self.CCX_TO_VTK_TYPE[etype]
                 node_ids = []
 
-            elif s.startswith('-2') and etype is not None:
+            elif s.startswith('-2') and etype is not None and vtk_type is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
                 if len(node_ids) >= needed:
                     final_nodes = node_ids[:needed]
@@ -269,7 +269,7 @@ class _FRDVTKReader(BaseVTKReader):
             elif s.startswith('-3'):
                 return
 
-    def _parse_result_data(self, first_line: str, fh: Any, name: str, step_bucket: dict) -> None:
+    def _parse_result_data(self, first_line: str, fh: Any, name: str, step_bucket: dict[str, dict[int, list[float]]]) -> None:
         """Parse -1 records until -3 sentinel is hit."""
         data: dict[int, list[float]] = {}
 
@@ -364,7 +364,7 @@ class _FRDVTKReader(BaseVTKReader):
 
         cells: list[int] = []
         types: list[int] = []
-        for conn, ctype in zip(self._elements, self._cell_types):
+        for conn, ctype in zip(self._elements, self._cell_types, strict=False):
             try:
                 vtk_ids = [node_map[n] for n in conn]
             except KeyError:
@@ -419,7 +419,7 @@ class FRDReader(BaseReader, TimeReader):
 
     _class_reader = _FRDVTKReader
 
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str | pathlib.Path) -> None:
         super().__init__(path)
         self._reader: _FRDVTKReader = self._class_reader()
         self._reader.SetFileName(self.path)
@@ -468,17 +468,3 @@ class FRDReader(BaseReader, TimeReader):
 
     def read(self) -> UnstructuredGrid:
         return self.reader.GetOutput()
-
-
-# ---------------------------------------------------------------------------
-# PyVista Native Registration
-# ---------------------------------------------------------------------------
-# This allows using pv.read('my_file.frd') directly
-
-try:
-    from pyvista.core.utilities.reader import CLASS_READERS_MAP
-
-    if '.frd' not in CLASS_READERS_MAP:
-        CLASS_READERS_MAP['.frd'] = FRDReader
-except ImportError:
-    pass
