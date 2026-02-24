@@ -142,12 +142,12 @@ def pv_html_page_context(  # noqa: PLR0917
             # We can get away with directly using the pagename since "examples"
             # in the pagename is the same as the "examples" directory in the
             # repo
-            return f'http://github.com/pyvista/pyvista/edit/main/{pagename}.py'
+            return f'https://github.com/pyvista/pyvista/edit/main/{pagename}.py'
         elif '_autosummary' in pagename:
-            # This is an API example
-            fullname = pagename.split('_autosummary')[1][1:]
+            # This is an API summary stub
+            fullname = pagename.split('_autosummary')[1].lstrip('/')
             return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
         else:
-            return link
+            return link  # fallback to default
 
     context['fix_edit_link_button'] = fix_edit_link_button
