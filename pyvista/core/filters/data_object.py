@@ -907,12 +907,12 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                         'ignore',
                         category=pv.InvalidMeshWarning,
                     )
-                    cell_types = mesh.distinct_cell_types
+                    cell_types_ = mesh.distinct_cell_types
             else:
-                cell_types = mesh.distinct_cell_types
+                cell_types_ = mesh.distinct_cell_types
 
             # Use a list to preserve order, but we format it to look like a set
-            cell_types = sorted(cell_types)
+            cell_types = sorted(cell_types_)
             cell_types_fmt = (
                 str(set())
                 if len(cell_types) == 0
