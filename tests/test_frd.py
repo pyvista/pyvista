@@ -1,0 +1,122 @@
+import pytest
+import numpy as np
+
+from pyvista.core.utilities.frd import FRDReader
+
+@pytest.fixture
+def mock_frd_file(tmp_path):
+    """Fixture to create a temporary FRD file with basic ASCII structure."""
+    content = """2C
+ -1 1 0.0 0.0 0.0
+ -1 2 1.0 0.0 0.0
+ -1 3 1.0 1.0 0.0
+ -1 4 0.0 1.0 0.0
+ -1 5 0.0 0.0 1.0
+ -1 6 1.0 0.0 1.0
+ -1 7 1.0 1.0 1.0
+ -1 8 0.0 1.0 1.0
+ -3
+ 3C
+ -1 1 1
+ -2 1 2 3 4 5 6 7 8
+ -3
+ 100CL 1 0.1
+ -4 STRESS 6
+ -1 1 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 2 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 3 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 4 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 5 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 6 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 7 10.0 20.0 30.0 0.0 0.0 0.0
+ -1 8 10.0 20.0 30.0 0.0 0.0 0.0
+ -3
+ 100CL 2 0.2
+ -4 STRAIN 6
+ -1 1 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 2 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 3 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 4 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 5 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 6 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 7 0.1 0.2 0.3 0.0 0.0 0.0
+ -1 8 0.1 0.2 0.3 0.0 0.0 0.0
+ -3
+ 100CL 3 0.3
+ -4 DISP 3
+ -1 1 1.0 2.0 3.0
+ -1 2 1.0 2.0 3.0
+ -1 3 1.0 2.0 3.0
+ -1 4 1.0 2.0 3.0
+ -1 5 1.0 2.0 3.0
+ -1 6 1.0 2.0 3.0
+ -1 7 1.0 2.0 3.0
+ -1 8 1.0 2.0 3.0
+ -3
+"""
+    file_path = tmp_path / "test_model.frd"
+    file_path.write_text(content, encoding="utf-8")
+    return str(file_path)
+
+def test_frd_reader_init_and_read(mock_frd_file):
+    reader = FRDReader(mock_frd_file)
+    mesh = reader.read()
+    
+    assert mesh.n_points == 8
+    assert mesh.n_cells == 1
+    assert "Original_Node_ID" in mesh.point_data
+
+def test_frd_reader_time_steps(mock_frd_file):
+    reader = FRDReader(mock_frd_file)
+    
+    assert reader.number_time_points == 3
+    assert reader.time_values == [0.1, 0.2, 0.3]
+    assert reader.time_point_value(0) == 0.1
+    assert reader.active_time_value == 0.1
+
+    reader.set_active_time_point(2)
+    assert reader.active_time_value == 0.3
+    
+    mesh = reader.read()
+    assert "DISP" in mesh.point_data
+    assert mesh.point_data["DISP"].shape == (8, 3)
+
+def test_frd_reader_set_active_time_value(mock_frd_file):
+    reader = FRDReader(mock_frd_file)
+    
+    reader.set_active_time_value(0.18)
+    assert reader.active_time_value == 0.2
+
+    reader.active_time_value = 0.29
+    assert reader.active_time_value == 0.3
+
+def test_frd_reader_derived_stress(mock_frd_file):
+    reader = FRDReader(mock_frd_file)
+    reader.set_active_time_point(0)
+    mesh = reader.read()
+    
+    assert "STRESS" in mesh.point_data
+    assert "STRESS_vMises" in mesh.point_data
+    assert "STRESS_sgMises" in mesh.point_data
+    assert "STRESS_PS1" in mesh.point_data
+    assert "STRESS_PS2" in mesh.point_data
+    assert "STRESS_PS3" in mesh.point_data
+
+def test_frd_reader_derived_strain(mock_frd_file):
+    reader = FRDReader(mock_frd_file)
+    reader.set_active_time_point(1)
+    mesh = reader.read()
+    
+    assert "STRAIN" in mesh.point_data
+    assert "STRAIN_vMises" in mesh.point_data
+    assert "STRAIN_sgMises" in mesh.point_data
+    assert "STRAIN_PS1" in mesh.point_data
+
+def test_frd_reader_errors(mock_frd_file):
+    reader = FRDReader(mock_frd_file)
+    
+    with pytest.raises(IndexError):
+        reader.set_active_time_point(99)
+        
+    with pytest.raises(IndexError):
+        reader.set_active_time_point(-1)
