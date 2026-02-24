@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import get_args
 
+import numpy as np
 import pytest
 from pytest_cases import case
 from pytest_cases import filters
@@ -45,8 +46,20 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
-    monkeypatch.setattr(app, 'help_format', 'plaintext')
+
+
+@pytest.fixture
+def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
+    console = Console(
+        width=70,
+        highlight=True,
+        force_terminal=True,
+        color_system='standard',
+        legacy_windows=False,
+    )
+    monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -216,6 +229,9 @@ def tmp_cow_file(tmp_example_dir):
     src = Path(pv.examples.download_cow(load=False))
     dst = tmp_example_dir / src.name
     shutil.copy(src, dst)
+    cow = pv.read(dst)
+    cow.points = np.append(cow.points, [[np.nan, 0, 0], [np.nan, 0, 0]], axis=0)
+    cow.save(dst)
     return dst
 
 
@@ -374,6 +390,86 @@ def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture
         "PolyData mesh 'cow.vtp' is not valid:\n"
         ' - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
         '3250]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console_color')
+def test_validate_color(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
+    b = '\x1b[1m'  # bold
+    _ = '\x1b[0m'  # reset
+    m = '\x1b[35m'  # magenta
+    cb = '\x1b[1;36m'  # cyan bold
+    y = '\x1b[33m'  # yellow
+    g = '\x1b[32m'  # green
+    r = '\x1b[31m'  # red
+    rib = '\x1b[3;91m'  # red italic bright
+
+    main(f'validate {str(tmp_cow_file)!r} --report message')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type               : {m}PolyData{_}\n'
+        f'    N Points           : {cb}2905{_}\n'
+        f'    N Cells            : {cb}3263{_}\n'
+        f'    Cell types         : {b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid           : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}3{_}{b}){_} : '
+        f"{b}({_}{g}'non_finite_points'{_}, {g}'unused_points'{_}, \n{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Error message:{_}\n'
+        f'    {m}PolyData{_} mesh is not valid:\n'
+        f'     - Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid \npoint ids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'     - Mesh has {cb}2{_} {r}non-finite point{_}{r}s{_}. '
+        f'Invalid point ids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'     - Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, \n{cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file)!r} --report fields')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type                     : {m}PolyData{_}\n'
+        f'    N Points                 : {cb}2905{_}\n'
+        f'    N Cells                  : {cb}3263{_}\n'
+        f'    Cell types               : '
+        f'{b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid                 : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}3{_}{b}){_}       : '
+        f"{b}({_}{g}'non_finite_points'{_}, {g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Invalid data arrays:{_}\n'
+        f'    Cell data wrong length   : {b}[{_}{b}]{_}\n'
+        f'    Point data wrong length  : {b}[{_}{b}]{_}\n'
+        f'{b}Invalid point ids:{_}\n'
+        f'    {r}Non-finite points{_} {b}({_}{cb}2{_}{b}){_}    : '
+        f'{b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'    {r}Unused points{_} {b}({_}{cb}2{_}{b}){_}        : '
+        f'{b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'{b}Invalid cell ids:{_}\n'
+        f'    Coincident points        : {b}[{_}{b}]{_}\n'
+        f'    Degenerate faces         : {b}[{_}{b}]{_}\n'
+        f'    Intersecting edges       : {b}[{_}{b}]{_}\n'
+        f'    Intersecting faces       : {b}[{_}{b}]{_}\n'
+        f'    Invalid point references : {b}[{_}{b}]{_}\n'
+        f'    Inverted faces           : {b}[{_}{b}]{_}\n'
+        f'    Negative size            : {b}[{_}{b}]{_}\n'
+        f'    Non-contiguous edges     : {b}[{_}{b}]{_}\n'
+        f'    {r}Non-convex{_} {b}({_}{cb}3{_}{b}){_}           : '
+        f'{b}[{_}{cb}1013{_}, {cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+        f'    Non-planar faces         : {b}[{_}{b}]{_}\n'
+        f'    Wrong number of points   : {b}[{_}{b}]{_}\n'
+        f'    Zero size                : {b}[{_}{b}]{_}\n'
     )
     assert out == expected
 
