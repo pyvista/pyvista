@@ -437,6 +437,26 @@ def test_validate_invalid_mesh(
     )
     assert out == expected
 
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r} --report')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type               : MultiBlock\n'
+        '    N Blocks           : 1\n'
+        'Report summary:\n'
+        '    Is valid           : False\n'
+        "    Invalid fields (2) : ('non_finite_points', 'unused_points')\n"
+        'Error message:\n'
+        "    MultiBlock mesh 'ant.vtm' is not valid:\n"
+        "     - Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '       - Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '       - Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
 
 @pytest.mark.usefixtures('patch_app_console_color')
 def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixture):
@@ -489,7 +509,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f"{g}'unused_points'{_}, \n"
         f"{g}'non_convex'{_}{b}){_}\n"
         f'{b}Error message:{_}\n'
-        f'    {m}UnstructuredGrid{_} mesh is not valid:\n'
+        f"    {m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
         f'     - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
         f'{b}({_}length must be \n'
         f"{cb}2905{_}{b}){_}. Invalid array: {g}'foo'{_} "
