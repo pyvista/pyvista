@@ -227,7 +227,7 @@ def tmp_ant_file(tmp_example_dir):
 
 
 @pytest.fixture
-def tmp_cow_file(tmp_example_dir):
+def tmp_cow_file_invalid(tmp_example_dir):
     src = Path(pv.examples.download_cow(load=False))
     # Need to save as vtk, not vtp, since XML reader doesn't like invalid arrays
     dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
@@ -246,6 +246,15 @@ def tmp_cow_file(tmp_example_dir):
 
     cow.save(dst)
     return dst
+
+
+@pytest.fixture
+def tmp_ant_file_invalid_multiblock(tmp_ant_file):
+    out = tmp_ant_file.with_suffix('.vtkhdf')
+    mesh = pv.read(tmp_ant_file)
+    mesh.points = np.append(mesh.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+    mesh.cast_to_multiblock().save(out)
+    return out
 
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
@@ -396,8 +405,12 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
-    main(f'validate {str(tmp_cow_file)!r}')
+def test_validate_invalid_mesh(
+    tmp_cow_file_invalid: Path,
+    tmp_ant_file_invalid_multiblock: Path,
+    capsys: pytest.CaptureFixture,
+):
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
     out = capsys.readouterr().out
     expected = (
         "PolyData mesh 'cow.vtk' is not valid:\n"
@@ -413,9 +426,20 @@ def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture
     )
     assert out == expected
 
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "MultiBlock mesh 'ant.vtkhdf' is not valid:\n"
+        " - Block id 0 'Block_1' PolyData mesh is not valid:\n"
+        '   - Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '   - Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
 
 @pytest.mark.usefixtures('patch_app_console_color')
-def test_validate_color(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
+def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixture):
     b = '\x1b[1m'  # bold
     _ = '\x1b[0m'  # reset
     m = '\x1b[35m'  # magenta
@@ -425,7 +449,28 @@ def test_validate_color(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
     r = '\x1b[31m'  # red
     rib = '\x1b[3;91m'  # red italic bright
 
-    main(f'validate {str(tmp_cow_file)!r} --report message')
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        f"{m}PolyData{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f' - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}2905{_}{b}){_}.\n'
+        f"Invalid array: {g}'foo'{_} {b}({_}{cb}2906{_}{b}){_}\n"
+        f' - Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}3263{_}{b}){_}.\n'
+        f"Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f' - Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid point \nids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f' - Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f' - Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, {cb}1532{_}, \n{cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report message')
     out = capsys.readouterr().out
 
     expected = (
@@ -464,7 +509,7 @@ def test_validate_color(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
     )
     assert out == expected
 
-    main(f'validate {str(tmp_cow_file)!r} --report fields')
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report fields')
     out = capsys.readouterr().out
 
     expected = (
