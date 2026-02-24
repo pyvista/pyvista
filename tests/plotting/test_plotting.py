@@ -18,6 +18,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
+from typing import get_args
 
 import numpy as np
 from PIL import Image
@@ -32,6 +33,7 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import _vtk
+from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
@@ -1276,7 +1278,8 @@ def test_axes():
     pl.show()
 
 
-def test_box_axes(verify_image_cache):
+@pytest.mark.skip_check_gc
+def test_box_axes_deprecated(verify_image_cache):
     """Test deprecated function and make sure we remove it by v0.48."""
     verify_image_cache.skip = True
 
@@ -1284,40 +1287,14 @@ def test_box_axes(verify_image_cache):
 
     def _test_add_axes_box():
         pl.add_axes(box=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Calling this should raise an error'
-            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
             raise RuntimeError(msg)
 
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
+    match_str = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+    with pytest.raises(DeprecationError, match=re.escape(match_str)):
         _test_add_axes_box()
     pl.close()
-
-
-def test_box_axes_color_box():
-    pl = pv.Plotter()
-
-    def _test_add_axes_color_box():
-        pl.add_axes(box=True, box_args={'color_box': True})
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this function'
-            raise RuntimeError(msg)
-
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
-        _test_add_axes_color_box()
-    pl.add_mesh(pv.Sphere())
-    pl.show()
 
 
 def test_add_box_axes():
@@ -4410,6 +4387,22 @@ def test_xyz_assembly_show_labels_false(assembly):
     pl.show()
 
 
+@pytest.mark.parametrize('scale_mode', get_args(ScaleModeOptions))
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_axes_assembly_scale_mode(scale_mode, symmetric):
+    cls = pv.AxesAssemblySymmetric if symmetric else pv.AxesAssembly
+    scale = (0.4, 1.0, 2.5)
+    axes_scale = cls(position=(-1, 2, 1), scale=scale, scale_mode=scale_mode)
+    matrix = pv.Transform().scale(scale).matrix
+    axes_matrix = cls(user_matrix=matrix, scale_mode=scale_mode)
+
+    pl = pv.Plotter()
+    pl.add_actor(axes_scale)
+    pl.add_actor(axes_matrix)
+    pl.enable_parallel_projection()
+    pl.show()
+
+
 @pytest.mark.parametrize('relative_position', [(0, 0, -0.5), (0, 0, 0.5)], ids=['bottom', 'top'])
 def test_label_prop3d(relative_position):
     dataset = pv.Cone(direction=(0, 0, 1))
@@ -4889,7 +4882,7 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
-    if pv.vtk_version_info > (9, 6, 0) and orient_faces is False:
+    if pv.vtk_version_info >= (9, 6, 0) and orient_faces is False:
         # This bug was fixed in VTK 9.6
         pytest.xfail('The faces are oriented correctly, even when orient_faces=False')
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -5350,6 +5343,47 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
     grid = cell_example()
     if next(grid.cell).dimension == 2:
         # Ensure normals of 2D cells point in z-direction for consistency
-        normal = grid.extract_geometry().cell_normals.mean(axis=0)
+        normal = grid.extract_surface(algorithm=None).cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
+
+
+@pytest.mark.parametrize('data', ['point', 'cell'])
+def test_hide_cells(data):
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    if data == 'cell':
+        grid.cell_data['scalars'] = range(grid.n_cells)
+        clim_max = grid.n_cells
+    else:
+        grid.point_data['scalars'] = range(grid.n_points)
+        clim_max = grid.n_points
+
+    kwargs = dict(show_edges=True, show_grid=True, clim=[0, clim_max])
+
+    grid.plot(**kwargs)
+
+    grid = grid.hide_cells(range(60, 120))
+    grid.plot(**kwargs)
+
+    grid = grid.cast_to_unstructured_grid()
+    grid.plot(**kwargs)
+
+
+def test_hide_cells_no_scalars():
+    grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
+    grid = grid.hide_cells(range(80, 120))
+    grid = grid.cast_to_unstructured_grid()
+    # Test plotting still works with ghost cells active
+    assert grid.active_scalars_name == _vtk.vtkDataSetAttributes.GhostArrayName()
+    grid.plot(color='w', show_edges=True, show_grid=True)
+
+
+@pytest.mark.skip_check_gc
+def test_connectivity_cmap():
+    # Test case described in https://github.com/pyvista/pyvista/issues/8252
+    large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
+    medium = pv.Sphere(center=(-2, 0, 0), phi_resolution=15, theta_resolution=15)
+    small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
+    mesh = large + medium + small
+    connected = mesh.connectivity('all')
+    connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)

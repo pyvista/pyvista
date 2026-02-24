@@ -28,6 +28,7 @@ from typing_extensions import Unpack
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core._vtk_utilities import vtk_version_info
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -56,7 +57,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
-    from .filters.data_object import _MeshValidationOptions
+    from .filters.data_object import _NestedMeshValidationFields
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
@@ -89,7 +90,7 @@ class MultiBlock(
     *args : dict, optional
         Data object dictionary.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -142,7 +143,7 @@ class MultiBlock(
 
     >>> for block in blocks:
     ...     # Do something with each dataset
-    ...     surf = block.extract_surface()
+    ...     surf = block.extract_surface(algorithm=None)
 
     """
 
@@ -151,11 +152,11 @@ class MultiBlock(
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = dict.fromkeys(
         ['.vtm', '.vtmb'], XMLMultiBlockDataWriter
     )
-    if _vtk.vtk_version_info >= (9, 4):
+    if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(
-        self: MultiBlock, *args, validate: bool | _MeshValidationOptions = False, **kwargs
+        self: MultiBlock, *args, validate: bool | _NestedMeshValidationFields = False, **kwargs
     ) -> None:
         """Initialize multi block."""
         super().__init__()
@@ -494,7 +495,7 @@ class MultiBlock(
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_exodus()
 
         The dataset has eight :class:`MultiBlock` blocks.
 
@@ -511,7 +512,7 @@ class MultiBlock(
         <generator object MultiBlock._recursive_iterator at ...>
 
         >>> len(list(iterator))
-        59
+        11
 
         Check if all blocks are :class:`~pyvista.DataSet` objects. Note that ``None``
         blocks are included by default, so this may not be ``True`` in all cases.
@@ -546,11 +547,11 @@ class MultiBlock(
         ... )
         >>> next(iterator)
         ('Element Blocks->Unnamed block ID: 1', UnstructuredGrid (...)
-          N Cells:    8
-          N Points:   27
-          X Bounds:   4.486e-01, 1.249e+00
-          Y Bounds:   1.372e+00, 1.872e+00
-          Z Bounds:   -6.351e-01, 3.649e-01
+          N Cells:    336
+          N Points:   400
+          X Bounds:   0.000e+00, 1.200e+01
+          Y Bounds:   0.000e+00, 3.500e+00
+          Z Bounds:   0.000e+00, 3.399e+00
           N Arrays:   6)
 
         Iterate through ids. The ids are returned as a tuple by default.
@@ -1843,21 +1844,21 @@ class MultiBlock(
 
         Load a dataset with nested blocks.
 
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         Get one of the blocks and extract its surface.
 
-        >>> block = multi[0][42]
-        >>> surface = block.extract_geometry()
+        >>> block = multi[0][3]
+        >>> surface = block.extract_surface(algorithm=None)
 
         Replace the block.
 
-        >>> multi.replace((0, 42), surface)
+        >>> multi.replace((0, 3), surface)
 
         This is similar to replacing the block directly with indexing but the block
         name is also preserved.
 
-        >>> multi[0][42] = surface
+        >>> multi[0][3] = surface
 
         """
         if isinstance(index, Sequence) and not isinstance(index, str):
@@ -2460,7 +2461,7 @@ class MultiBlock(
             Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         Notes
@@ -2480,7 +2481,7 @@ class MultiBlock(
             elif isinstance(block, pv.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface()
+                return block.extract_surface(algorithm=None)
 
         return self.generic_filter(block_filter, _skip_none=False)
 
@@ -2541,7 +2542,7 @@ class MultiBlock(
         --------
         as_polydata_blocks
             Convert all blocks to :class:`~pyvista.PolyData`.
-        :meth:`~pyvista.CompositeFilters.extract_geometry`
+        :meth:`~pyvista.DataObjectFilters.extract_surface`
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
@@ -2560,10 +2561,10 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_biplane`.
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         The dataset has eight nested multi-block blocks, so the block types
         only contains :class:`MultiBlock`.
@@ -2575,7 +2576,7 @@ class MultiBlock(
         only contains :class:`~pyvista.UnstructuredGrid`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
         return {type(block) for block in self}
@@ -2596,10 +2597,10 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_biplane`.
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         The dataset has eight nested multi-block blocks, so the block types
         only contains :class:`MultiBlock`.
@@ -2611,7 +2612,7 @@ class MultiBlock(
         only contains :class:`~pyvista.UnstructuredGrid`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
         return {type(block) for block in self.recursive_iterator()}
@@ -2631,15 +2632,15 @@ class MultiBlock(
         Examples
         --------
         Load a dataset with nested multi-blocks. Here we load
-        :func:`~pyvista.examples.downloads.download_biplane`.
+        :func:`~pyvista.examples.downloads.download_cgns_multi`.
 
         >>> from pyvista import examples
-        >>> multi = examples.download_biplane()
+        >>> multi = examples.download_cgns_multi()
 
         Show the :attr:`nested_block_types`.
 
         >>> multi.nested_block_types
-        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+        {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         Since there is only one type, the dataset is homogeneous.
 

@@ -38,7 +38,8 @@ def default(entry: HelpEntry):  # noqa: ANN202
 
 
 def names(entry: HelpEntry):  # noqa: ANN202
-    names = Text(' '.join(entry.names), style='cyan')
+    strings = (*entry.names, *entry.shorts)
+    names = Text(' '.join(strings), style='cyan')
     return (Text('* ', style='red') + names) if entry.required else names
 
 

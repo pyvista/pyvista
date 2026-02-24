@@ -20,6 +20,7 @@ from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
+from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
@@ -164,7 +165,7 @@ def test_color_invalid_type():
 def test_color_name_delimiter(delimiter):
     name = f'medium{delimiter}spring{delimiter}green'
     c = pv.Color(name)
-    assert c.name == name.replace(delimiter, '')
+    assert c.name == name.replace(delimiter, '_')
 
 
 def test_color_hls():
@@ -202,8 +203,15 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values, strict=True)
         metafunc.parametrize('vtk_color', test_cases, ids=color_names)
 
+    if 'paraview_color' in metafunc.fixturenames:
+        color_names = list(pv.plotting.colors._PARAVIEW_COLORS.keys())
+        color_values = list(pv.plotting.colors._PARAVIEW_COLORS.values())
+
+        test_cases = zip(color_names, color_values, strict=True)
+        metafunc.parametrize('paraview_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
-        synonyms = list(pv.colors.color_synonyms.keys())
+        synonyms = list(pv.colors._formatted_color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
@@ -211,12 +219,15 @@ def pytest_generate_tests(metafunc):
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
-    assert pv.Color(name).hex_rgb.lower() == value.lower()
+    color = pv.Color(name)
+    assert color.hex_rgb.lower() == value.lower()
 
     # Test name
-    if name not in pv.plotting.colors._CSS_COLORS:
-        alt_name = pv.plotting.colors.color_synonyms[name]
-        assert alt_name in pv.plotting.colors._CSS_COLORS
+    assert color.name in pv.plotting.colors._CSS_COLORS
+
+    if _format_color_name(color.name) != name:
+        # Must be a synonym
+        assert name in pv.plotting.colors._formatted_color_synonyms
 
 
 @pytest.mark.skip_check_gc
@@ -245,14 +256,31 @@ def test_vtk_colors(vtk_color):
         'light_viridian': 'viridian_light',
     }
     name = vtk_synonyms.get(name, name)
+    expected_hex = _vtk_named_color_as_hex(name)
+    assert value.lower() == expected_hex
 
+
+def _vtk_named_color_as_hex(name: str) -> str:
     # Get expected hex value from vtkNamedColors
     color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
-    expected_hex = pv.Color(int_rgb).hex_rgb
+    return pv.Color(int_rgb).hex_rgb
 
+
+@pytest.mark.skip_check_gc
+@pytest.mark.needs_vtk_version(9, 6, 99)  # >= 9.7.0
+def test_paraview_colors(paraview_color):
+    name, value = paraview_color
+
+    # Map PyVista color names to names used by vtkNamedColors
+    paraview_map = {
+        'paraview_background': 'ParaViewBlueGrayBkg',
+        'paraview_background_warm': 'ParaViewWarmGrayBkg',
+    }
+    name = paraview_map[name]
+    expected_hex = _vtk_named_color_as_hex(name)
     assert value.lower() == expected_hex
 
 
@@ -263,7 +291,7 @@ def test_color_synonyms(color_synonym):
 
 
 def test_unique_colors():
-    duplicates = np.rec.find_duplicate(pv.hexcolors.values())
+    duplicates = np.rec.find_duplicate(pv.hex_colors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
@@ -318,3 +346,16 @@ def test_cmaps_cmcrameri_required():
     actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
     expected = set(_CMCRAMERI_CMAPS)
     assert actual == expected
+
+
+def test_hexcolors_deprecated():
+    msg = (
+        "'hexcolors' is deprecated; use 'hex_colors' instead. "
+        'The color names in `hex_colors` are delimited with `_`.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.colors.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.hexcolors
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        _ = pv.plotting.hexcolors

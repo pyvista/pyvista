@@ -54,6 +54,27 @@ body:
     validations:
       required: true
   - type: textarea
+    id: dataset-information
+    attributes:
+      label: Dataset Information
+      description: |
+        If a custom dataset is needed to reproduce the bug, upload the dataset here or provide a download link.
+        In addition, use the `validate_mesh` filter on it and paste the output below.
+
+        For a dataset 'file.vtk', run python code:
+
+        ```python
+        import pyvista as pv
+        mesh = pv.read('file.vtk')
+        print(mesh.validate_mesh())
+        ```
+
+        Or with a shell command (requires `pyvista>=0.48`):
+
+        ```shell
+        pyvista validate file.vtk
+        ```
+  - type: textarea
     id: screenshots
     attributes:
       label: Screenshots

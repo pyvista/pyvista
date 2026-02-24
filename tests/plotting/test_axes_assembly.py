@@ -23,15 +23,95 @@ def planes_assembly():
     return pv.PlanesAssembly()
 
 
+def test_axes_assembly_shaft_length(axes_assembly):
+    val = 0.8
+    assert axes_assembly.shaft_length == (val, val, val)
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[0], val)
+
+    val = 1.0
+    axes_assembly.shaft_length = val
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[0], val)
+
+
+def test_axes_assembly_tip_length(axes_assembly):
+    val = 0.2
+    assert axes_assembly.tip_length == (val, val, val)
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[0], val)
+
+    val = 1.0
+    axes_assembly.tip_length = val
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[0], val)
+
+
+def test_axes_assembly_shaft_radius(axes_assembly):
+    val = 0.025
+    assert axes_assembly.shaft_radius == (val, val, val)
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[1], val * 2)
+
+    val = 1.0
+    axes_assembly.shaft_radius = val
+    assert np.isclose(axes_assembly._shaft_actors[0].bounds_size[1], val * 2)
+
+
+def test_axes_assembly_tip_radius(axes_assembly):
+    val = 0.1
+    assert axes_assembly.tip_radius == (val, val, val)
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[1], val * 2)
+
+    val = 1.0
+    axes_assembly.tip_radius = val
+    assert np.isclose(axes_assembly._tip_actors[0].bounds_size[1], val * 2)
+
+
+def test_axes_assembly_shaft_type(axes_assembly):
+    assert axes_assembly.shaft_type == 'cylinder'
+    dataset = axes_assembly._shaft_actors[0].mapper.dataset.copy()
+    axes_assembly.shaft_type = 'sphere'
+    dataset_new = axes_assembly._shaft_actors[0].mapper.dataset.copy()
+    assert dataset != dataset_new
+
+
+def test_axes_assembly_tip_type(axes_assembly):
+    assert axes_assembly.tip_type == 'cone'
+    dataset = axes_assembly._tip_actors[0].mapper.dataset.copy()
+    axes_assembly.tip_type = 'sphere'
+    dataset_new = axes_assembly._tip_actors[0].mapper.dataset.copy()
+    assert dataset != dataset_new
+
+
+@pytest.mark.parametrize('scale_mode', ['default', 'anti_distortion'])
+def test_axes_assembly_scale_mode(axes_assembly, scale_mode):
+    tip_actors = axes_assembly._tip_actors
+    shaft_actors = axes_assembly._shaft_actors
+    axes_assembly.scale_mode = scale_mode
+    assert axes_assembly.scale_mode == scale_mode
+    scale = (0.2, 1.1, 2.0)
+    axes_assembly.scale = scale
+    x_size = shaft_actors[0].bounds_size[0] + tip_actors[0].bounds_size[0]
+    y_size = shaft_actors[1].bounds_size[1] + tip_actors[1].bounds_size[1]
+    z_size = shaft_actors[2].bounds_size[2] + tip_actors[2].bounds_size[2]
+    assert (x_size, y_size, z_size) == scale
+
+
+def test_axes_assembly_symmetric_bounds():
+    asymmetric_bounds = pv.AxesAssembly().bounds
+    assert np.allclose(asymmetric_bounds, (-0.1, 1.0, -0.1, 1.0, -0.1, 1.0))
+    symmetric_bounds = pv.AxesAssembly(symmetric_bounds=True).bounds
+    assert np.allclose(symmetric_bounds, (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'symmetric_bounds'"):
+        pv.AxesAssemblySymmetric(symmetric_bounds=True)
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        '  Shaft radius:               0.025',
+        '  Shaft radius:               (0.025, 0.025, 0.025)',
         '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        '  Tip radius:                 0.1',
+        '  Tip radius:                 (0.1, 0.1, 0.1)',
         '  Tip length:                 (0.2, 0.2, 0.2)',
         '  Symmetric:                  False',
         '  Symmetric bounds:           False',
@@ -45,11 +125,11 @@ def test_axes_assembly_repr(axes_assembly):
         "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
         '  Y Color:                                     ',
-        "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "      Shaft                   Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
+        "      Tip                     Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
         '  Z Color:                                     ',
-        "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "      Shaft                   Color(name='medium_blue', hex='#0000cdff', opacity=255)",
+        "      Tip                     Color(name='medium_blue', hex='#0000cdff', opacity=255)",
         '  Position:                   (0.0, 0.0, 0.0)',
         '  Orientation:                (0.0, -0.0, 0.0)',
         '  Origin:                     (0.0, 0.0, 0.0)',
@@ -135,10 +215,10 @@ def _config_axes_theme():
 def test_axes_assembly_theme(axes_assembly):
     assert axes_assembly.x_color[0].name == 'tomato'
     assert axes_assembly.x_color[1].name == 'tomato'
-    assert axes_assembly.y_color[0].name == 'seagreen'
-    assert axes_assembly.y_color[1].name == 'seagreen'
-    assert axes_assembly.z_color[0].name == 'mediumblue'
-    assert axes_assembly.z_color[1].name == 'mediumblue'
+    assert axes_assembly.y_color[0].name == 'sea_green'
+    assert axes_assembly.y_color[1].name == 'sea_green'
+    assert axes_assembly.z_color[0].name == 'medium_blue'
+    assert axes_assembly.z_color[1].name == 'medium_blue'
 
     pv.global_theme.axes.x_color = 'black'
     pv.global_theme.axes.y_color = 'white'
@@ -594,8 +674,8 @@ def test_planes_assembly_repr(planes_assembly):
         '  Label offset:               0.05',
         "  Label mode:                 '3D'",
         "  X Color:                    Color(name='tomato', hex='#ff6347ff', opacity=255)",
-        "  Y Color:                    Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "  Z Color:                    Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "  Y Color:                    Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
+        "  Z Color:                    Color(name='medium_blue', hex='#0000cdff', opacity=255)",
         '  Position:                   (0.0, 0.0, 0.0)',
         '  Orientation:                (0.0, -0.0, 0.0)',
         '  Origin:                     (0.0, 0.0, 0.0)',

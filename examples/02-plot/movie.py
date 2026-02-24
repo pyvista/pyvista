@@ -17,7 +17,6 @@ This example uses :meth:`~pyvista.Plotter.open_movie` and
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 filename = 'sphere-shrinking.mp4'

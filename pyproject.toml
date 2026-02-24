@@ -14,6 +14,7 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.14',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
@@ -24,10 +25,10 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
-  'vtk!=9.4.0; python_version < "3.14"',
-  'vtk!=9.4.1; python_version < "3.14"',
-  'vtk<9.6.0; python_version < "3.14"',
-  'vtk>=9.2.2; python_version < "3.14"',
+  'vtk!=9.4.0',
+  'vtk!=9.4.1',
+  'vtk<9.7.0',
+  'vtk>=9.2.2',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -47,17 +48,18 @@ jupyter = [
   'nest-asyncio2',
   'trame-client>=2.12.7',
   'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
-  'trame-vtk>=2.5.8',
+  'trame-vtk != 2.10.3, != 2.11.*',
+  'trame-vtk>=2.5.8, <2.10.3', # Pin indefinitely to avoid breakages
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
 ]
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.5.0',
+  'cyclopts<4.6.0',
   'matplotlib<3.10.9',
   'numpy<2.4.0',
-  'pillow<12.1.0',
+  'pillow<12.2.0',
   'pooch<1.9.0',
   'scooby<0.12.0',
   'typing-extensions<4.16.0',
@@ -68,7 +70,7 @@ typing = [
   'mypy<1.20.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.11.0',
+  'trimesh<4.12.0',
   { include-group = 'pinned' },
 ]
 
@@ -77,7 +79,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.148.9',
+  'hypothesis<6.150.4',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
@@ -103,10 +105,10 @@ test = [
   'sphinx<8.3.0',
   'sympy<1.15.0',
   'tqdm<4.68.0',
-  'trame-vtk>=2.5.8,<2.10.2',
+  'trame-vtk>=2.5.8,<2.10.3',
   'trame-vuetify>=2.3.1,<3.3.0',
   'trame>=2.5.2,<3.13.0',
-  'trimesh<4.11.0',
+  'trimesh<4.12.0',
   'typing-extensions<4.16.0',
   { include-group = 'pinned' },
 ]
@@ -122,7 +124,7 @@ docs = [
   'imageio==2.37.2',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.5.1',
+  'jupyterlab==4.5.3',
   'lxml==6.0.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
@@ -131,8 +133,8 @@ docs = [
   'numpydoc==1.10.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.16.2',
-  'pytest-sphinx==0.6.3',
-  'ruamel-yaml<0.19.0',
+  'pytest-sphinx==0.7.1',
+  'ruamel-yaml<0.20.0',
   'scipy==1.16.0; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
@@ -142,17 +144,17 @@ docs = [
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
-  'sphinx-togglebutton==0.3.2',
-  'sphinx-toolbox==4.1.0',
+  'sphinx-togglebutton==0.4.4',
+  'sphinx-toolbox==4.1.2',
   'sphinx==8.2.3; python_version >= "3.11"',
   'sphinxcontrib-asciinema==0.4.3',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-vtk==2.10.1',
+  'trame-vtk==2.10.2',
   'trame-vuetify==3.2.0',
   'trame==3.12.0',
-  'trimesh==4.10.1',
+  'trimesh==4.11.1',
   'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]
@@ -160,7 +162,7 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.2',
   'pytest-xdist<3.9.0',
-  'trame-vtk==2.10.1',
+  'trame-vtk==2.10.2',
   { include-group = 'pinned' },
 ]
 
@@ -248,6 +250,7 @@ filterwarnings = [
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
@@ -494,7 +497,8 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']
-'pyvista/core/_vtk_core.py' = ['ANN', 'PLC0414']
+'pyvista/core/_vtk_core.py' = ['PLC0414']
+'pyvista/core/_vtk_utilities.py' = ['ANN']
 'pyvista/core/dataobject.py' = ['PLC0415']
 'pyvista/core/errors.py' = ['ANN']
 'pyvista/core/filters/*' = ['ANN', 'PYI019']

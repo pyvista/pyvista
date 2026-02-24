@@ -39,6 +39,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
@@ -3079,7 +3080,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Show non-linear subdivision.
 
-    >>> surf = dataset.extract_surface(nonlinear_subdivision=5)
+    >>> surf = dataset.extract_surface(algorithm=None, nonlinear_subdivision=5)
     >>> surf.plot(smooth_shading=True)
 
     .. seealso::
@@ -3680,7 +3681,7 @@ def _kitchen_split_load_func(mesh):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = pv.core.filters._get_output(alg)
+        result = _get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -8632,6 +8633,9 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 def download_biplane(load=True):  # noqa: FBT002
     """Download biplane dataset.
 
+    .. warning::
+        This dataset is known to cause segmentation faults on Windows.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8645,9 +8649,11 @@ def download_biplane(load=True):  # noqa: FBT002
 
     Examples
     --------
+    >>> import sys
     >>> from pyvista import examples
-    >>> dataset = examples.download_biplane()
-    >>> dataset.plot(cpos='zy', zoom=1.5)
+    >>> if sys.platform != 'win32':  # segfaults on Windows
+    ...     dataset = examples.download_biplane()
+    ...     dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
 

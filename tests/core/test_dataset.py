@@ -1298,7 +1298,7 @@ def test_volume_area():
     # PolyData
     # cube of size 4
     # PolyData is special because it is a 2D surface that can enclose a volume
-    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface()
+    grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface(algorithm=None)
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
 
@@ -1567,17 +1567,17 @@ def test_dimensionality():
     assert mesh.max_cell_dimensionality == 2
     assert mesh.min_cell_dimensionality == 2
 
-    strip = examples.cells.TriangleStrip().extract_geometry()
+    strip = examples.cells.TriangleStrip().extract_surface(algorithm=None)
     assert strip.dimensionality == 2
     assert strip.max_cell_dimensionality == 2
     assert strip.min_cell_dimensionality == 2
 
-    line = examples.cells.Line().extract_geometry()
+    line = examples.cells.Line().extract_surface(algorithm=None)
     assert line.dimensionality == 1
     assert line.max_cell_dimensionality == 1
     assert line.min_cell_dimensionality == 1
 
-    vertex = examples.cells.Vertex().extract_geometry()
+    vertex = examples.cells.Vertex().extract_surface(algorithm=None)
     assert vertex.dimensionality == 0
     assert vertex.max_cell_dimensionality == 0
     assert vertex.min_cell_dimensionality == 0
@@ -1662,3 +1662,17 @@ def test_structured_grid_dimensionality():
     assert linear.distinct_cell_types == cell_types
     assert linear.max_cell_dimensionality == cell_dimension
     assert linear.min_cell_dimensionality == cell_dimension
+
+
+def test_has_nonlinear_cells():
+    linear = examples.cells.Hexahedron()
+    assert not linear.has_nonlinear_cells
+
+    nonlinear = examples.cells.QuadraticHexahedron()
+    assert nonlinear.has_nonlinear_cells
+
+    mixed = linear + nonlinear
+    assert mixed.has_nonlinear_cells
+
+    assert not pv.UnstructuredGrid().has_nonlinear_cells
+    assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells

@@ -598,14 +598,16 @@ def test_axes_geometry_source_tip_length_init():
 
 
 def test_axes_geometry_source_tip_radius_set_get(axes_geometry_source):
-    assert axes_geometry_source.tip_radius == 0.1
+    assert axes_geometry_source.tip_radius == (0.1, 0.1, 0.1)
     axes_geometry_source.tip_radius = 0.8
-    assert axes_geometry_source.tip_radius == 0.8
+    assert axes_geometry_source.tip_radius == (0.8, 0.8, 0.8)
+    axes_geometry_source.tip_radius = [0.1, 0.2, 0.3]
+    assert axes_geometry_source.tip_radius == (0.1, 0.2, 0.3)
 
 
 def test_axes_geometry_source_tip_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(tip_radius=9)
-    assert axes_geometry_source.tip_radius == 9
+    assert axes_geometry_source.tip_radius == (9, 9, 9)
 
 
 @pytest.mark.parametrize(
@@ -676,14 +678,16 @@ def test_axes_geometry_source_tip_type_init(tip_type):
 
 
 def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
-    assert axes_geometry_source.shaft_radius == 0.025
+    assert axes_geometry_source.shaft_radius == (0.025, 0.025, 0.025)
     axes_geometry_source.shaft_radius = 0.1
-    assert axes_geometry_source.shaft_radius == 0.1
+    assert axes_geometry_source.shaft_radius == (0.1, 0.1, 0.1)
+    axes_geometry_source.shaft_radius = [0.1, 0.2, 0.3]
+    assert axes_geometry_source.shaft_radius == (0.1, 0.2, 0.3)
 
 
 def test_axes_geometry_source_shaft_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(shaft_radius=3)
-    assert axes_geometry_source.shaft_radius == 3
+    assert axes_geometry_source.shaft_radius == (3, 3, 3)
 
 
 def test_axes_geometry_source_update_output(axes_geometry_source):
@@ -715,10 +719,10 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        '  Shaft radius:               0.025',
+        '  Shaft radius:               (0.025, 0.025, 0.025)',
         '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        '  Tip radius:                 0.1',
+        '  Tip radius:                 (0.1, 0.1, 0.1)',
         '  Tip length:                 (0.2, 0.2, 0.2)',
         '  Symmetric:                  False',
         '  Symmetric bounds:           False',

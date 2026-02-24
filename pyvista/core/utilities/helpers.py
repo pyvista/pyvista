@@ -225,7 +225,7 @@ def wrap(  # noqa: PLR0911
     if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
         if dataset.ndim == 1 and dataset.shape[0] == 3:
             return pv.PolyData(dataset)
-        if dataset.ndim > 1 and dataset.ndim < 3 and dataset.shape[1] == 3:
+        if dataset.ndim == 2 and dataset.shape[1] == 3:
             return pv.PolyData(dataset)
         elif dataset.ndim == 3:
             mesh = pv.ImageData(dimensions=dataset.shape)
@@ -236,7 +236,10 @@ def wrap(  # noqa: PLR0911
             mesh.active_scalars_name = 'values'
             return mesh
         else:
-            msg = 'NumPy array could not be wrapped pyvista.'
+            msg = (
+                'NumPy array could not be wrapped. `pv.wrap` only supports '
+                f'ndarray with shape (3,) or (N, 3) or (X, Y, Z). Got {dataset.shape}'
+            )
             raise NotImplementedError(msg)
 
     # wrap VTK arrays as pyvista_ndarray
