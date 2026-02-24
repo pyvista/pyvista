@@ -898,8 +898,21 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
             mesh_items['N Cells'] = mesh.n_cells
+
+            # Get distinct cell types
+            if pv.vtk_version_info < (9, 5, 0):
+                # This may cast to unstructured grid, which will warn if arrays are invalid
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        'ignore',
+                        category=pv.InvalidMeshWarning,
+                    )
+                    cell_types = mesh.distinct_cell_types
+            else:
+                cell_types = mesh.distinct_cell_types
+
             # Use a list to preserve order, but we format it to look like a set
-            cell_types = sorted(mesh.distinct_cell_types)
+            cell_types = sorted(cell_types)
             cell_types_fmt = (
                 str(set())
                 if len(cell_types) == 0

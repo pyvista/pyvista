@@ -233,7 +233,7 @@ def tmp_cow_file_invalid(tmp_example_dir):
     dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
 
     # Modify mesh
-    cow = pv.read(src)
+    cow = pv.read(src).cast_to_unstructured_grid()
     # Add invalid points
     # Make sure we have a single invalid point (nan) and multiple invalid points (unused)
     # since the messages differ for singular vs plural
@@ -250,7 +250,7 @@ def tmp_cow_file_invalid(tmp_example_dir):
 
 @pytest.fixture
 def tmp_ant_file_invalid_multiblock(tmp_ant_file):
-    out = tmp_ant_file.with_suffix('.vtkhdf')
+    out = tmp_ant_file.with_suffix('.vtm')
     mesh = pv.read(tmp_ant_file)
     mesh.points = np.append(mesh.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
     mesh.cast_to_multiblock().save(out)
@@ -413,7 +413,7 @@ def test_validate_invalid_mesh(
     main(f'validate {str(tmp_cow_file_invalid)!r}')
     out = capsys.readouterr().out
     expected = (
-        "PolyData mesh 'cow.vtk' is not valid:\n"
+        "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
         ' - Mesh has 1 point array with incorrect length (length must be 2905).\n'
         "Invalid array: 'foo' (2906)\n"
         ' - Mesh has 2 cell arrays with incorrect length (length must be 3263).\n'
@@ -429,8 +429,8 @@ def test_validate_invalid_mesh(
     main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
     out = capsys.readouterr().out
     expected = (
-        "MultiBlock mesh 'ant.vtkhdf' is not valid:\n"
-        " - Block id 0 'Block_1' PolyData mesh is not valid:\n"
+        "MultiBlock mesh 'ant.vtm' is not valid:\n"
+        " - Block id 0 'Block-00' PolyData mesh is not valid:\n"
         '   - Mesh has 2 unused points not referenced by any cell. Invalid \n'
         'point ids: [486, 487]\n'
         '   - Mesh has 1 non-finite point. Invalid point id: [486]\n'
@@ -452,7 +452,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     main(f'validate {str(tmp_cow_file_invalid)!r}')
     out = capsys.readouterr().out
     expected = (
-        f"{m}PolyData{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
         f' - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
         f'{b}({_}length must be {cb}2905{_}{b}){_}.\n'
         f"Invalid array: {g}'foo'{_} {b}({_}{cb}2906{_}{b}){_}\n"
@@ -477,7 +477,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f'{b}Mesh Validation Report{_}\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         f'{b}Mesh info:{_}\n'
-        f'    Type               : {m}PolyData{_}\n'
+        f'    Type               : {m}UnstructuredGrid{_}\n'
         f'    N Points           : {cb}2905{_}\n'
         f'    N Cells            : {cb}3263{_}\n'
         f'    Cell types         : {b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
@@ -489,7 +489,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f"{g}'unused_points'{_}, \n"
         f"{g}'non_convex'{_}{b}){_}\n"
         f'{b}Error message:{_}\n'
-        f'    {m}PolyData{_} mesh is not valid:\n'
+        f'    {m}UnstructuredGrid{_} mesh is not valid:\n'
         f'     - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
         f'{b}({_}length must be \n'
         f"{cb}2905{_}{b}){_}. Invalid array: {g}'foo'{_} "
@@ -516,7 +516,7 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f'{b}Mesh Validation Report{_}\n'
         '━━━━━━━━━━━━━━━━━━━━━━\n'
         f'{b}Mesh info:{_}\n'
-        f'    Type                        : {m}PolyData{_}\n'
+        f'    Type                        : {m}UnstructuredGrid{_}\n'
         f'    N Points                    : {cb}2905{_}\n'
         f'    N Cells                     : {cb}3263{_}\n'
         f'    Cell types                  : '
