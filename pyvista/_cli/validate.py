@@ -155,6 +155,7 @@ def _validate(
         _console_error(app=app, message=msg)
     else:
         if report is not None:
+            # Print the full report
             invalid_fields = out.invalid_fields if report_body == 'fields' else None
             app.console.print(_MeshValidator._colorize_output(str(out), invalid_fields))
         elif (message := out.message) is not None:

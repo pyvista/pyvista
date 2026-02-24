@@ -4,6 +4,7 @@ import colorsys
 import importlib.util
 import itertools
 import re
+from typing import get_args
 
 import cmcrameri
 import cmocean
@@ -16,13 +17,19 @@ import pytest
 
 import pyvista as pv
 from pyvista.plotting import _vtk
+from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import _format_color_name
+from pyvista.plotting.colors import _formatted_hex_colors
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
+from pyvista.plotting.colors import hex_colors
+
+_ALL_ANNOTATED_COLORS = sorted(get_args(_ALL_COLORS_LITERAL))
+_FORMATED_TO_DELIMITED = dict(zip(_formatted_hex_colors, hex_colors, strict=True))
 
 COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
@@ -215,6 +222,14 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
+def assert_color_in_annotations(name: str, invert: bool = False):
+    msg = f'Color {name!r} is missing from type annotations.'
+    if invert:
+        assert name not in _ALL_ANNOTATED_COLORS, msg
+    else:
+        assert name in _ALL_ANNOTATED_COLORS, msg
+
+
 @pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
@@ -228,6 +243,11 @@ def test_css4_colors(css4_color):
     if _format_color_name(color.name) != name:
         # Must be a synonym
         assert name in pv.plotting.colors._formatted_color_synonyms
+    else:
+        # Test non-synonyms are included in annotations
+        delimited_name = _FORMATED_TO_DELIMITED[name]
+        assert _format_color_name(delimited_name) == name  # Sanity check
+        assert_color_in_annotations(delimited_name)
 
 
 @pytest.mark.skip_check_gc
@@ -238,11 +258,13 @@ def test_tab_colors(tab_color):
 
     # Test name
     assert name in pv.plotting.colors._TABLEAU_COLORS
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
+    assert_color_in_annotations(name)
 
     # Some pyvista colors are technically not valid VTK colors. We need to map their
     # synonym manually for the tests
@@ -279,21 +301,36 @@ def test_paraview_colors(paraview_color):
         'paraview_background': 'ParaViewBlueGrayBkg',
         'paraview_background_warm': 'ParaViewWarmGrayBkg',
     }
-    name = paraview_map[name]
-    expected_hex = _vtk_named_color_as_hex(name)
+    vtk_color_name = paraview_map[name]
+    expected_hex = _vtk_named_color_as_hex(vtk_color_name)
     assert value.lower() == expected_hex
+    assert_color_in_annotations(name)
 
 
 @pytest.mark.skip_check_gc
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
+    assert color.name != color_synonym
+    # Test that synonyms are NOT included in annotations
+    # Since this leads to confusing double entries for the same color
+    assert_color_in_annotations(color_synonym, invert=True)
 
 
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hex_colors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
+
+    assert len(pv.hex_colors) == len(_ALL_ANNOTATED_COLORS)
+    assert set(pv.hex_colors.keys()) == set(_ALL_ANNOTATED_COLORS)
+
+
+@pytest.mark.skip_check_gc
+@pytest.mark.parametrize('color_annotation', _ALL_ANNOTATED_COLORS)
+def test_color_annotations(color_annotation):
+    color = pv.Color(color_annotation)
+    assert isinstance(color, pv.Color)
 
 
 @pytest.fixture
