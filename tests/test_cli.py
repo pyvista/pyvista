@@ -454,7 +454,7 @@ def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
     out = capsys.readouterr().out
     assert '╭─ PyVista Error ─' in out, out
     assert '│ Failed to validate PolyData mesh read from path' in out, out
-    assert '│ validation_fields and exclude_fields cannot both be set.' in out, out
+    assert "│ Excluded field 'cells' must be a subset of the validation fields." in out, out
     assert e.value.code == 1
 
 
