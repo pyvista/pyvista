@@ -444,9 +444,7 @@ class FRDReader(BaseReader, TimeReader):
         n = self.number_time_points
         if not 0 <= time_point < n:
             msg = f'time_point {time_point} is out of range (file has {n} time point(s)).'
-            raise IndexError(
-                msg
-            )
+            raise IndexError(msg)
         self.reader._active_time_point = time_point
 
     def set_active_time_value(self, time_value: float) -> None:
