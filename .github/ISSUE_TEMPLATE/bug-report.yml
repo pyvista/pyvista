@@ -47,7 +47,7 @@ body:
 
         Or with a shell command (requires `pyvista>=0.47`):
 
-        ``` shell
+        ```shell
         pyvista report
         ```
       render: shell
@@ -72,7 +72,7 @@ body:
         Or with a shell command (requires `pyvista>=0.48`):
 
         ```shell
-        pyvista validate file.vtk
+        pyvista validate file.vtk --report
         ```
   - type: textarea
     id: screenshots
