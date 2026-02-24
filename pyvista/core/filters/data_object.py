@@ -686,7 +686,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         string = _format_style(string, mesh_names, 'purple')
 
         # Make section headings bold
-        section_headings = _MeshValidator._SECTION_HEADINGS
+        section_headings = [f'\n{heading}' for heading in _MeshValidator._SECTION_HEADINGS]
         string = _format_style(string, section_headings, 'bold')
 
         # Make report title bold

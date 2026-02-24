@@ -46,6 +46,7 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
 
 
 @pytest.fixture
@@ -388,6 +389,9 @@ def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture
     out = capsys.readouterr().out
     expected = (
         "PolyData mesh 'cow.vtp' is not valid:\n"
+        ' - Mesh has 2 unused points not referenced by any cell. Invalid point \n'
+        'ids: [2903, 2904]\n'
+        ' - Mesh has 2 non-finite points. Invalid point ids: [2903, 2904]\n'
         ' - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
         '3250]\n'
     )
@@ -396,6 +400,7 @@ def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture
 
 @pytest.mark.usefixtures('patch_app_console_color')
 def test_validate_color(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
+    capsys.readouterr()
     b = '\x1b[1m'  # bold
     _ = '\x1b[0m'  # reset
     m = '\x1b[35m'  # magenta
