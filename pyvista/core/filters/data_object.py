@@ -537,7 +537,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         s = 's' if len(array) > 1 else ''
         celltype = f'{cell_type.name} ' if cell_type else ''  # type: ignore[union-attr]
         return (
-            f'Mesh has {len(array)}{before}{celltype}cell{s}{after}. '
+            f'{_MeshValidator._MESH_HAS} {len(array)}{before}{celltype}cell{s}{after}. '
             f'Invalid cell id{s}: {reprlib.repr(array)}'
         )
 
@@ -560,7 +560,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             n_arrays = len(invalid_arrays)
             s = 's' if n_arrays > 1 else ''
             msg_template = (
-                'Mesh has {n_arrays} {kind} array{s} with incorrect length '
+                f'{_MeshValidator._MESH_HAS} {n_arrays} {kind} array{s} with incorrect length '
                 '(length must be {expected}). Invalid array{s}: {details}'
             )
             details = join_limited(
@@ -630,7 +630,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             n_ids = len(array)
             s = 's' if n_ids > 1 else ''
             return (
-                f'Mesh has {n_ids} {name_norm}{s}{info_}. Invalid point id{s}: '
+                f'{_MeshValidator._MESH_HAS} {n_ids} {name_norm}{s}{info_}. Invalid point id{s}: '
                 f'{reprlib.repr(array)}'
             )
 
@@ -648,6 +648,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     _MESSAGE_BULLET = '-'
     _MULTIBLOCK_BULLET = '*'
+    _MESH_HAS = 'Mesh has'
 
     @staticmethod
     def _create_message_header(obj: object) -> str:
@@ -720,7 +721,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         def insert_bullet(indent: str, string: str):
             bullet = (
                 _MeshValidator._MESSAGE_BULLET
-                if string.startswith('Mesh has')
+                if string.startswith(_MeshValidator._MESH_HAS)
                 else _MeshValidator._MULTIBLOCK_BULLET
             )
             return f'{indent}{bullet} {string}'
