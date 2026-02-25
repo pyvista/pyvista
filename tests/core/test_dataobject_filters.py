@@ -1833,16 +1833,16 @@ def test_validate_mesh_composite_message(invalid_nested_multiblock):
     actual = report.message
     expected = (
         'MultiBlock mesh is not valid due to the following problems:\n'
-        " - Block id 1 'poly_root' PolyData mesh is not valid due to the following "
+        " * Block id 1 'poly_root' PolyData mesh is not valid due to the following "
         'problems:\n'
         '   - Mesh has 19 unused points not referenced by any cell(s). Invalid point '
         'ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '   - Mesh has 1 non-finite point. Invalid point id: [20]\n'
         '   - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell '
         'id: [0]\n'
-        " - Block id 2 'nested' MultiBlock mesh is not valid due to the following "
+        " * Block id 2 'nested' MultiBlock mesh is not valid due to the following "
         'problems:\n'
-        "   - Block id 0 'poly_nested' PolyData mesh is not valid due to the "
+        "   * Block id 0 'poly_nested' PolyData mesh is not valid due to the "
         'following problems:\n'
         '     - Mesh has 19 unused points not referenced by any cell(s). Invalid '
         'point ids: [2, 3, 4, 5, 6, 7, ...]\n'
@@ -2268,7 +2268,7 @@ def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point
     def _format_composite(match):
         prefix = (
             'MultiBlock mesh is not valid due to the following problems:\n'
-            " - Block id 0 'Block-00' "
+            " * Block id 0 'Block-00' "
         )
         return prefix + match.replace(' - ', '   - ')
 

@@ -717,15 +717,21 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     @property
     def message(self) -> str | None:
+        def insert_bullet(indent: str, string: str):
+            bullet = (
+                _MeshValidator._MESSAGE_BULLET
+                if string.startswith('Mesh has')
+                else _MeshValidator._MULTIBLOCK_BULLET
+            )
+            return f'{indent}{bullet} {string}'
 
         def render(node: _NestedStrings, *, level: int = 0) -> str:
             indent = ' ' + ('  ' * (level - 1) if level > 1 else '')
-            bullet = '-'
             if isinstance(node, str):
                 # Leaf node
                 if level == 0:
                     return node
-                return f'{indent}{"-"} {node}'
+                return insert_bullet(indent, node)
 
             # Structured node: [header, children]
             header, children = node
@@ -735,7 +741,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             if level == 0:
                 lines.append(header)
             else:
-                lines.append(f'{indent}{bullet} {header}')
+                lines.append(insert_bullet(indent, header))
 
             # Render children
             lines.extend([render(child, level=level + 1) for child in children])
@@ -1201,7 +1207,7 @@ class DataObjectFilters:
             Invalid fields (1) : ('non_convex',)
         Error message:
             MultiBlock mesh is not valid due to the following problems:
-             - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
+             * Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
                - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
         Validate again but show the fields in report body.
