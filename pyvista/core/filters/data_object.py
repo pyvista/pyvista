@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from collections.abc import Sized
+import copy as copylib
 from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
@@ -420,7 +421,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Generate reports and error messages for each block
         reports: list[_MeshValidationReport[DataSet] | None] = []
         message_body: list[str] = []
-        bullet = _MeshValidator._message_bullet
         for i, block in enumerate(mesh):
             if block is None:
                 reports.append(None)
@@ -434,10 +434,10 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
 
-                if (msg := report.message) is not None:
-                    prefix = f'Block id {i} {validated_mesh.get_block_name(i)!r}'
-                    indented = msg.replace(bullet, '  ' + bullet)
-                    message_body.append(f'{prefix} {indented}')
+                if (msg := report._message) is not None:
+                    msg = copylib.copy(msg)
+                    msg[0] = f'Block id {i} {validated_mesh.get_block_name(i)!r} ' + msg[0]
+                    message_body.append(msg)
 
         # Iterate over fields in order and identify blocks with invalid fields
         dataclass_fields: dict[str, Sequence[int | str]] = {}
@@ -452,11 +452,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     invalid_block_ids.append(i)
             dataclass_fields[field] = invalid_block_ids
 
-        bullet = _MeshValidator._message_bullet
-        body = bullet + f'\n{bullet}'.join(message_body)
         header = _MeshValidator._create_message_header(validated_mesh)
-        message = f'{header}\n{body}'
-
+        message = [header, message_body]
         return _MeshValidationReport(
             _mesh=validated_mesh,
             _message=message,
@@ -649,7 +646,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 summaries.append(issue)
         return summaries
 
-    _message_bullet = ' - '
+    _MESSAGE_BULLET = '-'
+    _MULTIBLOCK_BULLET = '*'
 
     @staticmethod
     def _create_message_header(obj: object) -> str:
@@ -719,34 +717,33 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     @property
     def message(self) -> str | None:
-        def render_nested_list(
-            message: _NestedStrings, *, level: int = 0, bullet: str = '-'
-        ) -> str:
-            """Render a nested list of strings with proper indentation and hyphens.
 
-            Top-level string does not get a leading hyphen.
-            """
-            indent = ' ' * level
+        def render(node: _NestedStrings, *, level: int = 0) -> str:
+            indent = ' ' + ('  ' * (level - 1) if level > 1 else '')
+            bullet = '-'
+            if isinstance(node, str):
+                # Leaf node
+                if level == 0:
+                    return node
+                return f'{indent}{"-"} {node}'
+
+            # Structured node: [header, children]
+            header, children = node
             lines: list[str] = []
 
-            if isinstance(message, str):
-                # Only add bullet if we're nested
-                if level == 0:
-                    return message
-                return f'{indent}{bullet} {message}'
+            # Render header
+            if level == 0:
+                lines.append(header)
+            else:
+                lines.append(f'{indent}{bullet} {header}')
 
-            for item in message:
-                if isinstance(item, str):
-                    lines.append(render_nested_list(item, level=level, bullet=bullet))
-                else:
-                    # Nested list: increase indentation
-                    lines.append(render_nested_list(item, level=level + 1, bullet=bullet))
-
+            # Render children
+            lines.extend([render(child, level=level + 1) for child in children])
             return '\n'.join(lines)
 
         if self.is_valid:
             return None
-        return render_nested_list(self._message)  # type: ignore[attr-defined]
+        return render(self._message)  # type: ignore[attr-defined]
 
     @property
     def is_valid(self) -> bool:  # numpydoc ignore=RT01
