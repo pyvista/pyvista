@@ -1,3 +1,5 @@
+"""CalculiX FRD file reader for PyVista."""
+
 from __future__ import annotations
 
 import pathlib
@@ -100,7 +102,7 @@ class _FRDVTKReader(BaseVTKReader):
     def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
         """Return an UnstructuredGrid for the currently active time step."""
         target_time = self._time_steps[self._active_time_point] if self._time_steps else None
-
+        
         if self._output is None or self._output_time != target_time:
             if not self._nodes:
                 self.Update()
@@ -113,7 +115,7 @@ class _FRDVTKReader(BaseVTKReader):
         if self._output is None:
             msg = 'Failed to generate output grid.'
             raise RuntimeError(msg)
-
+            
         return self._output
 
     # ------------------------------------------------------------------
@@ -188,7 +190,7 @@ class _FRDVTKReader(BaseVTKReader):
     # ------------------------------------------------------------------
 
     def _parse_lines(self, fh: Any) -> None:
-        """Main loop dispatching to block-specific parsers."""
+        """Dispatch lines to block-specific parsers."""
         for line in fh:
             s = line.strip()
             if s.startswith('2C'):
@@ -425,6 +427,7 @@ class FRDReader(BaseReader, TimeReader):
     _class_reader = _FRDVTKReader
 
     def __init__(self, path: str | pathlib.Path) -> None:
+        """Initialize the reader."""
         super().__init__(path)
         self._reader: _FRDVTKReader = self._class_reader()
         self._reader.SetFileName(self.path)
@@ -432,20 +435,25 @@ class FRDReader(BaseReader, TimeReader):
 
     @property
     def reader(self) -> _FRDVTKReader:
+        """Return the underlying low-level VTK reader."""
         return self._reader
 
     @property
     def number_time_points(self) -> int:
+        """Return the total number of time points."""
         return len(self.reader._time_steps)
 
     def time_point_value(self, time_point: int) -> float:
+        """Return the time value associated with the given time point."""
         return self.reader._time_steps[time_point]
 
     @property
     def time_values(self) -> list[float]:
+        """Return the list of available time values."""
         return list(self.reader._time_steps)
 
     def set_active_time_point(self, time_point: int) -> None:
+        """Set the active time point."""
         n = self.number_time_points
         if not 0 <= time_point < n:
             msg = f'time_point {time_point} is out of range (file has {n} time point(s)).'
@@ -453,6 +461,7 @@ class FRDReader(BaseReader, TimeReader):
         self.reader._active_time_point = time_point
 
     def set_active_time_value(self, time_value: float) -> None:
+        """Set the active time value."""
         steps = self.reader._time_steps
         if not steps:
             msg = 'No time steps found in the FRD file.'
@@ -462,6 +471,7 @@ class FRDReader(BaseReader, TimeReader):
 
     @property
     def active_time_value(self) -> float:
+        """Return the active time value."""
         steps = self.reader._time_steps
         if not steps:
             return 0.0
@@ -469,7 +479,9 @@ class FRDReader(BaseReader, TimeReader):
 
     @active_time_value.setter
     def active_time_value(self, value: float) -> None:
+        """Set the active time value."""
         self.set_active_time_value(value)
 
     def read(self) -> UnstructuredGrid:
+        """Read and return the PyVista UnstructuredGrid."""
         return self.reader.GetOutput()
