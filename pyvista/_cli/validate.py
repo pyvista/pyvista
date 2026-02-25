@@ -2,17 +2,26 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Annotated
+from typing import cast
+from typing import get_args
 
 from cyclopts import Parameter
 
 import pyvista as pv
-from pyvista.core.filters.data_object import _LiteralMeshValidationFields  # noqa: TC001
+from pyvista.core.filters.data_object import _LiteralMeshValidationFields
+from pyvista.core.filters.data_object import _ReportBodyOptions
 
 from .app import app
 from .utils import HELP_FORMATTER
 from .utils import _console_error
 from .utils import _converter_files
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from cyclopts import Token
 
 fields_help = """
 Field(s) to validate. Specify individual field(s) or group(s) of fields:
@@ -62,6 +71,30 @@ exclude_help = """
 Field(s) to exclude from the validation. This is similar to using FIELDS, but is subtractive
 instead of additive.
 """
+report_help = """
+Show report. Control the body of the report with:
+- ``fields`` to show all validation fields.
+- ``message`` to show the error message (if any).
+
+``message`` is used by default if no tokens are passed.
+"""
+
+
+def _converter_report(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_ReportBodyOptions]:
+    values: list[str] = [t.value for t in tokens]
+    n_values = len(values)
+    if n_values > 1:
+        msg = f'Invalid value for {tokens[0].keyword}: accepts 0 or 1 arguments. Got {n_values}.'
+        raise ValueError(msg)
+    value = values[0]
+    allowed = get_args(_ReportBodyOptions)
+    if value in allowed:
+        return cast('list[_ReportBodyOptions]', [value])
+    msg = f'expected one of {str(allowed)[1:-1]} or no value. Got {value!r}.'
+    raise ValueError(msg)
 
 
 @app.command(
@@ -96,17 +129,37 @@ def _validate(
             help=exclude_help,
         ),
     ] = None,
+    report: Annotated[
+        list[_ReportBodyOptions] | None,
+        Parameter(
+            name='report',
+            consume_multiple=True,
+            converter=_converter_report,
+            show_default=False,
+            negative=[],
+            help=report_help,
+        ),
+    ] = None,
 ) -> None:
     mesh = mesh_path[0].mesh  # type: ignore[attr-defined]
     path = mesh_path[0].path  # type: ignore[attr-defined]
+    report_body = report[0] if report else 'message'
+    class_name = mesh.__class__.__name__
     try:
-        report = pv.DataObjectFilters.validate_mesh(
-            mesh, validation_fields=fields, exclude_fields=exclude
+        out = pv.DataObjectFilters.validate_mesh(
+            mesh, validation_fields=fields, exclude_fields=exclude, report_body=report_body
         )
     except Exception as e:  # noqa: BLE001
-        msg = (
-            f'Failed to validate {mesh.__class__.__name__} mesh read from path {str(path)!r}\n{e}'
-        )
+        msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
         _console_error(app=app, message=msg)
     else:
-        print(report)  # noqa: T201
+        if report is not None:
+            # Print the full report
+            app.console.print(str(out))
+        elif (message := out.message) is not None:
+            # Only print the error message
+            message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
+            app.console.print(message)
+        else:
+            # Mesh is valid
+            app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
