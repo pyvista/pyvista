@@ -102,7 +102,7 @@ class _FRDVTKReader(BaseVTKReader):
     def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
         """Return an UnstructuredGrid for the currently active time step."""
         target_time = self._time_steps[self._active_time_point] if self._time_steps else None
-        
+
         if self._output is None or self._output_time != target_time:
             if not self._nodes:
                 self.Update()
@@ -115,7 +115,7 @@ class _FRDVTKReader(BaseVTKReader):
         if self._output is None:
             msg = 'Failed to generate output grid.'
             raise RuntimeError(msg)
-            
+
         return self._output
 
     # ------------------------------------------------------------------
