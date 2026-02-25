@@ -434,7 +434,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
 
-                if (msg := report._message) is not None:
+                if (msg := report._message) is not None:  # type: ignore[attr-defined]
                     msg = copylib.copy(msg)
                     msg[0] = f'Block id {i} {validated_mesh.get_block_name(i)!r} ' + msg[0]
                     message_body.append(msg)
@@ -728,13 +728,11 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         def render(node: _NestedStrings, *, level: int = 0) -> str:
             indent = ' ' + ('  ' * (level - 1) if level > 1 else '')
             if isinstance(node, str):
-                # Leaf node
-                if level == 0:
-                    return node
                 return insert_bullet(indent, node)
 
             # Structured node: [header, children]
-            header, children = node
+            header = cast('str', node[0])
+            children = node[1]
             lines: list[str] = []
 
             # Render header
