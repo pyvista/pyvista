@@ -113,7 +113,7 @@ class _FRDVTKReader(BaseVTKReader):
         if self._output is None:
             msg = 'Failed to generate output grid.'
             raise RuntimeError(msg)
-            
+
         return self._output
 
     # ------------------------------------------------------------------
