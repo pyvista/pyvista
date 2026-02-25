@@ -110,7 +110,10 @@ class _FRDVTKReader(BaseVTKReader):
             self._output = self._build_grid(step_data)
             self._output_time = target_time
 
-        assert self._output is not None
+        if self._output is None:
+            msg = 'Failed to generate output grid.'
+            raise RuntimeError(msg)
+            
         return self._output
 
     # ------------------------------------------------------------------
@@ -269,7 +272,7 @@ class _FRDVTKReader(BaseVTKReader):
             elif s.startswith('-3'):
                 return
 
-    def _parse_result_data(
+    def _parse_result_data(  # noqa: PLR0917
         self, first_line: str, fh: Any, name: str, step_bucket: dict[str, dict[int, list[float]]]
     ) -> None:
         """Parse -1 records until -3 sentinel is hit."""
