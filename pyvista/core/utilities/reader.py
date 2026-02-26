@@ -6,7 +6,6 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 import enum
-from functools import wraps
 import json
 import os
 from pathlib import Path
@@ -2575,23 +2574,6 @@ class HDFReader(BaseReader):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
-
-    @wraps(BaseReader.read)
-    def read(self):  # type: ignore[override]
-        """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
-        try:
-            with pv.VtkErrorCatcher(raise_errors=True):
-                return super().read()
-        except RuntimeError as err:  # pragma: no cover
-            if "Can't find the `Type` attribute." in str(err):
-                msg = (
-                    f'{self.path} is missing the Type attribute. '
-                    'The VTKHDF format has changed as of 9.2.0, '
-                    f'see {HDF_HELP} for more details.'
-                )
-                raise RuntimeError(msg)
-            else:
-                raise
 
 
 class GLTFReader(BaseReader):

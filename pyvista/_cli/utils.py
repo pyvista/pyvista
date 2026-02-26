@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 from typing import NoReturn
+import warnings
 
 from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
@@ -126,7 +127,12 @@ def _converter_files(
     not_readable: list[str] = []
     for file in values:
         try:
-            mesh = pv.read(file)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    category=pv.InvalidMeshWarning,
+                )
+                mesh = pv.read(file)
         except Exception:  # noqa: BLE001
             not_readable.append(file)
         else:
