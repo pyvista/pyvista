@@ -268,8 +268,42 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         cell_fields_to_validate: list[_CellFields] = []
 
         if validation_fields is not None and exclude_fields is not None:
-            msg = 'validation_fields and exclude_fields cannot both be set.'
-            raise ValueError(msg)
+            # Validate the fields separately and build new output
+            valid_fields = _MeshValidator._validate_fields(validation_fields, None)
+            excl_fields = _MeshValidator._validate_fields(exclude_fields, None)
+            output_fields: tuple[list[_DataFields], list[_PointFields], list[_CellFields]] = (
+                [],
+                [],
+                [],
+            )
+            # Check that excluded fields are a subset of valid fields.
+            # Avoid using sets since we want to preserve order
+            for valid, excluded, output in zip(
+                valid_fields, excl_fields, output_fields, strict=True
+            ):
+                out = list(valid)
+                for field in excluded:
+                    if field in valid:
+                        out.remove(field)
+                    else:
+                        # Invalid field
+                        # Check if a group was passed to make the error message friendlier
+                        if 'data' in exclude_fields and field in allowed_data_fields:
+                            bad_field = 'data'
+                        elif 'points' in exclude_fields and field in allowed_point_fields:
+                            bad_field = 'points'
+                        elif 'cells' in exclude_fields and field in allowed_cell_fields:
+                            bad_field = 'cells'
+                        else:
+                            bad_field = field
+                        msg = (
+                            f'Excluded field {bad_field!r} must be a subset of the '
+                            f'validation fields.'
+                        )
+                        raise ValueError(msg)
+                output.extend(out)  # type: ignore[attr-defined]
+            return tuple(tuple(fields) for fields in output_fields)  # type: ignore[return-value]
+
         elif validation_fields is None and exclude_fields is None:
             # Default values, no need to validate
             data_fields_to_validate.extend(allowed_data_fields)
