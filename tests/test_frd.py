@@ -9,7 +9,7 @@ from pyvista.core.utilities.frd import FRDReader
 @pytest.fixture
 def mock_frd_file(tmp_path):
     """Fixture to create a temporary FRD file with basic ASCII structure."""
-    content = """2C
+    content = '''2C
  -1 1 0.0 0.0 0.0
  -1 2 1.0 0.0 0.0
  -1 3 1.0 1.0 0.0
@@ -56,7 +56,7 @@ def mock_frd_file(tmp_path):
  -1 7 1.0 2.0 3.0
  -1 8 1.0 2.0 3.0
  -3
-"""
+'''
     file_path = tmp_path / 'test_model.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
@@ -65,7 +65,7 @@ def mock_frd_file(tmp_path):
 @pytest.fixture
 def comprehensive_frd_file(tmp_path):
     """Fixture generating a mock FRD file covering all parsing branches and errors."""
-    content = """1C file header
+    content = '''1C file header
 2C
  -1 1 0.0 0.0 0.0
  -1 2 1.0 0.0 0.0
@@ -81,7 +81,7 @@ def comprehensive_frd_file(tmp_path):
  -1 3 bad_type
  -1 4 999
  -1 5 1
- -2 1 2 3 4 5 6 7 8
+ -2 99 99 99 99 99 99 99 99
  -3
 100CL 1 0.1
  -4 STRESS 6
@@ -94,7 +94,14 @@ def comprehensive_frd_file(tmp_path):
  -4 EMPTY_BLOCK 1
  -5 some info
  -3
-"""
+100CL 3 0.3
+ -4 SCALAR 1
+ -1 1 10.0
+ -1 2 20.0
+ -1 3 30.0
+ -1 4 40.0
+ -3
+'''
     file_path = tmp_path / 'comprehensive.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
@@ -186,11 +193,16 @@ def test_frd_reader_comprehensive(comprehensive_frd_file):
     mesh = reader.read()
 
     assert mesh.n_points == 4
-    assert reader.number_time_points == 2
+    assert reader.number_time_points == 3
 
     # Check if derived stress fields were computed correctly
     assert 'STRESS_vMises' in mesh.point_data
     assert 'STRESS_sgMises' in mesh.point_data
+    
+    # Check if scalar values (n_components == 1) were correctly added
+    reader.set_active_time_point(2)
+    mesh_scalar = reader.read()
+    assert 'SCALAR' in mesh_scalar.point_data
 
 
 def test_no_time_steps(no_steps_frd_file):
