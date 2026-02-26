@@ -677,6 +677,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 text = text.replace(item, f'[{style}]{item}[/{style}]')
             return text
 
+        # Replace bullets
+        replacements = {
+            _MeshValidator._MULTIBLOCK_BULLET: '▸',
+            _MeshValidator._MESSAGE_BULLET: '▪',
+        }
+        for old, new in replacements.items():
+            pattern = rf'(?m)^(\s*){re.escape(old)}(?=\s)'
+            string = re.sub(pattern, rf'\1{new}', string)
+
         # Highlight cell types in yellow
         cell_names = {celltype.name for celltype in CellType}
         string = _format_style(string, cell_names, 'yellow')
