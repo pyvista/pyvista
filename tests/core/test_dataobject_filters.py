@@ -1622,7 +1622,7 @@ def test_validate_mesh_exclude_fields_subset(invalid_tetra_negative_volume):
     expected = (
         'Mesh Validation Report\n'
         '----------------------\n'
-        'Mesh:\n'
+        'Mesh info:\n'
         '    Type                     : UnstructuredGrid\n'
         '    N Points                 : 4\n'
         '    N Cells                  : 1\n'
