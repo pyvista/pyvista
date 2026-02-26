@@ -11,6 +11,7 @@ from cyclopts import Parameter
 
 import pyvista as pv
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
+from pyvista.core.filters.data_object import _MeshValidator
 from pyvista.core.filters.data_object import _ReportBodyOptions
 
 from .app import app
@@ -20,6 +21,7 @@ from .utils import _converter_files
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
     from cyclopts import Token
 
@@ -97,6 +99,10 @@ def _converter_report(
     raise ValueError(msg)
 
 
+def _insert_mesh_path(string: str, path: Path) -> str:
+    return string.replace('mesh is not valid', f'mesh {path.name!r} is not valid', 1)
+
+
 @app.command(
     usage=f'Usage: [bold]{pv.__name__} validate MESH-PATH [FIELDS...] [--exclude FIELDS...]',
     help_formatter=HELP_FORMATTER,
@@ -155,11 +161,17 @@ def _validate(
     else:
         if report is not None:
             # Print the full report
-            app.console.print(str(out))
+            report_string = str(out)
+            if report_body == 'fields':
+                invalid_fields = out.invalid_fields
+            else:
+                invalid_fields = None
+                report_string = _insert_mesh_path(report_string, path)
+            app.console.print(_MeshValidator._colorize_output(report_string, invalid_fields))
         elif (message := out.message) is not None:
-            # Only print the error message
-            message = message.replace('mesh is not valid', f'mesh {path.name!r} is not valid')
-            app.console.print(message)
+            # Only print the error message and show the file name
+            message = _insert_mesh_path(message, path)
+            app.console.print(_MeshValidator._colorize_output(message))
         else:
             # Mesh is valid
             app.console.print(f'[green]{class_name} mesh {path.name!r} is valid![/green]')
