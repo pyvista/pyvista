@@ -9,7 +9,7 @@ from pyvista.core.utilities.frd import FRDReader
 @pytest.fixture
 def mock_frd_file(tmp_path):
     """Fixture to create a temporary FRD file with basic ASCII structure."""
-    content = '''2C
+    content = """2C
  -1 1 0.0 0.0 0.0
  -1 2 1.0 0.0 0.0
  -1 3 1.0 1.0 0.0
@@ -56,7 +56,7 @@ def mock_frd_file(tmp_path):
  -1 7 1.0 2.0 3.0
  -1 8 1.0 2.0 3.0
  -3
-'''
+"""
     file_path = tmp_path / 'test_model.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
@@ -65,7 +65,7 @@ def mock_frd_file(tmp_path):
 @pytest.fixture
 def comprehensive_frd_file(tmp_path):
     """Fixture generating a mock FRD file covering all parsing branches and errors."""
-    content = '''1C file header
+    content = """1C file header
 2C
  -1 1 0.0 0.0 0.0
  -1 2 1.0 0.0 0.0
@@ -94,7 +94,7 @@ def comprehensive_frd_file(tmp_path):
  -4 EMPTY_BLOCK 1
  -5 some info
  -3
-'''
+"""
     file_path = tmp_path / 'comprehensive.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
