@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+import pyvista as pv
 from pyvista.core.utilities.frd import FRDReader
 
 
@@ -57,6 +58,62 @@ def mock_frd_file(tmp_path):
  -3
 """
     file_path = tmp_path / 'test_model.frd'
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path)
+
+
+@pytest.fixture
+def comprehensive_frd_file(tmp_path):
+    """Fixture generating a mock FRD file covering all parsing branches and errors."""
+    content = """1C file header
+2C
+ -1 1 0.0 0.0 0.0
+ -1 2 1.0 0.0 0.0
+ -1 3 0.0 1.0 0.0
+ -1 4 1.0 1.0 0.0
+ -1 bad_node_id 0.0 0.0 0.0
+ -3
+3C
+ -1 1 7
+ -2 1 3 2
+ -1 2 9
+ -2 1 3 4 2
+ -1 3 bad_type
+ -1 4 999
+ -1 5 1
+ -2 1 2 3 4 5 6 7 8
+ -3
+100CL 1 0.1
+ -4 STRESS 6
+ -5 skip component info
+ -1 bad_first_line 1.0
+ -1 1 1.0 2.0 3.0 4.0 5.0 6.0
+ -1 2 bad_float 3.0 4.0 5.0 6.0
+ -3
+100CL 2 0.2
+ -4 EMPTY_BLOCK 1
+ -5 some info
+ -3
+"""
+    file_path = tmp_path / 'comprehensive.frd'
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path)
+
+
+@pytest.fixture
+def no_steps_frd_file(tmp_path):
+    """Fixture to trigger empty step checks."""
+    content = "1C\n2C\n -1 1 0.0 0.0 0.0\n -3\n"
+    file_path = tmp_path / 'nosteps.frd'
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path)
+
+
+@pytest.fixture
+def empty_frd_file(tmp_path):
+    """Fixture to trigger empty file checks."""
+    content = "1C Empty File\n"
+    file_path = tmp_path / 'empty.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
 
@@ -120,7 +177,33 @@ def test_frd_reader_derived_strain(mock_frd_file):
     assert 'STRAIN_PS1' in mesh.point_data
 
 
-def test_frd_reader_errors(mock_frd_file):
+def test_frd_reader_comprehensive(comprehensive_frd_file):
+    # This directly hits the logic in pyvista/core/utilities/fileio.py
+    mesh_from_pv = pv.read(comprehensive_frd_file)
+    assert isinstance(mesh_from_pv, pv.UnstructuredGrid)
+
+    reader = FRDReader(comprehensive_frd_file)
+    mesh = reader.read()
+
+    assert mesh.n_points == 4
+    assert reader.number_time_points == 2
+
+    # Check if derived stress fields were computed correctly
+    assert 'STRESS_vMises' in mesh.point_data
+    assert 'STRESS_sgMises' in mesh.point_data
+
+
+def test_no_time_steps(no_steps_frd_file):
+    reader = FRDReader(no_steps_frd_file)
+
+    # This triggers the 'if not steps: return 0.0' lines
+    assert reader.active_time_value == 0.0
+
+    with pytest.raises(RuntimeError):
+        reader.set_active_time_value(0.5)
+
+
+def test_frd_reader_errors(mock_frd_file, empty_frd_file):
     reader = FRDReader(mock_frd_file)
 
     with pytest.raises(IndexError):
@@ -128,3 +211,7 @@ def test_frd_reader_errors(mock_frd_file):
 
     with pytest.raises(IndexError):
         reader.set_active_time_point(-1)
+
+    empty_reader = FRDReader(empty_frd_file)
+    with pytest.raises(ValueError):
+        empty_reader.read()
