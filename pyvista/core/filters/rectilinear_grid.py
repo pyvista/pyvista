@@ -65,6 +65,11 @@ class RectilinearGridFilters:
         pyvista.UnstructuredGrid
             UnstructuredGrid containing the tetrahedral cells.
 
+        .. warning::
+
+            The output :attr:`~pyvista.DataSet.points` has single-precision points, and
+            any double precision will be lost.
+
         Examples
         --------
         Divide a rectangular grid into tetrahedrons. Each cell contains by
@@ -121,7 +126,7 @@ class RectilinearGridFilters:
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
-        out = _get_output(alg)
+        out = _get_output(alg, warn_points_precision=False)
 
         if pass_data:
             # algorithm stores original cell ids in active scalars
