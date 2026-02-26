@@ -103,7 +103,7 @@ def comprehensive_frd_file(tmp_path):
 @pytest.fixture
 def no_steps_frd_file(tmp_path):
     """Fixture to trigger empty step checks."""
-    content = "1C\n2C\n -1 1 0.0 0.0 0.0\n -3\n"
+    content = '1C\n2C\n -1 1 0.0 0.0 0.0\n -3\n'
     file_path = tmp_path / 'nosteps.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
@@ -112,7 +112,7 @@ def no_steps_frd_file(tmp_path):
 @pytest.fixture
 def empty_frd_file(tmp_path):
     """Fixture to trigger empty file checks."""
-    content = "1C Empty File\n"
+    content = '1C Empty File\n'
     file_path = tmp_path / 'empty.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
