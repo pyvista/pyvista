@@ -25,6 +25,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core.utilities.frd import _FRDVTKReader
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -3504,6 +3505,70 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetTimeStep(time_point)
 
+class FRDReader(BaseReader, TimeReader):
+    """Reader for CalculiX FRD ASCII result files (``.frd``)."""
+
+    _class_reader = _FRDVTKReader
+
+    def __init__(self, path: str | pathlib.Path) -> None:
+        """Initialize the reader."""
+        super().__init__(path)
+        self._reader: _FRDVTKReader = self._class_reader()
+        self._reader.SetFileName(self.path)
+        self._reader.Update()
+
+    @property
+    def reader(self) -> _FRDVTKReader:
+        """Return the underlying low-level VTK reader."""
+        return self._reader
+
+    @property
+    def number_time_points(self) -> int:
+        """Return the total number of time points."""
+        return len(self.reader._time_steps)
+
+    def time_point_value(self, time_point: int) -> float:
+        """Return the time value associated with the given time point."""
+        return self.reader._time_steps[time_point]
+
+    @property
+    def time_values(self) -> list[float]:
+        """Return the list of available time values."""
+        return list(self.reader._time_steps)
+
+    def set_active_time_point(self, time_point: int) -> None:
+        """Set the active time point."""
+        n = self.number_time_points
+        if not 0 <= time_point < n:
+            msg = f'time_point {time_point} is out of range (file has {n} time point(s)).'
+            raise IndexError(msg)
+        self.reader._active_time_point = time_point
+
+    def set_active_time_value(self, time_value: float) -> None:
+        """Set the active time value."""
+        steps = self.reader._time_steps
+        if not steps:
+            msg = 'No time steps found in the FRD file.'
+            raise RuntimeError(msg)
+        idx = int(np.argmin(np.abs(np.array(steps) - time_value)))
+        self.reader._active_time_point = idx
+
+    @property
+    def active_time_value(self) -> float:
+        """Return the active time value."""
+        steps = self.reader._time_steps
+        if not steps:
+            return 0.0
+        return steps[self.reader._active_time_point]
+
+    @active_time_value.setter
+    def active_time_value(self, value: float) -> None:
+        """Set the active time value."""
+        self.set_active_time_value(value)
+
+    def read(self) -> UnstructuredGrid:
+        """Read and return the PyVista UnstructuredGrid."""
+        return self.reader.GetOutput()
 
 class ExodusIIBlockSet(_NoNewAttrMixin):
     """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
@@ -3866,6 +3931,7 @@ CLASS_READERS = {
     '.exii': ExodusIIReader,
     '.facet': FacetReader,
     '.foam': POpenFOAMReader,
+    '.frd': FRDReader,
     '.g': BYUReader,
     '.gif': GIFReader,
     '.glb': GLTFReader,
