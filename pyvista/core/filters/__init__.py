@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+import numpy as np
+
 import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import wrap
@@ -40,6 +42,14 @@ if TYPE_CHECKING:
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
+    # Try to set output precision to match input
+    if alg.GetNumberOfInputPorts() > 0:
+        alg_input = cast('pv.DataObject', wrap(alg.GetInputDataObject(0, 0)))
+        if (set_precision := getattr(alg, 'SetOutputPointsPrecision', None)) is not None:
+            points = getattr(alg_input, 'points', None)
+            if points is not None and points.dtype == np.double:
+                set_precision(alg.DOUBLE_PRECISION)
+
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
     if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
@@ -75,6 +85,7 @@ def _get_output(
     oport=0,
     active_scalars=None,
     active_scalars_field='point',
+    warn_points_precision: bool = True,
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
@@ -90,40 +101,29 @@ def _get_output(
         return data.cast_to_pointset()
 
     # Warn if the alg modified points dtype
-    points_in = getattr(ido, 'points', None)
-    if points_in is not None:
-        points_out = getattr(data, 'points', None)
-        if points_out is not None and points_in.dtype != points_out.dtype:
-            msg = (
-                f'The points dtype of {ido.__class__.__name__} '
-                f'was modified by {algorithm.__class__.__name__}.\n'
-                f'Input dtype: {points_in.dtype.name!r}, output dtype: {points_out.dtype.name!r}.'
-            )
-            warn_external(msg, RuntimeWarning)
+    if warn_points_precision:
+        points_in = getattr(ido, 'points', None)
+        if points_in is not None:
+            points_out = getattr(data, 'points', None)
+            if points_out is not None and points_in.dtype != points_out.dtype:
+                msg = (
+                    f'The points dtype of {ido.__class__.__name__} '
+                    f'was modified by {algorithm.__class__.__name__}.\n'
+                    f'Input dtype: {points_in.dtype.name!r}, '
+                    f'output dtype: {points_out.dtype.name!r}.'
+                )
+                warn_external(msg, RuntimeWarning)
     return data
 
 
-from .composite import CompositeFilters
-from .data_object import DataObjectFilters
+from .composite import CompositeFilters as CompositeFilters
+from .data_object import DataObjectFilters as DataObjectFilters
 
 # Re-export submodules to maintain the same import paths
 # before filters.py was split into submodules
-from .data_set import DataSetFilters
-from .image_data import ImageDataFilters
-from .poly_data import PolyDataFilters
-from .rectilinear_grid import RectilinearGridFilters
-from .structured_grid import StructuredGridFilters
-from .unstructured_grid import UnstructuredGridFilters
-
-__all__ = [
-    'CompositeFilters',
-    'DataObjectFilters',
-    'DataSetFilters',
-    'ImageDataFilters',
-    'PolyDataFilters',
-    'RectilinearGridFilters',
-    'StructuredGridFilters',
-    'UnstructuredGridFilters',
-    '_get_output',
-    '_update_alg',
-]
+from .data_set import DataSetFilters as DataSetFilters
+from .image_data import ImageDataFilters as ImageDataFilters
+from .poly_data import PolyDataFilters as PolyDataFilters
+from .rectilinear_grid import RectilinearGridFilters as RectilinearGridFilters
+from .structured_grid import StructuredGridFilters as StructuredGridFilters
+from .unstructured_grid import UnstructuredGridFilters as UnstructuredGridFilters
