@@ -5804,6 +5804,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> merged.plot()
 
         """
+
+        def _maybe_cast_to_ugrid(mesh):
+            # Hidden cells for some mesh types are broken by vtkAppendFilter
+            # We cast to unstructured grid first to preserve them.
+            if isinstance(mesh, (pv.ImageData, pv.StructuredGrid)) and mesh._has_ghost_cells:
+                return mesh.cast_to_unstructured_grid()
+            return mesh
+
         vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
         if main_has_priority is not None:
             msg = (
@@ -5820,6 +5828,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             # Set default for older VTK:
             main_has_priority = True
 
+        grids = grid if isinstance(grid, (list, tuple, pv.MultiBlock)) else [grid]
+
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
         append_filter.SetTolerance(tolerance)
@@ -5830,17 +5840,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         # correct order
         append_main_first = (not main_has_priority) or vtk_at_least_95
         if append_main_first:
-            append_filter.AddInputData(self)
+            append_filter.AddInputData(_maybe_cast_to_ugrid(self))
 
-        if isinstance(grid, _vtk.vtkDataSet):
-            append_filter.AddInputData(grid)
-        elif isinstance(grid, (list, tuple, pv.MultiBlock)):
-            grids = grid
-            for grid_ in grids:
-                append_filter.AddInputData(grid_)
+        for grid_ in grids:
+            if isinstance(grid_, pv.ExplicitStructuredGrid):
+                # Need to cast to avoid seg fault
+                append_filter.AddInputData(grid_.cast_to_unstructured_grid())
+            else:
+                append_filter.AddInputData(_maybe_cast_to_ugrid(grid_))
 
         if not append_main_first:
-            append_filter.AddInputData(self)
+            append_filter.AddInputData(_maybe_cast_to_ugrid(self))
 
         _update_alg(append_filter, progress_bar=progress_bar, message='Merging')
         merged = _get_output(append_filter)

@@ -849,7 +849,7 @@ def read_grdecl(
     # Active cells
     if 'ACTNUM' in keywords:
         active = np.array(keywords['ACTNUM']) > 0.0
-        grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
+        grid.hide_cells(~active, inplace=True)
 
     # Store unused keywords in user dict
     grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}

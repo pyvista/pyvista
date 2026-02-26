@@ -60,9 +60,12 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
     from ._typing_core import _ArrayLikeOrScalar
+    from ._typing_core import _DataSetType
 
-# vector array names
-DEFAULT_VECTOR_KEY = '_vectors'
+
+DEFAULT_VECTOR_KEY = '_vectors'  # vector array names
+GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
+HIDDEN_CELL = _vtk.vtkDataSetAttributes.HIDDENCELL
 _Dimensionality = Literal[0, 1, 2, 3]
 
 
@@ -1719,10 +1722,27 @@ class DataSet(DataSetFilters, DataObject):
         <class 'pyvista.core.pointset.UnstructuredGrid'>
 
         """
+        # Process hidden cells. We need to show then re-hide them for some mesh types else
+        # vtkAppendFilter converts the cells to EMPTY_CELL cells
+        hidden_cell_ids: NumpyArray[int] | None = None
+        if (
+            isinstance(self, (pv.ImageData, pv.StructuredGrid))
+            and (ids := self.hidden_cell_ids).size > 0
+        ):
+            hidden_cell_ids = ids
+            self_input: DataSet = self.unhide_cells()
+        else:
+            self_input = self
+
         alg = _vtk.vtkAppendFilter()
-        alg.AddInputData(self)
+        alg.AddInputData(self_input)
         alg.Update()
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        if hidden_cell_ids is not None:
+            output.hide_cells(hidden_cell_ids, inplace=True)
+
+        return output
 
     @_deprecate_positional_args
     def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
@@ -3359,3 +3379,196 @@ class DataSet(DataSetFilters, DataObject):
             else _vtk.vtkCellTypes.IsLinear
         )
         return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
+
+
+@abstract_class
+class _HiddenCellsMixin:
+    """Mixin class for DataSet types that support hidden ghost cells.
+
+    Hidden cells are supported by:
+
+    - :class:`~pyvista.ImageData`
+    - :class:`~pyvista.StructuredGrid`
+    - :class:`~pyvista.ExplicitStructuredGrid`
+    - :class:`~pyvista.UnstructuredGrid`
+
+    """
+
+    @_deprecate_positional_args(allowed=['ind'])
+    def hide_cells(  # type: ignore[misc]
+        self: _DataSetType,
+        ind: VectorLike[int] | VectorLike[bool] | None = None,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ) -> _DataSetType:
+        """Hide cells without deleting them.
+
+        Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
+
+        Parameters
+        ----------
+        ind : sequence[int]
+            List or array of cell indices to be hidden.  The array can
+            also be a boolean array of the same size as the number of
+            cells.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.StructuredGrid
+            Structured grid with hidden cells.
+
+        Examples
+        --------
+        Hide part of the middle of a :class:`~pyvista.StructuredGrid` surface.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> x = np.arange(-10, 10, 0.25)
+        >>> y = np.arange(-10, 10, 0.25)
+        >>> z = 0
+        >>> x, y, z = np.meshgrid(x, y, z)
+        >>> grid = pv.StructuredGrid(x, y, z)
+        >>> grid = grid.hide_cells(range(79 * 30, 79 * 50))
+        >>> grid.plot(color=True, show_edges=True)
+
+        Hide the top section of a :class:`~pyvista.ExplicitStructuredGrid`.
+
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
+
+        """
+        if not inplace:
+            return self.copy().hide_cells(ind, inplace=True)
+
+        if ind is None:
+            indices: VectorLike[int] | VectorLike[bool] = np.full(
+                shape=(self.n_cells,), fill_value=np.True_, dtype=np.bool_
+            )
+        else:
+            indices = ind
+            if isinstance(ind, np.ndarray):
+                if ind.dtype == np.bool_ and ind.size != self.n_cells:
+                    msg = f'Boolean array size must match the number of cells ({self.n_cells})'
+                    raise ValueError(msg)
+
+        try:
+            if len(indices) == 0:
+                return self
+        except TypeError:
+            pass  # ind may be a scalar, keep going
+
+        try:
+            ghost_cells: np.ndarray | pyvista_ndarray = self.cell_data[GHOST_ARRAY_NAME]
+        except KeyError:
+            ghost_cells = np.zeros(self.n_cells, np.uint8)
+
+        ghost_cells[indices] = HIDDEN_CELL  # type: ignore[index]
+
+        # add but do not make active
+        self.cell_data.set_array(ghost_cells, GHOST_ARRAY_NAME)
+        return self
+
+    def unhide_cells(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        inplace: bool = False,
+    ) -> _DataSetType:
+        """Show hidden cells.
+
+        Shows hidden cells by setting the ghost cell array to ``0``
+        where ``HIDDENCELL``.
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            This method is applied to this grid if ``True``
+            or to a copy otherwise.
+
+        Returns
+        -------
+        ExplicitStructuredGrid
+            A deep copy of this grid if ``inplace=False`` with the
+            hidden cells shown.  Otherwise, this dataset with the
+            shown cells.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
+
+        >>> grid = grid.show_cells()
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
+
+        """
+        if inplace:
+            if GHOST_ARRAY_NAME in self.cell_data:
+                array = self.cell_data[GHOST_ARRAY_NAME]
+                ind = np.where(array == HIDDEN_CELL)[0]
+                array[ind] = 0
+            return self
+
+        return self.copy().unhide_cells(inplace=True)
+
+    @property
+    def visible_bounds(self: _DataSetType) -> BoundsTuple:  # type: ignore[misc]
+        """Return the bounding box of the visible cells.
+
+        Different from `bounds`, which returns the bounding box of the
+        complete grid, this method returns the bounding box of the
+        visible cells, where the ghost cell array is not
+        ``HIDDENCELL``.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            The limits of the visible grid in the X, Y and Z
+            directions respectively.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> grid = examples.load_explicit_structured()
+        >>> grid = grid.hide_cells(range(80, 120))
+        >>> grid.bounds
+        BoundsTuple(x_min =  0.0,
+                    x_max = 80.0,
+                    y_min =  0.0,
+                    y_max = 50.0,
+                    z_min =  0.0,
+                    z_max =  6.0)
+
+        >>> grid.visible_bounds
+        BoundsTuple(x_min =  0.0,
+                    x_max = 80.0,
+                    y_min =  0.0,
+                    y_max = 50.0,
+                    z_min =  0.0,
+                    z_max =  4.0)
+
+        """
+        if (hidden_cell_ids := self.hidden_cell_ids).size > 0:
+            return self.extract_cells(hidden_cell_ids, invert=True).bounds
+        return self.bounds
+
+    @property
+    def has_hidden_cells(self) -> bool:  # numpydoc ignore=RT01
+        """Return True if any cells are hidden."""
+        return self.hidden_cell_ids.size > 0  # type: ignore[misc]
+
+    @property
+    def hidden_cell_ids(self: _DataSetType) -> NumpyArray[int]:  # type: ignore[misc]  # numpydoc ignore=RT01
+        """Return the IDs of currently hidden cells."""
+        if GHOST_ARRAY_NAME in self.cell_data:
+            array = self.cell_data[GHOST_ARRAY_NAME]
+            return np.where(array == HIDDEN_CELL)[0]
+        return np.empty(shape=(0,), dtype=int)
+
+    @property
+    def _has_ghost_cells(self: _DataSetType) -> bool:  # type: ignore[misc]
+        return GHOST_ARRAY_NAME in self.cell_data
