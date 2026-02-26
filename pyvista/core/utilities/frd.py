@@ -112,10 +112,6 @@ class _FRDVTKReader(BaseVTKReader):
             self._output = self._build_grid(step_data)
             self._output_time = target_time
 
-        if self._output is None:
-            msg = 'Failed to generate output grid.'
-            raise RuntimeError(msg)
-
         return self._output
 
     # ------------------------------------------------------------------
