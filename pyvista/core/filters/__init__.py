@@ -30,6 +30,7 @@ from typing import Any
 from typing import cast
 
 import pyvista as pv
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
@@ -87,6 +88,18 @@ def _get_output(
     # return a PointSet if input is a pointset
     if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
+
+    # Warn if the alg modified points dtype
+    points_in = getattr(ido, 'points', None)
+    if points_in is not None:
+        points_out = getattr(data, 'points', None)
+        if points_out is not None and points_in.dtype != points_out.dtype:
+            msg = (
+                f'The points dtype of {ido.__class__.__name__} '
+                f'was modified by {algorithm.__class__.__name__}.\n'
+                f'Input dtype: {points_in.dtype.name!r}, output dtype: {points_out.dtype.name!r}.'
+            )
+            warn_external(msg, RuntimeWarning)
     return data
 
 
