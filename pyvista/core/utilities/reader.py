@@ -3505,6 +3505,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetTimeStep(time_point)
 
+
 class FRDReader(BaseReader, TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``)."""
 
@@ -3569,6 +3570,7 @@ class FRDReader(BaseReader, TimeReader):
     def read(self) -> UnstructuredGrid:
         """Read and return the PyVista UnstructuredGrid."""
         return self.reader.GetOutput()
+
 
 class ExodusIIBlockSet(_NoNewAttrMixin):
     """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
