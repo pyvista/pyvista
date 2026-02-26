@@ -33,6 +33,7 @@ from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import _CELL_TYPES_1D
 from pyvista.core.celltype import _CELL_TYPES_2D
 from pyvista.core.celltype import _CELL_TYPES_3D
+from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -45,13 +46,13 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.reader import _mesh_types
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
-    from pyvista import CellType
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
@@ -216,6 +217,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     _allowed_point_fields = get_args(_PointFields)
     _allowed_cell_fields = get_args(_CellFields)
     _allowed_field_groups = (*get_args(_DefaultFieldGroups), *get_args(_OtherFieldGroups))
+
+    # Define variables to output that may be colorized
+    _SECTION_HEADINGS: ClassVar[set[str]] = set()
+    _NORMALIZED_MESSAGE_FIELD_NAMES: ClassVar[set[str]] = set()
+    _REPORT_TITLE = 'Mesh Validation Report'
 
     @dataclass
     class _FieldSummary:
@@ -563,6 +569,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             else:
                 size = 'volume'
             name_norm = name_norm.replace('size', size)
+        _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
 
         # Need to write name either before of after the word "cell"
         if name == 'non_convex':
@@ -600,6 +607,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'Mesh has {n_arrays} {kind} array{s} with incorrect length '
                 '(length must be {expected}). Invalid array{s}: {details}'
             )
+            _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add('incorrect length')
             details = join_limited(
                 [f'{name!r} ({length})' for name, length in invalid_arrays.items()]
             )
@@ -663,7 +671,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             if not array:
                 return ''
             name_norm = _MeshValidator._normalize_field_name(name_)
+            _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
             name_norm = name_norm.removesuffix('s')
+            _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
             n_ids = len(array)
             s = 's' if n_ids > 1 else ''
             return (
@@ -673,7 +683,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         summaries: list[_MeshValidator._FieldSummary] = []
         for name, func, info in [
-            ('unused_points', get_unused_point_ids, ' not referenced by any cell(s)'),
+            ('unused_points', get_unused_point_ids, ' not referenced by any cell'),
             ('non_finite_points', get_non_finite_point_ids, ''),
         ]:
             if name in validation_fields:
@@ -687,11 +697,54 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @staticmethod
     def _create_message_header(obj: object) -> str:
-        return f'{obj.__class__.__name__} mesh is not valid due to the following problems:'
+        return f'{obj.__class__.__name__} mesh is not valid:'
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         return self._validation_report
+
+    @staticmethod
+    def _colorize_output(string: str, invalid_fields: tuple[str, ...] | None = None) -> str:
+        """Color and style text using Rich markup."""
+
+        def _format_style(text: str, items: Iterable[str], style: str) -> str:
+            for item in items:
+                text = text.replace(item, f'[{style}]{item}[/{style}]')
+            return text
+
+        # Highlight cell types in yellow
+        cell_names = {celltype.name for celltype in CellType}
+        string = _format_style(string, cell_names, 'yellow')
+
+        # Highlight mesh types in purple
+        mesh_names = {*get_args(_mesh_types), 'ExplicitStructuredGrid'}
+        string = _format_style(string, mesh_names, 'purple')
+
+        # Make section headings bold
+        section_headings = [f'\n{heading}' for heading in _MeshValidator._SECTION_HEADINGS]
+        string = _format_style(string, section_headings, 'bold')
+
+        # Make report title bold
+        title = _MeshValidator._REPORT_TITLE
+        string = _format_style(string, [title], 'bold')
+
+        # Make title underline bold
+        underline = '-' * len(title)
+        new_underline = '━' * len(title)
+        string = string.replace(underline, new_underline)
+
+        # Highlight invalid fields in message as red
+        # Reverse sort to ensure we replace things like 'unused_points' before 'unused_point'
+        norm_field_names = sorted(_MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES)[::-1]
+        string = _format_style(string, norm_field_names, 'red')
+
+        # Highlight invalid reported fields in red:
+        if invalid_fields:
+            norm_field_names = [
+                _MeshValidator._normalize_field_name(name).capitalize() for name in invalid_fields
+            ]
+            string = _format_style(string, norm_field_names, 'red')
+        return string
 
 
 _LiteralMeshValidationFields = (
@@ -839,12 +892,14 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         label_width = compute_label_width()
         lines: list[str] = []
 
-        title = 'Mesh Validation Report'
+        title = _MeshValidator._REPORT_TITLE
         lines.append(title)
         lines.append('-' * len(title))
 
         def append_group_name(name):
-            lines.append(f'{name}:')
+            heading = f'{name}:'
+            lines.append(heading)
+            _MeshValidator._SECTION_HEADINGS.add(heading)
 
         def emit_group(name: str, field_names: Sequence[str]) -> None:
             if all(getattr(self, field) is None for field in field_names):
@@ -867,7 +922,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
                     )
 
         def emit_mesh_info() -> None:
-            lines.append('Mesh:')
+            append_group_name('Mesh info')
             for key, value in mesh_items.items():
                 lines.append(f'{indent}{key:<{label_width}} : {value}')
 
@@ -877,8 +932,21 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         if isinstance(mesh, pv.DataSet):
             mesh_items['N Points'] = mesh.n_points
             mesh_items['N Cells'] = mesh.n_cells
+
+            # Get distinct cell types
+            if pv.vtk_version_info < (9, 5, 0):
+                # This may cast to unstructured grid, which will warn if arrays are invalid
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        'ignore',
+                        category=pv.InvalidMeshWarning,
+                    )
+                    cell_types_ = mesh.distinct_cell_types
+            else:
+                cell_types_ = mesh.distinct_cell_types
+
             # Use a list to preserve order, but we format it to look like a set
-            cell_types = sorted(mesh.distinct_cell_types)
+            cell_types = sorted(cell_types_)
             cell_types_fmt = (
                 str(set())
                 if len(cell_types) == 0
@@ -1080,7 +1148,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type           : PolyData
             N Points       : 842
             N Cells        : 1680
@@ -1095,7 +1163,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : PolyData
             N Points                 : 842
             N Cells                  : 1680
@@ -1142,7 +1210,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
@@ -1187,7 +1255,7 @@ class DataObjectFilters:
         ``action`` keyword is set for emitting warnings or raising errors.
 
         >>> print(report.message)
-        PolyData mesh is not valid due to the following problems:
+        PolyData mesh is not valid:
          - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
         Show a validation report for cells with intersecting edges and unused points only.
@@ -1198,7 +1266,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : PolyData
             N Points                 : 2903
             N Cells                  : 3263
@@ -1230,15 +1298,15 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type               : MultiBlock
             N Blocks           : 1
         Report summary:
             Is valid           : False
             Invalid fields (1) : ('non_convex',)
         Error message:
-            MultiBlock mesh is not valid due to the following problems:
-             - Block id 0 'Block-00' PolyData mesh is not valid due to the following problems:
+            MultiBlock mesh is not valid:
+             - Block id 0 'Block-00' PolyData mesh is not valid:
                - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
         Validate again but show the fields in report body.
@@ -1249,7 +1317,7 @@ class DataObjectFilters:
         >>> print(report)
         Mesh Validation Report
         ----------------------
-        Mesh:
+        Mesh info:
             Type                     : MultiBlock
             N Blocks                 : 1
         Report summary:

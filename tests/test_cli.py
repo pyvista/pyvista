@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import get_args
 
+import numpy as np
 import pytest
 from pytest_cases import case
 from pytest_cases import filters
@@ -26,6 +27,7 @@ import pyvista as pv
 from pyvista.__main__ import app
 from pyvista.__main__ import main
 from pyvista.core.filters.data_object import _LiteralMeshValidationFields
+from tests.core.test_dataobject_filters import _add_vtk_array
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -46,7 +48,20 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
     monkeypatch.setattr(app, 'help_format', 'plaintext')
+
+
+@pytest.fixture
+def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
+    console = Console(
+        width=70,
+        highlight=True,
+        force_terminal=True,
+        color_system='standard',
+        legacy_windows=False,
+    )
+    monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -212,11 +227,34 @@ def tmp_ant_file(tmp_example_dir):
 
 
 @pytest.fixture
-def tmp_cow_file(tmp_example_dir):
+def tmp_cow_file_invalid(tmp_example_dir):
     src = Path(pv.examples.download_cow(load=False))
-    dst = tmp_example_dir / src.name
-    shutil.copy(src, dst)
+    # Need to save as vtk, not vtp, since XML reader doesn't like invalid arrays
+    dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
+
+    # Modify mesh
+    cow = pv.read(src).cast_to_unstructured_grid()
+    # Add invalid points
+    # Make sure we have a single invalid point (nan) and multiple invalid points (unused)
+    # since the messages differ for singular vs plural
+    cow.points = np.append(cow.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+
+    # Add invalid arrays, singular point array but multiple cell arrays
+    _add_vtk_array(cow, 'foo', range(cow.n_points + 1), association='point')
+    _add_vtk_array(cow, 'bar', range(cow.n_cells + 1), association='cell')
+    _add_vtk_array(cow, 'baz', range(cow.n_cells - 1), association='cell')
+
+    cow.save(dst)
     return dst
+
+
+@pytest.fixture
+def tmp_ant_file_invalid_multiblock(tmp_ant_file):
+    out = tmp_ant_file.with_suffix('.vtm')
+    mesh = pv.read(tmp_ant_file)
+    mesh.points = np.append(mesh.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+    mesh.cast_to_multiblock().save(out)
+    return out
 
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
@@ -314,8 +352,8 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
-        '----------------------\n'
-        'Mesh:\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
         '    Type           : PolyData\n'
         '    N Points       : 486\n'
         '    N Cells        : 912\n'
@@ -334,8 +372,8 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     out = capsys.readouterr().out
     expected = (
         'Mesh Validation Report\n'
-        '----------------------\n'
-        'Mesh:\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
         '    Type                     : PolyData\n'
         '    N Points                 : 486\n'
         '    N Cells                  : 912\n'
@@ -367,13 +405,178 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_validate_invalid_mesh(tmp_cow_file: Path, capsys: pytest.CaptureFixture):
-    main(f'validate {str(tmp_cow_file)!r}')
+def test_validate_invalid_mesh(
+    tmp_cow_file_invalid: Path,
+    tmp_ant_file_invalid_multiblock: Path,
+    capsys: pytest.CaptureFixture,
+):
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
     out = capsys.readouterr().out
     expected = (
-        "PolyData mesh 'cow.vtp' is not valid due to the following problems:\n"
+        "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
+        ' - Mesh has 1 point array with incorrect length (length must be 2905).\n'
+        "Invalid array: 'foo' (2906)\n"
+        ' - Mesh has 2 cell arrays with incorrect length (length must be 3263).\n'
+        "Invalid arrays: 'bar' (3264), 'baz' (3262)\n"
+        ' - Mesh has 2 unused points not referenced by any cell. Invalid point \n'
+        'ids: [2903, 2904]\n'
+        ' - Mesh has 1 non-finite point. Invalid point id: [2903]\n'
         ' - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
         '3250]\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "MultiBlock mesh 'ant.vtm' is not valid:\n"
+        " - Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '   - Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '   - Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r} --report')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type               : MultiBlock\n'
+        '    N Blocks           : 1\n'
+        'Report summary:\n'
+        '    Is valid           : False\n'
+        "    Invalid fields (2) : ('non_finite_points', 'unused_points')\n"
+        'Error message:\n'
+        "    MultiBlock mesh 'ant.vtm' is not valid:\n"
+        "     - Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '       - Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '       - Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console_color')
+def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixture):
+    b = '\x1b[1m'  # bold
+    _ = '\x1b[0m'  # reset
+    m = '\x1b[35m'  # magenta
+    cb = '\x1b[1;36m'  # cyan bold
+    y = '\x1b[33m'  # yellow
+    g = '\x1b[32m'  # green
+    r = '\x1b[31m'  # red
+    rib = '\x1b[3;91m'  # red italic bright
+
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f' - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}2905{_}{b}){_}.\n'
+        f"Invalid array: {g}'foo'{_} {b}({_}{cb}2906{_}{b}){_}\n"
+        f' - Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}3263{_}{b}){_}.\n'
+        f"Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f' - Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid point \nids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f' - Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f' - Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, {cb}1532{_}, \n{cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report message')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type               : {m}UnstructuredGrid{_}\n'
+        f'    N Points           : {cb}2905{_}\n'
+        f'    N Cells            : {cb}3263{_}\n'
+        f'    Cell types         : {b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid           : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}5{_}{b}){_} : '
+        f"{b}({_}{g}'cell_data_wrong_length'{_}, \n"
+        f"{g}'point_data_wrong_length'{_}, {g}'non_finite_points'{_}, "
+        f"{g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Error message:{_}\n'
+        f"    {m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f'     - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be \n'
+        f"{cb}2905{_}{b}){_}. Invalid array: {g}'foo'{_} "
+        f'{b}({_}{cb}2906{_}{b}){_}\n'
+        f'     - Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be \n'
+        f"{cb}3263{_}{b}){_}. Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f'     - Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid \npoint ids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'     - Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f'     - Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, \n'
+        f'{cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report fields')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type                        : {m}UnstructuredGrid{_}\n'
+        f'    N Points                    : {cb}2905{_}\n'
+        f'    N Cells                     : {cb}3263{_}\n'
+        f'    Cell types                  : '
+        f'{b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid                    : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}5{_}{b}){_}          : '
+        f"{b}({_}{g}'cell_data_wrong_length'{_}, \n"
+        f"{g}'point_data_wrong_length'{_}, {g}'non_finite_points'{_}, "
+        f"{g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Invalid data arrays:{_}\n'
+        f'    {r}Cell data wrong length{_} '
+        f'{b}({_}{cb}2{_}{b}){_}  : '
+        f"{b}[{_}{g}'bar'{_}, {g}'baz'{_}{b}]{_}\n"
+        f'    {r}Point data wrong length{_} '
+        f'{b}({_}{cb}1{_}{b}){_} : '
+        f"{b}[{_}{g}'foo'{_}{b}]{_}\n"
+        f'{b}Invalid point ids:{_}\n'
+        f'    {r}Non-finite points{_} '
+        f'{b}({_}{cb}1{_}{b}){_}       : '
+        f'{b}[{_}{cb}2903{_}{b}]{_}\n'
+        f'    {r}Unused points{_} '
+        f'{b}({_}{cb}2{_}{b}){_}           : '
+        f'{b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'{b}Invalid cell ids:{_}\n'
+        f'    Coincident points           : {b}[{_}{b}]{_}\n'
+        f'    Degenerate faces            : {b}[{_}{b}]{_}\n'
+        f'    Intersecting edges          : {b}[{_}{b}]{_}\n'
+        f'    Intersecting faces          : {b}[{_}{b}]{_}\n'
+        f'    Invalid point references    : {b}[{_}{b}]{_}\n'
+        f'    Inverted faces              : {b}[{_}{b}]{_}\n'
+        f'    Negative size               : {b}[{_}{b}]{_}\n'
+        f'    Non-contiguous edges        : {b}[{_}{b}]{_}\n'
+        f'    {r}Non-convex{_} '
+        f'{b}({_}{cb}3{_}{b}){_}              : '
+        f'{b}[{_}{cb}1013{_}, {cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+        f'    Non-planar faces            : {b}[{_}{b}]{_}\n'
+        f'    Wrong number of points      : {b}[{_}{b}]{_}\n'
+        f'    Zero size                   : {b}[{_}{b}]{_}\n'
     )
     assert out == expected
 
