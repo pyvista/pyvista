@@ -4,15 +4,58 @@ from __future__ import annotations
 
 import pathlib
 import re
+from enum import Enum
+from enum import IntEnum
 from typing import Any
 from typing import ClassVar
 
 import numpy as np
 
+from pyvista.core.celltype import CellType
+from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.utilities.reader import BaseReader
 from pyvista.core.utilities.reader import BaseVTKReader
 from pyvista.core.utilities.reader import TimeReader
+
+
+class FRDBlock(Enum):
+    """CalculiX FRD block types."""
+
+    NODES = '2C'
+    ELEMENTS = '3C'
+    RESULTS = '100'
+
+
+class CGXRecord(IntEnum):
+    """CGX Record Types.
+
+    Source https://www.dhondt.de/cgx_2.23.pdf (11 Result Format, page 144).
+    """
+
+    NODAL_VALUES = -1
+    ELEMENT_FACES = -2
+    END_OF_BLOCK = -3
+    ATTRIBUTE_HEADER = -4
+    COMPONENT_DEFINITION = -5
+
+
+class FRDElementType(IntEnum):
+    """CalculiX FRD element types."""
+
+    HE8 = 1
+    PE6 = 2
+    TE4 = 3
+    HE20 = 4
+    PE15 = 5
+    TE10 = 6
+    TR3 = 7
+    TR6 = 8
+    QU4 = 9
+    QU8 = 10
+    BE2 = 11
+    BE3 = 12
+
 
 # ---------------------------------------------------------------------------
 # Low-level, VTK-style reader
@@ -31,34 +74,34 @@ class _FRDVTKReader(BaseVTKReader):
     _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
 
     # CalculiX element type -> VTK cell type
-    CCX_TO_VTK_TYPE: ClassVar[dict[int, int]] = {
-        1: 12,  # he8  -> VTK_HEXAHEDRON
-        2: 13,  # pe6  -> VTK_WEDGE
-        3: 10,  # te4  -> VTK_TETRA
-        4: 25,  # he20 -> VTK_QUADRATIC_HEXAHEDRON
-        5: 13,  # pe15 -> VTK_WEDGE (degraded; pe15 not native to base VTK)
-        6: 24,  # te10 -> VTK_QUADRATIC_TETRA
-        7: 5,  # tr3  -> VTK_TRIANGLE
-        8: 22,  # tr6  -> VTK_QUADRATIC_TRIANGLE
-        9: 9,  # qu4  -> VTK_QUAD
-        10: 23,  # qu8  -> VTK_QUADRATIC_QUAD
-        11: 3,  # be2  -> VTK_LINE
-        12: 21,  # be3  -> VTK_QUADRATIC_EDGE
+    CCX_TO_VTK_TYPE: ClassVar[dict[FRDElementType, CellType]] = {
+        FRDElementType.HE8: CellType.HEXAHEDRON,
+        FRDElementType.PE6: CellType.WEDGE,
+        FRDElementType.TE4: CellType.TETRA,
+        FRDElementType.HE20: CellType.QUADRATIC_HEXAHEDRON,
+        FRDElementType.PE15: CellType.WEDGE,  # degraded; pe15 not native to base VTK
+        FRDElementType.TE10: CellType.QUADRATIC_TETRA,
+        FRDElementType.TR3: CellType.TRIANGLE,
+        FRDElementType.TR6: CellType.QUADRATIC_TRIANGLE,
+        FRDElementType.QU4: CellType.QUAD,
+        FRDElementType.QU8: CellType.QUADRATIC_QUAD,
+        FRDElementType.BE2: CellType.LINE,
+        FRDElementType.BE3: CellType.QUADRATIC_EDGE,
     }
 
-    NODES_PER_ELEM: ClassVar[dict[int, int]] = {
-        1: 8,
-        2: 6,
-        3: 4,
-        4: 20,
-        5: 15,
-        6: 10,
-        7: 3,
-        8: 6,
-        9: 4,
-        10: 8,
-        11: 2,
-        12: 3,
+    NODES_PER_ELEM: ClassVar[dict[FRDElementType, int]] = {
+        FRDElementType.HE8: _CELL_TYPE_TO_NUM_POINTS[CellType.HEXAHEDRON],
+        FRDElementType.PE6: _CELL_TYPE_TO_NUM_POINTS[CellType.WEDGE],
+        FRDElementType.TE4: _CELL_TYPE_TO_NUM_POINTS[CellType.TETRA],
+        FRDElementType.HE20: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_HEXAHEDRON],
+        FRDElementType.PE15: 15,  # Needs to read 15 nodes from file even if degrading to WEDGE
+        FRDElementType.TE10: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_TETRA],
+        FRDElementType.TR3: _CELL_TYPE_TO_NUM_POINTS[CellType.TRIANGLE],
+        FRDElementType.TR6: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_TRIANGLE],
+        FRDElementType.QU4: _CELL_TYPE_TO_NUM_POINTS[CellType.QUAD],
+        FRDElementType.QU8: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_QUAD],
+        FRDElementType.BE2: _CELL_TYPE_TO_NUM_POINTS[CellType.LINE],
+        FRDElementType.BE3: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_EDGE],
     }
 
     def __init__(self) -> None:
@@ -94,8 +137,8 @@ class _FRDVTKReader(BaseVTKReader):
         self._output = None
         self._output_time = object()
 
-        with pathlib.Path(self._filename).open(errors='replace') as fh:
-            self._parse_lines(fh)
+        with pathlib.Path(self._filename).open(errors='replace') as file_stream:
+            self._parse_lines(file_stream)
 
         self._time_steps = sorted(self._results_by_step.keys())
 
@@ -131,9 +174,9 @@ class _FRDVTKReader(BaseVTKReader):
         except (IndexError, ValueError):
             return -1, 0.0
 
-    def _permute_nodes(self, node_ids: list[int], etype: int) -> list[int]:
+    def _permute_nodes(self, node_ids: list[int], etype: FRDElementType) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
-        if etype == 4 and len(node_ids) == 20:
+        if etype == FRDElementType.HE20 and len(node_ids) == 20:
             return [
                 node_ids[0],
                 node_ids[1],
@@ -157,7 +200,7 @@ class _FRDVTKReader(BaseVTKReader):
                 node_ids[15],
             ]
 
-        if etype == 7 and len(node_ids) == 3:
+        if etype == FRDElementType.TR3 and len(node_ids) == 3:
             p = [self._nodes[n] for n in node_ids]
             area = (
                 p[0][0] * (p[1][1] - p[2][1])
@@ -168,7 +211,7 @@ class _FRDVTKReader(BaseVTKReader):
                 return [node_ids[0], node_ids[2], node_ids[1]]
             return node_ids
 
-        if etype in (9, 10):
+        if etype in (FRDElementType.QU4, FRDElementType.QU8):
             corners = node_ids[:4]
             mids = node_ids[4:]
             p = [self._nodes[n] for n in corners]
@@ -185,23 +228,24 @@ class _FRDVTKReader(BaseVTKReader):
     # Block parsers (Memory efficient iterators)
     # ------------------------------------------------------------------
 
-    def _parse_lines(self, fh: Any) -> None:
+    def _parse_lines(self, file_stream: Any) -> None:
         """Dispatch lines to block-specific parsers."""
-        for line in fh:
+        for line in file_stream:
             s = line.strip()
-            if s.startswith('2C'):
-                self._parse_nodes(fh)
-            elif s.startswith('3C'):
-                self._parse_elements(fh)
-            elif s.startswith('100'):
+            if s.startswith(FRDBlock.NODES.value):
+                self._parse_nodes(file_stream)
+            elif s.startswith(FRDBlock.ELEMENTS.value):
+                self._parse_elements(file_stream)
+            elif s.startswith(FRDBlock.RESULTS.value):
                 _step_id, step_time = self._parse_100cl_header(s)
-                self._parse_results(fh, step_time)
+                self._parse_results(file_stream, step_time)
 
-    def _parse_nodes(self, fh: Any) -> None:
+    def _parse_nodes(self, file_stream: Any) -> None:
         """Parse 2C node block."""
-        for line in fh:
+        end_block = str(CGXRecord.END_OF_BLOCK.value)
+        for line in file_stream:
             s = line.strip()
-            if s.startswith('-3'):
+            if s.startswith(end_block):
                 return
             try:
                 parts = self._fix_scientific(s).split()
@@ -210,22 +254,27 @@ class _FRDVTKReader(BaseVTKReader):
             except (ValueError, IndexError):
                 pass
 
-    def _parse_elements(self, fh: Any) -> None:
+    def _parse_elements(self, file_stream: Any) -> None:
         """Parse 3C element block."""
         needed = 0
         node_ids: list[int] = []
-        etype: int | None = None
-        vtk_type: int | None = None
+        etype: FRDElementType | None = None
+        vtk_type: CellType | None = None
 
-        for line in fh:
+        end_block = str(CGXRecord.END_OF_BLOCK.value)
+        elem_def = str(CGXRecord.NODAL_VALUES.value)
+        elem_faces = str(CGXRecord.ELEMENT_FACES.value)
+
+        for line in file_stream:
             s = line.strip()
-            if s.startswith('-3'):
+            if s.startswith(end_block):
                 return
 
-            if s.startswith('-1'):
+            if s.startswith(elem_def):
                 parts = s.split()
                 try:
-                    etype = int(parts[2])
+                    etype_val = int(parts[2])
+                    etype = FRDElementType(etype_val)
                 except (ValueError, IndexError):
                     etype = None
                     continue
@@ -238,16 +287,16 @@ class _FRDVTKReader(BaseVTKReader):
                 vtk_type = self.CCX_TO_VTK_TYPE[etype]
                 node_ids = []
 
-            elif s.startswith('-2') and etype is not None and vtk_type is not None:
+            elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
                 if len(node_ids) >= needed:
                     final_nodes = node_ids[:needed]
                     final_nodes = self._permute_nodes(final_nodes, etype)
                     self._elements.append(final_nodes)
-                    self._cell_types.append(vtk_type)
+                    self._cell_types.append(vtk_type.value)
                     etype = None  # Wait for the next -1 record
 
-    def _parse_results(self, fh: Any, step_time: float) -> None:
+    def _parse_results(self, file_stream: Any, step_time: float) -> None:
         """Parse 100CL result block."""
         if step_time not in self._results_by_step:
             self._results_by_step[step_time] = {}
@@ -255,26 +304,34 @@ class _FRDVTKReader(BaseVTKReader):
         step_bucket = self._results_by_step[step_time]
         name = 'Unknown'
 
-        for line in fh:
+        attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
+        comp_def = str(CGXRecord.COMPONENT_DEFINITION.value)
+        nodal_vals = str(CGXRecord.NODAL_VALUES.value)
+        end_block = str(CGXRecord.END_OF_BLOCK.value)
+
+        for line in file_stream:
             s = line.strip()
-            if s.startswith('-4'):
+            if s.startswith(attr_header):
                 parts = s.split()
                 if len(parts) >= 2:
                     name = parts[1]
-            elif s.startswith('-5'):
+            elif s.startswith(comp_def):
                 continue
-            elif s.startswith('-1'):
+            elif s.startswith(nodal_vals):
                 # Pass the first data line and iterator down to collect data
-                self._parse_result_data(s, fh, name, step_bucket)
+                self._parse_result_data(s, file_stream, name, step_bucket)
                 return
-            elif s.startswith('-3'):
+            elif s.startswith(end_block):
                 return
 
     def _parse_result_data(  # noqa: PLR0917
-        self, first_line: str, fh: Any, name: str, step_bucket: dict[str, dict[int, list[float]]]
+        self, first_line: str, file_stream: Any, name: str, step_bucket: dict[str, dict[int, list[float]]]
     ) -> None:
-        """Parse -1 records until -3 sentinel is hit."""
+        """Parse data records until sentinel is hit."""
         data: dict[int, list[float]] = {}
+        
+        end_block = str(CGXRecord.END_OF_BLOCK.value)
+        nodal_vals = str(CGXRecord.NODAL_VALUES.value)
 
         # Process the very first line passed from _parse_results
         try:
@@ -284,11 +341,11 @@ class _FRDVTKReader(BaseVTKReader):
             pass
 
         # Continue with the rest of the file iterator
-        for line in fh:
+        for line in file_stream:
             s = line.strip()
-            if s.startswith('-3'):
+            if s.startswith(end_block):
                 break
-            if s.startswith('-1'):
+            if s.startswith(nodal_vals):
                 try:
                     parts = self._fix_scientific(s).split()
                     data[int(parts[1])] = [float(x) for x in parts[2:]]
@@ -367,7 +424,7 @@ class _FRDVTKReader(BaseVTKReader):
 
         cells: list[int] = []
         types: list[int] = []
-        for conn, ctype in zip(self._elements, self._cell_types, strict=False):
+        for conn, ctype in zip(self._elements, self._cell_types, strict=True):
             try:
                 vtk_ids = [node_map[n] for n in conn]
             except KeyError:
@@ -382,7 +439,7 @@ class _FRDVTKReader(BaseVTKReader):
             points,
         )
 
-        grid.point_data['Original_Node_ID'] = np.array([str(nid) for nid in sorted_ids])
+        grid.point_data['original_node_ids'] = np.array([str(nid) for nid in sorted_ids])
 
         n_points = len(points)
         for name, data in step_data.items():
