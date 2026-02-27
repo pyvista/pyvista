@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import enum
 from functools import cache
 import importlib
+import inspect
 import sys
 import threading
 import traceback
@@ -305,6 +306,15 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
     """Metaclass to combine automatic attribute freezing with ABC support."""
 
 
+def _hasattr_static(obj: Any, attr: str) -> bool:
+    """Replicate behavior of hasattr using static lookup."""
+    try:
+        inspect.getattr_static(obj, attr)
+    except AttributeError:
+        return False
+    return True
+
+
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     """Mixin to prevent adding new attributes.
 
@@ -341,7 +351,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                 if (
                     frozen
                     and frozen_by is type(self)
-                    and not (key in type(self).__dict__ or hasattr(self, key))
+                    and not (key in type(self).__dict__ or _hasattr_static(self, key))
                 ):
                     from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
