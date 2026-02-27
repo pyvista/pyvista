@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.utilities.frd import FRDReader
 
 
 @pytest.fixture
@@ -126,16 +126,23 @@ def empty_frd_file(tmp_path):
 
 
 def test_frd_reader_init_and_read(mock_frd_file):
-    reader = FRDReader(mock_frd_file)
+    # Test reading via the common pyvista endpoint
+    mesh_from_pv = pv.read(mock_frd_file)
+    assert mesh_from_pv.n_points == 8
+    assert mesh_from_pv.n_cells == 1
+    assert 'original_node_ids' in mesh_from_pv.point_data
+
+    # Test reading directly with the reader class
+    reader = pv.FRDReader(mock_frd_file)
     mesh = reader.read()
 
     assert mesh.n_points == 8
     assert mesh.n_cells == 1
-    assert 'Original_Node_ID' in mesh.point_data
+    assert 'original_node_ids' in mesh.point_data
 
 
 def test_frd_reader_time_steps(mock_frd_file):
-    reader = FRDReader(mock_frd_file)
+    reader = pv.FRDReader(mock_frd_file)
 
     assert reader.number_time_points == 3
     assert reader.time_values == [0.1, 0.2, 0.3]
@@ -151,7 +158,7 @@ def test_frd_reader_time_steps(mock_frd_file):
 
 
 def test_frd_reader_set_active_time_value(mock_frd_file):
-    reader = FRDReader(mock_frd_file)
+    reader = pv.FRDReader(mock_frd_file)
 
     reader.set_active_time_value(0.18)
     assert reader.active_time_value == 0.2
@@ -161,27 +168,44 @@ def test_frd_reader_set_active_time_value(mock_frd_file):
 
 
 def test_frd_reader_derived_stress(mock_frd_file):
-    reader = FRDReader(mock_frd_file)
+    reader = pv.FRDReader(mock_frd_file)
     reader.set_active_time_point(0)
     mesh = reader.read()
 
     assert 'STRESS' in mesh.point_data
-    assert 'STRESS_vMises' in mesh.point_data
-    assert 'STRESS_sgMises' in mesh.point_data
-    assert 'STRESS_PS1' in mesh.point_data
-    assert 'STRESS_PS2' in mesh.point_data
-    assert 'STRESS_PS3' in mesh.point_data
+
+    # Check calculated stress derived fields for mock_frd_file
+    # values: xx=10, yy=20, zz=30, xy=yz=zx=0
+    # vMises for this state is ~17.3205
+    expected_vmises = np.sqrt(300.0) 
+    
+    np.testing.assert_allclose(mesh.point_data['STRESS_vMises'], expected_vmises)
+    np.testing.assert_allclose(mesh.point_data['STRESS_sgMises'], expected_vmises)
+    
+    # Principal stresses should match diagonal entries since shear is 0
+    np.testing.assert_allclose(mesh.point_data['STRESS_PS3'], 10.0)
+    np.testing.assert_allclose(mesh.point_data['STRESS_PS2'], 20.0)
+    np.testing.assert_allclose(mesh.point_data['STRESS_PS1'], 30.0)
 
 
 def test_frd_reader_derived_strain(mock_frd_file):
-    reader = FRDReader(mock_frd_file)
+    reader = pv.FRDReader(mock_frd_file)
     reader.set_active_time_point(1)
     mesh = reader.read()
 
     assert 'STRAIN' in mesh.point_data
-    assert 'STRAIN_vMises' in mesh.point_data
-    assert 'STRAIN_sgMises' in mesh.point_data
-    assert 'STRAIN_PS1' in mesh.point_data
+
+    # Check calculated strain derived fields for mock_frd_file
+    # values: xx=0.1, yy=0.2, zz=0.3, xy=yz=zx=0
+    # vMises strain for this state is sqrt(3)/15 = ~0.11547
+    expected_vmises = np.sqrt(3.0) / 15.0
+
+    np.testing.assert_allclose(mesh.point_data['STRAIN_vMises'], expected_vmises)
+    np.testing.assert_allclose(mesh.point_data['STRAIN_sgMises'], expected_vmises)
+    
+    np.testing.assert_allclose(mesh.point_data['STRAIN_PS3'], 0.1)
+    np.testing.assert_allclose(mesh.point_data['STRAIN_PS2'], 0.2)
+    np.testing.assert_allclose(mesh.point_data['STRAIN_PS1'], 0.3)
 
 
 def test_frd_reader_comprehensive(comprehensive_frd_file):
@@ -189,7 +213,7 @@ def test_frd_reader_comprehensive(comprehensive_frd_file):
     mesh_from_pv = pv.read(comprehensive_frd_file)
     assert isinstance(mesh_from_pv, pv.UnstructuredGrid)
 
-    reader = FRDReader(comprehensive_frd_file)
+    reader = pv.FRDReader(comprehensive_frd_file)
     mesh = reader.read()
 
     assert mesh.n_points == 4
@@ -206,7 +230,7 @@ def test_frd_reader_comprehensive(comprehensive_frd_file):
 
 
 def test_no_time_steps(no_steps_frd_file):
-    reader = FRDReader(no_steps_frd_file)
+    reader = pv.FRDReader(no_steps_frd_file)
 
     # This triggers the 'if not steps: return 0.0' lines
     assert reader.active_time_value == 0.0
@@ -216,7 +240,7 @@ def test_no_time_steps(no_steps_frd_file):
 
 
 def test_frd_reader_errors(mock_frd_file, empty_frd_file):
-    reader = FRDReader(mock_frd_file)
+    reader = pv.FRDReader(mock_frd_file)
 
     with pytest.raises(IndexError, match='out of range'):
         reader.set_active_time_point(99)
@@ -224,6 +248,6 @@ def test_frd_reader_errors(mock_frd_file, empty_frd_file):
     with pytest.raises(IndexError, match='out of range'):
         reader.set_active_time_point(-1)
 
-    empty_reader = FRDReader(empty_frd_file)
+    empty_reader = pv.FRDReader(empty_frd_file)
     with pytest.raises(ValueError, match='No nodes found'):
         empty_reader.read()
