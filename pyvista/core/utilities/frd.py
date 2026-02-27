@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-import pathlib
-import re
 from enum import Enum
 from enum import IntEnum
+import pathlib
+import re
 from typing import Any
 from typing import ClassVar
 
 import numpy as np
 
-from pyvista.core.celltype import CellType
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
+from pyvista.core.celltype import CellType
 from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.utilities.reader import BaseReader
 from pyvista.core.utilities.reader import BaseVTKReader
@@ -325,11 +325,15 @@ class _FRDVTKReader(BaseVTKReader):
                 return
 
     def _parse_result_data(  # noqa: PLR0917
-        self, first_line: str, file_stream: Any, name: str, step_bucket: dict[str, dict[int, list[float]]]
+        self,
+        first_line: str,
+        file_stream: Any,
+        name: str,
+        step_bucket: dict[str, dict[int, list[float]]],
     ) -> None:
         """Parse data records until sentinel is hit."""
         data: dict[int, list[float]] = {}
-        
+
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         nodal_vals = str(CGXRecord.NODAL_VALUES.value)
 
