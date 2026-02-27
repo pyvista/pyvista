@@ -4395,3 +4395,13 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
+
+
+def test_warn_point_dtype_modified(ant):
+    double = ant.points_to_double()
+    match = (
+        'The points dtype of PolyData was modified by vtkShrinkFilter.\n'
+        "Input dtype: 'float64', output dtype: 'float32'."
+    )
+    with pytest.warns(RuntimeWarning, match=match):
+        double.shrink()
