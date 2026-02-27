@@ -1498,6 +1498,22 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
         setattr(b, ham, eggs)
 
 
+def test_no_new_attr_mixin_side_effects():
+    class Parent(_NoNewAttrMixin):
+        @property
+        def foo(self):
+            raise RuntimeError
+
+        @foo.setter
+        def foo(self, val): ...
+
+    class Child(Parent): ...
+
+    # Test that setting attributes on child classes does not trigger a call to the getter
+    obj = Child()
+    obj.foo = 42
+
+
 def test_set_new_attribute(no_new_attributes_mixin_subclass):
     a, _ = no_new_attributes_mixin_subclass
     ham = 'ham'
