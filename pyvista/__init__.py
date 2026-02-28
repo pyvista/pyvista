@@ -7,6 +7,8 @@ import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 
+import numpy as np
+
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
 from pyvista._version import version_info as version_info
@@ -35,9 +37,6 @@ from pyvista.report import check_math_text_support as check_math_text_support
 from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotlib_vtk_compatibility
 from pyvista.report import get_gpu_info as get_gpu_info
 
-if TYPE_CHECKING:
-    import numpy as np
-
 # get the int type from vtk
 ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
 
@@ -49,6 +48,11 @@ if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
 
 # A simple flag to set when generating the documentation
 OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
+
+_precision = os.environ.get('PYVISTA_POINTS_PRECISION', 'none').lower()
+POINTS_PRECISION: np.single | np.double | Literal['default'] | None = (
+    np.double if _precision == 'double' else np.single if _precision == 'single' else None
+)
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'

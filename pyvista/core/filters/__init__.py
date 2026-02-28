@@ -32,7 +32,6 @@ from typing import cast
 import numpy as np
 
 import pyvista as pv
-from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
@@ -43,9 +42,17 @@ if TYPE_CHECKING:
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
     # Try to set output precision to match input
-    if alg.GetNumberOfInputPorts() > 0:
-        alg_input = cast('pv.DataObject', wrap(alg.GetInputDataObject(0, 0)))
-        if (set_precision := getattr(alg, 'SetOutputPointsPrecision', None)) is not None:
+
+    if (precision := pv.POINTS_PRECISION) is not None and (
+        set_precision := getattr(alg, 'SetOutputPointsPrecision', None)
+    ) is not None:
+        if precision == np.single:
+            set_precision(alg.SINGLE_PRECISION)
+        elif precision == np.double:
+            set_precision(alg.DOUBLE_PRECISION)
+        elif alg.GetNumberOfInputPorts() > 0:
+            # default
+            alg_input = cast('pv.DataObject', wrap(alg.GetInputDataObject(0, 0)))
             points = getattr(alg_input, 'points', None)
             if points is not None and points.dtype == np.double:
                 set_precision(alg.DOUBLE_PRECISION)
@@ -85,7 +92,6 @@ def _get_output(
     oport=0,
     active_scalars=None,
     active_scalars_field='point',
-    warn_points_precision: bool = True,
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
@@ -100,19 +106,42 @@ def _get_output(
     if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
 
-    # Warn if the alg modified points dtype
-    if warn_points_precision:
+    if (precision := pv.POINTS_PRECISION) is not None:
         points_in = getattr(ido, 'points', None)
         if points_in is not None:
             points_out = getattr(data, 'points', None)
-            if points_out is not None and points_in.dtype != points_out.dtype:
+            requires_double = precision == np.double or (
+                precision == 'default' and points_in.dtype == np.double
+            )
+            if requires_double and points_out.dtype != np.double:
                 msg = (
-                    f'The points dtype of {ido.__class__.__name__} '
-                    f'was modified by {algorithm.__class__.__name__}.\n'
-                    f'Input dtype: {points_in.dtype.name!r}, '
-                    f'output dtype: {points_out.dtype.name!r}.'
+                    f'{algorithm.__class__.__name__} did not generate '
+                    f'points with double precision.\n'
+                    f'Input {ido.__class__.__name__} points dtype is {points_in.dtype.name}, '
+                    f'output {data.__class__.__name__} points dtype is {points_out.dtype.name}.'
                 )
-                warn_external(msg, RuntimeWarning)
+                if points_in.dtype != np.double:
+                    msg += (
+                        '\nTry converting the input to double precision first '
+                        'with `points_to_double`.'
+                    )
+                elif points_out.dtype != np.double:
+                    if precision == np.double:
+                        msg += (
+                            '\npyvista.POINTS_PRECISION cannot be double for '
+                            'this filter and mesh type.'
+                        )
+                    else:
+                        msg += (
+                            '\nTry converting the input to single precision first '
+                            'with `points_to_single`.'
+                        )
+                raise ValueError(msg)
+            requires_single = precision == np.single or (
+                precision == 'default' and points_in.dtype == np.single
+            )
+            if requires_single and not isinstance(data, pv.Grid):
+                data.points = points_out.astype(np.single)
     return data
 
 

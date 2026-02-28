@@ -95,6 +95,19 @@ def uniform_vec():
     return mesh
 
 
+def test_warn_point_dtype_modified(ant):
+    double = ant.points_to_double()
+    match = (
+        'vtkShrinkFilter did not generate points with double precision.\n'
+        'Input PolyData points dtype is float64, '
+        'output UnstructuredGrid points dtype is float32.\n'
+        'pyvista.POINTS_PRECISION cannot be double for this filter and mesh type.'
+    )
+    assert np.double == pv.POINTS_PRECISION
+    with pytest.raises(ValueError, match=match):
+        double.shrink()
+
+
 def test_threshold_raises(mocker: MockerFixture):
     from pyvista.core.filters import data_set
 
@@ -232,7 +245,7 @@ def test_clip_surface():
         height=3.0,
         radius=1,
         resolution=50,
-    )
+    ).points_to_double()
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pv.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True)
@@ -244,11 +257,14 @@ def test_clip_surface():
     assert isinstance(clipped, pv.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
     # Test crinkle
+    # Crinkle uses extract_cells which does not support double precision
+    pv.POINTS_PRECISION = np.single
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
 
 
 @pytest.mark.parametrize('crinkle', [True, False])
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
         clp = dataset.clip_surface(dataset.extract_surface(algorithm=None), crinkle=crinkle)
@@ -410,6 +426,10 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
+# Threshold is generally compatibly with double precision,
+# but there is a VTK bug with invert=True that generates single precision output
+# So we need to force single precision
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_threshold_paraview_consistency():
     """Validate expected results that match ParaView."""
     x = np.arange(5, dtype=float)
@@ -551,6 +571,7 @@ def test_gaussian_splatting(sphere: PolyData):
     assert output.dimensions == dimensions
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -578,6 +599,7 @@ def test_delaunay_2d_unstructured():
     assert len(mesh.point_data.keys()) > 0
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes', 'flying_edges'])
 def test_contour(uniform, method):
     iso = uniform.contour(method=method, progress_bar=True)
@@ -622,6 +644,7 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_texture_map_to_plane(airplane):
     dataset = airplane
     # Automatically decide plane
@@ -673,6 +696,7 @@ def test_texture_map_to_sphere():
 
 
 def test_glyph(datasets, sphere):
+    sphere.points_to_double()  # LATER: Remove after making geometric sources 64-bit
     for dataset in datasets:
         dataset['vectors'] = np.ones_like(dataset.points)
         result = dataset.glyph(progress_bar=True)
@@ -744,6 +768,7 @@ def test_glyph(datasets, sphere):
 
 
 def test_glyph_warns_ambiguous_data(sphere):
+    sphere.points_to_double()  # LATER: Remove after making geometric sources 64-bit
     sphere.compute_normals(inplace=True)
     with pytest.warns(UserWarning, match='It is unclear which one to use') as warning_info:
         sphere.glyph(scale=True)
@@ -917,14 +942,14 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale='z_axis')
     glyph3 = grid.glyph(geom=geom, orient='z_axis', scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    assert glyph1.bounds.z_min == geom.bounds.x_min * scale
-    assert glyph1.bounds.z_max == geom.bounds.x_max * scale
-    assert glyph2.bounds.x_min == geom.bounds.x_min * scale
-    assert glyph2.bounds.x_max == geom.bounds.x_max * scale
-    assert glyph3.bounds.z_min == geom.bounds.x_min
-    assert glyph3.bounds.z_max == geom.bounds.x_max
-    assert glyph4.bounds.x_min == geom.bounds.x_min
-    assert glyph4.bounds.x_max == geom.bounds.x_max
+    assert np.isclose(glyph1.bounds.z_min, geom.bounds.x_min * scale)
+    assert np.isclose(glyph1.bounds.z_max, geom.bounds.x_max * scale)
+    assert np.isclose(glyph2.bounds.x_min, geom.bounds.x_min * scale)
+    assert np.isclose(glyph2.bounds.x_max, geom.bounds.x_max * scale)
+    assert np.isclose(glyph3.bounds.z_min, geom.bounds.x_min)
+    assert np.isclose(glyph3.bounds.z_max, geom.bounds.x_max)
+    assert np.isclose(glyph4.bounds.x_min, geom.bounds.x_min)
+    assert np.isclose(glyph4.bounds.x_max, geom.bounds.x_max)
 
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
@@ -995,6 +1020,9 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
     return connected_datasets
 
 
+# Connectivity generally supports double precision, but we use extract_cells internally for
+# some branches which does not support double, so we must use single precision
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
     'extraction_mode',
@@ -1131,6 +1159,7 @@ def test_connectivity_raises(
         dataset.connectivity(extraction_mode='all', region_assignment_mode='bar')
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
     'extraction_mode',
@@ -1290,6 +1319,7 @@ def test_connectivity_specified_warning(foot_bones: pv.PolyData):
         foot_bones.connectivity('specified', region_assignment_mode='unspecified', region_ids=[0])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 def test_connectivity_specified_returns_empty(connected_datasets, dataset_index):
     dataset = connected_datasets[dataset_index]
@@ -1448,6 +1478,7 @@ def test_smooth_taubin(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines(
@@ -1458,12 +1489,14 @@ def test_streamlines_dir(uniform_vec, integration_direction):
     assert all([stream.n_points, stream.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('integrator_type', [2, 4, 45])
 def test_streamlines_type(uniform_vec, integrator_type):
     stream = uniform_vec.streamlines('vectors', integrator_type=integrator_type, progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('interpolator_type', ['point', 'cell'])
 def test_streamlines_cell_point(uniform_vec, interpolator_type):
     stream = uniform_vec.streamlines(
@@ -1474,6 +1507,7 @@ def test_streamlines_cell_point(uniform_vec, interpolator_type):
     assert all([stream.n_points, stream.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_return_source(uniform_vec):
     stream, src = uniform_vec.streamlines(
         'vectors',
@@ -1486,12 +1520,14 @@ def test_streamlines_return_source(uniform_vec):
     assert all([stream.n_points, stream.n_cells, src.n_points])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_start_position(uniform_vec):
     stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0), progress_bar=True)
 
     assert all([stream.n_points, stream.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_max_length():
     # mesh that is 50x50x50 length units in size
     mesh = pv.ImageData(dimensions=(6, 6, 6), spacing=(10, 10, 10))
@@ -1577,6 +1613,7 @@ def test_streamlines_errors(uniform_vec):
         uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_from_source(uniform_vec):
     vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
     source = pv.PolyData(vertices)
@@ -1588,6 +1625,7 @@ def test_streamlines_from_source(uniform_vec):
     assert all([stream.n_points, stream.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_from_source_structured_grids():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
@@ -1612,24 +1650,28 @@ def mesh_2d_velocity():
     return mesh
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_evenly_spaced_2d():
     mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_evenly_spaced_2d_sep_dist_ratio():
     mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_evenly_spaced_2d_start_position():
     mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_evenly_spaced_2d_vectors():
     mesh = mesh_2d_velocity()
     mesh.set_active_vectors(None)
@@ -1637,12 +1679,14 @@ def test_streamlines_evenly_spaced_2d_vectors():
     assert all([streams.n_points, streams.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_evenly_spaced_2d_integrator_type():
     mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_streamlines_evenly_spaced_2d_interpolator_type():
     mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
@@ -1662,6 +1706,7 @@ def test_streamlines_evenly_spaced_2d_errors():
         mesh.streamlines_evenly_spaced_2D(step_unit='not valid')
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.xfail
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
@@ -1672,13 +1717,16 @@ def test_streamlines_nonxy_plane():
     assert all([streams.n_points, streams.n_cells])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
 
     line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
+    line.points_to_double()  # LATER: Remove
     line[name] = np.linspace(0, 10, 10)
 
+    assert line.points.dtype == np.double
     sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], resolution=2, progress_bar=True)
 
     expected_result = np.array([0.5, 1, 1.5])
@@ -1693,6 +1741,7 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_plot_over_line(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
@@ -1728,6 +1777,7 @@ def test_plot_over_line(tmpdir):
         )
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
@@ -1745,6 +1795,7 @@ def test_sample_over_multiple_lines():
     assert name in sampled_multiple_lines.array_names  # is name in sampled result
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
     name = 'values'
@@ -1782,6 +1833,7 @@ def test_sample_over_circular_arc():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_circular_arc_normal():
     """Test that we get a circular arc_normal."""
     name = 'values'
@@ -1827,6 +1879,7 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_plot_over_circular_arc(tmpdir):
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir('tmpdir')
@@ -1875,6 +1928,7 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_plot_over_circular_arc_normal(tmpdir):
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir('tmpdir')
@@ -2020,6 +2074,7 @@ def extracted_with_include_cells_false(grid4x4):
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
@@ -2041,6 +2096,7 @@ def test_extract_points_adjacent_cells_true(dataset_filter, extracted_with_adjac
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
@@ -2056,6 +2112,7 @@ def test_extract_points_adjacent_cells_false(dataset_filter, extracted_with_adja
     assert np.array_equal(sub_surf.cells, expected_surf.cells)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
@@ -2078,6 +2135,7 @@ def test_extract_points_include_cells_false(
     assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_points_default(extracted_with_adjacent_true):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
 
@@ -2095,6 +2153,7 @@ def test_extract_points_default(extracted_with_adjacent_true):
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(
@@ -2138,6 +2197,7 @@ def extract_values_values():
     return list(zip(point_values, cell_values, strict=True))
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('invert', [True, False])
 @pytest.mark.parametrize('values', extract_values_values())
@@ -2154,6 +2214,7 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
         assert np.array_equal(extracted.cells, grid4x4.faces)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_values_open_intervals(grid4x4):
     extracted = grid4x4.extract_values(ranges=[float('-inf'), float('inf')])
     assert extracted.n_points == 16
@@ -2286,6 +2347,7 @@ split_component_test_cases = [
 ]
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     ('component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'),
     split_component_test_cases,
@@ -2323,6 +2385,7 @@ def test_split_values_extract_values_component(
         assert np.isclose(block.volume, volume)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_values_split_ranges_values(labeled_data):
     _, _, labeled_data = labeled_data
     extracted = labeled_data.extract_values(values=[0, 1], ranges=[[0, 0], [1, 1]], split=True)
@@ -2353,6 +2416,7 @@ values_component_dict = (
 )
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     ('dict_inputs', 'block_names'),
     [
@@ -2517,6 +2581,7 @@ def test_extract_values_component_values_split_unique(
     )
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('pass_point_ids', [True, False])
 @pytest.mark.parametrize('pass_cell_ids', [True, False])
 def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
@@ -2690,6 +2755,7 @@ def test_select_interior_points(uniform, hexbeam):
         mesh.select_interior_points(hexbeam, check_surface=True)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('inside_out', [True, False])
 def test_select_interior_points_method(sphere, plane, inside_out):
     def _extract_points(method):
@@ -2711,6 +2777,7 @@ def test_select_interior_points_raises(sphere, plane):
     plane.select_interior_points(sphere, method='cell_locator', locator_tolerance=0.1)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('method', ['cell_locator', 'signed_distance'])
 def test_select_interior_points_empty_mesh(method):
     out = pv.PolyData().select_interior_points(pv.PolyData(), method=method)
@@ -2719,15 +2786,16 @@ def test_select_interior_points_empty_mesh(method):
     assert out['selected_points'].size == 0
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary(progress_bar=True)
     assert boundary.n_points
 
 
-def test_merge_general(uniform):
+def test_merge_general(uniform, sphere):
     thresh = uniform.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
-    con = uniform.contour()  # poly data
+    con = sphere
     merged = thresh + con
     assert isinstance(merged, pv.UnstructuredGrid)
     merged = con + thresh
@@ -2795,7 +2863,7 @@ def test_iadd_general(uniform, hexbeam, sphere):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_compute_boundary_mesh_quality():
-    mesh = examples.download_can_crushed_vtu()
+    mesh = examples.download_can_crushed_vtu().points_to_double()
     qual = mesh.compute_boundary_mesh_quality()
     assert 'DistanceFromCellCenterToFaceCenter' in qual.array_names
     assert 'DistanceFromCellCenterToFacePlane' in qual.array_names
@@ -3277,6 +3345,7 @@ def test_poly_data_strip():
     assert stripped.n_cells == 1
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_shrink():
     mesh = pv.Sphere()
     shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
@@ -3288,6 +3357,7 @@ def test_shrink():
     assert shrunk.volume < mesh.volume
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_tessellate():
     points = np.array(
         [
@@ -3483,6 +3553,7 @@ def test_invalid_subdivide_adaptive(cube):
 
 
 def test_collision(sphere):
+    sphere.points_to_double()
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
     assert isinstance(output, pv.PolyData)
@@ -3522,6 +3593,7 @@ def test_reconstruct_surface_unstructured():
     assert mesh.n_points
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_integrate_data_datasets(datasets):
     """Test multiple dataset types."""
     for dataset in datasets:
@@ -3535,6 +3607,7 @@ def test_integrate_data_datasets(datasets):
             raise ValueError(msg)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_integrate_data():
     """Test specific case."""
     # sphere with radius = 0.5, area = pi
@@ -3551,7 +3624,7 @@ def test_integrate_data():
 
 def test_align():
     # Create a simple mesh
-    source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
+    source = pv.Cylinder(resolution=30).triangulate()
     transformed = source.rotate_y(20).rotate_z(25).translate([-0.75, -0.5, 0.5])
 
     # Perform ICP registration
@@ -3592,10 +3665,12 @@ def test_align_xyz_return_matrix():
     assert np.allclose(inverted_bounds, initial_bounds)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line source double
 @pytest.mark.parametrize(
     ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
 )
 def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
+    sphere.points_to_double()
     box = sphere.bounding_box(as_composite=as_composite)
     assert isinstance(box, mesh_type)
     assert box.bounds == sphere.bounds
@@ -3606,9 +3681,10 @@ def test_oriented_bounding_box():
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation, inplace=True)
     obb = box_mesh.oriented_bounding_box()
-    assert obb.bounds == box_mesh.bounds
+    assert np.allclose(obb.bounds, box_mesh.bounds)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line source double
 @pytest.mark.parametrize('oriented', [True, False])
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_bounding_box_return_meta(oriented, as_composite):
@@ -3633,7 +3709,7 @@ def test_bounding_box_return_meta(oriented, as_composite):
         # Test identity always returned for non-oriented box
         assert np.array_equal(axes, np.eye(3))
         bnds = box_mesh.bounds
-        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
+        assert np.allclose(point, (bnds.x_min, bnds.y_min, bnds.z_min))
 
     # Test the returned point is one of the box's points
     if as_composite:
@@ -3786,11 +3862,13 @@ def test_swap_axes(x, y, z, order, test_case, values):
         assert first_index < second_index
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
@@ -4136,6 +4214,7 @@ def frog_tissues_contour(frog_tissues_image):
     return frog_tissues_image.contour_labels(smoothing=False)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask(
@@ -4149,12 +4228,14 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     assert expected_voxels.n_cells == actual_voxels.n_cells
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
     mask = sphere.voxelize_binary_mask(dimensions=dims)
@@ -4162,6 +4243,7 @@ def test_voxelize_binary_mask_dimensions(sphere):
     assert mask.dimensions == dims
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_spacing(ant):
     # Test default
     mask_no_input = ant.voxelize_binary_mask()
@@ -4191,6 +4273,7 @@ def test_voxelize_binary_mask_spacing(ant):
 # Sometimes the sampling produces the same output.
 # https://github.com/pyvista/pyvista/pull/6728
 @flaky_test(times=5)
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
     mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
     mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
@@ -4210,6 +4293,7 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
         lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])],
     ],
 )
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
     mask = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
@@ -4228,6 +4312,7 @@ def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
 
 @pytest.mark.parametrize('foreground', [1, 2.1])
 @pytest.mark.parametrize('background', [-1, 0])
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_foreground_background(sphere, foreground, background):
     mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
     unique, counts = np.unique(mask['mask'], return_counts=True)
@@ -4249,6 +4334,7 @@ def test_voxelize_binary_mask_foreground_background(sphere, foreground, backgrou
         assert mask['mask'].dtype == float
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_input(hexbeam):
     # Test unstructured grid works
     assert isinstance(hexbeam, pv.UnstructuredGrid)
@@ -4278,6 +4364,7 @@ def oriented_polydata(oriented_image):
     return oriented_poly
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
@@ -4286,6 +4373,7 @@ def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     assert mask_as_surface.bounds == oriented_polydata.bounds
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_raises(sphere):
     match = 'Spacing and dimensions cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
@@ -4317,6 +4405,7 @@ def test_voxelize_binary_mask_raises(sphere):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_rectilinear(ant):
     vox = ant.voxelize_rectilinear()
     assert isinstance(vox, pv.RectilinearGrid)
@@ -4365,6 +4454,7 @@ def test_voxelize_rectilinear(ant):
         ant.voxelize_rectilinear(spacing={0.5, 0.3})
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize(ant):
     vox = ant.voxelize()
     assert isinstance(vox, pv.UnstructuredGrid)
@@ -4395,13 +4485,3 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
-
-
-def test_warn_point_dtype_modified(ant):
-    double = ant.points_to_double()
-    match = (
-        'The points dtype of PolyData was modified by vtkShrinkFilter.\n'
-        "Input dtype: 'float64', output dtype: 'float32'."
-    )
-    with pytest.warns(RuntimeWarning, match=match):
-        double.shrink()

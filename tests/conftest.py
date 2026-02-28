@@ -21,6 +21,7 @@ from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pv.OFF_SCREEN = True
+pv.POINTS_PRECISION = np.double
 
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
@@ -89,9 +90,11 @@ def flaky_test(
 def global_variables_reset():
     tmp_screenshots = pv.ON_SCREENSHOT
     tmp_figurepath = pv.FIGURE_PATH
+    tmp_precision = pv.POINTS_PRECISION
     yield
     pv.ON_SCREENSHOT = tmp_screenshots
     pv.FIGURE_PATH = tmp_figurepath
+    pv.POINTS_PRECISION = tmp_precision
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -125,6 +128,12 @@ def reset_global_state():
     assert pv.allow_new_attributes() is False
 
     pv.PICKLE_FORMAT = 'vtk'
+    pv.POINTS_PRECISION = np.double
+
+
+@pytest.fixture
+def force_points_precision_single():
+    pv.POINTS_PRECISION = np.single
 
 
 @pytest.fixture

@@ -2670,11 +2670,6 @@ class ImageDataFilters(DataSetFilters):
         pyvista.PolyData
             Surface mesh of labeled regions.
 
-        .. warning::
-
-            The output :attr:`~pyvista.DataSet.points` has single-precision points, and
-            any double precision will be lost.
-
         See Also
         --------
         :meth:`~pyvista.DataSetFilters.voxelize_binary_mask`
@@ -3066,7 +3061,7 @@ class ImageDataFilters(DataSetFilters):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
         # ImageData has double precision points, but output only has single
-        output: pv.PolyData = _get_output(alg, warn_points_precision=False)
+        output: pv.PolyData = _get_output(alg)
 
         (  # Clear temp scalars from input
             alg_input.point_data.remove(temp_scalars_name)
