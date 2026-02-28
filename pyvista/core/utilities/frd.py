@@ -14,9 +14,7 @@ import numpy as np
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
 from pyvista.core.pointset import UnstructuredGrid
-from pyvista.core.utilities.reader import BaseReader
 from pyvista.core.utilities.reader import BaseVTKReader
-from pyvista.core.utilities.reader import TimeReader
 
 
 class FRDBlock(Enum):
