@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from collections.abc import Sized
+import copy as copylib
 from dataclasses import InitVar
 from dataclasses import dataclass
 from dataclasses import fields
@@ -267,8 +268,42 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         cell_fields_to_validate: list[_CellFields] = []
 
         if validation_fields is not None and exclude_fields is not None:
-            msg = 'validation_fields and exclude_fields cannot both be set.'
-            raise ValueError(msg)
+            # Validate the fields separately and build new output
+            valid_fields = _MeshValidator._validate_fields(validation_fields, None)
+            excl_fields = _MeshValidator._validate_fields(exclude_fields, None)
+            output_fields: tuple[list[_DataFields], list[_PointFields], list[_CellFields]] = (
+                [],
+                [],
+                [],
+            )
+            # Check that excluded fields are a subset of valid fields.
+            # Avoid using sets since we want to preserve order
+            for valid, excluded, output in zip(
+                valid_fields, excl_fields, output_fields, strict=True
+            ):
+                out = list(valid)
+                for field in excluded:
+                    if field in valid:
+                        out.remove(field)
+                    else:
+                        # Invalid field
+                        # Check if a group was passed to make the error message friendlier
+                        if 'data' in exclude_fields and field in allowed_data_fields:
+                            bad_field = 'data'
+                        elif 'points' in exclude_fields and field in allowed_point_fields:
+                            bad_field = 'points'
+                        elif 'cells' in exclude_fields and field in allowed_cell_fields:
+                            bad_field = 'cells'
+                        else:
+                            bad_field = field
+                        msg = (
+                            f'Excluded field {bad_field!r} must be a subset of the '
+                            f'validation fields.'
+                        )
+                        raise ValueError(msg)
+                output.extend(out)  # type: ignore[attr-defined]
+            return tuple(tuple(fields) for fields in output_fields)  # type: ignore[return-value]
+
         elif validation_fields is None and exclude_fields is None:
             # Default values, no need to validate
             data_fields_to_validate.extend(allowed_data_fields)
@@ -426,7 +461,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Generate reports and error messages for each block
         reports: list[_MeshValidationReport[DataSet] | None] = []
         message_body: list[str] = []
-        bullet = _MeshValidator._message_bullet
         for i, block in enumerate(mesh):
             if block is None:
                 reports.append(None)
@@ -440,10 +474,10 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
 
-                if (msg := report.message) is not None:
-                    prefix = f'Block id {i} {validated_mesh.get_block_name(i)!r}'
-                    indented = msg.replace(bullet, '  ' + bullet)
-                    message_body.append(f'{prefix} {indented}')
+                if (msg := report._message) is not None:  # type: ignore[attr-defined]
+                    msg = copylib.copy(msg)
+                    msg[0] = f'Block id {i} {validated_mesh.get_block_name(i)!r} ' + msg[0]
+                    message_body.append(msg)
 
         # Iterate over fields in order and identify blocks with invalid fields
         dataclass_fields: dict[str, Sequence[int | str]] = {}
@@ -458,11 +492,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     invalid_block_ids.append(i)
             dataclass_fields[field] = invalid_block_ids
 
-        bullet = _MeshValidator._message_bullet
-        body = bullet + f'\n{bullet}'.join(message_body)
         header = _MeshValidator._create_message_header(validated_mesh)
-        message = f'{header}\n{body}'
-
+        message = [header, message_body]
         return _MeshValidationReport(
             _mesh=validated_mesh,
             _message=message,
@@ -547,7 +578,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         s = 's' if len(array) > 1 else ''
         celltype = f'{cell_type.name} ' if cell_type else ''  # type: ignore[union-attr]
         return (
-            f'Mesh has {len(array)}{before}{celltype}cell{s}{after}. '
+            f'{_MeshValidator._MESH_HAS} {len(array)}{before}{celltype}cell{s}{after}. '
             f'Invalid cell id{s}: {reprlib.repr(array)}'
         )
 
@@ -570,7 +601,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             n_arrays = len(invalid_arrays)
             s = 's' if n_arrays > 1 else ''
             msg_template = (
-                'Mesh has {n_arrays} {kind} array{s} with incorrect length '
+                f'{_MeshValidator._MESH_HAS} {n_arrays} {kind} array{s} with incorrect length '
                 '(length must be {expected}). Invalid array{s}: {details}'
             )
             _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add('incorrect length')
@@ -643,7 +674,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             n_ids = len(array)
             s = 's' if n_ids > 1 else ''
             return (
-                f'Mesh has {n_ids} {name_norm}{s}{info_}. Invalid point id{s}: '
+                f'{_MeshValidator._MESH_HAS} {n_ids} {name_norm}{s}{info_}. Invalid point id{s}: '
                 f'{reprlib.repr(array)}'
             )
 
@@ -659,7 +690,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 summaries.append(issue)
         return summaries
 
-    _message_bullet = ' - '
+    _MESSAGE_BULLET = '-'
+    _MULTIBLOCK_BULLET = '*'
+    _MESH_HAS = 'Mesh has'
 
     @staticmethod
     def _create_message_header(obj: object) -> str:
@@ -677,6 +710,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             for item in items:
                 text = text.replace(item, f'[{style}]{item}[/{style}]')
             return text
+
+        # Replace bullets
+        replacements = {
+            _MeshValidator._MULTIBLOCK_BULLET: '▸',
+            _MeshValidator._MESSAGE_BULLET: '▪',
+        }
+        for old, new in replacements.items():
+            pattern = rf'(?m)^(\s*){re.escape(old)}(?=\s)'
+            string = re.sub(pattern, rf'\1{new}', string)
 
         # Highlight cell types in yellow
         cell_names = {celltype.name for celltype in CellType}
@@ -772,34 +814,37 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     @property
     def message(self) -> str | None:
-        def render_nested_list(
-            message: _NestedStrings, *, level: int = 0, bullet: str = '-'
-        ) -> str:
-            """Render a nested list of strings with proper indentation and hyphens.
+        def insert_bullet(indent: str, string: str):
+            bullet = (
+                _MeshValidator._MESSAGE_BULLET
+                if string.startswith(_MeshValidator._MESH_HAS)
+                else _MeshValidator._MULTIBLOCK_BULLET
+            )
+            return f'{indent}{bullet} {string}'
 
-            Top-level string does not get a leading hyphen.
-            """
-            indent = ' ' * level
+        def render(node: _NestedStrings, *, level: int = 0) -> str:
+            indent = ' ' + ('  ' * (level - 1) if level > 1 else '')
+            if isinstance(node, str):
+                return insert_bullet(indent, node)
+
+            # Structured node: [header, children]
+            header = cast('str', node[0])
+            children = node[1]
             lines: list[str] = []
 
-            if isinstance(message, str):
-                # Only add bullet if we're nested
-                if level == 0:
-                    return message
-                return f'{indent}{bullet} {message}'
+            # Render header
+            if level == 0:
+                lines.append(header)
+            else:
+                lines.append(insert_bullet(indent, header))
 
-            for item in message:
-                if isinstance(item, str):
-                    lines.append(render_nested_list(item, level=level, bullet=bullet))
-                else:
-                    # Nested list: increase indentation
-                    lines.append(render_nested_list(item, level=level + 1, bullet=bullet))
-
+            # Render children
+            lines.extend([render(child, level=level + 1) for child in children])
             return '\n'.join(lines)
 
         if self.is_valid:
             return None
-        return render_nested_list(self._message)  # type: ignore[attr-defined]
+        return render(self._message)  # type: ignore[attr-defined]
 
     @property
     def is_valid(self) -> bool:  # numpydoc ignore=RT01
@@ -1272,7 +1317,7 @@ class DataObjectFilters:
             Invalid fields (1) : ('non_convex',)
         Error message:
             MultiBlock mesh is not valid:
-             - Block id 0 'Block-00' PolyData mesh is not valid:
+             * Block id 0 'Block-00' PolyData mesh is not valid:
                - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, 3250]
 
         Validate again but show the fields in report body.

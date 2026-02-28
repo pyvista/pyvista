@@ -1573,9 +1573,65 @@ def test_validate_mesh_exclude_fields():
     include = str(mesh.validate_mesh('point_data_wrong_length'))
     assert exclude == include
 
-    match = 'validation_fields and exclude_fields cannot both be set.'
+    match = "Excluded field 'cells' must be a subset of the validation fields."
     with pytest.raises(ValueError, match=match):
         mesh.validate_mesh('points', exclude_fields='cells')
+
+    match = "Excluded field 'points' must be a subset of the validation fields."
+    with pytest.raises(ValueError, match=match):
+        mesh.validate_mesh('cells', exclude_fields='points')
+
+    match = "Excluded field 'data' must be a subset of the validation fields."
+    with pytest.raises(ValueError, match=match):
+        mesh.validate_mesh('points', exclude_fields='data')
+
+    match = "Excluded field 'negative_size' must be a subset of the validation fields."
+    with pytest.raises(ValueError, match=match):
+        mesh.validate_mesh('points', exclude_fields='negative_size')
+
+
+def test_validate_mesh_exclude_fields_subset(invalid_tetra_negative_volume):
+    NEGATIVE_SIZE = 'negative_size'
+    mesh = invalid_tetra_negative_volume
+    assert not mesh.validate_mesh().is_valid
+    assert not mesh.validate_mesh(NEGATIVE_SIZE).is_valid
+    assert not mesh.validate_mesh('cells').is_valid
+    assert mesh.validate_mesh('cells', exclude_fields=NEGATIVE_SIZE).is_valid
+
+    # Test all cell fields are included except for the excluded one
+    report = str(mesh.validate_mesh('cells', exclude_fields=NEGATIVE_SIZE, report_body='fields'))
+    expected = (
+        'Invalid cell ids:\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Non-planar faces         : []\n'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []'
+    )
+    assert expected in report
+    assert 'Negative size' not in report
+
+    fields = ['data', 'points', NEGATIVE_SIZE]
+    report = str(mesh.validate_mesh(fields, exclude_fields=fields, report_body='fields'))
+    expected = (
+        'Mesh Validation Report\n'
+        '----------------------\n'
+        'Mesh info:\n'
+        '    Type                     : UnstructuredGrid\n'
+        '    N Points                 : 4\n'
+        '    N Cells                  : 1\n'
+        '    Cell types               : {TETRA}\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()'
+    )
+    assert report == expected
 
 
 def test_validate_mesh_cell_status():
@@ -1834,14 +1890,14 @@ def test_validate_mesh_composite_message(invalid_nested_multiblock):
     actual = report.message
     expected = (
         'MultiBlock mesh is not valid:\n'
-        " - Block id 1 'poly_root' PolyData mesh is not valid:\n"
+        " * Block id 1 'poly_root' PolyData mesh is not valid:\n"
         '   - Mesh has 19 unused points not referenced by any cell. Invalid point '
         'ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '   - Mesh has 1 non-finite point. Invalid point id: [20]\n'
         '   - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell '
         'id: [0]\n'
-        " - Block id 2 'nested' MultiBlock mesh is not valid:\n"
-        "   - Block id 0 'poly_nested' PolyData mesh is not valid:\n"
+        " * Block id 2 'nested' MultiBlock mesh is not valid:\n"
+        "   * Block id 0 'poly_nested' PolyData mesh is not valid:\n"
         '     - Mesh has 19 unused points not referenced by any cell. Invalid '
         'point ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '     - Mesh has 1 non-finite point. Invalid point id: [20]\n'
@@ -2264,7 +2320,7 @@ def test_cell_validator_intersecting_edges_nonconvex(invalid_hexahedron):
 @pytest.mark.skipif(sys.platform == 'Darwin', reason='Results differ for macOS and older vtk')
 def test_validate_mesh_error_message(invalid_hexahedron, poly_with_invalid_point):
     def _format_composite(match):
-        prefix = "MultiBlock mesh is not valid:\n - Block id 0 'Block-00' "
+        prefix = "MultiBlock mesh is not valid:\n * Block id 0 'Block-00' "
         return prefix + match.replace(' - ', '   - ')
 
     # Test single cell
