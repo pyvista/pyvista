@@ -3511,7 +3511,7 @@ class FRDReader(BaseReader, TimeReader):
 
     _class_reader = _FRDVTKReader
 
-    def __init__(self, path: str | pathlib.Path) -> None:
+    def __init__(self, path: str) -> None:
         """Initialize the reader."""
         super().__init__(path)
         self._reader: _FRDVTKReader = self._class_reader()
@@ -3567,7 +3567,7 @@ class FRDReader(BaseReader, TimeReader):
         """Set the active time value."""
         self.set_active_time_value(value)
 
-    def read(self) -> UnstructuredGrid:
+    def read(self):
         """Read and return the PyVista UnstructuredGrid."""
         return self.reader.GetOutput()
 
