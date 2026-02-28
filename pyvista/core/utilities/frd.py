@@ -6,15 +6,17 @@ from enum import Enum
 from enum import IntEnum
 import pathlib
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import ClassVar
 
 import numpy as np
 
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
-from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.utilities.reader import BaseVTKReader
+
+if TYPE_CHECKING:
+    from pyvista.core.pointset import UnstructuredGrid
 
 
 class FRDBlock(Enum):
@@ -416,6 +418,8 @@ class _FRDVTKReader(BaseVTKReader):
     # ------------------------------------------------------------------
 
     def _build_grid(self, step_data: dict[str, dict[int, list[float]]]) -> UnstructuredGrid:
+        from pyvista.core.pointset import UnstructuredGrid  # noqa: PLC0415
+
         if not self._nodes:
             msg = 'No nodes found in FRD file -- cannot build grid.'
             raise ValueError(msg)
