@@ -6,7 +6,8 @@ from enum import Enum
 from enum import IntEnum
 import pathlib
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+from typing import Any
 from typing import ClassVar
 
 import numpy as np
