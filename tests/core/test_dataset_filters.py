@@ -2103,12 +2103,22 @@ def test_extract_cells(sphere):
     extracted = sphere.extract_cells(ind, invert=True)
     assert extracted.n_cells == sphere.n_cells - n_cells
 
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+    assert 'vtkOriginalPointIds' in extracted.point_data
+    assert 'vtkOriginalCellIds' in extracted.cell_data
+
     ind = [0]
     n_cells = len(ind)
     extracted = sphere.extract_cells(ind)
     assert extracted.n_cells == n_cells
-    extracted = sphere.extract_cells(ind, invert=True)
+    extracted = sphere.extract_cells(ind, invert=True, pass_point_ids=False, pass_cell_ids=False)
     assert extracted.n_cells == sphere.n_cells - n_cells
+
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+    assert 'vtkOriginalPointIds' not in extracted.point_data
+    assert 'vtkOriginalCellIds' not in extracted.cell_data
 
     ind = [4, 5]
     n_cells = len(ind)

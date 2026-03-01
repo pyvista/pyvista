@@ -306,7 +306,6 @@ from vtkmodules.vtkFiltersCore import vtkElevationFilter as vtkElevationFilter
 from vtkmodules.vtkFiltersCore import (
     vtkExplicitStructuredGridToUnstructuredGrid as vtkExplicitStructuredGridToUnstructuredGrid,
 )
-from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
 from vtkmodules.vtkFiltersCore import vtkExtractEdges as vtkExtractEdges
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges as vtkFeatureEdges
 from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D as vtkFlyingEdges3D
@@ -517,6 +516,9 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
     from vtkmodules.vtkFiltersCore import vtkPackLabels as vtkPackLabels
     from vtkmodules.vtkFiltersCore import vtkSurfaceNets3D as vtkSurfaceNets3D
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
+    from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
 
 with contextlib.suppress(ImportError):  # Deprecated in VTK 9.3.0
     from vtkmodules.vtkFiltersSources import (  # type: ignore[attr-defined]
