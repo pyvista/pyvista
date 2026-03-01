@@ -2095,6 +2095,41 @@ def test_extract_points_default(extracted_with_adjacent_true):
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+def test_extract_cells(sphere):
+    ind = 0
+    n_cells = 1
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    ind = [0]
+    n_cells = len(ind)
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    ind = [4, 5]
+    n_cells = len(ind)
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    ind = np.zeros(shape=(sphere.n_cells,), dtype=bool)
+    ind[[0, 1]] = True
+    n_cells = 2
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    match = 'Number of bool indices (2) must match the number of cells (840).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = sphere.extract_cells([True, True])
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(

@@ -4498,8 +4498,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Parameters
         ----------
-        ind : sequence[int]
-            Numpy array of cell indices to be extracted.
+        ind : int | VectorLike[int]
+            Cell indices to extract. Can be a single int or a vector of ints.
+            A bool vector is also supported; the vector size should match the number of cells.
 
         invert : bool, default: False
             Invert the selection.
@@ -4542,12 +4543,22 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
+        ind_ = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
+        if ind_.dtype == bool and ind_.size != self.n_cells:
+            msg = (
+                f'Number of bool indices ({ind_.size}) '
+                f'must match the number of cells ({self.n_cells}).'
+            )
+            raise ValueError(msg)
+
         if invert:
-            mask = np.ones(self.n_cells, bool)
-            mask[ind] = False
-            ids = mask
-        else:
-            _, ids = numpy_to_idarr(ind, return_ind=True)
+            if ind_.dtype == bool:
+                ind_ = np.invert(ind_)
+            else:
+                mask = np.ones(self.n_cells, bool)
+                mask[ind] = False
+                ind_ = mask
+        _, ids = numpy_to_idarr(ind_, return_ind=True)
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
