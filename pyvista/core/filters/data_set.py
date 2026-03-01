@@ -4544,22 +4544,22 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         if pv.vtk_version_info >= (9, 3, 0):
-            ind_ = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
-            if ind_.dtype == bool and ind_.size != self.n_cells:
+            indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
+            if indices.dtype == bool and indices.size != self.n_cells:
                 msg = (
-                    f'Number of bool indices ({ind_.size}) '
+                    f'Number of bool indices ({indices.size}) '
                     f'must match the number of cells ({self.n_cells}).'
                 )
                 raise ValueError(msg)
 
             if invert:
-                if ind_.dtype == bool:
-                    ind_ = np.invert(ind_)
+                if indices.dtype == bool:
+                    indices = np.invert(indices)
                 else:
                     mask = np.ones(self.n_cells, bool)
                     mask[ind] = False
-                    ind_ = mask
-            _, ids = numpy_to_idarr(ind_, return_ind=True)
+                    indices = mask
+            _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc]
 
             # Extract using a shallow copy to avoid the side effect of creating the
             # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4574,7 +4574,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             extract = _vtk.vtkExtractCells()
             extract.SetInputData(ds_copy)
-            extract.SetCellIds(ids, ids.size)
+            extract.SetCellIds(indices, indices.size)
             extract.SetPassThroughCellIds(False)
             _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
             return _get_output(extract)
