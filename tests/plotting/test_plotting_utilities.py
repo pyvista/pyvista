@@ -23,10 +23,13 @@ def test_gpuinfo(monkeypatch):
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
     _repr_html = gpuinfo._repr_html_()
+    _str = str(gpuinfo)
     assert isinstance(_repr, str)
     assert len(_repr) > 1
     assert isinstance(_repr_html, str)
     assert len(_repr_html) > 1
+    assert isinstance(_str, str)
+    assert len(_str) > 1
 
     # test corrupted internal infos
     monkeypatch.setattr(
