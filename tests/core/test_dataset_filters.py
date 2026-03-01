@@ -2193,10 +2193,11 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
     if invert:
         assert extracted.n_points == 0
         assert extracted.n_cells == 0
-        assert extracted.n_arrays == 2
     else:
         assert np.array_equal(extracted.points, grid4x4.points)
         assert np.array_equal(extracted.cells, grid4x4.faces)
+    assert 'vtkOriginalPointIds' in extracted.point_data
+    assert 'vtkOriginalCellIds' in extracted.cell_data
 
 
 def test_extract_values_open_intervals(grid4x4):
