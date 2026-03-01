@@ -499,6 +499,13 @@ except ImportError:  # pragma: no cover
             raise VTKVersionError(msg)
 
 
+try:  # Module changed in VTK 9.3.0
+    from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
+except ImportError:
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractCells as vtkExtractCells,
+    )
+
 with contextlib.suppress(ImportError):
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
     from vtkmodules.vtkFiltersParallelDIY2 import (
@@ -516,9 +523,6 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
     from vtkmodules.vtkFiltersCore import vtkPackLabels as vtkPackLabels
     from vtkmodules.vtkFiltersCore import vtkSurfaceNets3D as vtkSurfaceNets3D
-
-with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
-    from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
 
 with contextlib.suppress(ImportError):  # Deprecated in VTK 9.3.0
     from vtkmodules.vtkFiltersSources import (  # type: ignore[attr-defined]

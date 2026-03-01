@@ -4543,60 +4543,22 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        if pv.vtk_version_info >= (9, 3, 0):
-            indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
-            if indices.dtype == bool and indices.size != self.n_cells:
-                msg = (
-                    f'Number of bool indices ({indices.size}) '
-                    f'must match the number of cells ({self.n_cells}).'
-                )
-                raise ValueError(msg)
+        indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
+        if indices.dtype == bool and indices.size != self.n_cells:
+            msg = (
+                f'Number of bool indices ({indices.size}) '
+                f'must match the number of cells ({self.n_cells}).'
+            )
+            raise ValueError(msg)
 
-            if invert:
-                if indices.dtype == bool:
-                    indices = np.invert(indices)
-                else:
-                    mask = np.ones(self.n_cells, bool)
-                    mask[ind] = False
-                    indices = mask
-            _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc]
-
-            # Extract using a shallow copy to avoid the side effect of creating the
-            # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
-            # dataset.
-            #
-            # See: https://github.com/pyvista/pyvista/pull/7946
-            ds_copy = self.copy(deep=False)
-            if pass_cell_ids:
-                ds_copy.cell_data['vtkOriginalCellIds'] = np.arange(ds_copy.n_cells)
-            if pass_point_ids:
-                ds_copy.point_data['vtkOriginalPointIds'] = np.arange(ds_copy.n_points)
-
-            extract = _vtk.vtkExtractCells()
-            extract.SetInputData(ds_copy)
-            extract.SetCellIds(indices, indices.size)
-            extract.SetPassThroughCellIds(False)
-            _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
-            return _get_output(extract)
-
-        # Old implementation - remove when support for vtk 9.2 is dropped
         if invert:
-            ind_: VectorLike[int]
-            _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            mask = np.ones(self.n_cells, bool)
-            mask[ind_] = False
-            ids = numpy_to_idarr(mask)
-        else:
-            ids = numpy_to_idarr(ind)
-
-        # Create selection objects
-        selectionNode = _vtk.vtkSelectionNode()
-        selectionNode.SetFieldType(_vtk.vtkSelectionNode.CELL)
-        selectionNode.SetContentType(_vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(ids)
-
-        selection = _vtk.vtkSelection()
-        selection.AddNode(selectionNode)
+            if indices.dtype == bool:
+                indices = np.invert(indices)
+            else:
+                mask = np.ones(self.n_cells, bool)
+                mask[ind] = False
+                indices = mask
+        _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc]
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4604,24 +4566,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         #
         # See: https://github.com/pyvista/pyvista/pull/7946
         ds_copy = self.copy(deep=False)
+        if pass_cell_ids:
+            ds_copy.cell_data['vtkOriginalCellIds'] = np.arange(ds_copy.n_cells)
+        if pass_point_ids:
+            ds_copy.point_data['vtkOriginalPointIds'] = np.arange(ds_copy.n_points)
 
-        extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, ds_copy)
-        extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Cells')
-        subgrid = _get_output(extract_sel)
-
-        # extracts only in float32
-        if subgrid.n_points and self.points.dtype != np.dtype('float32'):
-            ind = subgrid.point_data['vtkOriginalPointIds']
-            subgrid.points = self.points[ind]
-
-        # Process output arrays
-        if (name := 'vtkOriginalPointIds') in (data := subgrid.point_data) and not pass_point_ids:
-            del data[name]
-        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
-            del data[name]
-        return subgrid
+        extract = _vtk.vtkExtractCells()
+        extract.SetInputData(ds_copy)
+        extract.SetCellIds(indices, indices.size)
+        extract.SetPassThroughCellIds(False)
+        _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
+        return _get_output(extract)
 
     @_deprecate_positional_args(allowed=['ind'])
     def extract_points(  # type: ignore[misc]  # noqa: PLR0917
