@@ -4544,12 +4544,16 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
-        if indices.dtype == bool and indices.size != self.n_cells:
-            msg = (
-                f'Number of bool indices ({indices.size}) '
-                f'must match the number of cells ({self.n_cells}).'
-            )
-            raise ValueError(msg)
+        if indices.dtype == bool:
+            assume_sorted_and_unique = True
+            if indices.size != self.n_cells:
+                msg = (
+                    f'Number of bool indices ({indices.size}) '
+                    f'must match the number of cells ({self.n_cells}).'
+                )
+                raise ValueError(msg)
+        else:
+            assume_sorted_and_unique = False
 
         if invert:
             if indices.dtype == bool:
@@ -4574,6 +4578,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract = _vtk.vtkExtractCells()
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
+        extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
         if pv.vtk_version_info >= (9, 3, 0):
             # We set the arrays manually earlier
             extract.SetPassThroughCellIds(False)
