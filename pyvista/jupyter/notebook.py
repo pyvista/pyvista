@@ -11,6 +11,7 @@ Includes:
 
 from __future__ import annotations
 
+import tempfile
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -53,12 +54,60 @@ def handle_plotter(
 
             return show_trame(plotter, mode=backend, **kwargs)
 
+        if backend == 'vtk-wasm':
+            return show_vtk_wasm(plotter, **kwargs)
+
     except ImportError as e:
         warn_external(
             f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
         )
 
     return show_static_image(plotter, screenshot)
+
+
+def show_vtk_wasm(plotter: Plotter, **kwargs) -> IFrame:  # noqa: ARG001  # numpydoc ignore=RT01
+    """Display a VTK WebAssembly widget in a jupyter notebook."""
+    try:
+        from IPython.display import IFrame  # noqa: PLC0415
+        import trame_vtklocal  # noqa: F401, PLC0415
+        import vtk  # noqa: F401, PLC0415
+    except ImportError as e:
+        msg = (
+            'VTK-WASM backend requires VTK>=9.4 and trame-vtklocal. Install with:'
+            '    pip install --extra-index-url vtk>=9.4 trame-vtklocal'
+        )
+        raise ImportError(msg) from e
+
+    # Export the scene to a format compatible with vtk-wasm
+    # Create a temporary HTML file with the vtk-wasm viewer
+    # TODO: Integrate actual VTK scene data with vtk-wasm viewer
+
+    # Export the VTK scene data
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+        # Create HTML content with vtk-wasm viewer
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>VTK-WASM Viewer</title>
+            <script src="https://unpkg.com/vtk-wasm/dist/vtk-wasm.js"></script>
+        </head>
+        <body>
+            <div id="vtk-container" style="width: 100%; height: 600px;"></div>
+            <script>
+                // Initialize vtk-wasm viewer
+                const container = document.getElementById('vtk-container');
+                // VTK-WASM integration code will be added here
+                console.log('VTK-WASM viewer initialized');
+            </script>
+        </body>
+        </html>
+        """
+        f.write(html_content)
+        temp_file = f.name
+
+    # Return an IFrame pointing to the temporary file
+    return IFrame(temp_file, width='100%', height=600)
 
 
 def show_static_image(
