@@ -13,6 +13,7 @@ import weakref
 
 import numpy as np
 
+import pyvista
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -22,6 +23,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
+from .opts import InteractionStyle
 from .opts import PickerType
 
 log = logging.getLogger(__name__)
@@ -1194,6 +1196,46 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         """
         self.style = InteractorStyleRubberBand2D(self)
+
+    def enable_interaction_style(self, style: InteractionStyle | None = None):
+        """Set the interactive style to a pre-defined mode.
+
+        Parameters
+        ----------
+        style : InteractionStyle
+            The pre-defined interaction style.
+
+        """
+        if style is None:
+            if plotter := self._plotter:
+                style = plotter._theme.interaction_style
+            else:
+                style = pyvista.global_theme.interaction_style
+        style = InteractionStyle.from_any(style)
+        match style:
+            case InteractionStyle.TRACKBALL:
+                self.enable_trackball_style()
+            case InteractionStyle.TRACKBALL_ACTOR:
+                self.enable_trackball_actor_style()
+            case InteractionStyle.TWO_D:
+                self.enable_2d_style()
+            case InteractionStyle.JOYSTICK:
+                self.enable_joystick_style()
+            case InteractionStyle.JOYSTICK_ACTOR:
+                self.enable_joystick_actor_style()
+            case InteractionStyle.IMAGE:
+                self.enable_image_style()
+            case InteractionStyle.RUBBERBAND:
+                self.enable_rubber_band_style()
+            case InteractionStyle.RUBBERBAND_2D:
+                self.enable_rubber_band_2d_style()
+            case InteractionStyle.TERRAIN:
+                self.enable_terrain_style()
+            case InteractionStyle.ZOOM:
+                self.enable_zoom_style()
+            case _:
+                msg = f'Unknown interaction style: {style}'
+                raise ValueError(msg)
 
     def _simulate_keypress(self, key):
         """Simulate a keypress."""
