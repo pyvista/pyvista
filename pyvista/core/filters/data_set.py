@@ -4574,9 +4574,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract = _vtk.vtkExtractCells()
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
-        extract.SetPassThroughCellIds(False)
+        if pv.vtk_version_info >= (9, 3, 0):
+            # We set the arrays manually earlier
+            extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
-        return _get_output(extract)
+        subgrid = _get_output(extract)
+
+        if pv.vtk_version_info >= (9, 3, 0):
+            return subgrid
+
+        # Process output arrays
+        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
+            del data[name]
+        return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
     def extract_points(  # type: ignore[misc]  # noqa: PLR0917
