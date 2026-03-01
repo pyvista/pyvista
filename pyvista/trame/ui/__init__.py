@@ -24,7 +24,7 @@ _VIEWERS: dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 
-def get_viewer(plotter, server=None, suppress_rendering=False):
+def get_viewer(plotter, server=None, suppress_rendering=False, animate=False):
     """Get a Viewer instance for a given Plotter.
 
     There should be only one Viewer instance per plotter. A Viewer
@@ -40,6 +40,9 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
 
     suppress_rendering : bool, default: False
         Suppress rendering on the plotter.
+
+    animate : bool, default: False
+        Whether to enable animation on the viewer.
 
     Returns
     -------
@@ -60,9 +63,13 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
     if not server:
         server = get_server()
     if server.client_type == 'vue2':
-        viewer = Vue2Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
+        viewer = Vue2Viewer(
+            plotter, suppress_rendering=suppress_rendering, server=server, animate=animate
+        )
     else:
-        viewer = Vue3Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
+        viewer = Vue3Viewer(
+            plotter, suppress_rendering=suppress_rendering, server=server, animate=animate
+        )
 
     _VIEWERS[plotter._id_name] = viewer
     return viewer
@@ -74,6 +81,7 @@ def plotter_ui(
     default_server_rendering=True,
     collapse_menu=False,
     add_menu=True,
+    animate=False,
     **kwargs,
 ):
     """Create a UI view for the given Plotter.
@@ -102,6 +110,9 @@ def plotter_ui(
     add_menu : bool, default: True
         Add a UI controls VCard to the VContainer.
 
+    animate : bool, default: False
+        Whether to enable animation on the viewer.
+
     **kwargs : dict, optional
         Additional keyword arguments are passed to the viewer being created.
 
@@ -111,7 +122,9 @@ def plotter_ui(
         Trame view interface for pyvista.
 
     """
-    viewer = get_viewer(plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client')
+    viewer = get_viewer(
+        plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client', animate=animate
+    )
     return viewer.ui(
         mode=mode,
         default_server_rendering=default_server_rendering,
