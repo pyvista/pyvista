@@ -4585,6 +4585,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract)
 
+        # Make active scalars match input
+        info = self.active_scalars_info
+        subgrid.set_active_scalars(info.name, info.association)
+
         if pv.vtk_version_info >= (9, 3, 0):
             return subgrid
 
