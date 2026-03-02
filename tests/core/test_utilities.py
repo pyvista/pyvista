@@ -1500,9 +1500,11 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
 
 def test_no_new_attr_mixin_side_effects():
     class Parent(_NoNewAttrMixin):
+        getter_call_count = 0
+
         @property
         def foo(self):
-            raise RuntimeError
+            self.getter_call_count += 1
 
         @foo.setter
         def foo(self, val): ...
@@ -1512,9 +1514,11 @@ def test_no_new_attr_mixin_side_effects():
     # Test that setting attributes on lasses does not trigger a call to the getter
     obj = Parent()
     obj.foo = 42
+    assert obj.getter_call_count == 0
 
     obj = Child()
     obj.foo = 42
+    assert obj.getter_call_count == 0
 
 
 def test_set_new_attribute(no_new_attributes_mixin_subclass):
