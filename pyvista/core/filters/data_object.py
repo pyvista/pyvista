@@ -1814,10 +1814,14 @@ class DataObjectFilters:
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
-        converted_ints = False
+        converted_ints: np.single | np.double | Literal[False] = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
-            converted_ints = True
+            if np.double == pv.POINTS_PRECISION:
+                self.points_to_double()
+                converted_ints = np.double
+            else:
+                self.points_to_single()
+                converted_ints = np.single
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
             point_vectors: list[str | None] = [
@@ -1836,7 +1840,7 @@ class DataObjectFilters:
                 self.cell_data.active_vectors_name,
                 self.cell_data.active_normals_name,
             ]
-        # dynamically convert each self.point_data[name] etc. to float32
+        # dynamically convert each self.point_data[name] etc. to float
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [self.point_data, self.cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
@@ -1845,13 +1849,14 @@ class DataObjectFilters:
                     continue
                 vector_arr = dataset_attrs[vector_name]
                 if not np.issubdtype(vector_arr.dtype, np.floating):
-                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
-                    converted_ints = True
+                    if not converted_ints:
+                        converted_ints = np.float32
+                    dataset_attrs[vector_name] = vector_arr.astype(converted_ints)
         if converted_ints:
             warn_external(
                 'Integer points, vector and normal data (if any) of the input mesh '
-                'have been converted to ``np.float32``. This is necessary in order '
-                'to transform properly.',
+                f'have been converted to `{np.dtype(converted_ints).name}`.\n'
+                f'This is necessary in order to transform properly.',
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -3860,6 +3865,7 @@ class DataObjectFilters:
             The ``'geometry'`` algorithm also
 
             - merges points by default,
+            - supports returning points with :class:`numpy.float64` dtype,
             - tends to preserve the original mesh's point order and connectivity, and
             - generates closed surfaces where closed surfaces would normally be expected.
 
@@ -3995,6 +4001,7 @@ class DataObjectFilters:
                 nonlinear_subdivision=nonlinear_subdivision,
                 algorithm=algorithm,
                 progress_bar=progress_bar,
+                points_dtype=points_dtype,
             )
             append = _vtk.vtkAppendPolyData()
             for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):

@@ -199,6 +199,7 @@ def test_transform_raises(sphere):
         sphere.transform(matrix, inplace=False)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
     multiblock_all_with_nested_and_none.clean()
@@ -215,20 +216,20 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
         assert clp2 is not None
 
 
-def test_clip_box():
-    dataset = examples.load_airplane()
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_clip_box(airplane, uniform):
     # test length 3 bounds
-    result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
-    dataset = examples.load_uniform()
-    result = dataset.clip_box(bounds=0.5, progress_bar=True)
+    result = uniform.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
+    assert result.n_cells
+    result = uniform.clip_box(bounds=0.5, progress_bar=True)
     assert result.n_cells
     with pytest.raises(ValueError):  # noqa: PT011
-        dataset.clip_box(bounds=(5, 6), progress_bar=True)
+        uniform.clip_box(bounds=(5, 6), progress_bar=True)
     # allow Sequence but not Iterable bounds
     with pytest.raises(TypeError):
-        dataset.clip_box(bounds={5, 6, 7}, progress_bar=True)
+        uniform.clip_box(bounds={5, 6, 7}, progress_bar=True)
     # Test with a poly data box
-    mesh = examples.load_airplane()
+    mesh = airplane
     box = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
     box.rotate_z(33, inplace=True)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
@@ -237,7 +238,7 @@ def test_clip_box():
     assert result.n_cells
 
     with pytest.raises(ValueError):  # noqa: PT011
-        dataset.clip_box(bounds=pv.Sphere(), progress_bar=True)
+        mesh.clip_box(bounds=pv.Sphere(), progress_bar=True)
 
     # crinkle clip
     surf = pv.Sphere(radius=3)
@@ -259,6 +260,7 @@ def test_clip_empty(crinkle):
     assert out.is_empty
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_clip_box_no_unused_points(as_composite):
     mesh = pv.Cube()
@@ -340,6 +342,7 @@ def test_slice_along_axis_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_all_edges(datasets):
     for dataset in datasets:
         edges = dataset.extract_all_edges()
@@ -357,6 +360,7 @@ def test_extract_all_edges(datasets):
     assert edges.n_lines
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_all_edges_no_data():
     mesh = pv.Wavelet()
     edges = mesh.extract_all_edges(clear_data=True)
@@ -491,9 +495,9 @@ def test_point_data_to_cell_data_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_triangulate():
-    data = examples.load_uniform()
-    tri = data.triangulate(progress_bar=True)
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_triangulate(uniform):
+    tri = uniform.triangulate(progress_bar=True)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
 
@@ -584,8 +588,9 @@ def test_sample_composite():
     assert 'vtkGhostType' in result[0].point_data
 
 
-def test_slice_along_line():
-    model = examples.load_uniform()
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_slice_along_line(uniform):
+    model = uniform
     n = 5
     x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
@@ -623,7 +628,7 @@ def test_slice_along_line_composite(multiblock_all):
 
 
 def test_compute_cell_quality():
-    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
+    mesh = pv.ParametricEllipsoid().triangulate()
     match_str = re.escape('This filter is deprecated. Use `cell_quality` instead')
     with pytest.raises(DeprecationError, match=match_str):
         _ = mesh.compute_cell_quality(progress_bar=True)
@@ -635,17 +640,16 @@ AREA = 'area'
 VOLUME = 'volume'
 
 
-def test_cell_quality():
-    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.cell_quality(SHAPE, progress_bar=True)
+def test_cell_quality(sphere):
+    qual = sphere.cell_quality(SHAPE, progress_bar=True)
     assert SHAPE in qual.array_names
 
     expected_names = [SHAPE, AREA]
-    qual = mesh.cell_quality(expected_names, progress_bar=True)
+    qual = sphere.cell_quality(expected_names, progress_bar=True)
     assert qual.array_names == expected_names
 
     with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
-        mesh.cell_quality(quality_measure='foo', progress_bar=True)
+        sphere.cell_quality(quality_measure='foo', progress_bar=True)
 
 
 def test_cell_quality_measures(ant):
@@ -1271,16 +1275,16 @@ def test_transform_integers():
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
 
-    with pytest.warns(UserWarning, match=r'Integer points.*converted.*float32'):
+    with pytest.warns(UserWarning, match=r'Integer points.*converted.*float64'):
         poly.rotate_x(angle=10, inplace=True)
 
     # check that points were converted and transformed correctly
-    assert poly.points.dtype == np.float32
+    assert poly.points.dtype == np.float64
     assert poly.points[-1, 1] != 0
     # assert that exactly active vectors and normals were converted
     for key in 'active_v', 'active_n':
-        assert poly.point_data[key].dtype == np.float32
-        assert poly.cell_data[key].dtype == np.float32
+        assert poly.point_data[key].dtype == np.float64
+        assert poly.cell_data[key].dtype == np.float64
     for key in 'inactive_v', 'inactive_n':
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
@@ -2206,7 +2210,7 @@ def test_validate_mesh_degenerate_cells():
         return pv.wrap(append.GetOutput())
 
     # Line with coincident points
-    invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)).points_to_double()  # LATER: Remove
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
         assert state[0] == pv.CellStatus.ZERO_SIZE
@@ -2512,6 +2516,7 @@ def test_extract_surface_datasets(multiblock_all, algorithm, bool_kwargs):
         assert ('vtkOriginalCellIds' in surf.cell_data) == bool_kwargs
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('as_multiblock', [True, False])
 def test_extract_surface_nonlinear(as_multiblock):
     # create a single quadratic hexahedral cell
