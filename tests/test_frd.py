@@ -179,7 +179,7 @@ def test_frd_reader_derived_stress(mock_frd_file):
     # vMises for this state is ~17.3205
     expected_vmises = np.sqrt(300.0)
 
-    np.testing.assert_allclose(mesh.point_data['STRESS_vMises'], expected_vmises)
+    np.testing.assert_allclose(mesh.point_data['STRESS_Mises'], expected_vmises)
     np.testing.assert_allclose(mesh.point_data['STRESS_sgMises'], expected_vmises)
 
     # Principal stresses should match diagonal entries since shear is 0
@@ -220,7 +220,7 @@ def test_frd_reader_comprehensive(comprehensive_frd_file):
     assert reader.number_time_points == 3
 
     # Check if derived stress fields were computed correctly
-    assert 'STRESS_vMises' in mesh.point_data
+    assert 'STRESS_Mises' in mesh.point_data
     assert 'STRESS_sgMises' in mesh.point_data
 
     # Check if scalar values (n_components == 1) were correctly added
