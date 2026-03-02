@@ -4025,6 +4025,7 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     FacetReader: 'PolyData',
     FLUENTCFFReader: 'MultiBlock',
     FluentReader: 'UnstructuredGrid',
+    FRDReader: 'UnstructuredGrid',
     GambitReader: 'UnstructuredGrid',
     GaussianCubeReader: ('ImageData', 'PolyData'),
     GESignaReader: 'ImageData',
