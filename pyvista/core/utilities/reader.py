@@ -3504,7 +3504,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetTimeStep(time_point)
 
-from pyvista.core.utilities.frd import _FRDVTKReader  # noqa: PLC0415
+
+from pyvista.core.utilities.frd import _FRDVTKReader
+
 
 class FRDReader(BaseReader, TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``)."""
