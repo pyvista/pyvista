@@ -41,8 +41,11 @@ if TYPE_CHECKING:
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
-    # Try to set output precision to match input
-
+    # Try to set output precision to match input if the filter supports it.
+    # This should not really be necessary since vtkAlgorithm.DEFAULT_PRECISION
+    # is *supposed* to handle this automatically, but in practice some filters and
+    # do not honor this for some mesh types, e.g. https://gitlab.kitware.com/vtk/vtk/-/issues/19965
+    # so we need to explicitly set the output points precision.
     if (precision := pv.POINTS_PRECISION) is not None and (
         set_precision := getattr(alg, 'SetOutputPointsPrecision', None)
     ) is not None:
