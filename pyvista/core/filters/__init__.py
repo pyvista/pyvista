@@ -97,6 +97,7 @@ def _get_output(
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
+    _check_output_points_precision(ido, data, points_dtype=points_dtype, algorithm=algorithm)
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:
@@ -106,11 +107,10 @@ def _get_output(
     # return a PointSet if input is a pointset
     if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
-    _set_output_points_precision(ido, data, points_dtype=points_dtype, algorithm=algorithm)
     return data
 
 
-def _set_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm):
+def _check_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm):
     precision = points_dtype if points_dtype is not None else pv.POINTS_PRECISION
     if precision is not None:
         points_in = getattr(mesh_in, 'points', None)
@@ -120,6 +120,11 @@ def _set_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm):
                 precision == 'default' and points_in.dtype == np.double
             )
             if requires_double and points_out.dtype != np.double:
+                # Handle edge case with no points
+                if points_in.size == 0 and points_out.size == 0:
+                    mesh_out.points_to_double()
+                    return
+
                 msg = (
                     f'{algorithm.__class__.__name__} did not generate '
                     f'points with double precision.\n'

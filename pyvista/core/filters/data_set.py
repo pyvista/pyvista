@@ -29,8 +29,8 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _check_output_points_precision
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type

@@ -23,8 +23,8 @@ from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _check_output_points_precision
 from pyvista.core.filters import _get_output
-from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation

@@ -509,6 +509,7 @@ def test_voxelize_throws_point_cloud(hexbeam):
             pv.voxelize(mesh)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_volume_default_density(uniform):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
@@ -536,6 +537,7 @@ def test_voxelize_volume_no_face_mesh(rectilinear):
             pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_enclosed_bounds(function, ant):
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -550,6 +552,7 @@ def test_voxelize_enclosed_bounds(function, ant):
     assert vox.bounds.z_max >= ant.bounds.z_max
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_fit_bounds(function, uniform):
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -1824,7 +1827,7 @@ class CasesTransformApply:
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
-        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, float
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
@@ -1832,7 +1835,7 @@ class CasesTransformApply:
             pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
             True,
             pv.PolyData,
-            np.float32,
+            float,
         )
 
     def case_polydata_float(self):

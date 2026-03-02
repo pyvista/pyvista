@@ -29,6 +29,7 @@ from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters import _update_alg
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -1725,7 +1726,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     @_deprecate_positional_args

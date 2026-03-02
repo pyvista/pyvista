@@ -143,7 +143,8 @@ def cube():
 
 @pytest.fixture
 def airplane():
-    return examples.load_airplane()
+    mesh = examples.load_airplane()
+    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
 
 
 @pytest.fixture
@@ -215,13 +216,18 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def structured():
+    return examples.load_structured()
+
+
+@pytest.fixture
+def datasets(uniform, rectilinear, hexbeam, airplane, structured):
     return [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane().points_to_double(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        uniform,  # ImageData
+        rectilinear,  # RectilinearGrid
+        hexbeam,  # UnstructuredGrid
+        airplane,  # PolyData
+        structured,  # StructuredGrid
     ]
 
 
