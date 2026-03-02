@@ -426,10 +426,7 @@ def test_threshold_percent(datasets):
         dataset.threshold_percent({18.0, 85.0})
 
 
-# Threshold is generally compatibly with double precision,
-# but there is a VTK bug with invert=True that generates single precision output
-# So we need to force single precision
-@pytest.mark.usefixtures('force_points_precision_single')
+
 def test_threshold_paraview_consistency():
     """Validate expected results that match ParaView."""
     x = np.arange(5, dtype=float)

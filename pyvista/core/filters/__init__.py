@@ -121,7 +121,7 @@ def _check_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm
             )
             if requires_double and points_out.dtype != np.double:
                 # Handle edge case with no points
-                if points_in.size == 0 and points_out.size == 0:
+                if points_out.size == 0:
                     mesh_out.points_to_double()
                     return
 
