@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
-
 from enum import Enum
 from enum import IntEnum
 import pathlib
@@ -14,6 +12,7 @@ from typing import ClassVar
 
 import numpy as np
 
+from pyvista._warn_external import warn_external
 from pyvista.core.celltype import CellType
 from pyvista.core.utilities.reader import BaseVTKReader
 
@@ -177,13 +176,31 @@ class _FRDVTKReader(BaseVTKReader):
 
     def _permute_nodes(self, node_ids: list[int], etype: FRDElementType) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
-        if etype == FRDElementType.HE20 and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.HE20]:
+        if (
+            etype == FRDElementType.HE20
+            and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.HE20]
+        ):
             return [
-                node_ids[0], node_ids[1], node_ids[2], node_ids[3],
-                node_ids[4], node_ids[5], node_ids[6], node_ids[7],
-                node_ids[8], node_ids[9], node_ids[10], node_ids[11],
-                node_ids[16], node_ids[17], node_ids[18], node_ids[19],
-                node_ids[12], node_ids[13], node_ids[14], node_ids[15],
+                node_ids[0],
+                node_ids[1],
+                node_ids[2],
+                node_ids[3],
+                node_ids[4],
+                node_ids[5],
+                node_ids[6],
+                node_ids[7],
+                node_ids[8],
+                node_ids[9],
+                node_ids[10],
+                node_ids[11],
+                node_ids[16],
+                node_ids[17],
+                node_ids[18],
+                node_ids[19],
+                node_ids[12],
+                node_ids[13],
+                node_ids[14],
+                node_ids[15],
             ]
 
         return node_ids
@@ -268,9 +285,9 @@ class _FRDVTKReader(BaseVTKReader):
                     continue
 
                 if etype not in self.CCX_TO_VTK_TYPE:
-                    warnings.warn(
+                    warn_external(
                         f"Unsupported element type '{etype_val}' encountered. These elements will be skipped.",
-                        UserWarning
+                        UserWarning,
                     )
                     etype = None
                     continue

@@ -3512,10 +3512,10 @@ class FRDReader(BaseReader, TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``).
 
     Supported element types include: HE8, PE6, TE4, HE20, TE10, TR3, TR6, QU4, QU8, BE2, BE3.
-    Note that PE15 (15-node wedge) elements are supported, but are degraded to standard PE6 
+    Note that PE15 (15-node wedge) elements are supported, but are degraded to standard PE6
     (6-node wedge) elements upon read since VTK does not natively support the 15-node wedge.
 
-    For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically 
+    For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically
     pre-computes and appends the following derived scalar arrays to the output mesh:
     - ``<NAME>_Mises``: equivalent von Mises magnitude.
     - ``<NAME>_sgMises``: signed von Mises magnitude.
@@ -3526,14 +3526,17 @@ class FRDReader(BaseReader, TimeReader):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> from pathlib import Path
-    >>> filename = examples.download_frd(load=False)  # Note: requires adding download_frd to examples
+    >>> filename = examples.download_frd(
+    ...     load=False
+    ... )  # Note: requires adding download_frd to examples
     >>> Path(filename).name
     'mesh.frd'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
+
     """
-    
+
     _class_reader = _FRDVTKReader
 
     def __init__(self, path: str) -> None:
