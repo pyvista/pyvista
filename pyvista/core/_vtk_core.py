@@ -499,6 +499,13 @@ except ImportError:  # pragma: no cover
             raise VTKVersionError(msg)
 
 
+try:  # Module changed in VTK 9.3.0
+    from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
+except ImportError:
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractCells as vtkExtractCells,
+    )
+
 with contextlib.suppress(ImportError):
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
     from vtkmodules.vtkFiltersParallelDIY2 import (
