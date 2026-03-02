@@ -3521,7 +3521,7 @@ class FRDReader(BaseReader, TimeReader):
         self._reader.Update()
 
     @property
-    def reader(self) -> _FRDVTKReader:
+    def reader(self) -> Any:
         """Return the underlying low-level VTK reader."""
         return self._reader
 
