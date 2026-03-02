@@ -414,14 +414,14 @@ def test_validate_invalid_mesh(
     out = capsys.readouterr().out
     expected = (
         "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
-        ' - Mesh has 1 point array with incorrect length (length must be 2905).\n'
+        ' ▪ Mesh has 1 point array with incorrect length (length must be 2905).\n'
         "Invalid array: 'foo' (2906)\n"
-        ' - Mesh has 2 cell arrays with incorrect length (length must be 3263).\n'
+        ' ▪ Mesh has 2 cell arrays with incorrect length (length must be 3263).\n'
         "Invalid arrays: 'bar' (3264), 'baz' (3262)\n"
-        ' - Mesh has 2 unused points not referenced by any cell. Invalid point \n'
+        ' ▪ Mesh has 2 unused points not referenced by any cell. Invalid point \n'
         'ids: [2903, 2904]\n'
-        ' - Mesh has 1 non-finite point. Invalid point id: [2903]\n'
-        ' - Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
+        ' ▪ Mesh has 1 non-finite point. Invalid point id: [2903]\n'
+        ' ▪ Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
         '3250]\n'
     )
     assert out == expected
@@ -430,10 +430,10 @@ def test_validate_invalid_mesh(
     out = capsys.readouterr().out
     expected = (
         "MultiBlock mesh 'ant.vtm' is not valid:\n"
-        " - Block id 0 'Block-00' PolyData mesh is not valid:\n"
-        '   - Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        " ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '   ▪ Mesh has 2 unused points not referenced by any cell. Invalid \n'
         'point ids: [486, 487]\n'
-        '   - Mesh has 1 non-finite point. Invalid point id: [486]\n'
+        '   ▪ Mesh has 1 non-finite point. Invalid point id: [486]\n'
     )
     assert out == expected
 
@@ -450,10 +450,10 @@ def test_validate_invalid_mesh(
         "    Invalid fields (2) : ('non_finite_points', 'unused_points')\n"
         'Error message:\n'
         "    MultiBlock mesh 'ant.vtm' is not valid:\n"
-        "     - Block id 0 'Block-00' PolyData mesh is not valid:\n"
-        '       - Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        "     ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '       ▪ Mesh has 2 unused points not referenced by any cell. Invalid \n'
         'point ids: [486, 487]\n'
-        '       - Mesh has 1 non-finite point. Invalid point id: [486]\n'
+        '       ▪ Mesh has 1 non-finite point. Invalid point id: [486]\n'
     )
     assert out == expected
 
@@ -473,19 +473,19 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
     out = capsys.readouterr().out
     expected = (
         f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
-        f' - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f' ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
         f'{b}({_}length must be {cb}2905{_}{b}){_}.\n'
         f"Invalid array: {g}'foo'{_} {b}({_}{cb}2906{_}{b}){_}\n"
-        f' - Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f' ▪ Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
         f'{b}({_}length must be {cb}3263{_}{b}){_}.\n'
         f"Invalid arrays: {g}'bar'{_} "
         f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
         f'{b}({_}{cb}3262{_}{b}){_}\n'
-        f' - Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f' ▪ Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
         f'Invalid point \nids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
-        f' - Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f' ▪ Mesh has {cb}1{_} {r}non-finite point{_}. '
         f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
-        f' - Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f' ▪ Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
         f'Invalid cell ids: {b}[{_}{cb}1013{_}, {cb}1532{_}, \n{cb}3250{_}{b}]{_}\n'
     )
     assert out == expected
@@ -510,20 +510,20 @@ def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixtur
         f"{g}'non_convex'{_}{b}){_}\n"
         f'{b}Error message:{_}\n'
         f"    {m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
-        f'     - Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'     ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
         f'{b}({_}length must be \n'
         f"{cb}2905{_}{b}){_}. Invalid array: {g}'foo'{_} "
         f'{b}({_}{cb}2906{_}{b}){_}\n'
-        f'     - Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'     ▪ Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
         f'{b}({_}length must be \n'
         f"{cb}3263{_}{b}){_}. Invalid arrays: {g}'bar'{_} "
         f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
         f'{b}({_}{cb}3262{_}{b}){_}\n'
-        f'     - Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'     ▪ Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
         f'Invalid \npoint ids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
-        f'     - Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'     ▪ Mesh has {cb}1{_} {r}non-finite point{_}. '
         f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
-        f'     - Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'     ▪ Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
         f'Invalid cell ids: {b}[{_}{cb}1013{_}, \n'
         f'{cb}1532{_}, {cb}3250{_}{b}]{_}\n'
     )
