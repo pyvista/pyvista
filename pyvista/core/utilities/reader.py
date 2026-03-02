@@ -25,7 +25,6 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import VersionInfo
-from pyvista.core.utilities.frd import _FRDVTKReader
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -3505,6 +3504,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetTimeStep(time_point)
 
+from pyvista.core.utilities.frd import _FRDVTKReader  # noqa: PLC0415
 
 class FRDReader(BaseReader, TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``)."""
