@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from enum import Enum
 from enum import IntEnum
 import pathlib
@@ -161,10 +163,9 @@ class _FRDVTKReader(BaseVTKReader):
     # Parsing helpers
     # ------------------------------------------------------------------
 
-    @classmethod
-    def _fix_scientific(cls, line: str) -> str:
-        """Insert a space before a bare ``-`` sign adjacent to a number."""
-        return cls._SCIENTIFIC_RE.sub(' -', line)
+    @staticmethod
+    def _fix_scientific(line: str) -> str:
+        return _FRDVTKReader._SCIENTIFIC_RE.sub(' -', line)
 
     @staticmethod
     def _parse_100cl_header(line: str) -> tuple[int, float]:
@@ -176,29 +177,16 @@ class _FRDVTKReader(BaseVTKReader):
 
     def _permute_nodes(self, node_ids: list[int], etype: FRDElementType) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
-        if etype == FRDElementType.HE20 and len(node_ids) == 20:
+        if etype == FRDElementType.HE20 and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.HE20]:
             return [
-                node_ids[0],
-                node_ids[1],
-                node_ids[2],
-                node_ids[3],
-                node_ids[4],
-                node_ids[5],
-                node_ids[6],
-                node_ids[7],
-                node_ids[8],
-                node_ids[9],
-                node_ids[10],
-                node_ids[11],
-                node_ids[16],
-                node_ids[17],
-                node_ids[18],
-                node_ids[19],
-                node_ids[12],
-                node_ids[13],
-                node_ids[14],
-                node_ids[15],
+                node_ids[0], node_ids[1], node_ids[2], node_ids[3],
+                node_ids[4], node_ids[5], node_ids[6], node_ids[7],
+                node_ids[8], node_ids[9], node_ids[10], node_ids[11],
+                node_ids[16], node_ids[17], node_ids[18], node_ids[19],
+                node_ids[12], node_ids[13], node_ids[14], node_ids[15],
             ]
+
+        return node_ids
 
         if etype == FRDElementType.TR3 and len(node_ids) == 3:
             p = [self._nodes[n] for n in node_ids]
@@ -280,6 +268,10 @@ class _FRDVTKReader(BaseVTKReader):
                     continue
 
                 if etype not in self.CCX_TO_VTK_TYPE:
+                    warnings.warn(
+                        f"Unsupported element type '{etype_val}' encountered. These elements will be skipped.",
+                        UserWarning
+                    )
                     etype = None
                     continue
 
@@ -374,7 +366,7 @@ class _FRDVTKReader(BaseVTKReader):
             * ((xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2 + 6.0 * (xy**2 + yz**2 + zx**2))
         )
         trace = xx + yy + zz
-        grid.point_data[f'{base_name}_vMises'] = vmises
+        grid.point_data[f'{base_name}_Mises'] = vmises
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             trace != 0, np.sign(trace) * vmises, vmises
         )
@@ -391,7 +383,7 @@ class _FRDVTKReader(BaseVTKReader):
             (xx - yy) ** 2 + (yy - zz) ** 2 + (zz - xx) ** 2 + 6.0 * (xy**2 + yz**2 + zx**2)
         )
         volumetric = xx + yy + zz
-        grid.point_data[f'{base_name}_vMises'] = vmises_strain
+        grid.point_data[f'{base_name}_Mises'] = vmises_strain
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             volumetric != 0, np.sign(volumetric) * vmises_strain, vmises_strain
         )
