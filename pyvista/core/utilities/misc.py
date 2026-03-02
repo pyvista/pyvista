@@ -7,7 +7,7 @@ from collections.abc import Sequence
 import enum
 from functools import cache
 import importlib
-import inspect
+from inspect import getattr_static
 import sys
 import threading
 import traceback
@@ -309,7 +309,7 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
 def _hasattr_static(obj: Any, attr: str) -> bool:
     """Replicate behavior of hasattr using static lookup."""
     try:
-        inspect.getattr_static(obj, attr)
+        getattr_static(obj, attr)
     except AttributeError:
         return False
     return True
