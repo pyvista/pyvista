@@ -187,9 +187,9 @@ def tetbeam():
 @pytest.fixture
 def struct_grid():
     x, y, z = np.meshgrid(
-        np.arange(-10, 10, 2, dtype=np.float32),
-        np.arange(-10, 10, 2, dtype=np.float32),
-        np.arange(-10, 10, 2, dtype=np.float32),
+        np.arange(-10, 10, 2, dtype=np.float64),
+        np.arange(-10, 10, 2, dtype=np.float64),
+        np.arange(-10, 10, 2, dtype=np.float64),
     )
     return pv.StructuredGrid(x, y, z)
 

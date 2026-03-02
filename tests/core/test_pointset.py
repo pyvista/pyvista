@@ -267,6 +267,7 @@ def test_threshold_percent(pointset):
     assert out.n_points == pointset.n_points // 2
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_explode(pointset):
     out = pointset.explode(1)
     assert isinstance(out, pv.PointSet)

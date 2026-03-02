@@ -1514,7 +1514,7 @@ def test_no_new_attr_mixin_side_effects():
 
     class Child(Parent): ...
 
-    # Test that setting attributes on lasses does not trigger a call to the getter
+    # Test that setting attributes on classes does not trigger a call to the getter
     obj = Parent()
     obj.foo = 42
     assert obj.getter_call_count == 0
