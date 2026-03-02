@@ -2095,6 +2095,51 @@ def test_extract_points_default(extracted_with_adjacent_true):
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+def test_extract_cells(sphere):
+    ind = 0
+    n_cells = 1
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+    assert 'vtkOriginalPointIds' in extracted.point_data
+    assert 'vtkOriginalCellIds' in extracted.cell_data
+
+    ind = [0]
+    n_cells = len(ind)
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True, pass_point_ids=False, pass_cell_ids=False)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+    assert 'vtkOriginalPointIds' not in extracted.point_data
+    assert 'vtkOriginalCellIds' not in extracted.cell_data
+
+    ind = [4, 5]
+    n_cells = len(ind)
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    ind = np.zeros(shape=(sphere.n_cells,), dtype=bool)
+    ind[[0, 1]] = True
+    n_cells = 2
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    match = 'Number of bool indices (2) must match the number of cells (840).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = sphere.extract_cells([True, True])
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(
@@ -2148,10 +2193,11 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
     if invert:
         assert extracted.n_points == 0
         assert extracted.n_cells == 0
-        assert extracted.n_arrays == 0
     else:
         assert np.array_equal(extracted.points, grid4x4.points)
         assert np.array_equal(extracted.cells, grid4x4.faces)
+    assert 'vtkOriginalPointIds' in extracted.point_data
+    assert 'vtkOriginalCellIds' in extracted.cell_data
 
 
 def test_extract_values_open_intervals(grid4x4):
@@ -2543,9 +2589,9 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
         pass_cell_ids=pass_cell_ids,
     )
     if pass_cell_ids:
-        assert extracted.cell_data.keys() == []
+        assert CELL_IDS in extracted.cell_data
     if pass_point_ids:
-        assert extracted.point_data.keys() == []
+        assert POINT_IDS in extracted.point_data
 
 
 def test_extract_values_empty():
