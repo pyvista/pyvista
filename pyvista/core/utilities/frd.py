@@ -12,7 +12,6 @@ from typing import ClassVar
 
 import numpy as np
 
-from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
 from pyvista.core.utilities.reader import BaseVTKReader
 
@@ -91,18 +90,18 @@ class _FRDVTKReader(BaseVTKReader):
     }
 
     NODES_PER_ELEM: ClassVar[dict[FRDElementType, int]] = {
-        FRDElementType.HE8: _CELL_TYPE_TO_NUM_POINTS[CellType.HEXAHEDRON],
-        FRDElementType.PE6: _CELL_TYPE_TO_NUM_POINTS[CellType.WEDGE],
-        FRDElementType.TE4: _CELL_TYPE_TO_NUM_POINTS[CellType.TETRA],
-        FRDElementType.HE20: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_HEXAHEDRON],
-        FRDElementType.PE15: 15,  # Needs to read 15 nodes from file even if degrading to WEDGE
-        FRDElementType.TE10: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_TETRA],
-        FRDElementType.TR3: _CELL_TYPE_TO_NUM_POINTS[CellType.TRIANGLE],
-        FRDElementType.TR6: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_TRIANGLE],
-        FRDElementType.QU4: _CELL_TYPE_TO_NUM_POINTS[CellType.QUAD],
-        FRDElementType.QU8: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_QUAD],
-        FRDElementType.BE2: _CELL_TYPE_TO_NUM_POINTS[CellType.LINE],
-        FRDElementType.BE3: _CELL_TYPE_TO_NUM_POINTS[CellType.QUADRATIC_EDGE],
+        FRDElementType.HE8: 8,
+        FRDElementType.PE6: 6,
+        FRDElementType.TE4: 4,
+        FRDElementType.HE20: 20,
+        FRDElementType.PE15: 15,
+        FRDElementType.TE10: 10,
+        FRDElementType.TR3: 3,
+        FRDElementType.TR6: 6,
+        FRDElementType.QU4: 4,
+        FRDElementType.QU8: 8,
+        FRDElementType.BE2: 2,
+        FRDElementType.BE3: 3,
     }
 
     def __init__(self) -> None:
