@@ -1473,6 +1473,10 @@ def surface_from_para(  # noqa: PLR0917
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
     para_source.SetGenerateTextureCoordinates(texture_coordinates)
+    if np.single == pv.POINTS_PRECISION:
+        para_source.SetOutputPointsPrecision(_vtk.vtkAlgorithm.SINGLE_PRECISION)
+    elif np.double == pv.POINTS_PRECISION:
+        para_source.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
     para_source.Update()
     surf = wrap(para_source.GetOutput())
     if clean:

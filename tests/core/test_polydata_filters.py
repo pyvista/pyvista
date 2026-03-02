@@ -30,6 +30,7 @@ def test_contour_banded_raise(sphere):
         _ = sphere.contour_banded(10)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_contour_banded_points(sphere):
     sphere.clear_data()
     sphere['data'] = sphere.points[:, 2]
@@ -111,6 +112,7 @@ def test_contour_banded_raises(mocker: MockerFixture):
         sp.contour_banded(1)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_boolean_intersect_edge_case():
     a = pv.Cube(x_length=2, y_length=2, z_length=2).triangulate()
     b = pv.Cube().triangulate()  # smaller cube (x_length=1)
@@ -154,18 +156,20 @@ def test_decimate_polyline_inplace(poly_circle):
 
 
 def test_triangulate_contours():
-    poly = pv.Polygon(n_sides=4, fill=False)
+    poly = pv.Polygon(n_sides=4, fill=False).points_to_double()  # LATER: Remove
     filled = poly.triangulate_contours()
     for cell in filled.cell:
         assert cell.type == pv.CellType.TRIANGLE
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()
     assert ribbon.n_cells
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_ruled_surface():
     poly = pv.PolyData(
         [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]],

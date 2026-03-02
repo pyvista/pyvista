@@ -398,7 +398,7 @@ def _spline_load_func():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    return pv.Spline(points, 1000)
+    return pv.Spline(points, 1000).points_to_double()  # LATER: Remove
 
 
 _dataset_spline = _DatasetLoader(_spline_load_func)
