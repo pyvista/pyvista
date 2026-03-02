@@ -2731,6 +2731,26 @@ def download_brain(load=True):  # noqa: FBT002
 
 _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 
+def download_frd(*, load=True):
+    """Download a sample CalculiX FRD file.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_frd()
+    >>> dataset.plot()
+    """
+    return _download_file('mesh.frd', load=load)
 
 @_deprecate_positional_args
 def download_structured_grid(load=True):  # noqa: FBT002
