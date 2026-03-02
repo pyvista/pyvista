@@ -92,6 +92,7 @@ def _get_output(
     oport=0,
     active_scalars=None,
     active_scalars_field='point',
+    points_dtype=None,
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
@@ -105,11 +106,16 @@ def _get_output(
     # return a PointSet if input is a pointset
     if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
+    _set_output_points_precision(ido, data, points_dtype=points_dtype, algorithm=algorithm)
+    return data
 
-    if (precision := pv.POINTS_PRECISION) is not None:
-        points_in = getattr(ido, 'points', None)
+
+def _set_output_points_precision(mesh_in, mesh_out, *, points_dtype, algorithm):
+    precision = points_dtype if points_dtype is not None else pv.POINTS_PRECISION
+    if precision is not None:
+        points_in = getattr(mesh_in, 'points', None)
         if points_in is not None:
-            points_out = getattr(data, 'points', None)
+            points_out = getattr(mesh_out, 'points', None)
             requires_double = precision == np.double or (
                 precision == 'default' and points_in.dtype == np.double
             )
@@ -117,8 +123,8 @@ def _get_output(
                 msg = (
                     f'{algorithm.__class__.__name__} did not generate '
                     f'points with double precision.\n'
-                    f'Input {ido.__class__.__name__} points dtype is {points_in.dtype.name}, '
-                    f'output {data.__class__.__name__} points dtype is {points_out.dtype.name}.'
+                    f'Input {mesh_in.__class__.__name__} points dtype is {points_in.dtype.name}, '
+                    f'output {mesh_out.__class__.__name__} points dtype is {points_out.dtype.name}.'
                 )
                 if points_in.dtype != np.double:
                     msg += (
@@ -140,9 +146,8 @@ def _get_output(
             requires_single = precision == np.single or (
                 precision == 'default' and points_in.dtype == np.single
             )
-            if requires_single and not isinstance(data, pv.Grid):
-                data.points = points_out.astype(np.single)
-    return data
+            if requires_single:
+                mesh_out.points_to_single()
 
 
 from .composite import CompositeFilters as CompositeFilters

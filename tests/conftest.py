@@ -153,7 +153,8 @@ def rectilinear():
 
 @pytest.fixture
 def sphere():
-    return examples.load_sphere()
+    mesh = examples.load_sphere()
+    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
 
 
 @pytest.fixture
@@ -163,7 +164,8 @@ def uniform():
 
 @pytest.fixture
 def ant():
-    return examples.load_ant()
+    mesh = examples.load_ant()
+    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
 
 
 @pytest.fixture
@@ -218,7 +220,7 @@ def datasets():
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
         examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
+        examples.load_airplane().points_to_double(),  # PolyData
         examples.load_structured(),  # StructuredGrid
     ]
 

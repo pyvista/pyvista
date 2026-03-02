@@ -1321,7 +1321,9 @@ class DataSet(DataSetFilters, DataObject):
         0.51825
 
         """
-        sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
+        sizes = self._compute_cell_sizes_points_dtype(
+            length=False, area=False, volume=True, points_dtype='default'
+        )
         return sizes.cell_data['Volume'].sum().item()
 
     @property
@@ -1363,7 +1365,9 @@ class DataSet(DataSetFilters, DataObject):
         3.13
 
         """
-        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
+        sizes = self._compute_cell_sizes_points_dtype(
+            length=False, area=True, volume=False, points_dtype='default'
+        )
         return sizes.cell_data['Area'].sum().item()
 
     def get_array(

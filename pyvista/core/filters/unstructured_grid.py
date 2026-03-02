@@ -34,7 +34,7 @@ class UnstructuredGridFilters(DataSetFilters):
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    def subdivide_tetra(self):
+    def subdivide_tetra(self, points_dtype=None):
         """Subdivide each tetrahedron into twelve tetrahedrons.
 
         Returns
@@ -59,7 +59,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg = _vtk.vtkSubdivideTetra()
         alg.SetInputData(self)
         _update_alg(alg)
-        return _get_output(alg)
+        return _get_output(alg, points_dtype=points_dtype)
 
     @_deprecate_positional_args
     def clean(  # noqa: PLR0917

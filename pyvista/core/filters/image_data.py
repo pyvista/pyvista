@@ -24,6 +24,7 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -2458,6 +2459,7 @@ class ImageDataFilters(DataSetFilters):
         smoothing_relaxation: float = 0.5,
         smoothing_distance: float | None = None,
         smoothing_scale: float = 1.0,
+        points_dtype=None,
         progress_bar: bool = False,
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
@@ -3060,8 +3062,7 @@ class ImageDataFilters(DataSetFilters):
         with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
-        # ImageData has double precision points, but output only has single
-        output: pv.PolyData = _get_output(alg)
+        output: pv.PolyData = _get_output(alg, points_dtype=points_dtype)
 
         (  # Clear temp scalars from input
             alg_input.point_data.remove(temp_scalars_name)

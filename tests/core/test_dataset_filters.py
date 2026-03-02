@@ -96,7 +96,7 @@ def uniform_vec():
 
 
 def test_warn_point_dtype_modified(ant):
-    double = ant.points_to_double()
+    assert ant.points.dtype == np.double
     match = (
         'vtkShrinkFilter did not generate points with double precision.\n'
         'Input PolyData points dtype is float64, '
@@ -105,7 +105,7 @@ def test_warn_point_dtype_modified(ant):
     )
     assert np.double == pv.POINTS_PRECISION
     with pytest.raises(ValueError, match=match):
-        double.shrink()
+        ant.shrink()
 
 
 def test_threshold_raises(mocker: MockerFixture):
@@ -245,7 +245,7 @@ def test_clip_surface():
         height=3.0,
         radius=1,
         resolution=50,
-    ).points_to_double()
+    ).points_to_double()  # LATER: Remove after source is double by default
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pv.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True)
@@ -571,7 +571,6 @@ def test_gaussian_splatting(sphere: PolyData):
     assert output.dimensions == dimensions
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -696,7 +695,6 @@ def test_texture_map_to_sphere():
 
 
 def test_glyph(datasets, sphere):
-    sphere.points_to_double()  # LATER: Remove after making geometric sources 64-bit
     for dataset in datasets:
         dataset['vectors'] = np.ones_like(dataset.points)
         result = dataset.glyph(progress_bar=True)
@@ -768,7 +766,6 @@ def test_glyph(datasets, sphere):
 
 
 def test_glyph_warns_ambiguous_data(sphere):
-    sphere.points_to_double()  # LATER: Remove after making geometric sources 64-bit
     sphere.compute_normals(inplace=True)
     with pytest.warns(UserWarning, match='It is unclear which one to use') as warning_info:
         sphere.glyph(scale=True)
@@ -3391,19 +3388,17 @@ def test_poly_data_strip():
     assert stripped.n_cells == 1
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_shrink():
     mesh = pv.Sphere()
-    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
+    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True, points_dtype=np.single)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
     mesh = examples.load_uniform()
-    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
+    shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True, points_dtype=np.single)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.volume < mesh.volume
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_tessellate():
     points = np.array(
         [
@@ -3418,14 +3413,16 @@ def test_tessellate():
     cells = np.array([6, 0, 1, 2, 3, 4, 5])
     cell_types = np.array([CellType.QUADRATIC_TRIANGLE])
     ugrid = pv.UnstructuredGrid(cells, cell_types, points)
-    tessellated = ugrid.tessellate(progress_bar=True)
+    tessellated = ugrid.tessellate(progress_bar=True, points_dtype=np.single)
     assert tessellated.n_cells > ugrid.n_cells
     assert tessellated.n_points > ugrid.n_points
-    assert ugrid.tessellate(max_n_subdivide=6).n_cells > tessellated.n_cells
-    assert ugrid.tessellate(merge_points=False).n_points > tessellated.n_points
+    tessellated2 = ugrid.tessellate(max_n_subdivide=6, points_dtype=np.single)
+    assert tessellated2.n_cells > tessellated.n_cells
+    tessellated2 = ugrid.tessellate(merge_points=False, points_dtype=np.single)
+    assert tessellated2.n_points > tessellated.n_points
     pdata = pv.PolyData()
     with pytest.raises(TypeError):
-        tessellated = pdata.tessellate(progress_bar=True)
+        tessellated = pdata.tessellate(progress_bar=True, points_dtype=np.single)
 
 
 def test_extrude_rotate():
@@ -3599,7 +3596,6 @@ def test_invalid_subdivide_adaptive(cube):
 
 
 def test_collision(sphere):
-    sphere.points_to_double()
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, n_collision = sphere.collision(moved_sphere)
     assert isinstance(output, pv.PolyData)
@@ -3716,7 +3712,6 @@ def test_align_xyz_return_matrix():
     ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
 )
 def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
-    sphere.points_to_double()
     box = sphere.bounding_box(as_composite=as_composite)
     assert isinstance(box, mesh_type)
     assert box.bounds == sphere.bounds
@@ -3908,13 +3903,12 @@ def test_swap_axes(x, y, z, order, test_case, values):
         assert first_index < second_index
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_subdivide_tetra(tetbeam):
-    grid = tetbeam.subdivide_tetra()
+    # Filter does not support double precision
+    grid = tetbeam.subdivide_tetra(points_dtype=np.single)
     assert grid.n_cells == tetbeam.n_cells * 12
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
@@ -3925,7 +3919,8 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
         [
             pv.CellType.HEXAHEDRON,
             pv.CellType.BEZIER_PYRAMID,
-        ]
+        ],
+        points_dtype=np.single,  # does not support double precision
     )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 
@@ -3933,18 +3928,20 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     assert 'vtkOriginalPointIds' not in hexbeam.point_data
     assert 'vtkOriginalCellIds' not in hexbeam.cell_data
 
-    tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
+    tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA, points_dtype=np.single)
     assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
 
     int_array = np.array([int(pv.CellType.TETRA), int(pv.CellType.HEXAHEDRON)])
-    tet_hex_cells = combined.extract_cells_by_type(int_array)
+    tet_hex_cells = combined.extract_cells_by_type(int_array, points_dtype=np.single)
     assert pv.CellType.TETRA in tet_hex_cells.celltypes
     assert pv.CellType.HEXAHEDRON in tet_hex_cells.celltypes
 
-    should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
+    should_be_empty = combined.extract_cells_by_type(
+        pv.CellType.BEZIER_CURVE, points_dtype=np.single
+    )
     assert should_be_empty.n_cells == 0
 
-    combined.extract_cells_by_type(1.0)
+    combined.extract_cells_by_type(1.0, points_dtype=np.single)
     match = 'cell_types must have integer-like values.'
     with pytest.raises(ValueError, match=re.escape(match)):
         combined.extract_cells_by_type(1.1)
@@ -4257,10 +4254,10 @@ def frog_tissues_image():
 
 @pytest.fixture
 def frog_tissues_contour(frog_tissues_image):
-    return frog_tissues_image.contour_labels(smoothing=False)
+    contour = frog_tissues_image.contour_labels(smoothing=False, points_dtype=np.single)
+    return contour.points_to_double()
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask(
@@ -4274,14 +4271,12 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
     assert expected_voxels.n_cells == actual_voxels.n_cells
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
     mask = sphere.voxelize_binary_mask(dimensions=dims)
@@ -4289,7 +4284,6 @@ def test_voxelize_binary_mask_dimensions(sphere):
     assert mask.dimensions == dims
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_spacing(ant):
     # Test default
     mask_no_input = ant.voxelize_binary_mask()
@@ -4319,7 +4313,6 @@ def test_voxelize_binary_mask_spacing(ant):
 # Sometimes the sampling produces the same output.
 # https://github.com/pyvista/pyvista/pull/6728
 @flaky_test(times=5)
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
     mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
     mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
@@ -4339,7 +4332,6 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
         lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])],
     ],
 )
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
     mask = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
@@ -4358,7 +4350,6 @@ def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
 
 @pytest.mark.parametrize('foreground', [1, 2.1])
 @pytest.mark.parametrize('background', [-1, 0])
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_foreground_background(sphere, foreground, background):
     mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
     unique, counts = np.unique(mask['mask'], return_counts=True)
@@ -4380,7 +4371,6 @@ def test_voxelize_binary_mask_foreground_background(sphere, foreground, backgrou
         assert mask['mask'].dtype == float
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 def test_voxelize_binary_mask_input(hexbeam):
     # Test unstructured grid works
     assert isinstance(hexbeam, pv.UnstructuredGrid)

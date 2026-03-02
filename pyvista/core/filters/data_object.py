@@ -3923,6 +3923,26 @@ class DataObjectFilters:
         for more examples using this filter.
 
         """
+        return self._extract_surface_points_dtype(
+            pass_pointid=pass_pointid,
+            pass_cellid=pass_cellid,
+            nonlinear_subdivision=nonlinear_subdivision,
+            algorithm=algorithm,
+            progress_bar=progress_bar,
+            points_dtype=None,
+        )
+
+    def _extract_surface_points_dtype(
+        self,
+        *,
+        pass_pointid: bool = True,
+        pass_cellid: bool = True,
+        nonlinear_subdivision: int | None = None,
+        algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = _SENTINEL,
+        progress_bar: bool = False,
+        points_dtype,
+    ):
+        """Extract surface using public API plus a private points_dtype keyword."""
 
         def warn_future():
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
@@ -3988,6 +4008,7 @@ class DataObjectFilters:
             nonlinear_subdivision=nonlinear_subdivision,
             algorithm=algorithm,  # type: ignore[arg-type]
             progress_bar=progress_bar,
+            points_dtype=points_dtype,
         )
 
     @_deprecate_positional_args
@@ -4154,6 +4175,24 @@ class DataObjectFilters:
         >>> surf.plot(show_edges=True, scalars='Area')
 
         """
+        return self._compute_cell_sizes_points_dtype(
+            length=length,
+            area=area,
+            volume=volume,
+            progress_bar=progress_bar,
+            vertex_count=vertex_count,
+            points_dtype=None,
+        )
+
+    def _compute_cell_sizes_points_dtype(
+        self,
+        points_dtype,
+        length: bool = True,
+        area: bool = True,
+        volume: bool = True,
+        progress_bar: bool = False,
+        vertex_count: bool = False,
+    ):
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
@@ -4161,7 +4200,7 @@ class DataObjectFilters:
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        return _get_output(alg)
+        return _get_output(alg, points_dtype=points_dtype)
 
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
