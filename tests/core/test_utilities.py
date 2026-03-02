@@ -1501,6 +1501,29 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
         setattr(b, ham, eggs)
 
 
+def test_no_new_attr_mixin_side_effects():
+    class Parent(_NoNewAttrMixin):
+        getter_call_count = 0
+
+        @property
+        def foo(self):
+            self.getter_call_count += 1
+
+        @foo.setter
+        def foo(self, val): ...
+
+    class Child(Parent): ...
+
+    # Test that setting attributes on lasses does not trigger a call to the getter
+    obj = Parent()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
+
+    obj = Child()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
+
+
 def test_set_new_attribute(no_new_attributes_mixin_subclass):
     a, _ = no_new_attributes_mixin_subclass
     ham = 'ham'
