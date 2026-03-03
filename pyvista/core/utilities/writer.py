@@ -557,7 +557,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         if not (
             hasattr(self.writer, 'SetDataSetMajorVersion')
             and hasattr(self.writer, 'SetDataSetMinorVersion')
-        ):
+        ):  # pragma: no cover
             msg = (
                 'Setting file version requires VTK 9.3 or later. '
                 f'Current VTK version is {pv.vtk_version_info}.'
