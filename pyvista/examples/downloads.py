@@ -2750,15 +2750,16 @@ def download_frd(*, load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_frd()
     >>> dataset.plot()
+    .. seealso::
+
+        :ref:`Frd Dataset <frd_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
-    filename = _download_file('mesh.frd')
-    if not load:
-        return filename
+    return _download_dataset(_dataset_frd, load=load)
 
-    import pyvista as pv  # noqa: PLC0415
 
-    return pv.read(filename)
+_dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd',)
 
 
 @_deprecate_positional_args
