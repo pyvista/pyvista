@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.filters import _set_output_points_precision
 
 from .geometric_sources import translate
 from .helpers import wrap
@@ -1473,10 +1474,7 @@ def surface_from_para(  # noqa: PLR0917
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
     para_source.SetGenerateTextureCoordinates(texture_coordinates)
-    if np.single == pv.POINTS_PRECISION:
-        para_source.SetOutputPointsPrecision(_vtk.vtkAlgorithm.SINGLE_PRECISION)
-    elif np.double == pv.POINTS_PRECISION:
-        para_source.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
+    _set_output_points_precision(para_source)
     para_source.Update()
     surf = wrap(para_source.GetOutput())
     if clean:

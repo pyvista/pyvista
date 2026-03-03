@@ -13,11 +13,8 @@ import pathlib
 from pathlib import Path
 import re
 import time
-from types import FunctionType
-from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypeVar
 from typing import get_args
 
 import numpy as np
@@ -40,12 +37,14 @@ from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.conftest import _get_module_functions
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
+    from types import FunctionType
 
     from pytest_mock import MockerFixture
 
@@ -4677,23 +4676,6 @@ def test_create_axes_orientation_box():
     pl = pv.Plotter()
     _ = pl.add_actor(actor)
     pl.show()
-
-
-_TypeType = TypeVar('_TypeType', bound=type)
-
-
-def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
-    """Get all members of a specified type which are defined locally inside a module."""
-
-    def is_local(obj):
-        return type(obj) is typ and obj.__module__ == module.__name__
-
-    return dict(inspect.getmembers(module, predicate=is_local))
-
-
-def _get_module_functions(module: ModuleType):
-    """Get all functions defined locally inside a module."""
-    return _get_module_members(module, typ=FunctionType)
 
 
 def _get_default_kwargs(call: Callable) -> dict[str, Any]:

@@ -41,24 +41,7 @@ if TYPE_CHECKING:
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
-    # Try to set output precision to match input if the filter supports it.
-    # This should not really be necessary since vtkAlgorithm.DEFAULT_PRECISION
-    # is *supposed* to handle this automatically, but in practice some filters
-    # do not honor this for some mesh types, e.g. https://gitlab.kitware.com/vtk/vtk/-/issues/19965
-    # so we need to explicitly set the output points precision.
-    if (precision := pv.POINTS_PRECISION) is not None and (
-        set_precision := getattr(alg, 'SetOutputPointsPrecision', None)
-    ) is not None:
-        if precision == np.single:
-            set_precision(alg.SINGLE_PRECISION)
-        elif precision == np.double:
-            set_precision(alg.DOUBLE_PRECISION)
-        elif alg.GetNumberOfInputPorts() > 0:
-            # default
-            alg_input = cast('pv.DataObject', wrap(alg.GetInputDataObject(0, 0)))
-            points = getattr(alg_input, 'points', None)
-            if points is not None and points.dtype == np.double:
-                set_precision(alg.DOUBLE_PRECISION)
+    _set_output_points_precision(alg)
 
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
@@ -85,6 +68,30 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
         # with VTK observers can be slow.
         with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
             alg.Update()
+
+
+def _set_output_points_precision(alg: _vtk.vtkAlgorithm):
+    # Try to set output precision to match input if the filter supports it.
+    # This should not really be necessary since vtkAlgorithm.DEFAULT_PRECISION
+    # is *supposed* to handle this automatically, but in practice some filters
+    # do not honor this for some mesh types, e.g. https://gitlab.kitware.com/vtk/vtk/-/issues/19965
+    # so we need to explicitly set the output points precision.
+    if (precision := pv.POINTS_PRECISION) is not None and (
+        set_precision := getattr(alg, 'SetOutputPointsPrecision', None)
+    ) is not None:
+        if precision == np.single:
+            set_precision(alg.SINGLE_PRECISION)
+        elif precision == np.double:
+            set_precision(alg.DOUBLE_PRECISION)
+        elif alg.GetNumberOfInputPorts() > 0:
+            # default
+            alg_input = cast('pv.DataObject', wrap(alg.GetInputDataObject(0, 0)))
+            points = getattr(alg_input, 'points', None)
+            if points is not None and points.dtype == np.double:
+                set_precision(alg.DOUBLE_PRECISION)
+        else:
+            msg = f'Invalid precision {precision}.'
+            raise ValueError(msg)
 
 
 def _get_output(

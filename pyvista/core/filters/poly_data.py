@@ -43,7 +43,6 @@ def _pop_points_dtype(kwargs):
     return kwargs.pop('points_dtype', None)
 
 
-
 @abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
@@ -1433,6 +1432,7 @@ class PolyDataFilters(DataSetFilters):
         subfilter='linear',
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Increase the number of triangles in a single, connected triangular mesh.
 
@@ -1505,6 +1505,9 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True, line_width=3)
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             msg = 'Input mesh for subdivision must be all triangles.'
             raise NotAllTrianglesError(msg)
@@ -1528,7 +1531,7 @@ class PolyDataFilters(DataSetFilters):
         sfilter.SetInputData(self)
         _update_alg(sfilter, progress_bar=progress_bar, message='Subdividing Mesh')
 
-        submesh = _get_output(sfilter)
+        submesh = _get_output(sfilter, points_dtype=points_dtype)
         if inplace:
             self.copy_from(submesh, deep=False)  # type: ignore[attr-defined]
             return self
@@ -1866,7 +1869,7 @@ class PolyDataFilters(DataSetFilters):
         feature_angle=30.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-            **kwargs
+        **kwargs,
     ):
         """Compute point and/or cell normals for a mesh.
 
