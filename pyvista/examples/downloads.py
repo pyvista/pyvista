@@ -2752,7 +2752,12 @@ def download_frd(*, load=True):
     >>> dataset.plot()
 
     """
-    return _download_file('mesh.frd', load=load)
+    filename = _download_file('mesh.frd')
+    if not load:
+        return filename
+
+    import pyvista as pv
+    return pv.read(filename)
 
 
 @_deprecate_positional_args
