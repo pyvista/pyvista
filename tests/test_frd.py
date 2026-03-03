@@ -211,11 +211,13 @@ def test_frd_reader_derived_strain(mock_frd_file):
 
 def test_frd_reader_comprehensive(comprehensive_frd_file):
     # This directly hits the logic in pyvista/core/utilities/fileio.py
-    mesh_from_pv = pv.read(comprehensive_frd_file)
+    with pytest.warns(UserWarning, match="Unknown element type code '999'"):
+        mesh_from_pv = pv.read(comprehensive_frd_file)
     assert isinstance(mesh_from_pv, pv.UnstructuredGrid)
 
-    reader = pv.FRDReader(comprehensive_frd_file)
-    mesh = reader.read()
+    with pytest.warns(UserWarning, match="Unknown element type code '999'"):
+        reader = pv.FRDReader(comprehensive_frd_file)
+        mesh = reader.read()
 
     assert mesh.n_points == 4
     assert reader.number_time_points == 3
