@@ -538,7 +538,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         if not (
             hasattr(self.writer, 'GetDataSetMajorVersion')
             and hasattr(self.writer, 'GetDataSetMinorVersion')
-        ):
+        ):  # pragma: no cover
             return (None, None)
         major = self.writer.GetDataSetMajorVersion()
         minor = self.writer.GetDataSetMinorVersion()
