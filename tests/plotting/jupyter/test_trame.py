@@ -128,7 +128,7 @@ def test_trame(client_type):
     viewer = get_viewer(pl)
 
     for cp in ['xy', 'xz', 'yz', 'isometric']:
-        exec(f'viewer.view_{cp}()')
+        exec(f'viewer.view_{cp}()')  # noqa: S102
         cpos = list(pl.camera_position)
         pl.camera_position = cp[:3]
         assert cpos == pl.camera_position
