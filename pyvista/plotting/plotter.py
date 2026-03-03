@@ -900,8 +900,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except Exception:  # noqa: BLE001  # pragma: no cover
-                            pass
+                        except Exception as e:  # noqa: BLE001  # pragma: no cover
+                            log.debug('Failed to rename array during gLTF export: %s', e)
 
         exporter = vtkGLTFExporter()
         exporter.SetRenderWindow(self.render_window)
