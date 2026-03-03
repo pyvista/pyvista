@@ -861,6 +861,7 @@ def test_icosahedron():
     assert np.isclose(doubled_solid.length, 2 * solid.length)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_icosphere():
     center = (1.0, 2.0, 3.0)
     radius = 2.4

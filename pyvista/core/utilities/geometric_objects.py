@@ -1285,12 +1285,13 @@ def Cube(  # noqa: PLR0917
     cube.cell_data.set_array([1, 4, 0, 3, 5, 2], 'FaceIndex')
 
     # clean duplicate points
+    points_dtype = np.single if point_dtype == 'float32' else np.double
     if clean:
-        cube.clean(inplace=True)
+        cube.clean(inplace=True, points_dtype=points_dtype)
 
         # Fix incorrect default point normals
         del cube.point_data['Normals']
-        cube = cube.compute_normals(point_normals=True, cell_normals=False)
+        cube = cube.compute_normals(point_normals=True, cell_normals=False, points_dtype=point_dtype)
 
     return cube
 

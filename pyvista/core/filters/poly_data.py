@@ -39,6 +39,11 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core._dataset_types import _PolyDataType
 
 
+def _pop_points_dtype(kwargs):
+    return kwargs.pop('points_dtype', None)
+
+
+
 @abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
@@ -1861,6 +1866,7 @@ class PolyDataFilters(DataSetFilters):
         feature_angle=30.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+            **kwargs
     ):
         """Compute point and/or cell normals for a mesh.
 
@@ -1981,6 +1987,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`compute_normals_example` for more examples using this filter.
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
@@ -2000,7 +2009,7 @@ class PolyDataFilters(DataSetFilters):
         normal.SetInputData(self)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
-        mesh = _get_output(normal)
+        mesh = _get_output(normal, points_dtype=points_dtype)
         try:
             mesh['Normals']
         except KeyError:
@@ -2285,6 +2294,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if tolerance is None:
             tolerance = kwargs.pop('merge_tol', None)
+        points_dtype = _pop_points_dtype(kwargs)
         assert_empty_kwargs(**kwargs)
         alg = _vtk.vtkCleanPolyData()
         alg.SetPointMerging(point_merging)
@@ -2299,7 +2309,7 @@ class PolyDataFilters(DataSetFilters):
                 alg.SetTolerance(tolerance)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning')
-        output = _get_output(alg)
+        output = _get_output(alg, points_dtype=points_dtype)
 
         # Check output so no segfaults occur
         if output.n_points < 1 and self.n_cells > 0:  # type: ignore[attr-defined]
