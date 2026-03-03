@@ -2759,7 +2759,9 @@ def download_frd(*, load=True):
     return _download_dataset(_dataset_frd, load=load)
 
 
-_dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd',)
+_dataset_frd = _SingleFileDownloadableDatasetLoader(
+    'mesh.frd',
+)
 
 
 @_deprecate_positional_args
