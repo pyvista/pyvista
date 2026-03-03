@@ -181,51 +181,25 @@ class _FRDVTKReader(BaseVTKReader):
             and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.HE20]
         ):
             return [
-                node_ids[0],
-                node_ids[1],
-                node_ids[2],
-                node_ids[3],
-                node_ids[4],
-                node_ids[5],
-                node_ids[6],
-                node_ids[7],
-                node_ids[8],
-                node_ids[9],
-                node_ids[10],
-                node_ids[11],
-                node_ids[16],
-                node_ids[17],
-                node_ids[18],
-                node_ids[19],
-                node_ids[12],
-                node_ids[13],
-                node_ids[14],
-                node_ids[15],
+                node_ids[0], node_ids[1], node_ids[2], node_ids[3],
+                node_ids[4], node_ids[5], node_ids[6], node_ids[7],
+                node_ids[8], node_ids[9], node_ids[10], node_ids[11],
+                node_ids[16], node_ids[17], node_ids[18], node_ids[19],
+                node_ids[12], node_ids[13], node_ids[14], node_ids[15],
             ]
 
-        return node_ids
-
-        if etype == FRDElementType.TR3 and len(node_ids) == 3:
-            p = [self._nodes[n] for n in node_ids]
-            area = (
-                p[0][0] * (p[1][1] - p[2][1])
-                + p[1][0] * (p[2][1] - p[0][1])
-                + p[2][0] * (p[0][1] - p[1][1])
-            )
-            if area < 0:
-                return [node_ids[0], node_ids[2], node_ids[1]]
-            return node_ids
-
-        if etype in (FRDElementType.QU4, FRDElementType.QU8):
-            corners = node_ids[:4]
-            mids = node_ids[4:]
-            p = [self._nodes[n] for n in corners]
-            area = sum(p[i][0] * p[(i + 1) % 4][1] - p[(i + 1) % 4][0] * p[i][1] for i in range(4))
-            if area < 0:
-                corners = [corners[0], corners[3], corners[2], corners[1]]
-                if mids:
-                    mids = [mids[0], mids[3], mids[2], mids[1]]
-            return corners + mids
+        if (
+            etype == FRDElementType.PE15
+            and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.PE15]
+        ):
+            # CalculiX: 0-5 (corners), 6-8 (bottom mids), 9-11 (vertical mids), 12-14 (top mids)
+            # VTK:      0-5 (corners), 6-8 (bottom mids), 9-11 (top mids), 12-14 (vertical mids)
+            return [
+                node_ids[0], node_ids[1], node_ids[2], node_ids[3], node_ids[4], node_ids[5],
+                node_ids[6], node_ids[7], node_ids[8],
+                node_ids[12], node_ids[13], node_ids[14],  # Top mids
+                node_ids[9], node_ids[10], node_ids[11],   # Vertical mids
+            ]
 
         return node_ids
 
@@ -279,14 +253,23 @@ class _FRDVTKReader(BaseVTKReader):
                 parts = s.split()
                 try:
                     etype_val = int(parts[2])
-                    etype = FRDElementType(etype_val)
                 except (ValueError, IndexError):
+                    etype = None
+                    continue
+
+                try:
+                    etype = FRDElementType(etype_val)
+                except ValueError:
+                    warn_external(
+                        f"Unknown element type code '{etype_val}' encountered. These elements will be skipped.",
+                        UserWarning,
+                    )
                     etype = None
                     continue
 
                 if etype not in self.CCX_TO_VTK_TYPE:
                     warn_external(
-                        f"Unsupported element type '{etype_val}' encountered. These elements will be skipped.",
+                        f"Unsupported element type '{etype.name}' encountered. These elements will be skipped.",
                         UserWarning,
                     )
                     etype = None
