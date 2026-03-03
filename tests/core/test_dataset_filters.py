@@ -2191,7 +2191,6 @@ def test_extract_cells(sphere):
         _ = sphere.extract_cells([True, True])
 
 
-@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(
