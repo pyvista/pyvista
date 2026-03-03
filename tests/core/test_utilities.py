@@ -36,7 +36,9 @@ from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -924,6 +926,15 @@ def test_vtk_error_catcher():
         pass
 
 
+def test_update_alg_raises():
+    from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
+
+    reader = vtkXMLPolyDataReader()
+    reader.SetFileName('this_file_does_not_exist.vtp')
+    with pytest.raises(pv.VTKExecutionError):
+        _update_alg(reader)
+
+
 def test_axis_angle_rotation():
     # rotate points around body diagonal
     points = np.eye(3)
@@ -1485,6 +1496,29 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
     match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         setattr(b, ham, eggs)
+
+
+def test_no_new_attr_mixin_side_effects():
+    class Parent(_NoNewAttrMixin):
+        getter_call_count = 0
+
+        @property
+        def foo(self):
+            self.getter_call_count += 1
+
+        @foo.setter
+        def foo(self, val): ...
+
+    class Child(Parent): ...
+
+    # Test that setting attributes on lasses does not trigger a call to the getter
+    obj = Parent()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
+
+    obj = Child()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
 
 
 def test_set_new_attribute(no_new_attributes_mixin_subclass):
@@ -2786,19 +2820,19 @@ def test_cell_quality_info_raises():
 
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute():
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
-    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+    assert is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
 
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
-    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+    assert is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
 
-    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+    assert not is_vtk_attribute(pv.ImageData, 'foo')
 
 
 @pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
-    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
+    assert is_vtk_attribute(obj, 'GetDimensions')
 
 
 warnings.simplefilter('always')

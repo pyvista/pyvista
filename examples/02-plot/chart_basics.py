@@ -12,7 +12,6 @@ in the same renderer, is given in :ref:`chart_overlays_example`.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore
@@ -20,7 +19,9 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-rng = np.random.default_rng(1)  # Seeded random number generator for consistent data generation
+rng = np.random.default_rng(
+    1
+)  # Seeded random number generator for consistent data generation
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled

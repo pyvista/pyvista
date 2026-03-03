@@ -13,6 +13,8 @@ import numpy as np
 import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -40,8 +42,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Transform(
     _NoNewAttrMixin,
-    _vtk.DisableVtkSnakeCase,
-    _vtk.vtkPyVistaOverride,
+    DisableVtkSnakeCase,
+    vtkPyVistaOverride,
     _vtk.vtkTransform,
 ):
     """Describes linear transformations via a 4x4 matrix.
@@ -2780,10 +2782,8 @@ class Transform(
         Represent the rotation as :class:`scipy.spatial.transform.Rotation` instance.
 
         >>> rot = transform.as_rotation()
-        >>> rot
-        Rotation.from_matrix(array([[ 0., -1.,  0.],
-                                    [ 1.,  0.,  0.],
-                                    [ 0.,  0.,  1.]]))
+        >>> type(rot)
+        <class 'scipy.spatial.transform._rotation.Rotation'>
 
         Represent the rotation as a quaternion.
 

@@ -38,7 +38,9 @@ mesh['NormalInversed'] = -1 * mesh['Normals'].copy()
 arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 pl.add_mesh(arrows, color='blue', label='Top pressure')
 
-arrows_inversed = mesh.glyph(scale='NormalInversed', orient='NormalInversed', tolerance=0.05)
+arrows_inversed = mesh.glyph(
+    scale='NormalInversed', orient='NormalInversed', tolerance=0.05
+)
 pl.add_mesh(arrows_inversed, color='red', label='Lower pressure')
 
 # Adding surface mesh

@@ -135,6 +135,13 @@ responsibility to ensure that the existing license is compatible and
 included in the contributed files or you can obtain permission from the
 original author to relicense the code.
 
+Generative AI
+-------------
+
+We follow the Python Developer's Guide on `Generative AI <https://devguide.python.org/getting-started/generative-ai/>`_.
+The resulting contribution is the responsibility of the contributor, and we value good code,
+concise accurate documentation, and avoiding unneeded code churn.
+
 --------------
 
 Development Practices

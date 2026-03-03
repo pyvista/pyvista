@@ -32,11 +32,11 @@ vol.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
 # %%
 # Extract the outer surface of the volume using the
-# :func:`pyvista.DataSetFilters.extract_geometry` filter and then apply the
+# :func:`~pyvista.DataObjectFilters.extract_surface` filter and then apply the
 # smoothing filter:
 
 # Get the out surface as PolyData
-surf = vol.extract_geometry()
+surf = vol.extract_surface(algorithm=None)
 # Smooth the surface
 smooth = surf.smooth()
 smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)

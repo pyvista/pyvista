@@ -190,7 +190,7 @@ def test_axes_eq(default_theme):
     assert default_theme.axes == pv.plotting.themes.Theme().axes
 
     theme = pv.plotting.themes.Theme()
-    theme.axes.box = True
+    theme.axes.box = not default_theme.axes.box
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
 

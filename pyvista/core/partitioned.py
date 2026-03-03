@@ -8,6 +8,7 @@ from typing import overload
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import vtk_version_info
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
@@ -51,7 +52,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {'.vtpd': XMLPartitionedDataSetWriter}
 
-    if _vtk.vtk_version_info >= (9, 4):
+    if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(self, *args, **kwargs):

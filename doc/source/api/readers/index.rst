@@ -65,6 +65,7 @@ Reader Classes
     SLCReader
     STLReader
     SegYReader
+    SeriesReader
     TIFFReader
     TecplotReader
     VTKDataSetReader

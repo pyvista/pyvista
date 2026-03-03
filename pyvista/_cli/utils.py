@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 from typing import NoReturn
+import warnings
 
 from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
 
     from cyclopts import App
     from cyclopts import Token
+    from rich.console import Console
+    from rich.console import ConsoleOptions
     from rich.console import Group
 
     from pyvista import DataObject
@@ -36,7 +39,8 @@ def default(entry: HelpEntry):  # noqa: ANN202
 
 
 def names(entry: HelpEntry):  # noqa: ANN202
-    names = Text(' '.join(entry.names), style='cyan')
+    strings = (*entry.names, *entry.shorts)
+    names = Text(' '.join(strings), style='cyan')
     return (Text('* ', style='red') + names) if entry.required else names
 
 
@@ -44,7 +48,14 @@ def description(entry: HelpEntry):  # noqa: ANN202
     return entry.description
 
 
-HELP_FORMATTER = DefaultFormatter(
+class _PyvistaHelpFormatter(DefaultFormatter):
+    def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
+        """Render the usage line."""
+        if usage:  # pragma: no branch
+            console.print(usage)
+
+
+HELP_FORMATTER = _PyvistaHelpFormatter(
     table_spec=TableSpec(show_header=True),
     column_specs=(
         ColumnSpec(
@@ -116,7 +127,12 @@ def _converter_files(
     not_readable: list[str] = []
     for file in values:
         try:
-            mesh = pv.read(file)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    category=pv.InvalidMeshWarning,
+                )
+                mesh = pv.read(file)
         except Exception:  # noqa: BLE001
             not_readable.append(file)
         else:

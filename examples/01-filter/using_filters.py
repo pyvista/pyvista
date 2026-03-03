@@ -20,12 +20,13 @@ from pyvista import examples
 #
 # * ``slice``: creates a single slice through the input dataset on a user defined plane
 # * ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal slices
-# * ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along a specified axis
+# * ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along a
+#   specified axis
 # * ``threshold``: Thresholds a dataset by a single value or range of values
 # * ``threshold_percent``: Threshold by percentages of the scalar range
 # * ``clip``: Clips the dataset by a user defined plane
 # * ``outline_corners``: Outlines the corners of the data extent
-# * ``extract_geometry``: Extract surface geometry
+# * ``extract_surface``: Extract surface geometry
 #
 # To use these filters, call the method of your choice directly on your data
 # object:

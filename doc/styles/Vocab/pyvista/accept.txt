@@ -24,6 +24,7 @@ Docformatter
 Docstring
 Docstrings
 Doctest
+Enums
 Flownet
 Fortran
 Framebuffer

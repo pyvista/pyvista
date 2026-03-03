@@ -171,6 +171,3 @@ def _plot(
         _console_error(app=app, message=msg)
     else:
         return res
-
-
-_plot.__doc__ = pv.plot.__doc__  # Needed by cyclopts to get parameters help

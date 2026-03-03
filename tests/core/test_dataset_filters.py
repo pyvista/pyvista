@@ -26,6 +26,7 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
@@ -75,7 +76,7 @@ class GetOutput:
 
     def __call__(self, algorithm, *args, **kwargs):
         self._mock(algorithm, *args, **kwargs)
-        return pv.core.filters._get_output(algorithm)
+        return _get_output(algorithm)
 
     def reset(self, *args, **kwargs):
         self._mock.reset_mock(*args, **kwargs)
@@ -250,7 +251,7 @@ def test_clip_surface():
 @pytest.mark.parametrize('crinkle', [True, False])
 def test_clip_surface_output_type(datasets, crinkle):
     for dataset in datasets:
-        clp = dataset.clip_surface(dataset.extract_geometry(), crinkle=crinkle)
+        clp = dataset.clip_surface(dataset.extract_surface(algorithm=None), crinkle=crinkle)
         assert clp is not None
         if isinstance(dataset, pv.PointSet):
             assert isinstance(clp, pv.PointSet)
@@ -552,16 +553,20 @@ def test_gaussian_splatting(sphere: PolyData):
 
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
-        geom = dataset.extract_geometry(progress_bar=True)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            geom = dataset.extract_geometry(progress_bar=True)
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = multiblock_all.extract_geometry()
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        output = multiblock_all.extract_geometry()
     assert isinstance(output, pv.PolyData)
 
 
 def test_extract_geometry_extent(uniform):
-    geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
+    match = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        geom = uniform.extract_geometry(extent=(0, 5, 0, 100, 0, 100))
     assert isinstance(geom, pv.PolyData)
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
@@ -617,8 +622,8 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
-def test_texture_map_to_plane():
-    dataset = examples.load_airplane()
+def test_texture_map_to_plane(airplane):
+    dataset = airplane
     # Automatically decide plane
     out = dataset.texture_map_to_plane(inplace=False, progress_bar=True)
     assert isinstance(out, type(dataset))
@@ -627,6 +632,15 @@ def test_texture_map_to_plane():
     origin = bnds[0::2]
     point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
     point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
+    with pytest.raises(ValueError, match='Bad plane definition'):
+        dataset.texture_map_to_plane(
+            origin=origin,
+            point_u=point_u,
+            point_v=point_v,
+            progress_bar=True,
+        )
+    point_u = (bnds.x_max, bnds.y_min, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_max, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
@@ -1405,8 +1419,9 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth(uniform):
-    surf = uniform.extract_surface().clean()
+    surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
@@ -1417,8 +1432,9 @@ def test_smooth(uniform):
     assert np.allclose(smooth_inplace.points, smoothed.points)
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_smooth_taubin(uniform):
-    surf = uniform.extract_surface().clean()
+    surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth_taubin()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
@@ -2079,6 +2095,51 @@ def test_extract_points_default(extracted_with_adjacent_true):
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+def test_extract_cells(sphere):
+    ind = 0
+    n_cells = 1
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+    assert 'vtkOriginalPointIds' in extracted.point_data
+    assert 'vtkOriginalCellIds' in extracted.cell_data
+
+    ind = [0]
+    n_cells = len(ind)
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True, pass_point_ids=False, pass_cell_ids=False)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+    assert 'vtkOriginalPointIds' not in extracted.point_data
+    assert 'vtkOriginalCellIds' not in extracted.cell_data
+
+    ind = [4, 5]
+    n_cells = len(ind)
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    ind = np.zeros(shape=(sphere.n_cells,), dtype=bool)
+    ind[[0, 1]] = True
+    n_cells = 2
+    extracted = sphere.extract_cells(ind)
+    assert extracted.n_cells == n_cells
+    extracted = sphere.extract_cells(ind, invert=True)
+    assert extracted.n_cells == sphere.n_cells - n_cells
+
+    match = 'Number of bool indices (2) must match the number of cells (840).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = sphere.extract_cells([True, True])
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(
@@ -2132,10 +2193,11 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
     if invert:
         assert extracted.n_points == 0
         assert extracted.n_cells == 0
-        assert extracted.n_arrays == 0
     else:
         assert np.array_equal(extracted.points, grid4x4.points)
         assert np.array_equal(extracted.cells, grid4x4.faces)
+    assert 'vtkOriginalPointIds' in extracted.point_data
+    assert 'vtkOriginalCellIds' in extracted.cell_data
 
 
 def test_extract_values_open_intervals(grid4x4):
@@ -2168,7 +2230,7 @@ def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = append(big_box, small_box).extract_geometry().connectivity()
+    labeled = append(big_box, small_box).extract_surface(algorithm=None).connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2527,9 +2589,9 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
         pass_cell_ids=pass_cell_ids,
     )
     if pass_cell_ids:
-        assert extracted.cell_data.keys() == []
+        assert CELL_IDS in extracted.cell_data
     if pass_point_ids:
-        assert extracted.point_data.keys() == []
+        assert POINT_IDS in extracted.point_data
 
 
 def test_extract_values_empty():
@@ -2709,60 +2771,6 @@ def test_decimate_boundary():
     assert boundary.n_points
 
 
-def test_extract_surface():
-    # create a single quadratic hexahedral cell
-    lin_pts = np.array(
-        [
-            [-1, -1, -1],  # node 0
-            [1, -1, -1],  # node 1
-            [1, 1, -1],  # node 2
-            [-1, 1, -1],  # node 3
-            [-1, -1, 1],  # node 4
-            [1, -1, 1],  # node 5
-            [1, 1, 1],  # node 6
-            [-1, 1, 1],  # node 7
-        ],
-        np.double,
-    )
-
-    quad_pts = np.array(
-        [
-            (lin_pts[1] + lin_pts[0]) / 2,  # between point 0 and 1
-            (lin_pts[1] + lin_pts[2]) / 2,  # between point 1 and 2
-            (lin_pts[2] + lin_pts[3]) / 2,  # and so on...
-            (lin_pts[3] + lin_pts[0]) / 2,
-            (lin_pts[4] + lin_pts[5]) / 2,
-            (lin_pts[5] + lin_pts[6]) / 2,
-            (lin_pts[6] + lin_pts[7]) / 2,
-            (lin_pts[7] + lin_pts[4]) / 2,
-            (lin_pts[0] + lin_pts[4]) / 2,
-            (lin_pts[1] + lin_pts[5]) / 2,
-            (lin_pts[2] + lin_pts[6]) / 2,
-            (lin_pts[3] + lin_pts[7]) / 2,
-        ],
-    )
-
-    # introduce a minor variation to the location of the mid-side points
-    quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.25
-    pts = np.vstack((lin_pts, quad_pts))
-
-    cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
-    celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
-    grid = pv.UnstructuredGrid(cells, celltypes, pts)
-
-    # expect each face to be divided 6 times since it has a midside node
-    surf = grid.extract_surface(progress_bar=True)
-    assert surf.n_faces_strict == 36
-
-    # expect each face to be divided several more times than the linear extraction
-    surf_subdivided = grid.extract_surface(nonlinear_subdivision=5, progress_bar=True)
-    assert surf_subdivided.n_faces_strict > surf.n_faces_strict
-
-    # No subdivision, expect one face per cell
-    surf_no_subdivide = grid.extract_surface(nonlinear_subdivision=0, progress_bar=True)
-    assert surf_no_subdivide.n_faces_strict == 6
-
-
 def test_merge_general(uniform):
     thresh = uniform.threshold_percent([0.2, 0.5], progress_bar=True)  # unstructured grid
     con = uniform.contour()  # poly data
@@ -2771,7 +2779,7 @@ def test_merge_general(uniform):
     merged = con + thresh
     assert isinstance(merged, pv.UnstructuredGrid)
     # Pure PolyData inputs should yield poly data output
-    merged = uniform.extract_surface() + con
+    merged = uniform.extract_surface(algorithm=None) + con
     assert isinstance(merged, pv.PolyData)
 
 

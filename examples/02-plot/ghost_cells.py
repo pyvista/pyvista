@@ -16,7 +16,6 @@ for this to work (use the ``cast_to_unstructured_grid`` filter).
 from __future__ import annotations
 
 import numpy as np
-
 from pyvista import examples
 
 vol = examples.load_channels()

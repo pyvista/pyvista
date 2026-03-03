@@ -331,10 +331,11 @@ def test_raise_unsupported(pointset):
         pointset.point_is_inside_cell()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.extract_surface()
+        pointset.extract_surface(algorithm=None)
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.extract_geometry()
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            pointset.extract_geometry()
 
 
 def test_rotate_x():

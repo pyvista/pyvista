@@ -12,6 +12,10 @@ import numpy as np
 from . import _vtk_core as _vtk
 
 _CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
+_CELL_TYPES_0D: set[CellType] = set()
+_CELL_TYPES_1D: set[CellType] = set()
+_CELL_TYPES_2D: set[CellType] = set()
+_CELL_TYPES_3D: set[CellType] = set()
 
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
@@ -700,7 +704,19 @@ class CellType(IntEnum):
                 _CELL_TYPE_TO_NUM_POINTS[np.uint8(value)] = cell.GetNumberOfPoints()
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
-                dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
+
+                dimension = cell.GetCellDimension()
+                dimension_badge = _generate_dimension_badge(dimension)
+
+                # Store as sets for use by other methods
+                if dimension == 0:
+                    _CELL_TYPES_0D.add(self)
+                elif dimension == 1:
+                    _CELL_TYPES_1D.add(self)
+                elif dimension == 2:
+                    _CELL_TYPES_2D.add(self)
+                else:
+                    _CELL_TYPES_3D.add(self)
 
                 points = _points_override or cell.GetNumberOfPoints()
                 points_badge = _generate_points_badge(points)  # type: ignore[arg-type]

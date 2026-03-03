@@ -48,9 +48,9 @@ class _DataFormatMixin:
     @property
     def data_format(self) -> _DataFormatOptions:
         try:
-            mode = self.writer.GetDataMode()
+            mode = self.writer.GetDataMode()  # type: ignore[attr-defined]
         except AttributeError:
-            mode = self.writer.GetFileType()
+            mode = self.writer.GetFileType()  # type: ignore[attr-defined]
         return self._format_mapping[mode]
 
     @data_format.setter
@@ -58,14 +58,18 @@ class _DataFormatMixin:
         _validation.check_contains(get_args(_DataFormatOptions), data_format, name='data format')
         if data_format == 'binary':
             try:
-                self.writer.SetDataModeToBinary()  # DataWriter, PLYWriter, STLWriter
+                # DataWriter, PLYWriter, STLWriter
+                self.writer.SetDataModeToBinary()  # type: ignore[attr-defined]
             except AttributeError:
-                self.writer.SetFileTypeToBinary()  # XMLWriter
+                # XMLWriter
+                self.writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
         else:
             try:
-                self.writer.SetDataModeToAscii()  # DataWriter, PLYWriter, STLWriter
+                # DataWriter, PLYWriter, STLWriter
+                self.writer.SetDataModeToAscii()  # type: ignore[attr-defined]
             except AttributeError:
-                self.writer.SetFileTypeToASCII()  # XMLWriter
+                # XMLWriter
+                self.writer.SetFileTypeToASCII()  # type: ignore[attr-defined]
 
 
 @abstract_class
@@ -124,11 +128,11 @@ class BaseWriter(_FileIOBase):
     @property
     def path(self) -> str:  # numpydoc ignore=RT01
         """Return or set the filename or directory of the writer."""
-        return self.writer.GetFileName()
+        return self.writer.GetFileName()  # type: ignore[attr-defined]
 
     @path.setter
     def path(self, path: str | Path) -> None:
-        self.writer.SetFileName(str(path))
+        self.writer.SetFileName(str(path))  # type: ignore[attr-defined]
 
     @property
     def data_object(self) -> DataObject:  # numpydoc ignore=RT01
@@ -191,12 +195,12 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
             mesh.direction_matrix, np.eye(3)
         ):
             msg = (
-                'The direction matrix for ImageData will not be saved using the '
+                'The direction matrix for ImageData cannot be saved using the '
                 'legacy `.vtk` format.\n'
                 'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
                 'Use the `.vti` extension instead (XML format).'
             )
-            warn_external(msg)
+            raise ValueError(msg)
 
 
 class HDFWriter(BaseWriter):
@@ -332,12 +336,12 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
     @property
     def texture(self) -> str | None:  # numpydoc ignore=RT01
         """Get or set a texture array to be written."""
-        return self.writer.GetArrayName()
+        return self.writer.GetArrayName()  # type: ignore[attr-defined]
 
     @texture.setter
     def texture(self, texture: str | NumpyArray[float] | None) -> None:
         if texture is None:
-            self.writer.SetArrayName(None)
+            self.writer.SetArrayName(None)  # type: ignore[attr-defined]
             return
         _validation.check_instance(texture, (str, np.ndarray), name='texture')
         if isinstance(texture, str):
@@ -349,11 +353,11 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
             self.data_object[array_name] = texture
 
         _validation.check_subdtype(array, 'uint8', name='texture')
-        self.writer.SetArrayName(array_name)
+        self.writer.SetArrayName(array_name)  # type: ignore[attr-defined]
 
         # enable alpha channel if applicable
         enable_alpha = array.shape[-1] == 4
-        self.writer.SetEnableAlpha(enable_alpha)
+        self.writer.SetEnableAlpha(enable_alpha)  # type: ignore[attr-defined]
 
 
 class PNGWriter(BaseWriter):
@@ -491,13 +495,13 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         _validation.check_contains(supported, must_contain=compression, name='compression')
         self._compression = compression
         if compression is None:
-            self.writer.SetCompressorTypeToNone()
+            self.writer.SetCompressorTypeToNone()  # type: ignore[attr-defined]
         elif compression == 'zlib':
-            self.writer.SetCompressorTypeToZLib()
+            self.writer.SetCompressorTypeToZLib()  # type: ignore[attr-defined]
         elif compression == 'lz4':
-            self.writer.SetCompressorTypeToLZ4()
+            self.writer.SetCompressorTypeToLZ4()  # type: ignore[attr-defined]
         else:
-            self.writer.SetCompressorTypeToLZMA()
+            self.writer.SetCompressorTypeToLZMA()  # type: ignore[attr-defined]
 
     @property
     def file_version(self) -> tuple[int, int] | tuple[None, None]:

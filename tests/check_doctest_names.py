@@ -160,7 +160,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             ):
                 continue
             try:
-                exec(example.source, globs)
+                exec(example.source, globs)  # noqa: S102
             except Exception as exc:  # noqa: BLE001
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')

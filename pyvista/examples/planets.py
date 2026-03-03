@@ -51,7 +51,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
     sphere.active_texture_coordinates = texture_coords
-    return sphere.extract_surface(pass_pointid=False, pass_cellid=False)
+    return sphere.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
 
 
 @_deprecate_positional_args

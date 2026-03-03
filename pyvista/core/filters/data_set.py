@@ -14,6 +14,7 @@ from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
+import warnings
 
 import numpy as np
 
@@ -22,7 +23,9 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
+from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -37,6 +40,7 @@ from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -56,21 +60,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
-
-# Matches https://github.com/Kitware/VTK/blob/ac6cb2b3550b7de9c9cfcd731098d453e9fab1b7/Common/DataModel/vtkCellStatus.h#L16-L28
-_CELL_VALIDATOR_BIT_FIELD = dict(
-    wrong_number_of_points=0x01,
-    intersecting_edges=0x02,
-    intersecting_faces=0x04,
-    non_contiguous_edges=0x08,
-    non_convex=0x10,
-    inverted_faces=0x20,
-    non_planar_faces=0x40,
-    degenerate_faces=0x80,
-    coincident_points=0x100,
-)
 
 
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
@@ -723,7 +715,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = wrap(surface).extract_geometry()
+            surface = wrap(surface).extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -1268,8 +1262,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         This will extract all 0D, 1D, and 2D cells producing the
         boundary faces of the dataset.
 
-        .. note::
-            This tends to be less efficient than :func:`extract_surface`.
+        .. deprecated:: 0.47.0
+            Use :meth:`~pyvista.DataObjectFilters.extract_surface` instead
+            with keyword `algorithm=None`.
 
         Parameters
         ----------
@@ -1292,7 +1287,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.extract_geometry()
+        >>> hex_beam.extract_geometry()  # doctest:+SKIP
         PolyData (...)
           N Cells:    88
           N Points:   90
@@ -1305,13 +1300,42 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See :ref:`surface_smoothing_example` for more examples using this filter.
 
         """
+        msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
+        warn_external(msg, PyVistaDeprecationWarning)
+        if pv.version_info >= (0, 50):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pv.version_info >= (0, 53):  # pragma: no cover
+            msg = 'Remove this deprecated filter.'
+            raise RuntimeError(msg)
+        return self._geometry_filter(
+            extent=extent,
+            pass_pointid=False,
+            pass_cellid=False,
+            nonlinear_subdivision=1,
+            progress_bar=progress_bar,
+        )
+
+    def _geometry_filter(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        pass_pointid: bool,
+        pass_cellid: bool,
+        extent: VectorLike[float] | None,
+        nonlinear_subdivision: int,
+        progress_bar: bool,
+        message: str = 'Extracting Geometry',
+    ) -> PolyData:
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        alg.SetPassThroughCellIds(pass_cellid)
+        alg.SetPassThroughPointIds(pass_pointid)
+        alg.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
         if extent is not None:
             extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
             alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
-        _update_alg(alg, progress_bar=progress_bar, message='Extracting Geometry')
+        _update_alg(alg, progress_bar=progress_bar, message=message)
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['isosurfaces', 'scalars'])
@@ -1569,6 +1593,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
         else:
+            s_axis = np.array(point_u) - origin
+            t_axis = np.array(point_v) - origin
+            if np.dot(s_axis, s_axis) == 0.0 or np.dot(t_axis, t_axis) == 0.0:
+                msg = 'Bad plane definition'
+                raise ValueError(msg)
+
             alg.SetOrigin(*origin)  # BOTTOM LEFT CORNER
             alg.SetPoint1(*point_u)  # BOTTOM RIGHT CORNER
             alg.SetPoint2(*point_v)  # TOP LEFT CORNER
@@ -2105,6 +2135,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Create a single mesh with three disconnected regions where each
         region has a different cell count.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> large = pv.Sphere(
         ...     center=(-4, 0, 0), phi_resolution=40, theta_resolution=40
@@ -2115,31 +2146,55 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
         >>> mesh = large + medium + small
 
-        Plot their connectivity.
+        Compute connectivity. There are three regions, one for each sphere.
 
         >>> conn = mesh.connectivity('all')
-        >>> conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+        >>> np.unique(conn['RegionId'])
+        pyvista_ndarray([0, 1, 2])
+
+        Plot the connectivity labels using :meth:`~pyvista.DataSetFilters.color_labels`.
+
+        >>> def labels_plotter(dataset: pv.DataSet) -> pv.Plotter:
+        ...     rgb = ['red', 'green', 'blue']
+        ...     colored, color_dict = dataset.color_labels(rgb, return_dict=True)
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(colored, show_edges=True)
+        ...     pl.add_legend(color_dict)
+        ...     pl.camera_position = pv.CameraPosition(
+        ...         position=(3.8, 5.8, 5.8),
+        ...         focal_point=(-2.0, 0.0, 0.0),
+        ...         viewup=(0.0, 0.0, 1.0),
+        ...     )
+        ...     return pl
+        >>>
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
+
 
         Restrict connectivity to a scalar range.
 
         >>> mesh['y_coordinates'] = mesh.points[:, 1]
         >>> conn = mesh.connectivity('all', scalar_range=[-1, 0])
-        >>> conn.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract the region closest to the origin.
 
         >>> conn = mesh.connectivity('closest', (0, 0, 0))
-        >>> conn.plot(color='blue', show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract a region using a cell ID ``3100`` as a seed.
 
         >>> conn = mesh.connectivity('cell_seed', 3100)
-        >>> conn.plot(color='green', show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract the largest region.
 
         >>> conn = mesh.connectivity('largest')
-        >>> conn.plot(color='red', show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         Extract the largest and smallest regions by specifying their
         region IDs. Note that the region IDs of the output differ from
@@ -2149,7 +2204,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> large_id = 0  # largest always has ID '0'
         >>> small_id = 2  # smallest has ID 'N-1' with N=3 regions
         >>> conn = mesh.connectivity('specified', (small_id, large_id))
-        >>> conn.plot(cmap=['red', 'blue'], show_edges=True)
+        >>> pl = labels_plotter(conn)
+        >>> pl.show()
 
         """
         # Deprecated on v0.43.0
@@ -2345,7 +2401,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(
             alg, progress_bar=progress_bar, message='Finding and Labeling Connected Regions.'
         )
-        output = _get_output(alg)
+        # This filter is known to return invalid arrays which emits a warning when
+        # the output is wrapped. These invalid arrays are removed later.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                category=pv.InvalidMeshWarning,
+            )
+            output = _get_output(alg)
 
         # Process output
         output_needs_fixing = False  # initialize flag if output needs to be fixed
@@ -2411,7 +2474,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             except TypeError:
                 pass
             else:
-                return self
+                output = self
+        # Make sure buggy scalars have been fixed
+        _warn_if_invalid_data(output)
         return output
 
     @_deprecate_positional_args
@@ -3737,9 +3802,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         """
         return (
-            self.extract_geometry(progress_bar=progress_bar)
-            .triangulate()
-            .decimate(target_reduction)
+            self.extract_surface(
+                algorithm=None,
+                pass_cellid=False,
+                pass_pointid=False,
+                progress_bar=progress_bar,
+            )
+            .triangulate(progress_bar=progress_bar)
+            .decimate(target_reduction, progress_bar=progress_bar)
         )
 
     @_deprecate_positional_args(allowed=['pointa', 'pointb'])
@@ -4428,8 +4498,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Parameters
         ----------
-        ind : sequence[int]
-            Numpy array of cell indices to be extracted.
+        ind : int | VectorLike[int]
+            Cell indices to extract. Can be a single int or a vector of ints.
+            A bool vector is also supported; the vector size should match the number of cells.
 
         invert : bool, default: False
             Invert the selection.
@@ -4472,23 +4543,26 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
-        if invert:
-            ind_: VectorLike[int]
-            _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            mask = np.ones(self.n_cells, bool)
-            mask[ind_] = False
-            ids = numpy_to_idarr(mask)
+        indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
+        if indices.dtype == bool:
+            assume_sorted_and_unique = True
+            if indices.size != self.n_cells:
+                msg = (
+                    f'Number of bool indices ({indices.size}) '
+                    f'must match the number of cells ({self.n_cells}).'
+                )
+                raise ValueError(msg)
         else:
-            ids = numpy_to_idarr(ind)
+            assume_sorted_and_unique = False
 
-        # Create selection objects
-        selectionNode = _vtk.vtkSelectionNode()
-        selectionNode.SetFieldType(_vtk.vtkSelectionNode.CELL)
-        selectionNode.SetContentType(_vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(ids)
-
-        selection = _vtk.vtkSelection()
-        selection.AddNode(selectionNode)
+        if invert:
+            if indices.dtype == bool:
+                indices = np.invert(indices)
+            else:
+                mask = np.ones(self.n_cells, bool)
+                mask[ind] = False
+                indices = mask
+        _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc]
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4496,21 +4570,29 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         #
         # See: https://github.com/pyvista/pyvista/pull/7946
         ds_copy = self.copy(deep=False)
+        if pass_cell_ids:
+            ds_copy.cell_data['vtkOriginalCellIds'] = np.arange(ds_copy.n_cells)
+        if pass_point_ids:
+            ds_copy.point_data['vtkOriginalPointIds'] = np.arange(ds_copy.n_points)
 
-        extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, ds_copy)
-        extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Cells')
-        subgrid = _get_output(extract_sel)
+        extract = _vtk.vtkExtractCells()
+        extract.SetInputData(ds_copy)
+        extract.SetCellIds(indices, indices.size)
+        extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
+        if pv.vtk_version_info >= (9, 3, 0):
+            # We set the arrays manually earlier
+            extract.SetPassThroughCellIds(False)
+        _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
+        subgrid = _get_output(extract)
 
-        # extracts only in float32
-        if subgrid.n_points and self.points.dtype != np.dtype('float32'):
-            ind = subgrid.point_data['vtkOriginalPointIds']
-            subgrid.points = self.points[ind]
+        # Make active scalars match input
+        info = self.active_scalars_info
+        subgrid.set_active_scalars(info.name, info.association)
+
+        if pv.vtk_version_info >= (9, 3, 0):
+            return subgrid
 
         # Process output arrays
-        if (name := 'vtkOriginalPointIds') in (data := subgrid.point_data) and not pass_point_ids:
-            del data[name]
         if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
             del data[name]
         return subgrid
@@ -4611,6 +4693,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             del data[name]
         if (name := 'vtkOriginalCellIds') in (data := output.cell_data) and not pass_cell_ids:
             del data[name]
+
+        # For consistency, ensure there is always an output array
+        if output.is_empty:
+            if pass_point_ids:
+                output.point_data['vtkOriginalPointIds'] = np.array((), dtype=int)
+            if pass_cell_ids:
+                output.cell_data['vtkOriginalCellIds'] = np.array((), dtype=int)
         return output
 
     def split_values(  # type: ignore[misc]
@@ -5408,105 +5497,62 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         return output
 
-    @_deprecate_positional_args
-    def extract_surface(  # type: ignore[misc]  # noqa: PLR0917
+    def _dataset_surface_filter(  # type: ignore[misc]
         self: _DataSetType,
-        pass_pointid: bool = True,  # noqa: FBT001, FBT002
-        pass_cellid: bool = True,  # noqa: FBT001, FBT002
+        *,
+        pass_pointid: bool = True,
+        pass_cellid: bool = True,
         nonlinear_subdivision: int = 1,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
+        message: str = 'Extracting Surface',
     ):
-        """Extract surface mesh of the grid.
-
-        Parameters
-        ----------
-        pass_pointid : bool, default: True
-            Adds a point array ``"vtkOriginalPointIds"`` that
-            identifies which original points these surface points
-            correspond to.
-
-        pass_cellid : bool, default: True
-            Adds a cell array ``"vtkOriginalCellIds"`` that
-            identifies which original cells these surface cells
-            correspond to.
-
-        nonlinear_subdivision : int, default: 1
-            If the input is an unstructured grid with nonlinear faces,
-            this parameter determines how many times the face is
-            subdivided into linear faces.
-
-            If 0, the output is the equivalent of its linear
-            counterpart (and the midpoints determining the nonlinear
-            interpolation are discarded). If 1 (the default), the
-            nonlinear face is triangulated based on the midpoints. If
-            greater than 1, the triangulated pieces are recursively
-            subdivided to reach the desired subdivision. Setting the
-            value to greater than 1 may cause some point data to not
-            be passed even if no nonlinear faces exist. This option
-            has no effect if the input is not an unstructured grid.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Surface mesh of the grid.
-
-        Warnings
-        --------
-        Both ``"vtkOriginalPointIds"`` and ``"vtkOriginalCellIds"`` may be
-        affected by other VTK operations. See `issue 1164
-        <https://github.com/pyvista/pyvista/issues/1164>`_ for
-        recommendations on tracking indices across operations.
-
-        Examples
-        --------
-        Extract the surface of an UnstructuredGrid.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> grid = examples.load_hexbeam()
-        >>> surf = grid.extract_surface()
-        >>> type(surf)
-        <class 'pyvista.core.pointset.PolyData'>
-        >>> surf['vtkOriginalPointIds']
-        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4, 54,  3,  6, 45,
-                         72,  5, 63,  9, 35, 44, 11, 16, 89, 17, 10, 26, 62, 13,
-                         12, 53, 80, 15, 14, 71, 19, 37, 55, 20, 38, 56, 21, 39,
-                         57, 22, 40, 58, 23, 41, 59, 24, 42, 60, 25, 43, 61, 28,
-                         82, 29, 83, 30, 84, 31, 85, 32, 86, 33, 87, 34, 88, 46,
-                         73, 47, 74, 48, 75, 49, 76, 50, 77, 51, 78, 52, 79, 64,
-                         65, 66, 67, 68, 69, 70])
-        >>> surf['vtkOriginalCellIds']
-        pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
-                         36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
-                         13, 13, 17, 17, 21, 21, 25, 25, 29, 29, 33, 33,  4,  4,
-                          8,  8, 12, 12, 16, 16, 20, 20, 24, 24, 28, 28, 32, 32,
-                          7,  7, 11, 11, 15, 15, 19, 19, 23, 23, 27, 27, 31, 31,
-                         35, 35,  6,  6, 10, 10, 14, 14, 18, 18, 22, 22, 26, 26,
-                         30, 30, 34, 34])
-
-        Note that in the "vtkOriginalCellIds" array, the same original cells
-        appears multiple times since this array represents the original cell of
-        each surface cell extracted.
-
-        See the :ref:`extract_surface_example` for more examples using this filter.
-
-        """
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(self)
         surf_filter.SetPassThroughPointIds(pass_pointid)
         surf_filter.SetPassThroughCellIds(pass_cellid)
-
-        if nonlinear_subdivision != 1:
-            surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
-
-        # available in 9.0.2
-        # surf_filter.SetDelegation(delegation)
-
-        _update_alg(surf_filter, progress_bar=progress_bar, message='Extracting Surface')
+        surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
+        _update_alg(surf_filter, progress_bar=progress_bar, message=message)
         return _get_output(surf_filter)
+
+    def _extract_surface(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        pass_pointid: bool,
+        pass_cellid: bool,
+        nonlinear_subdivision: int,
+        algorithm: _ExtractSurfaceOptions,
+        progress_bar: bool,
+    ) -> PolyData:
+        """Delegate to vtkGeometryFilter or vtkDataSetSurfaceFilter."""
+        message = 'Extracting Surface'
+
+        if algorithm in (None, 'geometry'):
+            # Default case: use vtkGeometryFilter. This will automatically delegate to
+            # vtkDataSetSurfaceFilter internally as needed for non-linear cells
+            if algorithm == 'geometry' and self.has_nonlinear_cells:
+                # vtkGeometryFilter itself cannot process non-linear cells
+                msg = (
+                    'Mesh contains non-linear cells which cannot be processed '
+                    'by the geometry algorithm.'
+                )
+                raise ValueError(msg)
+
+            return self._geometry_filter(
+                extent=None,  # Extent is only used by deprecated extract_geometry filter
+                nonlinear_subdivision=nonlinear_subdivision,
+                pass_pointid=pass_pointid,
+                pass_cellid=pass_cellid,
+                progress_bar=progress_bar,
+                message=message,
+            )
+        # Special case: use vtkDataSetSurfaceFilter only if requested
+        return self._dataset_surface_filter(
+            nonlinear_subdivision=nonlinear_subdivision,
+            pass_pointid=pass_pointid,
+            pass_cellid=pass_cellid,
+            progress_bar=progress_bar,
+            message=message,
+        )
 
     @_deprecate_positional_args
     def surface_indices(  # type: ignore[misc]
@@ -5514,6 +5560,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return the surface indices of a grid.
+
+        .. versionchanged:: 0.47
+            The underlying algorithm used to compute surface indices has changed.
+            :vtk:`vtkGeometryFilter` is now used, previously it was :vtk:`vtkDataSetSurfaceFilter`.
 
         Parameters
         ----------
@@ -5532,11 +5582,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> from pyvista import examples
         >>> grid = examples.load_hexbeam()
         >>> ind = grid.surface_indices()
-        >>> ind[:10]  # doctest:+SKIP
-        pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4])
+        >>> ind[:10]
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         """
-        surf = DataSetFilters.extract_surface(self, pass_cellid=True, progress_bar=progress_bar)
+        surf = DataObjectFilters.extract_surface(
+            self, algorithm=None, pass_cellid=False, progress_bar=progress_bar
+        )
         return surf.point_data['vtkOriginalPointIds']
 
     @_deprecate_positional_args(allowed=['feature_angle'])
@@ -5549,7 +5601,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         manifold_edges: bool = True,  # noqa: FBT001, FBT002
         clear_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> PolyData:
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -5607,9 +5659,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
-        dataset = self
+        dataset: DataSet = self
         if not isinstance(dataset, _vtk.vtkPolyData):
-            dataset = DataSetFilters.extract_surface(dataset)
+            dataset = DataObjectFilters.extract_surface(
+                dataset, algorithm=None, pass_pointid=False, pass_cellid=False
+            )
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(dataset)
         featureEdges.SetFeatureAngle(feature_angle)
@@ -5769,7 +5823,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> merged.plot()
 
         """
-        vtk_at_least_95 = _vtk.vtk_version_info >= (9, 5, 0)
+        vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
         if main_has_priority is not None:
             msg = (
                 "The keyword 'main_has_priority' is deprecated and should not be used.\n"
@@ -5857,9 +5911,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     @_deprecate_positional_args(allowed=['quality_measure'])
     def compute_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
-        quality_measure: str = 'scaled_jacobian',
-        null_value: float = -1.0,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        quality_measure: str = 'scaled_jacobian',  # noqa: ARG002
+        null_value: float = -1.0,  # noqa: ARG002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002, ARG002
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -5947,9 +6001,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
-        if pv.version_info >= (0, 48):  # pragma: no cover
-            msg = 'Convert this deprecation warning into an error.'
-            raise RuntimeError(msg)
         if pv.version_info >= (0, 49):  # pragma: no cover
             msg = 'Remove this filter.'
             raise RuntimeError(msg)
@@ -5958,59 +6009,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
             "new filter does not include an array named ``'CellQuality'`"
         )
-        warn_external(msg, PyVistaDeprecationWarning)
-
-        alg = _vtk.vtkCellQuality()
-        possible_measure_setters = {
-            'area': 'SetQualityMeasureToArea',
-            'aspect_beta': 'SetQualityMeasureToAspectBeta',
-            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
-            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
-            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
-            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
-            'condition': 'SetQualityMeasureToCondition',
-            'diagonal': 'SetQualityMeasureToDiagonal',
-            'dimension': 'SetQualityMeasureToDimension',
-            'distortion': 'SetQualityMeasureToDistortion',
-            'jacobian': 'SetQualityMeasureToJacobian',
-            'max_angle': 'SetQualityMeasureToMaxAngle',
-            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
-            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
-            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
-            'min_angle': 'SetQualityMeasureToMinAngle',
-            'oddy': 'SetQualityMeasureToOddy',
-            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
-            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
-            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
-            'shape': 'SetQualityMeasureToShape',
-            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
-            'shear': 'SetQualityMeasureToShear',
-            'shear_and_size': 'SetQualityMeasureToShearAndSize',
-            'skew': 'SetQualityMeasureToSkew',
-            'stretch': 'SetQualityMeasureToStretch',
-            'taper': 'SetQualityMeasureToTaper',
-            'volume': 'SetQualityMeasureToVolume',
-            'warpage': 'SetQualityMeasureToWarpage',
-        }
-
-        # we need to check if these quality measures exist as VTK API changes
-        measure_setters = {}
-        for name, attr in possible_measure_setters.items():
-            setter_candidate = getattr(alg, attr, None)
-            if setter_candidate:
-                measure_setters[name] = setter_candidate
-
-        try:
-            # Set user specified quality measure
-            measure_setters[quality_measure]()
-        except (KeyError, IndexError):
-            options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
-            msg = f'Cell quality type ({quality_measure}) not available. Options are: {options}'
-            raise KeyError(msg)
-        alg.SetInputData(self)
-        alg.SetUndefinedQuality(null_value)
-        _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Quality')
-        return _get_output(alg)
+        raise DeprecationError(msg)
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
@@ -6227,7 +6226,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Shrinking Mesh')
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
-            return output.extract_surface()  # type: ignore[unreachable]
+            return output.extract_surface(  # type: ignore[unreachable]
+                algorithm=None, pass_cellid=False, pass_pointid=False
+            )
         return output
 
     @_deprecate_positional_args
@@ -6787,7 +6788,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         as_composite: bool,
     ):
         def _multiblock_to_polydata(multiblock):
-            return multiblock.combine(merge_points=False).extract_geometry()
+            return multiblock.combine(merge_points=False).extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
 
         # Validate style
         _validation.check_contains(['frame', 'outline', 'face'], must_contain=box_style)
@@ -8004,7 +8007,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
-        surface = wrap(self).extract_geometry()
+        surface = wrap(self).extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh
             msg = 'Input mesh must have faces for voxelization.'
@@ -8509,137 +8512,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
-
-    def cell_validator(self: DataSet):  # type:ignore[misc]
-        """Check the validity of each cell in this dataset.
-
-        Use :vtk:`vtkCellValidator` to determine the status of each cell. The status is encoded
-        as a bit field cell data array ``'validity_state'``. The cell states are:
-
-        - ``valid`` (``0x00``): Cell is valid and has no issues.
-        - ``wrong_number_of_points`` (``0x01``): Cell does not have the minimum number of points
-          needed to describe it.
-        - ``intersecting_edges`` (``0x02``): 2D cell has two edges that intersect.
-        - ``intersecting_faces`` (``0x04``): 3D cell has two faces that intersect.
-        - ``non_contiguous_edges`` (``0x08``): 2D cell's perimeter edges are not contiguous.
-        - ``non_convex`` (``0x10``): 2D or 3D cell is not convex.
-        - ``inverted_faces`` (``0x20``): Cell face(s) do not point in the direction required by
-          its :class:`~pyvista.CellType`.
-        - ``non_planar_faces`` (``0x40``): Vertices for a face do not all lie in the same plane.
-        - ``degenerate_faces`` (``0x80``): Face(s) collapse to a line or a point through repeated
-          collocated vertices.
-        - ``coincident_points`` (``0x100``): Cell has duplicate coordinates or repeated use of
-          the same connectivity entry.
-
-        For convenience, a field data array for each state is also appended. The array names match
-        the state names above, except for the ``'valid'`` state; instead, an array with
-        ``'invalid'`` cells is stored. Each field data array contains the indices of cells with
-        the specified state.
-
-        Refer to :vtk:`vtkCellValidator` for more details about each state.
-
-        .. versionadded:: 0.47
-
-        Returns
-        -------
-        DataSet
-            Dataset with field data of cell validity.
-
-        See Also
-        --------
-        :meth:`~pyvista.DataSet.validate_mesh`
-        :meth:`~pyvista.DataObjectFilters.cell_quality`
-        :ref:`mesh_validation_example`
-
-        Examples
-        --------
-        Load a mesh with invalid cells.
-
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_cow()
-
-        Validate the cells and show the included arrays.
-
-        >>> validated = mesh.cell_validator()
-        >>> validated.array_names  # doctest: +NORMALIZE_WHITESPACE
-        ['validity_state',
-         'invalid',
-         'wrong_number_of_points',
-         'intersecting_edges',
-         'intersecting_faces',
-         'non_contiguous_edges',
-         'non_convex',
-         'inverted_faces',
-         'non_planar_faces',
-         'degenerate_faces',
-         'coincident_points']
-
-        Show unique scalar values.
-
-        >>> np.unique(validated.cell_data['validity_state'])
-        pyvista_ndarray([ 0, 16], dtype=int16)
-
-        The ``0`` cells are valid, and the cells with value ``16`` (i.e. hex ``0x10``) have a
-        nonconvex state. We confirm this by printing the ``'non_convex'`` array, which shows there
-        are three invalid cells.
-
-        >>> validated.field_data['non_convex']
-        pyvista_ndarray([1013, 1532, 3250])
-
-        We can also show all invalid cells. This matches the nonconvex ids, which confirms
-        these are the only invalid cells.
-
-        >>> validated.field_data['invalid']
-        pyvista_ndarray([1013, 1532, 3250])
-
-        Plot the cell states using :meth:`~pyvista.DataSetFilters.color_labels`. Orient the
-        camera to show the underside of the cow where two of the invalid cells are located.
-
-        >>> colored, color_map = validated.color_labels(
-        ...     scalars='validity_state', return_dict=True
-        ... )
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(colored)
-        >>> _ = pl.add_legend(color_map)
-        >>> pl.view_xz()
-        >>> pl.camera.zoom(2.5)
-        >>> pl.show()
-
-        Extract the invalid cells and plot them along with the original mesh as wireframe for
-        context. Orient the camera to focus on the cow's left eye where the third invalid cell is
-        located.
-
-        >>> invalid_cells = mesh.extract_cells(validated['invalid'])
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, style='wireframe', color='light gray')
-        >>> _ = pl.add_mesh(invalid_cells, color='lime')
-        >>> pl.camera_position = pv.CameraPosition(
-        ...     position=(5.1, 1.8, -4.9),
-        ...     focal_point=(4.7, 1.8, 0.38),
-        ...     viewup=(0.0, 1.0, 0.0),
-        ... )
-        >>> pl.show()
-
-        """
-        cell_validator = _vtk.vtkCellValidator()
-        cell_validator.SetInputData(self)
-        cell_validator.Update()
-        output = _get_output(cell_validator)
-
-        # Rename output scalars and make them active
-        validity_state = output.cell_data['ValidityState']
-        output.cell_data['validity_state'] = validity_state
-        del output.cell_data['ValidityState']
-        output.set_active_scalars('validity_state', preference='cell')
-
-        # Extract indices of invalid cells and store as field data
-        output.field_data['invalid'] = np.where(validity_state != 0)[0]
-        for name, value in _CELL_VALIDATOR_BIT_FIELD.items():
-            output.field_data[name] = np.where(validity_state & value)[0]
-        return output
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):

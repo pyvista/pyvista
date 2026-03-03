@@ -16,7 +16,7 @@ import numpy as np
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core._vtk_core import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
@@ -1512,22 +1512,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             if hasattr(picker, 'SetTolerance'):
                 picker.SetTolerance(0.025)
         self.interactor.SetPicker(picker)
-
-    def add_pick_obeserver(self, observer):  # noqa: ARG002
-        """Add an observer to call back when pick events end.
-
-        .. deprecated:: 0.42.2
-            This function has been deprecated. Use
-            :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
-
-        Parameters
-        ----------
-        observer : callable
-            The observer function to call when a pick event ends.
-
-        """
-        msg = '`add_pick_obeserver` has been deprecated, use `add_pick_observer`'
-        raise ValueError(msg)
 
     def add_pick_observer(self, observer):
         """Add an observer to call back when pick events end.

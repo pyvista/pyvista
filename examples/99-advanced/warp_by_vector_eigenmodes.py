@@ -23,9 +23,8 @@ from __future__ import annotations
 from itertools import product
 
 import numpy as np
-from scipy.linalg import eigh
-
 import pyvista as pv
+from scipy.linalg import eigh
 
 
 def analytical_integral_rppd(p, q, r, *, a, b, c):
@@ -83,8 +82,10 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 
 def get_first_N_above_thresh(*, N, freqs, thresh, decimals=3):
-    """Return first N unique frequencies with amplitude above threshold based on first decimals."""
-    unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
+    """Return first N unique frequencies with amplitude>thresh based on first decimals."""
+    unique_freqs, unique_indices = np.unique(
+        np.round(freqs, decimals=decimals), return_index=True
+    )
     nonzero = unique_freqs > thresh
     unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
     return unique_freqs[:N], unique_indices[:N]
@@ -102,7 +103,10 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
     """
     # building coordinates
     triplets = [
-        (p, q, r) for p in range(N + 1) for q in range(N - p + 1) for r in range(N - p - q + 1)
+        (p, q, r)
+        for p in range(N + 1)
+        for q in range(N - p + 1)
+        for r in range(N - p - q + 1)
     ]
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
@@ -187,14 +191,22 @@ omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
 # expected values from (Bernard 2014, pl.14),
 # error depends on polynomial order ``N``
-expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])  # noqa: N816
+expected_freqs_kHz = np.array(  # noqa: N816
+    [704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9]
+)
 computed_freqs_kHz, mode_indices = get_first_N_above_thresh(  # noqa: N816
     N=8, freqs=freqs / 1e3, thresh=1, decimals=1
 )
 print('found the following first unique eigenfrequencies:')
-for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz, strict=True)):
+for ind, (freq1, freq2) in enumerate(
+    zip(computed_freqs_kHz, expected_freqs_kHz, strict=True)
+):
     error = np.abs(freq2 - freq1) / freq1 * 100.0
-    print(f'freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %')
+    print(
+        f'freq. {ind + 1:1}: {freq1:8.1f} kHz, '
+        f'expected: {freq2:8.1f} kHz, '
+        f'error: {error:.2f} %'
+    )
 
 # %%
 # Now, let's display a mode on a mesh of the cube.
@@ -244,7 +256,9 @@ warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
 pl = pv.Plotter()
-pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False, clim=(0.0, 1.0))
+pl.add_mesh(
+    vol, style='wireframe', scalars=warpby, show_scalar_bar=False, clim=(0.0, 1.0)
+)
 pl.add_mesh(warped, scalars=warpby, clim=(0.0, 1.0))
 pl.show()
 

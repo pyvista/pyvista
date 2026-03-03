@@ -118,49 +118,10 @@ Jupyter backend to use.
 
 .. autodata:: JupyterBackendOptions
 
-
-Data Object Types
------------------
-
-pyvista._GridType
-~~~~~~~~~~~~~~~~~
+pyvista.MeshValidationFields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Field options for :meth:`~pyvista.DataObjectFilters.validate_mesh`.
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: _GridType
-
-pyvista._PointGridType
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _PointGridType
-
-pyvista._PointSetType
-~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _PointSetType
-
-
-pyvista._DataSetType
-~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _DataSetType
-
-pyvista._DataSetOrMultiBlockType
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _DataSetOrMultiBlockType
-
-pyvista._DataObjectType
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _DataObjectType
+.. autodata:: MeshValidationFields

@@ -34,13 +34,12 @@ from typing import cast
 
 import numpy as np
 import pooch
-from pooch import Unzip
-from pooch.utils import get_logger
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
@@ -55,7 +54,7 @@ if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import MultiBlock
 # disable pooch verbose logging
-POOCH_LOGGER = get_logger()
+POOCH_LOGGER = pooch.get_logger()  # type: ignore[attr-defined]
 POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 
@@ -64,7 +63,7 @@ CACHE_VERSION = 3
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
 
@@ -136,7 +135,7 @@ _warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
 # to the registry since we're not (at the moment) concerned about hashes.
-FETCHER = pooch.create(
+FETCHER = pooch.create(  # type: ignore[attr-defined]
     path=USER_DATA_PATH,
     base_url=SOURCE,
     registry={},
@@ -232,7 +231,7 @@ def _download_file(filename):
     """Download a file using pooch."""
     return FETCHER.fetch(
         filename,
-        processor=Unzip() if filename.endswith('.zip') else None,
+        processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
     )
 
@@ -3081,7 +3080,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Show non-linear subdivision.
 
-    >>> surf = dataset.extract_surface(nonlinear_subdivision=5)
+    >>> surf = dataset.extract_surface(algorithm=None, nonlinear_subdivision=5)
     >>> surf.plot(smooth_shading=True)
 
     .. seealso::
@@ -3682,7 +3681,7 @@ def _kitchen_split_load_func(mesh):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = pv.core.filters._get_output(alg)
+        result = _get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -8634,6 +8633,9 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 def download_biplane(load=True):  # noqa: FBT002
     """Download biplane dataset.
 
+    .. warning::
+        This dataset is known to cause segmentation faults on Windows.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8647,9 +8649,11 @@ def download_biplane(load=True):  # noqa: FBT002
 
     Examples
     --------
+    >>> import sys
     >>> from pyvista import examples
-    >>> dataset = examples.download_biplane()
-    >>> dataset.plot(cpos='zy', zoom=1.5)
+    >>> if sys.platform != 'win32':  # segfaults on Windows
+    ...     dataset = examples.download_biplane()
+    ...     dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
 

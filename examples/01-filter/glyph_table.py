@@ -11,7 +11,6 @@ up. This example demonstrates this functionality.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -67,7 +66,9 @@ glyphs = mesh.glyph(
 
 # create plotter and add our glyphs with some nontrivial lighting
 pl = pv.Plotter()
-pl.add_mesh(glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False)
+pl.add_mesh(
+    glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False
+)
 pl.show()
 # %%
 # .. tags:: filter

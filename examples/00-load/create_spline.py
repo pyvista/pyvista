@@ -145,7 +145,9 @@ spline = pv.Spline(points, parametrize_by='length')
 spline_by_index = pv.Spline(points, parametrize_by='index')
 pl.add_mesh(spline, line_width=4)
 pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
-pl.add_mesh(spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(
+    spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True
+)
 pl.show()
 
 # %%
@@ -173,7 +175,9 @@ for constraint, constraint_id in constraint_map.items():
     spline.cell_data['boundary_constraint'] = np.array([constraint_id], dtype=np.uint8)
     mesh = pv.merge([mesh, spline], merge_points=False)
 
-colored_mesh, color_map = mesh.color_labels(output_scalars='boundary_constraint', return_dict=True)
+colored_mesh, color_map = mesh.color_labels(
+    output_scalars='boundary_constraint', return_dict=True
+)
 legend_map = dict(zip(constraint_map.keys(), color_map.values(), strict=True))
 pl.add_mesh(colored_mesh, line_width=4, rgb=True)
 pl.add_legend(legend_map)
@@ -203,7 +207,9 @@ for boundary_value in range(4):
     spline.cell_data['boundary_value'] = np.array([boundary_value], dtype=float)
     mesh = pv.merge([mesh, spline], merge_points=False)
 
-colored_mesh, color_map = mesh.color_labels(output_scalars='boundary_value', return_dict=True)
+colored_mesh, color_map = mesh.color_labels(
+    output_scalars='boundary_value', return_dict=True
+)
 pl.add_mesh(colored_mesh, line_width=4, rgb=True)
 pl.add_legend(color_map)
 pl.camera_position = cpos

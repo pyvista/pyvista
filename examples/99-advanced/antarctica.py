@@ -114,7 +114,9 @@ pl.show()
 agree = flow_a.dot(flow_b.mean(0))
 
 pl = pv.Plotter()
-pl.add_mesh(a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block b'})
+pl.add_mesh(
+    a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block b'}
+)
 pl.add_mesh(b, color='w')
 pl.show(cpos='xy')
 
@@ -123,5 +125,7 @@ agree = flow_b.dot(flow_a.mean(0))
 
 pl = pv.Plotter()
 pl.add_mesh(a, color='w')
-pl.add_mesh(b, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block a'})
+pl.add_mesh(
+    b, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block a'}
+)
 pl.show(cpos='xy')

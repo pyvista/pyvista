@@ -119,7 +119,6 @@ values change through time:
     import pyvistaqt as pvqt
     from pyvista import examples
 
-
     globe = examples.load_globe()
     texture = examples.load_globe_texture()
     globe.point_data['scalars'] = np.random.rand(globe.n_points)

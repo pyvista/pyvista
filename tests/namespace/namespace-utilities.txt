@@ -89,6 +89,8 @@ SLCReader, <class 'pyvista.utilities.reader.SLCReader'>
 STLReader, <class 'pyvista.utilities.reader.STLReader'>
 Scraper, <class 'pyvista.utilities.sphinx_gallery.Scraper'>
 SegYReader, <class 'pyvista.utilities.reader.SegYReader'>
+SeriesDataSet, <class 'pyvista.utilities.reader.SeriesDataSet'>
+SeriesReader, <class 'pyvista.utilities.reader.SeriesReader'>
 Sphere, <function Sphere at 0x7f72f5d21d30>
 Spline, <function Spline at 0x7f72f5cb03a0>
 Superquadric, <function Superquadric at 0x7f72f5cac8b0>

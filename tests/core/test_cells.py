@@ -9,6 +9,10 @@ import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.celltype import _CELL_TYPES_0D
+from pyvista.core.celltype import _CELL_TYPES_1D
+from pyvista.core.celltype import _CELL_TYPES_2D
+from pyvista.core.celltype import _CELL_TYPES_3D
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -524,3 +528,19 @@ def test_deep_deprecated(deep: bool):
     if pv._version.version_info[:2] > (0, 48):
         msg = 'Remove `deep` constructor kwarg'
         raise RuntimeError(msg)
+
+
+def test_cell_type_dimensions():
+    get_dimension = (
+        _vtk.vtkCellTypeUtilities.GetDimension
+        if pv.vtk_version_info >= (9, 6, 0)
+        else _vtk.vtkCellTypes.GetDimension
+    )
+    for cell_type in _CELL_TYPES_0D:
+        assert get_dimension(cell_type) == 0
+    for cell_type in _CELL_TYPES_1D:
+        assert get_dimension(cell_type) == 1
+    for cell_type in _CELL_TYPES_2D:
+        assert get_dimension(cell_type) == 2
+    for cell_type in _CELL_TYPES_3D:
+        assert get_dimension(cell_type) == 3
