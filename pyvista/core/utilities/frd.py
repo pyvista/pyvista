@@ -288,7 +288,7 @@ class _FRDVTKReader(BaseVTKReader):
                 except ValueError:
                     warn_external(
                         f"Unknown element type code '{etype_val}' encountered. "
-                        "These elements will be skipped.",
+                        'These elements will be skipped.',
                         UserWarning,
                     )
                     etype = None
@@ -297,7 +297,7 @@ class _FRDVTKReader(BaseVTKReader):
                 if etype not in self.CCX_TO_VTK_TYPE:
                     warn_external(
                         f"Unsupported element type '{etype.name}' encountered. "
-                        "These elements will be skipped.",
+                        'These elements will be skipped.',
                         UserWarning,
                     )
                     etype = None
