@@ -233,7 +233,7 @@ class _FRDVTKReader(BaseVTKReader):
                 node_ids[6],  # Inverted bottom base mids
                 node_ids[14],
                 node_ids[13],
-                node_ids[12], # Top mids (VTK expects top next)
+                node_ids[12],  # Top mids (VTK expects top next)
                 node_ids[9],
                 node_ids[11],
                 node_ids[10],  # Vertical mids
