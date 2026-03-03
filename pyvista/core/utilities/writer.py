@@ -12,7 +12,6 @@ from typing import get_args
 import numpy as np
 
 import pyvista as pv
-from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
