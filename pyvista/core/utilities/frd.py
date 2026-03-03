@@ -203,28 +203,40 @@ class _FRDVTKReader(BaseVTKReader):
                 node_ids[15],
             ]
 
+        # Both PE6 and PE15 (Wedges) in CalculiX have inverted bases compared to VTK
+        if (
+            etype == FRDElementType.PE6
+            and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.PE6]
+        ):
+            return [
+                node_ids[0],
+                node_ids[2],
+                node_ids[1],  # Inverted bottom base
+                node_ids[3],
+                node_ids[5],
+                node_ids[4],  # Inverted top base
+            ]
+
         if (
             etype == FRDElementType.PE15
             and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.PE15]
         ):
-            # CalculiX: 0-5 (corners), 6-8 (bottom mids), 9-11 (vertical mids), 12-14 (top mids)
-            # VTK:      0-5 (corners), 6-8 (bottom mids), 9-11 (top mids), 12-14 (vertical mids)
             return [
                 node_ids[0],
-                node_ids[1],
                 node_ids[2],
+                node_ids[1],  # Inverted bottom base corners
                 node_ids[3],
-                node_ids[4],
                 node_ids[5],
-                node_ids[6],
-                node_ids[7],
+                node_ids[4],  # Inverted top base corners
                 node_ids[8],
-                node_ids[12],
+                node_ids[7],
+                node_ids[6],  # Inverted bottom base mids
+                node_ids[14],
                 node_ids[13],
-                node_ids[14],  # Top mids
+                node_ids[12], # Top mids (VTK expects top next)
                 node_ids[9],
-                node_ids[10],
-                node_ids[11],  # Vertical mids
+                node_ids[11],
+                node_ids[10],  # Vertical mids
             ]
 
         return node_ids
