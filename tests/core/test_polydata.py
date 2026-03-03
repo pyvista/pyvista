@@ -917,7 +917,7 @@ def test_compute_normals_raises(sphere):
     with pytest.raises(TypeError, match=re.escape(msg)):
         point_cloud.compute_normals()
 
-    lines = pv.MultipleLines().points_to_double()  # LATER: Remove
+    lines = pv.MultipleLines()
     assert lines.n_lines == lines.n_cells
     with pytest.raises(TypeError, match=re.escape(msg)):
         lines.compute_normals()

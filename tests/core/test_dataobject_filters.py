@@ -2210,7 +2210,7 @@ def test_validate_mesh_degenerate_cells():
         return pv.wrap(append.GetOutput())
 
     # Line with coincident points
-    invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)).points_to_double()  # LATER: Remove
+    invalid_mesh = pv.Line((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         state = mesh.cell_validator()['validity_state']
         assert state[0] == pv.CellStatus.ZERO_SIZE

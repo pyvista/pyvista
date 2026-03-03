@@ -245,7 +245,7 @@ def test_clip_surface():
         height=3.0,
         radius=1,
         resolution=50,
-    ).points_to_double()  # LATER: Remove after source is double by default
+    )
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pv.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True)
@@ -1710,13 +1710,11 @@ def test_streamlines_nonxy_plane():
     assert all([streams.n_points, streams.n_cells])
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
 
     line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
-    line.points_to_double()  # LATER: Remove
     line[name] = np.linspace(0, 10, 10)
 
     assert line.points.dtype == np.double
@@ -1734,7 +1732,6 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_plot_over_line(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
@@ -1770,7 +1767,6 @@ def test_plot_over_line(tmpdir):
         )
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
@@ -1788,7 +1784,6 @@ def test_sample_over_multiple_lines():
     assert name in sampled_multiple_lines.array_names  # is name in sampled result
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
     name = 'values'
@@ -1826,7 +1821,6 @@ def test_sample_over_circular_arc():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_sample_over_circular_arc_normal():
     """Test that we get a circular arc_normal."""
     name = 'values'
@@ -1872,7 +1866,6 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_plot_over_circular_arc(tmpdir):
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir('tmpdir')
@@ -1921,7 +1914,6 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line precision
 def test_plot_over_circular_arc_normal(tmpdir):
     mesh = examples.load_uniform()
     tmp_dir = tmpdir.mkdir('tmpdir')
@@ -2191,6 +2183,7 @@ def test_extract_cells(sphere):
         _ = sphere.extract_cells([True, True])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(
@@ -3702,7 +3695,7 @@ def test_align_xyz_return_matrix():
     assert np.allclose(inverted_bounds, initial_bounds)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line source double
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Investigate Multiblock dtype
 @pytest.mark.parametrize(
     ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
 )
@@ -3720,7 +3713,7 @@ def test_oriented_bounding_box():
     assert np.allclose(obb.bounds, box_mesh.bounds)
 
 
-@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Remove with line source double
+@pytest.mark.usefixtures('force_points_precision_single')  # LATER: Investigate Multiblock dtype
 @pytest.mark.parametrize('oriented', [True, False])
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_bounding_box_return_meta(oriented, as_composite):

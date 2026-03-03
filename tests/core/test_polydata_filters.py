@@ -156,7 +156,7 @@ def test_decimate_polyline_inplace(poly_circle):
 
 
 def test_triangulate_contours():
-    poly = pv.Polygon(n_sides=4, fill=False).points_to_double()  # LATER: Remove
+    poly = pv.Polygon(n_sides=4, fill=False)
     filled = poly.triangulate_contours()
     for cell in filled.cell:
         assert cell.type == pv.CellType.TRIANGLE

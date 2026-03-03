@@ -482,9 +482,7 @@ def test_arrows():
 
 
 def test_arrows_cell_data():
-    box = (
-        pv.Box().points_to_double().compute_normals(cell_normals=True, point_normals=False)
-    )  # LATER: Remove
+    box = pv.Box().compute_normals(cell_normals=True, point_normals=False)
     assert box.array_names == ['Normals']
     assert box.cell_data.keys() == ['Normals']
     assert box.arrows is None
