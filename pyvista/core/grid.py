@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Sequence
 from functools import wraps
 from pathlib import Path
@@ -16,6 +18,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.pointset import StructuredGrid
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -30,6 +33,7 @@ from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
+from .dataset import _HiddenCellsMixin
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
@@ -37,12 +41,11 @@ from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
-from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from pyvista import StructuredGrid
+    from pyvista import ExplicitStructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
@@ -54,8 +57,7 @@ if TYPE_CHECKING:
     from .filters.data_object import _NestedMeshValidationFields
 
 
-@abstract_class
-class Grid(DataSet):
+class Grid(DataSet, ABC):
     """A class full of common methods for non-pointset grids."""
 
     @property
@@ -98,6 +100,15 @@ class Grid(DataSet):
         attrs = DataSet._get_attrs(self)
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
+
+    @abstractmethod
+    def cast_to_structured_grid(self) -> StructuredGrid:
+        """Cast to structured grid."""
+
+    @wraps(StructuredGrid.cast_to_explicit_structured_grid)
+    def cast_to_explicit_structured_grid(self) -> ExplicitStructuredGrid:  # numpydoc ignore=RT01
+        """Cast to explicit structured grid."""
+        return self.cast_to_structured_grid().cast_to_explicit_structured_grid()
 
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
@@ -516,7 +527,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return _get_output(alg)
 
 
-class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
+class ImageData(Grid, _HiddenCellsMixin, ImageDataFilters, _vtk.vtkImageData):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:
