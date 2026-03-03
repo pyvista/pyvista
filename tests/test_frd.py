@@ -197,10 +197,11 @@ def test_frd_reader_derived_strain(mock_frd_file):
 
     # Check calculated strain derived fields for mock_frd_file
     # values: xx=0.1, yy=0.2, zz=0.3, xy=yz=zx=0
-    # vMises strain for this state is sqrt(3)/15 = ~0.11547
+    # Mises strain for this state is sqrt(3)/15 = ~0.11547
     expected_vmises = np.sqrt(3.0) / 15.0
 
-    np.testing.assert_allclose(mesh.point_data['STRAIN_vMises'], expected_vmises)
+    # TUTAJ BYŁ BŁĄD - ZMIEŃ NA 'STRAIN_Mises'
+    np.testing.assert_allclose(mesh.point_data['STRAIN_Mises'], expected_vmises)
     np.testing.assert_allclose(mesh.point_data['STRAIN_sgMises'], expected_vmises)
 
     np.testing.assert_allclose(mesh.point_data['STRAIN_PS3'], 0.1)
@@ -251,3 +252,80 @@ def test_frd_reader_errors(mock_frd_file, empty_frd_file):
     empty_reader = pv.FRDReader(empty_frd_file)
     with pytest.raises(ValueError, match='No nodes found'):
         empty_reader.read()
+
+# =============================================================================
+# Element node ordering validation (Volume / Area checks)
+# =============================================================================
+
+# A dictionary mapping FRD element types to a valid 3D nodal coordinate list.
+# These nodes are carefully ordered according to the CalculiX manual so that,
+# when parsed and converted to VTK cells, the resulting volume or area is strictly positive.
+VALID_ELEMENT_DEFINITIONS = {
+    # 3D Elements (Expect volume > 0)
+    'HE8': (1, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 1.0 1.0 0.0\n -1 4 0.0 1.0 0.0\n -1 5 0.0 0.0 1.0\n -1 6 1.0 0.0 1.0\n -1 7 1.0 1.0 1.0\n -1 8 0.0 1.0 1.0", "1 2 3 4 5 6 7 8"),
+    'PE6': (2, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.0 1.0 0.0\n -1 4 0.0 0.0 1.0\n -1 5 1.0 0.0 1.0\n -1 6 0.0 1.0 1.0", "1 2 3 4 5 6"),
+    'TE4': (3, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.0 1.0 0.0\n -1 4 0.0 0.0 1.0", "1 2 3 4"),
+    'HE20': (4, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 1.0 1.0 0.0\n -1 4 0.0 1.0 0.0\n -1 5 0.0 0.0 1.0\n -1 6 1.0 0.0 1.0\n -1 7 1.0 1.0 1.0\n -1 8 0.0 1.0 1.0\n -1 9 0.5 0.0 0.0\n -1 10 1.0 0.5 0.0\n -1 11 0.5 1.0 0.0\n -1 12 0.0 0.5 0.0\n -1 13 0.5 0.0 1.0\n -1 14 1.0 0.5 1.0\n -1 15 0.5 1.0 1.0\n -1 16 0.0 0.5 1.0\n -1 17 0.0 0.0 0.5\n -1 18 1.0 0.0 0.5\n -1 19 1.0 1.0 0.5\n -1 20 0.0 1.0 0.5", "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"),
+    'PE15': (5, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.0 1.0 0.0\n -1 4 0.0 0.0 1.0\n -1 5 1.0 0.0 1.0\n -1 6 0.0 1.0 1.0\n -1 7 0.5 0.0 0.0\n -1 8 0.5 0.5 0.0\n -1 9 0.0 0.5 0.0\n -1 10 0.0 0.0 0.5\n -1 11 1.0 0.0 0.5\n -1 12 0.0 1.0 0.5\n -1 13 0.5 0.0 1.0\n -1 14 0.5 0.5 1.0\n -1 15 0.0 0.5 1.0", "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"),
+    'TE10': (6, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.0 1.0 0.0\n -1 4 0.0 0.0 1.0\n -1 5 0.5 0.0 0.0\n -1 6 0.5 0.5 0.0\n -1 7 0.0 0.5 0.0\n -1 8 0.0 0.0 0.5\n -1 9 0.5 0.0 0.5\n -1 10 0.0 0.5 0.5", "1 2 3 4 5 6 7 8 9 10"),
+
+    # 2D Elements (Expect area > 0)
+    'TR3': (7, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.0 1.0 0.0", "1 2 3"),
+    'TR6': (8, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.0 1.0 0.0\n -1 4 0.5 0.0 0.0\n -1 5 0.5 0.5 0.0\n -1 6 0.0 0.5 0.0", "1 2 3 4 5 6"),
+    'QU4': (9, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 1.0 1.0 0.0\n -1 4 0.0 1.0 0.0", "1 2 3 4"),
+    'QU8': (10, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 1.0 1.0 0.0\n -1 4 0.0 1.0 0.0\n -1 5 0.5 0.0 0.0\n -1 6 1.0 0.5 0.0\n -1 7 0.5 1.0 0.0\n -1 8 0.0 0.5 0.0", "1 2 3 4 5 6 7 8"),
+    
+    # 1D Elements (Expect length > 0)
+    'BE2': (11, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0", "1 2"),
+    'BE3': (12, "1 0.0 0.0 0.0\n -1 2 1.0 0.0 0.0\n -1 3 0.5 0.0 0.0", "1 2 3"),
+}
+
+
+@pytest.fixture
+def generic_element_frd(tmp_path, request):
+    """Generates an FRD file on the fly for a specific element type."""
+    elem_name = request.param
+    etype_id, nodes, connectivity = VALID_ELEMENT_DEFINITIONS[elem_name]
+    
+    content = f"""1C Element test
+2C
+ -1 {nodes}
+ -3
+3C
+ -1 1 {etype_id}
+ -2 {connectivity}
+ -3
+"""
+    file_path = tmp_path / f'{elem_name}_test.frd'
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path), elem_name
+
+
+@pytest.mark.parametrize('generic_element_frd', ['HE8', 'PE6', 'TE4', 'HE20', 'PE15', 'TE10'], indirect=True)
+def test_frd_3d_element_volumes(generic_element_frd):
+    filepath, elem_name = generic_element_frd
+    mesh = pv.FRDReader(filepath).read()
+    
+    # Calculate cell volume
+    vol = mesh.compute_cell_sizes().cell_data['Volume'][0]
+    assert vol > 0.0, f"Element {elem_name} generated non-positive volume ({vol}). Bad node ordering!"
+
+
+@pytest.mark.parametrize('generic_element_frd', ['TR3', 'TR6', 'QU4', 'QU8'], indirect=True)
+def test_frd_2d_element_areas(generic_element_frd):
+    filepath, elem_name = generic_element_frd
+    mesh = pv.FRDReader(filepath).read()
+    
+    # Calculate cell area
+    area = mesh.compute_cell_sizes().cell_data['Area'][0]
+    assert area > 0.0, f"Element {elem_name} generated non-positive area ({area}). Bad node ordering!"
+
+
+@pytest.mark.parametrize('generic_element_frd', ['BE2', 'BE3'], indirect=True)
+def test_frd_1d_element_lengths(generic_element_frd):
+    filepath, elem_name = generic_element_frd
+    mesh = pv.FRDReader(filepath).read()
+    
+    # Calculate cell length
+    length = mesh.compute_cell_sizes().cell_data['Length'][0]
+    assert length > 0.0, f"Element {elem_name} generated non-positive length ({length}). Bad node ordering!"
