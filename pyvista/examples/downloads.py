@@ -2756,7 +2756,7 @@ def download_frd(*, load=True):
     if not load:
         return filename
 
-    import pyvista as pv
+    import pyvista as pv  # noqa: PLC0415
 
     return pv.read(filename)
 
