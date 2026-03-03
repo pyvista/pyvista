@@ -217,7 +217,8 @@ def test_frd_reader_comprehensive(comprehensive_frd_file):
 
     with pytest.warns(UserWarning, match="Unknown element type code '999'"):
         reader = pv.FRDReader(comprehensive_frd_file)
-        mesh = reader.read()
+        
+    mesh = reader.read()
 
     assert mesh.n_points == 4
     assert reader.number_time_points == 3
