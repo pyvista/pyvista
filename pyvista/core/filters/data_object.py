@@ -39,6 +39,7 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _pop_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
@@ -47,6 +48,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.core.utilities.transform import Transform
 
@@ -3813,6 +3815,7 @@ class DataObjectFilters:
         nonlinear_subdivision: int | None = None,
         algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = _SENTINEL,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ) -> PolyData:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
 
@@ -3929,26 +3932,6 @@ class DataObjectFilters:
         for more examples using this filter.
 
         """
-        return self._extract_surface_points_dtype(
-            pass_pointid=pass_pointid,
-            pass_cellid=pass_cellid,
-            nonlinear_subdivision=nonlinear_subdivision,
-            algorithm=algorithm,
-            progress_bar=progress_bar,
-            points_dtype=None,
-        )
-
-    def _extract_surface_points_dtype(
-        self,
-        *,
-        pass_pointid: bool = True,
-        pass_cellid: bool = True,
-        nonlinear_subdivision: int | None = None,
-        algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = _SENTINEL,
-        progress_bar: bool = False,
-        points_dtype,
-    ):
-        """Extract surface using public API plus a private points_dtype keyword."""
 
         def warn_future():
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
@@ -3972,6 +3955,9 @@ class DataObjectFilters:
                 'Explicitly set the `algorithm` keyword to\nsilence this warning.'
             )
             warn_external(msg, pv.PyVistaFutureWarning)
+
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
 
         if algorithm is _SENTINEL:
             # Warn about future change in default alg

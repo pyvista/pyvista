@@ -70,6 +70,10 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
             alg.Update()
 
 
+def _pop_points_dtype(kwargs):
+    return kwargs.pop('points_dtype', None)
+
+
 def _set_output_points_precision(alg: _vtk.vtkAlgorithm):
     # Try to set output precision to match input if the filter supports it.
     # This should not really be necessary since vtkAlgorithm.DEFAULT_PRECISION

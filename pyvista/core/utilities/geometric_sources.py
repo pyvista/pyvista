@@ -47,7 +47,7 @@ SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
-class _Source(_vtk.vtkAlgorithm):
+class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
     @property
     def points_dtype(self):
         return getattr(self, '_points_dtype', None)
@@ -347,7 +347,7 @@ if vtk_version_info < (9, 3):
             return wrap(self.GetOutput())
 
 
-class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkConeSource):
+class ConeSource(_Source, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -605,7 +605,7 @@ class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkConeSour
         return wrap(self.GetOutput())
 
 
-class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkCylinderSource):
+class CylinderSource(_Source, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -868,7 +868,7 @@ class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkCyli
         return wrap(self.GetOutput())
 
 
-class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkLineSource):
+class MultipleLinesSource(_Source, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -1211,7 +1211,7 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
             out.points += self.center
 
 
-class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
+class CubeSource(_Source, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1623,7 +1623,7 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
-class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkLineSource):
+class LineSource(_Source, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1742,7 +1742,7 @@ class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkLineSour
         return wrap(self.GetOutput())
 
 
-class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkSphereSource):
+class SphereSource(_Source, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2030,7 +2030,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkSphere
         return wrap(self.GetOutput())
 
 
-class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkRegularPolygonSource):
+class PolygonSource(_Source, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2315,7 +2315,7 @@ class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonic
         return wrap(self.GetOutput())
 
 
-class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkPlaneSource):
+class PlaneSource(_Source, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2729,7 +2729,7 @@ class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
         return wrap(self.GetOutput())
 
 
-class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkTessellatedBoxSource):
+class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2841,9 +2841,7 @@ class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkTessellat
         return wrap(self.GetOutput())
 
 
-class SuperquadricSource(
-    _NoNewAttrMixin, DisableVtkSnakeCase, _Source, _vtk.vtkSuperquadricSource
-):
+class SuperquadricSource(_Source, _vtk.vtkSuperquadricSource):
     """Create superquadric source.
 
     .. versionadded:: 0.44
