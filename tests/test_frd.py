@@ -412,7 +412,7 @@ def test_frd_reader_wrong_number_of_points_warning(empty_frd_file):
     # 1. Test internal method catches bad length directly
     low_level_reader = pv.core.utilities._frd._FRDVTKReader()
     bad_nodes = [1, 2, 3]  # HE8 expects 8 nodes
-    low_level_reader._permute_nodes(bad_nodes, pv.core.utilities.frd.FRDElementType.HE8)
+    low_level_reader._permute_nodes(bad_nodes, pv.core.utilities._frd.FRDElementType.HE8)
     assert pv.CellType.HEXAHEDRON in low_level_reader._has_wrong_number_of_points
 
     # 2. Test that Update() raises the warning based on the internal state
