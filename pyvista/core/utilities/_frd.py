@@ -302,9 +302,8 @@ class _FRDVTKReader(BaseVTKReader):
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
                 if len(node_ids) >= needed:
-                    final_nodes = node_ids[:needed]
-                    final_nodes = self._permute_nodes(final_nodes, etype)
-                    self._elements.append(final_nodes)
+                    final_nodes = self._permute_nodes(node_ids, etype)
+                    self._elements.append(final_nodes[:needed])
                     self._cell_types.append(vtk_type.value)
                     etype = None  # Wait for the next -1 record
 
