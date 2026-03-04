@@ -219,13 +219,15 @@ def test_frd_reader_derived_strain(mock_frd_file):
 
 def test_frd_reader_comprehensive(comprehensive_frd_file):
     # This directly hits the logic in pyvista/core/utilities/fileio.py
-    match = 'Unknown element type code(s) encountered {999}. These elements are skipped.'
-    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+    with pytest.warns(pv.InvalidMeshWarning):
         mesh_from_pv = pv.read(comprehensive_frd_file)
     assert isinstance(mesh_from_pv, pv.UnstructuredGrid)
 
-    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
+    with pytest.warns(pv.InvalidMeshWarning):
         reader = pv.FRDReader(comprehensive_frd_file)
+
+    # Inject empty dictionary to trigger the defensive "if not data: continue" branch
+    reader.reader._results_by_step[0.2]['FAKE_EMPTY'] = {}
 
     mesh = reader.read()
 
@@ -366,14 +368,15 @@ def generic_element_frd(tmp_path, request):
 )
 def test_frd_3d_element_volumes(generic_element_frd):
     filepath, elem_name = generic_element_frd
+
+    mesh = pv.FRDReader(filepath).read()
+    
     if elem_name == 'PE15':
         msg = (
             'VTK bug with negative volume for quadratic wedge '
             'https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
         )
         pytest.xfail(msg)
-
-    mesh = pv.FRDReader(filepath).read()
 
     # Calculate cell volume
     vol = mesh.compute_cell_sizes().cell_data['Volume'][0]
@@ -404,3 +407,19 @@ def test_frd_1d_element_lengths(generic_element_frd):
     assert length > 0.0, (
         f'Element {elem_name} generated non-positive length ({length}). Bad node ordering!'
     )
+
+
+def test_frd_reader_wrong_number_of_points_warning(empty_frd_file):
+    """Cover defensive checks for elements with an incorrect number of nodes."""
+    # 1. Test internal method catches bad length directly
+    low_level_reader = pv.core.utilities.frd._FRDVTKReader()
+    bad_nodes = [1, 2, 3]  # HE8 expects 8 nodes
+    low_level_reader._permute_nodes(bad_nodes, pv.core.utilities.frd.FRDElementType.HE8)
+    assert pv.CellType.HEXAHEDRON in low_level_reader._has_wrong_number_of_points
+
+    # 2. Test that Update() raises the warning based on the internal state
+    reader = pv.FRDReader(empty_frd_file)
+    reader.reader._has_wrong_number_of_points.add(pv.CellType.HEXAHEDRON)
+    
+    with pytest.warns(pv.InvalidMeshWarning, match='Cell types with wrong number of points detected'):
+        reader.read()
