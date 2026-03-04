@@ -186,34 +186,14 @@ class _PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self) -> Self:
-        """Convert the points datatype to double precision.
-
-        Returns
-        -------
-        pyvista.PointSet
-            Pointset with points in double precision.
-
-        Notes
-        -----
-        This operates in place.
-
-        Examples
-        --------
-        Create a mesh that has points of the type ``float32`` and
-        convert the points to ``float64``.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> mesh.points.dtype
-        dtype('float32')
-        >>> _ = mesh.points_to_double()
-        >>> mesh.points.dtype
-        dtype('float64')
-
-        """
+    def _points_to_double(self):
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
+        return self
+
+    def _points_to_single(self):
+        if self.points.dtype != np.single:
+            self.points = self.points.astype(np.single)
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace

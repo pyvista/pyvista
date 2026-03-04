@@ -58,6 +58,10 @@ if TYPE_CHECKING:
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._POINTS_PRECISION = np.double
+
     @property
     def dimensions(self: Self) -> tuple[int, int, int]:
         """Return the grid's dimensions.
@@ -92,6 +96,17 @@ class Grid(DataSet):
     def dimensions(self: Self, dims: VectorLike[int]) -> None:
         self.SetDimensions(*dims)
         self.Modified()
+
+    def _points_to_double(self) -> None:
+        self._POINTS_PRECISION = np.double
+
+    def _points_to_single(self) -> None:
+        self._POINTS_PRECISION = np.single
+
+    def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
+        if np.single == self._POINTS_PRECISION:
+            return points.astype(np.single)
+        return points
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
@@ -353,10 +368,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
-            return convert_array(self.GetPoints().GetData())
-
-        xx, yy, zz = self.meshgrid
-        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+            points = convert_array(self.GetPoints().GetData())
+        else:
+            xx, yy, zz = self.meshgrid
+            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        return self._convert_points_precision(points)
 
     @points.setter
     def points(
@@ -812,31 +828,35 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
-            return convert_array(self.GetPoints().GetData())
+            points = convert_array(self.GetPoints().GetData())
 
         # Handle empty case
-        if not all(self.dimensions):
-            return np.zeros((0, 3))
+        elif not all(self.dimensions):
+            points = np.zeros((0, 3))
 
-        # Get grid dimensions
-        nx, ny, nz = self.dimensions
-        nx -= 1
-        ny -= 1
-        nz -= 1
-        # get the points and convert to spacings
-        dx, dy, dz = self.spacing
-        # Now make the cell arrays
-        ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
-        x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
-        y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
-        z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-        points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        else:
+            # Get grid dimensions
+            nx, ny, nz = self.dimensions
+            nx -= 1
+            ny -= 1
+            nz -= 1
+            # get the points and convert to spacings
+            dx, dy, dz = self.spacing
+            # Now make the cell arrays
+            ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
+            x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
+            y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
+            z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
+            xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
-        direction = self.direction_matrix
-        if not np.array_equal(direction, np.eye(3)):
-            return pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
-        return points
+            direction = self.direction_matrix
+            if not np.array_equal(direction, np.eye(3)):
+                points = (
+                    pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
+                )
+
+        return self._convert_points_precision(points)
 
     @points.setter
     def points(

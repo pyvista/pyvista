@@ -1366,11 +1366,17 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     smesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
                     smesh.cell_data['original_cell_ids'] = np.arange(smesh.n_cells)
+                    # Do not enforce points dtype for selected mesh
                     tri_smesh = smesh.extract_surface(
-                        algorithm=None, pass_pointid=False, pass_cellid=False
-                    ).triangulate()
-                    cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
-                    picked.append(smesh.extract_cells(cids_to_get))
+                        algorithm=None,
+                        pass_pointid=False,
+                        pass_cellid=False,
+                        points_dtype='default',
+                    ).triangulate(points_dtype='default')
+                    cids_to_get = tri_smesh.extract_cells(cids, points_dtype='default')[
+                        'original_cell_ids'
+                    ]
+                    picked.append(smesh.extract_cells(cids_to_get, points_dtype='default'))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826

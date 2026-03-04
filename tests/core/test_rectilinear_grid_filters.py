@@ -14,18 +14,21 @@ def tiny_rectilinear():
     return pv.RectilinearGrid(xrng, yrng, zrng)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('tetra_per_cell', [5, 6, 12])
-def test_to_tetrahedral(tiny_rectilinear, tetra_per_cell):
+def test_to_tetrahedra(tiny_rectilinear, tetra_per_cell):
     tet_grid = tiny_rectilinear.to_tetrahedra(tetra_per_cell=tetra_per_cell)
     assert tet_grid.n_cells == tiny_rectilinear.n_cells * tetra_per_cell
 
 
-def test_to_tetrahedral_raise(tiny_rectilinear):
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_to_tetrahedra_raise(tiny_rectilinear):
     with pytest.raises(ValueError, match='either 5, 6, or 12'):
         tiny_rectilinear.to_tetrahedra(tetra_per_cell=9)
 
 
-def test_to_tetrahedral_mixed(tiny_rectilinear):
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_to_tetrahedra_mixed(tiny_rectilinear):
     data = np.empty(tiny_rectilinear.n_cells, dtype=int)
     half = tiny_rectilinear.n_cells // 2
     data[:half] = 5
@@ -44,12 +47,14 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
         tet_grid = tiny_rectilinear.to_tetrahedra(mixed=123)
 
 
-def test_to_tetrahedral_edge_case():
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_to_tetrahedra_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.ImageData(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
 
 
-def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_to_tetrahedra_pass_cell_ids(tiny_rectilinear):
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=False)
     assert not tet_grid.cell_data
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=True, pass_data=False)
@@ -57,7 +62,8 @@ def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
     assert np.issubdtype(tet_grid.cell_data['vtkOriginalCellIds'].dtype, np.integer)
 
 
-def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_to_tetrahedra_pass_cell_data(tiny_rectilinear):
     # test that data isn't passed
     tiny_rectilinear['cell_data'] = np.ones(tiny_rectilinear.n_cells)
     tiny_rectilinear['point_data'] = np.arange(tiny_rectilinear.n_points)
@@ -81,3 +87,9 @@ def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
     assert tiny_rectilinear.active_scalars_name == 'point_data'
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=True)
     assert tet_grid.active_scalars_name == 'point_data'
+
+
+@pytest.mark.usefixtures('force_points_precision_single')
+def test_to_tetrahedra_points_dtype(rectilinear):
+    assert rectilinear.points.dtype == np.double
+    assert rectilinear.to_tetrahedra().points.dtype == np.single

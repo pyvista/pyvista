@@ -3681,7 +3681,7 @@ def _kitchen_split_load_func(mesh):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = _get_output(alg)
+        result = _get_output(alg, points_dtype=np.single)
         kitchen[key] = result
     return kitchen
 

@@ -39,6 +39,7 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _pop_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
@@ -47,6 +48,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.core.utilities.transform import Transform
 
@@ -1814,10 +1816,14 @@ class DataObjectFilters:
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
-        converted_ints = False
+        converted_ints: np.single | np.double | Literal[False] = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
-            converted_ints = True
+            if np.double == pv.POINTS_PRECISION:
+                self.points_to_double()
+                converted_ints = np.double
+            else:
+                self.points_to_single()
+                converted_ints = np.single
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
             point_vectors: list[str | None] = [
@@ -1836,7 +1842,7 @@ class DataObjectFilters:
                 self.cell_data.active_vectors_name,
                 self.cell_data.active_normals_name,
             ]
-        # dynamically convert each self.point_data[name] etc. to float32
+        # dynamically convert each self.point_data[name] etc. to float
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [self.point_data, self.cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
@@ -1845,13 +1851,14 @@ class DataObjectFilters:
                     continue
                 vector_arr = dataset_attrs[vector_name]
                 if not np.issubdtype(vector_arr.dtype, np.floating):
-                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
-                    converted_ints = True
+                    if not converted_ints:
+                        converted_ints = np.float32
+                    dataset_attrs[vector_name] = vector_arr.astype(converted_ints)
         if converted_ints:
             warn_external(
                 'Integer points, vector and normal data (if any) of the input mesh '
-                'have been converted to ``np.float32``. This is necessary in order '
-                'to transform properly.',
+                f'have been converted to `{np.dtype(converted_ints).name}`.\n'
+                f'This is necessary in order to transform properly.',
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -3808,6 +3815,7 @@ class DataObjectFilters:
         nonlinear_subdivision: int | None = None,
         algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = _SENTINEL,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ) -> PolyData:
         """Extract surface geometry of the mesh as :class:`~pyvista.PolyData`.
 
@@ -3860,6 +3868,7 @@ class DataObjectFilters:
             The ``'geometry'`` algorithm also
 
             - merges points by default,
+            - supports returning points with :class:`numpy.float64` dtype,
             - tends to preserve the original mesh's point order and connectivity, and
             - generates closed surfaces where closed surfaces would normally be expected.
 
@@ -3947,6 +3956,9 @@ class DataObjectFilters:
             )
             warn_external(msg, pv.PyVistaFutureWarning)
 
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         if algorithm is _SENTINEL:
             # Warn about future change in default alg
             warn_future()
@@ -3975,6 +3987,7 @@ class DataObjectFilters:
                 nonlinear_subdivision=nonlinear_subdivision,
                 algorithm=algorithm,
                 progress_bar=progress_bar,
+                points_dtype=points_dtype,
             )
             append = _vtk.vtkAppendPolyData()
             for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
@@ -3988,6 +4001,7 @@ class DataObjectFilters:
             nonlinear_subdivision=nonlinear_subdivision,
             algorithm=algorithm,  # type: ignore[arg-type]
             progress_bar=progress_bar,
+            points_dtype=points_dtype,
         )
 
     @_deprecate_positional_args
@@ -4111,6 +4125,7 @@ class DataObjectFilters:
         volume: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         vertex_count: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -4154,6 +4169,9 @@ class DataObjectFilters:
         >>> surf.plot(show_edges=True, scalars='Area')
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
@@ -4161,7 +4179,7 @@ class DataObjectFilters:
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        return _get_output(alg)
+        return _get_output(alg, points_dtype=points_dtype)
 
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
@@ -4453,6 +4471,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Return an all triangle mesh.
 
@@ -4486,11 +4505,14 @@ class DataObjectFilters:
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, points_dtype=points_dtype)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self

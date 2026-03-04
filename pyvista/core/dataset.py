@@ -29,6 +29,7 @@ from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters import _update_alg
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -1321,7 +1322,9 @@ class DataSet(DataSetFilters, DataObject):
         0.51825
 
         """
-        sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
+        sizes = self.compute_cell_sizes(
+            length=False, area=False, volume=True, points_dtype='default'
+        )
         return sizes.cell_data['Volume'].sum().item()
 
     @property
@@ -1363,7 +1366,9 @@ class DataSet(DataSetFilters, DataObject):
         3.13
 
         """
-        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
+        sizes = self.compute_cell_sizes(
+            length=False, area=True, volume=False, points_dtype='default'
+        )
         return sizes.cell_data['Area'].sum().item()
 
     def get_array(
@@ -1721,7 +1726,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     @_deprecate_positional_args
@@ -3359,3 +3364,72 @@ class DataSet(DataSetFilters, DataObject):
             else _vtk.vtkCellTypes.IsLinear
         )
         return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
+
+    def points_to_double(self) -> Self:
+        """Convert the points datatype to double precision.
+
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in double precision.
+
+        Notes
+        -----
+        This operates in place.
+
+        See Also
+        --------
+        points_to_single
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float32`` and
+        convert the points to ``float64``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.points.dtype
+        dtype('float32')
+        >>> _ = mesh.points_to_double()
+        >>> mesh.points.dtype
+        dtype('float64')
+
+        """
+        return self._points_to_double()
+
+    def points_to_single(self) -> Self:
+        """Convert the points datatype to single precision.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in single precision.
+
+        Notes
+        -----
+        - This operates in place.
+        - Many VTK filters do not properly support double-precision points and will
+          convert the points to single precision. PyVista issues a warning about this,
+          but this warning can be silenced by explicitly converting points to single.
+
+        See Also
+        --------
+        points_to_double
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float64`` and
+        convert the points to ``float32``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0]])
+        >>> mesh.points.dtype
+        dtype('float64')
+        >>> _ = mesh.points_to_single()
+        >>> mesh.points.dtype
+        dtype('float32')
+
+        """
+        return self._points_to_single()

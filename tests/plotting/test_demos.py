@@ -42,6 +42,7 @@ def test_plot_logo():
 
 
 @skip_no_plotting
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_plot_datasets():
     # simply should not fail
     demos.plot_datasets()

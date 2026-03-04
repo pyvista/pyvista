@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import ItemsView
 from itertools import permutations
 import re
+from types import FunctionType
+from typing import TYPE_CHECKING
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -9,6 +12,48 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from tests.conftest import _get_module_functions
+
+if TYPE_CHECKING:
+    from types import FunctionType
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'geometric_obj_test_case' in metafunc.fixturenames:
+        functions = _generate_geometric_object_functions()
+        ids = [name for name, _ in functions]
+        metafunc.parametrize('geometric_obj_test_case', functions, ids=ids)
+
+
+def _generate_geometric_object_functions() -> ItemsView[str, FunctionType]:
+    """Generate a list of geometric or parametric object functions which have a direction."""
+    geo_functions = _get_module_functions(pv.core.geometric_objects)
+    para_functions = _get_module_functions(pv.core.parametric_objects)
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
+    return {name: func for name, func in functions.items() if name[0].isupper()}.items()
+
+
+@pytest.mark.parametrize('dtype', [np.single, np.double])
+def test_geometric_objects(geometric_obj_test_case, dtype):
+    name, func = geometric_obj_test_case
+
+    # Add required args if needed
+    kwargs = {}
+    if name == 'CircularArc':
+        kwargs['center'] = (0, 0, 0)
+        kwargs['pointa'] = (1, 0, 0)
+        kwargs['pointb'] = (0, 1, 0)
+    elif name == 'CircularArcFromNormal':
+        kwargs['center'] = (0, 0, 0)
+    elif name in ['KochanekSpline', 'Spline']:
+        kwargs['points'] = np.eye(3)
+    elif name == 'Text3D':
+        kwargs['string'] = 'Text3D'
+
+    pv.POINTS_PRECISION = dtype
+    obj = func(**kwargs)
+    assert obj.points.dtype == dtype
 
 
 @given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
@@ -861,6 +906,7 @@ def test_icosahedron():
     assert np.isclose(doubled_solid.length, 2 * solid.length)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_icosphere():
     center = (1.0, 2.0, 3.0)
     radius = 2.4

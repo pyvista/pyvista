@@ -3,12 +3,16 @@ from __future__ import annotations
 import faulthandler
 import functools
 from importlib import metadata
+import inspect
 from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
 import platform
 import re
+from types import FunctionType
+from types import ModuleType
+from typing import TypeVar
 
 import numpy as np
 from numpy.random import default_rng
@@ -21,6 +25,7 @@ from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pv.OFF_SCREEN = True
+pv.POINTS_PRECISION = np.double
 
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
@@ -89,9 +94,11 @@ def flaky_test(
 def global_variables_reset():
     tmp_screenshots = pv.ON_SCREENSHOT
     tmp_figurepath = pv.FIGURE_PATH
+    tmp_precision = pv.POINTS_PRECISION
     yield
     pv.ON_SCREENSHOT = tmp_screenshots
     pv.FIGURE_PATH = tmp_figurepath
+    pv.POINTS_PRECISION = tmp_precision
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -125,6 +132,12 @@ def reset_global_state():
     assert pv.allow_new_attributes() is False
 
     pv.PICKLE_FORMAT = 'vtk'
+    pv.POINTS_PRECISION = np.double
+
+
+@pytest.fixture
+def force_points_precision_single():
+    pv.POINTS_PRECISION = np.single
 
 
 @pytest.fixture
@@ -134,7 +147,8 @@ def cube():
 
 @pytest.fixture
 def airplane():
-    return examples.load_airplane()
+    mesh = examples.load_airplane()
+    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
 
 
 @pytest.fixture
@@ -144,7 +158,8 @@ def rectilinear():
 
 @pytest.fixture
 def sphere():
-    return examples.load_sphere()
+    mesh = examples.load_sphere()
+    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
 
 
 @pytest.fixture
@@ -154,7 +169,8 @@ def uniform():
 
 @pytest.fixture
 def ant():
-    return examples.load_ant()
+    mesh = examples.load_ant()
+    return mesh.points_to_double() if np.double == pv.POINTS_PRECISION else mesh
 
 
 @pytest.fixture
@@ -175,9 +191,9 @@ def tetbeam():
 @pytest.fixture
 def struct_grid():
     x, y, z = np.meshgrid(
-        np.arange(-10, 10, 2, dtype=np.float32),
-        np.arange(-10, 10, 2, dtype=np.float32),
-        np.arange(-10, 10, 2, dtype=np.float32),
+        np.arange(-10, 10, 2, dtype=np.float64),
+        np.arange(-10, 10, 2, dtype=np.float64),
+        np.arange(-10, 10, 2, dtype=np.float64),
     )
     return pv.StructuredGrid(x, y, z)
 
@@ -204,13 +220,18 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def structured():
+    return examples.load_structured()
+
+
+@pytest.fixture
+def datasets(uniform, rectilinear, hexbeam, airplane, structured):
     return [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        uniform,  # ImageData
+        rectilinear,  # RectilinearGrid
+        hexbeam,  # UnstructuredGrid
+        airplane,  # PolyData
+        structured,  # StructuredGrid
     ]
 
 
@@ -551,3 +572,20 @@ def pytest_report_header(config):  # noqa: ARG001
         comma_lst = ', '.join(not_found)
         lines.append(f'optional package{plrl} not found: {comma_lst}')
     return '\n'.join(lines)
+
+
+_TypeType = TypeVar('_TypeType', bound=type)
+
+
+def _get_module_functions(module: ModuleType):
+    """Get all functions defined locally inside a module."""
+
+    def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
+        """Get all members of a specified type which are defined locally inside a module."""
+
+        def is_local(obj):
+            return type(obj) is typ and obj.__module__ == module.__name__
+
+        return dict(inspect.getmembers(module, predicate=is_local))
+
+    return _get_module_members(module, typ=FunctionType)

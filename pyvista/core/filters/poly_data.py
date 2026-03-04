@@ -18,6 +18,7 @@ from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _pop_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -798,6 +799,7 @@ class PolyDataFilters(DataSetFilters):
         pass_lines: bool = False,
         inplace: bool = False,
         progress_bar: bool = False,
+        **kwargs,
     ):
         """Return an all triangle mesh.
 
@@ -841,13 +843,16 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         trifilter = _vtk.vtkTriangleFilter()
         trifilter.SetInputData(self)
         trifilter.SetPassVerts(pass_verts)
         trifilter.SetPassLines(pass_lines)
         _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
 
-        mesh = _get_output(trifilter)
+        mesh = _get_output(trifilter, points_dtype=points_dtype)
         if inplace:
             self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return self
@@ -1428,6 +1433,7 @@ class PolyDataFilters(DataSetFilters):
         subfilter='linear',
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Increase the number of triangles in a single, connected triangular mesh.
 
@@ -1500,6 +1506,9 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True, line_width=3)
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             msg = 'Input mesh for subdivision must be all triangles.'
             raise NotAllTrianglesError(msg)
@@ -1523,7 +1532,7 @@ class PolyDataFilters(DataSetFilters):
         sfilter.SetInputData(self)
         _update_alg(sfilter, progress_bar=progress_bar, message='Subdividing Mesh')
 
-        submesh = _get_output(sfilter)
+        submesh = _get_output(sfilter, points_dtype=points_dtype)
         if inplace:
             self.copy_from(submesh, deep=False)  # type: ignore[attr-defined]
             return self
@@ -1861,6 +1870,7 @@ class PolyDataFilters(DataSetFilters):
         feature_angle=30.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Compute point and/or cell normals for a mesh.
 
@@ -1981,6 +1991,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`compute_normals_example` for more examples using this filter.
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
@@ -2000,7 +2013,7 @@ class PolyDataFilters(DataSetFilters):
         normal.SetInputData(self)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
-        mesh = _get_output(normal)
+        mesh = _get_output(normal, points_dtype=points_dtype)
         try:
             mesh['Normals']
         except KeyError:
@@ -2285,6 +2298,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if tolerance is None:
             tolerance = kwargs.pop('merge_tol', None)
+        points_dtype = _pop_points_dtype(kwargs)
         assert_empty_kwargs(**kwargs)
         alg = _vtk.vtkCleanPolyData()
         alg.SetPointMerging(point_merging)
@@ -2299,7 +2313,7 @@ class PolyDataFilters(DataSetFilters):
                 alg.SetTolerance(tolerance)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning')
-        output = _get_output(alg)
+        output = _get_output(alg, points_dtype=points_dtype)
 
         # Check output so no segfaults occur
         if output.n_points < 1 and self.n_cells > 0:  # type: ignore[attr-defined]

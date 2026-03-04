@@ -1109,6 +1109,7 @@ def test_cast_image_data_with_float_spacing_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_image_data_to_tetrahedra():
     grid = pv.ImageData(dimensions=(2, 2, 2))
     ugrid = grid.to_tetrahedra()

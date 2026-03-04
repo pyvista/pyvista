@@ -502,6 +502,13 @@ changes any given branch is introducing before looking at the code.
 -  ``release/``: releases (see below)
 -  ``breaking-change/``: Changes that break backward compatibility
 
+Filter Conventions
+^^^^^^^^^^^^^^^^^^
+Points dtype
+
+- The points dtype for filters is set globally
+- Filters should `only` expose the ``points_dtype`` if the filter does not support double precision
+
 Testing
 ^^^^^^^
 

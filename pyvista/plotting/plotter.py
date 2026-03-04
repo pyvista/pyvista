@@ -38,6 +38,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import convert_array
@@ -6223,12 +6224,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         pdata = pv.vector_poly_data(cent, direction)
         # Create arrow object
         arrow = _vtk.vtkArrowSource()
-        arrow.Update()
+        _update_alg(arrow)
         glyph3D = _vtk.vtkGlyph3D()
         glyph3D.SetSourceData(arrow.GetOutput())
         glyph3D.SetInputData(pdata)
         glyph3D.SetVectorModeToUseVector()
-        glyph3D.Update()
+        _update_alg(glyph3D)
 
         arrows = wrap(glyph3D.GetOutput())
         return self.add_mesh(arrows, **kwargs)

@@ -36,6 +36,11 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+@pytest.fixture(autouse=True)
+def default_points_dtype():
+    pv.POINTS_PRECISION = None
+
+
 @pytest.fixture
 def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     console = Console(

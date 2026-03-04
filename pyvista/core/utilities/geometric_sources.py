@@ -25,6 +25,8 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.filters import _maybe_convert_points_dtype
+from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -44,6 +46,37 @@ if TYPE_CHECKING:
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
+
+class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
+    @property
+    def points_dtype(self):
+        return getattr(self, '_points_dtype', None)
+
+    @points_dtype.setter
+    def points_dtype(self, points_dtype):
+        self._points_dtype = points_dtype
+
+    def Update(self) -> None:
+        _set_output_points_precision(self)
+        super().Update()
+
+    def GetOutput(self) -> pv.DataObject:
+        out = wrap(super().GetOutput())
+        _Source._check_output_points_precision(out, points_dtype=self.points_dtype, algorithm=self)
+        return out
+
+    @staticmethod
+    def _check_output_points_precision(mesh_out, *, points_dtype, algorithm):
+        precision = points_dtype if points_dtype is not None else pv.POINTS_PRECISION
+        if precision is not None:
+            points = mesh_out.points
+            if precision == np.double and points.dtype != np.double:
+                msg = (
+                    f'{algorithm.__class__.__name__} does not support double precision.\n'
+                    f'Output {mesh_out.__class__.__name__} points dtype is {points.dtype.name}.'
+                )
+                raise ValueError(msg)
 
 
 def translate(
@@ -310,11 +343,12 @@ if vtk_version_info < (9, 3):
                 Capsule surface.
 
             """
+            _set_output_points_precision(self)
             self.Update()
             return wrap(self.GetOutput())
 
 
-class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
+class ConeSource(_Source, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -572,7 +606,7 @@ class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
         return wrap(self.GetOutput())
 
 
-class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSource):
+class CylinderSource(_Source, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -835,7 +869,7 @@ class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSourc
         return wrap(self.GetOutput())
 
 
-class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
+class MultipleLinesSource(_Source, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -1099,6 +1133,11 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
                 # Add a single point to 'fix' the bounds
                 self._output.points = (0.0, 0.0, 0.0)
 
+            # Extrude filter only supports single precision, so we increase precision
+            # after creating the polydata but before applying transformations
+            if np.double == pv.POINTS_PRECISION:
+                self._output.points_to_double()
+
             self._transform_output()
             self._modified = False
 
@@ -1173,7 +1212,7 @@ class Text3DSource(_NoNewAttrMixin, DisableVtkSnakeCase, vtkVectorText):
             out.points += self.center
 
 
-class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
+class CubeSource(_Source, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1585,7 +1624,7 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
-class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
+class LineSource(_Source, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1704,7 +1743,7 @@ class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
-class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
+class SphereSource(_Source, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1992,7 +2031,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         return wrap(self.GetOutput())
 
 
-class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
+class PolygonSource(_Source, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2277,7 +2316,7 @@ class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonic
         return wrap(self.GetOutput())
 
 
-class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
+class PlaneSource(_Source, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2688,10 +2727,11 @@ class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
 
         """
         self.Update()
-        return wrap(self.GetOutput())
+        # Arrow source doesn't support double precision, so we convert manually
+        return _maybe_convert_points_dtype(wrap(self.GetOutput()))
 
 
-class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
+class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2803,7 +2843,7 @@ class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSour
         return wrap(self.GetOutput())
 
 
-class SuperquadricSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
+class SuperquadricSource(_Source, _vtk.vtkSuperquadricSource):
     """Create superquadric source.
 
     .. versionadded:: 0.44

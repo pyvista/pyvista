@@ -126,6 +126,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 2], points_out[:, 2])
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_translate_precision():
     """Test that specifying a 64bit float as an arg, will not
     introduce precision error for 32bit meshes.

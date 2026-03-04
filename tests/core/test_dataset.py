@@ -1253,6 +1253,7 @@ def test_partition(hexbeam):
     assert out.n_points > hexbeam.n_points
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_explode(datasets):
     for dataset in datasets:
         out = dataset.explode()
@@ -1260,6 +1261,7 @@ def test_explode(datasets):
         assert out.n_points > dataset.n_points
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_separate_cells(hexbeam):
     assert hexbeam.n_points != hexbeam.n_cells * 8
     sep_grid = hexbeam.separate_cells()
