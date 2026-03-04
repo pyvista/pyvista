@@ -84,13 +84,18 @@ def comprehensive_frd_file(tmp_path):
  -1 4 999
  -1 5 1
  -2 99 99 99 99 99 99 99 99
+ -1 6 1
+ -2 1 2 3 4
+ -1 7 5
+ -2 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
  -3
-100CL 1 0.1
+100CL BAD_STEP BAD_TIME
  -4 STRESS 6
  -5 skip component info
  -1 bad_first_line 1.0
  -1 1 1.0 2.0 3.0 4.0 5.0 6.0
  -1 2 bad_float 3.0 4.0 5.0 6.0
+ -1 99 1.0 2.0 3.0 4.0 5.0 6.0
  -3
 100CL 2 0.2
  -4 EMPTY_BLOCK 1
@@ -102,12 +107,12 @@ def comprehensive_frd_file(tmp_path):
  -1 2 20.0
  -1 3 30.0
  -1 4 40.0
+ -1 99 99.0
  -3
 """
     file_path = tmp_path / 'comprehensive.frd'
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
-
 
 @pytest.fixture
 def no_steps_frd_file(tmp_path):
