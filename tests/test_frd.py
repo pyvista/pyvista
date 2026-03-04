@@ -370,7 +370,7 @@ def test_frd_3d_element_volumes(generic_element_frd):
     filepath, elem_name = generic_element_frd
 
     mesh = pv.FRDReader(filepath).read()
-    
+
     if elem_name == 'PE15':
         msg = (
             'VTK bug with negative volume for quadratic wedge '
@@ -420,6 +420,8 @@ def test_frd_reader_wrong_number_of_points_warning(empty_frd_file):
     # 2. Test that Update() raises the warning based on the internal state
     reader = pv.FRDReader(empty_frd_file)
     reader.reader._has_wrong_number_of_points.add(pv.CellType.HEXAHEDRON)
-    
-    with pytest.warns(pv.InvalidMeshWarning, match='Cell types with wrong number of points detected'):
+
+    with pytest.warns(
+        pv.InvalidMeshWarning, match='Cell types with wrong number of points detected'
+    ):
         reader.read()
