@@ -519,6 +519,7 @@ def test_wrap_no_copy():
     assert wrapped is pv.wrap(wrapped)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_inheritance_no_wrappers():
     class Foo(pv.PolyData):
         pass

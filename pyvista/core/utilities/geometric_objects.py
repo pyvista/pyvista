@@ -2024,8 +2024,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    poly = pv.PolyData(points, cells)
-    return _maybe_convert_points_dtype(poly)
+    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2101,8 +2100,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    poly = pv.PolyData(points, cells)
-    return _maybe_convert_points_dtype(poly)
+    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2138,8 +2136,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    poly = pv.PolyData(points, cells)
-    return _maybe_convert_points_dtype(poly)
+    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2178,8 +2175,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    poly = pv.PolyData(points, cells)
-    return _maybe_convert_points_dtype(poly)
+    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
@@ -2222,8 +2218,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    poly = pv.PolyData(points, cells)
-    return _maybe_convert_points_dtype(poly)
+    return _maybe_convert_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
