@@ -3519,6 +3519,8 @@ class FRDReader(BaseReader, TimeReader):
     - ``<NAME>_sgMises``: signed von Mises magnitude.
     - ``<NAME>_PS1``, ``_PS2``, ``_PS3``: principal components.
 
+    .. versionadded:: 0.48
+
     Examples
     --------
     >>> import pyvista as pv
