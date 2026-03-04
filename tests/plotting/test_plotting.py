@@ -3193,6 +3193,7 @@ def test_ssaa_pass():
     pl.show()
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @skip_windows_mesa
 def test_ssao_pass(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
@@ -3208,6 +3209,7 @@ def test_ssao_pass(verify_image_cache):
 
 
 @skip_mesa
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_ssao_pass_from_helper(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True  # high variance (~1000) on MacOS 15
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
@@ -4528,6 +4530,7 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing fatal exception: access violation')
 def test_voxelize_volume():
     mesh = examples.download_cow()
