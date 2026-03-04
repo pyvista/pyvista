@@ -80,7 +80,7 @@ class _FRDVTKReader(BaseVTKReader):
         FRDElementType.PE6: CellType.WEDGE,
         FRDElementType.TE4: CellType.TETRA,
         FRDElementType.HE20: CellType.QUADRATIC_HEXAHEDRON,
-        FRDElementType.PE15: CellType.WEDGE,  # degraded; pe15 not native to base VTK
+        FRDElementType.PE15: CellType.QUADRATIC_WEDGE,
         FRDElementType.TE10: CellType.QUADRATIC_TETRA,
         FRDElementType.TR3: CellType.TRIANGLE,
         FRDElementType.TR6: CellType.QUADRATIC_TRIANGLE,
@@ -223,20 +223,20 @@ class _FRDVTKReader(BaseVTKReader):
         ):
             return [
                 node_ids[0],
+                node_ids[1],
                 node_ids[2],
-                node_ids[1],  # Inverted bottom base corners
                 node_ids[3],
+                node_ids[4],
                 node_ids[5],
-                node_ids[4],  # Inverted top base corners
-                node_ids[8],
+                node_ids[6],
                 node_ids[7],
-                node_ids[6],  # Inverted bottom base mids
-                node_ids[14],
+                node_ids[8],
+                node_ids[12],
                 node_ids[13],
-                node_ids[12],  # Top mids (VTK expects top next)
+                node_ids[14],
                 node_ids[9],
+                node_ids[10],
                 node_ids[11],
-                node_ids[10],  # Vertical mids
             ]
 
         return node_ids
