@@ -1249,3 +1249,12 @@ def test_download_warping_spheres():
     mesh = examples.download_warping_spheres()
     expected = pv.PolyData if pv.vtk_version_info < (9, 5, 0) else pv.PartitionedDataSet
     assert isinstance(mesh, expected)
+
+
+def test_download_frd():
+    filename = examples.download_frd(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.frd'
+
+    mesh = examples.download_frd()
+    assert isinstance(mesh, pv.UnstructuredGrid)
