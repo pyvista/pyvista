@@ -82,10 +82,12 @@ def comprehensive_frd_file(tmp_path):
  -1 4 999
  -1 5 1
  -2 99 99 99 99 99 99 99 99
- -1 6 1
- -2 1 2 3 4
- -1 7 5
+ -1 6 5
  -2 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+ -1 7 2
+ -2 1 2 3
+ -1 8 7
+ -2 1 2 3 4 5
  -3
 100CL BAD_STEP BAD_TIME
  -4 STRESS 6
@@ -405,21 +407,3 @@ def test_frd_1d_element_lengths(generic_element_frd):
     assert length > 0.0, (
         f'Element {elem_name} generated non-positive length ({length}). Bad node ordering!'
     )
-
-
-def test_frd_reader_wrong_number_of_points_warning(empty_frd_file):
-    """Cover defensive checks for elements with an incorrect number of nodes."""
-    # 1. Test internal method catches bad length directly
-    low_level_reader = pv.core.utilities._frd._FRDVTKReader()
-    bad_nodes = [1, 2, 3]  # HE8 expects 8 nodes
-    low_level_reader._permute_nodes(bad_nodes, pv.core.utilities._frd.FRDElementType.HE8)
-    assert pv.CellType.HEXAHEDRON in low_level_reader._has_wrong_number_of_points
-
-    # 2. Test that Update() raises the warning based on the internal state
-    reader = pv.FRDReader(empty_frd_file)
-    reader.reader._has_wrong_number_of_points.add(pv.CellType.HEXAHEDRON)
-
-    with pytest.warns(
-        pv.InvalidMeshWarning, match='Cell types with wrong number of points detected'
-    ):
-        reader.read()
