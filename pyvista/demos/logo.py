@@ -24,7 +24,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.features import _voxelize_legacy
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
@@ -83,21 +82,7 @@ def text_3d(string, depth=0.5):
     :ref:`create_pixel_art_example`
 
     """
-    from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
-
-    vec_text = vtkVectorText()
-    vec_text.SetText(string)
-
-    extrude = _vtk.vtkLinearExtrusionFilter()
-    extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion()
-    extrude.SetVector(0, 0, 1)
-    extrude.SetScaleFactor(depth)
-
-    tri_filter = _vtk.vtkTriangleFilter()
-    tri_filter.SetInputConnection(extrude.GetOutputPort())
-    tri_filter.Update()
-    return pv.wrap(tri_filter.GetOutput())
+    return pv.Text3D(string, depth=depth)
 
 
 @_deprecate_positional_args

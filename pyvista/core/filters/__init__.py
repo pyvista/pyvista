@@ -74,6 +74,14 @@ def _pop_points_dtype(kwargs):
     return kwargs.pop('points_dtype', None)
 
 
+def _maybe_convert_points_dtype(mesh):
+    if np.single == pv.POINTS_PRECISION:
+        mesh.points_to_single()
+    elif np.double == pv.POINTS_PRECISION:
+        mesh.points_to_double()
+    return mesh
+
+
 def _set_output_points_precision(alg: _vtk.vtkAlgorithm):
     # Try to set output precision to match input if the filter supports it.
     # This should not really be necessary since vtkAlgorithm.DEFAULT_PRECISION

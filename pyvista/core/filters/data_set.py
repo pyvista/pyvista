@@ -30,6 +30,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _maybe_convert_points_dtype
 from pyvista.core.filters import _pop_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
@@ -1814,9 +1815,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Make glyphing geometry if necessary
         if geom is None:
-            arrow = _vtk.vtkArrowSource()
-            _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            alg = _vtk.vtkArrowSource()
+            _update_alg(alg, progress_bar=progress_bar, message='Making Arrow')
+            arrow = _maybe_convert_points_dtype(pv.wrap(alg.GetOutput()))
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom

@@ -37,7 +37,7 @@ with contextlib.suppress(ImportError):
 
 from typing import TYPE_CHECKING
 
-from pyvista.core.filters import _check_output_points_precision
+from pyvista.core.filters import _maybe_convert_points_dtype
 from pyvista.core.filters import _set_output_points_precision
 
 from .helpers import wrap
@@ -51,14 +51,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-
-
-def _maybe_convert_points_dtype(mesh):
-    if np.single == pv.POINTS_PRECISION:
-        mesh.points_to_single()
-    elif np.double == pv.POINTS_PRECISION:
-        mesh.points_to_double()
-    return mesh
 
 
 @_deprecate_positional_args

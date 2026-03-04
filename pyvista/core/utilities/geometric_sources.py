@@ -25,6 +25,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.filters import _maybe_convert_points_dtype
 from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
@@ -2726,7 +2727,8 @@ class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
 
         """
         self.Update()
-        return wrap(self.GetOutput())
+        # Arrow source doesn't support double precision, so we convert manually
+        return _maybe_convert_points_dtype(wrap(self.GetOutput()))
 
 
 class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
