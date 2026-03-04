@@ -1311,6 +1311,7 @@ def test_fit_plane_to_points_resolution(airplane):
     assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_fit_plane_to_points():
     # Fit a plane to a plane's points
     center = (1, 2, 3)

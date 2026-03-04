@@ -4861,6 +4861,7 @@ def test_direction_objects(direction_obj_test_case):
     pl.show()
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('orient_faces', [True, False])
 def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
@@ -4893,6 +4894,7 @@ def _show_edges():
     pv.global_theme.show_edges = flag
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
 @pytest.mark.parametrize(
     ('select_inputs', 'select_outputs'),
@@ -4969,6 +4971,7 @@ def test_contour_labels_boundary_style(
     pl.show(return_cpos=True)
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize(
     ('smoothing_distance', 'smoothing_scale'),
     [(0, None), (None, 0), (5, 0.5), (5, 1)],
@@ -5016,6 +5019,7 @@ def test_contour_labels_smoothing_constraint(
     pl.show()
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.usefixtures('_show_edges')
 @pytest.mark.parametrize('smoothing', [True, False])
 @pytest.mark.needs_vtk_version(9, 3, 0)

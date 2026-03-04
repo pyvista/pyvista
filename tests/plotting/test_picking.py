@@ -605,6 +605,7 @@ def test_block_picking(multiblock_poly):
     assert pl.picked_block_index == picked_blocks[0]
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 @pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
 @pytest.mark.skip_check_gc("vtkDataArray not gc'd with 'point' mode on Python 3.14 vtk dev wheels")
 def test_element_picking(mode):

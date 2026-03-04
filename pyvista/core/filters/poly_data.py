@@ -799,6 +799,7 @@ class PolyDataFilters(DataSetFilters):
         pass_lines: bool = False,
         inplace: bool = False,
         progress_bar: bool = False,
+        **kwargs,
     ):
         """Return an all triangle mesh.
 
@@ -842,13 +843,16 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         trifilter = _vtk.vtkTriangleFilter()
         trifilter.SetInputData(self)
         trifilter.SetPassVerts(pass_verts)
         trifilter.SetPassLines(pass_lines)
         _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
 
-        mesh = _get_output(trifilter)
+        mesh = _get_output(trifilter, points_dtype=points_dtype)
         if inplace:
             self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return self

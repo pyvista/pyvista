@@ -4125,7 +4125,7 @@ class DataObjectFilters:
         volume: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         vertex_count: bool = False,  # noqa: FBT001, FBT002
-            **kwargs,
+        **kwargs,
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -4471,6 +4471,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Return an all triangle mesh.
 
@@ -4504,11 +4505,14 @@ class DataObjectFilters:
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, points_dtype=points_dtype)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self

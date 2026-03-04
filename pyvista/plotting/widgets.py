@@ -10,6 +10,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.filters import _set_output_points_precision
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -2078,6 +2079,7 @@ class WidgetHelper:
         def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
+            _set_output_points_precision(para_source)
             para_source.Update()
             polyline = pv.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))

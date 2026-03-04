@@ -29,8 +29,8 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.filters import _check_output_points_precision
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _pop_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
@@ -4495,6 +4495,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        **kwargs,
     ):
         """Return a subset of the grid.
 
@@ -4545,6 +4546,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show()
 
         """
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
+
         indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
         if indices.dtype == bool:
             assume_sorted_and_unique = True
@@ -4585,7 +4589,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             # We set the arrays manually earlier
             extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
-        subgrid = _get_output(extract)
+        subgrid = _get_output(extract, points_dtype=points_dtype)
 
         # Make active scalars match input
         info = self.active_scalars_info
