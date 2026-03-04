@@ -114,6 +114,7 @@ def comprehensive_frd_file(tmp_path):
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
 
+
 @pytest.fixture
 def no_steps_frd_file(tmp_path):
     """Fixture to trigger empty step checks."""
