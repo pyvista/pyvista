@@ -2081,6 +2081,7 @@ def test_array_volume_rendering(uniform, verify_image_cache):
     pv.plot(arr, volume=True, opacity='linear')
 
 
+@pytest.mark.usefixtures('force_points_precision_single')
 def test_plot_compare_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()

@@ -6224,12 +6224,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         pdata = pv.vector_poly_data(cent, direction)
         # Create arrow object
         arrow = _vtk.vtkArrowSource()
-        _update_alg(arrow.Update())
+        _update_alg(arrow)
         glyph3D = _vtk.vtkGlyph3D()
-        glyph3D.SetIn(arrow.GetOutput())
+        glyph3D.SetSourceData(arrow.GetOutput())
         glyph3D.SetInputData(pdata)
         glyph3D.SetVectorModeToUseVector()
-        _update_alg(glyph3D.Update())
+        _update_alg(glyph3D)
 
         arrows = wrap(glyph3D.GetOutput())
         return self.add_mesh(arrows, **kwargs)
