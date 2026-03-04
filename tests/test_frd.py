@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 
@@ -211,11 +213,12 @@ def test_frd_reader_derived_strain(mock_frd_file):
 
 def test_frd_reader_comprehensive(comprehensive_frd_file):
     # This directly hits the logic in pyvista/core/utilities/fileio.py
-    with pytest.warns(UserWarning, match="Unknown element type code '999'"):
+    match = 'Unknown element type code(s) encountered {999}. These elements are skipped.'
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         mesh_from_pv = pv.read(comprehensive_frd_file)
     assert isinstance(mesh_from_pv, pv.UnstructuredGrid)
 
-    with pytest.warns(UserWarning, match="Unknown element type code '999'"):
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match)):
         reader = pv.FRDReader(comprehensive_frd_file)
 
     mesh = reader.read()
@@ -357,6 +360,13 @@ def generic_element_frd(tmp_path, request):
 )
 def test_frd_3d_element_volumes(generic_element_frd):
     filepath, elem_name = generic_element_frd
+    if elem_name == 'PE15':
+        msg = (
+            'VTK bug with negative volume for quadratic wedge '
+            'https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
+        )
+        pytest.xfail(msg)
+
     mesh = pv.FRDReader(filepath).read()
 
     # Calculate cell volume

@@ -8,12 +8,13 @@ import pathlib
 import re
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ClassVar
 
 import numpy as np
 
 from pyvista._warn_external import warn_external
+from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
+from pyvista.core.errors import InvalidMeshWarning
 from pyvista.core.utilities.reader import BaseVTKReader
 
 if TYPE_CHECKING:
@@ -58,6 +59,25 @@ class FRDElementType(IntEnum):
     BE3 = 12
 
 
+# CalculiX element type -> VTK cell type
+CCX_TO_VTK_TYPE: dict[FRDElementType, CellType] = {
+    FRDElementType.HE8: CellType.HEXAHEDRON,
+    FRDElementType.PE6: CellType.WEDGE,
+    FRDElementType.TE4: CellType.TETRA,
+    FRDElementType.HE20: CellType.QUADRATIC_HEXAHEDRON,
+    FRDElementType.PE15: CellType.QUADRATIC_WEDGE,
+    FRDElementType.TE10: CellType.QUADRATIC_TETRA,
+    FRDElementType.TR3: CellType.TRIANGLE,
+    FRDElementType.TR6: CellType.QUADRATIC_TRIANGLE,
+    FRDElementType.QU4: CellType.QUAD,
+    FRDElementType.QU8: CellType.QUADRATIC_QUAD,
+    FRDElementType.BE2: CellType.LINE,
+    FRDElementType.BE3: CellType.QUADRATIC_EDGE,
+}
+
+NODES_PER_ELEM: dict[FRDElementType, int] = {
+    elem: _CELL_TYPE_TO_NUM_POINTS[np.uint8(CCX_TO_VTK_TYPE[elem])] for elem in CCX_TO_VTK_TYPE
+}
 # ---------------------------------------------------------------------------
 # Low-level, VTK-style reader
 # ---------------------------------------------------------------------------
@@ -74,43 +94,14 @@ class _FRDVTKReader(BaseVTKReader):
     # Compiled regex to fix scientific notation formatting issues
     _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
 
-    # CalculiX element type -> VTK cell type
-    CCX_TO_VTK_TYPE: ClassVar[dict[FRDElementType, CellType]] = {
-        FRDElementType.HE8: CellType.HEXAHEDRON,
-        FRDElementType.PE6: CellType.WEDGE,
-        FRDElementType.TE4: CellType.TETRA,
-        FRDElementType.HE20: CellType.QUADRATIC_HEXAHEDRON,
-        FRDElementType.PE15: CellType.QUADRATIC_WEDGE,
-        FRDElementType.TE10: CellType.QUADRATIC_TETRA,
-        FRDElementType.TR3: CellType.TRIANGLE,
-        FRDElementType.TR6: CellType.QUADRATIC_TRIANGLE,
-        FRDElementType.QU4: CellType.QUAD,
-        FRDElementType.QU8: CellType.QUADRATIC_QUAD,
-        FRDElementType.BE2: CellType.LINE,
-        FRDElementType.BE3: CellType.QUADRATIC_EDGE,
-    }
-
-    NODES_PER_ELEM: ClassVar[dict[FRDElementType, int]] = {
-        FRDElementType.HE8: 8,
-        FRDElementType.PE6: 6,
-        FRDElementType.TE4: 4,
-        FRDElementType.HE20: 20,
-        FRDElementType.PE15: 15,
-        FRDElementType.TE10: 10,
-        FRDElementType.TR3: 3,
-        FRDElementType.TR6: 6,
-        FRDElementType.QU4: 4,
-        FRDElementType.QU8: 8,
-        FRDElementType.BE2: 2,
-        FRDElementType.BE3: 3,
-    }
-
     def __init__(self) -> None:
         super().__init__()
         # Geometry
         self._nodes: dict[int, list[float]] = {}
         self._elements: list[list[int]] = []
         self._cell_types: list[int] = []
+        self._has_wrong_number_of_points: set[CellType] = set()
+        self._has_unsupported_element: set[int] = set()
 
         # Time-step data: time_value -> { result_name -> { node_id -> [values] } }
         self._results_by_step: dict[float, dict[str, dict[int, list[float]]]] = {}
@@ -140,6 +131,14 @@ class _FRDVTKReader(BaseVTKReader):
 
         with pathlib.Path(self._filename).open(errors='replace') as file_stream:
             self._parse_lines(file_stream)
+        if celltypes := self._has_wrong_number_of_points:
+            msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
+            warn_external(msg, InvalidMeshWarning)
+        if elements := self._has_unsupported_element:
+            msg = (
+                f'Unknown element type code(s) encountered {elements}. These elements are skipped.'
+            )
+            warn_external(msg, InvalidMeshWarning)
 
         self._time_steps = sorted(self._results_by_step.keys())
 
@@ -176,10 +175,11 @@ class _FRDVTKReader(BaseVTKReader):
 
     def _permute_nodes(self, node_ids: list[int], etype: FRDElementType) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
-        if (
-            etype == FRDElementType.HE20
-            and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.HE20]
-        ):
+        # Keep track of elements with wrong number of points
+        if len(node_ids) != NODES_PER_ELEM[etype]:
+            self._has_wrong_number_of_points.add(CCX_TO_VTK_TYPE[etype])
+
+        if etype == FRDElementType.HE20:
             return [
                 node_ids[0],
                 node_ids[1],
@@ -203,24 +203,17 @@ class _FRDVTKReader(BaseVTKReader):
                 node_ids[15],
             ]
 
-        # Both PE6 and PE15 (Wedges) in CalculiX have inverted bases compared to VTK
-        if (
-            etype == FRDElementType.PE6
-            and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.PE6]
-        ):
+        if etype == FRDElementType.PE6:
             return [
                 node_ids[0],
                 node_ids[2],
-                node_ids[1],  # Inverted bottom base
+                node_ids[1],
                 node_ids[3],
                 node_ids[5],
-                node_ids[4],  # Inverted top base
+                node_ids[4],
             ]
 
-        if (
-            etype == FRDElementType.PE15
-            and len(node_ids) == _FRDVTKReader.NODES_PER_ELEM[FRDElementType.PE15]
-        ):
+        if etype == FRDElementType.PE15:
             return [
                 node_ids[0],
                 node_ids[1],
@@ -298,25 +291,12 @@ class _FRDVTKReader(BaseVTKReader):
                 try:
                     etype = FRDElementType(etype_val)
                 except ValueError:
-                    warn_external(
-                        f"Unknown element type code '{etype_val}' encountered. "
-                        'These elements will be skipped.',
-                        UserWarning,
-                    )
+                    self._has_unsupported_element.add(etype_val)
                     etype = None
                     continue
 
-                if etype not in self.CCX_TO_VTK_TYPE:
-                    warn_external(
-                        f"Unsupported element type '{etype.name}' encountered. "
-                        'These elements will be skipped.',
-                        UserWarning,
-                    )
-                    etype = None
-                    continue
-
-                needed = self.NODES_PER_ELEM[etype]
-                vtk_type = self.CCX_TO_VTK_TYPE[etype]
+                needed = NODES_PER_ELEM[etype]
+                vtk_type = CCX_TO_VTK_TYPE[etype]
                 node_ids = []
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
