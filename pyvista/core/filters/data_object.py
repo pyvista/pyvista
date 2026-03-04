@@ -4125,6 +4125,7 @@ class DataObjectFilters:
         volume: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         vertex_count: bool = False,  # noqa: FBT001, FBT002
+            **kwargs,
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -4168,24 +4169,9 @@ class DataObjectFilters:
         >>> surf.plot(show_edges=True, scalars='Area')
 
         """
-        return self._compute_cell_sizes_points_dtype(
-            length=length,
-            area=area,
-            volume=volume,
-            progress_bar=progress_bar,
-            vertex_count=vertex_count,
-            points_dtype=None,
-        )
+        points_dtype = _pop_points_dtype(kwargs)
+        assert_empty_kwargs(**kwargs)
 
-    def _compute_cell_sizes_points_dtype(
-        self,
-        points_dtype,
-        length: bool = True,
-        area: bool = True,
-        volume: bool = True,
-        progress_bar: bool = False,
-        vertex_count: bool = False,
-    ):
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)

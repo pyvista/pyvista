@@ -6234,7 +6234,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         output = _get_output(alg, points_dtype=points_dtype)
         if isinstance(self, _vtk.vtkPolyData):
             # Force single output to match output from shrink filter
-            return output._extract_surface_points_dtype(  # type: ignore[unreachable]
+            return output.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_cellid=False, pass_pointid=False, points_dtype=np.single
             )
         return output
@@ -8017,7 +8017,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
-        surface = wrap(self)._extract_surface_points_dtype(
+        surface = wrap(self).extract_surface(
             algorithm=None, pass_pointid=False, pass_cellid=False, points_dtype='default'
         )
         if not (surface.faces.size or surface.strips.size):
