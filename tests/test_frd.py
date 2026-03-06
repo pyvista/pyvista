@@ -369,9 +369,6 @@ def generic_element_frd(tmp_path, request):
 
 
 @pytest.mark.parametrize(
-    'generic_element_frd', ['HE8', 'PE6', 'TE4', 'HE20', 'PE15', 'TE10'], indirect=True
-)
-@pytest.mark.parametrize(
     'generic_element_frd', list(VALID_ELEMENT_DEFINITIONS.keys()), indirect=True
 )
 def test_frd_element_sizes(generic_element_frd):
