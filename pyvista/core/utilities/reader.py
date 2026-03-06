@@ -3581,10 +3581,6 @@ class FRDReader(BaseReader, TimeReader):
         """Set the active time value."""
         self.set_active_time_value(value)
 
-    def read(self):
-        """Read and return the PyVista UnstructuredGrid."""
-        return self.reader.GetOutput()
-
 
 class ExodusIIBlockSet(_NoNewAttrMixin):
     """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
