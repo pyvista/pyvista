@@ -418,13 +418,15 @@ def test_elevation_composite(multiblock_all):
 
 def test_compute_cell_sizes(datasets):
     for dataset in datasets:
-        result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True)
+        result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True, size=True)
         assert result is not None
         assert isinstance(result, type(dataset))
         assert 'Length' in result.array_names
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
         assert 'VertexCount' in result.array_names
+        assert 'Size' in result.array_names
+
     # Test the volume property
     grid = pv.ImageData(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
@@ -435,6 +437,36 @@ def test_compute_cell_sizes_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.compute_cell_sizes(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
+
+
+@pytest.mark.parametrize('as_multiblock', [True, False])
+def test_compute_cell_sizes_size(as_multiblock):
+    mesh_0 = examples.cells.Vertex()
+    mesh_1 = examples.cells.Line().translate((1, 1, 1), inplace=False)
+    mesh_2 = examples.cells.Quadrilateral().translate((2, 2, 2), inplace=False)
+    mesh_3 = examples.cells.Hexahedron().translate((3, 3, 3), inplace=False)
+    mesh = mesh_0 + mesh_1 + mesh_2 + mesh_3
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+
+    output = mesh.compute_cell_sizes(vertex_count=True, size=True)
+    output_dataset = output[0] if as_multiblock else output
+
+    assert np.allclose([1.0, 0.0, 0.0, 0.0], output_dataset['VertexCount'])
+    assert np.allclose([0.0, 1.0, 0.0, 0.0], output_dataset['Length'])
+    assert np.allclose([0.0, 0.0, 1.0, 0.0], output_dataset['Area'])
+    assert np.allclose([0.0, 0.0, 0.0, 1.0], output_dataset['Volume'])
+    assert np.allclose([1.0, 1.0, 1.0, 1.0], output_dataset['Size'])
+
+    output = mesh.compute_cell_sizes(
+        length=False, area=False, volume=False, vertex_count=False, size=True
+    )
+    output_dataset = output[0] if as_multiblock else output
+    assert 'VertexCount' not in output_dataset.array_names
+    assert 'Length' not in output_dataset.array_names
+    assert 'Area' not in output_dataset.array_names
+    assert 'Volume' not in output_dataset.array_names
+    assert np.allclose([0.0, 0.0, 0.0, 0.0], output_dataset['Size'])
 
 
 def test_cell_centers(datasets):
