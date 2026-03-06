@@ -4151,7 +4151,7 @@ class DataObjectFilters:
 
         """
 
-        def add_size_array(dataset: _DataSetType) -> _DataSetType:
+        def add_size_array(dataset: DataSet):
             size_array = np.zeros(dataset.n_cells)
             cell_data = dataset.cell_data
             cell_data['Size'] = size_array
