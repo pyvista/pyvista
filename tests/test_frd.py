@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from pyvista.core.celltype import _CELL_TYPES_1D, _CELL_TYPES_2D, _CELL_TYPES_3D
-from pyvista.core.utilities._frd import FRDElementType, CCX_TO_VTK_TYPE
-
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.core.celltype import _CELL_TYPES_1D
+from pyvista.core.celltype import _CELL_TYPES_2D
+from pyvista.core.celltype import _CELL_TYPES_3D
+from pyvista.core.utilities._frd import CCX_TO_VTK_TYPE
+from pyvista.core.utilities._frd import FRDElementType
 
 
 @pytest.fixture
@@ -369,16 +371,17 @@ def generic_element_frd(tmp_path, request):
 @pytest.mark.parametrize(
     'generic_element_frd', ['HE8', 'PE6', 'TE4', 'HE20', 'PE15', 'TE10'], indirect=True
 )
-
-@pytest.mark.parametrize('generic_element_frd', list(VALID_ELEMENT_DEFINITIONS.keys()), indirect=True)
+@pytest.mark.parametrize(
+    'generic_element_frd', list(VALID_ELEMENT_DEFINITIONS.keys()), indirect=True
+)
 def test_frd_element_sizes(generic_element_frd):
     """Condense 1D/2D/3D element size testing into a single dynamic check."""
     filepath, elem_name = generic_element_frd
     mesh = pv.FRDReader(filepath).read()
-    
+
     # 1. Pobierz typ FRD z enuma
     frd_enum = FRDElementType[elem_name]
-    
+
     # 2. Mapuj na typ komórki VTK
     vtk_type = CCX_TO_VTK_TYPE[frd_enum]
 
@@ -392,16 +395,22 @@ def test_frd_element_sizes(generic_element_frd):
 
     # 3. Oblicz rozmiary komórek
     sizes = mesh.compute_cell_sizes().cell_data
-    
+
     # 4. Sprawdź wymiar dynamicznie i zrób odpowiednią asercję
     if vtk_type in _CELL_TYPES_1D:
         val = sizes['Length'][0]
-        assert val > 0.0, f'Element {elem_name} generated non-positive length ({val}). Bad node ordering!'
+        assert val > 0.0, (
+            f'Element {elem_name} generated non-positive length ({val}). Bad node ordering!'
+        )
     elif vtk_type in _CELL_TYPES_2D:
         val = sizes['Area'][0]
-        assert val > 0.0, f'Element {elem_name} generated non-positive area ({val}). Bad node ordering!'
+        assert val > 0.0, (
+            f'Element {elem_name} generated non-positive area ({val}). Bad node ordering!'
+        )
     elif vtk_type in _CELL_TYPES_3D:
         val = sizes['Volume'][0]
-        assert val > 0.0, f'Element {elem_name} generated non-positive volume ({val}). Bad node ordering!'
+        assert val > 0.0, (
+            f'Element {elem_name} generated non-positive volume ({val}). Bad node ordering!'
+        )
     else:
-        pytest.fail(f"Unhandled cell dimension for element {elem_name} with VTK type {vtk_type}.")
+        pytest.fail(f'Unhandled cell dimension for element {elem_name} with VTK type {vtk_type}.')
