@@ -127,7 +127,7 @@ class _FRDVTKReader(BaseVTKReader):
 
         with pathlib.Path(self._filename).open(errors='replace') as file_stream:
             self._parse_lines(file_stream)
-            
+
         if celltypes := self._has_wrong_number_of_points:
             msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
             warn_external(msg, InvalidMeshWarning)
@@ -142,11 +142,9 @@ class _FRDVTKReader(BaseVTKReader):
     def Update(self) -> None:  # noqa: N802
         """Construct the mesh for the currently active time step."""
         target_time = self._time_steps[self._active_time_point] if self._time_steps else None
-        
-        step_data = (
-            self._results_by_step.get(target_time, {}) if target_time is not None else {}
-        )
-        
+
+        step_data = self._results_by_step.get(target_time, {}) if target_time is not None else {}
+
         # Build the grid and assign it to the standard VTK data object variable
         self._data_object = self._build_grid(step_data)
 
