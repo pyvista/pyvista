@@ -109,28 +109,25 @@ class _FRDVTKReader(BaseVTKReader):
         # Time steps
         self._time_steps: list[float] = []
         self._active_time_point: int = 0
-        self._output_time: object = object()
-        self._output: UnstructuredGrid | None = None
 
     def SetFileName(self, filename: str) -> None:  # noqa: N802
         self._filename = filename
 
     def UpdateInformation(self) -> None:  # noqa: N802
-        pass
+        """Parse the file and extract available time steps and metadata."""
+        if not getattr(self, '_filename', None):
+            return
 
-    def Update(self) -> None:  # noqa: N802
-        """Parse the file using a memory-efficient iterator approach."""
         self._nodes.clear()
         self._elements.clear()
         self._cell_types.clear()
         self._results_by_step.clear()
         self._time_steps.clear()
         self._active_time_point = 0
-        self._output = None
-        self._output_time = object()
 
         with pathlib.Path(self._filename).open(errors='replace') as file_stream:
             self._parse_lines(file_stream)
+            
         if celltypes := self._has_wrong_number_of_points:
             msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
             warn_external(msg, InvalidMeshWarning)
@@ -141,6 +138,17 @@ class _FRDVTKReader(BaseVTKReader):
             warn_external(msg, InvalidMeshWarning)
 
         self._time_steps = sorted(self._results_by_step.keys())
+
+    def Update(self) -> None:  # noqa: N802
+        """Construct the mesh for the currently active time step."""
+        target_time = self._time_steps[self._active_time_point] if self._time_steps else None
+        
+        step_data = (
+            self._results_by_step.get(target_time, {}) if target_time is not None else {}
+        )
+        
+        # Build the grid and assign it to the standard VTK data object variable
+        self._data_object = self._build_grid(step_data)
 
     def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
         """Return an UnstructuredGrid for the currently active time step."""
