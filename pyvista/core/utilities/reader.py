@@ -3537,18 +3537,6 @@ class FRDReader(BaseReader, TimeReader):
 
     _class_reader = _FRDVTKReader
 
-    def __init__(self, path: str) -> None:
-        """Initialize the reader."""
-        super().__init__(path)
-        self._reader: _FRDVTKReader = self._class_reader()
-        self._reader.SetFileName(self.path)
-        self._reader.Update()
-
-    @property
-    def reader(self) -> Any:
-        """Return the underlying low-level VTK reader."""
-        return self._reader
-
     @property
     def number_time_points(self) -> int:
         """Return the total number of time points."""
