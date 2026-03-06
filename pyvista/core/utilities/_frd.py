@@ -148,21 +148,6 @@ class _FRDVTKReader(BaseVTKReader):
         # Build the grid and assign it to the standard VTK data object variable
         self._data_object = self._build_grid(step_data)
 
-    def GetOutput(self) -> UnstructuredGrid:  # noqa: N802
-        """Return an UnstructuredGrid for the currently active time step."""
-        target_time = self._time_steps[self._active_time_point] if self._time_steps else None
-
-        if self._output is None or self._output_time != target_time:
-            if not self._nodes:
-                self.Update()
-            step_data = (
-                self._results_by_step.get(target_time, {}) if target_time is not None else {}
-            )
-            self._output = self._build_grid(step_data)
-            self._output_time = target_time
-
-        return self._output
-
     # ------------------------------------------------------------------
     # Parsing helpers
     # ------------------------------------------------------------------
