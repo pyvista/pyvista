@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pyvista.core.celltype import _CELL_TYPES_1D, _CELL_TYPES_2D, _CELL_TYPES_3D
+from pyvista.core.utilities._frd import FRDElementType, CCX_TO_VTK_TYPE
+
 import numpy as np
 import pytest
 
@@ -366,11 +369,20 @@ def generic_element_frd(tmp_path, request):
 @pytest.mark.parametrize(
     'generic_element_frd', ['HE8', 'PE6', 'TE4', 'HE20', 'PE15', 'TE10'], indirect=True
 )
-def test_frd_3d_element_volumes(generic_element_frd):
+
+@pytest.mark.parametrize('generic_element_frd', list(VALID_ELEMENT_DEFINITIONS.keys()), indirect=True)
+def test_frd_element_sizes(generic_element_frd):
+    """Condense 1D/2D/3D element size testing into a single dynamic check."""
     filepath, elem_name = generic_element_frd
-
     mesh = pv.FRDReader(filepath).read()
+    
+    # 1. Pobierz typ FRD z enuma
+    frd_enum = FRDElementType[elem_name]
+    
+    # 2. Mapuj na typ komórki VTK
+    vtk_type = CCX_TO_VTK_TYPE[frd_enum]
 
+    # Zostawiamy obsługę znanego błędu w VTK dla PE15
     if elem_name == 'PE15':
         msg = (
             'VTK bug with negative volume for quadratic wedge '
@@ -378,32 +390,18 @@ def test_frd_3d_element_volumes(generic_element_frd):
         )
         pytest.xfail(msg)
 
-    # Calculate cell volume
-    vol = mesh.compute_cell_sizes().cell_data['Volume'][0]
-    assert vol > 0.0, (
-        f'Element {elem_name} generated non-positive volume ({vol}). Bad node ordering!'
-    )
-
-
-@pytest.mark.parametrize('generic_element_frd', ['TR3', 'TR6', 'QU4', 'QU8'], indirect=True)
-def test_frd_2d_element_areas(generic_element_frd):
-    filepath, elem_name = generic_element_frd
-    mesh = pv.FRDReader(filepath).read()
-
-    # Calculate cell area
-    area = mesh.compute_cell_sizes().cell_data['Area'][0]
-    assert area > 0.0, (
-        f'Element {elem_name} generated non-positive area ({area}). Bad node ordering!'
-    )
-
-
-@pytest.mark.parametrize('generic_element_frd', ['BE2', 'BE3'], indirect=True)
-def test_frd_1d_element_lengths(generic_element_frd):
-    filepath, elem_name = generic_element_frd
-    mesh = pv.FRDReader(filepath).read()
-
-    # Calculate cell length
-    length = mesh.compute_cell_sizes().cell_data['Length'][0]
-    assert length > 0.0, (
-        f'Element {elem_name} generated non-positive length ({length}). Bad node ordering!'
-    )
+    # 3. Oblicz rozmiary komórek
+    sizes = mesh.compute_cell_sizes().cell_data
+    
+    # 4. Sprawdź wymiar dynamicznie i zrób odpowiednią asercję
+    if vtk_type in _CELL_TYPES_1D:
+        val = sizes['Length'][0]
+        assert val > 0.0, f'Element {elem_name} generated non-positive length ({val}). Bad node ordering!'
+    elif vtk_type in _CELL_TYPES_2D:
+        val = sizes['Area'][0]
+        assert val > 0.0, f'Element {elem_name} generated non-positive area ({val}). Bad node ordering!'
+    elif vtk_type in _CELL_TYPES_3D:
+        val = sizes['Volume'][0]
+        assert val > 0.0, f'Element {elem_name} generated non-positive volume ({val}). Bad node ordering!'
+    else:
+        pytest.fail(f"Unhandled cell dimension for element {elem_name} with VTK type {vtk_type}.")
