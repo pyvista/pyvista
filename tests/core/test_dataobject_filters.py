@@ -439,6 +439,7 @@ def test_compute_cell_sizes_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order changed')
 @pytest.mark.parametrize('as_multiblock', [True, False])
 def test_compute_cell_sizes_size(as_multiblock):
     mesh_0 = examples.cells.Vertex()
