@@ -31,7 +31,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
-from pyvista.core.celltype import _CELL_DIMENSION_LOOKUP
 from pyvista.core.celltype import _CELL_TYPES_1D
 from pyvista.core.celltype import _CELL_TYPES_2D
 from pyvista.core.celltype import CellType
@@ -4153,22 +4152,12 @@ class DataObjectFilters:
         """
 
         def add_size_array(dataset: _DataSetType) -> _DataSetType:
-            ugrid = (
-                dataset
-                if isinstance(dataset, pv.UnstructuredGrid)
-                else dataset.cast_to_unstructured_grid()
-            )
-            celltypes = ugrid.celltypes
-            dims = _CELL_DIMENSION_LOOKUP[celltypes]
-
-            # Create Size array
             size_array = np.zeros(dataset.n_cells)
             cell_data = dataset.cell_data
             cell_data['Size'] = size_array
-            for dim, name in [(0, 'VertexCount'), (1, 'Length'), (2, 'Area'), (3, 'Volume')]:
+            for name in ('VertexCount', 'Length', 'Area', 'Volume'):
                 if name in cell_data:
-                    mask = dims == dim
-                    size_array[mask] = cell_data[name][mask]
+                    size_array += cell_data[name]
 
         # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
         vert_count = vertex_count and getattr(self, 'n_cells', True)
