@@ -5116,7 +5116,7 @@ def download_notch_stress(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed.vtk')
 
 
 @_deprecate_positional_args
