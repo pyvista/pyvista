@@ -213,7 +213,6 @@ def test_frd_reader_derived_strain(mock_frd_file):
     # Mises strain for this state is sqrt(3)/15 = ~0.11547
     expected_vmises = np.sqrt(3.0) / 15.0
 
-    # TUTAJ BYŁ BŁĄD - ZMIEŃ NA 'STRAIN_Mises'
     np.testing.assert_allclose(mesh.point_data['STRAIN_Mises'], expected_vmises)
     np.testing.assert_allclose(mesh.point_data['STRAIN_sgMises'], expected_vmises)
 
@@ -376,13 +375,13 @@ def test_frd_element_sizes(generic_element_frd):
     filepath, elem_name = generic_element_frd
     mesh = pv.FRDReader(filepath).read()
 
-    # 1. Pobierz typ FRD z enuma
+    # 1. Get the FRD type from the enum
     frd_enum = FRDElementType[elem_name]
 
-    # 2. Mapuj na typ komórki VTK
+    # 2. Map to the VTK cell type
     vtk_type = CCX_TO_VTK_TYPE[frd_enum]
 
-    # Zostawiamy obsługę znanego błędu w VTK dla PE15
+    # Handle known VTK bug for PE15
     if elem_name == 'PE15':
         msg = (
             'VTK bug with negative volume for quadratic wedge '
@@ -390,10 +389,10 @@ def test_frd_element_sizes(generic_element_frd):
         )
         pytest.xfail(msg)
 
-    # 3. Oblicz rozmiary komórek
+    # 3. Compute cell sizes
     sizes = mesh.compute_cell_sizes().cell_data
 
-    # 4. Sprawdź wymiar dynamicznie i zrób odpowiednią asercję
+    # 4. Check the dimension dynamically and make the appropriate assertion
     if vtk_type in _CELL_TYPES_1D:
         val = sizes['Length'][0]
         assert val > 0.0, (
