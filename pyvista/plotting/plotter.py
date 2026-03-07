@@ -7375,10 +7375,18 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 log.debug('Starting iren')
                 self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
-                    # Resolves #1260
+                    # Workaround for Windows interactor unresponsiveness after focus changes.
+                    # See: https://github.com/pyvista/pyvista/issues/8383
                     if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()  # type: ignore[union-attr]
-                    self.iren.start()  # type: ignore[union-attr]
+                        vtk_iren = self.iren.interactor  # type: ignore[union-attr]
+                        while True:
+                            vtk_iren.ProcessEvents()
+                            if vtk_iren.GetDone():
+                                break
+                            self.render_window.Render()  # type: ignore[union-attr]
+                            time.sleep(0.016)
+                    else:
+                        self.iren.start()  # type: ignore[union-attr]
 
                 if pv.vtk_version_info < (9, 2, 3):  # pragma: no cover
                     self.iren.initialize()  # type: ignore[union-attr]
