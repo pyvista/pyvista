@@ -1403,7 +1403,13 @@ class DataObjectFilters:
         validation_fields = None if validate is True else validate
         self.validate_mesh(validation_fields, action='error')
 
-    def cell_validator(self: _DataSetOrMultiBlockType):  # type:ignore[misc]
+    def cell_validator(
+        self: _DataSetOrMultiBlockType,
+        *,
+        tolerance: float | None = None,
+        planarity_tolerance: float | None = None,
+        size_tolerance: float | None = None,
+    ):  # type:ignore[misc]
         """Check the validity of each cell in this dataset.
 
         The status of each cell is encoded as a bit field cell data array ``'validity_state'``.
@@ -1545,11 +1551,18 @@ class DataObjectFilters:
         """
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
+        if tolerance is not None:
+            cell_validator.SetTolerance(tolerance)
+        if planarity_tolerance is not None:
+            cell_validator.SetPlanarityTolerance(planarity_tolerance)
         cell_validator.Update()
         output = _get_output(cell_validator)
 
-        # Tolerance for float equality checks. This is on the order of 1e-7,
-        tolerance = cell_validator.GetTolerance()
+        def compute_size_tolerance() -> float:
+            dataset = self.combine() if isinstance(self, pv.MultiBlock) else self.copy(deep=False)
+            _length_distribution_percentile(dataset, 0.9)
+            size_factor = 1e-6
+            return cell_length * size_factor
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
@@ -1580,10 +1593,10 @@ class DataObjectFilters:
             )['Size']
 
             # NEGATIVE_SIZE
-            state[size < -tolerance] |= CellStatus.NEGATIVE_SIZE
+            state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
 
             # ZERO_SIZE
-            state[np.abs(size) <= tolerance] |= CellStatus.ZERO_SIZE
+            state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # INVALID_POINT_REFERENCES
             if hasattr(mesh, 'dimensions'):
@@ -1610,6 +1623,8 @@ class DataObjectFilters:
             state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
             return
 
+        size_tol = compute_size_tolerance() if size_tolerance is None else size_tolerance
+        output.field_data['size_tolerance'] = [size_tol]
         if isinstance(output, pv.DataSet):
             post_process(output)
         else:
@@ -5025,6 +5040,20 @@ class _Crinkler:
                 block.n_cells, dtype=_Crinkler.INT_DTYPE
             )
         return active_scalars_info
+
+
+# def _length_distribution_percentile(mesh: PolyData | UnstructuredGrid, percentile, sample_size=None, *, progress_bar=False):
+#     percentile = _validation.validate_number(
+#         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+#     )
+#     distribution = _vtk.vtkLengthDistribution()
+#     distribution.SetInputData(mesh)
+#     distribution.SetSampleSize(mesh.n_cells)
+#     distribution.SortSampleOff()
+#     _update_alg(
+#         distribution, progress_bar=progress_bar, message='Computing cell length distribution'
+#     )
+#     mesh.cell_data['lengths'] = pv.Table(distribution.GetOutput()).values()[0]
 
 
 def _cell_status_docs_insert():
