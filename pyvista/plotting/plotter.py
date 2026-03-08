@@ -11,6 +11,7 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
+import ctypes
 from functools import wraps
 import io
 from itertools import cycle
@@ -7389,9 +7390,18 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
                             # target an update rate of 60 FPS
                             telap = time.time() - tstart_frame
-                            need_tsleep = FPS_1_OVER_60 - telap
-                            if need_tsleep > 0:
-                                time.sleep(need_tsleep)
+                            sleep_ms = int((FPS_1_OVER_60 - telap) * 1000)
+                            if sleep_ms > 0:
+                                # instead of time.sleep use MsgWaitForMultipleObjects
+                                # to pump window messages to avoid the window appearing
+                                # unresponsive
+                                ctypes.windll.user32.MsgWaitForMultipleObjects(
+                                    0,
+                                    None,
+                                    False,
+                                    sleep_ms,
+                                    0x04FF,  # QS_ALLINPUT
+                                )
                     else:
                         self.iren.start()  # type: ignore[union-attr]
 
