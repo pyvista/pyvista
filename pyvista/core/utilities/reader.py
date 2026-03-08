@@ -3523,8 +3523,14 @@ class _FRDReader(BaseVTKReader):
         parser = FRDParser(self._filename)
         self._frd_data = parser.parse()
 
-        if celltypes := self._frd_data.has_wrong_number_of_points:
-            msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
+        if celltypes := self._frd_data._has_too_many_points:
+            msg = f'Cell type(s) with too many points detected:\n{celltypes}'
+            warn_external(msg, InvalidMeshWarning)
+        if celltypes := self._frd_data._has_too_few_points:
+            msg = (
+                f'Cell type(s) with too few points detected. Invalid elements are skipped.'
+                f'\n{celltypes}'
+            )
             warn_external(msg, InvalidMeshWarning)
         if elements := self._frd_data.has_unsupported_element:
             msg = (

@@ -81,11 +81,15 @@ NODES_PER_ELEM: dict[FRDElementType, int] = {
 
 @dataclass
 class FRDData:
+    # Parsed data
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
     cell_types: list[int] = field(default_factory=list)
     results_by_step: dict[float, dict[str, dict[int, list[float]]]] = field(default_factory=dict)
-    has_wrong_number_of_points: set[CellType] = field(default_factory=set)
+
+    # Diagnostic data
+    _has_too_many_points: set[CellType] = field(default_factory=set)
+    _has_too_few_points: set[CellType] = field(default_factory=set)
     has_unsupported_element: set[int] = field(default_factory=set)
 
 
@@ -126,12 +130,8 @@ class FRDParser:
             return -1, 0.0
 
     @staticmethod
-    def _permute_nodes(node_ids: list[int], etype: FRDElementType, frd_data: FRDData) -> list[int]:
+    def _permute_nodes(node_ids: list[int], etype: FRDElementType) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
-        # Keep track of elements with wrong number of points
-        if len(node_ids) != NODES_PER_ELEM[etype]:
-            frd_data.has_wrong_number_of_points.add(CCX_TO_VTK_TYPE[etype])
-
         if etype == FRDElementType.HE20:
             return node_ids[:8] + node_ids[8:12] + node_ids[16:20] + node_ids[12:16]
         if etype == FRDElementType.PE6:
@@ -191,8 +191,17 @@ class FRDParser:
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
+                n_nodes = len(node_ids)
+                if n_nodes < needed:
+                    # Skip elements with too few points
+                    frd_data._has_too_few_points.add(CCX_TO_VTK_TYPE[etype])
+                    continue
+                if n_nodes > needed:
+                    # Keep track of elements with too many points
+                    frd_data._has_too_many_points.add(CCX_TO_VTK_TYPE[etype])
+
                 if len(node_ids) >= needed:
-                    final_nodes = FRDParser._permute_nodes(node_ids, etype, frd_data)
+                    final_nodes = FRDParser._permute_nodes(node_ids, etype)
                     frd_data.elements.append(final_nodes[:needed])
                     frd_data.cell_types.append(vtk_type.value)
                     etype = None

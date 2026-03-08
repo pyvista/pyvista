@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 
@@ -222,9 +224,16 @@ def test_frd_reader_derived_strain(mock_frd_file):
 
 
 def test_frd_reader_comprehensive(comprehensive_frd_file):
-    # This directly hits the logic in pyvista/core/utilities/fileio.py
-    with pytest.warns(pv.InvalidMeshWarning):
-        mesh_from_pv = pv.read(comprehensive_frd_file)
+    match1 = 'Cell type(s) with too many points detected:\n{<CellType.TRIANGLE: 5>}'
+    match2 = (
+        'Cell type(s) with too few points detected. Invalid elements are skipped.\n'
+        '{<CellType.WEDGE: 13>}'
+    )
+    match3 = 'Unknown element type code(s) encountered {999}. These elements are skipped.'
+    with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match1)):  # noqa: PT031
+        with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match2)):
+            with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match3)):
+                mesh_from_pv = pv.read(comprehensive_frd_file)
     assert isinstance(mesh_from_pv, pv.UnstructuredGrid)
 
     with pytest.warns(pv.InvalidMeshWarning):
