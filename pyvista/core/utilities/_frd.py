@@ -13,11 +13,8 @@ from typing import Any
 
 import numpy as np
 
-from pyvista._warn_external import warn_external
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import InvalidMeshWarning
-from pyvista.core.utilities.reader import BaseVTKReader
 
 if TYPE_CHECKING:
     from pyvista.core.pointset import UnstructuredGrid
@@ -80,41 +77,6 @@ CCX_TO_VTK_TYPE: dict[FRDElementType, CellType] = {
 NODES_PER_ELEM: dict[FRDElementType, int] = {
     elem: _CELL_TYPE_TO_NUM_POINTS[np.uint8(CCX_TO_VTK_TYPE[elem])] for elem in CCX_TO_VTK_TYPE
 }
-
-
-class _FRDVTKReader(BaseVTKReader):
-    """VTK-style reader for CalculiX FRD files using FRDParser."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._frd_data: FRDData | None = None
-        self._time_steps: list[float] = []
-        self._active_time_point: int = 0
-
-    def UpdateInformation(self) -> None:  # noqa: N802
-        parser = FRDParser(self._filename)
-        self._frd_data = parser.parse()
-
-        if celltypes := self._frd_data.has_wrong_number_of_points:
-            msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
-            warn_external(msg, InvalidMeshWarning)
-        if elements := self._frd_data.has_unsupported_element:
-            msg = (
-                f'Unknown element type code(s) encountered {elements}. These elements are skipped.'
-            )
-            warn_external(msg, InvalidMeshWarning)
-
-        self._time_steps = sorted(self._frd_data.results_by_step.keys())
-
-    def Update(self) -> None:  # noqa: N802
-        """Construct the mesh for the currently active time step."""
-        if self._frd_data is None:
-            return
-        step_time = self._time_steps[self._active_time_point] if self._time_steps else None
-        step_data = (
-            self._frd_data.results_by_step.get(step_time, {}) if step_time is not None else {}
-        )
-        self._data_object = FRDParser._build_grid(self._frd_data, step_data)
 
 
 @dataclass

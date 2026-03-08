@@ -23,9 +23,12 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core.errors import InvalidMeshWarning
 
+from ._frd import FRDParser
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
 from .fileio import _lazy_vtk_import
@@ -36,6 +39,8 @@ from .misc import abstract_class
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from ._frd import FRDData
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader]] = {}
@@ -3505,8 +3510,39 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetTimeStep(time_point)
 
 
-# import here to avoid circular
-from pyvista.core.utilities._frd import _FRDVTKReader
+class _FRDReader(BaseVTKReader):
+    """VTK-style reader for CalculiX FRD files using FRDParser."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._frd_data: FRDData | None = None
+        self._time_steps: list[float] = []
+        self._active_time_point: int = 0
+
+    def UpdateInformation(self) -> None:
+        parser = FRDParser(self._filename)
+        self._frd_data = parser.parse()
+
+        if celltypes := self._frd_data.has_wrong_number_of_points:
+            msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
+            warn_external(msg, InvalidMeshWarning)
+        if elements := self._frd_data.has_unsupported_element:
+            msg = (
+                f'Unknown element type code(s) encountered {elements}. These elements are skipped.'
+            )
+            warn_external(msg, InvalidMeshWarning)
+
+        self._time_steps = sorted(self._frd_data.results_by_step.keys())
+
+    def Update(self) -> None:
+        """Construct the mesh for the currently active time step."""
+        if self._frd_data is None:
+            return
+        step_time = self._time_steps[self._active_time_point] if self._time_steps else None
+        step_data = (
+            self._frd_data.results_by_step.get(step_time, {}) if step_time is not None else {}
+        )
+        self._data_object = FRDParser._build_grid(self._frd_data, step_data)
 
 
 class FRDReader(BaseReader, TimeReader):
@@ -3536,7 +3572,7 @@ class FRDReader(BaseReader, TimeReader):
 
     """
 
-    _class_reader = _FRDVTKReader
+    _class_reader = _FRDReader
 
     @property
     def number_time_points(self) -> int:
