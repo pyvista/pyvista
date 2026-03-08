@@ -1802,19 +1802,254 @@ def CubicLine() -> UnstructuredGrid:
     return _make_isoparametric_unstructured_grid(_vtk.vtkCubicLine())
 
 
+def LagrangeCurve() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange curve.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_CURVE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange curve.
+
+    Examples
+    --------
+    Create and plot a single Lagrange curve.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeCurve()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([3, 0, 1, 2])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0.5, 0. , 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_CURVE
+    array([68], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_CURVE)
+
+
+def LagrangeTriangle() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange triangle.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_TRIANGLE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange triangle.
+
+    Examples
+    --------
+    Create and plot a single Lagrange triangle.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeTriangle()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([6, 0, 1, 2, 3, 4, 5])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0.5, 0. , 0. ],
+                     [0.5, 0.5, 0. ],
+                     [0. , 0.5, 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TRIANGLE
+    array([69], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_TRIANGLE)
+
+
+def LagrangeQuadrilateral() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange quadrilateral.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_QUADRILATERAL` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange quadrilateral.
+
+    Examples
+    --------
+    Create and plot a single Lagrange quadrilateral.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeQuadrilateral()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [1. , 1. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0.5, 0. , 0. ],
+                     [1. , 0.5, 0. ],
+                     [0.5, 1. , 0. ],
+                     [0. , 0.5, 0. ],
+                     [0.5, 0.5, 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_QUADRILATERAL
+    array([70], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_QUADRILATERAL)
+
+
+def LagrangeHexahedron() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange hexahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_HEXAHEDRON` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange hexahedron.
+
+    Examples
+    --------
+    Create and plot a single Lagrange hexahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeHexahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([27,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [1. , 1. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0. , 0. , 1. ],
+                     [1. , 0. , 1. ],
+                     [1. , 1. , 1. ],
+                     [0. , 1. , 1. ],
+                     [0.5, 0. , 0. ],
+                     [1. , 0.5, 0. ],
+                     [0.5, 1. , 0. ],
+                     [0. , 0.5, 0. ],
+                     [0.5, 0. , 1. ],
+                     [1. , 0.5, 1. ],
+                     [0.5, 1. , 1. ],
+                     [0. , 0.5, 1. ],
+                     [0. , 0. , 0.5],
+                     [1. , 0. , 0.5],
+                     [1. , 1. , 0.5],
+                     [0. , 1. , 0.5],
+                     [0. , 0.5, 0.5],
+                     [1. , 0.5, 0.5],
+                     [0.5, 0. , 0.5],
+                     [0.5, 1. , 0.5],
+                     [0.5, 0.5, 0. ],
+                     [0.5, 0.5, 1. ],
+                     [0.5, 0.5, 0.5]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_HEXAHEDRON
+    array([72], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_HEXAHEDRON)
+
+
+def LagrangeWedge() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange wedge.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_WEDGE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange wedge.
+
+    Examples
+    --------
+    Create and plot a single Lagrange wedge.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeWedge()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([18,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0. , 0. , 1. ],
+                     [1. , 0. , 1. ],
+                     [0. , 1. , 1. ],
+                     [0.5, 0. , 0. ],
+                     [0.5, 0.5, 0. ],
+                     [0. , 0.5, 0. ],
+                     [0.5, 0. , 1. ],
+                     [0.5, 0.5, 1. ],
+                     [0. , 0.5, 1. ],
+                     [0. , 0. , 0.5],
+                     [1. , 0. , 0.5],
+                     [0. , 1. , 0.5],
+                     [0.5, 0. , 0.5],
+                     [0.5, 0.5, 0.5],
+                     [0. , 0.5, 0.5]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_WEDGE
+    array([73], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_WEDGE)
+
+
 def BezierCurve() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single bezier curve.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier curve.
 
     This cell corresponds to the :attr:`pyvista.CellType.BEZIER_CURVE` cell type.
 
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single bezier curve.
+        UnstructuredGrid containing a single Bezier curve.
 
     Examples
     --------
-    Create and plot a single bezier curve.
+    Create and plot a single Bezier curve.
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierCurve()
@@ -1840,18 +2075,18 @@ def BezierCurve() -> UnstructuredGrid:
 
 
 def BezierTriangle() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single bezier triangle.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier triangle.
 
     This cell corresponds to the :attr:`pyvista.CellType.BEZIER_TRIANGLE` cell type.
 
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single bezier triangle.
+        UnstructuredGrid containing a single Bezier triangle.
 
     Examples
     --------
-    Create and plot a single bezier triangle.
+    Create and plot a single Bezier triangle.
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierTriangle()
@@ -1880,18 +2115,18 @@ def BezierTriangle() -> UnstructuredGrid:
 
 
 def BezierQuadrilateral() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single bezier quadrilateral.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier quadrilateral.
 
     This cell corresponds to the :attr:`pyvista.CellType.BEZIER_QUADRILATERAL` cell type.
 
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single bezier quadrilateral.
+        UnstructuredGrid containing a single Bezier quadrilateral.
 
     Examples
     --------
-    Create and plot a single bezier quadrilateral.
+    Create and plot a single Bezier quadrilateral.
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierQuadrilateral()
@@ -1923,18 +2158,18 @@ def BezierQuadrilateral() -> UnstructuredGrid:
 
 
 def BezierTetrahedron() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single bezier tetrahedron.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier tetrahedron.
 
     This cell corresponds to the :attr:`pyvista.CellType.BEZIER_TETRAHEDRON` cell type.
 
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single bezier tetrahedron.
+        UnstructuredGrid containing a single Bezier tetrahedron.
 
     Examples
     --------
-    Create and plot a single bezier tetrahedron.
+    Create and plot a single Bezier tetrahedron.
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierTetrahedron()
@@ -1967,18 +2202,18 @@ def BezierTetrahedron() -> UnstructuredGrid:
 
 
 def BezierHexahedron() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single bezier hexahedron.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier hexahedron.
 
     This cell corresponds to the :attr:`pyvista.CellType.BEZIER_HEXAHEDRON` cell type.
 
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single bezier hexahedron.
+        UnstructuredGrid containing a single Bezier hexahedron.
 
     Examples
     --------
-    Create and plot a single bezier hexahedron.
+    Create and plot a single Bezier hexahedron.
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierHexahedron()
@@ -2029,18 +2264,18 @@ def BezierHexahedron() -> UnstructuredGrid:
 
 
 def BezierWedge() -> UnstructuredGrid:
-    """Create a :class:`pyvista.UnstructuredGrid` containing a single bezier wedge.
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier wedge.
 
     This cell corresponds to the :attr:`pyvista.CellType.BEZIER_WEDGE` cell type.
 
     Returns
     -------
     pyvista.UnstructuredGrid
-        UnstructuredGrid containing a single bezier wedge.
+        UnstructuredGrid containing a single Bezier wedge.
 
     Examples
     --------
-    Create and plot a single bezier wedge.
+    Create and plot a single Bezier wedge.
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierWedge()
