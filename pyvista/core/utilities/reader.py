@@ -3505,6 +3505,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetTimeStep(time_point)
 
 
+# import here to avoid circular
 from pyvista.core.utilities._frd import _FRDVTKReader
 
 

@@ -364,9 +364,9 @@ class _FRDVTKReader(BaseVTKReader):
     # ------------------------------------------------------------------
     # Derived field computation
     # ------------------------------------------------------------------
-
+    @staticmethod
     def _compute_derived_stress(
-        self, grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
+        grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
     ) -> None:
         xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
         xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
@@ -380,10 +380,11 @@ class _FRDVTKReader(BaseVTKReader):
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             trace != 0, np.sign(trace) * vmises, vmises
         )
-        self._compute_principals(grid, base_name, tensor)
+        _FRDVTKReader._compute_principals(grid, base_name, tensor)
 
+    @staticmethod
     def _compute_derived_strain(
-        self, grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
+        grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
     ) -> None:
         xx, yy, zz = tensor[:, 0], tensor[:, 1], tensor[:, 2]
         xy, yz, zx = tensor[:, 3], tensor[:, 4], tensor[:, 5]
@@ -397,7 +398,7 @@ class _FRDVTKReader(BaseVTKReader):
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             volumetric != 0, np.sign(volumetric) * vmises_strain, vmises_strain
         )
-        self._compute_principals(grid, base_name, tensor)
+        _FRDVTKReader._compute_principals(grid, base_name, tensor)
 
     @staticmethod
     def _compute_principals(grid: UnstructuredGrid, base_name: str, tensor: np.ndarray) -> None:
@@ -472,6 +473,6 @@ class _FRDVTKReader(BaseVTKReader):
                 if 'STRESS' in upper and n_components == 6:
                     self._compute_derived_stress(grid, name, arr)
                 elif 'STRAIN' in upper and n_components == 6:
-                    self._compute_derived_strain(grid, name, arr)
+                    _FRDVTKReader._compute_derived_strain(grid, name, arr)
 
         return grid
