@@ -537,7 +537,11 @@ _CELL_TYPE_INFO = dict(
         cell_class=_vtk.vtkLagrangeQuadrilateral,
         example='LagrangeQuadrilateral',
     ),
-    LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
+    LAGRANGE_TETRAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_TETRAHEDRON,
+        cell_class=_vtk.vtkLagrangeTetra,
+        example='LagrangeTetrahedron',
+    ),
     LAGRANGE_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_LAGRANGE_HEXAHEDRON,
         cell_class=_vtk.vtkLagrangeHexahedron,
@@ -548,10 +552,7 @@ _CELL_TYPE_INFO = dict(
         cell_class=_vtk.vtkLagrangeWedge,
         example='LagrangeWedge',
     ),
-    LAGRANGE_PYRAMID=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_PYRAMID
-    ),
-
+    LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
     BEZIER_CURVE=_CellTypeTuple(
@@ -584,10 +585,8 @@ _CELL_TYPE_INFO = dict(
         cell_class=_vtk.vtkBezierWedge,
         example='BezierWedge',
     ),
-    BEZIER_PYRAMID=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_PYRAMID)
+    BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
 )
-
 
 
 class CellType(IntEnum):
