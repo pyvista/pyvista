@@ -231,7 +231,7 @@ def test_frd_reader_comprehensive(comprehensive_frd_file):
         reader = pv.FRDReader(comprehensive_frd_file)
 
     # Inject empty dictionary to trigger the defensive "if not data: continue" branch
-    reader.reader._results_by_step[0.2]['FAKE_EMPTY'] = {}
+    reader.reader._frd_data.results_by_step[0.2]['FAKE_EMPTY'] = {}
 
     mesh = reader.read()
 

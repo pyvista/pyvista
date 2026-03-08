@@ -1,7 +1,9 @@
-"""CalculiX FRD file reader for PyVista."""
+"""CalculiX FRD file parser for PyVista."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from dataclasses import field
 from enum import Enum
 from enum import IntEnum
 import pathlib
@@ -78,83 +80,80 @@ CCX_TO_VTK_TYPE: dict[FRDElementType, CellType] = {
 NODES_PER_ELEM: dict[FRDElementType, int] = {
     elem: _CELL_TYPE_TO_NUM_POINTS[np.uint8(CCX_TO_VTK_TYPE[elem])] for elem in CCX_TO_VTK_TYPE
 }
-# ---------------------------------------------------------------------------
-# Low-level, VTK-style reader
-# ---------------------------------------------------------------------------
 
 
 class _FRDVTKReader(BaseVTKReader):
-    """VTK-style reader for CalculiX FRD ASCII result files.
-
-    This class mirrors the interface expected by :class:`BaseVTKReader` so
-    that :class:`FRDReader` can delegate to it in exactly the same way as
-    other de-novo readers (e.g. ``SeriesReader``).
-    """
-
-    # Compiled regex to fix scientific notation formatting issues
-    _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
+    """VTK-style reader for CalculiX FRD files using FRDParser."""
 
     def __init__(self) -> None:
         super().__init__()
-        # Geometry
-        self._nodes: dict[int, list[float]] = {}
-        self._elements: list[list[int]] = []
-        self._cell_types: list[int] = []
-        self._has_wrong_number_of_points: set[CellType] = set()
-        self._has_unsupported_element: set[int] = set()
-
-        # Time-step data: time_value -> { result_name -> { node_id -> [values] } }
-        self._results_by_step: dict[float, dict[str, dict[int, list[float]]]] = {}
-
-        # Time steps
+        self._frd_data: FRDData | None = None
         self._time_steps: list[float] = []
         self._active_time_point: int = 0
 
-    def SetFileName(self, filename: str) -> None:  # noqa: N802
-        self._filename = filename
-
     def UpdateInformation(self) -> None:  # noqa: N802
-        """Parse the file and extract available time steps and metadata."""
-        if not getattr(self, '_filename', None):
-            return
+        parser = FRDParser(self._filename)
+        self._frd_data = parser.parse()
 
-        self._nodes.clear()
-        self._elements.clear()
-        self._cell_types.clear()
-        self._results_by_step.clear()
-        self._time_steps.clear()
-        self._active_time_point = 0
-
-        with pathlib.Path(self._filename).open(errors='replace') as file_stream:
-            self._parse_lines(file_stream)
-
-        if celltypes := self._has_wrong_number_of_points:
+        if celltypes := self._frd_data.has_wrong_number_of_points:
             msg = f'Cell types with wrong number of points detected:  {celltypes}.\n'
             warn_external(msg, InvalidMeshWarning)
-        if elements := self._has_unsupported_element:
+        if elements := self._frd_data.has_unsupported_element:
             msg = (
                 f'Unknown element type code(s) encountered {elements}. These elements are skipped.'
             )
             warn_external(msg, InvalidMeshWarning)
 
-        self._time_steps = sorted(self._results_by_step.keys())
+        self._time_steps = sorted(self._frd_data.results_by_step.keys())
 
     def Update(self) -> None:  # noqa: N802
         """Construct the mesh for the currently active time step."""
-        target_time = self._time_steps[self._active_time_point] if self._time_steps else None
+        if self._frd_data is None:
+            return
+        step_time = self._time_steps[self._active_time_point] if self._time_steps else None
+        step_data = (
+            self._frd_data.results_by_step.get(step_time, {}) if step_time is not None else {}
+        )
+        self._data_object = FRDParser._build_grid(self._frd_data, step_data)
 
-        step_data = self._results_by_step.get(target_time, {}) if target_time is not None else {}
 
-        # Build the grid and assign it to the standard VTK data object variable
-        self._data_object = self._build_grid(step_data)
+@dataclass
+class FRDData:
+    nodes: dict[int, list[float]] = field(default_factory=dict)
+    elements: list[list[int]] = field(default_factory=list)
+    cell_types: list[int] = field(default_factory=list)
+    results_by_step: dict[float, dict[str, dict[int, list[float]]]] = field(default_factory=dict)
+    has_wrong_number_of_points: set[CellType] = field(default_factory=set)
+    has_unsupported_element: set[int] = field(default_factory=set)
 
-    # ------------------------------------------------------------------
-    # Parsing helpers
-    # ------------------------------------------------------------------
+
+class FRDParser:
+    """Parses a CalculiX FRD file into an FRDData object."""
+
+    # Compiled regex to fix scientific notation formatting issues
+    _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
+
+    def __init__(self, filename: str) -> None:
+        self._filename = filename
+
+    def parse(self) -> FRDData:
+        frd_data = FRDData()
+        with pathlib.Path(self._filename).open(errors='replace') as file_stream:
+            for line in file_stream:
+                s = line.strip()
+                if s.startswith(FRDBlock.NODES.value):
+                    self._parse_nodes(file_stream, frd_data)
+                elif s.startswith(FRDBlock.ELEMENTS.value):
+                    self._parse_elements(file_stream, frd_data)
+                elif s.startswith(FRDBlock.RESULTS.value):
+                    _step_id, step_time = self._parse_100cl_header(s)
+                    frd_data.results_by_step.setdefault(step_time, {})
+                    self._parse_results(file_stream, frd_data.results_by_step[step_time])
+        return frd_data
 
     @staticmethod
     def _fix_scientific(line: str) -> str:
-        return _FRDVTKReader._SCIENTIFIC_RE.sub(' -', line)
+        return FRDParser._SCIENTIFIC_RE.sub(' -', line)
 
     @staticmethod
     def _parse_100cl_header(line: str) -> tuple[int, float]:
@@ -164,112 +163,45 @@ class _FRDVTKReader(BaseVTKReader):
         except (IndexError, ValueError):
             return -1, 0.0
 
-    def _permute_nodes(self, node_ids: list[int], etype: FRDElementType) -> list[int]:
+    @staticmethod
+    def _permute_nodes(node_ids: list[int], etype: FRDElementType, frd_data: FRDData) -> list[int]:
         """Reorder node IDs from CalculiX to VTK conventions."""
         # Keep track of elements with wrong number of points
         if len(node_ids) != NODES_PER_ELEM[etype]:
-            self._has_wrong_number_of_points.add(CCX_TO_VTK_TYPE[etype])
+            frd_data.has_wrong_number_of_points.add(CCX_TO_VTK_TYPE[etype])
 
         if etype == FRDElementType.HE20:
-            return [
-                node_ids[0],
-                node_ids[1],
-                node_ids[2],
-                node_ids[3],
-                node_ids[4],
-                node_ids[5],
-                node_ids[6],
-                node_ids[7],
-                node_ids[8],
-                node_ids[9],
-                node_ids[10],
-                node_ids[11],
-                node_ids[16],
-                node_ids[17],
-                node_ids[18],
-                node_ids[19],
-                node_ids[12],
-                node_ids[13],
-                node_ids[14],
-                node_ids[15],
-            ]
-
+            return node_ids[:8] + node_ids[8:12] + node_ids[16:20] + node_ids[12:16]
         if etype == FRDElementType.PE6:
-            return [
-                node_ids[0],
-                node_ids[2],
-                node_ids[1],
-                node_ids[3],
-                node_ids[5],
-                node_ids[4],
-            ]
-
+            return [node_ids[0], node_ids[2], node_ids[1], node_ids[3], node_ids[5], node_ids[4]]
         if etype == FRDElementType.PE15:
-            return [
-                node_ids[0],
-                node_ids[1],
-                node_ids[2],
-                node_ids[3],
-                node_ids[4],
-                node_ids[5],
-                node_ids[6],
-                node_ids[7],
-                node_ids[8],
-                node_ids[12],
-                node_ids[13],
-                node_ids[14],
-                node_ids[9],
-                node_ids[10],
-                node_ids[11],
-            ]
-
+            return node_ids[:9] + node_ids[12:15] + node_ids[9:12]
         return node_ids
 
-    # ------------------------------------------------------------------
-    # Block parsers (Memory efficient iterators)
-    # ------------------------------------------------------------------
-
-    def _parse_lines(self, file_stream: Any) -> None:
-        """Dispatch lines to block-specific parsers."""
-        for line in file_stream:
-            s = line.strip()
-            if s.startswith(FRDBlock.NODES.value):
-                self._parse_nodes(file_stream)
-            elif s.startswith(FRDBlock.ELEMENTS.value):
-                self._parse_elements(file_stream)
-            elif s.startswith(FRDBlock.RESULTS.value):
-                _step_id, step_time = self._parse_100cl_header(s)
-
-                if step_time not in self._results_by_step:
-                    self._results_by_step[step_time] = {}
-
-                step_bucket = self._results_by_step[step_time]
-                _FRDVTKReader._parse_results(file_stream, step_bucket)
-
-    def _parse_nodes(self, file_stream: Any) -> None:
-        """Parse 2C node block."""
+    @staticmethod
+    def _parse_nodes(file_stream: Any, frd_data: FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 return
             try:
-                parts = self._fix_scientific(s).split()
+                parts = FRDParser._fix_scientific(s).split()
                 nid = int(parts[1])
-                self._nodes[nid] = [float(parts[2]), float(parts[3]), float(parts[4])]
+                frd_data.nodes[nid] = [float(parts[2]), float(parts[3]), float(parts[4])]
             except (ValueError, IndexError):
                 pass
 
-    def _parse_elements(self, file_stream: Any) -> None:
-        """Parse 3C element block."""
-        needed = 0
-        node_ids: list[int] = []
-        etype: FRDElementType | None = None
-        vtk_type: CellType | None = None
-
+    @staticmethod
+    def _parse_elements(file_stream: Any, frd_data: FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         elem_def = str(CGXRecord.NODAL_VALUES.value)
         elem_faces = str(CGXRecord.ELEMENT_FACES.value)
+
+        needed = 0
+        node_ids: list[int] = []
+        etype = None
+        vtk_type = None
 
         for line in file_stream:
             s = line.strip()
@@ -287,7 +219,7 @@ class _FRDVTKReader(BaseVTKReader):
                 try:
                     etype = FRDElementType(etype_val)
                 except ValueError:
-                    self._has_unsupported_element.add(etype_val)
+                    frd_data.has_unsupported_element.add(etype_val)
                     etype = None
                     continue
 
@@ -298,16 +230,14 @@ class _FRDVTKReader(BaseVTKReader):
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
                 if len(node_ids) >= needed:
-                    final_nodes = self._permute_nodes(node_ids, etype)
-                    self._elements.append(final_nodes[:needed])
-                    self._cell_types.append(vtk_type.value)
-                    etype = None  # Wait for the next -1 record
+                    final_nodes = FRDParser._permute_nodes(node_ids, etype, frd_data)
+                    frd_data.elements.append(final_nodes[:needed])
+                    frd_data.cell_types.append(vtk_type.value)
+                    etype = None
 
     @staticmethod
     def _parse_results(file_stream: Any, step_bucket: dict) -> None:
-        """Parse 100CL result block."""
         name = 'Unknown'
-
         attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
         comp_def = str(CGXRecord.COMPONENT_DEFINITION.value)
         nodal_vals = str(CGXRecord.NODAL_VALUES.value)
@@ -322,40 +252,32 @@ class _FRDVTKReader(BaseVTKReader):
             elif s.startswith(comp_def):
                 continue
             elif s.startswith(nodal_vals):
-                # Pass the first data line and iterator down to collect data
-                _FRDVTKReader._parse_result_data(s, file_stream, name, step_bucket)
+                FRDParser._parse_result_data(s, file_stream, name, step_bucket)
                 return
             elif s.startswith(end_block):
                 return
 
     @staticmethod
     def _parse_result_data(  # noqa: PLR0917
-        first_line: str,
-        file_stream: Any,
-        name: str,
-        step_bucket: dict[str, dict[int, list[float]]],
+        first_line: str, file_stream: Any, name: str, step_bucket: dict
     ) -> None:
-        """Parse data records until sentinel is hit."""
         data: dict[int, list[float]] = {}
-
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         nodal_vals = str(CGXRecord.NODAL_VALUES.value)
 
-        # Process the very first line passed from _parse_results
         try:
-            parts = _FRDVTKReader._fix_scientific(first_line).split()
+            parts = FRDParser._fix_scientific(first_line).split()
             data[int(parts[1])] = [float(x) for x in parts[2:]]
         except (ValueError, IndexError):
             pass
 
-        # Continue with the rest of the file iterator
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 break
             if s.startswith(nodal_vals):
                 try:
-                    parts = _FRDVTKReader._fix_scientific(s).split()
+                    parts = FRDParser._fix_scientific(s).split()
                     data[int(parts[1])] = [float(x) for x in parts[2:]]
                 except (ValueError, IndexError):
                     pass
@@ -363,9 +285,6 @@ class _FRDVTKReader(BaseVTKReader):
         if data:
             step_bucket[name] = data
 
-    # ------------------------------------------------------------------
-    # Derived field computation
-    # ------------------------------------------------------------------
     @staticmethod
     def _compute_derived_stress(
         grid: UnstructuredGrid, base_name: str, tensor: np.ndarray
@@ -382,7 +301,7 @@ class _FRDVTKReader(BaseVTKReader):
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             trace != 0, np.sign(trace) * vmises, vmises
         )
-        _FRDVTKReader._compute_principals(grid, base_name, tensor)
+        FRDParser._compute_principals(grid, base_name, tensor)
 
     @staticmethod
     def _compute_derived_strain(
@@ -400,7 +319,7 @@ class _FRDVTKReader(BaseVTKReader):
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             volumetric != 0, np.sign(volumetric) * vmises_strain, vmises_strain
         )
-        _FRDVTKReader._compute_principals(grid, base_name, tensor)
+        FRDParser._compute_principals(grid, base_name, tensor)
 
     @staticmethod
     def _compute_principals(grid: UnstructuredGrid, base_name: str, tensor: np.ndarray) -> None:
@@ -418,24 +337,21 @@ class _FRDVTKReader(BaseVTKReader):
         grid.point_data[f'{base_name}_PS2'] = eigvals[:, 1]
         grid.point_data[f'{base_name}_PS1'] = eigvals[:, 2]
 
-    # ------------------------------------------------------------------
-    # Grid assembly
-    # ------------------------------------------------------------------
-
-    def _build_grid(self, step_data: dict[str, dict[int, list[float]]]) -> UnstructuredGrid:
+    @staticmethod
+    def _build_grid(frd_data: FRDData, step_data: dict) -> UnstructuredGrid:
         from pyvista.core.pointset import UnstructuredGrid  # noqa: PLC0415
 
-        if not self._nodes:
+        if not frd_data.nodes:
             msg = 'No nodes found in FRD file -- cannot build grid.'
             raise ValueError(msg)
 
-        sorted_ids = sorted(self._nodes)
+        sorted_ids = sorted(frd_data.nodes)
         node_map = {nid: idx for idx, nid in enumerate(sorted_ids)}
-        points = np.array([self._nodes[n] for n in sorted_ids], dtype=float)
+        points = np.array([frd_data.nodes[n] for n in sorted_ids], dtype=float)
 
         cells: list[int] = []
         types: list[int] = []
-        for conn, ctype in zip(self._elements, self._cell_types, strict=True):
+        for conn, ctype in zip(frd_data.elements, frd_data.cell_types, strict=True):
             try:
                 vtk_ids = [node_map[n] for n in conn]
             except KeyError:
@@ -473,8 +389,8 @@ class _FRDVTKReader(BaseVTKReader):
 
                 upper = name.upper()
                 if 'STRESS' in upper and n_components == 6:
-                    _FRDVTKReader._compute_derived_stress(grid, name, arr)
+                    FRDParser._compute_derived_stress(grid, name, arr)
                 elif 'STRAIN' in upper and n_components == 6:
-                    _FRDVTKReader._compute_derived_strain(grid, name, arr)
+                    FRDParser._compute_derived_strain(grid, name, arr)
 
         return grid
