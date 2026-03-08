@@ -19,7 +19,7 @@ from pyvista.core.celltype import CellType
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
-    from pyvista.core.pointset import UnstructuredGrid
+    from pyvista import UnstructuredGrid
 
 
 class FRDBlock(Enum):
@@ -80,9 +80,11 @@ NODES_PER_ELEM: dict[FRDElementType, int] = {
     elem: _CELL_TYPE_TO_NUM_POINTS[np.uint8(CCX_TO_VTK_TYPE[elem])] for elem in CCX_TO_VTK_TYPE
 }
 
-ResultField = dict[int, list[float]]
-StepResults = dict[str, ResultField]
-StepResultsType = dict[float, StepResults]
+
+# Results hierarchy: step_time -> result_name -> node_id -> values
+NodeResultData = dict[int, list[float]]
+StepBucket = dict[str, NodeResultData]
+ResultsByStep = dict[float, StepBucket]
 
 
 @dataclass
@@ -91,7 +93,7 @@ class FRDData(_NoNewAttrMixin):
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
     cell_types: list[int] = field(default_factory=list)
-    results_by_step: StepResultsType = field(default_factory=dict)
+    results_by_step: ResultsByStep = field(default_factory=dict)
 
     # Diagnostic data
     _has_too_many_points: set[CellType] = field(default_factory=set)
@@ -213,7 +215,7 @@ class FRDParser(_NoNewAttrMixin):
                     etype = None
 
     @staticmethod
-    def _parse_results(file_stream: Any, step_bucket: StepResults) -> None:
+    def _parse_results(file_stream: Any, step_bucket: StepBucket) -> None:
         name = 'Unknown'
         attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
         comp_def = str(CGXRecord.COMPONENT_DEFINITION.value)
@@ -236,7 +238,7 @@ class FRDParser(_NoNewAttrMixin):
 
     @staticmethod
     def _parse_result_data(  # noqa: PLR0917
-        first_line: str, file_stream: Any, name: str, step_bucket: StepResults
+        first_line: str, file_stream: Any, name: str, step_bucket: StepBucket
     ) -> None:
         data: dict[int, list[float]] = {}
         end_block = str(CGXRecord.END_OF_BLOCK.value)
@@ -315,7 +317,7 @@ class FRDParser(_NoNewAttrMixin):
         grid.point_data[f'{base_name}_PS1'] = eigvals[:, 2]
 
     @staticmethod
-    def _build_grid(frd_data: FRDData, step_data: StepResults) -> UnstructuredGrid:
+    def _build_grid(frd_data: FRDData, step_data: StepBucket) -> UnstructuredGrid:
 
         if not frd_data.nodes:
             msg = 'No nodes found in FRD file -- cannot build grid.'
