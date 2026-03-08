@@ -15,6 +15,7 @@ import numpy as np
 
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from pyvista.core.pointset import UnstructuredGrid
@@ -80,7 +81,7 @@ NODES_PER_ELEM: dict[FRDElementType, int] = {
 
 
 @dataclass
-class FRDData:
+class FRDData(_NoNewAttrMixin):
     # Parsed data
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
@@ -93,7 +94,7 @@ class FRDData:
     has_unsupported_element: set[int] = field(default_factory=set)
 
 
-class FRDParser:
+class FRDParser(_NoNewAttrMixin):
     """Parses a CalculiX FRD file into an FRDData object."""
 
     # Compiled regex to fix scientific notation formatting issues

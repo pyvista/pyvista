@@ -263,6 +263,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pv.CGNSReader,
             pv.ExodusIIBlockSet,
             pv.DEMReader,
+            pv.core.utilities._frd.FRDParser,
         ):
             assert issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Test fails without proper dataset files.')
