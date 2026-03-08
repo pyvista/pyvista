@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 
+import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -79,6 +80,10 @@ NODES_PER_ELEM: dict[FRDElementType, int] = {
     elem: _CELL_TYPE_TO_NUM_POINTS[np.uint8(CCX_TO_VTK_TYPE[elem])] for elem in CCX_TO_VTK_TYPE
 }
 
+ResultField = dict[int, list[float]]
+StepResults = dict[str, ResultField]
+StepResultsType = dict[float, StepResults]
+
 
 @dataclass
 class FRDData(_NoNewAttrMixin):
@@ -86,7 +91,7 @@ class FRDData(_NoNewAttrMixin):
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
     cell_types: list[int] = field(default_factory=list)
-    results_by_step: dict[float, dict[str, dict[int, list[float]]]] = field(default_factory=dict)
+    results_by_step: StepResultsType = field(default_factory=dict)
 
     # Diagnostic data
     _has_too_many_points: set[CellType] = field(default_factory=set)
@@ -208,7 +213,7 @@ class FRDParser(_NoNewAttrMixin):
                     etype = None
 
     @staticmethod
-    def _parse_results(file_stream: Any, step_bucket: dict) -> None:
+    def _parse_results(file_stream: Any, step_bucket: StepResults) -> None:
         name = 'Unknown'
         attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
         comp_def = str(CGXRecord.COMPONENT_DEFINITION.value)
@@ -231,7 +236,7 @@ class FRDParser(_NoNewAttrMixin):
 
     @staticmethod
     def _parse_result_data(  # noqa: PLR0917
-        first_line: str, file_stream: Any, name: str, step_bucket: dict
+        first_line: str, file_stream: Any, name: str, step_bucket: StepResults
     ) -> None:
         data: dict[int, list[float]] = {}
         end_block = str(CGXRecord.END_OF_BLOCK.value)
@@ -310,8 +315,7 @@ class FRDParser(_NoNewAttrMixin):
         grid.point_data[f'{base_name}_PS1'] = eigvals[:, 2]
 
     @staticmethod
-    def _build_grid(frd_data: FRDData, step_data: dict) -> UnstructuredGrid:
-        from pyvista.core.pointset import UnstructuredGrid  # noqa: PLC0415
+    def _build_grid(frd_data: FRDData, step_data: StepResults) -> UnstructuredGrid:
 
         if not frd_data.nodes:
             msg = 'No nodes found in FRD file -- cannot build grid.'
@@ -332,7 +336,7 @@ class FRDParser(_NoNewAttrMixin):
             cells.extend(vtk_ids)
             types.append(ctype)
 
-        grid = UnstructuredGrid(
+        grid = pv.UnstructuredGrid(
             np.array(cells, dtype=np.int64),
             np.array(types, dtype=np.uint8),
             points,
