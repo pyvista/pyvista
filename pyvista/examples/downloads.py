@@ -2735,6 +2735,8 @@ _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 def download_frd(*, load=True):
     """Download a sample CalculiX FRD file.
 
+    .. versionadded:: 0.48
+
     Parameters
     ----------
     load : bool, default: True
