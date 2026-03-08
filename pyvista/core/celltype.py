@@ -522,37 +522,72 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE, cell_class=_vtk.vtkLagrangeCurve),
+    LAGRANGE_CURVE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_CURVE,
+        cell_class=_vtk.vtkLagrangeCurve,
+        example='LagrangeCurve',
+    ),
     LAGRANGE_TRIANGLE=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_TRIANGLE, cell_class=_vtk.vtkLagrangeTriangle
+        value=_vtk.VTK_LAGRANGE_TRIANGLE,
+        cell_class=_vtk.vtkLagrangeTriangle,
+        example='LagrangeTriangle',
     ),
     LAGRANGE_QUADRILATERAL=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_QUADRILATERAL, cell_class=_vtk.vtkLagrangeQuadrilateral
+        value=_vtk.VTK_LAGRANGE_QUADRILATERAL,
+        cell_class=_vtk.vtkLagrangeQuadrilateral,
+        example='LagrangeQuadrilateral',
     ),
     LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
     LAGRANGE_HEXAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_HEXAHEDRON, cell_class=_vtk.vtkLagrangeHexahedron
+        value=_vtk.VTK_LAGRANGE_HEXAHEDRON,
+        cell_class=_vtk.vtkLagrangeHexahedron,
+        example='LagrangeHexahedron',
     ),
-    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE, cell_class=_vtk.vtkLagrangeWedge),
-    LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
+    LAGRANGE_WEDGE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_WEDGE,
+        cell_class=_vtk.vtkLagrangeWedge,
+        example='LagrangeWedge',
+    ),
+    LAGRANGE_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_PYRAMID
+    ),
+
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE, cell_class=_vtk.vtkBezierCurve),
+    BEZIER_CURVE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_CURVE,
+        cell_class=_vtk.vtkBezierCurve,
+        example='BezierCurve',
+    ),
     BEZIER_TRIANGLE=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_TRIANGLE, cell_class=_vtk.vtkBezierTriangle
+        value=_vtk.VTK_BEZIER_TRIANGLE,
+        cell_class=_vtk.vtkBezierTriangle,
+        example='BezierTriangle',
     ),
     BEZIER_QUADRILATERAL=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_QUADRILATERAL, cell_class=_vtk.vtkBezierQuadrilateral
+        value=_vtk.VTK_BEZIER_QUADRILATERAL,
+        cell_class=_vtk.vtkBezierQuadrilateral,
+        example='BezierQuadrilateral',
     ),
     BEZIER_TETRAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_TETRAHEDRON, cell_class=_vtk.vtkBezierTetra
+        value=_vtk.VTK_BEZIER_TETRAHEDRON,
+        cell_class=_vtk.vtkBezierTetra,
+        example='BezierTetrahedron',
     ),
     BEZIER_HEXAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_HEXAHEDRON, cell_class=_vtk.vtkBezierHexahedron
+        value=_vtk.VTK_BEZIER_HEXAHEDRON,
+        cell_class=_vtk.vtkBezierHexahedron,
+        example='BezierHexahedron',
     ),
-    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
-    BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
+    BEZIER_WEDGE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_WEDGE,
+        cell_class=_vtk.vtkBezierWedge,
+        example='BezierWedge',
+    ),
+    BEZIER_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_PYRAMID)
 )
+
 
 
 class CellType(IntEnum):
