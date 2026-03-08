@@ -139,6 +139,7 @@ if TYPE_CHECKING:
 
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
+FPS_1_OVER_60 = 1 / 60
 
 if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -7370,25 +7371,31 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 self.last_vtksz = self.export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
-        if interactive and not self.off_screen:
+        if interactive and not self.off_screen:  # pragma: no cover
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
                     # Workaround for Windows interactor unresponsiveness after focus changes.
                     # See: https://github.com/pyvista/pyvista/issues/8383
-                    if os.name == 'nt':  # pragma: no cover
+                    if os.name == 'nt':
                         vtk_iren = self.iren.interactor  # type: ignore[union-attr]
                         while True:
+                            tstart_frame = time.time()
                             vtk_iren.ProcessEvents()
                             if vtk_iren.GetDone():
                                 break
-                            self.render_window.Render()  # type: ignore[union-attr]
-                            time.sleep(0.016)
+                            self.render_window.Render()
+
+                            # target an update rate of 60 FPS
+                            telap = time.time() - tstart_frame
+                            need_tsleep = FPS_1_OVER_60 - telap
+                            if need_tsleep > 0:
+                                time.sleep(need_tsleep)
                     else:
                         self.iren.start()  # type: ignore[union-attr]
 
-                if pv.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                if pv.vtk_version_info < (9, 2, 3):
                     self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
