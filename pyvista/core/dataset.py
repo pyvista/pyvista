@@ -3359,3 +3359,50 @@ class DataSet(DataSetFilters, DataObject):
             else _vtk.vtkCellTypes.IsLinear
         )
         return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
+
+    @property
+    def bounding_sphere(self) -> tuple[float, tuple[float, float, float]]:
+        """Compute the radius and center of a bounding sphere.
+
+        The sphere is exact for meshes with 4 points or less, and is otherwise approximated
+        using Ritter's algorithm. Returns NaN values if there are no points.
+
+        Uses :vtk:`vtkCell.ComputeBoundingSphere` internally for the computation.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        radius, center
+            Sphere radius as a float and center as a tuple of floats.
+
+        Examples
+        --------
+        Get the bounding sphere geometry of a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> radius, center = mesh.bounding_sphere
+
+        Create a sphere and plot it along with the original mesh.
+
+        >>> sphere = pv.Icosphere(radius=radius, center=center)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(sphere, style='wireframe', color='black')
+        >>> pl.view_xy()
+        >>> pl.camera.zoom(1.5)
+        >>> pl.show()
+
+        """
+        # Create grid with a single POLY_VERTEX cell containing all the points
+        n_points = self.n_points
+        cells = np.hstack([[n_points], np.arange(n_points)])
+        celltypes = np.array([pv.CellType.POLY_VERTEX], dtype=np.uint8)
+        grid = pv.UnstructuredGrid(cells, celltypes, self.points)
+
+        # Compute radius and center of the cell
+        center = [0.0, 0.0, 0.0]
+        r2 = grid.GetCell(0).ComputeBoundingSphere(center)
+        return r2**0.5, tuple(center)
