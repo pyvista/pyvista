@@ -7395,7 +7395,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                                 # instead of time.sleep use MsgWaitForMultipleObjects
                                 # to pump window messages to avoid the window appearing
                                 # unresponsive
-                                ctypes.windll.user32.MsgWaitForMultipleObjects(
+                                ctypes.windll.user32.MsgWaitForMultipleObjects(  # type: ignore[attr-defined]
                                     0,
                                     None,
                                     False,
