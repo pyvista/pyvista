@@ -239,7 +239,12 @@ class _FRDVTKReader(BaseVTKReader):
                 self._parse_elements(file_stream)
             elif s.startswith(FRDBlock.RESULTS.value):
                 _step_id, step_time = self._parse_100cl_header(s)
-                self._parse_results(file_stream, step_time)
+
+                if step_time not in self._results_by_step:
+                    self._results_by_step[step_time] = {}
+
+                step_bucket = self._results_by_step[step_time]
+                _FRDVTKReader._parse_results(file_stream, step_bucket)
 
     def _parse_nodes(self, file_stream: Any) -> None:
         """Parse 2C node block."""
@@ -298,12 +303,9 @@ class _FRDVTKReader(BaseVTKReader):
                     self._cell_types.append(vtk_type.value)
                     etype = None  # Wait for the next -1 record
 
-    def _parse_results(self, file_stream: Any, step_time: float) -> None:
+    @staticmethod
+    def _parse_results(file_stream: Any, step_bucket: dict) -> None:
         """Parse 100CL result block."""
-        if step_time not in self._results_by_step:
-            self._results_by_step[step_time] = {}
-
-        step_bucket = self._results_by_step[step_time]
         name = 'Unknown'
 
         attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
@@ -321,13 +323,13 @@ class _FRDVTKReader(BaseVTKReader):
                 continue
             elif s.startswith(nodal_vals):
                 # Pass the first data line and iterator down to collect data
-                self._parse_result_data(s, file_stream, name, step_bucket)
+                _FRDVTKReader._parse_result_data(s, file_stream, name, step_bucket)
                 return
             elif s.startswith(end_block):
                 return
 
+    @staticmethod
     def _parse_result_data(  # noqa: PLR0917
-        self,
         first_line: str,
         file_stream: Any,
         name: str,
@@ -341,7 +343,7 @@ class _FRDVTKReader(BaseVTKReader):
 
         # Process the very first line passed from _parse_results
         try:
-            parts = self._fix_scientific(first_line).split()
+            parts = _FRDVTKReader._fix_scientific(first_line).split()
             data[int(parts[1])] = [float(x) for x in parts[2:]]
         except (ValueError, IndexError):
             pass
@@ -353,7 +355,7 @@ class _FRDVTKReader(BaseVTKReader):
                 break
             if s.startswith(nodal_vals):
                 try:
-                    parts = self._fix_scientific(s).split()
+                    parts = _FRDVTKReader._fix_scientific(s).split()
                     data[int(parts[1])] = [float(x) for x in parts[2:]]
                 except (ValueError, IndexError):
                     pass
@@ -471,7 +473,7 @@ class _FRDVTKReader(BaseVTKReader):
 
                 upper = name.upper()
                 if 'STRESS' in upper and n_components == 6:
-                    self._compute_derived_stress(grid, name, arr)
+                    _FRDVTKReader._compute_derived_stress(grid, name, arr)
                 elif 'STRAIN' in upper and n_components == 6:
                     _FRDVTKReader._compute_derived_strain(grid, name, arr)
 
