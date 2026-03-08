@@ -3373,7 +3373,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        radius, center
+        float, tuple
             Sphere radius as a float and center as a tuple of floats.
 
         Examples
