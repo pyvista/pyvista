@@ -3405,4 +3405,4 @@ class DataSet(DataSetFilters, DataObject):
         # Compute radius and center of the cell
         center = [0.0, 0.0, 0.0]
         r2 = grid.GetCell(0).ComputeBoundingSphere(center)
-        return r2**0.5, tuple(center)  # type: ignore[return-value]
+        return float(r2**0.5), (center[0], center[1], center[2])
