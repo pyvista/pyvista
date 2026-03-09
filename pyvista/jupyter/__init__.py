@@ -178,7 +178,7 @@ def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
           virtual framebuffer.
 
         Custom backends registered via
-        :func:`pyvista.register_jupyter_backend` are also accepted.
+        :func:`~pyvista.jupyter.register_jupyter_backend` are also accepted.
 
     name : str, optional
         The unique name identifier for the server.
