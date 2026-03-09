@@ -217,11 +217,10 @@ class FRDParser(_NoNewAttrMixin):
 
         for line in file_stream:
             s = line.strip()
-            if node_ids and not s.startswith(elem_faces):
-                # Node ids were only partially extended from the previous line, which means we
-                # should expect more ids to define the rest of the element. But since this line
-                # does not define faces, it means the previous element definition is complete,
-                # and hence the element as-is has too few points
+            if etype is not None and not s.startswith(elem_faces):
+                # Etype has not been reset, which means we should expect more ids to define the
+                # rest of the element. But since this line does not define faces, the previous
+                # element definition is complete, and hence the element as-is has too few points
                 invalid = InvalidElement(
                     line_number=elem_line_number,
                     element_type=etype,
