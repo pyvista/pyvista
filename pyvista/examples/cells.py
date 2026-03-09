@@ -2014,7 +2014,6 @@ def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_HEXAHEDRON` cell type.
 
-
     Parameters
     ----------
     cell_order : int, default: 3
