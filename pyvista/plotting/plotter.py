@@ -16,6 +16,7 @@ import io
 from itertools import cycle
 import logging
 import os
+
 if os.name == 'nt':
     import ctypes
 from pathlib import Path
