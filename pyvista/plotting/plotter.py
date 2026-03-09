@@ -11,12 +11,12 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
+import ctypes
 from functools import wraps
 import io
 from itertools import cycle
 import logging
 import os
-import ctypes
 from pathlib import Path
 import platform
 import sys
