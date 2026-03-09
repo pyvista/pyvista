@@ -12,6 +12,7 @@ Includes:
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
 from pyvista._warn_external import warn_external
@@ -55,7 +56,7 @@ def handle_plotter(
         if backend in ['server', 'client', 'trame', 'html']:
             from pyvista.trame.jupyter import show_trame  # noqa: PLC0415
 
-            return show_trame(plotter, mode=backend, **kwargs)
+            return show_trame(plotter, mode=cast('Any', backend), **kwargs)
 
     except ImportError as e:
         warn_external(
