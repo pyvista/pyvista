@@ -3523,20 +3523,27 @@ class _FRDReader(BaseVTKReader):
         parser = FRDParser(self._filename)
         self._frd_data = parser.parse()
 
-        if celltypes := self._frd_data._has_too_many_points:
-            msg = f'Cell type(s) with too many points detected:\n{celltypes}'
+        MAX_N_LINES = 3
+
+        def _warn_invalid(invalid_elements, desc):
+            n = len(invalid_elements)
+            s = 's' if n > 1 else ''
+            msg = f'{n} cell{s} with {desc}:'
+            for elem in invalid_elements[:MAX_N_LINES]:
+                msg += '\n  ' + str(elem)
+
             warn_external(msg, InvalidMeshWarning)
-        if celltypes := self._frd_data._has_too_few_points:
-            msg = (
-                f'Cell type(s) with too few points detected. Invalid elements are skipped.'
-                f'\n{celltypes}'
+
+        if invalid_elements := self._frd_data._has_too_many_points:
+            _warn_invalid(invalid_elements, 'too many points detected')
+
+        if invalid_elements := self._frd_data._has_too_few_points:
+            _warn_invalid(invalid_elements, 'too few points detected. These elements are skipped')
+
+        if invalid_elements := self._frd_data._has_unsupported_element:
+            _warn_invalid(
+                invalid_elements, 'unknown element type encountered. These elements are skipped.'
             )
-            warn_external(msg, InvalidMeshWarning)
-        if elements := self._frd_data.has_unsupported_element:
-            msg = (
-                f'Unknown element type code(s) encountered {elements}. These elements are skipped.'
-            )
-            warn_external(msg, InvalidMeshWarning)
 
         self._time_steps = sorted(self._frd_data.results_by_step.keys())
 

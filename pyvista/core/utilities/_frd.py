@@ -88,6 +88,28 @@ ResultsByStep = dict[float, StepBucket]
 
 
 @dataclass
+class InvalidElement:
+    line_number: int
+    element_type: int
+    n_nodes_expected: int | None = None
+    n_nodes_actual: int | None = None
+
+    def __str__(self) -> str:
+        items_to_print: list[str] = [f'line {self.line_number}']
+        etype = self.element_type
+        content = (
+            f'{etype.value} ({etype.name})' if isinstance(etype, FRDElementType) else str(etype)
+        )
+        items_to_print.append(f'element type {content}')
+
+        actual = self.n_nodes_actual
+        expected = self.n_nodes_expected
+        if actual is not None and expected is not None:
+            items_to_print.append(f'num nodes {actual} (expected {expected})')
+        return ', '.join(items_to_print)
+
+
+@dataclass
 class FRDData(_NoNewAttrMixin):
     # Parsed data
     nodes: dict[int, list[float]] = field(default_factory=dict)
@@ -96,9 +118,9 @@ class FRDData(_NoNewAttrMixin):
     results_by_step: ResultsByStep = field(default_factory=dict)
 
     # Diagnostic data
-    _has_too_many_points: set[CellType] = field(default_factory=set)
-    _has_too_few_points: set[CellType] = field(default_factory=set)
-    has_unsupported_element: set[int] = field(default_factory=set)
+    _has_too_many_points: list[InvalidElement] = field(default_factory=list)
+    _has_too_few_points: list[InvalidElement] = field(default_factory=list)
+    _has_unsupported_element: list[InvalidElement] = field(default_factory=list)
 
 
 class FRDParser(_NoNewAttrMixin):
@@ -173,7 +195,8 @@ class FRDParser(_NoNewAttrMixin):
         etype = None
         vtk_type = None
 
-        for line in file_stream:
+        for i, line in enumerate(file_stream):
+            line_number = i + 1
             s = line.strip()
             if s.startswith(end_block):
                 return
@@ -189,7 +212,8 @@ class FRDParser(_NoNewAttrMixin):
                 try:
                     etype = FRDElementType(etype_val)
                 except ValueError:
-                    frd_data.has_unsupported_element.add(etype_val)
+                    invalid = InvalidElement(line_number=line_number, element_type=etype_val)
+                    frd_data._has_unsupported_element.append(invalid)
                     etype = None
                     continue
 
@@ -202,11 +226,23 @@ class FRDParser(_NoNewAttrMixin):
                 n_nodes = len(node_ids)
                 if n_nodes < needed:
                     # Skip elements with too few points
-                    frd_data._has_too_few_points.add(CCX_TO_VTK_TYPE[etype])
+                    invalid = InvalidElement(
+                        line_number=line_number,
+                        element_type=etype,
+                        n_nodes_expected=needed,
+                        n_nodes_actual=n_nodes,
+                    )
+                    frd_data._has_too_few_points.append(invalid)
                     continue
                 if n_nodes > needed:
-                    # Keep track of elements with too many points
-                    frd_data._has_too_many_points.add(CCX_TO_VTK_TYPE[etype])
+                    # Keep track of elements with too many points, but don't skip
+                    invalid = InvalidElement(
+                        line_number=line_number,
+                        element_type=etype,
+                        n_nodes_expected=needed,
+                        n_nodes_actual=n_nodes,
+                    )
+                    frd_data._has_too_many_points.append(invalid)
 
                 if len(node_ids) >= needed:
                     final_nodes = FRDParser._permute_nodes(node_ids, etype)
