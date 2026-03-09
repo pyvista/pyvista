@@ -87,8 +87,26 @@ StepBucket = dict[str, NodeResultData]
 ResultsByStep = dict[float, StepBucket]
 
 
+class LineTrackingStream:
+    """Wrap a file-like iterator to track line numbers automatically."""
+
+    def __init__(self, lines: Any) -> None:
+        self._lines = iter(lines)
+        self.line_number = 0
+
+    def __iter__(self) -> LineTrackingStream:
+        return self
+
+    def __next__(self) -> str:
+        line = next(self._lines)
+        self.line_number += 1
+        return line
+
+
 @dataclass
 class InvalidElement:
+    """Dataclass to store invalid elements detected when parsing."""
+
     line_number: int
     element_type: int
     n_nodes_expected: int | None = None
@@ -135,16 +153,17 @@ class FRDParser(_NoNewAttrMixin):
     def parse(self) -> FRDData:
         frd_data = FRDData()
         with pathlib.Path(self._filename).open(errors='replace') as file_stream:
-            for line in file_stream:
+            lines = LineTrackingStream(file_stream)
+            for line in lines:
                 s = line.strip()
                 if s.startswith(FRDBlock.NODES.value):
-                    self._parse_nodes(file_stream, frd_data)
+                    self._parse_nodes(lines, frd_data)
                 elif s.startswith(FRDBlock.ELEMENTS.value):
-                    self._parse_elements(file_stream, frd_data)
+                    self._parse_elements(lines, frd_data)
                 elif s.startswith(FRDBlock.RESULTS.value):
                     _step_id, step_time = self._parse_100cl_header(s)
                     frd_data.results_by_step.setdefault(step_time, {})
-                    self._parse_results(file_stream, frd_data.results_by_step[step_time])
+                    self._parse_results(lines, frd_data.results_by_step[step_time])
         return frd_data
 
     @staticmethod
@@ -195,13 +214,13 @@ class FRDParser(_NoNewAttrMixin):
         etype = None
         vtk_type = None
 
-        for i, line in enumerate(file_stream):
-            line_number = i + 1
+        for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 return
 
             if s.startswith(elem_def):
+                line_number = file_stream.line_number
                 parts = s.split()
                 try:
                     etype_val = int(parts[2])

@@ -226,15 +226,15 @@ def test_frd_reader_derived_strain(mock_frd_file):
 def test_frd_reader_comprehensive(comprehensive_frd_file):
     match1 = (
         '1 cell with too many points detected:\n'
-        '  line 14, element type 7 (TR3), num nodes 5 (expected 3)'
+        '  line 22, element type 7 (TR3), num nodes 5 (expected 3)'
     )
     match2 = (
         '1 cell with too few points detected. These elements are skipped:\n'
-        '  line 12, element type 2 (PE6), num nodes 3 (expected 6)'
+        '  line 20, element type 2 (PE6), num nodes 3 (expected 6)'
     )
     match3 = (
         '1 cell with unknown element type encountered. These elements are skipped.:\n'
-        '  line 6, element type 999'
+        '  line 15, element type 999'
     )
     with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match1)):  # noqa: PT031
         with pytest.warns(pv.InvalidMeshWarning, match=re.escape(match2)):
