@@ -521,7 +521,6 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_PYRAMID),
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
-    ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
     LAGRANGE_CURVE=_CellTypeTuple(
         value=_vtk.VTK_LAGRANGE_CURVE,
@@ -692,7 +691,7 @@ class CellType(IntEnum):
         `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
             VTK reference about cell types.
 
-        `Modeling Lagrange Finite Elements in VTK` <https://www.kitware.com//modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit/>`_
+        `Modeling Lagrange Finite Elements in VTK <https://www.kitware.com//modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit/>`_
             VTK blog post about Lagrange cells.
 
         `Implementation of rational Bézier cells into VTK <https://www.kitware.com/implementation-of-rational-bezier-cells-into-vtk/>`_
