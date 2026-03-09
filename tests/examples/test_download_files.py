@@ -1258,3 +1258,5 @@ def test_download_frd():
 
     mesh = examples.download_frd()
     assert isinstance(mesh, pv.UnstructuredGrid)
+    assert mesh.n_cells == 61
+    assert mesh.n_points == 190
