@@ -16,7 +16,6 @@ import numpy as np
 import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
-from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
@@ -87,14 +86,14 @@ StepBucket = dict[str, NodeResultData]
 ResultsByStep = dict[float, StepBucket]
 
 
-class LineTrackingStream:
+class _LineTrackingStream:
     """Wrap a file-like iterator to track line numbers automatically."""
 
     def __init__(self, lines: Any) -> None:
         self._lines = iter(lines)
         self.line_number = 0
 
-    def __iter__(self) -> LineTrackingStream:
+    def __iter__(self) -> _LineTrackingStream:
         return self
 
     def __next__(self) -> str:
@@ -104,7 +103,7 @@ class LineTrackingStream:
 
 
 @dataclass
-class InvalidElement:
+class _InvalidElement:
     """Dataclass to store invalid elements detected when parsing."""
 
     line_number: int
@@ -128,7 +127,7 @@ class InvalidElement:
 
 
 @dataclass
-class FRDData(_NoNewAttrMixin):
+class _FRDData:
     # Parsed data
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
@@ -136,12 +135,12 @@ class FRDData(_NoNewAttrMixin):
     results_by_step: ResultsByStep = field(default_factory=dict)
 
     # Diagnostic data
-    _has_too_many_points: list[InvalidElement] = field(default_factory=list)
-    _has_too_few_points: list[InvalidElement] = field(default_factory=list)
-    _has_unsupported_element: list[InvalidElement] = field(default_factory=list)
+    _has_too_many_points: list[_InvalidElement] = field(default_factory=list)
+    _has_too_few_points: list[_InvalidElement] = field(default_factory=list)
+    _has_unsupported_element: list[_InvalidElement] = field(default_factory=list)
 
 
-class FRDParser(_NoNewAttrMixin):
+class _FRDParser:
     """Parses a CalculiX FRD file into an FRDData object."""
 
     # Compiled regex to fix scientific notation formatting issues
@@ -150,10 +149,10 @@ class FRDParser(_NoNewAttrMixin):
     def __init__(self, filename: str) -> None:
         self._filename = filename
 
-    def parse(self) -> FRDData:
-        frd_data = FRDData()
+    def parse(self) -> _FRDData:
+        frd_data = _FRDData()
         with pathlib.Path(self._filename).open(errors='replace') as file_stream:
-            lines = LineTrackingStream(file_stream)
+            lines = _LineTrackingStream(file_stream)
             for line in lines:
                 s = line.strip()
                 if s.startswith(FRDBlock.NODES.value):
@@ -168,7 +167,7 @@ class FRDParser(_NoNewAttrMixin):
 
     @staticmethod
     def _fix_scientific(line: str) -> str:
-        return FRDParser._SCIENTIFIC_RE.sub(' -', line)
+        return _FRDParser._SCIENTIFIC_RE.sub(' -', line)
 
     @staticmethod
     def _parse_100cl_header(line: str) -> tuple[int, float]:
@@ -190,21 +189,21 @@ class FRDParser(_NoNewAttrMixin):
         return node_ids
 
     @staticmethod
-    def _parse_nodes(file_stream: Any, frd_data: FRDData) -> None:
+    def _parse_nodes(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 return
             try:
-                parts = FRDParser._fix_scientific(s).split()
+                parts = _FRDParser._fix_scientific(s).split()
                 nid = int(parts[1])
                 frd_data.nodes[nid] = [float(parts[2]), float(parts[3]), float(parts[4])]
             except (ValueError, IndexError):
                 pass
 
     @staticmethod
-    def _parse_elements(file_stream: Any, frd_data: FRDData) -> None:
+    def _parse_elements(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         elem_def = str(CGXRecord.NODAL_VALUES.value)
         elem_faces = str(CGXRecord.ELEMENT_FACES.value)
@@ -221,7 +220,7 @@ class FRDParser(_NoNewAttrMixin):
                 # Etype has not been reset, which means we should expect more ids to define the
                 # rest of the element. But since this line does not define faces, the previous
                 # element definition is complete, and hence the element as-is has too few points
-                invalid = InvalidElement(
+                invalid = _InvalidElement(
                     line_number=elem_line_number,
                     element_type=etype,
                     n_nodes_expected=needed,
@@ -244,7 +243,7 @@ class FRDParser(_NoNewAttrMixin):
                 try:
                     etype = FRDElementType(etype_val)
                 except ValueError:
-                    invalid = InvalidElement(line_number=elem_line_number, element_type=etype_val)
+                    invalid = _InvalidElement(line_number=elem_line_number, element_type=etype_val)
                     frd_data._has_unsupported_element.append(invalid)
                     etype = None
                     continue
@@ -262,7 +261,7 @@ class FRDParser(_NoNewAttrMixin):
                     continue
                 if n_nodes > needed:
                     # Keep track of elements with too many points, but don't skip
-                    invalid = InvalidElement(
+                    invalid = _InvalidElement(
                         line_number=elem_line_number,
                         element_type=etype,
                         n_nodes_expected=needed,
@@ -271,7 +270,7 @@ class FRDParser(_NoNewAttrMixin):
                     frd_data._has_too_many_points.append(invalid)
 
                 # Take only the first 'needed' nodes
-                final_nodes = FRDParser._permute_nodes(node_ids, etype)
+                final_nodes = _FRDParser._permute_nodes(node_ids, etype)
                 frd_data.elements.append(final_nodes[:needed])
                 frd_data.cell_types.append(vtk_type.value)
 
@@ -296,7 +295,7 @@ class FRDParser(_NoNewAttrMixin):
             elif s.startswith(comp_def):
                 continue
             elif s.startswith(nodal_vals):
-                FRDParser._parse_result_data(s, file_stream, name, step_bucket)
+                _FRDParser._parse_result_data(s, file_stream, name, step_bucket)
                 return
             elif s.startswith(end_block):
                 return
@@ -310,7 +309,7 @@ class FRDParser(_NoNewAttrMixin):
         nodal_vals = str(CGXRecord.NODAL_VALUES.value)
 
         try:
-            parts = FRDParser._fix_scientific(first_line).split()
+            parts = _FRDParser._fix_scientific(first_line).split()
             data[int(parts[1])] = [float(x) for x in parts[2:]]
         except (ValueError, IndexError):
             pass
@@ -321,7 +320,7 @@ class FRDParser(_NoNewAttrMixin):
                 break
             if s.startswith(nodal_vals):
                 try:
-                    parts = FRDParser._fix_scientific(s).split()
+                    parts = _FRDParser._fix_scientific(s).split()
                     data[int(parts[1])] = [float(x) for x in parts[2:]]
                 except (ValueError, IndexError):
                     pass
@@ -345,7 +344,7 @@ class FRDParser(_NoNewAttrMixin):
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             trace != 0, np.sign(trace) * vmises, vmises
         )
-        FRDParser._compute_principals(grid, base_name, tensor)
+        _FRDParser._compute_principals(grid, base_name, tensor)
 
     @staticmethod
     def _compute_derived_strain(
@@ -363,7 +362,7 @@ class FRDParser(_NoNewAttrMixin):
         grid.point_data[f'{base_name}_sgMises'] = np.where(
             volumetric != 0, np.sign(volumetric) * vmises_strain, vmises_strain
         )
-        FRDParser._compute_principals(grid, base_name, tensor)
+        _FRDParser._compute_principals(grid, base_name, tensor)
 
     @staticmethod
     def _compute_principals(grid: UnstructuredGrid, base_name: str, tensor: np.ndarray) -> None:
@@ -382,7 +381,7 @@ class FRDParser(_NoNewAttrMixin):
         grid.point_data[f'{base_name}_PS1'] = eigvals[:, 2]
 
     @staticmethod
-    def _build_grid(frd_data: FRDData, step_data: StepBucket) -> UnstructuredGrid:
+    def _build_grid(frd_data: _FRDData, step_data: StepBucket) -> UnstructuredGrid:
 
         if not frd_data.nodes:
             msg = 'No nodes found in FRD file -- cannot build grid.'
@@ -432,8 +431,8 @@ class FRDParser(_NoNewAttrMixin):
 
                 upper = name.upper()
                 if 'STRESS' in upper and n_components == 6:
-                    FRDParser._compute_derived_stress(grid, name, arr)
+                    _FRDParser._compute_derived_stress(grid, name, arr)
                 elif 'STRAIN' in upper and n_components == 6:
-                    FRDParser._compute_derived_strain(grid, name, arr)
+                    _FRDParser._compute_derived_strain(grid, name, arr)
 
         return grid

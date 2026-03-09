@@ -28,7 +28,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.errors import InvalidMeshWarning
 
-from ._frd import FRDParser
+from ._frd import _FRDParser
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
 from .fileio import _lazy_vtk_import
@@ -40,7 +40,7 @@ from .misc import abstract_class
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ._frd import FRDData
+    from ._frd import _FRDData
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader]] = {}
@@ -3515,12 +3515,12 @@ class _FRDReader(BaseVTKReader):
 
     def __init__(self) -> None:
         super().__init__()
-        self._frd_data: FRDData | None = None
+        self._frd_data: _FRDData | None = None
         self._time_steps: list[float] = []
         self._active_time_point: int = 0
 
     def UpdateInformation(self) -> None:
-        parser = FRDParser(self._filename)
+        parser = _FRDParser(self._filename)
         self._frd_data = parser.parse()
 
         MAX_N_LINES = 3
@@ -3555,7 +3555,7 @@ class _FRDReader(BaseVTKReader):
         step_data = (
             self._frd_data.results_by_step.get(step_time, {}) if step_time is not None else {}
         )
-        self._data_object = FRDParser._build_grid(self._frd_data, step_data)
+        self._data_object = _FRDParser._build_grid(self._frd_data, step_data)
 
 
 class FRDReader(BaseReader, TimeReader):
