@@ -213,14 +213,28 @@ class FRDParser(_NoNewAttrMixin):
         node_ids: list[int] = []
         etype = None
         vtk_type = None
+        elem_line_number = -1
 
         for line in file_stream:
             s = line.strip()
+            if node_ids and not s.startswith(elem_faces):
+                # Node ids were only partially extended from the previous line, which means we
+                # should expect more ids to define the rest of the element. But since this line
+                # does not define faces, it means the previous element definition is complete,
+                # and hence the element as-is has too few points
+                invalid = InvalidElement(
+                    line_number=elem_line_number,
+                    element_type=etype,
+                    n_nodes_expected=needed,
+                    n_nodes_actual=len(node_ids),
+                )
+                frd_data._has_too_few_points.append(invalid)
+
             if s.startswith(end_block):
                 return
 
             if s.startswith(elem_def):
-                line_number = file_stream.line_number
+                elem_line_number = file_stream.line_number
                 parts = s.split()
                 try:
                     etype_val = int(parts[2])
@@ -231,7 +245,7 @@ class FRDParser(_NoNewAttrMixin):
                 try:
                     etype = FRDElementType(etype_val)
                 except ValueError:
-                    invalid = InvalidElement(line_number=line_number, element_type=etype_val)
+                    invalid = InvalidElement(line_number=elem_line_number, element_type=etype_val)
                     frd_data._has_unsupported_element.append(invalid)
                     etype = None
                     continue
@@ -242,32 +256,29 @@ class FRDParser(_NoNewAttrMixin):
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 node_ids.extend(int(x) for x in s.split()[1:])
-                n_nodes = len(node_ids)
-                if n_nodes < needed:
-                    # Skip elements with too few points
-                    invalid = InvalidElement(
-                        line_number=line_number,
-                        element_type=etype,
-                        n_nodes_expected=needed,
-                        n_nodes_actual=n_nodes,
-                    )
-                    frd_data._has_too_few_points.append(invalid)
+
+                if (n_nodes := len(node_ids)) < needed:
+                    # Element has too few points, and might be invalid, or maybe more points
+                    # are defined on the next line
                     continue
                 if n_nodes > needed:
                     # Keep track of elements with too many points, but don't skip
                     invalid = InvalidElement(
-                        line_number=line_number,
+                        line_number=elem_line_number,
                         element_type=etype,
                         n_nodes_expected=needed,
                         n_nodes_actual=n_nodes,
                     )
                     frd_data._has_too_many_points.append(invalid)
 
-                if len(node_ids) >= needed:
-                    final_nodes = FRDParser._permute_nodes(node_ids, etype)
-                    frd_data.elements.append(final_nodes[:needed])
-                    frd_data.cell_types.append(vtk_type.value)
-                    etype = None
+                # Take only the first 'needed' nodes
+                final_nodes = FRDParser._permute_nodes(node_ids, etype)
+                frd_data.elements.append(final_nodes[:needed])
+                frd_data.cell_types.append(vtk_type.value)
+
+                # Reset for next element
+                etype = None
+                node_ids = []
 
     @staticmethod
     def _parse_results(file_stream: Any, step_bucket: StepBucket) -> None:
