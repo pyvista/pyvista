@@ -527,7 +527,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LAGRANGE_CURVE,
         cell_class=_vtk.vtkLagrangeCurve,
         example='LagrangeCurve',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Lagrange representation of a curve with arbitrary order.
         """,
@@ -536,7 +536,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LAGRANGE_TRIANGLE,
         cell_class=_vtk.vtkLagrangeTriangle,
         example='LagrangeTriangle',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Lagrange representation of a triangle with arbitrary order.
         """,
@@ -545,7 +545,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LAGRANGE_QUADRILATERAL,
         cell_class=_vtk.vtkLagrangeQuadrilateral,
         example='LagrangeQuadrilateral',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Lagrange representation of a quadrilateral with arbitrary order.
         """,
@@ -554,7 +554,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LAGRANGE_TETRAHEDRON,
         cell_class=_vtk.vtkLagrangeTetra,
         example='LagrangeTetrahedron',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Lagrange representation of a tetrahedron with arbitrary order.
         """,
@@ -563,7 +563,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LAGRANGE_HEXAHEDRON,
         cell_class=_vtk.vtkLagrangeHexahedron,
         example='LagrangeHexahedron',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Lagrange representation of a hexahedron with arbitrary order.
         """,
@@ -572,7 +572,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_LAGRANGE_WEDGE,
         cell_class=_vtk.vtkLagrangeWedge,
         example='LagrangeWedge',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Lagrange representation of a wedge with arbitrary order.
         """,
@@ -589,7 +589,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BEZIER_CURVE,
         cell_class=_vtk.vtkBezierCurve,
         example='BezierCurve',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Bezier representation of a curve with arbitrary order.
         """,
@@ -598,7 +598,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BEZIER_TRIANGLE,
         cell_class=_vtk.vtkBezierTriangle,
         example='BezierTriangle',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Bezier representation of a triangle with arbitrary order.
         """,
@@ -607,7 +607,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BEZIER_QUADRILATERAL,
         cell_class=_vtk.vtkBezierQuadrilateral,
         example='BezierQuadrilateral',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Bezier representation of a quadrilateral with arbitrary order.
         """,
@@ -616,7 +616,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BEZIER_TETRAHEDRON,
         cell_class=_vtk.vtkBezierTetra,
         example='BezierTetrahedron',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Bezier representation of a tetrahedron with arbitrary order.
         """,
@@ -625,7 +625,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BEZIER_HEXAHEDRON,
         cell_class=_vtk.vtkBezierHexahedron,
         example='BezierHexahedron',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Bezier representation of a hexahedron with arbitrary order.
         """,
@@ -634,7 +634,7 @@ _CELL_TYPE_INFO = dict(
         value=_vtk.VTK_BEZIER_WEDGE,
         cell_class=_vtk.vtkBezierWedge,
         example='BezierWedge',
-        _points_override='variable',
+        points_override='variable',
         doc="""
         Bezier representation of a wedge with arbitrary order.
         """,
