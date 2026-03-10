@@ -181,6 +181,7 @@ from .reader import ExodusIIReader as ExodusIIReader
 from .reader import FacetReader as FacetReader
 from .reader import FLUENTCFFReader as FLUENTCFFReader
 from .reader import FluentReader as FluentReader
+from .reader import FRDReader as FRDReader
 from .reader import GambitReader as GambitReader
 from .reader import GaussianCubeReader as GaussianCubeReader
 from .reader import GESignaReader as GESignaReader

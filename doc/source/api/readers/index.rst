@@ -35,6 +35,7 @@ Reader Classes
     FacetReader
     FLUENTCFFReader
     FluentReader
+    FRDReader
     GambitReader
     GaussianCubeReader
     GESignaReader
