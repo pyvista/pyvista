@@ -489,7 +489,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     @property
     def pen(self) -> Pen:  # numpydoc ignore=RT01
         """Pen used to draw the axis.
-        
+
         Examples
         --------
         Create a 2D chart and change the x-axis color to red with a width of 5.
@@ -503,18 +503,18 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> chart.x_axis.pen.color = 'r'
            >>> chart.x_axis.pen.width = 5
            >>> chart.show()
-        
+
         """
         return self._pen
 
     @property
     def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
         """Pen used to draw the grid lines.
-        
+
         Examples
         --------
         Create a 2D chart and change the x-axis grid lines to a dashed style.
-        
+
         .. pyvista-plot::
            :force_static:
 
@@ -524,7 +524,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> chart.x_axis.grid_pen.color = (0.5, 0.5, 0.5)
            >>> chart.x_axis.grid_pen.style = '--'
            >>> chart.show()
-        
+
         """
         return self._grid_pen
 
