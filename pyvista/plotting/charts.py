@@ -488,8 +488,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def pen(self) -> Pen:  # numpydoc ignore=RT01
-        """
-        Pen used to draw the axis.
+        """Pen used to draw the axis.
 
         Examples
         --------
@@ -510,8 +509,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
-        """
-        Pen used to draw the grid lines.
+        """Pen used to draw the grid lines.
 
         Examples
         --------
