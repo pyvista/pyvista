@@ -135,12 +135,7 @@ def plot_cell(
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
         edges = cell_as_grid.extract_all_edges()
-        if edges.n_cells or cell.type in [
-            CellType.LINE,
-            CellType.POLY_LINE,
-            CellType.QUADRATIC_EDGE,
-            CellType.CUBIC_LINE,
-        ]:
+        if edges.n_cells or cell.dimension == 1:
             pl.add_mesh(
                 cell_as_grid,
                 style='wireframe',
@@ -1807,6 +1802,794 @@ def CubicLine() -> UnstructuredGrid:
     return _make_isoparametric_unstructured_grid(_vtk.vtkCubicLine())
 
 
+def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange curve.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_CURVE` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange curve.
+
+    Examples
+    --------
+    Create and plot a single Lagrange curve.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeCurve()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([4, 0, 1, 2, 3])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_CURVE
+    array([68], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_CURVE, cell_order=cell_order)
+
+
+def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange triangle.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_TRIANGLE` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange triangle.
+
+    Examples
+    --------
+    Create and plot a single Lagrange triangle.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeTriangle()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.33333334, 0.33333334, 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TRIANGLE
+    array([69], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order)
+
+
+def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange quadrilateral.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_QUADRILATERAL` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange quadrilateral.
+
+    Examples
+    --------
+    Create and plot a single Lagrange quadrilateral.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeQuadrilateral()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [1.        , 1.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [1.        , 0.33333334, 0.        ],
+                     [1.        , 0.66666669, 0.        ],
+                     [0.33333334, 1.        , 0.        ],
+                     [0.66666669, 1.        , 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.66666669, 0.66666669, 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_QUADRILATERAL
+    array([70], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order)
+
+
+def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange tetrahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_TETRAHEDRON` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange tetrahedron.
+
+    Examples
+    --------
+    Create and plot a single Lagrange tetrahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeTetrahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [1.        , 1.        , 0.        ],
+                     [0.5       , 0.5       , 0.5       ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [1.        , 0.33333334, 0.        ],
+                     [1.        , 0.66666669, 0.        ],
+                     [0.66666669, 0.66666669, 0.        ],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.16666667, 0.16666667, 0.16666667],
+                     [0.33333334, 0.33333334, 0.33333334],
+                     [0.83333331, 0.16666667, 0.16666667],
+                     [0.66666669, 0.33333334, 0.33333334],
+                     [0.83333331, 0.83333331, 0.16666667],
+                     [0.66666669, 0.66666669, 0.33333334],
+                     [0.5       , 0.16666667, 0.16666667],
+                     [0.83333331, 0.5       , 0.16666667],
+                     [0.5       , 0.5       , 0.16666667],
+                     [0.66666669, 0.33333334, 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TETRAHEDRON
+    array([71], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order)
+
+
+def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange hexahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_HEXAHEDRON` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange hexahedron.
+
+    Examples
+    --------
+    Create and plot a single Lagrange hexahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeHexahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+           33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [1.        , 1.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.        , 0.        , 1.        ],
+                     [1.        , 0.        , 1.        ],
+                     [1.        , 1.        , 1.        ],
+                     [0.        , 1.        , 1.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [1.        , 0.33333334, 0.        ],
+                     [1.        , 0.66666669, 0.        ],
+                     [0.33333334, 1.        , 0.        ],
+                     [0.66666669, 1.        , 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.33333334, 0.        , 1.        ],
+                     [0.66666669, 0.        , 1.        ],
+                     [1.        , 0.33333334, 1.        ],
+                     [1.        , 0.66666669, 1.        ],
+                     [0.33333334, 1.        , 1.        ],
+                     [0.66666669, 1.        , 1.        ],
+                     [0.        , 0.33333334, 1.        ],
+                     [0.        , 0.66666669, 1.        ],
+                     [0.        , 0.        , 0.33333334],
+                     [0.        , 0.        , 0.66666669],
+                     [1.        , 0.        , 0.33333334],
+                     [1.        , 0.        , 0.66666669],
+                     [1.        , 1.        , 0.33333334],
+                     [1.        , 1.        , 0.66666669],
+                     [0.        , 1.        , 0.33333334],
+                     [0.        , 1.        , 0.66666669],
+                     [0.        , 0.33333334, 0.33333334],
+                     [0.        , 0.66666669, 0.33333334],
+                     [0.        , 0.33333334, 0.66666669],
+                     [0.        , 0.66666669, 0.66666669],
+                     [1.        , 0.33333334, 0.33333334],
+                     [1.        , 0.66666669, 0.33333334],
+                     [1.        , 0.33333334, 0.66666669],
+                     [1.        , 0.66666669, 0.66666669],
+                     [0.33333334, 0.        , 0.33333334],
+                     [0.66666669, 0.        , 0.33333334],
+                     [0.33333334, 0.        , 0.66666669],
+                     [0.66666669, 0.        , 0.66666669],
+                     [0.33333334, 1.        , 0.33333334],
+                     [0.66666669, 1.        , 0.33333334],
+                     [0.33333334, 1.        , 0.66666669],
+                     [0.66666669, 1.        , 0.66666669],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.66666669, 0.66666669, 0.        ],
+                     [0.33333334, 0.33333334, 1.        ],
+                     [0.66666669, 0.33333334, 1.        ],
+                     [0.33333334, 0.66666669, 1.        ],
+                     [0.66666669, 0.66666669, 1.        ],
+                     [0.33333334, 0.33333334, 0.33333334],
+                     [0.66666669, 0.33333334, 0.33333334],
+                     [0.33333334, 0.66666669, 0.33333334],
+                     [0.66666669, 0.66666669, 0.33333334],
+                     [0.33333334, 0.33333334, 0.66666669],
+                     [0.66666669, 0.33333334, 0.66666669],
+                     [0.33333334, 0.66666669, 0.66666669],
+                     [0.66666669, 0.66666669, 0.66666669]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_HEXAHEDRON
+    array([72], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order)
+
+
+def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Lagrange wedge.
+
+    This cell corresponds to the :attr:`pyvista.CellType.LAGRANGE_WEDGE` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Lagrange wedge.
+
+    Examples
+    --------
+    Create and plot a single Lagrange wedge.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.LagrangeWedge()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+           33, 34, 35, 36, 37, 38, 39])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.        , 0.        , 1.        ],
+                     [1.        , 0.        , 1.        ],
+                     [0.        , 1.        , 1.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.33333334, 0.        , 1.        ],
+                     [0.66666669, 0.        , 1.        ],
+                     [0.66666669, 0.33333334, 1.        ],
+                     [0.33333334, 0.66666669, 1.        ],
+                     [0.        , 0.66666669, 1.        ],
+                     [0.        , 0.33333334, 1.        ],
+                     [0.        , 0.        , 0.33333334],
+                     [0.        , 0.        , 0.66666669],
+                     [1.        , 0.        , 0.33333334],
+                     [1.        , 0.        , 0.66666669],
+                     [0.        , 1.        , 0.33333334],
+                     [0.        , 1.        , 0.66666669],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.33333334, 0.33333334, 1.        ],
+                     [0.33333334, 0.        , 0.33333334],
+                     [0.66666669, 0.        , 0.33333334],
+                     [0.33333334, 0.        , 0.66666669],
+                     [0.66666669, 0.        , 0.66666669],
+                     [0.66666669, 0.33333334, 0.33333334],
+                     [0.33333334, 0.66666669, 0.33333334],
+                     [0.66666669, 0.33333334, 0.66666669],
+                     [0.33333334, 0.66666669, 0.66666669],
+                     [0.        , 0.66666669, 0.33333334],
+                     [0.        , 0.33333334, 0.33333334],
+                     [0.        , 0.66666669, 0.66666669],
+                     [0.        , 0.33333334, 0.66666669],
+                     [0.33333334, 0.33333334, 0.33333334],
+                     [0.33333334, 0.33333334, 0.66666669]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_WEDGE
+    array([73], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
+
+
+def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier curve.
+
+    This cell corresponds to the :attr:`pyvista.CellType.BEZIER_CURVE` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Bezier curve.
+
+    Examples
+    --------
+    Create and plot a single Bezier curve.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.BezierCurve()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([4, 0, 1, 2, 3])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_CURVE
+    array([75], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.BEZIER_CURVE, cell_order=cell_order)
+
+
+def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier triangle.
+
+    This cell corresponds to the :attr:`pyvista.CellType.BEZIER_TRIANGLE` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Bezier triangle.
+
+    Examples
+    --------
+    Create and plot a single Bezier triangle.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.BezierTriangle()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.33333334, 0.33333334, 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_TRIANGLE
+    array([76], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
+
+
+def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier quadrilateral.
+
+    This cell corresponds to the :attr:`pyvista.CellType.BEZIER_QUADRILATERAL` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Bezier quadrilateral.
+
+    Examples
+    --------
+    Create and plot a single Bezier quadrilateral.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.BezierQuadrilateral()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [1.        , 1.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [1.        , 0.33333334, 0.        ],
+                     [1.        , 0.66666669, 0.        ],
+                     [0.33333334, 1.        , 0.        ],
+                     [0.66666669, 1.        , 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.66666669, 0.66666669, 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_QUADRILATERAL
+    array([77], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order)
+
+
+def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier tetrahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.BEZIER_TETRAHEDRON` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Bezier tetrahedron.
+
+    Examples
+    --------
+    Create and plot a single Bezier tetrahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.BezierTetrahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [1.        , 1.        , 0.        ],
+                     [0.5       , 0.5       , 0.5       ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [1.        , 0.33333334, 0.        ],
+                     [1.        , 0.66666669, 0.        ],
+                     [0.66666669, 0.66666669, 0.        ],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.16666667, 0.16666667, 0.16666667],
+                     [0.33333334, 0.33333334, 0.33333334],
+                     [0.83333331, 0.16666667, 0.16666667],
+                     [0.66666669, 0.33333334, 0.33333334],
+                     [0.83333331, 0.83333331, 0.16666667],
+                     [0.66666669, 0.66666669, 0.33333334],
+                     [0.5       , 0.16666667, 0.16666667],
+                     [0.83333331, 0.5       , 0.16666667],
+                     [0.5       , 0.5       , 0.16666667],
+                     [0.66666669, 0.33333334, 0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_TETRAHEDRON
+    array([78], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order)
+
+
+def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier hexahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.BEZIER_HEXAHEDRON` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Bezier hexahedron.
+
+    Examples
+    --------
+    Create and plot a single Bezier hexahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.BezierHexahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+           33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [1.        , 1.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.        , 0.        , 1.        ],
+                     [1.        , 0.        , 1.        ],
+                     [1.        , 1.        , 1.        ],
+                     [0.        , 1.        , 1.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [1.        , 0.33333334, 0.        ],
+                     [1.        , 0.66666669, 0.        ],
+                     [0.33333334, 1.        , 0.        ],
+                     [0.66666669, 1.        , 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.33333334, 0.        , 1.        ],
+                     [0.66666669, 0.        , 1.        ],
+                     [1.        , 0.33333334, 1.        ],
+                     [1.        , 0.66666669, 1.        ],
+                     [0.33333334, 1.        , 1.        ],
+                     [0.66666669, 1.        , 1.        ],
+                     [0.        , 0.33333334, 1.        ],
+                     [0.        , 0.66666669, 1.        ],
+                     [0.        , 0.        , 0.33333334],
+                     [0.        , 0.        , 0.66666669],
+                     [1.        , 0.        , 0.33333334],
+                     [1.        , 0.        , 0.66666669],
+                     [1.        , 1.        , 0.33333334],
+                     [1.        , 1.        , 0.66666669],
+                     [0.        , 1.        , 0.33333334],
+                     [0.        , 1.        , 0.66666669],
+                     [0.        , 0.33333334, 0.33333334],
+                     [0.        , 0.66666669, 0.33333334],
+                     [0.        , 0.33333334, 0.66666669],
+                     [0.        , 0.66666669, 0.66666669],
+                     [1.        , 0.33333334, 0.33333334],
+                     [1.        , 0.66666669, 0.33333334],
+                     [1.        , 0.33333334, 0.66666669],
+                     [1.        , 0.66666669, 0.66666669],
+                     [0.33333334, 0.        , 0.33333334],
+                     [0.66666669, 0.        , 0.33333334],
+                     [0.33333334, 0.        , 0.66666669],
+                     [0.66666669, 0.        , 0.66666669],
+                     [0.33333334, 1.        , 0.33333334],
+                     [0.66666669, 1.        , 0.33333334],
+                     [0.33333334, 1.        , 0.66666669],
+                     [0.66666669, 1.        , 0.66666669],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.66666669, 0.66666669, 0.        ],
+                     [0.33333334, 0.33333334, 1.        ],
+                     [0.66666669, 0.33333334, 1.        ],
+                     [0.33333334, 0.66666669, 1.        ],
+                     [0.66666669, 0.66666669, 1.        ],
+                     [0.33333334, 0.33333334, 0.33333334],
+                     [0.66666669, 0.33333334, 0.33333334],
+                     [0.33333334, 0.66666669, 0.33333334],
+                     [0.66666669, 0.66666669, 0.33333334],
+                     [0.33333334, 0.33333334, 0.66666669],
+                     [0.66666669, 0.33333334, 0.66666669],
+                     [0.33333334, 0.66666669, 0.66666669],
+                     [0.66666669, 0.66666669, 0.66666669]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_HEXAHEDRON
+    array([79], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order)
+
+
+def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single Bezier wedge.
+
+    This cell corresponds to the :attr:`pyvista.CellType.BEZIER_WEDGE` cell type.
+
+    Parameters
+    ----------
+    cell_order : int, default: 3
+        Order of interpolation to use.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single Bezier wedge.
+
+    Examples
+    --------
+    Create and plot a single Bezier wedge.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.BezierWedge()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+           33, 34, 35, 36, 37, 38, 39])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0.        , 0.        , 0.        ],
+                     [1.        , 0.        , 0.        ],
+                     [0.        , 1.        , 0.        ],
+                     [0.        , 0.        , 1.        ],
+                     [1.        , 0.        , 1.        ],
+                     [0.        , 1.        , 1.        ],
+                     [0.33333334, 0.        , 0.        ],
+                     [0.66666669, 0.        , 0.        ],
+                     [0.66666669, 0.33333334, 0.        ],
+                     [0.33333334, 0.66666669, 0.        ],
+                     [0.        , 0.66666669, 0.        ],
+                     [0.        , 0.33333334, 0.        ],
+                     [0.33333334, 0.        , 1.        ],
+                     [0.66666669, 0.        , 1.        ],
+                     [0.66666669, 0.33333334, 1.        ],
+                     [0.33333334, 0.66666669, 1.        ],
+                     [0.        , 0.66666669, 1.        ],
+                     [0.        , 0.33333334, 1.        ],
+                     [0.        , 0.        , 0.33333334],
+                     [0.        , 0.        , 0.66666669],
+                     [1.        , 0.        , 0.33333334],
+                     [1.        , 0.        , 0.66666669],
+                     [0.        , 1.        , 0.33333334],
+                     [0.        , 1.        , 0.66666669],
+                     [0.33333334, 0.33333334, 0.        ],
+                     [0.33333334, 0.33333334, 1.        ],
+                     [0.33333334, 0.        , 0.33333334],
+                     [0.66666669, 0.        , 0.33333334],
+                     [0.33333334, 0.        , 0.66666669],
+                     [0.66666669, 0.        , 0.66666669],
+                     [0.66666669, 0.33333334, 0.33333334],
+                     [0.33333334, 0.66666669, 0.33333334],
+                     [0.66666669, 0.33333334, 0.66666669],
+                     [0.33333334, 0.66666669, 0.66666669],
+                     [0.        , 0.66666669, 0.33333334],
+                     [0.        , 0.33333334, 0.33333334],
+                     [0.        , 0.66666669, 0.66666669],
+                     [0.        , 0.33333334, 0.66666669],
+                     [0.33333334, 0.33333334, 0.33333334],
+                     [0.33333334, 0.33333334, 0.66666669]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_WEDGE
+    array([80], dtype=uint8)
+
+    """
+    return _make_cell_from_source(CellType.BEZIER_WEDGE, cell_order=cell_order)
+
+
 def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
     cell = pv.Cell(vtk_cell)  # type: ignore[abstract]
 
@@ -1818,3 +2601,22 @@ def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
 
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [cell.type], points)
+
+
+def _make_cell_from_source(celltype: CellType, cell_order: int):
+    """Use vtkCellTypeSource to generate UnstructuredGrid with a single cell type."""
+    src = _vtk.vtkCellTypeSource()
+    src.SetBlocksDimensions(1, 1, 1)
+    src.SetCellOrder(cell_order)
+    src.SetCellType(celltype)
+    src.Update()
+
+    cell0 = src.GetOutput().GetCell(0)
+    ugrid = _vtk.vtkUnstructuredGrid()
+    ugrid.SetPoints(cell0.GetPoints())
+    ids = _vtk.vtkIdList()
+    for i in range(cell0.GetNumberOfPoints()):
+        ids.InsertNextId(i)
+    ugrid.InsertNextCell(cell0.GetCellType(), ids)
+
+    return pv.wrap(ugrid)

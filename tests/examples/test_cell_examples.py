@@ -8,6 +8,7 @@ from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import CellType
+from pyvista.core import _vtk_core as _vtk
 from pyvista.examples import cells
 
 # Collect all functions in the cells module that start with a capital letter
@@ -65,6 +66,26 @@ def test_cell_is_valid(cell_example):
         assert invalid_fields == ('negative_size',)
     else:
         assert not invalid_fields
+
+
+@pytest.mark.needs_vtk_version(9, 6, 0, reason='vtkCellTypeUtilities requires 9.6')
+@parametrize('cell_example', cell_example_functions)
+def test_cell_name(cell_example):
+    # Test that the function names of cell examples match the actual names provided by VTK
+    cell_type = next(cell_example().cell).type
+    vtk_name = _vtk.vtkCellTypeUtilities.GetTypeAsString(cell_type)
+    expected = vtk_name.replace('-', '').replace(' ', '')
+
+    # Special case some cell types
+    if expected == 'Polyvertex':
+        expected = 'PolyVertex'
+    elif expected == 'Polyline':
+        expected = 'PolyLine'
+    elif expected == 'UnknownCell' and cell_type == CellType.EMPTY_CELL:
+        expected = 'Empty'
+
+    actual = cell_example.__name__
+    assert actual == expected
 
 
 def test_empty():
