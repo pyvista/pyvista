@@ -3615,8 +3615,13 @@ class FRDReader(BaseReader, TimeReader):
         if not steps:
             msg = 'No time steps found in the FRD file.'
             raise RuntimeError(msg)
-        idx = int(np.argmin(np.abs(np.array(steps) - time_value)))
-        self.reader._active_time_point = idx
+            
+        # Changed logic - exact match is required
+        if time_value not in steps:
+            msg = f'Not a valid time {time_value} from available time values: {steps}'
+            raise ValueError(msg)
+            
+        self.reader._active_time_point = steps.index(time_value)
 
     @property
     def active_time_value(self) -> float:
