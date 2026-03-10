@@ -7117,7 +7117,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
         cpos: CameraPositionOptions | None = None,
-        jupyter_backend: JupyterBackendOptions | None = None,
+        jupyter_backend: JupyterBackendOptions | str | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
         before_close_callback: Callable[[Plotter], None] | None = None,
