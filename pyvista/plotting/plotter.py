@@ -11,6 +11,7 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
+import ctypes
 from functools import wraps
 import io
 from itertools import cycle
@@ -139,6 +140,7 @@ if TYPE_CHECKING:
 
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
+FPS_1_OVER_60 = 1 / 60
 
 if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -7370,17 +7372,40 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 self.last_vtksz = self.export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
-        if interactive and not self.off_screen:
+        if interactive and not self.off_screen:  # pragma: no cover
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
-                    # Resolves #1260
-                    if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()  # type: ignore[union-attr]
-                    self.iren.start()  # type: ignore[union-attr]
+                    # Workaround for Windows interactor unresponsiveness after focus changes.
+                    # See: https://github.com/pyvista/pyvista/issues/8383
+                    if os.name == 'nt':
+                        vtk_iren = self.iren.interactor  # type: ignore[union-attr]
+                        while True:
+                            tstart_frame = time.time()
+                            vtk_iren.ProcessEvents()
+                            if vtk_iren.GetDone():
+                                break
+                            self.render_window.Render()
 
-                if pv.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                            # target an update rate of 60 FPS
+                            telap = time.time() - tstart_frame
+                            sleep_ms = int((FPS_1_OVER_60 - telap) * 1000)
+                            if sleep_ms > 0:
+                                # instead of time.sleep use MsgWaitForMultipleObjects
+                                # to pump window messages to avoid the window appearing
+                                # unresponsive
+                                ctypes.windll.user32.MsgWaitForMultipleObjects(  # type: ignore[attr-defined]
+                                    0,
+                                    None,
+                                    False,
+                                    sleep_ms,
+                                    0x04FF,  # QS_ALLINPUT
+                                )
+                    else:
+                        self.iren.start()  # type: ignore[union-attr]
+
+                if pv.vtk_version_info < (9, 2, 3):
                     self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
