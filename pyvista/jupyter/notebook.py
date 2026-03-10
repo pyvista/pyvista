@@ -12,7 +12,6 @@ Includes:
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import cast
 
 from pyvista._warn_external import warn_external
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
     from PIL.Image import Image
 
     from pyvista import pyvista_ndarray
+    from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 def handle_plotter(
     plotter: Plotter,
-    backend: str | None = None,
+    backend: JupyterBackendOptions | str | None = None,
     screenshot: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
@@ -56,7 +56,7 @@ def handle_plotter(
         if backend in ['server', 'client', 'trame', 'html']:
             from pyvista.trame.jupyter import show_trame  # noqa: PLC0415
 
-            return show_trame(plotter, mode=cast('Any', backend), **kwargs)
+            return show_trame(plotter, mode=backend, **kwargs)
 
     except ImportError as e:
         warn_external(
