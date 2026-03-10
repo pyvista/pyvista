@@ -117,6 +117,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BackfaceArgs
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import Chart
@@ -7116,7 +7117,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
         cpos: CameraPositionOptions | None = None,
-        jupyter_backend: str | None = None,
+        jupyter_backend: JupyterBackendOptions | str | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
         before_close_callback: Callable[[Plotter], None] | None = None,
