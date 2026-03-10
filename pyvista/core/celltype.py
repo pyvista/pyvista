@@ -522,36 +522,128 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE, cell_class=_vtk.vtkLagrangeCurve),
+    LAGRANGE_CURVE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_CURVE,
+        cell_class=_vtk.vtkLagrangeCurve,
+        example='LagrangeCurve',
+        points_override='variable',
+        doc="""
+        Lagrange representation of a curve with arbitrary order.
+        """,
+    ),
     LAGRANGE_TRIANGLE=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_TRIANGLE, cell_class=_vtk.vtkLagrangeTriangle
+        value=_vtk.VTK_LAGRANGE_TRIANGLE,
+        cell_class=_vtk.vtkLagrangeTriangle,
+        example='LagrangeTriangle',
+        points_override='variable',
+        doc="""
+        Lagrange representation of a triangle with arbitrary order.
+        """,
     ),
     LAGRANGE_QUADRILATERAL=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_QUADRILATERAL, cell_class=_vtk.vtkLagrangeQuadrilateral
+        value=_vtk.VTK_LAGRANGE_QUADRILATERAL,
+        cell_class=_vtk.vtkLagrangeQuadrilateral,
+        example='LagrangeQuadrilateral',
+        points_override='variable',
+        doc="""
+        Lagrange representation of a quadrilateral with arbitrary order.
+        """,
     ),
-    LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
+    LAGRANGE_TETRAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_TETRAHEDRON,
+        cell_class=_vtk.vtkLagrangeTetra,
+        example='LagrangeTetrahedron',
+        points_override='variable',
+        doc="""
+        Lagrange representation of a tetrahedron with arbitrary order.
+        """,
+    ),
     LAGRANGE_HEXAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_HEXAHEDRON, cell_class=_vtk.vtkLagrangeHexahedron
+        value=_vtk.VTK_LAGRANGE_HEXAHEDRON,
+        cell_class=_vtk.vtkLagrangeHexahedron,
+        example='LagrangeHexahedron',
+        points_override='variable',
+        doc="""
+        Lagrange representation of a hexahedron with arbitrary order.
+        """,
     ),
-    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE, cell_class=_vtk.vtkLagrangeWedge),
-    LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
+    LAGRANGE_WEDGE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_WEDGE,
+        cell_class=_vtk.vtkLagrangeWedge,
+        example='LagrangeWedge',
+        points_override='variable',
+        doc="""
+        Lagrange representation of a wedge with arbitrary order.
+        """,
+    ),
+    LAGRANGE_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_PYRAMID,
+        doc="""
+        Lagrange representation of a pyramid with arbitrary order.
+        """,
+    ),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE, cell_class=_vtk.vtkBezierCurve),
+    BEZIER_CURVE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_CURVE,
+        cell_class=_vtk.vtkBezierCurve,
+        example='BezierCurve',
+        points_override='variable',
+        doc="""
+        Bezier representation of a curve with arbitrary order.
+        """,
+    ),
     BEZIER_TRIANGLE=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_TRIANGLE, cell_class=_vtk.vtkBezierTriangle
+        value=_vtk.VTK_BEZIER_TRIANGLE,
+        cell_class=_vtk.vtkBezierTriangle,
+        example='BezierTriangle',
+        points_override='variable',
+        doc="""
+        Bezier representation of a triangle with arbitrary order.
+        """,
     ),
     BEZIER_QUADRILATERAL=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_QUADRILATERAL, cell_class=_vtk.vtkBezierQuadrilateral
+        value=_vtk.VTK_BEZIER_QUADRILATERAL,
+        cell_class=_vtk.vtkBezierQuadrilateral,
+        example='BezierQuadrilateral',
+        points_override='variable',
+        doc="""
+        Bezier representation of a quadrilateral with arbitrary order.
+        """,
     ),
     BEZIER_TETRAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_TETRAHEDRON, cell_class=_vtk.vtkBezierTetra
+        value=_vtk.VTK_BEZIER_TETRAHEDRON,
+        cell_class=_vtk.vtkBezierTetra,
+        example='BezierTetrahedron',
+        points_override='variable',
+        doc="""
+        Bezier representation of a tetrahedron with arbitrary order.
+        """,
     ),
     BEZIER_HEXAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_HEXAHEDRON, cell_class=_vtk.vtkBezierHexahedron
+        value=_vtk.VTK_BEZIER_HEXAHEDRON,
+        cell_class=_vtk.vtkBezierHexahedron,
+        example='BezierHexahedron',
+        points_override='variable',
+        doc="""
+        Bezier representation of a hexahedron with arbitrary order.
+        """,
     ),
-    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
-    BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
+    BEZIER_WEDGE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_WEDGE,
+        cell_class=_vtk.vtkBezierWedge,
+        example='BezierWedge',
+        points_override='variable',
+        doc="""
+        Bezier representation of a wedge with arbitrary order.
+        """,
+    ),
+    BEZIER_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_PYRAMID,
+        doc="""
+        Bezier representation of a pyramid with arbitrary order.
+        """,
+    ),
 )
 
 
@@ -574,17 +666,18 @@ class CellType(IntEnum):
     linear or constant interpolation. Non-linear cells may use quadratic,
     cubic, or some other interpolation.
 
+    Higher order interpolation is possible using Lagrange or Bézier cells. For Lagrange cells,
+    all the points lie on the interpolation curve, whereas for the Bézier cells, only the points at
+    the extremities are interpolatory.
+
     This enumeration defines all cell types used in VTK and supported by PyVista. The
     type(s) of cell(s) to use is typically chosen based on application need, such as
     graphics rendering or numerical simulation.
 
     .. seealso::
 
-        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
-            VTK reference about cell types.
-
-        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
-            List of all cell types defined in VTK.
+        :mod:`pyvista.examples.cells`
+            Examples creating a mesh comprising a single cell.
 
         :ref:`linear_cells_example`
             Detailed example using linear cells.
@@ -595,8 +688,17 @@ class CellType(IntEnum):
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-        :mod:`pyvista.examples.cells`
-            Examples creating a mesh comprising a single cell.
+        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
+            VTK reference about cell types.
+
+        `Modeling Lagrange Finite Elements in VTK <https://www.kitware.com//modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit/>`_
+            VTK blog post about Lagrange cells.
+
+        `Implementation of rational Bézier cells into VTK <https://www.kitware.com/implementation-of-rational-bezier-cells-into-vtk/>`_
+            VTK blog post about Bezier cells.
+
+        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
+            List of all cell types defined in VTK.
 
     Examples
     --------
