@@ -177,8 +177,8 @@ def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
           will generate nothing on headless servers even with a
           virtual framebuffer.
 
-        Custom backends registered via
-        :func:`register_jupyter_backend` are also accepted.
+        Custom backends registered via ``register_jupyter_backend``
+        are also accepted.
 
     name : str, optional
         The unique name identifier for the server.
