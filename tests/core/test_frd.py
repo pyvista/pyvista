@@ -175,19 +175,19 @@ def test_frd_reader_time_steps(mock_frd_file):
 def test_frd_reader_set_active_time_value(mock_frd_file):
     reader = pv.FRDReader(mock_frd_file)
 
-    # Exact time match is required. 
+    # Exact time match is required.
     # The mock_frd_file has time steps: 0.1, 0.2, 0.3.
-    
+
     # 1. Check setting an invalid time (e.g., 0.18 instead of 0.2)
-    with pytest.raises(ValueError, match="Not a valid time"):
+    with pytest.raises(ValueError, match='Not a valid time'):
         reader.set_active_time_value(0.18)
-        
+
     # 2. Check setting a valid time using the method
     reader.set_active_time_value(0.2)
     assert reader.active_time_value == 0.2
 
     # 3. Check setting an invalid time via the setter property
-    with pytest.raises(ValueError, match="Not a valid time"):
+    with pytest.raises(ValueError, match='Not a valid time'):
         reader.active_time_value = 0.29
 
     # 4. Check setting a valid time via the setter property
