@@ -4021,11 +4021,12 @@ RED_RGB = pv.Color('red').int_rgb
     ('color_input', 'expected_rgb'),
     [
         ('viridis', VIRIDIS_RGB),
+        (pv.get_cmap_safe('viridis'), VIRIDIS_RGB),
         (COLORS_DICT, COLORS_DICT_RGB),
         (COLORS_DICT_RGB, COLORS_DICT_RGB),
         ('red', [RED_RGB, RED_RGB, RED_RGB, RED_RGB]),
     ],
-    ids=['cmap', 'dict', 'sequence', 'named_color'],
+    ids=['cmap_str', 'cmap_instance', 'dict', 'sequence', 'named_color'],
 )
 def test_color_labels_inputs(labeled_image, color_input, expected_rgb):
     label_scalars = labeled_image.active_scalars
