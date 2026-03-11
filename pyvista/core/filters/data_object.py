@@ -31,9 +31,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
-from pyvista.core.celltype import _CELL_TYPES_1D
-from pyvista.core.celltype import _CELL_TYPES_2D
-from pyvista.core.celltype import _CELL_TYPES_3D
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -559,9 +556,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         name_norm = _MeshValidator._normalize_field_name(name)
         if cell_type and name_norm in ['zero size', 'negative size']:
-            if cell_type in _CELL_TYPES_1D:
+            if cell_type.dimension == 1:
                 size = 'length'
-            elif cell_type in _CELL_TYPES_2D:
+            elif cell_type.dimension == 2:
                 size = 'area'
             else:
                 size = 'volume'
@@ -1612,11 +1609,12 @@ class DataObjectFilters:
                 cell_types_3d = []
                 for cell_type in mesh.distinct_cell_types:
                     value = cell_type.value
-                    if value in _CELL_TYPES_1D:
+                    dimension = cell_type.dimension
+                    if dimension == 1:
                         cell_types_1d.append(value)
-                    elif value in _CELL_TYPES_2D:
+                    elif dimension == 2:
                         cell_types_2d.append(value)
-                    elif value in _CELL_TYPES_3D:
+                    elif dimension == 3:
                         cell_types_3d.append(value)
 
                 ugrid = (

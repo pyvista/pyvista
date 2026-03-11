@@ -3353,12 +3353,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if not isinstance(self, pv.UnstructuredGrid):
             return False
-        is_linear = (
-            _vtk.vtkCellTypeUtilities.IsLinear
-            if pv.vtk_version_info >= (9, 6, 0)
-            else _vtk.vtkCellTypes.IsLinear
-        )
-        return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
+        return not all(celltype.is_linear for celltype in self.distinct_cell_types)
 
     @property
     def bounding_sphere(self) -> tuple[float, tuple[float, float, float]]:
