@@ -2390,7 +2390,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(arr)
 
     @property
-    def cells_dict(self) -> dict[CellType, NumpyArray[int]]:  # numpydoc ignore=RT01
+    def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -2427,7 +2427,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> from pyvista import examples
         >>> hex_beam = pv.read(examples.hexbeamfile)
         >>> hex_beam.cells_dict  # doctest:+SKIP
-        {<CellType.HEXAHEDRON: 12>: array([[ 0,  2,  8,  7, 27, 36, 90, 81],
+        {12: array([[ 0,  2,  8,  7, 27, 36, 90, 81],
                 [ 2,  1,  4,  8, 36, 18, 54, 90],
                 [ 7,  8,  6,  5, 81, 90, 72, 63],
                 ...

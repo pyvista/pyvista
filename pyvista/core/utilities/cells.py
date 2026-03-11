@@ -120,7 +120,7 @@ def numpy_to_idarr(
 
 
 def create_mixed_cells(
-    mixed_cell_dict: dict[int | np.uint8, NumpyArray[int]], nr_points: int | None = None
+    mixed_cell_dict: dict[np.uint8, NumpyArray[int]], nr_points: int | None = None
 ) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
     """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
@@ -227,7 +227,7 @@ def create_mixed_cells(
     return cell_types_out, cell_arr_out
 
 
-def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[CellType, NumpyArray[int]]:
+def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]:
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
     This functions creates a cells dictionary (see
@@ -259,16 +259,15 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[CellType, NumpyArray[int]]
         like VTK_POLYGON.
 
     """
-    return_dict: dict[CellType, NumpyArray[int]] = {}
-
     if not isinstance(vtkobj, pv.UnstructuredGrid):
         msg = 'Expected a pyvista object'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
-        return return_dict
+        return {}
 
+    return_dict: dict[CellType, NumpyArray[int]] = {}
     cell_types = vtkobj.celltypes
     cells = vtkobj.cells
 
@@ -302,4 +301,4 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[CellType, NumpyArray[int]]
 
         return_dict[cell_type] = cells[cells_inds]
 
-    return return_dict
+    return {np.uint8(k): v for k, v in return_dict.items()}
