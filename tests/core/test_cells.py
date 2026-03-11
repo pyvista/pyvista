@@ -524,3 +524,25 @@ def test_deep_deprecated(deep: bool):
     if pv._version.version_info[:2] > (0, 48):
         msg = 'Remove `deep` constructor kwarg'
         raise RuntimeError(msg)
+
+
+def test_cell_type_properties():
+    assert pv.CellType.WEDGE.vtk_class is _vtk.vtkWedge
+    assert pv.CellType.WEDGE.n_points == 6
+    assert pv.CellType.WEDGE.n_edges == 9
+    assert pv.CellType.WEDGE.n_faces == 5
+    assert pv.CellType.WEDGE.is_primary
+    assert pv.CellType.WEDGE.dimension == 3
+    assert pv.CellType.WEDGE.is_linear
+    assert pv.CellType.WEDGE.is_primary
+
+    assert not pv.CellType.TRIANGLE_STRIP.is_primary
+
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.vtk_class is None
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.n_points == -1
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.n_edges == -1
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.n_faces == -1
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.is_primary
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.dimension == 3
+    assert not pv.CellType.HIGHER_ORDER_HEXAHEDRON.is_linear
+    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.is_primary
