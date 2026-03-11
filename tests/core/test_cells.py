@@ -536,13 +536,28 @@ def test_cell_type_properties():
     assert pv.CellType.WEDGE.is_linear
     assert pv.CellType.WEDGE.is_primary
 
-    assert not pv.CellType.TRIANGLE_STRIP.is_primary
+    # Test composite cell type
+    celltype = pv.CellType.TRIANGLE_STRIP
+    assert not celltype.is_primary
+    assert celltype.n_points == -1
+    assert celltype.n_edges == -1
+    assert celltype.n_faces == 0
+    assert celltype.dimension == 2
 
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.vtk_class is None
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.n_points == -1
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.n_edges == -1
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.n_faces == -1
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.is_primary
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.dimension == 3
-    assert not pv.CellType.HIGHER_ORDER_HEXAHEDRON.is_linear
-    assert pv.CellType.HIGHER_ORDER_HEXAHEDRON.is_primary
+    # Test cell type with variable points/edges/faces
+    celltype = pv.CellType.POLYHEDRON
+    assert celltype.is_primary
+    assert celltype.n_points == -1
+    assert celltype.n_edges == -1
+    assert celltype.n_faces == -1
+    assert celltype.is_linear
+    assert celltype.dimension == 3
+
+    # Test abstract cell type
+    celltype = pv.CellType.HIGHER_ORDER_HEXAHEDRON
+    assert celltype.vtk_class is None
+    assert celltype.n_points == -1
+    assert celltype.n_edges == -1
+    assert celltype.n_faces == -1
+    assert celltype.is_primary
+    assert not celltype.is_linear
