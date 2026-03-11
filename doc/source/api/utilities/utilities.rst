@@ -81,8 +81,10 @@ Enums
 .. autosummary::
    :toctree: _autosummary
 
-   CellType
    CellStatus
+
+.. autoclass:: CellType
+    :members:
 
 Array Access
 ~~~~~~~~~~~~
