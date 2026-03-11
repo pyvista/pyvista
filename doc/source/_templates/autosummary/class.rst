@@ -3,9 +3,6 @@
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
-{# autodoc does not document enum properties so we need to special case these #}
-{% set is_celltype_enum = (objname == "CellType") %}
-{% set celltype_properties = ["vtk_class", "dimension", "is_linear", "is_primary", "n_points", "n_edges", "n_faces"] %}
 
 {% block methods %}
 {% if methods %}
@@ -26,7 +23,7 @@
 {% endblock %}
 
 {% block attributes %}
-{% if attributes or is_celltype_enum %}
+{% if attributes %}
 
 {{ _('Attributes') }}
 {{ '-' * _('Attributes')|length }}
@@ -39,14 +36,6 @@
        {{ name }}.{{ item }}
      {% endif %}
    {% endif %}
-{% endfor %}
-
-{# Special-case CellType properties #}
-{% if is_celltype_enum %}
-   {% for prop in celltype_properties %}
-       {{ name }}.{{ prop }}
-   {% endfor %}
-{% endif %}
-
+{%- endfor %}
 {% endif %}
 {% endblock %}
