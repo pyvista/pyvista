@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from enum import IntEnum
 import textwrap
+from typing import Literal
 from typing import NamedTuple
+from typing import cast
 
-from . import _vtk_core as _vtk
+from pyvista.core import _vtk_core as _vtk
 
+_Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _GRID_TEMPLATE_NO_IMAGE = """
@@ -679,7 +682,7 @@ class CellType(IntEnum):
 
     # Attributes populated in __new__
     _vtk_class: type[_vtk.vtkCell] | None
-    _dimension: int
+    _dimension: _Dimension
     _is_linear: bool
     _is_primary: bool
     _n_points: int
@@ -709,9 +712,6 @@ class CellType(IntEnum):
         ----------
         value : int
             Integer value of the cell type.
-
-        _vtk_class : type[:vtk:`vtkCell`], optional
-            VTK class for this cell type.
 
         _doc : str, optional
             Short description of this cell type. Typically a single line but no more
@@ -746,7 +746,9 @@ class CellType(IntEnum):
         self._value_ = value
         self.__doc__ = ''
 
-        # Set cell type properties using vtkCellTypeUtilities
+        # Get the vtk class associated with this cell type. For simplicity, skip abstract types
+        # even though some actually do have a corresponding class. Among other things, skipping
+        # abstract types helps avoid the need to work around this VTK bug: https://gitlab.kitware.com/vtk/vtk/-/issues/19988
         _vtk_class_name = _vtk.vtkCellTypeUtilities.GetClassNameFromTypeId(value)
         self._vtk_class = (
             None
@@ -754,17 +756,20 @@ class CellType(IntEnum):
             or _vtk_class_name in ('vtkLagrangePyramid', 'vtkBezierPyramid')  # Missing vtk class
             else getattr(_vtk, _vtk_class_name)
         )
-        self._dimension = _vtk.vtkCellTypeUtilities.GetDimension(value)
+
+        # Set cell type properties using vtkCellTypeUtilities
+        self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
 
-        # Set properties that require instantiating the class
+        # Set properties that require instantiating the class.
+        # Assume primary cell with -1 values for points/edges/faces for abstract classes
         self._n_points = -1
         self._n_edges = -1
         self._n_faces = -1
         self._is_primary = True
         if self._vtk_class is not None:
             cell = self._vtk_class()
-            self._is_primary = cell.IsPrimaryCell()
+            self._is_primary = bool(cell.IsPrimaryCell())
 
             # Use -1 to denote the cell has variable points/edges/faces
             self._n_points = -1 if _variable_points else cell.GetNumberOfPoints()
@@ -815,37 +820,194 @@ class CellType(IntEnum):
 
     @property
     def vtk_class(self) -> type[_vtk.vtkCell] | None:  # numpydoc ignore=RT01
-        """Return the :vtk:`vtkCell` class associated with this cell type."""
+        """Return the :vtk:`vtkCell` class associated with this cell type.
+
+        Only concrete VTK classes that can instantiated are returned. ``None`` is returned
+        if the cell type has no corresponding VTK class or if the class is abstract.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        Get the VTK class associated with the :attr:`TRIANGLE` cell type.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.TRIANGLE.vtk_class
+        <class 'vtkmodules.vtkCommonDataModel.vtkTriangle'>
+
+        Abstract cell types like :attr:`HIGHER_ORDER_HEXAHEDRON` return ``None``.
+
+        >>> pv.CellType.HIGHER_ORDER_HEXAHEDRON.vtk_class is None
+        True
+
+        """
         return self._vtk_class
 
     @property
-    def dimension(self) -> int:  # numpydoc ignore=RT01
-        """Return this cell type's dimension."""
+    def dimension(self) -> _Dimension:  # numpydoc ignore=RT01
+        """Return this cell type's dimension.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        :attr:`VERTEX` is 0D.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.VERTEX.dimension
+        0
+
+        :attr:`LINE` is 1D.
+
+        >>> pv.CellType.LINE.dimension
+        1
+
+        :attr:`TRIANGLE` is 2D.
+
+        >>> pv.CellType.TRIANGLE.dimension
+        2
+
+        :attr:`HEXAHEDRON` is 3D.
+
+        >>> pv.CellType.HEXAHEDRON.dimension
+        3
+
+        """
         return self._dimension
 
     @property
     def is_linear(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if this cell type is linear."""
+        """Return ``True`` if this cell type is linear.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        :attr:`HEXAHEDRON` is linear.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.HEXAHEDRON.is_linear
+        True
+
+        :attr:`QUADRATIC_HEXAHEDRON` is not linear.
+
+        >>> pv.CellType.QUADRATIC_HEXAHEDRON.is_linear
+        False
+
+        """
         return self._is_linear
 
     @property
     def is_primary(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if this cell type is primary."""
+        """Return ``True`` if this cell type is primary.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        :attr:`VERTEX` is a primary cell.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.VERTEX.is_primary
+        True
+
+        :attr:`POLY_VERTEX` is a composite cell.
+
+        >>> pv.CellType.POLY_VERTEX.is_primary
+        False
+
+        """
         return self._is_primary
 
     @property
     def n_points(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of points defined by this cell type."""
+        """Return the number of points defined by this cell type.
+
+        A value of ``-1`` is returned if the cell type is abstract (e.g. :attr:`HIGHER_ORDER_EDGE`)
+        or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        :attr:`LINE` has a fixed number of points.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.LINE.n_points
+        2
+
+        :attr:`POLY_LINE` has a variable number of points.
+
+        >>> pv.CellType.POLY_LINE.n_points
+        -1
+
+        """
         return self._n_points
 
     @property
     def n_edges(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of edges defined by this cell type."""
+        """Return the number of edges defined by this cell type.
+
+        A value of ``-1`` is returned if the cell type is abstract (e.g. :attr:`HIGHER_ORDER_EDGE`)
+        or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        :attr:`QUAD` has a fixed number of edges.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.QUAD.n_edges
+        4
+
+        :attr:`POLYGON` has a variable number of edges.
+
+        >>> pv.CellType.POLYGON.n_edges
+        -1
+
+        Zero- and one-dimensional cell types have no edges.
+
+        >>> pv.CellType.VERTEX.n_edges
+        0
+
+        >>> pv.CellType.LINE.n_edges
+        0
+
+        """
         return self._n_edges
 
     @property
     def n_faces(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of faces defined by this cell type."""
+        """Return the number of faces defined by this cell type.
+
+        A value of ``-1`` is returned if the cell type is abstract (e.g. :attr:`HIGHER_ORDER_EDGE`)
+        or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        :attr:`WEDGE` has a fixed number of faces.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.WEDGE.n_faces
+        5
+
+        :attr:`POLYHEDRON` has a variable number of faces.
+
+        >>> pv.CellType.POLYHEDRON.n_faces
+        -1
+
+        Only three-dimensional cell types have faces.
+
+        >>> pv.CellType.LINE.n_faces
+        0
+
+        >>> pv.CellType.QUAD.n_faces
+        0
+
+        """
         return self._n_faces
 
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
