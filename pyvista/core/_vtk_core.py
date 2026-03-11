@@ -540,4 +540,6 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
 try:  # Introduced VTK 9.6.0
     from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities as vtkCellTypeUtilities
 except ImportError:
-    from vtkmodules.vtkCommonDataModel import vtkCellTypes as vtkCellTypeUtilities  # noqa: F401
+    from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
+        vtkCellTypes as vtkCellTypeUtilities,  # noqa: F401
+    )

@@ -677,6 +677,15 @@ class CellType(IntEnum):
 
     """
 
+    # Attributes populated in __new__
+    _vtk_class: type[_vtk.vtkCell] | None
+    _dimension: int
+    _is_linear: bool
+    _is_primary: bool
+    _n_points: int
+    _n_edges: int
+    _n_faces: int
+
     def __new__(  # noqa: PYI034
         cls: type[CellType],
         value: int,
@@ -749,10 +758,10 @@ class CellType(IntEnum):
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
 
         # Set properties that require instantiating the class
-        self._n_points = None
-        self._n_edges = None
-        self._n_faces = None
-        self._is_primary = None
+        self._n_points = -1
+        self._n_edges = -1
+        self._n_faces = -1
+        self._is_primary = True
         if self._vtk_class is not None:
             cell = self._vtk_class()
             self._is_primary = cell.IsPrimaryCell()
@@ -768,8 +777,8 @@ class CellType(IntEnum):
         if self._vtk_class or _doc or _example:
             badges = ''
             if self._vtk_class:
-                linear_badge = _generate_linear_badge(self._is_linear)  # type: ignore[arg-type]
-                primary_badge = _generate_primary_badge(self._is_primary)  # type: ignore[arg-type]
+                linear_badge = _generate_linear_badge(self._is_linear)
+                primary_badge = _generate_primary_badge(self._is_primary)
                 dimension_badge = _generate_dimension_badge(self._dimension)
 
                 points = 'variable' if _variable_points else self._n_points
@@ -805,7 +814,7 @@ class CellType(IntEnum):
         return self
 
     @property
-    def vtk_class(self) -> type[_vtk.vtkCell]:  # numpydoc ignore=RT01
+    def vtk_class(self) -> type[_vtk.vtkCell] | None:  # numpydoc ignore=RT01
         """Return the :vtk:`vtkCell` class associated with this cell type."""
         return self._vtk_class
 
@@ -820,22 +829,22 @@ class CellType(IntEnum):
         return self._is_linear
 
     @property
-    def is_primary(self) -> bool | None:  # numpydoc ignore=RT01
+    def is_primary(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if this cell type is primary."""
         return self._is_primary
 
     @property
-    def n_points(self) -> int | None:  # numpydoc ignore=RT01
+    def n_points(self) -> int:  # numpydoc ignore=RT01
         """Return the number of points defined by this cell type."""
         return self._n_points
 
     @property
-    def n_edges(self) -> int | None:  # numpydoc ignore=RT01
+    def n_edges(self) -> int:  # numpydoc ignore=RT01
         """Return the number of edges defined by this cell type."""
         return self._n_edges
 
     @property
-    def n_faces(self) -> int | None:  # numpydoc ignore=RT01
+    def n_faces(self) -> int:  # numpydoc ignore=RT01
         """Return the number of faces defined by this cell type."""
         return self._n_faces
 

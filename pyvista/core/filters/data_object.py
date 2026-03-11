@@ -555,10 +555,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
-        if cell_type and name_norm in ['zero size', 'negative size']:
-            if cell_type.dimension == 1:
+        ctype = cast('pv.CellType', cell_type)
+        if ctype and name_norm in ['zero size', 'negative size']:
+            if ctype.dimension == 1:
                 size = 'length'
-            elif cell_type.dimension == 2:
+            elif ctype.dimension == 2:
                 size = 'area'
             else:
                 size = 'volume'

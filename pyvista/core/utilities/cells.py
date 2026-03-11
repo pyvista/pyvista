@@ -16,6 +16,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from pyvista import CellType
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
@@ -173,14 +174,14 @@ def create_mixed_cells(
     ... )
 
     """
-    mixed_cells = {pv.CellType(k): v for k, v in mixed_cell_dict.items()}
-    if not all(k.n_points is not None and k.n_points > 0 for k in mixed_cells.keys()):
+    mixed_cells = {pv.CellType(k): v for k, v in mixed_cell_dict.items()}  # type: ignore[arg-type]
+    if not all(k.n_points > 0 for k in mixed_cells.keys()):
         msg = "You requested a cell type with variable length, which can't be used in this method"
         raise ValueError(msg)
 
     final_cell_types = []
     final_cell_arr = []
-    for elem_t, cells_arr in mixed_cell_dict.items():
+    for elem_t, cells_arr in mixed_cells.items():
         nr_points_per_elem = elem_t.n_points
         if (
             not isinstance(cells_arr, np.ndarray)  # type: ignore[redundant-expr]
@@ -226,7 +227,7 @@ def create_mixed_cells(
     return cell_types_out, cell_arr_out
 
 
-def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]:
+def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[CellType, NumpyArray[int]]:
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
     This functions creates a cells dictionary (see
@@ -258,7 +259,7 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
         like VTK_POLYGON.
 
     """
-    return_dict: dict[np.uint8, NumpyArray[int]] = {}
+    return_dict: dict[CellType, NumpyArray[int]] = {}
 
     if not isinstance(vtkobj, pv.UnstructuredGrid):
         msg = 'Expected a pyvista object'  # type: ignore[unreachable]
@@ -273,7 +274,7 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
 
     distinct_cell_types = vtkobj.distinct_cell_types
 
-    if not all(k.n_points is not None and k.n_points > 0 for k in distinct_cell_types):
+    if not all(k.n_points > 0 for k in distinct_cell_types):
         msg = (
             'You requested a cell-dictionary with a variable length cell, which is not supported '
             'currently'
