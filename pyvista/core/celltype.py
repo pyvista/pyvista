@@ -835,7 +835,7 @@ class CellType(IntEnum):
         >>> pv.CellType.TRIANGLE.vtk_class
         <class 'vtkmodules.vtkCommonDataModel.vtkTriangle'>
 
-        Abstract cell types like :attr:`HIGHER_ORDER_HEXAHEDRON` return ``None``.
+        Abstract cell types like :attr:`~pyvista.CellType.HIGHER_ORDER_HEXAHEDRON` return ``None``.
 
         >>> pv.CellType.HIGHER_ORDER_HEXAHEDRON.vtk_class is None
         True
@@ -923,7 +923,8 @@ class CellType(IntEnum):
     def n_points(self) -> int:  # numpydoc ignore=RT01
         """Return the number of points defined by this cell type.
 
-        A value of ``-1`` is returned if the cell type is abstract (e.g. :attr:`HIGHER_ORDER_EDGE`)
+        A value of ``-1`` is returned if the cell type is abstract (e.g.
+        :attr:`~pyvista.CellType.HIGHER_ORDER_EDGE`)
         or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
@@ -948,7 +949,8 @@ class CellType(IntEnum):
     def n_edges(self) -> int:  # numpydoc ignore=RT01
         """Return the number of edges defined by this cell type.
 
-        A value of ``-1`` is returned if the cell type is abstract (e.g. :attr:`HIGHER_ORDER_EDGE`)
+        A value of ``-1`` is returned if the cell type is abstract (e.g.
+        :attr:`~pyvista.CellType.HIGHER_ORDER_EDGE`)
         or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
@@ -981,7 +983,8 @@ class CellType(IntEnum):
     def n_faces(self) -> int:  # numpydoc ignore=RT01
         """Return the number of faces defined by this cell type.
 
-        A value of ``-1`` is returned if the cell type is abstract (e.g. :attr:`HIGHER_ORDER_EDGE`)
+        A value of ``-1`` is returned if the cell type is abstract (e.g.
+        :attr:`~pyvista.CellType.HIGHER_ORDER_EDGE`)
         or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
