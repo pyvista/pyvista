@@ -68,6 +68,7 @@ def test_cell_is_valid(cell_example):
         assert not invalid_fields
 
 
+@pytest.mark.needs_vtk_version(9, 6, 0, reason='vtkCellTypeUtilities requires 9.6')
 @parametrize('cell_example', cell_example_functions)
 def test_cell_name(cell_example):
     # Test that the function names of cell examples match the actual names provided by VTK

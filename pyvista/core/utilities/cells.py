@@ -120,7 +120,7 @@ def numpy_to_idarr(
 
 
 def create_mixed_cells(
-    mixed_cell_dict: dict[np.uint8, NumpyArray[int]], nr_points: int | None = None
+    mixed_cell_dict: dict[int | np.uint8, NumpyArray[int]], nr_points: int | None = None
 ) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
     """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
