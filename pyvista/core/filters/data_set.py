@@ -7269,7 +7269,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         colors: str
         | ColorLike
         | Sequence[ColorLike]
-        | dict[float, ColorLike] = 'glasbey_category10',
+        | dict[float, ColorLike]
+        | ColormapOptions = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycle'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
