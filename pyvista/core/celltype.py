@@ -633,15 +633,12 @@ class CellType(IntEnum):
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-    Attributes
+    Properties
     ----------
 
     .. list-table::
-       :header-rows: 1
        :widths: 20 80
 
-       * - Attribute
-         - Description
        * - :attr:`~pyvista.CellType.vtk_class`
          - VTK class associated with this cell type.
        * - :attr:`~pyvista.CellType.dimension`
