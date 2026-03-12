@@ -83,8 +83,8 @@ Enums
 
    CellStatus
 
-.. autoclass:: CellType
-    :members:
+.. autoenum:: CellType
+   :members:
 
 Array Access
 ~~~~~~~~~~~~
