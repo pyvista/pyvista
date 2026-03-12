@@ -82,6 +82,7 @@ def test_cell_name(cell_example):
     elif expected == 'Polyline':
         expected = 'PolyLine'
     elif expected == 'UnknownCell' and cell_type == CellType.EMPTY_CELL:
+        # VTK bug with empty cell https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786036
         expected = 'Empty'
 
     actual = cell_example.__name__
@@ -93,9 +94,9 @@ def test_cell_dimension(cell_example):
     # This test is needed because of possible VTK bugs with vtkCellTypeUtilities
     # https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
     cell = next(cell_example().cell)
-    actual_dimension = cell.dimension
-    expected_dimension = CellType(cell.type).dimension
-    assert actual_dimension == expected_dimension
+    cell_dimension = cell.dimension
+    celltype_dimension = CellType(cell.type).dimension
+    assert cell_dimension == celltype_dimension
 
 
 @parametrize('cell_example', cell_example_functions)
@@ -103,9 +104,9 @@ def test_cell_is_linear(cell_example):
     # This test is needed because of possible VTK bugs with vtkCellTypeUtilities
     # https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
     cell = next(cell_example().cell)
-    actual_is_linear = cell.is_linear
-    expected_is_linear = CellType(cell.type).is_linear
-    assert actual_is_linear == expected_is_linear
+    cell_is_linear = cell.is_linear
+    celltype_is_linear = CellType(cell.type).is_linear
+    assert cell_is_linear == celltype_is_linear
 
 
 def test_empty():
