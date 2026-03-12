@@ -635,26 +635,27 @@ class CellType(IntEnum):
 
     Attributes
     ----------
-    :attr:`~pyvista.CellType.vtk_class` : type[vtkCell] | None
-        VTK class associated with the cell type.
 
-    :attr:`~pyvista.CellType.dimension` : int
-        Topological dimension of the cell.
+    .. list-table::
+       :header-rows: 1
+       :widths: 20 80
 
-    :attr:`~pyvista.CellType.is_linear` : bool
-        Whether the cell uses linear interpolation.
-
-    :attr:`~pyvista.CellType.is_primary` : bool
-        Whether the cell type is primary.
-
-    :attr:`~pyvista.CellType.n_points` : int
-        Number of points defining the cell.
-
-    :attr:`~pyvista.CellType.n_edges` : int
-        Number of edges defining the cell.
-
-    :attr:`~pyvista.CellType.n_faces` : int
-        Number of faces defining the cell.
+       * - Attribute
+         - Description
+       * - :attr:`~pyvista.CellType.vtk_class`
+         - VTK class associated with this cell type.
+       * - :attr:`~pyvista.CellType.dimension`
+         - Topological dimension of the cell.
+       * - :attr:`~pyvista.CellType.is_linear`
+         - Whether the cell uses linear interpolation.
+       * - :attr:`~pyvista.CellType.is_primary`
+         - Whether the cell type is primary.
+       * - :attr:`~pyvista.CellType.n_points`
+         - Number of points defining the cell.
+       * - :attr:`~pyvista.CellType.n_edges`
+         - Number of edges defining the cell.
+       * - :attr:`~pyvista.CellType.n_faces`
+         - Number of faces defining the cell.
 
     References
     ----------
