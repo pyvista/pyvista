@@ -949,7 +949,7 @@ class CellType(IntEnum):
         """Return the number of points defined by this cell type.
 
         A value of ``-1`` is returned if the cell type is abstract (e.g. ``HIGHER_ORDER_EDGE``)
-        or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
+        or the number of points is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
 
@@ -979,7 +979,7 @@ class CellType(IntEnum):
         """Return the number of edges defined by this cell type.
 
         A value of ``-1`` is returned if the cell type is abstract (e.g. ``HIGHER_ORDER_EDGE``)
-        or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
+        or the number of edges is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
 
