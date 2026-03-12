@@ -780,39 +780,39 @@ class CellType(IntEnum):
 
         # Generate cell type documentation if specified
         if self._vtk_class or _doc or _example:
-            badges = ''
+            _badges = ''
             if self._vtk_class:
-                linear_badge = _generate_linear_badge(self._is_linear)
-                primary_badge = _generate_primary_badge(self._is_primary)
-                dimension_badge = _generate_dimension_badge(self._dimension)
+                _linear_badge = _generate_linear_badge(self._is_linear)
+                _primary_badge = _generate_primary_badge(self._is_primary)
+                _dimension_badge = _generate_dimension_badge(self._dimension)
 
-                points = 'variable' if _variable_points else self._n_points
-                points_badge = _generate_points_badge(points)  # type: ignore[arg-type]
+                _points = 'variable' if _variable_points else self._n_points
+                _points_badge = _generate_points_badge(_points)  # type: ignore[arg-type]
 
-                edges = 'variable' if _variable_edges else self._n_edges
-                edges_badge = _generate_edges_badge(edges)  # type: ignore[arg-type]
+                _edges = 'variable' if _variable_edges else self._n_edges
+                _edges_badge = _generate_edges_badge(_edges)  # type: ignore[arg-type]
 
-                faces = 'variable' if _variable_faces else self._n_faces
-                faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
+                _faces = 'variable' if _variable_faces else self._n_faces
+                _faces_badge = _generate_faces_badge(_faces)  # type: ignore[arg-type]
 
-                badges = _indent_paragraph(
-                    f'{linear_badge} {primary_badge} {dimension_badge}\n'
-                    f'{points_badge} {edges_badge} {faces_badge}',
+                _badges = _indent_paragraph(
+                    f'{_linear_badge} {_primary_badge} {_dimension_badge}\n'
+                    f'{_points_badge} {_edges_badge} {_faces_badge}',
                     level=2,
                 )
 
                 # Add additional references to VTK docs
-                vtk_class_ref = f':vtk:`{self._vtk_class.__name__}`'
-                see_also = f'See also {vtk_class_ref}.'
-                _doc += f'\n\n{see_also}'
+                _vtk_class_ref = f':vtk:`{self._vtk_class.__name__}`'
+                _see_also = f'See also {_vtk_class_ref}.'
+                _doc += f'\n\n{_see_also}'
 
             _doc = _indent_paragraph(_doc, level=2)
 
             self.__doc__ += (
-                _GRID_TEMPLATE_NO_IMAGE.format(badges, _doc)
+                _GRID_TEMPLATE_NO_IMAGE.format(_badges, _doc)
                 if _example is None
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
-                    _example, _example, PLACEHOLDER, badges, _doc
+                    _example, _example, PLACEHOLDER, _badges, _doc
                 )
             )
 
