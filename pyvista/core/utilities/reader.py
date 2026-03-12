@@ -3565,6 +3565,7 @@ class FRDReader(BaseReader, TimeReader):
 
     For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically
     pre-computes and appends the following derived scalar arrays to the output mesh:
+
     - ``<NAME>_Mises``: equivalent von Mises magnitude.
     - ``<NAME>_sgMises``: signed von Mises magnitude.
     - ``<NAME>_PS1``, ``_PS2``, ``_PS3``: principal components.
