@@ -4,7 +4,7 @@
 
 .. autoenum:: {{ objname }}
 
-# Manually document enum properties since autoenum does not enable use of template variables
+{# Manually document enum properties since autoenum does not enable use of template variables #}
 {% if objname == 'CellType' %}
 {{ _('Attributes') }}
 {{ '-' * _('Attributes')|length }}
