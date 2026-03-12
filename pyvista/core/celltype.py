@@ -633,27 +633,6 @@ class CellType(IntEnum):
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-    Properties
-    ----------
-
-    .. list-table::
-       :widths: 20 80
-
-       * - :attr:`~pyvista.CellType.vtk_class`
-         - VTK class associated with this cell type.
-       * - :attr:`~pyvista.CellType.dimension`
-         - Topological dimension of the cell.
-       * - :attr:`~pyvista.CellType.is_linear`
-         - Whether the cell uses linear interpolation.
-       * - :attr:`~pyvista.CellType.is_primary`
-         - Whether the cell type is primary.
-       * - :attr:`~pyvista.CellType.n_points`
-         - Number of points defining the cell.
-       * - :attr:`~pyvista.CellType.n_edges`
-         - Number of edges defining the cell.
-       * - :attr:`~pyvista.CellType.n_faces`
-         - Number of faces defining the cell.
-
     References
     ----------
     `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
