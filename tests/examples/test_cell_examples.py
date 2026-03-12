@@ -88,6 +88,26 @@ def test_cell_name(cell_example):
     assert actual == expected
 
 
+@parametrize('cell_example', cell_example_functions)
+def test_cell_dimension(cell_example):
+    # This test is needed because of possible VTK bugs with vtkCellTypeUtilities
+    # https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
+    cell = next(cell_example().cell)
+    actual_dimension = cell.dimension
+    expected_dimension = CellType(cell.type).dimension
+    assert actual_dimension == expected_dimension
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_linear(cell_example):
+    # This test is needed because of possible VTK bugs with vtkCellTypeUtilities
+    # https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
+    cell = next(cell_example().cell)
+    actual_is_linear = cell.is_linear
+    expected_is_linear = CellType(cell.type).is_linear
+    assert actual_is_linear == expected_is_linear
+
+
 def test_empty():
     grid = cells.Empty()
     assert grid.celltypes[0] == CellType.EMPTY_CELL

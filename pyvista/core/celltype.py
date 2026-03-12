@@ -762,6 +762,9 @@ class CellType(IntEnum):
         # Set cell type properties using vtkCellTypeUtilities
         self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
         self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
+        if value == _vtk.VTK_HEXAGONAL_PRISM:
+            # Need to fix https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
+            self._is_linear = True
 
         # Set properties that require instantiating the class.
         # Assume primary cell with -1 values for points/edges/faces for abstract classes
