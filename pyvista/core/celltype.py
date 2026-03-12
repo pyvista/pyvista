@@ -635,7 +635,7 @@ class CellType(IntEnum):
 
     Attributes
     ----------
-    :attr:`~pyvista.CellType.vtk_class` : type[vtkCell] or None
+    :attr:`~pyvista.CellType.vtk_class` : type[vtkCell] | None
         VTK class associated with the cell type.
 
     :attr:`~pyvista.CellType.dimension` : int
