@@ -16,7 +16,6 @@ from typing import cast
 from typing import get_args
 import warnings
 
-import matplotlib as mpl
 import numpy as np
 
 import pyvista as pv
@@ -7620,7 +7619,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 )
                 raise ValueError(msg)
             _is_rgb_sequence = False
-            if isinstance(colors, (str, mpl.colors.Colormap)):
+            if isinstance(colors, (str, matplotlib.colors.Colormap)):
                 try:
                     cmap = get_cmap_safe(cast('ColormapOptions', colors))
                 except ValueError:
