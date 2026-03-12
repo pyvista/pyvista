@@ -601,15 +601,15 @@ class CellType(IntEnum):
     coordinates define the cell geometry.
 
     Although point coordinates are defined in three dimensions, the cell topology can
-    be 0, 1, 2, or 3-dimensional.
+    be 0, 1, 2, or 3-dimensional. Use :attr:`dimension` to check the topological dimension.
 
     Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
     cells consist of one or more primary cells, while primary cells cannot be
-    decomposed.
+    decomposed. Use :attr:`is_primary` to check if a cell type is primary.
 
     Cells can also be characterized as linear or non-linear. Linear cells use
-    linear or constant interpolation. Non-linear cells may use quadratic,
-    cubic, or some other interpolation.
+    linear or constant interpolation, while non-linear cells may use quadratic,
+    cubic, or some other interpolation. Use :attr:`is_linear` to check if a cell type is linear.
 
     Higher order interpolation is possible using Lagrange or Bézier cells. For Lagrange cells,
     all the points lie on the interpolation curve, whereas for the Bézier cells, only the points at
@@ -620,6 +620,9 @@ class CellType(IntEnum):
     graphics rendering or numerical simulation.
 
     .. seealso::
+
+        :class:`pyvista.Cell`
+            Wrapper for instances of :vtk:`vtkCell`.
 
         :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
@@ -832,6 +835,10 @@ class CellType(IntEnum):
 
         .. versionadded:: 0.48
 
+        See Also
+        --------
+        pyvista.Cell
+
         Examples
         --------
         Get the VTK class associated with the :attr:`TRIANGLE` cell type.
@@ -853,6 +860,10 @@ class CellType(IntEnum):
         """Return this cell type's dimension.
 
         .. versionadded:: 0.48
+
+        See Also
+        --------
+        pyvista.Cell.dimension
 
         Examples
         --------
@@ -886,6 +897,11 @@ class CellType(IntEnum):
 
         .. versionadded:: 0.48
 
+        See Also
+        --------
+        is_primary
+        pyvista.Cell.is_linear
+
         Examples
         --------
         :attr:`HEXAHEDRON` is linear.
@@ -907,6 +923,10 @@ class CellType(IntEnum):
         """Return ``True`` if this cell type is primary.
 
         .. versionadded:: 0.48
+
+        See Also
+        --------
+        is_linear
 
         Examples
         --------
@@ -933,6 +953,11 @@ class CellType(IntEnum):
 
         .. versionadded:: 0.48
 
+        See Also
+        --------
+        n_edges, n_faces
+        pyvista.Cell.n_points
+
         Examples
         --------
         :attr:`LINE` has a fixed number of points.
@@ -957,6 +982,11 @@ class CellType(IntEnum):
         or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
+
+        See Also
+        --------
+        n_points, n_faces
+        pyvista.Cell.n_edges
 
         Examples
         --------
@@ -990,6 +1020,11 @@ class CellType(IntEnum):
         or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
+
+        See Also
+        --------
+        n_points, n_edges
+        pyvista.Cell.n_faces
 
         Examples
         --------
