@@ -633,17 +633,42 @@ class CellType(IntEnum):
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
-            VTK reference about cell types.
+    Attributes
+    ----------
+    :attr:`~pyvista.CellType.vtk_class` : type[vtkCell] or None
+        VTK class associated with the cell type.
 
-        `Modeling Lagrange Finite Elements in VTK <https://www.kitware.com//modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit/>`_
-            VTK blog post about Lagrange cells.
+    :attr:`~pyvista.CellType.dimension` : int
+        Topological dimension of the cell.
 
-        `Implementation of rational Bézier cells into VTK <https://www.kitware.com/implementation-of-rational-bezier-cells-into-vtk/>`_
-            VTK blog post about Bezier cells.
+    :attr:`~pyvista.CellType.is_linear` : bool
+        Whether the cell uses linear interpolation.
 
-        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
-            List of all cell types defined in VTK.
+    :attr:`~pyvista.CellType.is_primary` : bool
+        Whether the cell type is primary.
+
+    :attr:`~pyvista.CellType.n_points` : int
+        Number of points defining the cell.
+
+    :attr:`~pyvista.CellType.n_edges` : int
+        Number of edges defining the cell.
+
+    :attr:`~pyvista.CellType.n_faces` : int
+        Number of faces defining the cell.
+
+    References
+    ----------
+    `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
+        VTK reference about cell types.
+
+    `Modeling Lagrange Finite Elements in VTK <https://www.kitware.com//modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit/>`_
+        VTK blog post about Lagrange cells.
+
+    `Implementation of rational Bézier cells into VTK <https://www.kitware.com/implementation-of-rational-bezier-cells-into-vtk/>`_
+        VTK blog post about Bezier cells.
+
+    `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
+        List of all cell types defined in VTK.
 
     Examples
     --------
