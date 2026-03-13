@@ -12,12 +12,12 @@
 .. autosummary::
    :toctree: _autosummary
 
-   {{ objname }}.dimension
-   {{ objname }}.is_linear
-   {{ objname }}.is_primary
-   {{ objname }}.n_points
-   {{ objname }}.n_edges
-   {{ objname }}.n_faces
-   {{ objname }}.vtk_class
+   CellType.dimension
+   CellType.is_linear
+   CellType.is_primary
+   CellType.n_points
+   CellType.n_edges
+   CellType.n_faces
+   CellType.vtk_class
 
 {% endif %}
