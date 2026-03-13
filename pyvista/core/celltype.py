@@ -54,7 +54,9 @@ def _indent_paragraph(string: str, level: int) -> str:
 
 
 # See link for color names: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
-_BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
+_BADGE_COLORS = dict(
+    linear='primary', composite='success', dimension='secondary', geometry='muted'
+)
 
 
 def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
@@ -62,9 +64,9 @@ def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
     return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
 
 
-def _generate_primary_badge(is_primary: bool) -> str:  # noqa: FBT001
-    text = 'Primary' if is_primary else 'Composite'
-    return f':bdg-{_BADGE_COLORS["primary"]}:`{text}`'
+def _generate_composite_badge(is_composite: bool) -> str:  # noqa: FBT001
+    text = 'Composite' if is_composite else 'Primary'
+    return f':bdg-{_BADGE_COLORS["composite"]}:`{text}`'
 
 
 def _generate_dimension_badge(dimension: int) -> str:
@@ -605,7 +607,7 @@ class CellType(IntEnum):
 
     Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
     cells consist of one or more primary cells, while primary cells cannot be
-    decomposed. Use :attr:`is_primary` to check if a cell type is primary.
+    decomposed. Use :attr:`is_composite` to check if a cell type is primary or composite.
 
     Cells can also be characterized as linear or non-linear. Linear cells use
     linear or constant interpolation, while non-linear cells may use quadratic,
@@ -689,7 +691,7 @@ class CellType(IntEnum):
     _vtk_class: type[_vtk.vtkCell] | None
     _dimension: _Dimension
     _is_linear: bool
-    _is_primary: bool
+    _is_composite: bool
     _n_points: int
     _n_edges: int
     _n_faces: int
@@ -774,10 +776,10 @@ class CellType(IntEnum):
         self._n_points = -1
         self._n_edges = -1
         self._n_faces = -1
-        self._is_primary = True
+        self._is_composite = True
         if self._vtk_class is not None:
             cell = self._vtk_class()
-            self._is_primary = bool(cell.IsPrimaryCell())
+            self._is_composite = not bool(cell.IsPrimaryCell())
 
             # Use -1 to denote the cell has variable points/edges/faces
             self._n_points = -1 if _variable_points else cell.GetNumberOfPoints()
@@ -791,7 +793,7 @@ class CellType(IntEnum):
             _badges = ''
             if self._vtk_class:
                 _linear_badge = _generate_linear_badge(self._is_linear)
-                _primary_badge = _generate_primary_badge(self._is_primary)
+                _composite_badge = _generate_composite_badge(self._is_composite)
                 _dimension_badge = _generate_dimension_badge(self._dimension)
 
                 _points = 'variable' if _variable_points else self._n_points
@@ -804,7 +806,7 @@ class CellType(IntEnum):
                 _faces_badge = _generate_faces_badge(_faces)  # type: ignore[arg-type]
 
                 _badges = _indent_paragraph(
-                    f'{_linear_badge} {_primary_badge} {_dimension_badge}\n'
+                    f'{_linear_badge} {_composite_badge} {_dimension_badge}\n'
                     f'{_points_badge} {_edges_badge} {_faces_badge}',
                     level=2,
                 )
@@ -919,8 +921,8 @@ class CellType(IntEnum):
         return self._is_linear
 
     @property
-    def is_primary(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if this cell type is primary.
+    def is_composite(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if this cell type is composed of multiple smaller cells.
 
         .. versionadded:: 0.48
 
@@ -930,19 +932,19 @@ class CellType(IntEnum):
 
         Examples
         --------
-        :attr:`VERTEX` is a primary cell.
+        :attr:`VERTEX` is a primary cell and is not composite.
 
         >>> import pyvista as pv
-        >>> pv.CellType.VERTEX.is_primary
-        True
-
-        :attr:`POLY_VERTEX` is a composite cell.
-
-        >>> pv.CellType.POLY_VERTEX.is_primary
+        >>> pv.CellType.VERTEX.is_composite
         False
 
+        :attr:`POLY_VERTEX` `is` composite since it's composed of multiple vertex cells.
+
+        >>> pv.CellType.POLY_VERTEX.is_composite
+        True
+
         """
-        return self._is_primary
+        return self._is_composite
 
     @property
     def n_points(self) -> int:  # numpydoc ignore=RT01
