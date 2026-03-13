@@ -112,7 +112,7 @@ def test_cell_is_linear(cell_example):
 
 
 @parametrize('cell_example', cell_example_functions)
-def test_cell_is_primary(cell_example):
+def test_cell_is_composite(cell_example):
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
     assert celltype.is_composite != cell.IsPrimaryCell()
