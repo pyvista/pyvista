@@ -90,23 +90,69 @@ def test_cell_name(cell_example):
 
 
 @parametrize('cell_example', cell_example_functions)
+def test_cell_vtk_class(cell_example):
+    cell = cell_example().GetCell(0)
+    celltype = CellType(cell.GetCellType())
+    assert celltype.vtk_class is type(cell)
+
+
+@parametrize('cell_example', cell_example_functions)
 def test_cell_dimension(cell_example):
-    # This test is needed because of possible VTK bugs with vtkCellTypeUtilities
-    # https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
     cell = next(cell_example().cell)
-    cell_dimension = cell.dimension
-    celltype_dimension = CellType(cell.type).dimension
-    assert cell_dimension == celltype_dimension
+    celltype = CellType(cell.type)
+    assert celltype.dimension == cell.dimension
 
 
 @parametrize('cell_example', cell_example_functions)
 def test_cell_is_linear(cell_example):
-    # This test is needed because of possible VTK bugs with vtkCellTypeUtilities
-    # https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
     cell = next(cell_example().cell)
-    cell_is_linear = cell.is_linear
-    celltype_is_linear = CellType(cell.type).is_linear
-    assert cell_is_linear == celltype_is_linear
+    celltype = CellType(cell.type)
+    assert celltype.is_linear == cell.is_linear
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_primary(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    assert celltype.is_primary == cell.IsPrimaryCell()
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_n_points(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    name = cell_example.__name__
+    if name.startswith(('Bezier', 'Lagrange')) or name in (
+        'PolyLine',
+        'PolyVertex',
+        'Polygon',
+        'Polyhedron',
+        'QuadraticPolygon',
+        'TriangleStrip',
+    ):
+        assert celltype.n_points == -1
+    else:
+        assert celltype.n_points == cell.n_points
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_n_edges(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    if cell_example.__name__ in ('Polygon', 'Polyhedron', 'QuadraticPolygon', 'TriangleStrip'):
+        assert celltype.n_edges == -1
+    else:
+        assert celltype.n_edges == cell.n_edges
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_n_faces(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    if cell_example.__name__ == 'Polyhedron':
+        assert celltype.n_faces == -1
+    else:
+        assert celltype.n_faces == cell.n_faces
 
 
 def test_empty():
