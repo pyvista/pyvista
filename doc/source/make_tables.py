@@ -3565,7 +3565,6 @@ def make_all_tables() -> list[str]:  # noqa: D103
     RectilinearGridIOTable.generate()
     StructuredGridIOTable.generate()
     PolyDataIOTable.generate()
-    PolyDataIOTable.generate()
     UnstructuredGridIOTable.generate()
     MultiBlockIOTable.generate()
     PartitionedDataSetIOTable.generate()
