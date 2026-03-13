@@ -972,7 +972,7 @@ class CellType(IntEnum):
         :attr:`POLY_LINE` has a variable number of points and raises a ValueError.
 
         >>> try:
-        ...     pv.CellType.POLY_LINE.n_edges
+        ...     pv.CellType.POLY_LINE.n_points
         ... except ValueError:
         ...     print('Error!')
         Error!
