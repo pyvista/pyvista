@@ -121,8 +121,7 @@ def test_cell_is_primary(cell_example):
 def test_cell_n_points(cell_example):
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
-    name = cell_example.__name__
-    if name.startswith(('Bezier', 'Lagrange')) or name in (
+    if (name := cell_example.__name__).startswith(('Bezier', 'Lagrange')) or name in (
         'PolyLine',
         'PolyVertex',
         'Polygon',
@@ -130,7 +129,12 @@ def test_cell_n_points(cell_example):
         'QuadraticPolygon',
         'TriangleStrip',
     ):
-        assert celltype.n_points == -1
+        match = (
+            f'Cannot determine number of points for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            _ = celltype.n_points
     else:
         assert celltype.n_points == cell.n_points
 
@@ -140,7 +144,12 @@ def test_cell_n_edges(cell_example):
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
     if cell_example.__name__ in ('Polygon', 'Polyhedron', 'QuadraticPolygon', 'TriangleStrip'):
-        assert celltype.n_edges == -1
+        match = (
+            f'Cannot determine number of edges for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            _ = celltype.n_edges
     else:
         assert celltype.n_edges == cell.n_edges
 
@@ -150,7 +159,12 @@ def test_cell_n_faces(cell_example):
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
     if cell_example.__name__ == 'Polyhedron':
-        assert celltype.n_faces == -1
+        match = (
+            f'Cannot determine number of faces for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            _ = celltype.n_faces
     else:
         assert celltype.n_faces == cell.n_faces
 

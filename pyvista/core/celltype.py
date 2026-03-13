@@ -948,15 +948,18 @@ class CellType(IntEnum):
     def n_points(self) -> int:  # numpydoc ignore=RT01
         """Return the number of points defined by this cell type.
 
-        A value of ``-1`` is returned if the cell type is abstract (e.g. ``HIGHER_ORDER_EDGE``)
-        or the number of points is variable (e.g. :attr:`POLYHEDRON`).
-
         .. versionadded:: 0.48
 
         See Also
         --------
         n_edges, n_faces
         pyvista.Cell.n_points
+
+        Raises
+        ------
+        ValueError
+            If the number of points cannot be determined without a concrete instance.
+            Composite cells, higher order cells, polygon, and polyhedron will all raise an error.
 
         Examples
         --------
@@ -966,20 +969,26 @@ class CellType(IntEnum):
         >>> pv.CellType.LINE.n_points
         2
 
-        :attr:`POLY_LINE` has a variable number of points.
+        :attr:`POLY_LINE` has a variable number of points and raises a ValueError.
 
-        >>> pv.CellType.POLY_LINE.n_points
-        -1
+        >>> try:
+        ...     pv.CellType.POLY_LINE.n_edges
+        ... except ValueError:
+        ...     print('Error!')
+        Error!
 
         """
-        return self._n_points
+        if (n_points := self._n_points) == -1:
+            msg = (
+                f'Cannot determine number of points for {self.name!r} '
+                f'without a concrete cell instance.'
+            )
+            raise ValueError(msg)
+        return n_points
 
     @property
     def n_edges(self) -> int:  # numpydoc ignore=RT01
         """Return the number of edges defined by this cell type.
-
-        A value of ``-1`` is returned if the cell type is abstract (e.g. ``HIGHER_ORDER_EDGE``)
-        or the number of edges is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
 
@@ -987,6 +996,12 @@ class CellType(IntEnum):
         --------
         n_points, n_faces
         pyvista.Cell.n_edges
+
+        Raises
+        ------
+        ValueError
+            If the number of edges cannot be determined without a concrete instance.
+            Polygon, polyhedron, and triangle strip will all raise an error.
 
         Examples
         --------
@@ -996,10 +1011,13 @@ class CellType(IntEnum):
         >>> pv.CellType.QUAD.n_edges
         4
 
-        :attr:`POLYGON` has a variable number of edges.
+        :attr:`POLYGON` has a variable number of edges and raises a ValueError.
 
-        >>> pv.CellType.POLYGON.n_edges
-        -1
+        >>> try:
+        ...     pv.CellType.POLYGON.n_edges
+        ... except ValueError:
+        ...     print('Error!')
+        Error!
 
         Zero- and one-dimensional cell types have no edges.
 
@@ -1010,14 +1028,17 @@ class CellType(IntEnum):
         0
 
         """
-        return self._n_edges
+        if (n_edges := self._n_edges) == -1:
+            msg = (
+                f'Cannot determine number of edges for {self.name!r} '
+                f'without a concrete cell instance.'
+            )
+            raise ValueError(msg)
+        return n_edges
 
     @property
     def n_faces(self) -> int:  # numpydoc ignore=RT01
         """Return the number of faces defined by this cell type.
-
-        A value of ``-1`` is returned if the cell type is abstract (e.g. ``HIGHER_ORDER_EDGE``)
-        or the number of faces is variable (e.g. :attr:`POLYHEDRON`).
 
         .. versionadded:: 0.48
 
@@ -1025,6 +1046,12 @@ class CellType(IntEnum):
         --------
         n_points, n_edges
         pyvista.Cell.n_faces
+
+        Raises
+        ------
+        ValueError
+            If the number of faces cannot be determined without a concrete instance.
+            Polyhedron will raise an error.
 
         Examples
         --------
@@ -1034,10 +1061,13 @@ class CellType(IntEnum):
         >>> pv.CellType.WEDGE.n_faces
         5
 
-        :attr:`POLYHEDRON` has a variable number of faces.
+        :attr:`POLYHEDRON` has a variable number of faces and raises a ValueError.
 
-        >>> pv.CellType.POLYHEDRON.n_faces
-        -1
+        >>> try:
+        ...     pv.CellType.POLYHEDRON.n_edges
+        ... except ValueError:
+        ...     print('Error!')
+        Error!
 
         Only three-dimensional cell types have faces.
 
@@ -1048,7 +1078,13 @@ class CellType(IntEnum):
         0
 
         """
-        return self._n_faces
+        if (n_faces := self._n_faces) == -1:
+            msg = (
+                f'Cannot determine number of faces for {self.name!r} '
+                f'without a concrete cell instance.'
+            )
+            raise ValueError(msg)
+        return n_faces
 
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
     VERTEX = _CELL_TYPE_INFO['VERTEX']
