@@ -973,9 +973,9 @@ class CellType(IntEnum):
 
         >>> try:
         ...     pv.CellType.POLY_LINE.n_points
-        ... except ValueError:
-        ...     print('Error!')
-        Error!
+        ... except ValueError as error:
+        ...     print(error)
+        Cannot determine number of points for 'POLY_LINE' without a concrete cell instance.
 
         """
         if (n_points := self._n_points) == -1:
@@ -1015,9 +1015,9 @@ class CellType(IntEnum):
 
         >>> try:
         ...     pv.CellType.POLYGON.n_edges
-        ... except ValueError:
-        ...     print('Error!')
-        Error!
+        ... except ValueError as error:
+        ...     print(error)
+        Cannot determine number of edges for 'POLYGON' without a concrete cell instance.
 
         Zero- and one-dimensional cell types have no edges.
 
@@ -1064,10 +1064,10 @@ class CellType(IntEnum):
         :attr:`POLYHEDRON` has a variable number of faces and raises a ValueError.
 
         >>> try:
-        ...     pv.CellType.POLYHEDRON.n_edges
-        ... except ValueError:
-        ...     print('Error!')
-        Error!
+        ...     pv.CellType.POLYHEDRON.n_faces
+        ... except ValueError as error:
+        ...     print(error)
+        Cannot determine number of faces for 'POLYHEDRON' without a concrete cell instance.
 
         Only three-dimensional cell types have faces.
 
