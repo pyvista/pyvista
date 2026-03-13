@@ -171,6 +171,18 @@ def test_cell_n_faces(cell_example):
         assert celltype.n_faces == cell.n_faces
 
 
+def test_abstract_celltype():
+    celltype = pv.CellType.HIGHER_ORDER_HEXAHEDRON
+    assert not celltype.is_composite
+    match = 'Cannot determine number of'
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_points
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_edges
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_faces
+
+
 def test_empty():
     grid = cells.Empty()
     assert grid.celltypes[0] == CellType.EMPTY_CELL

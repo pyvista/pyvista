@@ -776,7 +776,7 @@ class CellType(IntEnum):
         self._n_points = -1
         self._n_edges = -1
         self._n_faces = -1
-        self._is_composite = True
+        self._is_composite = False
         if self._vtk_class is not None:
             cell = self._vtk_class()
             self._is_composite = not bool(cell.IsPrimaryCell())
