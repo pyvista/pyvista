@@ -82,10 +82,105 @@ def test_cell_name(cell_example):
     elif expected == 'Polyline':
         expected = 'PolyLine'
     elif expected == 'UnknownCell' and cell_type == CellType.EMPTY_CELL:
+        # VTK bug with empty cell https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786036
         expected = 'Empty'
 
     actual = cell_example.__name__
     assert actual == expected
+
+
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='VTK bug for higher-order quads/triangles')
+@parametrize('cell_example', cell_example_functions)
+def test_cell_vtk_class(cell_example):
+    cell = cell_example().GetCell(0)
+    celltype = CellType(cell.GetCellType())
+    assert celltype.vtk_class is type(cell)
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_dimension(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    assert celltype.dimension == cell.dimension
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_linear(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    assert celltype.is_linear == cell.is_linear
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_is_composite(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    assert celltype.is_composite != cell.IsPrimaryCell()
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_n_points(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    if (name := cell_example.__name__).startswith(('Bezier', 'Lagrange')) or name in (
+        'PolyLine',
+        'PolyVertex',
+        'Polygon',
+        'Polyhedron',
+        'QuadraticPolygon',
+        'TriangleStrip',
+    ):
+        match = (
+            f'Cannot determine number of points for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            _ = celltype.n_points
+    else:
+        assert celltype.n_points == cell.n_points
+
+
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='VTK bug for higher-order quads/triangles')
+@parametrize('cell_example', cell_example_functions)
+def test_cell_n_edges(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    if cell_example.__name__ in ('Polygon', 'Polyhedron', 'QuadraticPolygon', 'TriangleStrip'):
+        match = (
+            f'Cannot determine number of edges for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            _ = celltype.n_edges
+    else:
+        assert celltype.n_edges == cell.n_edges
+
+
+@parametrize('cell_example', cell_example_functions)
+def test_cell_n_faces(cell_example):
+    cell = next(cell_example().cell)
+    celltype = CellType(cell.type)
+    if cell_example.__name__ == 'Polyhedron':
+        match = (
+            f'Cannot determine number of faces for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            _ = celltype.n_faces
+    else:
+        assert celltype.n_faces == cell.n_faces
+
+
+def test_abstract_celltype():
+    celltype = pv.CellType.HIGHER_ORDER_HEXAHEDRON
+    assert not celltype.is_composite
+    match = 'Cannot determine number of'
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_points
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_edges
+    with pytest.raises(ValueError, match=match):
+        _ = celltype.n_faces
 
 
 def test_empty():
