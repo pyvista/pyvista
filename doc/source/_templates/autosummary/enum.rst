@@ -14,7 +14,7 @@
 
    CellType.dimension
    CellType.is_linear
-   CellType.is_primary
+   CellType.is_composite
    CellType.n_points
    CellType.n_edges
    CellType.n_faces

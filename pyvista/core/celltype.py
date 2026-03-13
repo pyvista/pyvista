@@ -901,7 +901,7 @@ class CellType(IntEnum):
 
         See Also
         --------
-        is_primary
+        is_composite
         pyvista.Cell.is_linear
 
         Examples
