@@ -134,7 +134,11 @@ def plot_cell(
         # Use existing grid if it's already a grid with one cell
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
-        edges = cell_as_grid.extract_all_edges()
+        if cell.type == CellType.CONVEX_POINT_SET:
+            # Cell does not actually have edges, so convert it to a surface first
+            edges = cell_as_grid.extract_surface(algorithm=None).extract_all_edges()
+        else:
+            edges = cell_as_grid.extract_all_edges()
         if edges.n_cells or cell.dimension == 1:
             pl.add_mesh(
                 cell_as_grid,
