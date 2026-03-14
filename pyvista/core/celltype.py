@@ -808,7 +808,7 @@ class CellType(IntEnum):
                 _faces_badge = _generate_faces_badge(_faces)  # type: ignore[arg-type]
 
                 _badges = _indent_paragraph(
-                    f'{_points_badge} {_edges_badge} {_faces_badge}\n\n',
+                    f'{_points_badge} {_edges_badge} {_faces_badge}\n\n'
                     f'{_linear_badge} {_composite_badge} {_dimension_badge}',
                     level=2,
                 )
