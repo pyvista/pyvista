@@ -65,11 +65,10 @@ def test_cell_is_valid(cell_example):
         # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
         assert invalid_fields == ('negative_size',)
     elif cell_type == pv.CellType.CONVEX_POINT_SET:
-        # This cell type appears to be broken, because the convex points are
-        # incorrectly labeled as non-convex
+        # VTK bug: the convex points are incorrectly flagged as non-convex https://gitlab.kitware.com/vtk/vtk/-/issues/19992
         assert invalid_fields == ('non_convex',)
-        # Show that the points are in fact convex by triangulating the points
-        assert mesh.delaunay_3d().validate_mesh().is_valid
+        # Show that the points are in fact convex as a surface
+        assert mesh.extract_surface(algorithm=None).validate_mesh().is_valid
 
     else:
         assert not invalid_fields
