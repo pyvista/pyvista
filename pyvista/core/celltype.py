@@ -64,7 +64,7 @@ def _cell_type_attr_ref(attr: str) -> str:
 
 
 def _generate_badge(color: str, text: str, ref: str) -> str:
-    return f':bdg-link-{color}:`{text} {ref}'
+    return f':bdg-link-{color}:`{text} {ref}`'
 
 
 def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
