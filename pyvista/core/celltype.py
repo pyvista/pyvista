@@ -61,28 +61,30 @@ _BADGE_COLORS = dict(
 
 def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
     text = 'Linear' if is_linear else 'Non-linear'
-    return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
+    return f':bdg-link-{_BADGE_COLORS["linear"]}:`{text} <pyvista.CellType.is_linear>`'
 
 
 def _generate_composite_badge(is_composite: bool) -> str:  # noqa: FBT001
     text = 'Composite' if is_composite else 'Primary'
-    return f':bdg-{_BADGE_COLORS["composite"]}:`{text}`'
+    return f':bdg-link-{_BADGE_COLORS["composite"]}:`{text} <pyvista.CellType.is_composite>`'
 
 
 def _generate_dimension_badge(dimension: int) -> str:
-    return f':bdg-{_BADGE_COLORS["dimension"]}:`{dimension}D`'
+    return f':bdg-link-{_BADGE_COLORS["dimension"]}:`{dimension}D <pyvista.CellType.dimension>`'
 
 
-def _generate_points_badge(num_points: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Points: {num_points}`'
+def _generate_points_badge(n_points: int) -> str:
+    return (
+        f':bdg-link-{_BADGE_COLORS["geometry"]}:`n_points: {n_points} <pyvista.CellType.n_points>`'
+    )
 
 
-def _generate_edges_badge(num_edges: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Edges: {num_edges}`'
+def _generate_edges_badge(n_edges: int) -> str:
+    return f':bdg-link-{_BADGE_COLORS["geometry"]}:`n_edges: {n_edges} <pyvista.CellType.n_edges>`'
 
 
-def _generate_faces_badge(num_faces: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Faces: {num_faces}`'
+def _generate_faces_badge(n_faces: int) -> str:
+    return f':bdg-link-{_BADGE_COLORS["geometry"]}:`n_faces: {n_faces} <pyvista.CellType.n_faces>`'
 
 
 class _CellTypeTuple(NamedTuple):
@@ -806,8 +808,8 @@ class CellType(IntEnum):
                 _faces_badge = _generate_faces_badge(_faces)  # type: ignore[arg-type]
 
                 _badges = _indent_paragraph(
-                    f'{_linear_badge} {_composite_badge} {_dimension_badge}\n'
-                    f'{_points_badge} {_edges_badge} {_faces_badge}',
+                    f'{_points_badge} {_edges_badge} {_faces_badge}\n\n',
+                    f'{_linear_badge} {_composite_badge} {_dimension_badge}',
                     level=2,
                 )
 
