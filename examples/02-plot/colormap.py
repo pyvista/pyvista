@@ -175,16 +175,16 @@ cgx_cmap = LinearSegmentedColormap.from_list('cgx', cgx_nodes)
 cgx_mesh = pv.Cylinder(resolution=20).elevation()
 
 # Plot the mesh using the custom cgx colormap
-plotter = pv.Plotter()
-plotter.add_mesh(
-    cgx_mesh,
-    cmap=cgx_cmap,
+pl = pv.Plotter()
+pl.add_mesh(
+    cgx_mesh, 
+    cmap=cgx_cmap, 
     n_colors=21,
     show_edges=True,
     scalar_bar_args={'title': 'CalculiX cgx'},
 )
-plotter.view_isometric()
-plotter.show()
+pl.view_isometric()
+pl.show()
 
 # %%
 # .. tags:: plot
