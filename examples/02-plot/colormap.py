@@ -178,6 +178,7 @@ plotter = pv.Plotter()
 plotter.add_mesh(
     cgx_mesh, 
     cmap=cgx_cmap, 
+    n_colors=21,
     show_edges=True,
     scalar_bar_args={'title': 'CalculiX cgx'},
 )
