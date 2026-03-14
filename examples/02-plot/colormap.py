@@ -10,7 +10,8 @@ values with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 
 from __future__ import annotations
 
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pyvista as pv
@@ -148,12 +149,12 @@ pl.show()
 # %%
 # Recreating Native Solver Colormaps (CalculiX)
 # +++++++++++++++++++++++++++++++++++++++++++++
-# Sometimes you want to process results in PyVista but keep the visual 
-# style identical to the solver's native post-processing tool. 
-# Below is an example of how to recreate the default ``cgx`` (CalculiX GraphiX) 
+# Sometimes you want to process results in PyVista but keep the visual
+# style identical to the solver's native post-processing tool.
+# Below is an example of how to recreate the default ``cgx`` (CalculiX GraphiX)
 # colormap using Matplotlib's :class:`matplotlib.colors.LinearSegmentedColormap`.
 #
-# This specific colormap uses exact RGB nodes at specific scalar fractions 
+# This specific colormap uses exact RGB nodes at specific scalar fractions
 # (0.0, 0.1, 0.3, 0.5, 0.8, 0.9, 1.0) to create its distinct color bands.
 
 # Define the exact RGB nodes from the cgx source code
@@ -168,7 +169,7 @@ cgx_nodes = [
 ]
 
 # Create the colormap
-cgx_cmap = LinearSegmentedColormap.from_list("cgx", cgx_nodes)
+cgx_cmap = LinearSegmentedColormap.from_list('cgx', cgx_nodes)
 
 # Create a sample mesh to demonstrate the colormap
 cgx_mesh = pv.Cylinder(resolution=20).elevation()
@@ -176,8 +177,8 @@ cgx_mesh = pv.Cylinder(resolution=20).elevation()
 # Plot the mesh using the custom cgx colormap
 plotter = pv.Plotter()
 plotter.add_mesh(
-    cgx_mesh, 
-    cmap=cgx_cmap, 
+    cgx_mesh,
+    cmap=cgx_cmap,
     n_colors=21,
     show_edges=True,
     scalar_bar_args={'title': 'CalculiX cgx'},
