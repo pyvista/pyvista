@@ -90,21 +90,21 @@ def _generate_dimension_badge(dimension: int) -> str:
 
 def _generate_points_badge(n_points: int) -> str:
     color = _BADGE_COLORS['geometry']
-    text = f'n_points: {n_points}'
+    text = f'Points: {n_points}'
     ref = _cell_type_attr_ref('n_points')
     return _generate_badge(color, text, ref)
 
 
 def _generate_edges_badge(n_edges: int) -> str:
     color = _BADGE_COLORS['geometry']
-    text = f'n_edges: {n_edges}'
+    text = f'Edges: {n_edges}'
     ref = _cell_type_attr_ref('n_edges')
     return _generate_badge(color, text, ref)
 
 
 def _generate_faces_badge(n_faces: int) -> str:
     color = _BADGE_COLORS['geometry']
-    text = f'n_faces: {n_faces}'
+    text = f'Faces: {n_faces}'
     ref = _cell_type_attr_ref('n_faces')
     return _generate_badge(color, text, ref)
 
