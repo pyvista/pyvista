@@ -446,6 +446,10 @@ _CELL_TYPE_INFO = dict(
     # Special class of cells formed by convex group of points
     CONVEX_POINT_SET=_CellTypeTuple(
         value=_vtk.VTK_CONVEX_POINT_SET,
+        example='ConvexPointSet',
+        doc="""
+        Represents a 3D cell defined by a convex set of points.
+        """,
         variable_points=True,
         variable_edges=True,
         variable_faces=True,
