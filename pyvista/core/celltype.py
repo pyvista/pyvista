@@ -59,36 +59,54 @@ _BADGE_COLORS = dict(
 )
 
 
-def _cell_type_ref(attr: str) -> str:
+def _cell_type_attr_ref(attr: str) -> str:
     return f'<_autosummary/pyvista.CellType.{attr}>'
 
 
+def _generate_badge(color: str, text: str, ref: str) -> str:
+    return f':bdg-link-{color}:`{text} {ref}'
+
+
 def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
+    color = _BADGE_COLORS['linear']
     text = 'Linear' if is_linear else 'Non-linear'
-    return f':bdg-link-{_BADGE_COLORS["linear"]}:`{text} {_cell_type_ref("is_linear")}'
+    ref = _cell_type_attr_ref('is_linear')
+    return _generate_badge(color, text, ref)
 
 
 def _generate_composite_badge(is_composite: bool) -> str:  # noqa: FBT001
+    color = _BADGE_COLORS['composite']
     text = 'Composite' if is_composite else 'Primary'
-    return f':bdg-link-{_BADGE_COLORS["composite"]}:`{text} {_cell_type_ref("is_composite")}'
+    ref = _cell_type_attr_ref('is_composite')
+    return _generate_badge(color, text, ref)
 
 
 def _generate_dimension_badge(dimension: int) -> str:
-    return f':bdg-link-{_BADGE_COLORS["dimension"]}:`{dimension}D {_cell_type_ref("dimension")}'
+    color = _BADGE_COLORS['dimension']
+    text = f'{dimension}D'
+    ref = _cell_type_attr_ref('dimension')
+    return _generate_badge(color, text, ref)
 
 
 def _generate_points_badge(n_points: int) -> str:
-    return (
-        f':bdg-link-{_BADGE_COLORS["geometry"]}:`n_points: {n_points} {_cell_type_ref("n_points")}'
-    )
+    color = _BADGE_COLORS['geometry']
+    text = f'n_points: {n_points}'
+    ref = _cell_type_attr_ref('n_points')
+    return _generate_badge(color, text, ref)
 
 
 def _generate_edges_badge(n_edges: int) -> str:
-    return f':bdg-link-{_BADGE_COLORS["geometry"]}:`n_edges: {n_edges} {_cell_type_ref("n_edges")}'
+    color = _BADGE_COLORS['geometry']
+    text = f'n_edges: {n_edges}'
+    ref = _cell_type_attr_ref('n_edges')
+    return _generate_badge(color, text, ref)
 
 
 def _generate_faces_badge(n_faces: int) -> str:
-    return f':bdg-link-{_BADGE_COLORS["geometry"]}:`n_faces: {n_faces} {_cell_type_ref("n_faces")}'
+    color = _BADGE_COLORS['geometry']
+    text = f'n_faces: {n_faces}'
+    ref = _cell_type_attr_ref('n_faces')
+    return _generate_badge(color, text, ref)
 
 
 class _CellTypeTuple(NamedTuple):
