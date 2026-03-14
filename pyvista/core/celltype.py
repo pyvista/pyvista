@@ -60,7 +60,7 @@ _BADGE_COLORS = dict(
 
 
 def _cell_type_attr_ref(attr: str) -> str:
-    return f'<_autosummary/pyvista.CellType.{attr}>'
+    return f'<pyvista.CellType.{attr}>'
 
 
 def _generate_badge(color: str, text: str, ref: str) -> str:
