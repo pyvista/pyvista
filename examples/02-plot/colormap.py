@@ -175,19 +175,26 @@ cgx_nodes = [
 # Create the colormap
 cgx_cmap = LinearSegmentedColormap.from_list('cgx', cgx_nodes)
 
-# Create a sample mesh to demonstrate the colormap
-cgx_mesh = pv.Cylinder(resolution=20).elevation()
+# %%
+# Download a sample mesh to demonstrate the colormap
+mesh = examples.download_notch_stress()
 
+# %%
 # Plot the mesh using the custom cgx colormap
+cpos = pv.CameraPosition(
+    position=(0.1249, -0.1242, 0.1698),
+    focal_point=(0.1965, 0.0467, -0.0036),
+    viewup=(0.2512, 0.6356, 0.7299),
+)
+
 pl = pv.Plotter()
 pl.add_mesh(
-    cgx_mesh,
+    mesh,
     cmap=cgx_cmap,
     n_colors=21,
     show_edges=True,
-    scalar_bar_args={'title': 'CalculiX cgx'},
 )
-pl.view_isometric()
+pl.camera_position = cpos
 pl.show()
 
 # %%
