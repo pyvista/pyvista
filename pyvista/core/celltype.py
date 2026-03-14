@@ -59,30 +59,36 @@ _BADGE_COLORS = dict(
 )
 
 
+def _generate_badge(*, kind: str, text: str, attr: str) -> str:
+    color = _BADGE_COLORS[kind]
+    ref = f'pyvista.CellType.{attr}'
+    return f':bdg-link-{color}:`{text} <{ref}>`'
+
+
 def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
     text = 'Linear' if is_linear else 'Non-linear'
-    return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
+    return _generate_badge(kind='linear', text=text, attr='is_linear')
 
 
 def _generate_composite_badge(is_composite: bool) -> str:  # noqa: FBT001
     text = 'Composite' if is_composite else 'Primary'
-    return f':bdg-{_BADGE_COLORS["composite"]}:`{text}`'
+    return _generate_badge(kind='composite', text=text, attr='is_composite')
 
 
 def _generate_dimension_badge(dimension: int) -> str:
-    return f':bdg-{_BADGE_COLORS["dimension"]}:`{dimension}D`'
+    return _generate_badge(kind='dimension', text=f'{dimension}D', attr='dimension')
 
 
-def _generate_points_badge(num_points: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Points: {num_points}`'
+def _generate_points_badge(n_points: int) -> str:
+    return _generate_badge(kind='geometry', text=f'Points: {n_points}', attr='n_points')
 
 
-def _generate_edges_badge(num_edges: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Edges: {num_edges}`'
+def _generate_edges_badge(n_edges: int) -> str:
+    return _generate_badge(kind='geometry', text=f'Edges: {n_edges}', attr='n_edges')
 
 
-def _generate_faces_badge(num_faces: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Faces: {num_faces}`'
+def _generate_faces_badge(n_faces: int) -> str:
+    return _generate_badge(kind='geometry', text=f'Faces: {n_faces}', attr='n_faces')
 
 
 class _CellTypeTuple(NamedTuple):

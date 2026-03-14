@@ -10,7 +10,7 @@
 {{ '-' * _('Attributes')|length }}
 
 .. autosummary::
-   :toctree: _autosummary
+   :toctree:
 
    CellType.dimension
    CellType.is_linear
