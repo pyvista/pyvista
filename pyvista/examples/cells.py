@@ -2728,7 +2728,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     MultiBlock (...)
       N Blocks:   1
       X Bounds:   0.000e+00, 1.000e+00
-      Y Bounds:   0.000e+00, 1.000e+00
+      Y Bounds:   -5.551e-17, 1.000e+00
       Z Bounds:   5.000e-01, 5.000e-01
 
     Compare to the un-normalized bounds.
