@@ -7,17 +7,50 @@ be used to learn about VTK :class:`cell types <pyvista.CellType>`.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Sequence
+import itertools
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
+from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from pyvista import MultiBlock
     from pyvista import PolyData
+
+
+_NOT_SUPPORTED_CELL_SOURCE = [
+    CellType.EMPTY_CELL,
+    CellType.VERTEX,
+    CellType.POLY_VERTEX,
+    CellType.POLY_LINE,
+    CellType.TRIANGLE_STRIP,
+    CellType.QUADRATIC_LINEAR_QUAD,
+    CellType.QUADRATIC_LINEAR_WEDGE,
+    CellType.BIQUADRATIC_QUADRATIC_WEDGE,
+    CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
+    CellType.BIQUADRATIC_TRIANGLE,
+    CellType.QUADRATIC_POLYGON,
+    CellType.CONVEX_POINT_SET,
+]
+
+_NOT_SUPPORTED_PARAMETRIC = [
+    CellType.POLY_VERTEX,
+    CellType.POLY_LINE,
+    CellType.TRIANGLE_STRIP,
+    CellType.POLYGON,
+    CellType.QUADRATIC_POLYGON,
+    CellType.CONVEX_POINT_SET,
+    CellType.POLYHEDRON,
+]
 
 
 def plot_cell(
@@ -131,6 +164,8 @@ def plot_cell(
     grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()
     for cell in grid.cell:
+        if cell.type == CellType.EMPTY_CELL:
+            continue
         # Use existing grid if it's already a grid with one cell
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
@@ -1032,7 +1067,7 @@ def QuadraticEdge() -> UnstructuredGrid:
     array([21], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticEdge())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_EDGE)
 
 
 def QuadraticTriangle() -> UnstructuredGrid:
@@ -1072,7 +1107,7 @@ def QuadraticTriangle() -> UnstructuredGrid:
     array([22], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticTriangle())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TRIANGLE)
 
 
 def QuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1114,7 +1149,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
     array([23], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticQuad())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_QUAD)
 
 
 def QuadraticPolygon() -> UnstructuredGrid:
@@ -1211,7 +1246,7 @@ def QuadraticTetrahedron() -> UnstructuredGrid:
     array([24], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticTetra())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TETRA)
 
 
 def QuadraticHexahedron() -> UnstructuredGrid:
@@ -1266,7 +1301,7 @@ def QuadraticHexahedron() -> UnstructuredGrid:
     array([25], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticHexahedron())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_HEXAHEDRON)
 
 
 def QuadraticWedge() -> UnstructuredGrid:
@@ -1315,7 +1350,7 @@ def QuadraticWedge() -> UnstructuredGrid:
     array([26], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_WEDGE)
 
 
 def QuadraticPyramid() -> UnstructuredGrid:
@@ -1362,7 +1397,7 @@ def QuadraticPyramid() -> UnstructuredGrid:
     array([27], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticPyramid())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_PYRAMID)
 
 
 def BiQuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1405,7 +1440,7 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
     array([28], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuad())
+    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUAD)
 
 
 def TriQuadraticHexahedron() -> UnstructuredGrid:
@@ -1467,7 +1502,7 @@ def TriQuadraticHexahedron() -> UnstructuredGrid:
     array([29], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkTriQuadraticHexahedron())
+    return _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_HEXAHEDRON)
 
 
 def TriQuadraticPyramid() -> UnstructuredGrid:
@@ -1521,7 +1556,7 @@ def TriQuadraticPyramid() -> UnstructuredGrid:
     array([37], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkTriQuadraticPyramid())
+    return _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_PYRAMID)
 
 
 def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
@@ -1561,7 +1596,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
     array([30], dtype=uint8)
 
     """  # noqa: E501
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticLinearQuad())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_QUAD)
 
 
 def QuadraticLinearWedge() -> UnstructuredGrid:
@@ -1607,7 +1642,7 @@ def QuadraticLinearWedge() -> UnstructuredGrid:
     array([31], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticLinearWedge())
+    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_WEDGE)
 
 
 def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
@@ -1660,7 +1695,7 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
     array([32], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuadraticWedge())
+    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE)
 
 
 def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
@@ -1720,7 +1755,7 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
     array([33], dtype=uint8)
 
     """  # noqa: E501
-    return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuadraticHexahedron())
+    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON)
 
 
 def BiQuadraticTriangle() -> UnstructuredGrid:
@@ -1761,7 +1796,7 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
     array([34], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticTriangle())
+    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_TRIANGLE)
 
 
 def CubicLine() -> UnstructuredGrid:
@@ -1799,7 +1834,7 @@ def CubicLine() -> UnstructuredGrid:
     array([35], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkCubicLine())
+    return _make_isoparametric_unstructured_grid(CellType.CUBIC_LINE)
 
 
 def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2590,21 +2625,140 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     return _make_cell_from_source(CellType.BEZIER_WEDGE, cell_order=cell_order)
 
 
-def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
-    cell = pv.Cell(vtk_cell)  # type: ignore[abstract]
+def cell_type_source(  # numpydoc ignore=RT01
+    cell_types: CellType | Sequence[CellType],
+    generator: Literal['examples', 'blocks', 'parametric'] = 'examples',
+    *,
+    block_dimensions=None,
+    cycle: bool = False,
+) -> MultiBlock:
+    """Generate a MultiBlock mesh comprised of one or more cell types.
+
+    Parameters
+    ----------
+    cell_types
+        Cell types to generate.
+
+    generator
+        Method for generating cell type blocks.
+
+    block_dimensions
+        Output dimensions of blocks to generate.
+
+    cycle
+        Cycle through and duplicate cell types as required in order to ensure the specified
+        block dimensions can be filled.
+
+    """
+
+    def _examples_grid(cell_type: CellType) -> UnstructuredGrid | None:
+        example = cell_type._example
+        if cell_type == CellType.EMPTY_CELL:
+            example = 'Empty'
+        elif example is None:
+            return None
+        return globals()[example]()
+
+    def _parametric_grid(cell_type: CellType) -> UnstructuredGrid | None:
+        return _make_isoparametric_unstructured_grid(cell_type)
+
+    def _blocks_grid(cell_type: CellType) -> UnstructuredGrid | None:
+        return _make_cell_from_source(cell_type, cell_order=3)
+
+    ctypes = [
+        CellType(ctype)
+        for ctype in (cell_types if isinstance(cell_types, Iterable) else [cell_types])
+    ]
+    if block_dimensions is None:
+        dimension = (len(ctypes), 1, 1)
+    else:
+        requested_size = np.prod(block_dimensions)
+        actual_size = len(ctypes)
+        if requested_size < actual_size:
+            msg = (
+                f'Requested dimension {block_dimensions} is too small. '
+                f'Number of cell types to generate ({actual_size}) exceeds '
+                f'the number of blocks ({requested_size}).'
+            )
+            raise ValueError(msg)
+        elif requested_size > actual_size and not cycle:
+            msg = (
+                f'Requested dimension {block_dimensions} is too large. '
+                f'Number of cell types to generate ({actual_size}) is less than '
+                f'the number of blocks ({requested_size}).\n'
+                f'Use `cycle=True` to cycle through and duplicate the cell types.'
+            )
+            raise ValueError(msg)
+        dimension = block_dimensions
+    dims = _validation.validate_array3(dimension, broadcast=True)
+    cell_centers = pv.ImageData(dimensions=dims + 1).cell_centers().points
+
+    if generator == 'examples':
+        generate_grid = _examples_grid
+    elif generator == 'parametric':
+        generate_grid = _parametric_grid
+    elif generator == 'blocks':
+        generate_grid = _blocks_grid
+
+    # Generate mesh for each cell type
+    distinct_meshes = pv.MultiBlock()
+    for ctype in ctypes:
+        grid = generate_grid(ctype)
+        if grid is None:
+            msg = f'{ctype!r} is not supported by the {generator!r} generator.'
+            warn_external(msg)
+        else:
+            grid = grid.resize(bounds_size=1)
+        distinct_meshes[ctype.name] = grid
+
+    # Build output from distinct meshes
+    output = pv.MultiBlock()
+    for center, (name, grid) in zip(
+        cell_centers, itertools.cycle(distinct_meshes.recursive_iterator('items'))
+    ):
+        # Ensure we have unique names by appending a number if
+        # multiple blocks with this same cell type exist
+        possible_name = name
+        count = 0
+        while True:
+            if possible_name in output.keys():
+                count += 1
+                possible_name = f'{name}_{count}'
+                continue
+            block_name = possible_name
+            break
+
+        if grid is None:
+            block_mesh = None
+        else:
+            # Ensure blocks are completely independent
+            block_mesh = grid.copy() if grid in output else grid
+            # Position block on the grid
+            block_mesh.center = center
+        output[block_name] = block_mesh
+    return output
+
+
+def _make_isoparametric_unstructured_grid(celltype: CellType) -> UnstructuredGrid | None:
+    if celltype.vtk_class is None or celltype in _NOT_SUPPORTED_PARAMETRIC:
+        return None
+    cell = celltype.vtk_class()
 
     # Create points
+    cell.Initialize()
     pcoords = cell.GetParametricCoords()
-    points = np.zeros((cell.n_points, 3))
+    points = np.zeros((cell.GetNumberOfPoints(), 3))
     for i in range(len(points)):
         points[i] = (pcoords[3 * i], pcoords[3 * i + 1], pcoords[3 * i + 2])
 
     cells = [len(points), *list(range(len(points)))]
-    return UnstructuredGrid(cells, [cell.type], points)
+    return UnstructuredGrid(cells, [celltype], points)
 
 
-def _make_cell_from_source(celltype: CellType, cell_order: int):
+def _make_cell_from_source(celltype: CellType, cell_order: int) -> UnstructuredGrid | None:
     """Use vtkCellTypeSource to generate UnstructuredGrid with a single cell type."""
+    if celltype.vtk_class is None or celltype in _NOT_SUPPORTED_CELL_SOURCE:
+        return None
     src = _vtk.vtkCellTypeSource()
     src.SetBlocksDimensions(1, 1, 1)
     src.SetCellOrder(cell_order)

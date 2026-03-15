@@ -10,6 +10,8 @@ import pyvista as pv
 from pyvista import CellType
 from pyvista.core import _vtk_core as _vtk
 from pyvista.examples import cells
+from pyvista.examples.cells import _NOT_SUPPORTED_CELL_SOURCE
+from pyvista.examples.cells import _NOT_SUPPORTED_PARAMETRIC
 
 # Collect all functions in the cells module that start with a capital letter
 cell_example_functions = [
@@ -181,6 +183,18 @@ def test_abstract_celltype():
         _ = celltype.n_edges
     with pytest.raises(ValueError, match=match):
         _ = celltype.n_faces
+
+
+@pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
+@pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is not None])
+def test_cell_type_source(cell_type, generator):
+    if (
+        (generator == 'examples' and cell_type == CellType.CONVEX_POINT_SET)
+        or (generator == 'parametric' and cell_type in _NOT_SUPPORTED_PARAMETRIC)
+        or (generator == 'blocks' and cell_type in _NOT_SUPPORTED_CELL_SOURCE)
+    ):
+        pytest.xfail('Not supported')
+    cells.cell_type_source(cell_type, generator)
 
 
 def test_empty():

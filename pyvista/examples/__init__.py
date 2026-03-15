@@ -6,6 +6,7 @@ from . import download_3ds as download_3ds
 from . import gltf as gltf
 from . import planets as planets
 from . import vrml as vrml
+from .cells import cell_type_source as cell_type_source
 from .cells import plot_cell as plot_cell
 from .downloads import *
 from .examples import *

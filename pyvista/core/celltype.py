@@ -701,6 +701,7 @@ class CellType(IntEnum):
     _n_points: int
     _n_edges: int
     _n_faces: int
+    _example: str | None
 
     def __new__(  # noqa: PYI034
         cls: type[CellType],
@@ -757,6 +758,7 @@ class CellType(IntEnum):
         """
         self = int.__new__(cls, value)
         self._value_ = value
+        self._example = _example
         self.__doc__ = ''
 
         # Get the vtk class associated with this cell type. For simplicity, skip abstract types
