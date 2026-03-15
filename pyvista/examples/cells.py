@@ -2828,7 +2828,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     ...     unsupported_mode='squeeze',
     ...     mismatch_mode='cycle',
     ... )
-    >>> grid.plot(show_edges=True, opacity=0.5)
+    >>> grid.plot(show_edges=True, opacity=0.5, line_width=3)
 
     Combine into a single grid and show :attr:`~pyvista.DataSet.distinct_cell_types`.
 
@@ -2842,6 +2842,23 @@ def cell_type_source(  # numpydoc ignore=RT01
      <CellType.LAGRANGE_HEXAHEDRON: 72>, <CellType.LAGRANGE_WEDGE: 73>,
      <CellType.BEZIER_TETRAHEDRON: 78>, <CellType.BEZIER_HEXAHEDRON: 79>,
      <CellType.BEZIER_WEDGE: 80>}
+
+    Compare the first 25 cell types from the different generators. Note that some values, e.g.
+    ``17``, do not correspond at all to any cell type, so gaps are expected in all outputs.
+
+    >>> kwargs = dict(
+    ...     cell_types=range(1, 26),
+    ...     block_dimensions=(5, 5, 1),
+    ...     unsupported_mode='skip',
+    ... )
+    >>> grid = cell_type_source(generator='examples', **kwargs)
+    >>> plot_cell(grid, cpos='xy')
+
+    >>> grid = cell_type_source(generator='parametric', **kwargs)
+    >>> plot_cell(grid, cpos='xy')
+
+    >>> grid = cell_type_source(generator='blocks', **kwargs)
+    >>> plot_cell(grid, cpos='xy')
 
     """
 
@@ -2861,10 +2878,13 @@ def cell_type_source(  # numpydoc ignore=RT01
         if shrink_factor is None
         else _validation.validate_number(shrink_factor, must_be_in_range=[0.0, 1.0])
     )
-    ctypes = [
-        CellType(ctype)
-        for ctype in (cell_types if isinstance(cell_types, Iterable) else [cell_types])
-    ]
+    ctypes: list[int] = []
+    for ctype in cell_types if isinstance(cell_types, Iterable) else [cell_types]:
+        try:
+            ctypes.append(CellType(ctype))
+        except ValueError:
+            ctypes.append(ctype)
+
     if block_dimensions is None:
         dimension = (len(ctypes), 1, 1)
     else:
@@ -2900,7 +2920,12 @@ def cell_type_source(  # numpydoc ignore=RT01
     # Generate mesh for each cell type
     distinct_meshes = pv.MultiBlock()
     for ctype in ctypes:
-        grid = generate_grid(ctype)
+        if isinstance(ctype, CellType):
+            grid = generate_grid(ctype)
+            name = ctype.name
+        else:
+            grid = None
+            name = 'None'
         if grid is None:
             if unsupported_mode in ['warn', 'error']:
                 msg = f'{ctype!r} is not supported by the {generator!r} generator.'
@@ -2909,7 +2934,7 @@ def cell_type_source(  # numpydoc ignore=RT01
                 warn_external(msg)
         elif grid.bounds_size != (1.0, 1.0, 1.0) or _shrink_factor != 1.0:
             grid = grid.resize(bounds_size=_shrink_factor)
-        distinct_meshes.append(grid, ctype.name)
+        distinct_meshes.append(grid, name)
 
     # Build output from distinct meshes
     output = pv.MultiBlock()
@@ -2917,7 +2942,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     iterator = itertools.cycle(iterator) if mismatch_mode == 'cycle' else iterator
 
     center_iter = iter(cell_centers)
-
+    name_counts = {}
     for name, block in iterator:
         if block is None:
             if unsupported_mode == 'squeeze':
@@ -2930,12 +2955,9 @@ def cell_type_source(  # numpydoc ignore=RT01
             break
 
         # Ensure unique names
-        possible_name = name
-        count = 0
-        while possible_name in output.keys():
-            count += 1
-            possible_name = f'{name}_{count}'
-        block_name = possible_name
+        count = name_counts.get(name, 0)
+        block_name = name if count == 0 else f'{name}_{count}'
+        name_counts[name] = count + 1
 
         # Ensure block is independent
         block_mesh = block.copy() if block in output else block
