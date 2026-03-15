@@ -2798,7 +2798,7 @@ def _vtkCellTypeSource(
     src.SetCellOrder(cell_order)
     src.SetCellType(celltype)
     src.Update()
-    ugrid = src.GetOutput()
+    ugrid = cast(_vtk.vtkUnstructuredGrid, src.GetOutput())
 
     if single_cell:
         cell0 = ugrid.GetCell(0)
@@ -2809,4 +2809,4 @@ def _vtkCellTypeSource(
             ids.InsertNextId(i)
         ugrid.InsertNextCell(cell0.GetCellType(), ids)
 
-    return pv.wrap(ugrid)  # type:ignore[return-value]
+    return pv.wrap(ugrid)
