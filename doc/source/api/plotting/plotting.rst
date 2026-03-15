@@ -6,39 +6,39 @@ Plotting
 When plotting with the interactive rendering windows in VTK, several keyboard
 shortcuts are available:
 
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| Key                                                   | Action                                              |
-+=====================================+=================+=====================================================+
-| Linux/Windows                       | Mac             |                                                     |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``q``                                                 | Close the rendering window                          |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``f``                                                 | Focus and zoom in on a point                        |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``v``                                                 | Isometric camera view                               |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``w``                                                 | Switch all datasets to a `wireframe` representation |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``r``                                                 | Reset the camera to view all datasets               |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``s``                                                 | Switch all datasets to a `surface` representation   |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``shift+click`` or ``middle-click`` | ``shift+click`` | Pan the rendering scene                             |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``left-click``                      | ``cmd+click``   | Rotate the rendering scene in 3D                    |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``ctrl+click``                      |                 | Rotate the rendering scene in 2D (view-plane)       |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``mouse-wheel`` or ``right-click``  | ``ctl+click``   | Continuously zoom the rendering scene               |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``shift+s``                                           | Save a screenshot (only on ``BackgroundPlotter``)   |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``shift+c``                                           | Enable interactive cell selection/picking           |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``up``/``down``                                       | Zoom in and out                                     |
-+-------------------------------------+-----------------+-----------------------------------------------------+
-| ``+``/``-``                                           | Increase/decrease the point size and line widths    |
-+-------------------------------------+-----------------+-----------------------------------------------------+
++-------------------------------------+-----------------+-------------------------------------------------------+
+| Key                                                   | Action                                                |
++=====================================+=================+=======================================================+
+| Linux/Windows                       | Mac             |                                                       |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``q``                                                 | Close the rendering window                            |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``f``                                                 | Focus and zoom in on a point                          |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``v``                                                 | Isometric camera view                                 |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``w``                                                 | Switch all datasets to a ``wireframe`` representation |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``r``                                                 | Reset the camera to view all datasets                 |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``s``                                                 | Switch all datasets to a ``surface`` representation   |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``shift+click`` or ``middle-click`` | ``shift+click`` | Pan the rendering scene                               |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``left-click``                      | ``cmd+click``   | Rotate the rendering scene in 3D                      |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``ctrl+click``                      |                 | Rotate the rendering scene in 2D (view-plane)         |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``mouse-wheel`` or ``right-click``  | ``ctl+click``   | Continuously zoom the rendering scene                 |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``shift+s``                                           | Save a screenshot (only on ``BackgroundPlotter``)     |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``shift+c``                                           | Enable interactive cell selection/picking             |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``up``/``down``                                       | Zoom in and out                                       |
++-------------------------------------+-----------------+-------------------------------------------------------+
+| ``+``/``-``                                           | Increase/decrease the point size and line widths      |
++-------------------------------------+-----------------+-------------------------------------------------------+
 
 
 Plotting in a Jupyter Notebook
@@ -59,9 +59,9 @@ It is possible to use the ``Plotter`` class as well.
 
 .. jupyter-execute::
 
-    plotter = pv.Plotter(notebook=True)
-    plotter.add_mesh(sphere)
-    plotter.show(jupyter_backend='static')
+    pl = pv.Plotter(notebook=True)
+    pl.add_mesh(sphere)
+    pl.show(jupyter_backend='static')
 
 Additionally, you can generate interactive plots by leveraging our
 jupyter plotting backend ``trame``.  You can even use it to create
@@ -69,11 +69,11 @@ interactive documentation online.
 
 .. jupyter-execute::
 
-    plotter = pv.Plotter(window_size=(600, 400))
-    plotter.background_color = 'w'
-    plotter.enable_anti_aliasing()
-    plotter.add_mesh(sphere, color='lightblue', show_edges=True)
-    plotter.show(jupyter_backend='static')
+    pl = pv.Plotter(window_size=(600, 400))
+    pl.background_color = 'w'
+    pl.enable_anti_aliasing()
+    pl.add_mesh(sphere, color='lightblue', show_edges=True)
+    pl.show(jupyter_backend='static')
 
 For more details, see the section on :ref:`jupyter_plotting`.
 
@@ -89,7 +89,7 @@ scene as well as has some useful menu functions for common scene
 manipulation or export tasks. To get started, try instantiating the
 :class:`pyvistaqt.BackgroundPlotter`:
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     import pyvistaqt as pvqt
@@ -119,16 +119,22 @@ values change through time:
     import pyvistaqt as pvqt
     from pyvista import examples
 
-
     globe = examples.load_globe()
     texture = examples.load_globe_texture()
     globe.point_data['scalars'] = np.random.rand(globe.n_points)
     globe.set_active_scalars('scalars')
 
 
-    plotter = pvqt.BackgroundPlotter()
-    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=texture, scalars='scalars')
-    plotter.view_isometric()
+    pl = pvqt.BackgroundPlotter()
+    pl.add_mesh(
+        globe,
+        lighting=False,
+        show_edges=True,
+        texture=texture,
+        scalars='scalars',
+    )
+    pl.view_isometric()
+
 
     # shrink globe in the background
     def shrink():
@@ -137,6 +143,7 @@ values change through time:
             # Update scalars
             globe.point_data['scalars'] = np.random.rand(globe.n_points)
             time.sleep(0.5)
+
 
     thread = Thread(target=shrink)
     thread.start()

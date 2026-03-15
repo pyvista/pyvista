@@ -8,18 +8,15 @@ The problem is that pytest doctests (following the standard-library
 doctest module) see the module-global namespace. So when a doctest looks
 like this:
 
-    Examples
-    --------
+Examples
+--------
     >>> import numpy
-    >>> import pyvista
     >>> from pyvista import CellType
     >>> offset = np.array([0, 9])
     >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
     >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
     >>> cells = np.hstack((cell0_ids, cell1_ids))
-    >>> cell_type = np.array(
-    ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
-    ... )
+    >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
 there will be a ``NameError`` when the code block is copied into Python
 because the ``np`` name is undefined. However, pytest and sphinx test
@@ -40,6 +37,7 @@ done to find the rare name mistake in our examples.
 
 If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
 environmental variable to ``True`` before running the script.
+
 """
 
 from __future__ import annotations
@@ -51,10 +49,10 @@ import sys
 from textwrap import indent
 from types import ModuleType
 
-import pyvista
+import pyvista as pv
 
 
-def discover_modules(entry=pyvista, recurse=True):
+def discover_modules(entry=pv, recurse=True):
     """Discover the submodules present under an entry point.
 
     If ``recurse=True``, search goes all the way into descendants of the
@@ -84,9 +82,9 @@ def discover_modules(entry=pyvista, recurse=True):
     next_entries = {entry}
     while next_entries:
         next_modules = {}
-        for entry in next_entries:
-            for attr_short_name in dir(entry):
-                attr = getattr(entry, attr_short_name)
+        for ent in next_entries:
+            for attr_short_name in dir(ent):
+                attr = getattr(ent, attr_short_name)
                 if not isinstance(attr, ModuleType):
                     continue
 
@@ -155,15 +153,15 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             continue
 
         # mock print to suppress output from a few talkative tests
-        globs = {'print': (lambda *args, **kwargs: ...)}
+        globs = {'print': (lambda *args, **kwargs: ...)}  # noqa: ARG005
         for iline, example in enumerate(dt.examples, start=1):
             if not example.source.strip() or (
                 respect_skips and skip_pattern.search(example.source)
             ):
                 continue
             try:
-                exec(example.source, globs)
-            except Exception as exc:
+                exec(example.source, globs)  # noqa: S102
+            except Exception as exc:  # noqa: BLE001
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')
                 erroring_code = ''.join([example.source for example in dt.examples[:iline]])
@@ -191,7 +189,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     return failures
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = ArgumentParser(description='Look for name errors in doctests.')
     parser.add_argument(
         '-v',

@@ -1,0 +1,1258 @@
+from __future__ import annotations
+
+import inspect
+from itertools import chain
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+import textwrap
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import get_args
+
+import numpy as np
+import pytest
+from pytest_cases import case
+from pytest_cases import filters
+from pytest_cases import fixture
+from pytest_cases import get_case_tags
+from pytest_cases import parametrize
+from pytest_cases import parametrize_with_cases
+from rich.console import Console
+
+import pyvista as pv
+from pyvista.__main__ import app
+from pyvista.__main__ import main
+from pyvista.core.filters.data_object import _LiteralMeshValidationFields
+from tests.core.test_dataobject_filters import _add_vtk_array
+
+if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
+    from pytest_cases.case_parametrizer_new import Case
+    from pytest_mock import MockerFixture
+
+
+@pytest.fixture
+def patch_app_console(monkeypatch: pytest.MonkeyPatch):
+    console = Console(
+        width=70,
+        force_terminal=True,
+        highlight=False,
+        color_system=None,
+        legacy_windows=False,
+    )
+    monkeypatch.setattr(app, 'console', console)
+    monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
+
+
+@pytest.fixture
+def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
+    console = Console(
+        width=70,
+        highlight=True,
+        force_terminal=True,
+        color_system='standard',
+        legacy_windows=False,
+    )
+    monkeypatch.setattr(app, 'console', console)
+    monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
+
+
+@pytest.mark.parametrize('args', [[], ''])
+@pytest.mark.usefixtures('patch_app_console')
+def test_no_input(args, capsys: pytest.CaptureFixture):
+    main(args)
+
+    expected = textwrap.dedent(
+        """\
+        Usage: pyvista COMMAND
+
+        ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ convert      Convert a mesh file to another format.                │
+        │ plot         Plot one or more mesh files in an interactive window  │
+        │              that can be customized with various options.          │
+        │ report       Generate a PyVista software environment report.       │
+        │ validate     Validate a mesh's array data, points, and cells.      │
+        │ --help (-h)  Display this message and exit.                        │
+        │ --version    Display application version.                          │
+        ╰────────────────────────────────────────────────────────────────────╯
+        """
+    )
+    assert expected == capsys.readouterr().out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_invalid_command(capsys: pytest.CaptureFixture):
+    expected = textwrap.dedent(
+        """\
+    Usage: pyvista COMMAND
+
+    ╭─ Commands ─────────────────────────────────────────────────────────╮
+    │ convert      Convert a mesh file to another format.                │
+    │ plot         Plot one or more mesh files in an interactive window  │
+    │              that can be customized with various options.          │
+    │ report       Generate a PyVista software environment report.       │
+    │ validate     Validate a mesh's array data, points, and cells.      │
+    │ --help (-h)  Display this message and exit.                        │
+    │ --version    Display application version.                          │
+    ╰────────────────────────────────────────────────────────────────────╯
+    ╭─ Error ────────────────────────────────────────────────────────────╮
+    │ Unknown command "foo". Available commands: report, convert, plot,  │
+    │ validate.                                                          │
+    ╰────────────────────────────────────────────────────────────────────╯
+    """
+    )
+    with pytest.raises(SystemExit) as e:
+        main('foo')
+    assert e.value.code == 1
+    assert expected == capsys.readouterr().out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+@pytest.mark.parametrize('command', ['report', 'convert'])
+def test_bad_kwarg_command(capsys: pytest.CaptureFixture, command):
+    expected = textwrap.dedent(
+        """\
+    ╭─ Error ────────────────────────────────────────────────────────────╮
+    │ Unknown option: "--foo=1".                                         │
+    ╰────────────────────────────────────────────────────────────────────╯
+    """
+    )
+    with pytest.raises(SystemExit) as e:
+        main(f'{command} --foo=1')
+    assert e.value.code == 1
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[-4:])
+
+
+@pytest.fixture
+def mock_report(mocker: MockerFixture):
+    return mocker.patch.object(pv._cli.report, 'Report')
+
+
+class CasesReport:
+    def case_empty(self):
+        return '', (), {}
+
+    @parametrize(downloads=['True', 'yes', 'y', 'true'])
+    @parametrize(sort=['True', 'yes', 'y', 'true'])
+    def case_kw_bool(self, downloads, sort):
+        return f'--downloads={downloads} --sort={sort}', (), dict(downloads=True, sort=True)
+
+    @parametrize(downloads=['False', 'no', 'n', 'false'])
+    @parametrize(sort=['False', 'no', 'n', 'false'])
+    def case_kw_bool_no(self, downloads, sort):
+        return f'--downloads={downloads} --sort={sort}', (), dict(downloads=False, sort=False)
+
+    def case_bool(self):
+        return '--downloads --sort', (), dict(downloads=True, sort=True)
+
+    def case_no_bool(self):
+        return '--no-downloads --no-sort', (), dict(downloads=False, sort=False)
+
+    def case_additional(self):
+        return '--additional "foo"', (['foo'],), {}
+
+    def case_additional_multiple_kw(self):
+        return '--additional "foo" --additional "bar"', (['foo', 'bar'],), {}
+
+    def case_additional_multiple_args(self):
+        return '"foo" "bar"', (['foo', 'bar'],), {}
+
+    def case_additional_ncol(self):
+        return '"foo" --ncol 2', (['foo'], 2), {}
+
+    def case_additional_textwidth(self):
+        # `textwidth` is keyword whereas `additional` is positional since inspect.BoundArguments
+        # enforces it
+        return '"foo" --text-width 100', (['foo'],), dict(text_width=100)
+
+
+@parametrize_with_cases('tokens, expected_args, expected_kwargs', cases=CasesReport)
+def test_report_called(
+    tokens: str,
+    expected_args: tuple,
+    expected_kwargs: dict,
+    mock_report: MagicMock,
+):
+    """Test that the Report class is called with the expected arguments."""
+    main(f'report {tokens}')
+    mock_report.assert_called_once_with(*expected_args, **expected_kwargs)
+
+
+class CasesConvert:
+    """CLI argument parsing cases for `convert`."""
+
+    def case_new_ext(self):
+        return 'ant.ply new.vtp', 'new.vtp'
+
+    def case_same_ext(self):
+        return 'ant.ply ant.ply', 'ant.ply'
+
+    def case_dir(self):
+        return 'ant.ply foo/new.vtp', 'foo/new.vtp'
+
+    def case_nested_dir(self):
+        return 'ant.ply foo/bar/new.vtp', 'foo/bar/new.vtp'
+
+    def case_wildcard_ext(self):
+        return 'ant.ply .vtp', 'ant.vtp'
+
+    def case_wildcard_dir(self):
+        return 'ant.ply bar/.vtp', 'bar/ant.vtp'
+
+
+@pytest.fixture
+def tmp_example_dir(tmp_path):
+    """Change cwd to tmp_path for the duration of the test."""
+    old_cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        yield tmp_path
+    finally:
+        os.chdir(old_cwd)
+
+
+@pytest.fixture
+def tmp_ant_file(tmp_example_dir):
+    src = Path(pv.examples.antfile)
+    dst = tmp_example_dir / src.name
+    shutil.copy(src, dst)
+    return dst
+
+
+@pytest.fixture
+def tmp_cow_file_invalid(tmp_example_dir):
+    src = Path(pv.examples.download_cow(load=False))
+    # Need to save as vtk, not vtp, since XML reader doesn't like invalid arrays
+    dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
+
+    # Modify mesh
+    cow = pv.read(src).cast_to_unstructured_grid()
+    # Add invalid points
+    # Make sure we have a single invalid point (nan) and multiple invalid points (unused)
+    # since the messages differ for singular vs plural
+    cow.points = np.append(cow.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+
+    # Add invalid arrays, singular point array but multiple cell arrays
+    _add_vtk_array(cow, 'foo', range(cow.n_points + 1), association='point')
+    _add_vtk_array(cow, 'bar', range(cow.n_cells + 1), association='cell')
+    _add_vtk_array(cow, 'baz', range(cow.n_cells - 1), association='cell')
+
+    cow.save(dst)
+    return dst
+
+
+@pytest.fixture
+def tmp_ant_file_invalid_multiblock(tmp_ant_file):
+    out = tmp_ant_file.with_suffix('.vtm')
+    mesh = pv.read(tmp_ant_file)
+    mesh.points = np.append(mesh.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+    mesh.cast_to_multiblock().save(out)
+    return out
+
+
+@parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
+def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
+    main(shlex.split(f'convert {tokens}', posix=True))
+    assert Path(expected_file).is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_dir_only_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
+
+    out = capsys.readouterr().out
+    assert '╭─ Error ─' in out, out
+    assert 'Invalid value' in out, out
+    assert 'Output file must have a file extension.' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_file_not_found(capsys: pytest.CaptureFixture):
+    file_in = 'missing.vtp'
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {file_in} .ply')
+    out = capsys.readouterr().out
+    assert '╭─ Error ─' in out, out
+    assert f'1 file not found: {file_in}' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
+    # Create a dummy .vtp file with empty contents
+    name = 'dummy.vtp'
+    file_in = tmp_path / name
+    file_in.write_text('')
+    assert file_in.is_file()
+
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(file_in)!r} .ply')
+
+    out = capsys.readouterr().out
+    assert '╭─ Error ─' in out, out
+    assert '1 file not readable by PyVista:' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    invalid_suffix = '.foo'
+    output_path = tmp_ant_file.with_suffix(invalid_suffix)
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(tmp_ant_file)!r} {str(output_path)!r}')
+
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert 'Failed to save output file: ' in out, out
+    assert output_path.name in out, out
+    assert 'Invalid file extension' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_help(capsys: pytest.CaptureFixture):
+    main('convert --help')
+
+    expected = textwrap.dedent(
+        """\
+            Usage: pyvista convert FILE-IN FILE-OUT
+
+            Convert a mesh file to another format.
+
+            Sample usage:
+            ```bash
+            pyvista convert foo.abc bar.xyz
+            Saved: bar.xyz
+
+            pyvista convert foo.abc .xyz
+            Saved: foo.xyz
+            ```
+  """
+    )
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    main(f'validate {str(tmp_ant_file)!r}')
+    out = capsys.readouterr().out
+    expected = "PolyData mesh 'ant.ply' is valid!\n"
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type           : PolyData\n'
+        '    N Points       : 486\n'
+        '    N Cells        : 912\n'
+        '    Cell types     : {TRIANGLE}\n'
+        'Report summary:\n'
+        '    Is valid       : True\n'
+        '    Invalid fields : ()\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report message')
+    out = capsys.readouterr().out
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report fields')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 912\n'
+        '    Cell types               : {TRIANGLE}\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []\n'
+        '    Unused points            : []\n'
+        'Invalid cell ids:\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Negative size            : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Non-planar faces         : []\n'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_mesh(
+    tmp_cow_file_invalid: Path,
+    tmp_ant_file_invalid_multiblock: Path,
+    capsys: pytest.CaptureFixture,
+):
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
+        ' ▪ Mesh has 1 point array with incorrect length (length must be 2905).\n'
+        "Invalid array: 'foo' (2906)\n"
+        ' ▪ Mesh has 2 cell arrays with incorrect length (length must be 3263).\n'
+        "Invalid arrays: 'bar' (3264), 'baz' (3262)\n"
+        ' ▪ Mesh has 2 unused points not referenced by any cell. Invalid point \n'
+        'ids: [2903, 2904]\n'
+        ' ▪ Mesh has 1 non-finite point. Invalid point id: [2903]\n'
+        ' ▪ Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
+        '3250]\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "MultiBlock mesh 'ant.vtm' is not valid:\n"
+        " ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '   ▪ Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '   ▪ Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r} --report')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type               : MultiBlock\n'
+        '    N Blocks           : 1\n'
+        'Report summary:\n'
+        '    Is valid           : False\n'
+        "    Invalid fields (2) : ('non_finite_points', 'unused_points')\n"
+        'Error message:\n'
+        "    MultiBlock mesh 'ant.vtm' is not valid:\n"
+        "     ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '       ▪ Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '       ▪ Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console_color')
+def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixture):
+    b = '\x1b[1m'  # bold
+    _ = '\x1b[0m'  # reset
+    m = '\x1b[35m'  # magenta
+    cb = '\x1b[1;36m'  # cyan bold
+    y = '\x1b[33m'  # yellow
+    g = '\x1b[32m'  # green
+    r = '\x1b[31m'  # red
+    rib = '\x1b[3;91m'  # red italic bright
+
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f' ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}2905{_}{b}){_}.\n'
+        f"Invalid array: {g}'foo'{_} {b}({_}{cb}2906{_}{b}){_}\n"
+        f' ▪ Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}3263{_}{b}){_}.\n'
+        f"Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f' ▪ Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid point \nids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f' ▪ Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f' ▪ Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, {cb}1532{_}, \n{cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report message')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type               : {m}UnstructuredGrid{_}\n'
+        f'    N Points           : {cb}2905{_}\n'
+        f'    N Cells            : {cb}3263{_}\n'
+        f'    Cell types         : {b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid           : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}5{_}{b}){_} : '
+        f"{b}({_}{g}'cell_data_wrong_length'{_}, \n"
+        f"{g}'point_data_wrong_length'{_}, {g}'non_finite_points'{_}, "
+        f"{g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Error message:{_}\n'
+        f"    {m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f'     ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be \n'
+        f"{cb}2905{_}{b}){_}. Invalid array: {g}'foo'{_} "
+        f'{b}({_}{cb}2906{_}{b}){_}\n'
+        f'     ▪ Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be \n'
+        f"{cb}3263{_}{b}){_}. Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f'     ▪ Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid \npoint ids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'     ▪ Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f'     ▪ Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, \n'
+        f'{cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report fields')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type                        : {m}UnstructuredGrid{_}\n'
+        f'    N Points                    : {cb}2905{_}\n'
+        f'    N Cells                     : {cb}3263{_}\n'
+        f'    Cell types                  : '
+        f'{b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid                    : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}5{_}{b}){_}          : '
+        f"{b}({_}{g}'cell_data_wrong_length'{_}, \n"
+        f"{g}'point_data_wrong_length'{_}, {g}'non_finite_points'{_}, "
+        f"{g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Invalid data arrays:{_}\n'
+        f'    {r}Cell data wrong length{_} '
+        f'{b}({_}{cb}2{_}{b}){_}  : '
+        f"{b}[{_}{g}'bar'{_}, {g}'baz'{_}{b}]{_}\n"
+        f'    {r}Point data wrong length{_} '
+        f'{b}({_}{cb}1{_}{b}){_} : '
+        f"{b}[{_}{g}'foo'{_}{b}]{_}\n"
+        f'{b}Invalid point ids:{_}\n'
+        f'    {r}Non-finite points{_} '
+        f'{b}({_}{cb}1{_}{b}){_}       : '
+        f'{b}[{_}{cb}2903{_}{b}]{_}\n'
+        f'    {r}Unused points{_} '
+        f'{b}({_}{cb}2{_}{b}){_}           : '
+        f'{b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'{b}Invalid cell ids:{_}\n'
+        f'    Coincident points           : {b}[{_}{b}]{_}\n'
+        f'    Degenerate faces            : {b}[{_}{b}]{_}\n'
+        f'    Intersecting edges          : {b}[{_}{b}]{_}\n'
+        f'    Intersecting faces          : {b}[{_}{b}]{_}\n'
+        f'    Invalid point references    : {b}[{_}{b}]{_}\n'
+        f'    Inverted faces              : {b}[{_}{b}]{_}\n'
+        f'    Negative size               : {b}[{_}{b}]{_}\n'
+        f'    Non-contiguous edges        : {b}[{_}{b}]{_}\n'
+        f'    {r}Non-convex{_} '
+        f'{b}({_}{cb}3{_}{b}){_}              : '
+        f'{b}[{_}{cb}1013{_}, {cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+        f'    Non-planar faces            : {b}[{_}{b}]{_}\n'
+        f'    Wrong number of points      : {b}[{_}{b}]{_}\n'
+        f'    Zero size                   : {b}[{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    command = f'validate {str(tmp_ant_file)!r} --report foo'
+    with pytest.raises(SystemExit) as e:
+        main(command)
+    out = capsys.readouterr().out
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        "│ Invalid value for --report: expected one of 'fields', 'message' or │\n"
+        "│ no value. Got 'foo'.                                               │\n"
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in out
+    assert e.value.code == 1
+
+    with pytest.raises(SystemExit) as e:
+        main(command + ' bar')
+    out = capsys.readouterr().out
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for --report: accepts 0 or 1 arguments. Got 2.       │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_help(capsys: pytest.CaptureFixture):
+    main('validate --help')
+    out = capsys.readouterr().out
+    usage = (
+        'Usage: pyvista validate MESH-PATH [FIELDS...] [--exclude FIELDS...]\n'
+        '\n'
+        "Validate a mesh's array data, points, and cells.\n"
+    )
+    assert usage in out, out
+
+    assert '│ * MESH-PATH --mesh-path  -' in out, out
+    assert 'Mesh to validate.' in out, out
+    assert '│ FIELDS --fields          -' in out, out
+    assert 'Field(s) to validate.' in out, out
+    assert '│ --exclude -e             -' in out, out
+    assert 'Field(s) to exclude' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(tmp_ant_file)!r} foo')
+
+    out = capsys.readouterr().out
+    expected = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for "FIELDS": unable to convert "foo" into           │\n'
+        '│ Literal[cell_data_wrong_length,                                    │\n'
+        '│ point_data_wrong_length]|Literal[non_finite_points,                │\n'
+        '│ unused_points]|Literal[coincident_points, degenerate_faces,        │\n'
+        '│ intersecting_edges, intersecting_faces, invalid_point_references,  │\n'
+        '│ inverted_faces, negative_size, non_contiguous_edges, non_convex,   │\n'
+        '│ non_planar_faces, wrong_number_of_points, zero_size]|Literal[data, │\n'
+        '│ points, cells]|Literal[memory_safe].                               │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert expected in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(tmp_ant_file)!r} points -e cells')
+
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert '│ Failed to validate PolyData mesh read from path' in out, out
+    assert "│ Excluded field 'cells' must be a subset of the validation fields." in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.skip_windows  # file path issues
+@pytest.mark.parametrize(
+    'field', chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields))
+)
+def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
+    # Test that all fields specified in the annotations work
+    main(f'validate {tmp_ant_file!s} {field}')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
+
+    # Test that all fields are documented
+    main(f'validate {tmp_ant_file!s} --help')
+    out = capsys.readouterr().out
+    if f'• {field}:' not in out:
+        pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
+
+
+@pytest.fixture
+def mock_plotter(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'Plotter')
+
+
+@pytest.fixture
+def mock_plot(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'plot')
+
+
+@pytest.fixture
+def mock_pv_read(mocker: MockerFixture):
+    return mocker.patch.object(pv, 'read')
+
+
+@pytest.fixture
+def mock_add_mesh(mock_plotter: MagicMock):
+    return mock_plotter().add_mesh
+
+
+@pytest.fixture
+def mock_add_volume(mock_plotter: MagicMock):
+    return mock_plotter().add_volume
+
+
+@fixture
+def missing_plot_arguments():
+    """Argument names in the `pv.plot` signature which are intentionally removed from the
+    `pv.cli.plot._plot` function
+    """
+
+    return {
+        'jupyter_backend',
+        'theme',
+        'return_viewer',
+        'return_img',
+        'cpos',
+        'jupyter_kwargs',
+        'notebook',
+    }
+
+
+@fixture
+def default_plot_kwargs(missing_plot_arguments: set[str]) -> dict[str, Any]:
+    """Default arguments of `pv.plot`."""
+
+    params = inspect.signature(pv.plot).parameters
+
+    return {
+        p: v.default
+        for p, v in params.items()
+        if (p not in missing_plot_arguments)
+        and (v.kind != v.VAR_KEYWORD)
+        and v.default is not v.empty
+    }
+
+
+def test_plot_cli_synced(missing_plot_arguments: set[str]):
+    """
+    Since the `pyvista plot` CLI exposes a subset of the original `pv.plot` arguments,
+    any changes made in the signature of `pv.plot` must be synced (or not) in the
+    `pyvista plot` CLI.
+
+    This test will fail if any:
+    - argument names
+    - default values
+    - type annotations
+
+    are different between those functions.
+    """
+    plot_sig = inspect.signature(pv.plot)
+    plot_params = set(plot_sig.parameters.keys())
+
+    # Test the parameters names
+    from pyvista._cli.plot import _plot
+
+    cli_sig = inspect.signature(_plot)
+    cli_params = set(cli_sig.parameters.keys())
+
+    diff = plot_params - cli_params - missing_plot_arguments
+    assert diff == set(), (
+        f'Found unexpected differences {diff} in the CLI plot signature arguments'
+    )
+
+    # Test the parameters defaults
+    cli_defaults = {name: p.default for name, p in cli_sig.parameters.items()}
+    plot_defaults = {name: plot_sig.parameters[name].default for name in cli_sig.parameters}
+
+    assert cli_defaults == plot_defaults
+
+    # Test the parameters annotations
+
+    # Need to import some types such that inspect eval them using locals()
+    from typing import Literal  # noqa: F401
+
+    from pyvista.jupyter import JupyterBackendOptions  # noqa: F401
+    from pyvista.plotting._typing import CameraPositionOptions  # noqa: F401
+    from pyvista.plotting._typing import ColorLike  # noqa: F401
+    from pyvista.plotting._typing import PlottableType  # noqa: F401
+    from pyvista.plotting.themes import Theme  # noqa: F401
+
+    plot_annotations = inspect.get_annotations(pv.plot, eval_str=True, locals=locals())
+    cli_annotations = inspect.get_annotations(_plot, eval_str=True)
+
+    cli_annotations = {
+        k: v.__origin__ for k, v in cli_annotations.items() if k not in ['return', 'kwargs']
+    }  # get __origin__ since Annotated type
+    plot_annotations = {k: v for k, v in plot_annotations.items() if k != 'return'}
+
+    # Filter only the ones from cli
+    plot_annotations = {name: plot_annotations[name] for name in cli_annotations}
+
+    # Filter the ones which have intentionally different annotations
+    excludes = {'anti_aliasing', 'background', 'border_color', 'var_item', 'screenshot'}
+
+    plot_annotations = {k: v for k, v in plot_annotations.items() if k not in excludes}
+    cli_annotations = {k: v for k, v in cli_annotations.items() if k not in excludes}
+
+    assert plot_annotations == cli_annotations
+
+
+class CasesPlot:
+    @parametrize(offscreen=['True', 'yes', 'y', 'true'])
+    def case_kw_bool(self, default_plot_kwargs: dict, offscreen: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--off-screen={offscreen}'
+        kwargs.update(off_screen=True)
+        return tokens, kwargs
+
+    @parametrize(offscreen=['False', 'no', 'n', 'false'])
+    def case_kw_no_bool(self, default_plot_kwargs: dict, offscreen: str):
+        kwargs = default_plot_kwargs
+        tokens = f'--off-screen={offscreen}'
+        kwargs.update(off_screen=False)
+        return tokens, kwargs
+
+    @parametrize(off_screen=[True, False])
+    def case_kw_no_bool_no_value(
+        self,
+        default_plot_kwargs: dict,
+        off_screen: bool,
+    ):
+        kwargs = default_plot_kwargs
+        tokens = '--off-screen' if off_screen else '--no-off-screen'
+        kwargs.update(off_screen=off_screen)
+        return tokens, kwargs
+
+    def case_window_size(
+        self,
+        default_plot_kwargs: dict,
+    ):
+        kwargs = default_plot_kwargs
+        tokens = '--window-size=[100,100]'
+        kwargs.update(window_size=[100, 100])
+        return tokens, kwargs
+
+    def case_window_size_multiple(
+        self,
+        default_plot_kwargs: dict,
+    ):
+        kwargs = default_plot_kwargs
+        tokens = '--window-size 100 100'
+        kwargs.update(window_size=[100, 100])
+        return tokens, kwargs
+
+    def case_window_size_rounding(
+        self,
+        default_plot_kwargs: dict,
+    ):
+        """Test when window size is given as float, it is rounded to int."""
+        kwargs = default_plot_kwargs
+        tokens = '--window-size=[100.4,100.6]'
+        kwargs.update(window_size=[100, 101])
+        return tokens, kwargs
+
+    @parametrize(anti_aliasing=['ssaa', 'msaa', 'fxaa'])
+    def case_anti_aliasing(
+        self,
+        default_plot_kwargs: dict,
+        anti_aliasing: str,
+    ):
+        kwargs = default_plot_kwargs
+        tokens = f'--anti-aliasing={anti_aliasing}'
+        kwargs.update(anti_aliasing=anti_aliasing)
+        return tokens, kwargs
+
+    # region kwargs cases
+    @parametrize(
+        tokens_kwargs=[
+            ('--color=red', dict(color='red')),
+            ('--color=(0,1,0)', dict(color=(0, 1, 0))),
+            ('--color="(0, 1, 0)"', dict(color=(0, 1, 0))),
+            ('--color="[0, 1, 0]"', dict(color=[0, 1, 0])),
+            ('--color=[0,1,0]', dict(color=[0, 1, 0])),
+            ('--color=[0.1,1,0]', dict(color=[0.1, 1, 0])),
+            ('--clim [0.1,1]', dict(clim=[0.1, 1])),
+            ('--clim [0.1,1] --color red', dict(clim=[0.1, 1], color='red')),
+        ]
+    )
+    @case(tags=['kwargs', 'add_mesh'])
+    def case_kwargs_add_mesh(
+        self,
+        tokens_kwargs: tuple[str, dict],
+    ):
+        """Test when kwargs are provided to Plotter.add_mesh"""
+        tokens, kwargs = tokens_kwargs
+        return tokens, kwargs
+
+    @parametrize(
+        tokens_kwargs=[
+            ('--mapper smart', dict(mapper='smart')),
+            ('--mapper smart --blending additive', dict(mapper='smart', blending='additive')),
+        ]
+    )
+    @case(tags=['kwargs', 'add_volume'])
+    def case_kwargs_add_volume(
+        self,
+        tokens_kwargs: tuple[str, dict],
+    ):
+        """Test when kwargs are provided to Plotter.add_volume"""
+        tokens, kwargs = tokens_kwargs
+        tokens += ' --volume'
+        return tokens, kwargs
+
+    # endregion kwargs cases
+
+    # region raises cases
+
+    @case(tags='raises')
+    def case_anti_aliasing_raises(self):
+        return '--anti-aliasing=foo', [
+            'Invalid value for "--anti-aliasing": unable to convert "foo" into',
+            "one of {'ssaa', 'msaa', 'fxaa'}.",
+        ]
+
+    @case(tags='raises')
+    @parametrize(window_size=['100', '100 200 300', '[100,200,300]'])
+    def case_window_size_wrong_length(self, window_size: str):
+        """Test when the window size does not have exactly two elements."""
+        if window_size == '100':
+            errors = [
+                'Invalid value "[100]" for "--window-size". Window size must be a',
+                'list of two integers.',
+            ]
+        elif window_size in {'100 200 300', '[100,200,300]'}:
+            errors = [
+                'Invalid value "[100, 200, 300]" for "--window-size". Window size ',
+                'must be a list of two integers.',
+            ]
+
+        return f' --window-size {window_size}', errors
+
+    @case(tags='raises')
+    @parametrize(window_size=['100 a', 'b a'])
+    def case_window_size_wrong_type(self, window_size: str):
+        """Test when the window size does not have the correct type."""
+        obj = 'a' if window_size == '100 a' else 'b'
+        return f'--window-size {window_size}', [
+            f'Invalid value for "--window-size": unable to convert "{obj}" into int.',
+        ]
+
+    @case(tags='raises')
+    def case_kw_unknown(self):
+        """Test when a supplementary keyword argument does not exists"""
+        return '--foo_bar bar', [
+            '⚠ The following exception has been raised when calling pv.plot: ',
+            '"foo_bar" is an invalid keyword argument for  ',
+            '`_common_arg_parser`  ',
+            'Please check the provided arguments.',
+        ]
+
+    @case(tags='raises')
+    def case_wrong_argument(self):
+        """Test when an argument raises an error"""
+        return ' --opacity=foo', [
+            '⚠ The following exception has been raised when calling pv.plot: ',
+            'Opacity transfer function (foo) unknown. Valid options:',
+            "'sigmoid_10', 'sigmoid_15', 'sigmoid_20', 'foreground',",
+        ]
+
+    # endregion raises cases
+
+
+@parametrize_with_cases(
+    'tokens, expected_kwargs',
+    cases=CasesPlot,
+    filter=~(filters.has_tag('raises') | filters.has_tag('kwargs')),
+)
+@pytest.mark.usefixtures('mock_pv_read')
+def test_plot_called(
+    tokens: str,
+    expected_kwargs: dict,
+    mock_plot: MagicMock,
+):
+    """Test that the pv.plot function is called with the expected arguments."""
+    file = Path(pv.examples.antfile).as_posix()
+    main(f'plot --files={file} {tokens}')
+    mock_plot.assert_called_once_with(var_item=[pv.read(file)], **expected_kwargs)
+
+
+@parametrize_with_cases(
+    'tokens, expected_kwargs',
+    cases=CasesPlot,
+    has_tag='kwargs',
+)
+def test_plot_called_kwargs(
+    tokens,
+    expected_kwargs,
+    mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
+    current_cases: dict[str, Case],
+):
+    """
+    Test that the pl.add_mesh or pl.add_volume function is called with the expected arguments
+    when supplementary kw arguments are added to the command line.
+    """
+
+    file = Path(pv.examples.antfile).as_posix()
+    main(f'plot --files {file} {tokens}')
+
+    case = current_cases['tokens']
+    tags = get_case_tags(case_func=case.func)
+
+    mock = mock_add_mesh if 'add_mesh' in tags else mock_add_volume
+    mock.assert_called_once_with(pv.read(file), **expected_kwargs)
+
+
+@parametrize_with_cases('tokens, errors', cases=CasesPlot, has_tag='raises')
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
+    """Test that the plot CLI is raising expected exit errors."""
+
+    file = Path(pv.examples.antfile).as_posix()
+    with pytest.raises(SystemExit) as e:
+        main(f'plot --files {file} {tokens}')
+
+    assert e.value.code == 1
+
+    out = capsys.readouterr().out
+    for error in errors:
+        assert error in out, out
+
+
+class CasesPlotFiles:
+    """Cases used to test the --files argument of the plot CLI"""
+
+    @pytest.mark.usefixtures('mock_pv_read')
+    def case_single_args(self, default_plot_kwargs: dict):
+        """Test when only a single positional argument is given for files."""
+        kwargs = default_plot_kwargs
+        f = Path(pv.examples.antfile).as_posix()
+        kwargs['var_item'] = [pv.read(f)]
+        return f, kwargs
+
+    @pytest.mark.usefixtures('mock_pv_read')
+    def case_multiple_args(self, default_plot_kwargs: dict):
+        """Test when multiple positional arguments are given for files."""
+        kwargs = default_plot_kwargs
+        files = [Path(pv.examples.antfile).as_posix()] * 2
+        kwargs['var_item'] = [pv.read(f) for f in files]
+        return ' '.join(files), kwargs
+
+    @parametrize(with_space=[True, False])
+    @pytest.mark.usefixtures('mock_pv_read')
+    def case_multiple_kargs(self, default_plot_kwargs: dict, with_space: bool):
+        """Test when multiple keyword arguments are given for files."""
+        kwargs = default_plot_kwargs
+
+        files = [Path(pv.examples.antfile).as_posix()] * 2
+        kwargs['var_item'] = [pv.read(f) for f in files]
+
+        prefix = '--files ' if with_space else '--files='
+        return prefix + ' '.join(files), kwargs
+
+    @case(tags='raises')
+    def case_not_exists(self, tmp_path: Path):
+        """Test when the file does not exists."""
+        return str((tmp_path / 'file.vtp').as_posix()), ['1 file not found']
+
+    @case(tags='raises')
+    def case_not_exists2(self, tmp_path: Path):
+        """Test when the filed do not exists."""
+        files = [str((tmp_path / f'file_{i}.vtp').as_posix()) for i in range(4)]
+        return ' '.join(files), ['4 files not found']
+
+    @case(tags='raises')
+    def case_not_exists_kw(self, tmp_path: Path):
+        """Test when the file does not exists as keyword."""
+        return f'--files={(tmp_path / "file.vtp").as_posix()}', ['1 file not found']
+
+    @case(tags='raises')
+    def case_empty(self):
+        """Test when no files are passed"""
+        return '', ['Command "plot" parameter "--files" requires an argument.']
+
+    @case(tags='raises')
+    def case_one_exists(self, tmp_path: Path):
+        """Test when one file does not exists."""
+        (f1 := (tmp_path / 'f1.vtp')).touch()
+        return f'--files {f1.as_posix()} {(tmp_path / "f2.vtp").as_posix()}', ['1 file not found']
+
+    @case(tags='raises')
+    def case_not_readable(self, tmp_path: Path, mocker: MockerFixture):
+        """Test when a file is not readable by pyvista"""
+        (f1 := (tmp_path / 'f1.vtp')).touch()
+        m = mocker.patch.object(pv, 'read')
+        m.side_effect = Exception('Not readable')
+
+        return f'--files {f1.as_posix()}', ['1 file not readable by PyVista:']
+
+
+@parametrize_with_cases(
+    'tokens, expected_kwargs', cases=CasesPlotFiles, filter=~filters.has_tag('raises')
+)
+def test_plot_called_files(
+    tokens: str,
+    expected_kwargs: dict,
+    mock_plot: MagicMock,
+):
+    """Test that the pv.plot function is called with the expected arguments
+    for the --files argument"""
+    main(f'plot {tokens}')
+    mock_plot.assert_called_once_with(**expected_kwargs)
+
+
+@parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
+    """Test that errors are correctly raised for the --files argument"""
+    with pytest.raises(SystemExit) as e:
+        main(f'plot {tokens}')
+
+    assert e.value.code == 1
+
+    out = capsys.readouterr().out
+    for error in errors:
+        assert error in out, out
+
+
+@parametrize(
+    tokens_ncalls_args=[
+        ('file1.ply file2.ply', 2, ['file1.ply', 'file2.ply']),
+        ('--files file1.ply file2.ply file3.ply', 3, ['file1.ply', 'file2.ply', 'file3.ply']),
+    ],
+    idgen=lambda **args: args['tokens_ncalls_args'][0],
+)
+@parametrize(func=['add_mesh', 'add_volume'])
+@pytest.mark.usefixtures('mock_pv_read')
+def test_add_mesh_volume_called(
+    tokens_ncalls_args: tuple[str, int, list[str]],
+    mock_add_mesh: MagicMock,
+    mock_add_volume: MagicMock,
+    mocker: MockerFixture,
+    func: str,
+    tmp_path: Path,
+):
+    """Test that the pv.Plotter.add_mesh and add_volume methods are called
+    a number of expected times with the correct arguments.
+    """
+    tokens, ncalls, args = tokens_ncalls_args
+    tokens += ' --volume' if (add_volume := (func == 'add_volume')) else ''
+
+    for a in args:
+        shutil.copy(pv.examples.antfile, tmp_path / a)
+
+    os.chdir(tmp_path)
+    main(f'plot {tokens}')
+
+    mock = mock_add_volume if add_volume else mock_add_mesh
+    assert mock.call_count == ncalls
+    assert mock.mock_calls == [mocker.call(pv.read(a)) for a in args]
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_report_help(capsys: pytest.CaptureFixture):
+    main('report --help')
+
+    expected = textwrap.dedent(
+        """\
+            Usage: pyvista report [ARGS]
+
+            Generate a PyVista software environment report.
+       """
+    )
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:4])
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_plot_help(capsys: pytest.CaptureFixture):
+    main('plot --help')
+
+    expected = textwrap.dedent(
+        """\
+        Usage: pyvista plot file (file2) [OPTIONS]
+
+        Plot one or more mesh files in an interactive window that can be 
+        customized with various options.
+        """  # noqa: W291
+    )
+    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:5])
+
+
+def test_version(capsys: pytest.CaptureFixture):
+    main('--version')
+    assert capsys.readouterr().out == f'pyvista {pv.__version__}\n'
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_help(capsys: pytest.CaptureFixture):
+    main('--help')
+
+    expected = textwrap.dedent(
+        """\
+        Usage: pyvista COMMAND
+
+        ╭─ Commands ─────────────────────────────────────────────────────────╮
+        │ convert      Convert a mesh file to another format.                │
+        │ plot         Plot one or more mesh files in an interactive window  │
+        │              that can be customized with various options.          │
+        │ report       Generate a PyVista software environment report.       │
+        │ validate     Validate a mesh's array data, points, and cells.      │
+        │ --help (-h)  Display this message and exit.                        │
+        │ --version    Display application version.                          │
+        ╰────────────────────────────────────────────────────────────────────╯
+        """
+    )
+    assert expected == capsys.readouterr().out
+
+
+@parametrize(
+    as_script=[True, False],
+    tokens_err_codes=[
+        ('--foo', 1),
+        ('report --foo', 1),
+        ('plot --foo', 1),
+        ('', 0),
+        ('report --help', 0),
+        ('plot --help', 0),
+        ('--help', 0),
+    ],
+)
+def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
+    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
+
+    argv, exit_code_expected = tokens_err_codes
+    args += [*shlex.split(argv)]
+
+    process = subprocess.run(
+        args,
+        check=False,
+        capture_output=True,
+        encoding='utf-8',
+    )
+
+    assert process.returncode == exit_code_expected
+
+
+@parametrize(func=['plot', 'report'])
+@parametrize(ret=['foo', None])
+def test_print(
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    func: str,
+    capsys: pytest.CaptureFixture,
+    ret: str | None,
+):
+    """Test that the output of the functions are sent to stdout."""
+    mock = mock_plot if func == 'plot' else mock_report
+    mock.return_value = ret
+    tokens = func if func == 'report' else f'{func} --files={Path(pv.examples.antfile).as_posix()}'
+    main(tokens)
+
+    expected = f'{ret}\n' if ret is not None else ''
+    assert capsys.readouterr().out == expected

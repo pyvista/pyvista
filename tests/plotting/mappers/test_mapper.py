@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.mapper import DataSetMapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_mapper(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -33,9 +33,9 @@ def test_bounds(dataset_mapper):
 
 
 def test_lookup_table(dataset_mapper):
-    assert isinstance(dataset_mapper.lookup_table, vtk.vtkLookupTable)
+    assert isinstance(dataset_mapper.lookup_table, _vtk.vtkLookupTable)
 
-    table = vtk.vtkLookupTable()
+    table = _vtk.vtkLookupTable()
 
     dataset_mapper.lookup_table = table
     assert dataset_mapper.lookup_table is table
@@ -73,11 +73,6 @@ def test_array_name(dataset_mapper):
     assert dataset_mapper.array_name == name
 
 
-def test_do_not_set_attributes(dataset_mapper):
-    with pytest.raises(AttributeError, match='cannot be added to type'):
-        dataset_mapper.not_an_attribute = None
-
-
 def test_copy(dataset_mapper, sphere):
     dataset_mapper.dataset = sphere
     dataset_mapper.interpolate_before_map = False
@@ -92,7 +87,7 @@ def test_copy(dataset_mapper, sphere):
     assert map_cp.scalar_range != dataset_mapper.scalar_range
 
 
-@pytest.mark.parametrize('resolve', ["polygon_offset", "shift_zbuffer", "off"])
+@pytest.mark.parametrize('resolve', ['polygon_offset', 'shift_zbuffer', 'off'])
 def test_resolve(dataset_mapper, resolve):
     dataset_mapper.resolve = resolve
     assert dataset_mapper.resolve == resolve
@@ -101,4 +96,4 @@ def test_resolve(dataset_mapper, resolve):
 def test_invalid_resolve(dataset_mapper):
     match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
     with pytest.raises(ValueError, match=match):
-        dataset_mapper.resolve = "invalid"
+        dataset_mapper.resolve = 'invalid'

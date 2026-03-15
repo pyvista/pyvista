@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
-from typing import List
-from typing import Sequence
+from typing import TYPE_CHECKING
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import wrap
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-@no_new_attr
-class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
+
+class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource):
     """Create a binary image of an ellipsoid class.
 
     .. versionadded:: 0.44.0
@@ -39,7 +41,8 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
     ...     center=(10, 10, 0),
     ...     radius=(3, 4, 5),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
+
     """
 
     def __init__(self, whole_extent=None, center=None, radius=None) -> None:
@@ -59,6 +62,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         -------
         sequence[int]
             The extent of the whole output image.
+
         """
         return self.GetWholeExtent()
 
@@ -70,17 +74,19 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         ----------
         whole_extent : sequence[int]
             The extent of the whole output image.
+
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center of the ellipsoid.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             The center of the ellipsoid.
+
         """
         return self.GetCenter()
 
@@ -92,6 +98,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         ----------
         center : sequence[float]
             The center of the ellipsoid.
+
         """
         self.SetCenter(center)
 
@@ -103,6 +110,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         -------
         sequence[float]
             The radius of the ellipsoid.
+
         """
         return self.GetRadius()
 
@@ -114,6 +122,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         ----------
         radius : sequence[float]
             The radius of the ellipsoid.
+
         """
         self.SetRadius(radius)
 
@@ -125,13 +134,13 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         -------
         pyvista.ImageData
             The output image.
+
         """
         self.Update()
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
+class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource):
     """Create an image of the Mandelbrot set.
 
     .. versionadded:: 0.44.0
@@ -153,7 +162,8 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     maxiter=100,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
+
     """
 
     def __init__(self, whole_extent=None, maxiter=None) -> None:
@@ -171,6 +181,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         -------
         sequence[int]
             The extent of the whole output image.
+
         """
         return self.GetWholeExtent()
 
@@ -182,8 +193,9 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         ----------
         whole_extent : sequence[int]
             The extent of the whole output image.
+
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def maxiter(self) -> int:
@@ -193,6 +205,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         -------
         int
             The maximum number of iterations.
+
         """
         return self.GetMaximumNumberOfIterations()
 
@@ -204,6 +217,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         ----------
         maxiter : int
             The maximum number of iterations.
+
         """
         self.SetMaximumNumberOfIterations(maxiter)
 
@@ -215,13 +229,13 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         -------
         pyvista.ImageData
             The output image.
+
         """
         self.Update()
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageNoiseSource(_vtk.vtkImageNoiseSource):
+class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -251,12 +265,12 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     maximum=255,
     ...     seed=0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         whole_extent=(0, 255, 0, 255, 0, 0),
         minimum=0.0,
@@ -281,6 +295,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         -------
         sequence[int]
           The extent of the whole output image.
+
         """
         return self._whole_extent
 
@@ -292,6 +307,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         ----------
         whole_extent : sequence[int]
           The extent of the whole output image.
+
         """
         self._whole_extent = whole_extent
         self.SetWholeExtent(whole_extent)
@@ -304,6 +320,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         -------
         float
           The minimum value for the generated noise.
+
         """
         return self.GetMinimum()
 
@@ -315,6 +332,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         ----------
         minimum : float
           The minimum value for the generated noise.
+
         """
         self.SetMinimum(minimum)
 
@@ -326,6 +344,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         -------
         float
           The maximum value for the generated noise.
+
         """
         return self.GetMaximum()
 
@@ -337,6 +356,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         ----------
         maximum : float
           The maximum value for the generated noise.
+
         """
         self.SetMaximum(maximum)
 
@@ -347,6 +367,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         ----------
         value : int
           The seed value for the random number generator to use.
+
         """
         _vtk.vtkMath().RandomSeed(value)
 
@@ -358,13 +379,13 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         -------
         pyvista.ImageData
           The output image.
+
         """
         self.Update()
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
+class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
 
     .. versionadded:: 0.44.0
@@ -398,12 +419,12 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     ...     amplitude=255,
     ...     direction=(1.0, 0.0, 0.0),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         whole_extent=None,
         direction=None,
@@ -431,6 +452,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         -------
         sequence[int]
             The extent of the whole output image.
+
         """
         return self._whole_extent
 
@@ -442,6 +464,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         ----------
         whole_extent : sequence[int]
             The extent of the whole output image.
+
         """
         self._whole_extent = whole_extent
         self.SetWholeExtent(
@@ -461,6 +484,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         -------
         sequence[float]
             The direction of the sinusoid.
+
         """
         return self.GetDirection()
 
@@ -472,8 +496,9 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         ----------
         direction : sequence[float]
             The direction of the sinusoid.
+
         """
-        self.SetDirection(direction)
+        self.SetDirection(direction)  # type: ignore[call-overload]
 
     @property
     def period(self) -> float:
@@ -483,6 +508,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         -------
         float
             The period of the sinusoid in pixel.
+
         """
         return self.GetPeriod()
 
@@ -494,6 +520,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         ----------
         period : float
             The period of the sinusoid in pixel.
+
         """
         self.SetPeriod(period)
 
@@ -505,8 +532,9 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         -------
         sequence[float]
             The phase of the sinusoid in pixel.
+
         """
-        return self.GetPhase()
+        return self.GetPhase()  # type: ignore[return-value]
 
     @phase.setter
     def phase(self, phase: Sequence[float]) -> None:
@@ -516,8 +544,9 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         ----------
         phase : sequence[float]
             The phase of the sinusoid in pixel.
+
         """
-        self.SetPhase(phase)
+        self.SetPhase(phase)  # type: ignore[arg-type]
 
     @property
     def amplitude(self) -> float:
@@ -527,6 +556,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         -------
         float
             The magnitude of the sinusoid.
+
         """
         return self.GetAmplitude()
 
@@ -538,6 +568,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         ----------
         amplitude : float
             The magnitude of the sinusoid.
+
         """
         self.SetAmplitude(amplitude)
 
@@ -549,13 +580,13 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         -------
         pyvista.ImageData
             The output image.
+
         """
         self.Update()
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageGaussianSource(_vtk.vtkImageGaussianSource):
+class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
     """Create a binary image with Gaussian pixel values.
 
     .. versionadded:: 0.44.0
@@ -585,12 +616,14 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     ...     maximum=255,
     ...     std=100.0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
+        self, center=None, whole_extent=None, maximum=None, std=None
+    ) -> None:
         super().__init__()
         if center is not None:
             self.center = center
@@ -602,13 +635,14 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
             self.std = std
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center of the gaussian.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
           The center of the gaussian.
+
         """
         return self.GetCenter()
 
@@ -620,6 +654,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         ----------
         center : sequence[float]
           The center of the gaussian.
+
         """
         self.SetCenter(center)
 
@@ -631,6 +666,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         -------
         sequence[int]
           The extent of the whole output image.
+
         """
         return self._whole_extent
 
@@ -642,6 +678,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         ----------
         whole_extent : sequence[int]
           The extent of the whole output image.
+
         """
         self._whole_extent = whole_extent
         self.SetWholeExtent(
@@ -661,6 +698,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         -------
         float
           The maximum value of the gaussian.
+
         """
         return self.GetMaximum()
 
@@ -672,6 +710,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         ----------
         maximum : float
           The maximum value of the gaussian.
+
         """
         self.SetMaximum(maximum)
 
@@ -683,6 +722,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         -------
         float
           The standard deviation of the gaussian.
+
         """
         return self.GetStandardDeviation()
 
@@ -694,6 +734,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         ----------
         std : float
           The standard deviation of the gaussian.
+
         """
         self.SetStandardDeviation(std)
 
@@ -705,6 +746,131 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         -------
         pyvista.ImageData
           The output image.
+
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSource):
+    """Create an image of a grid.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    origin : sequence[float]
+        The origin of the grid.
+
+    extent : sequence[int]
+        The extent of the whole output image, Default: (0,255,0,255,0,0).
+
+    spacing : tuple
+        The pixel spacing.
+
+    Examples
+    --------
+    Create an image of a grid.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageGridSource(
+    ...     extent=(0, 20, 0, 20, 0, 0),
+    ...     spacing=(1, 1, 1),
+    ... )
+    >>> source.output.plot(cpos='xy')
+
+    """
+
+    def __init__(self, origin=None, extent=None, spacing=None) -> None:
+        super().__init__()
+        if origin is not None:
+            self.origin = origin
+        if extent is not None:
+            self.extent = extent
+        if spacing is not None:
+            self.spacing = spacing
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin of the data.
+
+        Returns
+        -------
+        sequence[float]
+            The origin of the grid.
+
+        """
+        return self.GetGridOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]) -> None:
+        """Set the origin of the data.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            The origin of the grid.
+
+        """
+        self.SetGridOrigin(origin)  # type: ignore[arg-type]
+
+    @property
+    def extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+            The extent of the whole output image.
+
+        """
+        return self.GetDataExtent()
+
+    @extent.setter
+    def extent(self, extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        extent : sequence[int]
+            The extent of the whole output image.
+
+        """
+        self.SetDataExtent(extent)
+
+    @property
+    def spacing(self) -> Sequence[float]:
+        """Get the spacing of the grid.
+
+        Returns
+        -------
+        sequence[float]
+            The pixel spacing.
+
+        """
+        return self.GetDataSpacing()
+
+    @spacing.setter
+    def spacing(self, spacing: Sequence[float]) -> None:
+        """Set the spacing of the grid.
+
+        Parameters
+        ----------
+        spacing : sequence[float]
+            The pixel spacing.
+
+        """
+        self.SetDataSpacing(spacing)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The output image.
+
         """
         self.Update()
         return wrap(self.GetOutput())

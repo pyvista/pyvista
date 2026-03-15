@@ -1,5 +1,5 @@
 """
-.. _disabling_mesh_lighting_example:
+.. _mesh_lighting_example:
 
 Disabling Mesh Lighting
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -25,13 +25,13 @@ horse.rotate_z(-120, inplace=True)
 horse.points = (horse.points - horse.center) * 100
 shifted = horse.translate((0, 10, 0), inplace=False)
 
-plotter = pv.Plotter()
-plotter.add_mesh(horse, color='brown')
-plotter.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(horse, color='brown')
+pl.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
+pl.show()
 
 
-###############################################################################
+# %%
 # Due to the obvious lack of depth detail this mostly makes sense for meshes
 # with non-trivial colors or textures. If it weren't for the edges being drawn,
 # the second mesh would be practically impossible to understand even with the
@@ -39,6 +39,8 @@ plotter.show()
 
 shifted.plot(color='brown', lighting=False)
 
-###############################################################################
+# %%
 # For further examples about fine-tuning mesh properties that affect
-# light rendering, see the :ref:`lighting_properties_example` example.
+# light rendering, see the :ref:`lighting_mesh_example` example.
+#
+# .. tags:: lights

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import re
 from unittest import mock
 
 import numpy as np
+import pandas as pd
 import pytest
-import vtk as _vtk
 
 from pyvista import examples
 from pyvista import pyvista_ndarray
+from pyvista import vtk_points
+from pyvista.core import _vtk_core as _vtk
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyvista_ndarray_1d():
     return pyvista_ndarray([1.0, 2.0, 3.0])
 
@@ -64,7 +67,7 @@ def test_modifying_modifies_dataset():
 
 # TODO: This currently doesn't work for single element indexing operations!
 # in these cases, the __array_finalize__ method is not called
-@pytest.mark.skip()
+@pytest.mark.skip
 def test_slices_are_associated_single_index():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
@@ -96,3 +99,20 @@ def test_add_1d():
     pv_arr = pyvista_ndarray([1]) + pyvista_ndarray([1])
     np_arr = np.array([1]) + np.array([1])
     assert np.array_equal(pv_arr, np_arr)
+
+
+@pytest.mark.parametrize('val', [1, True, None])
+def test_raises(val):
+    match = re.escape(
+        f'pyvista_ndarray got an invalid type {type(val)}. '
+        f'Expected an Iterable or vtk.vtkAbstractArray'
+    )
+    with pytest.raises(TypeError, match=match):
+        pyvista_ndarray(val)
+
+
+@pytest.mark.parametrize('obj_in', [np.eye(3), vtk_points(np.eye(3)).GetData()])
+def test_wrap_pandas(obj_in):
+    array = pyvista_ndarray(obj_in)
+    df = pd.DataFrame(array)
+    assert np.shares_memory(df.values, array)
