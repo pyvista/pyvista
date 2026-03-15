@@ -2809,4 +2809,4 @@ def _vtkCellTypeSource(
             ids.InsertNextId(i)
         ugrid.InsertNextCell(cell0.GetCellType(), ids)
 
-    return pv.wrap(ugrid)
+    return pv.wrap(ugrid)  # type:ignore[return-value]
