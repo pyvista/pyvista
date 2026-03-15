@@ -2728,7 +2728,7 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
 
 def cell_type_source(  # numpydoc ignore=RT01
     cell_types: int | Sequence[int],
-    generator: Literal['examples', 'blocks', 'parametric'] = 'examples',
+    generator: Literal['examples', 'source', 'parametric'] = 'examples',
     *,
     block_dimensions: VectorLike[int] | None = None,
     shrink_factor: float | None = None,
@@ -2746,19 +2746,19 @@ def cell_type_source(  # numpydoc ignore=RT01
     cell_types : int | sequence[int]
         Cell types to generate.
 
-    generator : 'examples' | 'blocks' | 'parametric', default: 'examples'
+    generator : 'examples' | 'source' | 'parametric', default: 'examples'
         Method for generating cell type blocks.
 
         - ``'examples'``: generate blocks using examples from :mod:`pyvista.examples.cells`.
         - ``'parametric'``: generate blocks using :vtk:`vtkCell.GetParametricCoords`.
-        - ``'blocks'``: generate blocks using :vtk:`vtkCellTypeSource`.
+        - ``'source'``: generate blocks using :vtk:`vtkCellTypeSource`.
 
         .. note::
 
            - ``'examples'`` supports all concrete :class:`cell types <pyvista.CellType>`, but
              the other generators only support a subset.
            - Both ``'examples'`` and ``'parametric'`` only generate a `single` cell per block,
-             whereas ``'blocks'`` may generate multiple cells of the same type in order to fill a
+             whereas ``'source'`` may generate multiple cells of the same type in order to fill a
              unit block (e.g. two triangles to fill a square, two wedges to fill a cube).
 
     block_dimensions : VectorLike[int], optional
@@ -2824,9 +2824,9 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'parametric')
     >>> plot_cell(triangle)
 
-    Use the ``'blocks'`` generator instead.
+    Use the ``'source'`` generator instead.
 
-    >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'blocks')
+    >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'source')
     >>> plot_cell(triangle)
 
     Generate multiple cell types. Here we generate all concrete linear 2D cells.
@@ -2864,7 +2864,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     This combination generates a continuous grid with no gaps.
 
     >>> cell_blocks = cell_type_source(
-    ...     cell_types, 'blocks', unsupported_action='squeeze'
+    ...     cell_types, 'source', unsupported_action='squeeze'
     ... )
     >>> plot_cell(cell_blocks)
 
@@ -2908,7 +2908,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
     >>> cell_blocks = cell_type_source(
     ...     cell_types,
-    ...     'blocks',
+    ...     'source',
     ...     block_dimensions=(5, 5, 5),
     ...     unsupported_action='squeeze',
     ...     fill_mode='cycle',
@@ -2942,7 +2942,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> cell_blocks = cell_type_source(generator='parametric', **kwargs)
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = cell_type_source(generator='blocks', **kwargs)
+    >>> cell_blocks = cell_type_source(generator='source', **kwargs)
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     """
@@ -2999,7 +2999,7 @@ def cell_type_source(  # numpydoc ignore=RT01
         generate_grid = _examples_grid
     elif generator == 'parametric':
         generate_grid = _parametric_grid
-    elif generator == 'blocks':
+    elif generator == 'source':
         generate_grid = _blocks_grid
 
     # Generate mesh for each cell type

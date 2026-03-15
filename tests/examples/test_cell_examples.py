@@ -202,13 +202,13 @@ def test_abstract_celltype():
         _ = celltype.n_faces
 
 
-@pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
+@pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is not None])
 def test_cell_type_source(cell_type, generator):
-    if pv.vtk_version_info < (9, 4, 0) and generator == 'blocks':
+    if pv.vtk_version_info < (9, 4, 0) and generator == 'source':
         pytest.skip('VTK bug with vtkCellTypeSource for some cell types')
     if (generator == 'parametric' and cell_type in _NOT_SUPPORTED_PARAMETRIC) or (
-        generator == 'blocks' and cell_type in _NOT_SUPPORTED_CELL_SOURCE
+        generator == 'source' and cell_type in _NOT_SUPPORTED_CELL_SOURCE
     ):
         pytest.xfail('Not supported')
     mesh = cells.cell_type_source(cell_type, generator)
@@ -224,7 +224,7 @@ def test_cell_type_source(cell_type, generator):
         assert np.allclose(mesh.bounds, (0.0, 1.0, 0.0, 1.0, 0.0, 1.0))
 
 
-@pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
+@pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
 @pytest.mark.parametrize('dimensions', [(4, 1, 1), (1, 4, 1), (1, 1, 4)])
 def test_cell_type_source_block_dimensions(dimensions, generator):
     celltype = CellType.HEXAHEDRON
@@ -257,9 +257,9 @@ def test_cell_type_source_block_dimensions_raises():
 @pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_CELL_SOURCE)
 def test_cell_type_source_invalid_blocks(cell_type):
     assert cell_type.vtk_class is not None
-    match = f"{cell_type!r} is not supported by the 'blocks' generator."
+    match = f"{cell_type!r} is not supported by the 'source' generator."
     with pytest.raises(ValueError, match=match):
-        cells.cell_type_source(cell_type, generator='blocks')
+        cells.cell_type_source(cell_type, generator='source')
 
 
 @pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_PARAMETRIC)
@@ -270,7 +270,7 @@ def test_cell_type_source_invalid_parametric(cell_type):
         cells.cell_type_source(cell_type, generator='parametric')
 
 
-@pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
+@pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is None])
 def test_cell_type_source_invalid_abstract(generator, cell_type):
     match = f'{cell_type!r} is not supported'
