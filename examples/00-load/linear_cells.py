@@ -323,11 +323,11 @@ linear_cells = cell_type_source(linear_cell_types, block_dimensions=(n_rows, n_c
 # %%
 # Combine into a single :class:`~pyvista.UnstructuredGrid`, and use shrink to create space
 # between cells.
-combined = linear_cells.combine().shrink(0.7)
+combined = linear_cells.combine().shrink(0.5)
 
 # %%
 # Re-orient the mesh to match orientation of the other plots then plot it.
 combined = combined.flip_y()
-plot_cell(combined, cpos='xy')
+plot_cell(combined, cpos='xy', point_size=40, font_size=20)
 # %%
 # .. tags:: load
