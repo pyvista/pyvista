@@ -224,6 +224,30 @@ def test_cell_type_source_block_dimensions(dimensions, generator):
     assert mesh == mesh_no_cycle
 
 
+@pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_CELL_SOURCE)
+def test_cell_type_source_invalid_blocks(cell_type):
+    assert cell_type.vtk_class is not None
+    match = f"{cell_type!r} is not supported by the 'blocks' generator."
+    with pytest.warns(UserWarning, match=match):
+        cells.cell_type_source(cell_type, generator='blocks')
+
+
+@pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_PARAMETRIC)
+def test_cell_type_source_invalid_parametric(cell_type):
+    assert cell_type.vtk_class is not None
+    match = f"{cell_type!r} is not supported by the 'parametric' generator."
+    with pytest.warns(UserWarning, match=match):
+        cells.cell_type_source(cell_type, generator='parametric')
+
+
+@pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
+@pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is None])
+def test_cell_type_source_invalid_abstract(generator, cell_type):
+    match = f'{cell_type!r} is not supported'
+    with pytest.warns(UserWarning, match=match):
+        cells.cell_type_source(cell_type, generator=generator)
+
+
 def test_empty():
     grid = cells.Empty()
     assert grid.celltypes[0] == CellType.EMPTY_CELL

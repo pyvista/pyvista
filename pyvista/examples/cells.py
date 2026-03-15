@@ -165,8 +165,6 @@ def plot_cell(
     grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
     pl = pv.Plotter()
     for cell in grid.cell:
-        if cell.type == CellType.EMPTY_CELL:
-            continue
         # Use existing grid if it's already a grid with one cell
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
