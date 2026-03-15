@@ -7643,14 +7643,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(rectangle, show_edges=True, line_width=5)
         >>> _ = plotter.add_dimension_line(
-        ...     pointa, pointb, [0.1, 0.0, 0.0], shape_color="white"
+        ...     pointa, pointb, [0.1, 0.0, 0.0], shape_color='white'
         ... )
         >>> _ = plotter.add_dimension_line(
-        ...     pointb, pointc, [0.0, 0.1, 0.0], shape_color="white"
+        ...     pointb, pointc, [0.0, 0.1, 0.0], shape_color='white'
         ... )
         >>> plotter.show()
-        """
 
+        """
         # Define the lines
         pointa = np.asarray(pointa)
         pointb = np.asarray(pointb)
@@ -7661,10 +7661,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         # Create multiple lines and set the offset vector
         mlines = pyvista.MultipleLines(lines)
-        mlines["Normal"] = np.array([offset, offset])
+        mlines['Normal'] = np.array([offset, offset])
 
         # Create extension lines
-        arrows = mlines.glyph(geom=pyvista.Line(), scale="Normal", factor=1.0, orient="Normal")
+        arrows = mlines.glyph(geom=pyvista.Line(), scale='Normal', factor=1.0, orient='Normal')
 
         # Define the midpoints between pointa and pointb
         pointe = (pointc + pointd) / 2.0
@@ -7683,11 +7683,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             text_color=text_color,
         )
         # lines = self.add_lines(lines, color="black", width=2)
-        _ = self.add_lines(lines, color="black", width=2)
+        _ = self.add_lines(lines, color='black', width=2)
 
         # Add the arrow to the plot
         # mesh = self.add_mesh(arrows, color="black")
-        _ = self.add_mesh(arrows, color="black")
+        _ = self.add_mesh(arrows, color='black')
 
         # TODO Once each Actor corresponds to a MultiBlock, return the merged Actor.
         # blocks = pyvista.MultiBlock([text, lines, mesh])
