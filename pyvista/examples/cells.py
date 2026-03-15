@@ -2669,7 +2669,7 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
 
 
 def cell_type_source(  # numpydoc ignore=RT01
-    cell_types: CellType | Sequence[CellType],
+    cell_types: int | Sequence[int],
     generator: Literal['examples', 'blocks', 'parametric'] = 'examples',
     *,
     block_dimensions=None,
@@ -2950,7 +2950,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     iterator = itertools.cycle(iterator) if mismatch_mode == 'cycle' else iterator
 
     center_iter = iter(cell_centers)
-    name_counts = {}
+    name_counts: dict[str, int] = {}
     for name, block in iterator:
         if block is None:
             if unsupported_mode == 'squeeze':
