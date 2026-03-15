@@ -244,7 +244,7 @@ def test_cell_type_source_block_dimensions_raises():
 def test_cell_type_source_invalid_blocks(cell_type):
     assert cell_type.vtk_class is not None
     match = f"{cell_type!r} is not supported by the 'blocks' generator."
-    with pytest.warns(UserWarning, match=match):
+    with pytest.raises(ValueError, match=match):
         cells.cell_type_source(cell_type, generator='blocks')
 
 
@@ -252,7 +252,7 @@ def test_cell_type_source_invalid_blocks(cell_type):
 def test_cell_type_source_invalid_parametric(cell_type):
     assert cell_type.vtk_class is not None
     match = f"{cell_type!r} is not supported by the 'parametric' generator."
-    with pytest.warns(UserWarning, match=match):
+    with pytest.raises(ValueError, match=match):
         cells.cell_type_source(cell_type, generator='parametric')
 
 
@@ -260,8 +260,14 @@ def test_cell_type_source_invalid_parametric(cell_type):
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is None])
 def test_cell_type_source_invalid_abstract(generator, cell_type):
     match = f'{cell_type!r} is not supported'
-    with pytest.warns(UserWarning, match=match):
+    with pytest.raises(ValueError, match=match):
         cells.cell_type_source(cell_type, generator=generator)
+
+
+def test_cell_type_source_invalid_value():
+    match = "-1 is not a valid cell type and is not supported by the 'examples' generator."
+    with pytest.raises(ValueError, match=match):
+        cells.cell_type_source(-1)
 
 
 def test_cell_type_source_mismatch_mode():

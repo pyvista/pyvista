@@ -2928,7 +2928,8 @@ def cell_type_source(  # numpydoc ignore=RT01
             name = 'None'
         if grid is None:
             if unsupported_mode in ['warn', 'error']:
-                msg = f'{ctype!r} is not supported by the {generator!r} generator.'
+                invalid = ' ' if isinstance(ctype, CellType) else ' is not a valid cell type and '
+                msg = f'{ctype!r}{invalid}is not supported by the {generator!r} generator.'
                 if unsupported_mode == 'error':
                     raise ValueError(msg)
                 warn_external(msg)
