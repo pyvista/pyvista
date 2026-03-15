@@ -24,8 +24,8 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista import PolyData
 
 
 _NOT_SUPPORTED_CELL_SOURCE = [
@@ -55,7 +55,7 @@ _NOT_SUPPORTED_PARAMETRIC = [
 
 
 def plot_cell(
-    grid: PolyData | UnstructuredGrid,
+    grid: DataSet | MultiBlock,
     cpos=None,
     *,
     line_width: int | None = None,
@@ -162,14 +162,23 @@ def plot_cell(
             algorithm=None, pass_pointid=False, pass_cellid=False
         )
 
-    grid = grid if isinstance(grid, pv.UnstructuredGrid) else grid.cast_to_unstructured_grid()
+    if isinstance(grid, pv.MultiBlock):
+        grid = grid.combine()
+    elif not isinstance(grid, pv.UnstructuredGrid):
+        grid = grid.cast_to_unstructured_grid()
+
     pl = pv.Plotter()
+    has_2d_cells_only = True
     for cell in grid.cell:
+        dimension = cell.dimension
+        if dimension != 2:
+            has_2d_cells_only = False
+
         # Use existing grid if it's already a grid with one cell
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
         edges = cell_as_grid.extract_all_edges()
-        if edges.n_cells or cell.dimension == 1:
+        if edges.n_cells or dimension == 1:
             pl.add_mesh(
                 cell_as_grid,
                 style='wireframe',
@@ -190,7 +199,7 @@ def plot_cell(
             font_size=font_size_,
         )
 
-        if show_normals and cell.dimension >= 2:
+        if show_normals and dimension >= 2:
             surface = _extract_surface(cell)
             surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
             pl.add_arrows(
@@ -203,8 +212,12 @@ def plot_cell(
 
     pl.enable_anti_aliasing()
     if cpos is None:
-        pl.camera.azimuth = 20
-        pl.camera.elevation = -20
+        # Use xy view if we have all 2D cells lying in the xy plane
+        if has_2d_cells_only and grid.dimensionality == 2 and np.isclose(grid.bounds_size[2], 0.0):
+            pl.view_xy()
+        else:
+            pl.camera.azimuth = 20
+            pl.camera.elevation = -20
     else:
         pl.camera_position = cpos
     pl.show(**kwargs)
@@ -427,7 +440,7 @@ def Triangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Triangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -468,7 +481,7 @@ def TriangleStrip() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.TriangleStrip()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -599,7 +612,7 @@ def Pixel() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Pixel()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -639,7 +652,7 @@ def Quadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Quadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1085,7 +1098,7 @@ def QuadraticTriangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1125,7 +1138,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1167,7 +1180,7 @@ def QuadraticPolygon() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticPolygon()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1415,7 +1428,7 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BiQuadraticQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1574,7 +1587,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticLinearQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1773,7 +1786,7 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BiQuadraticTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1902,7 +1915,7 @@ def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.LagrangeTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -1954,7 +1967,7 @@ def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.LagrangeQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -2312,7 +2325,7 @@ def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -2363,7 +2376,7 @@ def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+    >>> examples.plot_cell(grid)
 
     List the grid's cells.
 
@@ -2660,7 +2673,9 @@ def cell_type_source(  # numpydoc ignore=RT01
     generator: Literal['examples', 'blocks', 'parametric'] = 'examples',
     *,
     block_dimensions=None,
+    shrink_factor: float | None = None,
     mismatch_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
+    unsupported_mode: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
 ) -> MultiBlock:
     """Generate a MultiBlock mesh comprised of one or more cell types.
 
@@ -2675,6 +2690,9 @@ def cell_type_source(  # numpydoc ignore=RT01
     block_dimensions
         Output dimensions of blocks to generate.
 
+    shrink_factor
+        Shrink each block by applying a scaling factor.
+
     mismatch_mode
         Select how to handle mismatched dimensions.
 
@@ -2682,6 +2700,89 @@ def cell_type_source(  # numpydoc ignore=RT01
         - ``'cycle'``: cycle through and duplicate cell types as required to ensure the
           specified block dimensions are completely filled.
         - ``'stop'``: stop iterating when all specified cell types have been generated.
+
+    unsupported_mode
+        Select how to handle unsupported cell types.
+
+        - ``'skip'``: Skip generating a block for unsupported cell types. A ``None`` block is
+          included instead. This will generate a gap in the output.
+        - ``'squeeze'``: Similar to ``'skip'``, but no ``None`` block is included. Since no block
+          is included, there are no gaps and the output appears to be "squeezed" together.
+        - ``'warn'``: Similar to ``skip``, but a warning is emitted when an unsupported type is
+          encountered.
+        - ``'error'``: Raise a ValueError when an unsupported cell type is encountered.
+
+    Examples
+    --------
+    Generate a single :attr:`~pyvista.CellType.TRIANGLE` cell.
+
+    >>> import pyvista as pv
+    >>> from pyvista.examples import cells, cell_type_source, plot_cell
+    >>> triangle = cell_type_source(pv.CellType.TRIANGLE)
+    >>> plot_cell(triangle)
+
+    This is similar to the :func:`~pyvista.examples.cells.Triangle` grid, except it's a
+    :class:`~pyvista.MultiBlock` and its bounds are normalized to fit inside a 1x1x1 grid.
+
+    >>> triangle
+    MultiBlock (...)
+      N Blocks:   1
+      X Bounds:   0.000e+00, 1.000e+00
+      Y Bounds:   0.000e+00, 1.000e+00
+      Z Bounds:   5.000e-01, 5.000e-01
+
+    Compare to the un-normalized bounds.
+
+    >>> cells.Triangle()
+    UnstructuredGrid (...)
+      N Cells:    1
+      N Points:   3
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -2.887e-01, 5.774e-01
+      Z Bounds:   0.000e+00, 0.000e+00
+      N Arrays:   0
+
+    Use the ``'parametric'`` generator instead.
+
+    >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'parametric')
+    >>> plot_cell(triangle)
+
+    Use the ``'blocks'`` generator instead.
+
+    >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'blocks')
+    >>> plot_cell(triangle)
+
+    Generate multiple cell types. Here we generate all concrete linear 2D cells.
+
+    >>> cell_types = [
+    ...     ctype
+    ...     for ctype in pv.CellType
+    ...     if ctype.dimension == 2 and ctype.is_linear
+    ... ]
+    >>> cell_types  # doctest: +NORMALIZE_WHITESPACE
+    [<CellType.TRIANGLE: 5>,
+     <CellType.TRIANGLE_STRIP: 6>,
+     <CellType.POLYGON: 7>,
+     <CellType.PIXEL: 8>,
+     <CellType.QUAD: 9>]
+
+    >>> cells = cell_type_source(cell_types, shrink_factor=0.8)
+    >>> plot_cell(cells)
+
+    Generate the same cell types using the parametric generator. This generator does not support
+    triangle strip or polygon cells, so we skip these.
+
+    >>> cells = cell_type_source(
+    ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_mode='skip'
+    ... )
+    >>> plot_cell(cells)
+
+    Use the blocks generator. It also does not support triangle strip, but it does support polygon.
+    This time, we squeeze the blocks together instead of skipping them, and do not shrink them.
+    This combination generates a continuous grid with no gaps.
+
+    >>> cells = cell_type_source(cell_types, 'blocks', unsupported_mode='squeeze')
+    >>> plot_cell(cells)
 
     """
 
@@ -2696,6 +2797,11 @@ def cell_type_source(  # numpydoc ignore=RT01
     def _blocks_grid(cell_type: CellType) -> UnstructuredGrid | None:
         return _vtkCellTypeSource(cell_type, cell_order=3, single_cell=False)
 
+    _shrink_factor = (
+        1.0
+        if shrink_factor is None
+        else _validation.validate_number(shrink_factor, must_be_in_range=[0.0, 1.0])
+    )
     ctypes = [
         CellType(ctype)
         for ctype in (cell_types if isinstance(cell_types, Iterable) else [cell_types])
@@ -2737,10 +2843,13 @@ def cell_type_source(  # numpydoc ignore=RT01
     for ctype in ctypes:
         grid = generate_grid(ctype)
         if grid is None:
-            msg = f'{ctype!r} is not supported by the {generator!r} generator.'
-            warn_external(msg)
-        elif grid.bounds_size != (1.0, 1.0, 1.0):
-            grid = grid.resize(bounds_size=1.0)
+            if unsupported_mode in ['warn', 'error']:
+                msg = f'{ctype!r} is not supported by the {generator!r} generator.'
+                if unsupported_mode == 'error':
+                    raise ValueError(msg)
+                warn_external(msg)
+        elif grid.bounds_size != (1.0, 1.0, 1.0) or _shrink_factor != 1.0:
+            grid = grid.resize(bounds_size=_shrink_factor)
         distinct_meshes.append(grid, ctype.name)
 
     # Build output from distinct meshes
@@ -2798,7 +2907,7 @@ def _vtkCellTypeSource(
     src.SetCellOrder(cell_order)
     src.SetCellType(celltype)
     src.Update()
-    ugrid = cast(_vtk.vtkUnstructuredGrid, src.GetOutput())
+    ugrid = cast('_vtk.vtkUnstructuredGrid', src.GetOutput())
 
     if single_cell:
         cell0 = ugrid.GetCell(0)
