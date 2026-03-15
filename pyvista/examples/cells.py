@@ -26,6 +26,7 @@ from pyvista.core import _vtk_core as _vtk
 if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import VectorLike
 
 
 _NOT_SUPPORTED_CELL_SOURCE = [
@@ -2672,7 +2673,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     cell_types: int | Sequence[int],
     generator: Literal['examples', 'blocks', 'parametric'] = 'examples',
     *,
-    block_dimensions=None,
+    block_dimensions: VectorLike[int] | None = None,
     shrink_factor: float | None = None,
     mismatch_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
     unsupported_mode: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
@@ -2687,13 +2688,16 @@ def cell_type_source(  # numpydoc ignore=RT01
     generator
         Method for generating cell type blocks.
 
-    block_dimensions
-        Output dimensions of blocks to generate.
+    block_dimensions : VectorLike[int], optional
+        Output dimensions of blocks to generate. By default, all blocks are stacked sequentially
+        along the x-axis. The dimensions should be compatible with the number of input cell types.
+        Use ``mismatch_mode`` to handle cases where the dimensions are _not_ compatible.
 
-    shrink_factor
-        Shrink each block by applying a scaling factor.
+    shrink_factor : float, optional
+        Shrink each block by applying a scaling factor. By default, no shrink factor is applied,
+        and each generated cell type is scaled to have a bounds size of 1x1x1.
 
-    mismatch_mode
+    mismatch_mode : 'exact' | 'cycle' | 'stop', default: 'exact'
         Select how to handle mismatched dimensions.
 
         - ``'exact'``: the number of cell types must match the specified block dimensions exactly.
@@ -2701,12 +2705,12 @@ def cell_type_source(  # numpydoc ignore=RT01
           specified block dimensions are completely filled.
         - ``'stop'``: stop iterating when all specified cell types have been generated.
 
-    unsupported_mode
+    unsupported_mode : 'skip' | 'squeeze'| 'warn' | 'error', default: 'error'
         Select how to handle unsupported cell types.
 
         - ``'skip'``: Skip generating a block for unsupported cell types. A ``None`` block is
-          included instead. This will generate a gap in the output.
-        - ``'squeeze'``: Similar to ``'skip'``, but no ``None`` block is included. Since no block
+          included instead. This will create a gap in the output.
+        - ``'squeeze'``: Similar to ``'skip'``, but no ``None`` block is appended. Since no block
           is included, there are no gaps and the output appears to be "squeezed" together.
         - ``'warn'``: Similar to ``skip``, but a warning is emitted when an unsupported type is
           encountered.
@@ -2893,7 +2897,7 @@ def cell_type_source(  # numpydoc ignore=RT01
             ctypes.append(ctype)
 
     if block_dimensions is None:
-        dimension = (len(ctypes), 1, 1)
+        dimension: int | VectorLike[int] = (len(ctypes), 1, 1)
     else:
         requested_size = np.prod(block_dimensions)
         actual_size = len(ctypes)
@@ -2914,7 +2918,7 @@ def cell_type_source(  # numpydoc ignore=RT01
                 )
                 raise ValueError(msg)
         dimension = block_dimensions
-    dims = _validation.validate_array3(dimension, broadcast=True)
+    dims = _validation.validate_array3(dimension, name='block_dimensions')
     cell_centers = pv.ImageData(dimensions=dims + 1).cell_centers().points
 
     if generator == 'examples':
