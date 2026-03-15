@@ -214,7 +214,7 @@ def plot_cell(
     if cpos is None:
         # Use xy view if we have all 2D cells lying in the xy plane
         if has_2d_cells_only and grid.dimensionality == 2 and np.isclose(grid.bounds_size[2], 0.0):
-            pl.view_xy()
+            pl.view_xy()  # type: ignore[call-arg]
         else:
             pl.camera.azimuth = 20
             pl.camera.elevation = -20
@@ -2856,26 +2856,32 @@ def cell_type_source(  # numpydoc ignore=RT01
     output = pv.MultiBlock()
     iterator = distinct_meshes.recursive_iterator('items')
     iterator = itertools.cycle(iterator) if mismatch_mode == 'cycle' else iterator
-    for center, (name, block) in zip(cell_centers, iterator, strict=False):
-        # Ensure we have unique names by appending a number if
-        # multiple blocks with this same cell type exist
-        possible_name = name
-        count = 0
-        while True:
-            if possible_name in output.keys():
-                count += 1
-                possible_name = f'{name}_{count}'
-                continue
-            block_name = possible_name
+
+    center_iter = iter(cell_centers)
+
+    for name, block in iterator:
+        if block is None:
+            if unsupported_mode == 'squeeze':
+                continue  # preserve center
+            next(center_iter, None)  # consume center
+            continue
+
+        center = next(center_iter, None)
+        if center is None:
             break
 
-        if block is None:
-            block_mesh = None
-        else:
-            # Ensure blocks are completely independent
-            block_mesh = block.copy() if block in output else block
-            # Position block on the grid
-            block_mesh.center = center
+        # Ensure unique names
+        possible_name = name
+        count = 0
+        while possible_name in output.keys():
+            count += 1
+            possible_name = f'{name}_{count}'
+        block_name = possible_name
+
+        # Ensure block is independent
+        block_mesh = block.copy() if block in output else block
+        # Position block on the grid
+        block_mesh.center = center
         output[block_name] = block_mesh
     return output
 
