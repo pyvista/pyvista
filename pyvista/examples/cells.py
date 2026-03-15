@@ -2676,7 +2676,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     block_dimensions: VectorLike[int] | None = None,
     shrink_factor: float | None = None,
     fill_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
-    unsupported_mode: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
+    unsupported_action: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
 ) -> MultiBlock:
     """Generate a MultiBlock mesh comprised of one or more cell types.
 
@@ -2705,7 +2705,7 @@ def cell_type_source(  # numpydoc ignore=RT01
           specified block dimensions are completely filled.
         - ``'stop'``: stop iterating when all specified cell types have been generated.
 
-    unsupported_mode : 'skip' | 'squeeze'| 'warn' | 'error', default: 'error'
+    unsupported_action : 'skip' | 'squeeze'| 'warn' | 'error', default: 'error'
         Select how to handle unsupported cell types.
 
         - ``'skip'``: Skip generating a block for unsupported cell types. A ``None`` block is
@@ -2782,7 +2782,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     triangle strip or polygon cells, so we skip these.
 
     >>> cell_blocks = cell_type_source(
-    ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_mode='skip'
+    ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_action='skip'
     ... )
     >>> plot_cell(cell_blocks)
 
@@ -2791,7 +2791,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     This combination generates a continuous grid with no gaps.
 
     >>> cell_blocks = cell_type_source(
-    ...     cell_types, 'blocks', unsupported_mode='squeeze'
+    ...     cell_types, 'blocks', unsupported_action='squeeze'
     ... )
     >>> plot_cell(cell_blocks)
 
@@ -2836,7 +2836,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     ...     cell_types,
     ...     'blocks',
     ...     block_dimensions=(5, 5, 5),
-    ...     unsupported_mode='squeeze',
+    ...     unsupported_action='squeeze',
     ...     fill_mode='cycle',
     ... )
     >>> cell_blocks.plot(show_edges=True, opacity=0.5, line_width=3)
@@ -2860,7 +2860,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> kwargs = dict(
     ...     cell_types=range(1, 26),
     ...     block_dimensions=(5, 5, 1),
-    ...     unsupported_mode='skip',
+    ...     unsupported_action='skip',
     ... )
     >>> cell_blocks = cell_type_source(generator='examples', **kwargs)
     >>> plot_cell(cell_blocks, cpos='xy')
@@ -2938,10 +2938,10 @@ def cell_type_source(  # numpydoc ignore=RT01
             grid = None
             name = 'None'
         if grid is None:
-            if unsupported_mode in ['warn', 'error']:
+            if unsupported_action in ['warn', 'error']:
                 invalid = ' ' if isinstance(ctype, CellType) else ' is not a valid cell type and '
                 msg = f'{ctype!r}{invalid}is not supported by the {generator!r} generator.'
-                if unsupported_mode == 'error':
+                if unsupported_action == 'error':
                     raise ValueError(msg)
                 warn_external(msg)
         elif grid.bounds_size != (1.0, 1.0, 1.0) or _shrink_factor != 1.0:
@@ -2957,7 +2957,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     name_counts: dict[str, int] = {}
     for name, block in iterator:
         if block is None:
-            if unsupported_mode == 'squeeze':
+            if unsupported_action == 'squeeze':
                 continue  # preserve center
             next(center_iter, None)  # consume center
             continue
