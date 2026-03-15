@@ -2854,12 +2854,13 @@ def cell_type_source(  # numpydoc ignore=RT01
     Plot them with 3 cells in the x-direction, and 4 cells in the y-direction.
 
     >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(3, 4, 1))
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> size_kwargs = dict(point_size=40, font_size=20)
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     Reverse the x and y dimension.
 
     >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(4, 3, 1))
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     Use the ``'stop'`` fill mode if there is a mismatch between the number of cell types and block
     dimensions. Here, the last two pyramid cell types are omitted.
@@ -2867,7 +2868,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> cell_blocks = cell_type_source(
     ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='stop'
     ... )
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     Alternatively, cycle through the cell types again to completely fill the dimensions. In this
     case, the line type is reused to fill the gap.
@@ -2875,7 +2876,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> cell_blocks = cell_type_source(
     ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='cycle'
     ... )
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
 
@@ -2911,13 +2912,13 @@ def cell_type_source(  # numpydoc ignore=RT01
     ...     unsupported_action='skip',
     ... )
     >>> cell_blocks = cell_type_source(generator='examples', **kwargs)
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     >>> cell_blocks = cell_type_source(generator='parametric', **kwargs)
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     >>> cell_blocks = cell_type_source(generator='blocks', **kwargs)
-    >>> plot_cell(cell_blocks, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     """
 
