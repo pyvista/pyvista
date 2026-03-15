@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import re
 
 import numpy as np
 import pytest
@@ -203,15 +204,19 @@ def test_cell_type_source(cell_type, generator):
         assert mesh.center == (0.0, 0.0, 0.0)
     else:
         assert mesh.center == (0.5, 0.5, 0.5)
+    if cell_type.dimension == 3:
+        assert np.allclose(mesh.bounds, (0.0, 1.0, 0.0, 1.0, 0.0, 1.0))
 
 
 @pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
 @pytest.mark.parametrize('dimensions', [(4, 1, 1), (1, 4, 1), (1, 1, 4)])
 def test_cell_type_source_block_dimensions(dimensions, generator):
-    celltype = CellType.PYRAMID  # Use a 3D cell type whose example isn't 1x1x1 in size
-    mesh = cells.cell_type_source(celltype, generator, block_dimensions=dimensions, cycle=True)
+    celltype = CellType.HEXAHEDRON
+    mesh = cells.cell_type_source(
+        celltype, generator, block_dimensions=dimensions, mismatch_mode='cycle'
+    )
     assert np.allclose(mesh.bounds, (0.0, dimensions[0], 0.0, dimensions[1], 0.0, dimensions[2]))
-    assert mesh.keys() == ['PYRAMID', 'PYRAMID_1', 'PYRAMID_2', 'PYRAMID_3']
+    assert mesh.keys() == ['HEXAHEDRON', 'HEXAHEDRON_1', 'HEXAHEDRON_2', 'HEXAHEDRON_3']
 
     # Test blocks are independent copies
     ids = {id(m) for m in mesh}
@@ -219,7 +224,7 @@ def test_cell_type_source_block_dimensions(dimensions, generator):
 
     # Test without cycle
     mesh_no_cycle = cells.cell_type_source(
-        [celltype] * 4, generator, block_dimensions=dimensions, cycle=False
+        [celltype] * 4, generator, block_dimensions=dimensions, mismatch_mode='exact'
     )
     assert mesh == mesh_no_cycle
 
@@ -246,6 +251,25 @@ def test_cell_type_source_invalid_abstract(generator, cell_type):
     match = f'{cell_type!r} is not supported'
     with pytest.warns(UserWarning, match=match):
         cells.cell_type_source(cell_type, generator=generator)
+
+
+def test_cell_type_source_mismatch_mode():
+    match = (
+        'Requested dimension (2, 1, 1) is too large. Number of cell types to generate (1) '
+        'is less than the number of blocks requested (2).\n'
+        'Use `mismatch_mode` to prevent an error from being raised.'
+    )
+    kwargs = dict(cell_types=CellType.HEXAHEDRON, block_dimensions=(2, 1, 1))
+    with pytest.raises(ValueError, match=re.escape(match)):
+        cells.cell_type_source(**kwargs)
+
+    mesh = cells.cell_type_source(mismatch_mode='stop', **kwargs)
+    assert mesh.n_blocks == 1
+    assert mesh.bounds == (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
+
+    mesh = cells.cell_type_source(mismatch_mode='cycle', **kwargs)
+    assert mesh.n_blocks == 2
+    assert mesh.bounds == (0.0, 2.0, 0.0, 1.0, 0.0, 1.0)
 
 
 def test_empty():

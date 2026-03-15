@@ -2688,7 +2688,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     generator: Literal['examples', 'blocks', 'parametric'] = 'examples',
     *,
     block_dimensions=None,
-    cycle: bool = False,
+    mismatch_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
 ) -> MultiBlock:
     """Generate a MultiBlock mesh comprised of one or more cell types.
 
@@ -2703,9 +2703,13 @@ def cell_type_source(  # numpydoc ignore=RT01
     block_dimensions
         Output dimensions of blocks to generate.
 
-    cycle
-        Cycle through and duplicate cell types as required in order to ensure the specified
-        block dimensions can be filled.
+    mismatch_mode
+        Select how to handle mismatched dimensions.
+
+        - ``'exact'``: the number of cell types must match the specified block dimensions exactly.
+        - ``'cycle'``: cycle through and duplicate cell types as required to ensure the
+          specified block dimensions are completely filled.
+        - ``'stop'``: stop iterating when all specified cell types have been generated.
 
     """
 
@@ -2736,14 +2740,15 @@ def cell_type_source(  # numpydoc ignore=RT01
                 f'the number of blocks requested ({requested_size}).'
             )
             raise ValueError(msg)
-        elif requested_size > actual_size and not cycle:
-            msg = (
-                f'Requested dimension {block_dimensions} is too large. '
-                f'Number of cell types to generate ({actual_size}) is less than '
-                f'the number of blocks requested ({requested_size}).\n'
-                f'Use `cycle=True` to cycle through and duplicate the cell types.'
-            )
-            raise ValueError(msg)
+        elif requested_size > actual_size:
+            if mismatch_mode == 'exact':
+                msg = (
+                    f'Requested dimension {block_dimensions} is too large. '
+                    f'Number of cell types to generate ({actual_size}) is less than '
+                    f'the number of blocks requested ({requested_size}).\n'
+                    f'Use `mismatch_mode` to prevent an error from being raised.'
+                )
+                raise ValueError(msg)
         dimension = block_dimensions
     dims = _validation.validate_array3(dimension, broadcast=True)
     cell_centers = pv.ImageData(dimensions=dims + 1).cell_centers().points
@@ -2764,13 +2769,13 @@ def cell_type_source(  # numpydoc ignore=RT01
             warn_external(msg)
         elif grid.bounds_size != (1.0, 1.0, 1.0):
             grid = grid.resize(bounds_size=1.0)
-        distinct_meshes[ctype.name] = grid
+        distinct_meshes.append(grid, ctype.name)
 
     # Build output from distinct meshes
     output = pv.MultiBlock()
-    for center, (name, block) in zip(
-        cell_centers, itertools.cycle(distinct_meshes.recursive_iterator('items'))
-    ):
+    iterator = distinct_meshes.recursive_iterator('items')
+    iterator = itertools.cycle(iterator) if mismatch_mode == 'cycle' else iterator
+    for center, (name, block) in zip(cell_centers, iterator, strict=False):
         # Ensure we have unique names by appending a number if
         # multiple blocks with this same cell type exist
         possible_name = name
