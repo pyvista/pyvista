@@ -2726,7 +2726,7 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     )
 
 
-def cell_type_source(  # numpydoc ignore=RT01
+def generate_cell_blocks(  # numpydoc ignore=RT01
     cell_types: int | Sequence[int],
     generator: Literal['examples', 'source', 'parametric'] = 'examples',
     *,
@@ -2740,6 +2740,8 @@ def cell_type_source(  # numpydoc ignore=RT01
     A separate :class:`~pyvista.UnstructuredGrid` block is generated for each input cell type.
     Cell types may be repeated or mixed in any order. By default, all blocks are stacked
     sequentially along the x-axis, though ``block_dimensions`` may be specified to control this.
+
+    .. versionadded:: 0.48
 
     Parameters
     ----------
@@ -2794,8 +2796,8 @@ def cell_type_source(  # numpydoc ignore=RT01
     Generate a single :attr:`~pyvista.CellType.TRIANGLE` cell.
 
     >>> import pyvista as pv
-    >>> from pyvista.examples import cells, cell_type_source, plot_cell
-    >>> triangle = cell_type_source(pv.CellType.TRIANGLE)
+    >>> from pyvista.examples import cells, generate_cell_blocks, plot_cell
+    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE)
     >>> plot_cell(triangle)
 
     This is similar to the :func:`~pyvista.examples.cells.Triangle` grid, except it's a
@@ -2821,12 +2823,12 @@ def cell_type_source(  # numpydoc ignore=RT01
 
     Use the ``'parametric'`` generator instead.
 
-    >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'parametric')
+    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'parametric')
     >>> plot_cell(triangle)
 
     Use the ``'source'`` generator instead.
 
-    >>> triangle = cell_type_source(pv.CellType.TRIANGLE, 'source')
+    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'source')
     >>> plot_cell(triangle)
 
     Generate multiple cell types. Here we generate all concrete linear 2D cells.
@@ -2843,7 +2845,7 @@ def cell_type_source(  # numpydoc ignore=RT01
      <CellType.PIXEL: 8>,
      <CellType.QUAD: 9>]
 
-    >>> cell_blocks = cell_type_source(cell_types, shrink_factor=0.8)
+    >>> cell_blocks = generate_cell_blocks(cell_types, shrink_factor=0.8)
     >>> plot_cell(cell_blocks)
 
     Each block's name matches the name of the cell type.
@@ -2854,7 +2856,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     Generate the same cell types using the parametric generator. This generator does not support
     triangle strip or polygon cells, so we skip these.
 
-    >>> cell_blocks = cell_type_source(
+    >>> cell_blocks = generate_cell_blocks(
     ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_action='skip'
     ... )
     >>> plot_cell(cell_blocks)
@@ -2863,7 +2865,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     This time, we squeeze the blocks together instead of skipping them, and do not shrink them.
     This combination generates a continuous grid with no gaps.
 
-    >>> cell_blocks = cell_type_source(
+    >>> cell_blocks = generate_cell_blocks(
     ...     cell_types, 'source', unsupported_action='squeeze'
     ... )
     >>> plot_cell(cell_blocks)
@@ -2878,19 +2880,19 @@ def cell_type_source(  # numpydoc ignore=RT01
 
     Plot them with 3 cells in the x-direction, and 4 cells in the y-direction.
 
-    >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(3, 4, 1))
+    >>> cell_blocks = generate_cell_blocks(cell_types, block_dimensions=(3, 4, 1))
     >>> size_kwargs = dict(point_size=40, font_size=20)
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     Reverse the x and y dimension.
 
-    >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(4, 3, 1))
+    >>> cell_blocks = generate_cell_blocks(cell_types, block_dimensions=(4, 3, 1))
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     Use the ``'stop'`` fill mode if there is a mismatch between the number of cell types and block
     dimensions. Here, the last two pyramid cell types are omitted.
 
-    >>> cell_blocks = cell_type_source(
+    >>> cell_blocks = generate_cell_blocks(
     ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='stop'
     ... )
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
@@ -2898,7 +2900,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     Alternatively, cycle through the cell types again to completely fill the dimensions. In this
     case, the line type is reused to fill the gap.
 
-    >>> cell_blocks = cell_type_source(
+    >>> cell_blocks = generate_cell_blocks(
     ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='cycle'
     ... )
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
@@ -2906,7 +2908,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
 
     >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
-    >>> cell_blocks = cell_type_source(
+    >>> cell_blocks = generate_cell_blocks(
     ...     cell_types,
     ...     'source',
     ...     block_dimensions=(5, 5, 5),
@@ -2936,13 +2938,13 @@ def cell_type_source(  # numpydoc ignore=RT01
     ...     block_dimensions=(5, 5, 1),
     ...     unsupported_action='skip',
     ... )
-    >>> cell_blocks = cell_type_source(generator='examples', **kwargs)
+    >>> cell_blocks = generate_cell_blocks(generator='examples', **kwargs)
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = cell_type_source(generator='parametric', **kwargs)
+    >>> cell_blocks = generate_cell_blocks(generator='parametric', **kwargs)
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = cell_type_source(generator='source', **kwargs)
+    >>> cell_blocks = generate_cell_blocks(generator='source', **kwargs)
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     """

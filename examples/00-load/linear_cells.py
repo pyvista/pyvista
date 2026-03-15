@@ -24,8 +24,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 import numpy as np
 import pyvista as pv
-from pyvista.examples import cell_type_source
 from pyvista.examples import cells as example_cells
+from pyvista.examples import generate_cell_blocks
 from pyvista.examples import plot_cell
 
 # random generator for examples
@@ -294,7 +294,7 @@ linear_cell_types.remove(pv.CellType.CONVEX_POINT_SET)
 
 # %%
 # Generate a :class:`~pyvista.MultiBlock` with all 16 linear cells.
-linear_cells = cell_type_source(linear_cell_types)
+linear_cells = generate_cell_blocks(linear_cell_types)
 
 # %%
 # Plot each grid on its own subplot.
@@ -319,7 +319,7 @@ pl.show()
 # %%
 # Instead of using subplots, plot the generated mesh directly as a single grid of cells.
 # Use a shrink factor to create space between cells.
-cells = cell_type_source(
+cells = generate_cell_blocks(
     linear_cell_types, block_dimensions=(n_rows, n_cols, 1), shrink_factor=0.5
 )
 

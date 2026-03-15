@@ -204,14 +204,14 @@ def test_abstract_celltype():
 
 @pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is not None])
-def test_cell_type_source(cell_type, generator):
+def test_generate_cell_blocks(cell_type, generator):
     if pv.vtk_version_info < (9, 4, 0) and generator == 'source':
         pytest.skip('VTK bug with vtkCellTypeSource for some cell types')
     if (generator == 'parametric' and cell_type in _NOT_SUPPORTED_PARAMETRIC) or (
         generator == 'source' and cell_type in _NOT_SUPPORTED_CELL_SOURCE
     ):
         pytest.xfail('Not supported')
-    mesh = cells.cell_type_source(cell_type, generator)
+    mesh = cells.generate_cell_blocks(cell_type, generator)
     assert isinstance(mesh, pv.MultiBlock)
     assert mesh.n_blocks == 1
     assert mesh.keys() == [cell_type.name]
@@ -226,9 +226,9 @@ def test_cell_type_source(cell_type, generator):
 
 @pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
 @pytest.mark.parametrize('dimensions', [(4, 1, 1), (1, 4, 1), (1, 1, 4)])
-def test_cell_type_source_block_dimensions(dimensions, generator):
+def test_generate_cell_blocks_block_dimensions(dimensions, generator):
     celltype = CellType.HEXAHEDRON
-    mesh = cells.cell_type_source(
+    mesh = cells.generate_cell_blocks(
         celltype, generator, block_dimensions=dimensions, fill_mode='cycle'
     )
     assert np.allclose(mesh.bounds, (0.0, dimensions[0], 0.0, dimensions[1], 0.0, dimensions[2]))
@@ -239,52 +239,52 @@ def test_cell_type_source_block_dimensions(dimensions, generator):
     assert len(ids) == mesh.n_blocks
 
     # Test without cycle
-    mesh_no_cycle = cells.cell_type_source(
+    mesh_no_cycle = cells.generate_cell_blocks(
         [celltype] * 4, generator, block_dimensions=dimensions, fill_mode='exact'
     )
     assert mesh == mesh_no_cycle
 
 
-def test_cell_type_source_block_dimensions_raises():
+def test_generate_cell_blocks_block_dimensions_raises():
     match = (
         'Requested dimension (1, 1, 1) is too small. Number of cell types to generate (2) '
         'exceeds the number of blocks requested (1).'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        cells.cell_type_source([CellType.TRIANGLE] * 2, block_dimensions=(1, 1, 1))
+        cells.generate_cell_blocks([CellType.TRIANGLE] * 2, block_dimensions=(1, 1, 1))
 
 
 @pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_CELL_SOURCE)
-def test_cell_type_source_invalid_blocks(cell_type):
+def test_generate_cell_blocks_invalid_blocks(cell_type):
     assert cell_type.vtk_class is not None
     match = f"{cell_type!r} is not supported by the 'source' generator."
     with pytest.raises(ValueError, match=match):
-        cells.cell_type_source(cell_type, generator='source')
+        cells.generate_cell_blocks(cell_type, generator='source')
 
 
 @pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_PARAMETRIC)
-def test_cell_type_source_invalid_parametric(cell_type):
+def test_generate_cell_blocks_invalid_parametric(cell_type):
     assert cell_type.vtk_class is not None
     match = f"{cell_type!r} is not supported by the 'parametric' generator."
     with pytest.raises(ValueError, match=match):
-        cells.cell_type_source(cell_type, generator='parametric')
+        cells.generate_cell_blocks(cell_type, generator='parametric')
 
 
 @pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is None])
-def test_cell_type_source_invalid_abstract(generator, cell_type):
+def test_generate_cell_blocks_invalid_abstract(generator, cell_type):
     match = f'{cell_type!r} is not supported'
     with pytest.raises(ValueError, match=match):
-        cells.cell_type_source(cell_type, generator=generator)
+        cells.generate_cell_blocks(cell_type, generator=generator)
 
 
-def test_cell_type_source_invalid_value():
+def test_generate_cell_blocks_invalid_value():
     match = "-1 is not a valid cell type and is not supported by the 'examples' generator."
     with pytest.raises(ValueError, match=match):
-        cells.cell_type_source(-1)
+        cells.generate_cell_blocks(-1)
 
 
-def test_cell_type_source_fill_mode():
+def test_generate_cell_blocks_fill_mode():
     match = (
         'Requested dimension (2, 1, 1) is too large. Number of cell types to generate (1) '
         'is less than the number of blocks requested (2).\n'
@@ -292,13 +292,13 @@ def test_cell_type_source_fill_mode():
     )
     kwargs = dict(cell_types=CellType.HEXAHEDRON, block_dimensions=(2, 1, 1))
     with pytest.raises(ValueError, match=re.escape(match)):
-        cells.cell_type_source(**kwargs)
+        cells.generate_cell_blocks(**kwargs)
 
-    mesh = cells.cell_type_source(fill_mode='stop', **kwargs)
+    mesh = cells.generate_cell_blocks(fill_mode='stop', **kwargs)
     assert mesh.n_blocks == 1
     assert mesh.bounds == (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
 
-    mesh = cells.cell_type_source(fill_mode='cycle', **kwargs)
+    mesh = cells.generate_cell_blocks(fill_mode='cycle', **kwargs)
     assert mesh.n_blocks == 2
     assert mesh.bounds == (0.0, 2.0, 0.0, 1.0, 0.0, 1.0)
 
