@@ -2766,23 +2766,82 @@ def cell_type_source(  # numpydoc ignore=RT01
      <CellType.PIXEL: 8>,
      <CellType.QUAD: 9>]
 
-    >>> cells = cell_type_source(cell_types, shrink_factor=0.8)
-    >>> plot_cell(cells)
+    >>> grid = cell_type_source(cell_types, shrink_factor=0.8)
+    >>> plot_cell(grid)
 
     Generate the same cell types using the parametric generator. This generator does not support
     triangle strip or polygon cells, so we skip these.
 
-    >>> cells = cell_type_source(
+    >>> grid = cell_type_source(
     ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_mode='skip'
     ... )
-    >>> plot_cell(cells)
+    >>> plot_cell(grid)
 
     Use the blocks generator. It also does not support triangle strip, but it does support polygon.
     This time, we squeeze the blocks together instead of skipping them, and do not shrink them.
     This combination generates a continuous grid with no gaps.
 
-    >>> cells = cell_type_source(cell_types, 'blocks', unsupported_mode='squeeze')
-    >>> plot_cell(cells)
+    >>> grid = cell_type_source(cell_types, 'blocks', unsupported_mode='squeeze')
+    >>> plot_cell(grid)
+
+    Generate a dimensioned grid of cell types.
+
+    >>> lines = [pv.CellType.LINE] * 3
+    >>> polygons = [pv.CellType.POLYGON] * 3
+    >>> wedges = [pv.CellType.WEDGE] * 3
+    >>> pyramids = [pv.CellType.PYRAMID] * 3
+    >>> cell_types = [*lines, *polygons, *wedges, *pyramids]
+
+    Plot them with 3 cells in the x-direction, and 4 cells in the y-irection.
+
+    >>> grid = cell_type_source(cell_types, block_dimensions=(3, 4, 1))
+    >>> plot_cell(grid, cpos='xy')
+
+    Reverse the x and y dimension.
+
+    >>> grid = cell_type_source(cell_types, block_dimensions=(4, 3, 1))
+    >>> plot_cell(grid, cpos='xy')
+
+    Use stop mode if there is a mismatch between the number of cell types and block dimensions.
+    Here, the last two pyramid cell types are omitted.
+
+    >>> grid = cell_type_source(
+    ...     cell_types[:-2], block_dimensions=(3, 4, 1), mismatch_mode='stop'
+    ... )
+    >>> plot_cell(grid, cpos='xy')
+
+    Alternatively, cycle through the cell types again to completely fill the dimensions. In this
+    case, the line type is reused to fill the gap.
+
+    >>> grid = cell_type_source(
+    ...     cell_types[:-2], block_dimensions=(3, 4, 1), mismatch_mode='cycle'
+    ... )
+    >>> plot_cell(grid, cpos='xy')
+
+    Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
+
+    >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
+    >>> grid = cell_type_source(
+    ...     cell_types,
+    ...     'blocks',
+    ...     block_dimensions=(5, 5, 5),
+    ...     unsupported_mode='squeeze',
+    ...     mismatch_mode='cycle',
+    ... )
+    >>> grid.plot(show_edges=True, opacity=0.5)
+
+    Combine into a single grid and show :attr:`~pyvista.DataSet.distinct_cell_types`.
+
+    >>> grid.combine().distinct_cell_types  # doctest: +NORMALIZE_WHITESPACE
+    {<CellType.TETRA: 10>, <CellType.VOXEL: 11>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
+     <CellType.PYRAMID: 14>, <CellType.PENTAGONAL_PRISM: 15>, <CellType.HEXAGONAL_PRISM: 16>,
+     <CellType.QUADRATIC_TETRA: 24>, <CellType.QUADRATIC_HEXAHEDRON: 25>,
+     <CellType.QUADRATIC_WEDGE: 26>, <CellType.QUADRATIC_PYRAMID: 27>,
+     <CellType.TRIQUADRATIC_HEXAHEDRON: 29>, <CellType.TRIQUADRATIC_PYRAMID: 37>,
+     <CellType.POLYHEDRON: 42>, <CellType.LAGRANGE_TETRAHEDRON: 71>,
+     <CellType.LAGRANGE_HEXAHEDRON: 72>, <CellType.LAGRANGE_WEDGE: 73>,
+     <CellType.BEZIER_TETRAHEDRON: 78>, <CellType.BEZIER_HEXAHEDRON: 79>,
+     <CellType.BEZIER_WEDGE: 80>}
 
     """
 
