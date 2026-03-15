@@ -452,7 +452,13 @@ _CELL_TYPE_INFO = dict(
     # Special class of cells formed by convex group of points
     CONVEX_POINT_SET=_CellTypeTuple(
         value=_vtk.VTK_CONVEX_POINT_SET,
+        example='ConvexPointSet',
+        doc="""
+        Represents a 3D cell defined by a convex set of points.
+        """,
         variable_points=True,
+        variable_edges=True,
+        variable_faces=True,
     ),
     ####################################################################################
     # Polyhedron cell (consisting of polygonal faces)
@@ -1009,7 +1015,7 @@ class CellType(IntEnum):
         ------
         ValueError
             If the number of edges cannot be determined without a concrete instance.
-            Polygon, polyhedron, and triangle strip will all raise an error.
+            Polygon, polyhedron, triangle strip, and convex point set will all raise an error.
 
         Examples
         --------
@@ -1059,7 +1065,7 @@ class CellType(IntEnum):
         ------
         ValueError
             If the number of faces cannot be determined without a concrete instance.
-            Polyhedron will raise an error.
+            Polyhedron and convex point set will raise an error.
 
         Examples
         --------

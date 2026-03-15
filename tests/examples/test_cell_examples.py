@@ -64,6 +64,12 @@ def test_cell_is_valid(cell_example):
     ):
         # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
         assert invalid_fields == ('negative_size',)
+    elif cell_type == pv.CellType.CONVEX_POINT_SET:
+        # VTK bug: the convex points are incorrectly flagged as non-convex https://gitlab.kitware.com/vtk/vtk/-/issues/19992
+        assert invalid_fields == ('non_convex',)
+        # Show that the points are in fact convex as a surface
+        assert mesh.extract_surface(algorithm=None).validate_mesh().is_valid
+
     else:
         assert not invalid_fields
 
@@ -81,9 +87,12 @@ def test_cell_name(cell_example):
         expected = 'PolyVertex'
     elif expected == 'Polyline':
         expected = 'PolyLine'
-    elif expected == 'UnknownCell' and cell_type == CellType.EMPTY_CELL:
-        # VTK bug with empty cell https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786036
-        expected = 'Empty'
+    elif expected == 'UnknownCell':
+        # VTK bug with these cells https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786036
+        if cell_type == CellType.EMPTY_CELL:
+            expected = 'Empty'
+        if cell_type == CellType.CONVEX_POINT_SET:
+            expected = 'ConvexPointSet'
 
     actual = cell_example.__name__
     assert actual == expected
@@ -129,6 +138,7 @@ def test_cell_n_points(cell_example):
         'Polyhedron',
         'QuadraticPolygon',
         'TriangleStrip',
+        'ConvexPointSet',
     ):
         match = (
             f'Cannot determine number of points for {celltype.name!r} '
@@ -145,7 +155,13 @@ def test_cell_n_points(cell_example):
 def test_cell_n_edges(cell_example):
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
-    if cell_example.__name__ in ('Polygon', 'Polyhedron', 'QuadraticPolygon', 'TriangleStrip'):
+    if cell_example.__name__ in (
+        'Polygon',
+        'Polyhedron',
+        'QuadraticPolygon',
+        'TriangleStrip',
+        'ConvexPointSet',
+    ):
         match = (
             f'Cannot determine number of edges for {celltype.name!r} '
             f'without a concrete cell instance.'
@@ -160,7 +176,7 @@ def test_cell_n_edges(cell_example):
 def test_cell_n_faces(cell_example):
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
-    if cell_example.__name__ == 'Polyhedron':
+    if cell_example.__name__ in ('Polyhedron', 'ConvexPointSet'):
         match = (
             f'Cannot determine number of faces for {celltype.name!r} '
             f'without a concrete cell instance.'

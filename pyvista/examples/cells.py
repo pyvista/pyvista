@@ -134,7 +134,11 @@ def plot_cell(
         # Use existing grid if it's already a grid with one cell
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
-        edges = cell_as_grid.extract_all_edges()
+        if cell.type == CellType.CONVEX_POINT_SET:
+            # Cell does not actually have edges, so convert it to a surface first
+            edges = cell_as_grid.extract_surface(algorithm=None).extract_all_edges()
+        else:
+            edges = cell_as_grid.extract_all_edges()
         if edges.n_cells or cell.dimension == 1:
             pl.add_mesh(
                 cell_as_grid,
@@ -289,6 +293,50 @@ def PolyVertex() -> UnstructuredGrid:
     points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0.4], [0, 1, 0.6]]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.POLY_VERTEX], points)
+
+
+def ConvexPointSet() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single convex point set.
+
+    This represents a set of 3D vertices as a single convex cell.
+
+    This cell corresponds to the :attr:`pyvista.CellType.CONVEX_POINT_SET` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single convex point set.
+
+    Examples
+    --------
+    Create and plot a single convex point set.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.ConvexPointSet()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells. This could be any number of points.
+
+    >>> grid.cells
+    array([6, 0, 1, 2, 3, 4, 5])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0. , 0. , 1. ],
+                     [1. , 0. , 0.4],
+                     [0. , 1. , 0.6]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.CONVEX_POINT_SET
+    array([41], dtype=uint8)
+
+    """
+    points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0.4], [0, 1, 0.6]]
+    cells = [len(points), *list(range(len(points)))]
+    return UnstructuredGrid(cells, [CellType.CONVEX_POINT_SET], points)
 
 
 def Line() -> UnstructuredGrid:
