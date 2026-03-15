@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import VectorLike
+    from pyvista.plotting._typing import CameraPositionOptions
 
 
 _NOT_SUPPORTED_CELL_SOURCE = [
@@ -57,7 +58,7 @@ _NOT_SUPPORTED_PARAMETRIC = [
 
 def plot_cell(
     grid: DataSet | MultiBlock,
-    cpos=None,
+    cpos: CameraPositionOptions | None = None,
     *,
     line_width: int | None = None,
     point_size: int | None = None,
@@ -78,15 +79,23 @@ def plot_cell(
 
     Parameters
     ----------
-    grid : PolyData | UnstructuredGrid
+    grid : DataSet | MultiBlock
         Dataset containing one single cell (ideally), though plotting a mesh with multiple cells
         is supported.
 
         .. versionchanged:: 0.47
             Plotting :class:`~pyvista.PolyData` is now supported.
 
+        .. versionchanged:: 0.48
+            Plotting :class:`~pyvista.MultiBlock` is now supported.
+
     cpos : str, optional
-        Camera position.
+        Camera position. Byx default, an ``'xy'`` view is used for 2D planar inputs; otherwise,
+        it's set to ``azimuth=20`` and ``elevation=-20``.
+
+        .. versionchanged:: 0.48
+
+            An ``'xy'`` view is now used by default for planar inputs.
 
     line_width : int, default: 5
         Line width of the cell's edges.
@@ -2726,24 +2735,40 @@ def cell_type_source(  # numpydoc ignore=RT01
     fill_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
     unsupported_action: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
 ) -> MultiBlock:
-    """Generate a MultiBlock mesh comprised of one or more cell types.
+    """Generate a :class:`~pyvista.MultiBlock` mesh comprised of one or more cell types.
+
+    A separate :class:`~pyvista.UnstructuredGrid` block is generated for each input cell type.
+    Cell types may be repeated or mixed in any order. By default, all blocks are stacked
+    sequentially along the x-axis, though ``block_dimensions`` may be specified to control this.
 
     Parameters
     ----------
-    cell_types
+    cell_types : int | sequence[int]
         Cell types to generate.
 
-    generator
+    generator : 'examples' | 'blocks' | 'parametric', default: 'examples'
         Method for generating cell type blocks.
+
+        - ``'examples'``: generate blocks using examples from :mod:`pyvista.examples.cells`.
+        - ``'parametric'``: generate blocks using :vtk:`vtkCell.GetParametricCoords`.
+        - ``'blocks'``: generate blocks using :vtk:`vtkCellTypeSource`.
+
+        .. note::
+
+           - ``'examples'`` supports all concrete :class:`cell types <pyvista.CellType>`, but
+             the other generators only support a subset.
+           - Both ``'examples'`` and ``'parametric'`` only generate a `single` cell per block,
+             whereas ``'blocks'`` may generate multiple cells of the same type in order to fill a
+             unit block (e.g. two triangles to fill a square, two wedges to fill a cube).
 
     block_dimensions : VectorLike[int], optional
         Output dimensions of blocks to generate. By default, all blocks are stacked sequentially
         along the x-axis. The dimensions should be compatible with the number of input cell types.
-        Use ``fill_mode`` to handle cases where the dimensions are _not_ compatible.
+        Use ``fill_mode`` to handle cases where the dimensions are `not` compatible.
 
     shrink_factor : float, optional
         Shrink each block by applying a scaling factor. By default, no shrink factor is applied,
-        and each generated cell type is scaled to have a bounds size of 1x1x1.
+        and each generated cell type is scaled to fit inside a unit cube.
 
     fill_mode : 'exact' | 'cycle' | 'stop', default: 'exact'
         Select how to handle mismatched dimensions.
