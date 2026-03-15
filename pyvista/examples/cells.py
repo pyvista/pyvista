@@ -2675,7 +2675,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     *,
     block_dimensions: VectorLike[int] | None = None,
     shrink_factor: float | None = None,
-    mismatch_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
+    fill_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
     unsupported_mode: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
 ) -> MultiBlock:
     """Generate a MultiBlock mesh comprised of one or more cell types.
@@ -2691,13 +2691,13 @@ def cell_type_source(  # numpydoc ignore=RT01
     block_dimensions : VectorLike[int], optional
         Output dimensions of blocks to generate. By default, all blocks are stacked sequentially
         along the x-axis. The dimensions should be compatible with the number of input cell types.
-        Use ``mismatch_mode`` to handle cases where the dimensions are _not_ compatible.
+        Use ``fill_mode`` to handle cases where the dimensions are _not_ compatible.
 
     shrink_factor : float, optional
         Shrink each block by applying a scaling factor. By default, no shrink factor is applied,
         and each generated cell type is scaled to have a bounds size of 1x1x1.
 
-    mismatch_mode : 'exact' | 'cycle' | 'stop', default: 'exact'
+    fill_mode : 'exact' | 'cycle' | 'stop', default: 'exact'
         Select how to handle mismatched dimensions.
 
         - ``'exact'``: the number of cell types must match the specified block dimensions exactly.
@@ -2813,11 +2813,11 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(4, 3, 1))
     >>> plot_cell(cell_blocks, cpos='xy')
 
-    Use stop mode if there is a mismatch between the number of cell types and block dimensions.
-    Here, the last two pyramid cell types are omitted.
+    Use the ``'stop'`` fill mode if there is a mismatch between the number of cell types and block
+    dimensions. Here, the last two pyramid cell types are omitted.
 
     >>> cell_blocks = cell_type_source(
-    ...     cell_types[:-2], block_dimensions=(3, 4, 1), mismatch_mode='stop'
+    ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='stop'
     ... )
     >>> plot_cell(cell_blocks, cpos='xy')
 
@@ -2825,7 +2825,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     case, the line type is reused to fill the gap.
 
     >>> cell_blocks = cell_type_source(
-    ...     cell_types[:-2], block_dimensions=(3, 4, 1), mismatch_mode='cycle'
+    ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='cycle'
     ... )
     >>> plot_cell(cell_blocks, cpos='xy')
 
@@ -2837,7 +2837,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     ...     'blocks',
     ...     block_dimensions=(5, 5, 5),
     ...     unsupported_mode='squeeze',
-    ...     mismatch_mode='cycle',
+    ...     fill_mode='cycle',
     ... )
     >>> cell_blocks.plot(show_edges=True, opacity=0.5, line_width=3)
 
@@ -2909,12 +2909,12 @@ def cell_type_source(  # numpydoc ignore=RT01
             )
             raise ValueError(msg)
         elif requested_size > actual_size:
-            if mismatch_mode == 'exact':
+            if fill_mode == 'exact':
                 msg = (
                     f'Requested dimension {block_dimensions} is too large. '
                     f'Number of cell types to generate ({actual_size}) is less than '
                     f'the number of blocks requested ({requested_size}).\n'
-                    f'Use `mismatch_mode` to prevent an error from being raised.'
+                    f'Use `fill_mode` to prevent an error from being raised.'
                 )
                 raise ValueError(msg)
         dimension = block_dimensions
@@ -2951,7 +2951,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     # Build output from distinct meshes
     output = pv.MultiBlock()
     iterator = distinct_meshes.recursive_iterator('items')
-    iterator = itertools.cycle(iterator) if mismatch_mode == 'cycle' else iterator
+    iterator = itertools.cycle(iterator) if fill_mode == 'cycle' else iterator
 
     center_iter = iter(cell_centers)
     name_counts: dict[str, int] = {}
