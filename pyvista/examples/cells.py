@@ -1066,7 +1066,7 @@ def QuadraticEdge() -> UnstructuredGrid:
     array([21], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_EDGE))
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_EDGE))
 
 
 def QuadraticTriangle() -> UnstructuredGrid:
@@ -1106,9 +1106,7 @@ def QuadraticTriangle() -> UnstructuredGrid:
     array([22], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TRIANGLE)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_TRIANGLE))
 
 
 def QuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1150,7 +1148,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
     array([23], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_QUAD))
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_QUAD))
 
 
 def QuadraticPolygon() -> UnstructuredGrid:
@@ -1247,9 +1245,7 @@ def QuadraticTetrahedron() -> UnstructuredGrid:
     array([24], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TETRA)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_TETRA))
 
 
 def QuadraticHexahedron() -> UnstructuredGrid:
@@ -1304,9 +1300,7 @@ def QuadraticHexahedron() -> UnstructuredGrid:
     array([25], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_HEXAHEDRON)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_HEXAHEDRON))
 
 
 def QuadraticWedge() -> UnstructuredGrid:
@@ -1355,9 +1349,7 @@ def QuadraticWedge() -> UnstructuredGrid:
     array([26], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_WEDGE)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_WEDGE))
 
 
 def QuadraticPyramid() -> UnstructuredGrid:
@@ -1404,9 +1396,7 @@ def QuadraticPyramid() -> UnstructuredGrid:
     array([27], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_PYRAMID)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_PYRAMID))
 
 
 def BiQuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1449,9 +1439,7 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
     array([28], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUAD)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_QUAD))
 
 
 def TriQuadraticHexahedron() -> UnstructuredGrid:
@@ -1513,9 +1501,7 @@ def TriQuadraticHexahedron() -> UnstructuredGrid:
     array([29], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_HEXAHEDRON)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.TRIQUADRATIC_HEXAHEDRON))
 
 
 def TriQuadraticPyramid() -> UnstructuredGrid:
@@ -1569,9 +1555,7 @@ def TriQuadraticPyramid() -> UnstructuredGrid:
     array([37], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_PYRAMID)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.TRIQUADRATIC_PYRAMID))
 
 
 def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
@@ -1611,9 +1595,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
     array([30], dtype=uint8)
 
     """  # noqa: E501
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_QUAD)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_LINEAR_QUAD))
 
 
 def QuadraticLinearWedge() -> UnstructuredGrid:
@@ -1659,9 +1641,7 @@ def QuadraticLinearWedge() -> UnstructuredGrid:
     array([31], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_WEDGE)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_LINEAR_WEDGE))
 
 
 def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
@@ -1714,10 +1694,7 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
     array([32], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE),
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE))
 
 
 def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
@@ -1777,10 +1754,7 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
     array([33], dtype=uint8)
 
     """  # noqa: E501
-    return cast(
-        'UnstructuredGrid',
-        _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON),
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON))
 
 
 def BiQuadraticTriangle() -> UnstructuredGrid:
@@ -1821,9 +1795,7 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
     array([34], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_TRIANGLE)
-    )
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_TRIANGLE))
 
 
 def CubicLine() -> UnstructuredGrid:
@@ -1861,7 +1833,7 @@ def CubicLine() -> UnstructuredGrid:
     array([35], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.CUBIC_LINE))
+    return cast('UnstructuredGrid', _isoparametric_grid(CellType.CUBIC_LINE))
 
 
 def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2719,7 +2691,7 @@ def cell_type_source(  # numpydoc ignore=RT01
         return globals()[example]()
 
     def _parametric_grid(cell_type: CellType) -> UnstructuredGrid | None:
-        return _make_isoparametric_unstructured_grid(cell_type)
+        return _isoparametric_grid(cell_type)
 
     def _blocks_grid(cell_type: CellType) -> UnstructuredGrid | None:
         return _vtkCellTypeSource(cell_type, cell_order=3, single_cell=False)
@@ -2799,7 +2771,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     return output
 
 
-def _make_isoparametric_unstructured_grid(celltype: CellType) -> UnstructuredGrid | None:
+def _isoparametric_grid(celltype: CellType) -> UnstructuredGrid | None:
     if celltype.vtk_class is None or celltype in _NOT_SUPPORTED_PARAMETRIC:
         return None
     cell = celltype.vtk_class()
