@@ -2766,25 +2766,32 @@ def cell_type_source(  # numpydoc ignore=RT01
      <CellType.PIXEL: 8>,
      <CellType.QUAD: 9>]
 
-    >>> grid = cell_type_source(cell_types, shrink_factor=0.8)
-    >>> plot_cell(grid)
+    >>> cell_blocks = cell_type_source(cell_types, shrink_factor=0.8)
+    >>> plot_cell(cell_blocks)
+
+    Each block's name matches the name of the cell type.
+
+    >>> cell_blocks.keys()
+    ['TRIANGLE', 'TRIANGLE_STRIP', 'POLYGON', 'PIXEL', 'QUAD']
 
     Generate the same cell types using the parametric generator. This generator does not support
     triangle strip or polygon cells, so we skip these.
 
-    >>> grid = cell_type_source(
+    >>> cell_blocks = cell_type_source(
     ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_mode='skip'
     ... )
-    >>> plot_cell(grid)
+    >>> plot_cell(cell_blocks)
 
     Use the blocks generator. It also does not support triangle strip, but it does support polygon.
     This time, we squeeze the blocks together instead of skipping them, and do not shrink them.
     This combination generates a continuous grid with no gaps.
 
-    >>> grid = cell_type_source(cell_types, 'blocks', unsupported_mode='squeeze')
-    >>> plot_cell(grid)
+    >>> cell_blocks = cell_type_source(
+    ...     cell_types, 'blocks', unsupported_mode='squeeze'
+    ... )
+    >>> plot_cell(cell_blocks)
 
-    Generate a dimensioned grid of cell types.
+    Generate cell types on a dimensioned grid.
 
     >>> lines = [pv.CellType.LINE] * 3
     >>> polygons = [pv.CellType.POLYGON] * 3
@@ -2792,47 +2799,47 @@ def cell_type_source(  # numpydoc ignore=RT01
     >>> pyramids = [pv.CellType.PYRAMID] * 3
     >>> cell_types = [*lines, *polygons, *wedges, *pyramids]
 
-    Plot them with 3 cells in the x-direction, and 4 cells in the y-irection.
+    Plot them with 3 cells in the x-direction, and 4 cells in the y-direction.
 
-    >>> grid = cell_type_source(cell_types, block_dimensions=(3, 4, 1))
-    >>> plot_cell(grid, cpos='xy')
+    >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(3, 4, 1))
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     Reverse the x and y dimension.
 
-    >>> grid = cell_type_source(cell_types, block_dimensions=(4, 3, 1))
-    >>> plot_cell(grid, cpos='xy')
+    >>> cell_blocks = cell_type_source(cell_types, block_dimensions=(4, 3, 1))
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     Use stop mode if there is a mismatch between the number of cell types and block dimensions.
     Here, the last two pyramid cell types are omitted.
 
-    >>> grid = cell_type_source(
+    >>> cell_blocks = cell_type_source(
     ...     cell_types[:-2], block_dimensions=(3, 4, 1), mismatch_mode='stop'
     ... )
-    >>> plot_cell(grid, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     Alternatively, cycle through the cell types again to completely fill the dimensions. In this
     case, the line type is reused to fill the gap.
 
-    >>> grid = cell_type_source(
+    >>> cell_blocks = cell_type_source(
     ...     cell_types[:-2], block_dimensions=(3, 4, 1), mismatch_mode='cycle'
     ... )
-    >>> plot_cell(grid, cpos='xy')
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
 
     >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
-    >>> grid = cell_type_source(
+    >>> cell_blocks = cell_type_source(
     ...     cell_types,
     ...     'blocks',
     ...     block_dimensions=(5, 5, 5),
     ...     unsupported_mode='squeeze',
     ...     mismatch_mode='cycle',
     ... )
-    >>> grid.plot(show_edges=True, opacity=0.5, line_width=3)
+    >>> cell_blocks.plot(show_edges=True, opacity=0.5, line_width=3)
 
     Combine into a single grid and show :attr:`~pyvista.DataSet.distinct_cell_types`.
 
-    >>> grid.combine().distinct_cell_types  # doctest: +NORMALIZE_WHITESPACE
+    >>> cell_blocks.combine().distinct_cell_types  # doctest: +NORMALIZE_WHITESPACE
     {<CellType.TETRA: 10>, <CellType.VOXEL: 11>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
      <CellType.PYRAMID: 14>, <CellType.PENTAGONAL_PRISM: 15>, <CellType.HEXAGONAL_PRISM: 16>,
      <CellType.QUADRATIC_TETRA: 24>, <CellType.QUADRATIC_HEXAHEDRON: 25>,
@@ -2851,14 +2858,14 @@ def cell_type_source(  # numpydoc ignore=RT01
     ...     block_dimensions=(5, 5, 1),
     ...     unsupported_mode='skip',
     ... )
-    >>> grid = cell_type_source(generator='examples', **kwargs)
-    >>> plot_cell(grid, cpos='xy')
+    >>> cell_blocks = cell_type_source(generator='examples', **kwargs)
+    >>> plot_cell(cell_blocks, cpos='xy')
 
-    >>> grid = cell_type_source(generator='parametric', **kwargs)
-    >>> plot_cell(grid, cpos='xy')
+    >>> cell_blocks = cell_type_source(generator='parametric', **kwargs)
+    >>> plot_cell(cell_blocks, cpos='xy')
 
-    >>> grid = cell_type_source(generator='blocks', **kwargs)
-    >>> plot_cell(grid, cpos='xy')
+    >>> cell_blocks = cell_type_source(generator='blocks', **kwargs)
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     """
 
