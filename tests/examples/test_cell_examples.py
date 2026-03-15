@@ -231,6 +231,15 @@ def test_cell_type_source_block_dimensions(dimensions, generator):
     assert mesh == mesh_no_cycle
 
 
+def test_cell_type_source_block_dimensions_raises():
+    match = (
+        'Requested dimension (1, 1, 1) is too small. Number of cell types to generate (2) '
+        'exceeds the number of blocks requested (1).'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        cells.cell_type_source([CellType.TRIANGLE] * 2, block_dimensions=(1, 1, 1))
+
+
 @pytest.mark.parametrize('cell_type', _NOT_SUPPORTED_CELL_SOURCE)
 def test_cell_type_source_invalid_blocks(cell_type):
     assert cell_type.vtk_class is not None
