@@ -12,6 +12,7 @@ from collections.abc import Sequence
 import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 
 import numpy as np
 
@@ -1067,7 +1068,7 @@ def QuadraticEdge() -> UnstructuredGrid:
     array([21], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_EDGE)
+    return cast('UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_EDGE))
 
 
 def QuadraticTriangle() -> UnstructuredGrid:
@@ -1107,7 +1108,9 @@ def QuadraticTriangle() -> UnstructuredGrid:
     array([22], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TRIANGLE)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TRIANGLE)
+    )
 
 
 def QuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1149,7 +1152,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
     array([23], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_QUAD)
+    return cast('UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_QUAD))
 
 
 def QuadraticPolygon() -> UnstructuredGrid:
@@ -1246,7 +1249,9 @@ def QuadraticTetrahedron() -> UnstructuredGrid:
     array([24], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TETRA)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_TETRA)
+    )
 
 
 def QuadraticHexahedron() -> UnstructuredGrid:
@@ -1301,7 +1306,9 @@ def QuadraticHexahedron() -> UnstructuredGrid:
     array([25], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_HEXAHEDRON)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_HEXAHEDRON)
+    )
 
 
 def QuadraticWedge() -> UnstructuredGrid:
@@ -1350,7 +1357,9 @@ def QuadraticWedge() -> UnstructuredGrid:
     array([26], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_WEDGE)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_WEDGE)
+    )
 
 
 def QuadraticPyramid() -> UnstructuredGrid:
@@ -1397,7 +1406,9 @@ def QuadraticPyramid() -> UnstructuredGrid:
     array([27], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_PYRAMID)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_PYRAMID)
+    )
 
 
 def BiQuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1440,7 +1451,9 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
     array([28], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUAD)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUAD)
+    )
 
 
 def TriQuadraticHexahedron() -> UnstructuredGrid:
@@ -1502,7 +1515,9 @@ def TriQuadraticHexahedron() -> UnstructuredGrid:
     array([29], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_HEXAHEDRON)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_HEXAHEDRON)
+    )
 
 
 def TriQuadraticPyramid() -> UnstructuredGrid:
@@ -1556,7 +1571,9 @@ def TriQuadraticPyramid() -> UnstructuredGrid:
     array([37], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_PYRAMID)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.TRIQUADRATIC_PYRAMID)
+    )
 
 
 def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
@@ -1596,7 +1613,9 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
     array([30], dtype=uint8)
 
     """  # noqa: E501
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_QUAD)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_QUAD)
+    )
 
 
 def QuadraticLinearWedge() -> UnstructuredGrid:
@@ -1642,7 +1661,9 @@ def QuadraticLinearWedge() -> UnstructuredGrid:
     array([31], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_WEDGE)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.QUADRATIC_LINEAR_WEDGE)
+    )
 
 
 def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
@@ -1695,7 +1716,10 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
     array([32], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE)
+    return cast(
+        'UnstructuredGrid',
+        _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE),
+    )
 
 
 def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
@@ -1755,7 +1779,10 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
     array([33], dtype=uint8)
 
     """  # noqa: E501
-    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON)
+    return cast(
+        'UnstructuredGrid',
+        _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON),
+    )
 
 
 def BiQuadraticTriangle() -> UnstructuredGrid:
@@ -1796,7 +1823,9 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
     array([34], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_TRIANGLE)
+    return cast(
+        'UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.BIQUADRATIC_TRIANGLE)
+    )
 
 
 def CubicLine() -> UnstructuredGrid:
@@ -1834,7 +1863,7 @@ def CubicLine() -> UnstructuredGrid:
     array([35], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(CellType.CUBIC_LINE)
+    return cast('UnstructuredGrid', _make_isoparametric_unstructured_grid(CellType.CUBIC_LINE))
 
 
 def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -1877,7 +1906,9 @@ def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
     array([68], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.LAGRANGE_CURVE, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid', _make_cell_from_source(CellType.LAGRANGE_CURVE, cell_order=cell_order)
+    )
 
 
 def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -1926,7 +1957,10 @@ def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
     array([69], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order),
+    )
 
 
 def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -1981,7 +2015,10 @@ def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
     array([70], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order),
+    )
 
 
 def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2041,7 +2078,10 @@ def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     array([71], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order),
+    )
 
 
 def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2147,7 +2187,10 @@ def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     array([72], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order),
+    )
 
 
 def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2228,7 +2271,9 @@ def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     array([73], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid', _make_cell_from_source(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
+    )
 
 
 def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2271,7 +2316,9 @@ def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
     array([75], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.BEZIER_CURVE, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid', _make_cell_from_source(CellType.BEZIER_CURVE, cell_order=cell_order)
+    )
 
 
 def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2320,7 +2367,9 @@ def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
     array([76], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid', _make_cell_from_source(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
+    )
 
 
 def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2375,7 +2424,10 @@ def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
     array([77], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order),
+    )
 
 
 def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2435,7 +2487,10 @@ def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     array([78], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order),
+    )
 
 
 def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2541,7 +2596,10 @@ def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     array([79], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid',
+        _make_cell_from_source(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order),
+    )
 
 
 def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2622,7 +2680,9 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     array([80], dtype=uint8)
 
     """
-    return _make_cell_from_source(CellType.BEZIER_WEDGE, cell_order=cell_order)
+    return cast(
+        'UnstructuredGrid', _make_cell_from_source(CellType.BEZIER_WEDGE, cell_order=cell_order)
+    )
 
 
 def cell_type_source(  # numpydoc ignore=RT01
@@ -2704,13 +2764,13 @@ def cell_type_source(  # numpydoc ignore=RT01
         if grid is None:
             msg = f'{ctype!r} is not supported by the {generator!r} generator.'
             warn_external(msg)
-        else:
-            grid = grid.resize(bounds_size=1)
+        elif grid.bounds_size != (1.0, 1.0, 1.0):
+            grid = grid.resize(bounds_size=1.0)
         distinct_meshes[ctype.name] = grid
 
     # Build output from distinct meshes
     output = pv.MultiBlock()
-    for center, (name, grid) in zip(
+    for center, (name, block) in zip(
         cell_centers, itertools.cycle(distinct_meshes.recursive_iterator('items'))
     ):
         # Ensure we have unique names by appending a number if
@@ -2725,11 +2785,11 @@ def cell_type_source(  # numpydoc ignore=RT01
             block_name = possible_name
             break
 
-        if grid is None:
+        if block is None:
             block_mesh = None
         else:
             # Ensure blocks are completely independent
-            block_mesh = grid.copy() if grid in output else grid
+            block_mesh = block.copy() if block in output else block
             # Position block on the grid
             block_mesh.center = center
         output[block_name] = block_mesh
