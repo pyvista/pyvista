@@ -2758,6 +2758,9 @@ def download_frd(*, load=True):
         :ref:`Frd Dataset <frd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`calculix_colormap_example`
+            Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
+
     """
     return _download_dataset(_dataset_frd, load=load)
 
