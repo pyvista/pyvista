@@ -1905,7 +1905,7 @@ def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
 
     """
     return cast(
-        'UnstructuredGrid', _make_cell_from_source(CellType.LAGRANGE_CURVE, cell_order=cell_order)
+        'UnstructuredGrid', _vtkCellTypeSource(CellType.LAGRANGE_CURVE, cell_order=cell_order)
     )
 
 
@@ -1957,7 +1957,7 @@ def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order),
     )
 
 
@@ -2015,7 +2015,7 @@ def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order),
     )
 
 
@@ -2078,7 +2078,7 @@ def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order),
     )
 
 
@@ -2187,7 +2187,7 @@ def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order),
     )
 
 
@@ -2270,7 +2270,7 @@ def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
 
     """
     return cast(
-        'UnstructuredGrid', _make_cell_from_source(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
+        'UnstructuredGrid', _vtkCellTypeSource(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
     )
 
 
@@ -2315,7 +2315,7 @@ def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
 
     """
     return cast(
-        'UnstructuredGrid', _make_cell_from_source(CellType.BEZIER_CURVE, cell_order=cell_order)
+        'UnstructuredGrid', _vtkCellTypeSource(CellType.BEZIER_CURVE, cell_order=cell_order)
     )
 
 
@@ -2366,7 +2366,7 @@ def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     """
     return cast(
-        'UnstructuredGrid', _make_cell_from_source(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
+        'UnstructuredGrid', _vtkCellTypeSource(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
     )
 
 
@@ -2424,7 +2424,7 @@ def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order),
     )
 
 
@@ -2487,7 +2487,7 @@ def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order),
     )
 
 
@@ -2596,7 +2596,7 @@ def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     """
     return cast(
         'UnstructuredGrid',
-        _make_cell_from_source(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order),
+        _vtkCellTypeSource(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order),
     )
 
 
@@ -2679,7 +2679,7 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
 
     """
     return cast(
-        'UnstructuredGrid', _make_cell_from_source(CellType.BEZIER_WEDGE, cell_order=cell_order)
+        'UnstructuredGrid', _vtkCellTypeSource(CellType.BEZIER_WEDGE, cell_order=cell_order)
     )
 
 
@@ -2722,7 +2722,7 @@ def cell_type_source(  # numpydoc ignore=RT01
         return _make_isoparametric_unstructured_grid(cell_type)
 
     def _blocks_grid(cell_type: CellType) -> UnstructuredGrid | None:
-        return _make_cell_from_source(cell_type, cell_order=3)
+        return _vtkCellTypeSource(cell_type, cell_order=3, single_cell=False)
 
     ctypes = [
         CellType(ctype)
@@ -2815,7 +2815,9 @@ def _make_isoparametric_unstructured_grid(celltype: CellType) -> UnstructuredGri
     return UnstructuredGrid(cells, [celltype], points)
 
 
-def _make_cell_from_source(celltype: CellType, cell_order: int) -> UnstructuredGrid | None:
+def _vtkCellTypeSource(
+    celltype: CellType, *, cell_order: int = 3, single_cell: bool = True
+) -> UnstructuredGrid | None:
     """Use vtkCellTypeSource to generate UnstructuredGrid with a single cell type."""
     if celltype.vtk_class is None or celltype in _NOT_SUPPORTED_CELL_SOURCE:
         return None
@@ -2824,13 +2826,15 @@ def _make_cell_from_source(celltype: CellType, cell_order: int) -> UnstructuredG
     src.SetCellOrder(cell_order)
     src.SetCellType(celltype)
     src.Update()
+    ugrid = src.GetOutput()
 
-    cell0 = src.GetOutput().GetCell(0)
-    ugrid = _vtk.vtkUnstructuredGrid()
-    ugrid.SetPoints(cell0.GetPoints())
-    ids = _vtk.vtkIdList()
-    for i in range(cell0.GetNumberOfPoints()):
-        ids.InsertNextId(i)
-    ugrid.InsertNextCell(cell0.GetCellType(), ids)
+    if single_cell:
+        cell0 = ugrid.GetCell(0)
+        ugrid = _vtk.vtkUnstructuredGrid()
+        ugrid.SetPoints(cell0.GetPoints())
+        ids = _vtk.vtkIdList()
+        for i in range(cell0.GetNumberOfPoints()):
+            ids.InsertNextId(i)
+        ugrid.InsertNextCell(cell0.GetCellType(), ids)
 
     return pv.wrap(ugrid)
