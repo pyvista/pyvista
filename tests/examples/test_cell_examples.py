@@ -194,7 +194,34 @@ def test_cell_type_source(cell_type, generator):
         or (generator == 'blocks' and cell_type in _NOT_SUPPORTED_CELL_SOURCE)
     ):
         pytest.xfail('Not supported')
-    cells.cell_type_source(cell_type, generator)
+    mesh = cells.cell_type_source(cell_type, generator)
+    assert isinstance(mesh, pv.MultiBlock)
+    assert mesh.n_blocks == 1
+    assert mesh.keys() == [cell_type.name]
+    assert mesh[0].distinct_cell_types == {cell_type}
+    if cell_type == CellType.EMPTY_CELL:
+        assert mesh.center == (0.0, 0.0, 0.0)
+    else:
+        assert mesh.center == (0.5, 0.5, 0.5)
+
+
+@pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
+@pytest.mark.parametrize('dimensions', [(4, 1, 1), (1, 4, 1), (1, 1, 4)])
+def test_cell_type_source_block_dimensions(dimensions, generator):
+    celltype = CellType.PYRAMID  # Use a 3D cell type whose example isn't 1x1x1 in size
+    mesh = cells.cell_type_source(celltype, generator, block_dimensions=dimensions, cycle=True)
+    assert np.allclose(mesh.bounds, (0.0, dimensions[0], 0.0, dimensions[1], 0.0, dimensions[2]))
+    assert mesh.keys() == ['PYRAMID', 'PYRAMID_1', 'PYRAMID_2', 'PYRAMID_3']
+
+    # Test blocks are independent copies
+    ids = {id(m) for m in mesh}
+    assert len(ids) == mesh.n_blocks
+
+    # Test without cycle
+    mesh_no_cycle = cells.cell_type_source(
+        [celltype] * 4, generator, block_dimensions=dimensions, cycle=False
+    )
+    assert mesh == mesh_no_cycle
 
 
 def test_empty():

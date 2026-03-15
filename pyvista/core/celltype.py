@@ -105,6 +105,7 @@ _CELL_TYPE_INFO = dict(
     # Linear cells
     EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
+        example='Empty',
         doc="""Used as a place-holder during processing.""",
     ),
     VERTEX=_CellTypeTuple(
@@ -828,7 +829,7 @@ class CellType(IntEnum):
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(_badges, _doc)
-                if _example is None
+                if (_example is None or _example == 'Empty')
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
                     _example, _example, PLACEHOLDER, _badges, _doc
                 )

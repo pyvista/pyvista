@@ -2652,10 +2652,7 @@ def cell_type_source(  # numpydoc ignore=RT01
     """
 
     def _examples_grid(cell_type: CellType) -> UnstructuredGrid | None:
-        example = cell_type._example
-        if cell_type == CellType.EMPTY_CELL:
-            example = 'Empty'
-        elif example is None:
+        if (example := cell_type._example) is None:
             return None
         return globals()[example]()
 
@@ -2678,14 +2675,14 @@ def cell_type_source(  # numpydoc ignore=RT01
             msg = (
                 f'Requested dimension {block_dimensions} is too small. '
                 f'Number of cell types to generate ({actual_size}) exceeds '
-                f'the number of blocks ({requested_size}).'
+                f'the number of blocks requested ({requested_size}).'
             )
             raise ValueError(msg)
         elif requested_size > actual_size and not cycle:
             msg = (
                 f'Requested dimension {block_dimensions} is too large. '
                 f'Number of cell types to generate ({actual_size}) is less than '
-                f'the number of blocks ({requested_size}).\n'
+                f'the number of blocks requested ({requested_size}).\n'
                 f'Use `cycle=True` to cycle through and duplicate the cell types.'
             )
             raise ValueError(msg)
