@@ -189,6 +189,8 @@ def test_abstract_celltype():
 @pytest.mark.parametrize('generator', ['examples', 'parametric', 'blocks'])
 @pytest.mark.parametrize('cell_type', [ctype for ctype in CellType if ctype.vtk_class is not None])
 def test_cell_type_source(cell_type, generator):
+    if pv.vtk_version_info < (9, 4, 0) and generator == 'blocks':
+        pytest.skip('VTK bug with vtkCellTypeSource for some cell types')
     if (
         (generator == 'examples' and cell_type == CellType.CONVEX_POINT_SET)
         or (generator == 'parametric' and cell_type in _NOT_SUPPORTED_PARAMETRIC)
