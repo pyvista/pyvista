@@ -392,6 +392,10 @@ def generic_element_frd(tmp_path, request):
     return str(file_path), elem_name
 
 
+@pytest.mark.needs_vtk_version(
+    (9, 6, 99),  # >= 9,7,0
+    reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
+)
 @pytest.mark.parametrize(
     'generic_element_frd', list(VALID_ELEMENT_DEFINITIONS.keys()), indirect=True
 )
