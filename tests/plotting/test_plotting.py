@@ -3497,20 +3497,25 @@ def test_plot_cell():
 
 
 @pytest.mark.parametrize(
-    ('line_width', 'point_size', 'font_size', 'normals_scale', 'cast'),
+    ('line_width', 'point_size', 'font_size', 'normals_scale', 'cls'),
     [
-        (5, 30, 20, 0.1, pv.DataSet.cast_to_poly_points),
-        (10, 80, 50, 0.25, pv.DataSet.cast_to_multiblock),
+        (5, 30, 20, 0.1, pv.PolyData),
+        (10, 80, 50, 0.25, pv.MultiBlock),
     ],
 )
 def test_plot_cell_kwargs(
-    line_width, point_size, font_size, normals_scale, verify_image_cache, cast
+    line_width, point_size, font_size, normals_scale, verify_image_cache, cls
 ):
     # Skip since variance is too high across operating systems
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
 
-    grid = cast(examples.cells.Polyhedron())
+    grid = examples.cells.Polyhedron()
+    if cls is pv.MultiBlock:
+        grid = grid.cast_to_multiblock()
+    elif cls is pv.PolyData:
+        grid = grid.extract_surface(algorithm='geometry')
+
     examples.plot_cell(
         grid,
         show_normals=True,
