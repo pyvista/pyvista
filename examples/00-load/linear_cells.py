@@ -279,7 +279,7 @@ pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Similar to above, let's create another  ``(4, 4)`` :class:`pyvista.Plotter` and plot
 # all 16 linear cells in a single plot. This time, however, we use
-# :func:`~pyvista.examples.cells.cell_type_source` to generate the grids.
+# :func:`~pyvista.examples.cells.generate_cell_blocks` to generate the grids.
 
 # %%
 # Create a list of all linear cell types. The list has 19 cell types.

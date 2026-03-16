@@ -80,7 +80,7 @@ def plot_cell(
 
     Parameters
     ----------
-    grid : DataSet | MultiBlock
+    grid : pyvista.DataSet | pyvista.MultiBlock
         Dataset containing one single cell (ideally), though plotting a mesh with multiple cells
         is supported.
 
