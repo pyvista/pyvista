@@ -392,10 +392,6 @@ def generic_element_frd(tmp_path, request):
     return str(file_path), elem_name
 
 
-@pytest.mark.needs_vtk_version(
-    (9, 6, 99),  # >= 9,7,0
-    reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
-)
 @pytest.mark.parametrize(
     'generic_element_frd', list(VALID_ELEMENT_DEFINITIONS.keys()), indirect=True
 )
@@ -409,6 +405,14 @@ def test_frd_element_sizes(generic_element_frd):
 
     # 2. Map to the VTK cell type
     vtk_type = CCX_TO_VTK_TYPE[frd_enum]
+
+    # Handle known VTK bug for PE15
+    if elem_name == 'PE15' and pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
+        msg = (
+            'VTK bug with negative volume for quadratic wedge '
+            'https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
+        )
+        pytest.xfail(msg)
 
     # 3. Compute cell sizes
     sizes = mesh.compute_cell_sizes().cell_data
