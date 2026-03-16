@@ -13,6 +13,7 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import get_args
 
 import numpy as np
 
@@ -2726,14 +2727,19 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     )
 
 
+_GeneratorOptions = Literal['examples', 'source', 'parametric']
+_FillModeOptions = Literal['exact', 'cycle', 'stop']
+_UnsupportedActionOptions = Literal['squeeze', 'skip', 'warn', 'error']
+
+
 def generate_cell_blocks(  # numpydoc ignore=RT01
     cell_types: int | Sequence[int],
-    generator: Literal['examples', 'source', 'parametric'] = 'examples',
+    generator: _GeneratorOptions = 'examples',
     *,
     block_dimensions: VectorLike[int] | None = None,
     shrink_factor: float | None = None,
-    fill_mode: Literal['exact', 'cycle', 'stop'] = 'exact',
-    unsupported_action: Literal['squeeze', 'skip', 'warn', 'error'] = 'error',
+    fill_mode: _FillModeOptions = 'exact',
+    unsupported_action: _UnsupportedActionOptions = 'error',
 ) -> MultiBlock:
     """Generate a :class:`~pyvista.MultiBlock` mesh comprised of one or more cell types.
 
@@ -2959,6 +2965,18 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
 
     def _blocks_grid(cell_type: CellType) -> UnstructuredGrid | None:
         return _vtkCellTypeSource(cell_type, cell_order=3, single_cell=False)
+
+    _validation.check_contains(
+        get_args(_GeneratorOptions), must_contain=generator, name='generator'
+    )
+    _validation.check_contains(
+        get_args(_UnsupportedActionOptions),
+        must_contain=unsupported_action,
+        name='unsupported action',
+    )
+    _validation.check_contains(
+        get_args(_FillModeOptions), must_contain=fill_mode, name='fill mode'
+    )
 
     _shrink_factor = (
         1.0
