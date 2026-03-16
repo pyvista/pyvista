@@ -3499,7 +3499,7 @@ def test_plot_cell():
 @pytest.mark.parametrize(
     ('line_width', 'point_size', 'font_size', 'normals_scale', 'cast'),
     [
-        (5, 30, 20, 0.1, pv.DataSet.cast_to_unstructured_grid),
+        (5, 30, 20, 0.1, pv.DataSet.cast_to_poly_points),
         (10, 80, 50, 0.25, pv.DataSet.cast_to_multiblock),
     ],
 )
