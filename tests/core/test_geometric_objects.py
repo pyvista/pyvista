@@ -113,9 +113,9 @@ def test_solid_sphere():
 
     # make sure cell creation gives positive volume.
     for cell in sphere.cell:
-        assert cell.cast_to_unstructured_grid().volume > -1e-4
+        assert cell.cast_to_unstructured_grid().volume > 0
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
-    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=2e-3)
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
 
 
 def test_solid_sphere_hollow():
@@ -126,7 +126,7 @@ def test_solid_sphere_hollow():
         theta_resolution=100,
         phi_resolution=100,
     )
-    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * (1.0**3 - 0.5**3), rel=2e-3)
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * (1.0**3 - 0.5**3), rel=1e-3)
 
 
 def test_solid_sphere_generic():
@@ -147,7 +147,7 @@ def test_solid_sphere_theta_start_end():
         theta_resolution=100,
         phi_resolution=100,
     )
-    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=2e-3)
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
 
     sphere = pv.SolidSphere(
         start_theta=180,
@@ -156,7 +156,7 @@ def test_solid_sphere_theta_start_end():
         theta_resolution=100,
         phi_resolution=100,
     )
-    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=2e-3)
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
 
     sphere = pv.SolidSphere(
         start_theta=90,
@@ -165,7 +165,7 @@ def test_solid_sphere_theta_start_end():
         theta_resolution=100,
         phi_resolution=100,
     )
-    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 12, rel=2e-3)
+    assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 12, rel=1e-3)
 
 
 def test_solid_sphere_phi_start_end():
