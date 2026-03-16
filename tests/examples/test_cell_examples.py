@@ -278,10 +278,29 @@ def test_generate_cell_blocks_invalid_abstract(generator, cell_type):
         cells.generate_cell_blocks(cell_type, generator=generator)
 
 
-def test_generate_cell_blocks_invalid_value():
+def test_generate_cell_blocks_unsupported_action():
     match = "-1 is not a valid cell type and is not supported by the 'examples' generator."
     with pytest.raises(ValueError, match=match):
-        cells.generate_cell_blocks(-1)
+        cells.generate_cell_blocks(-1, unsupported_action='error')
+    with pytest.warns(UserWarning, match=match):
+        cells.generate_cell_blocks(-1, unsupported_action='warn')
+
+    supported = pv.CellType.HEXAHEDRON
+    not_supported = pv.CellType.TRIANGLE_STRIP
+    cell_types = [supported, not_supported, supported]
+    blocks = cells.generate_cell_blocks(cell_types, unsupported_action='skip', generator='source')
+    n_blocks = 3
+    assert blocks.n_blocks == n_blocks
+    assert blocks[1] is None
+    assert blocks.bounds == (0.0, n_blocks, 0.0, 1.0, 0.0, 1.0)
+
+    blocks = cells.generate_cell_blocks(
+        cell_types, unsupported_action='squeeze', generator='source'
+    )
+    n_blocks = 2
+    assert blocks.n_blocks == n_blocks
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in blocks)
+    assert blocks.bounds == (0.0, n_blocks, 0.0, 1.0, 0.0, 1.0)
 
 
 def test_generate_cell_blocks_fill_mode():

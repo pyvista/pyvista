@@ -3053,8 +3053,6 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
         if block is None:
             if unsupported_action == 'squeeze':
                 continue  # preserve center
-            next(center_iter, None)  # consume center
-            continue
 
         center = next(center_iter, None)
         if center is None:
@@ -3065,10 +3063,13 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
         block_name = name if count == 0 else f'{name}_{count}'
         name_counts[name] = count + 1
 
-        # Ensure block is independent
-        block_mesh = block.copy() if block in output else block
-        # Position block on the grid
-        block_mesh.center = center
+        if block is None:
+            block_mesh = None
+        else:
+            # Ensure block is independent
+            block_mesh = block.copy() if block in output else block
+            # Position block on the grid
+            block_mesh.center = center
         output[block_name] = block_mesh
     return output
 
