@@ -3513,7 +3513,6 @@ def test_plot_cell_kwargs(
     grid = cast(examples.cells.Polyhedron())
     examples.plot_cell(
         grid,
-        cpos='iso',
         show_normals=True,
         point_size=point_size,
         font_size=font_size,
