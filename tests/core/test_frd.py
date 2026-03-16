@@ -406,14 +406,6 @@ def test_frd_element_sizes(generic_element_frd):
     # 2. Map to the VTK cell type
     vtk_type = CCX_TO_VTK_TYPE[frd_enum]
 
-    # Handle known VTK bug for PE15
-    if elem_name == 'PE15':
-        msg = (
-            'VTK bug with negative volume for quadratic wedge '
-            'https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
-        )
-        pytest.xfail(msg)
-
     # 3. Compute cell sizes
     sizes = mesh.compute_cell_sizes().cell_data
 
