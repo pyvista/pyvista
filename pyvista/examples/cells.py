@@ -91,12 +91,7 @@ def plot_cell(
             Plotting :class:`~pyvista.MultiBlock` is now supported.
 
     cpos : str, optional
-        Camera position. By default, an ``'xy'`` view is used for 2D planar inputs; otherwise,
-        it's set to ``azimuth=20`` and ``elevation=-20``.
-
-        .. versionchanged:: 0.48
-
-            An ``'xy'`` view is now used by default for planar inputs.
+        Camera position.
 
     line_width : int, default: 5
         Line width of the cell's edges.
@@ -179,12 +174,7 @@ def plot_cell(
         grid = grid.cast_to_unstructured_grid()
 
     pl = pv.Plotter()
-    has_2d_cells_only = True
     for cell in grid.cell:
-        dimension = cell.dimension
-        if dimension != 2:
-            has_2d_cells_only = False
-
         # Use existing grid if it's already a grid with one cell
         cell_as_grid = grid if grid.n_cells == 1 else cell.cast_to_unstructured_grid()
         pl.add_mesh(cell_as_grid, opacity=0.5)
@@ -193,7 +183,7 @@ def plot_cell(
             edges = cell_as_grid.extract_surface(algorithm=None).extract_all_edges()
         else:
             edges = cell_as_grid.extract_all_edges()
-        if edges.n_cells or dimension == 1:
+        if edges.n_cells or cell.dimension == 1:
             pl.add_mesh(
                 cell_as_grid,
                 style='wireframe',
@@ -214,7 +204,7 @@ def plot_cell(
             font_size=font_size_,
         )
 
-        if show_normals and dimension >= 2:
+        if show_normals and cell.dimension >= 2:
             surface = _extract_surface(cell)
             surface = surface.triangulate() if cell.type is CellType.TRIANGLE_STRIP else surface
             pl.add_arrows(
@@ -227,12 +217,8 @@ def plot_cell(
 
     pl.enable_anti_aliasing()
     if cpos is None:
-        # Use xy view if we have all 2D cells lying in the xy plane
-        if has_2d_cells_only and grid.dimensionality == 2 and np.isclose(grid.bounds_size[2], 0.0):
-            pl.view_xy()  # type: ignore[call-arg]
-        else:
-            pl.camera.azimuth = 20
-            pl.camera.elevation = -20
+        pl.camera.azimuth = 20
+        pl.camera.elevation = -20
     else:
         pl.camera_position = cpos
     pl.show(**kwargs)
@@ -499,7 +485,7 @@ def Triangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Triangle()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -540,7 +526,7 @@ def TriangleStrip() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.TriangleStrip()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -671,7 +657,7 @@ def Pixel() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Pixel()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -711,7 +697,7 @@ def Quadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Quadrilateral()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1157,7 +1143,7 @@ def QuadraticTriangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticTriangle()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1197,7 +1183,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticQuadrilateral()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1239,7 +1225,7 @@ def QuadraticPolygon() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticPolygon()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1487,7 +1473,7 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BiQuadraticQuadrilateral()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1646,7 +1632,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.QuadraticLinearQuadrilateral()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1845,7 +1831,7 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BiQuadraticTriangle()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -1974,7 +1960,7 @@ def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.LagrangeTriangle()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -2026,7 +2012,7 @@ def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.LagrangeQuadrilateral()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -2384,7 +2370,7 @@ def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierTriangle()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -2435,7 +2421,7 @@ def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.BezierQuadrilateral()
-    >>> examples.plot_cell(grid)
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -2806,7 +2792,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     >>> import pyvista as pv
     >>> from pyvista.examples import cells, generate_cell_blocks, plot_cell
     >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE)
-    >>> plot_cell(triangle)
+    >>> plot_cell(triangle, cpos='xy')
 
     This is similar to the :func:`~pyvista.examples.cells.Triangle` grid, except it's a
     :class:`~pyvista.MultiBlock` and its bounds are normalized to fit inside a 1x1x1 grid.
@@ -2832,12 +2818,12 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     Use the ``'parametric'`` generator instead.
 
     >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'parametric')
-    >>> plot_cell(triangle)
+    >>> plot_cell(triangle, cpos='xy')
 
     Use the ``'source'`` generator instead.
 
     >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'source')
-    >>> plot_cell(triangle)
+    >>> plot_cell(triangle, cpos='xy')
 
     Generate multiple cell types. Here we generate all concrete linear 2D cells.
 
@@ -2854,7 +2840,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
      <CellType.QUAD: 9>]
 
     >>> cell_blocks = generate_cell_blocks(cell_types, shrink_factor=0.8)
-    >>> plot_cell(cell_blocks)
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     Each block's name matches the name of the cell type.
 
@@ -2867,16 +2853,16 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     >>> cell_blocks = generate_cell_blocks(
     ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_action='skip'
     ... )
-    >>> plot_cell(cell_blocks)
+    >>> plot_cell(cell_blocks, cpos='xy')
 
-    Use the blocks generator. It also does not support triangle strip, but it does support polygon.
+    Use the source generator. It also does not support triangle strip, but it does support polygon.
     This time, we squeeze the blocks together instead of skipping them, and do not shrink them.
     This combination generates a continuous grid with no gaps.
 
     >>> cell_blocks = generate_cell_blocks(
     ...     cell_types, 'source', unsupported_action='squeeze'
     ... )
-    >>> plot_cell(cell_blocks)
+    >>> plot_cell(cell_blocks, cpos='xy')
 
     Generate cell types on a dimensioned grid.
 

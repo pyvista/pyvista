@@ -3497,32 +3497,23 @@ def test_plot_cell():
 
 
 @pytest.mark.parametrize(
-    ('line_width', 'point_size', 'font_size', 'normals_scale', 'set_cpos', 'cast'),
+    ('line_width', 'point_size', 'font_size', 'normals_scale', 'cast'),
     [
-        (5, 30, 20, 0.1, True, pv.DataSet.cast_to_unstructured_grid),
-        (10, 80, 50, 0.25, False, pv.DataSet.cast_to_multiblock),
+        (5, 30, 20, 0.1, pv.DataSet.cast_to_unstructured_grid),
+        (10, 80, 50, 0.25, pv.DataSet.cast_to_multiblock),
     ],
 )
 def test_plot_cell_kwargs(
-    line_width, point_size, font_size, normals_scale, verify_image_cache, set_cpos, cast
+    line_width, point_size, font_size, normals_scale, verify_image_cache, cast
 ):
     # Skip since variance is too high across operating systems
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
-    cpos = (
-        pv.CameraPosition(  # azimuth=20, elevation=-20
-            position=(0.7061723751688183, 1.5143915456222028, 0.45600309548995765),
-            focal_point=(0.0, 0.0, 0.0),
-            viewup=(0.0, 0.0, 1.0),
-        )
-        if set_cpos
-        else None
-    )
 
     grid = cast(examples.cells.Polyhedron())
     examples.plot_cell(
         grid,
-        cpos,
+        cpos='iso',
         show_normals=True,
         point_size=point_size,
         font_size=font_size,
