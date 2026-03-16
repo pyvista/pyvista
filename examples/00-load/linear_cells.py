@@ -152,8 +152,11 @@ def add_cell_helper(pl, *, text, grid, subplot, cpos=None):
         text_color='k',
     )
     if cpos is None:
-        pl.camera.azimuth = 20
-        pl.camera.elevation = -20
+        if next(grid.cell).dimension == 2:
+            pl.view_xy()
+        else:
+            pl.camera.azimuth = 20
+            pl.camera.elevation = -20
     else:
         pl.camera_position = cpos
     pl.camera.zoom(0.8)
@@ -190,28 +193,24 @@ add_cell_helper(
     text=f'TRIANGLE ({pv.CellType.TRIANGLE})',
     grid=example_cells.Triangle(),
     subplot=(1, 0),
-    cpos='xy',
 )
 add_cell_helper(
     pl,
     text=f'TRIANGLE_STRIP ({pv.CellType.TRIANGLE_STRIP})',
     grid=example_cells.TriangleStrip().rotate_z(90, inplace=False),
     subplot=(1, 1),
-    cpos='xy',
 )
 add_cell_helper(
     pl,
     text=f'POLYGON ({pv.CellType.POLYGON})',
     grid=example_cells.Polygon(),
     subplot=(1, 2),
-    cpos='xy',
 )
 add_cell_helper(
     pl,
     text=f'PIXEL ({pv.CellType.PIXEL})',
     grid=example_cells.Pixel(),
     subplot=(1, 3),
-    cpos='xy',
 )
 
 # make irregular
