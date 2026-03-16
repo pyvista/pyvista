@@ -2804,7 +2804,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
       N Blocks:   1
       X Bounds:   0.000e+00, 1.000e+00
       Y Bounds:   -5.551e-17, 1.000e+00
-      Z Bounds:   5.000e-01, 5.000e-01
+      Z Bounds:   0.000e+00, 0.000e+00
 
     Compare to the un-normalized bounds.
 
@@ -3061,6 +3061,21 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
             # Position block on the grid
             block_mesh.center = center
         output[block_name] = block_mesh
+
+    # Maybe translate output
+    x_size, y_size, z_size = output.bounds_size
+    translate = [0.0, 0.0, 0.0]
+    if np.isclose(z_size, 0):
+        # Ensure 2D outputs lie in xy plane
+        translate[2] = -output.bounds.z_min
+    if np.isclose(y_size, 0):
+        # Ensure 1D outputs lie along x-axis
+        translate[1] = -output.bounds.y_min
+    if np.isclose(x_size, 0):
+        # Ensure 0D outputs are at the origin
+        translate[0] = -output.bounds.x_min
+    if any(translate):
+        output.translate(translate, inplace=True)
     return output
 
 

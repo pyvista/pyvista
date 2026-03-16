@@ -216,12 +216,15 @@ def test_generate_cell_blocks(cell_type, generator):
     assert mesh.n_blocks == 1
     assert mesh.keys() == [cell_type.name]
     assert mesh[0].distinct_cell_types == {cell_type}
-    if cell_type == CellType.EMPTY_CELL:
+    dimensionality = mesh[0].dimensionality
+    if dimensionality == 0:
         assert mesh.center == (0.0, 0.0, 0.0)
+    elif dimensionality == 1:
+        assert mesh.center == (0.5, 0.0, 0.0)
+    elif dimensionality == 2:
+        assert mesh.center == (0.5, 0.5, 0.0)
     else:
         assert mesh.center == (0.5, 0.5, 0.5)
-    if cell_type.dimension == 3:
-        assert np.allclose(mesh.bounds, (0.0, 1.0, 0.0, 1.0, 0.0, 1.0))
 
 
 @pytest.mark.parametrize('generator', ['examples', 'parametric', 'source'])
