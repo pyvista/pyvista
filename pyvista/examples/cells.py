@@ -873,11 +873,11 @@ def Wedge() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[0.       , 1.       , 0.       ],
-                     [0.       , 0.       , 0.       ],
                      [0.       , 0.5      , 0.8660254],
+                     [0.       , 0.       , 0.       ],
                      [1.       , 1.       , 0.       ],
-                     [1.       , 0.       , 0.       ],
-                     [1.       , 0.5      , 0.8660254]])
+                     [1.       , 0.5      , 0.8660254],
+                     [1.       , 0.       , 0.       ]])
 
     >>> grid.celltypes  # same as pyvista.CellType.WEDGE
     array([13], dtype=uint8)
