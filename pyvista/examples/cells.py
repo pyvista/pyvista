@@ -91,7 +91,7 @@ def plot_cell(
             Plotting :class:`~pyvista.MultiBlock` is now supported.
 
     cpos : str, optional
-        Camera position. Byx default, an ``'xy'`` view is used for 2D planar inputs; otherwise,
+        Camera position. By default, an ``'xy'`` view is used for 2D planar inputs; otherwise,
         it's set to ``azimuth=20`` and ``elevation=-20``.
 
         .. versionchanged:: 0.48
@@ -2752,7 +2752,9 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     Parameters
     ----------
     cell_types : int | sequence[int]
-        Cell types to generate.
+        Cell type(s) to generate. By default, only :class:`~pyvista.CellType` values are supported.
+        Invalid cell type values may also be specified; these can be ignored by using the
+        ``unsupported_action`` keyword.
 
     generator : 'examples' | 'source' | 'parametric', default: 'examples'
         Method for generating cell type blocks.
@@ -2786,7 +2788,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
           specified block dimensions are completely filled.
         - ``'stop'``: stop iterating when all specified cell types have been generated.
 
-    unsupported_action : 'skip' | 'squeeze'| 'warn' | 'error', default: 'error'
+    unsupported_action : 'skip' | 'squeeze' | 'warn' | 'error', default: 'error'
         Select how to handle unsupported cell types.
 
         - ``'skip'``: Skip generating a block for unsupported cell types. A ``None`` block is
@@ -2937,7 +2939,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
      <CellType.BEZIER_WEDGE: 80>}
 
     Compare the first 25 cell types from the different generators. Note that some values, e.g.
-    ``17``, do not correspond at all to any cell type, so gaps are expected in all outputs.
+    ``17``, do not correspond to any cell type, so gaps are expected in all outputs.
 
     >>> kwargs = dict(
     ...     cell_types=range(1, 26),
