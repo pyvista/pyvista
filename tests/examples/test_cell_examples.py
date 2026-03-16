@@ -17,26 +17,15 @@ cell_example_functions = [
 ]
 
 
+@pytest.mark.needs_vtk_version(
+    (9, 6, 99),  # >= 9,7,0
+    reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
+)
 @parametrize('cell_example', cell_example_functions)
 def test_area_and_volume(cell_example):
     mesh = cell_example()
     assert isinstance(mesh, pv.UnstructuredGrid)
     assert mesh.n_cells == 1
-
-    # Volume should be positive but returns zero or negative, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-    ctype = mesh.celltypes[0]
-    if ctype == CellType.QUADRATIC_WEDGE:
-        assert mesh.volume < 0
-        return
-    elif ctype == CellType.TRIQUADRATIC_HEXAHEDRON:
-        if pv.vtk_version_info >= (9, 6, 0):
-            assert mesh.volume < 0
-        elif pv.vtk_version_info < (9, 4, 0):
-            assert mesh.volume == 0
-        return
-    elif ctype == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON and pv.vtk_version_info < (9, 4, 0):
-        assert mesh.volume == 0
-        return
 
     # Test area and volume
     dim = mesh.GetCell(0).GetCellDimension()
@@ -53,18 +42,16 @@ def test_area_and_volume(cell_example):
         assert np.isclose(volume, 0.0)
 
 
-@pytest.mark.needs_vtk_version(9, 5, 0, reason='vtkCellValidator output differs')
+@pytest.mark.needs_vtk_version(
+    (9, 6, 99),  # >= 9,7,0
+    reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
+)
 @parametrize('cell_example', cell_example_functions)
 def test_cell_is_valid(cell_example):
     mesh = cell_example()
     invalid_fields = mesh.validate_mesh().invalid_fields
     cell_type = next(mesh.cell).type
-    if cell_type == pv.CellType.QUADRATIC_WEDGE or (
-        cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
-    ):
-        # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-        assert invalid_fields == ('negative_size',)
-    elif cell_type == pv.CellType.CONVEX_POINT_SET:
+    if cell_type == pv.CellType.CONVEX_POINT_SET:
         # VTK bug: the convex points are incorrectly flagged as non-convex https://gitlab.kitware.com/vtk/vtk/-/issues/19992
         assert invalid_fields == ('non_convex',)
         # Show that the points are in fact convex as a surface

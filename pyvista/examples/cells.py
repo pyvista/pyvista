@@ -884,7 +884,7 @@ def Wedge() -> UnstructuredGrid:
 
     """
     R32 = np.sqrt(3) / 2
-    points = [[0, 1, 0], [0, 0, 0], [0, 0.5, R32], [1, 1, 0], [1, 0.0, 0.0], [1, 0.5, R32]]
+    points = [[0, 1, 0], [0, 0.5, R32], [0, 0, 0], [1, 1, 0], [1, 0.5, R32], [1, 0.0, 0.0]]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.WEDGE], points)
 
