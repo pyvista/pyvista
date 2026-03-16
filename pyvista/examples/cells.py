@@ -2745,7 +2745,9 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     generator : 'examples' | 'source' | 'parametric', default: 'examples'
         Method for generating cell type blocks.
 
-        - ``'examples'``: generate blocks using examples from :mod:`pyvista.examples.cells`.
+        - ``'examples'``: generate blocks using examples from :mod:`pyvista.examples.cells`. This
+          is a mixed collected of manually-defined linear cells, quadratic and cubic cells
+          generated with ``'paramatric'``, and higher order cells generated with ``source``.
         - ``'parametric'``: generate blocks using :vtk:`vtkCell.GetParametricCoords`.
         - ``'source'``: generate blocks using :vtk:`vtkCellTypeSource`.
 
