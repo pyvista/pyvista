@@ -196,6 +196,7 @@ class ScalarBars(_NoNewAttrMixin):
         render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
         unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
+        unique_bar: bool = True,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -326,6 +327,13 @@ class ScalarBars(_NoNewAttrMixin):
 
             .. versionadded:: 0.44.0
 
+        unique_bar : bool, default: True
+            Whether to use a unique scalar bar when a scalar bar
+            with the same title already exists.
+            If ``False``, then the existing scalar bar will be reused and rendered again.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkScalarBarActor`
@@ -405,6 +413,16 @@ class ScalarBars(_NoNewAttrMixin):
             self._scalar_bar_mappers[title].append(mapper)
             self._scalar_bar_ranges[title] = clim
             self._scalar_bar_actors[title].SetLookupTable(mapper.lookup_table)
+
+            name = self._scalar_bar_actors[title].name
+            if unique_bar is False and name not in self._plotter.renderer.actors.keys():
+                self._plotter.add_actor(
+                    self._scalar_bar_actors[title],
+                    reset_camera=False,
+                    pickable=False,
+                    render=render,
+                )
+
             # Color bar already present and ready to be used so returning
             return None
 
