@@ -11,6 +11,19 @@ from __future__ import annotations
 
 import contextlib
 
+# Disable array overrides for VTK 9.7 since these have breaking changes for trame-vtk
+# https://gitlab.kitware.com/vtk/vtk/-/issues/19996
+# There are hundreds of array classes that have overrides, so instead of polluting the
+# `_vtk_core` imports and manually overriding each class, we remove the array overrides wrapper
+# This must be done before importing classes from vtkmodules
+with contextlib.suppress(ImportError):
+    from vtkmodules import MODULE_MAPPER
+
+    core_overrides: list[str] | None = MODULE_MAPPER.pop('vtkCommonCore', None)
+    array_overrides = 'vtkmodules.numpy_interface.array_overrides'
+    if core_overrides is not None and array_overrides in core_overrides:
+        core_overrides.remove(array_overrides)
+
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
 from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper as VTKObjectWrapper
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as numpyTovtkDataArray

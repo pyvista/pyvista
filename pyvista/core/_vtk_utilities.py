@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import cache
-import inspect
 import sys
 from typing import Literal
 from typing import NamedTuple
@@ -106,23 +105,6 @@ class vtkPyVistaOverride:  # noqa: N801
 
         return cls
 
-
-# Similar to the class overrides above for data sets, we also need to disable array overrides
-# since these have breaking changes for trame-vtk https://gitlab.kitware.com/vtk/vtk/-/issues/19996
-if vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
-    # There are hundreds of array classes that need overrides, so instead of polluting the
-    # `_vtk_core` imports, we import the entire vtk module
-    from vtkmodules import vtkCommonCore as _vtkCommonCore
-
-    for _, obj in inspect.getmembers(_vtkCommonCore):
-        if (
-            inspect.isclass(obj)
-            and issubclass(obj, _vtk.vtkDataArray)
-            and hasattr(obj, 'override')
-        ):
-            obj.override(None)
-
-    del _vtkCommonCore
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
