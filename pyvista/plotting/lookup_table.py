@@ -962,7 +962,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         n_items = (
             vtk_values.GetSize()
             if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else vtk_values.GetCapacity()
+            else vtk_values.GetCapacity()  # type: ignore[attr-defined]
         )
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
