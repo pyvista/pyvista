@@ -556,3 +556,8 @@ except ImportError:
     from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
         vtkCellTypes as vtkCellTypeUtilities,  # noqa: F401
     )
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.7.0
+    from vtkmodules.vtkImagingCore import (
+        vtkImageBinaryThreshold as vtkImageBinaryThreshold,  # type: ignore[attr-defined]
+    )

@@ -1765,6 +1765,92 @@ class ImageDataFilters(DataSetFilters):
             erosion_alg, progress_bar=progress_bar, operation=dilation
         )
 
+    def _image_threshold(
+        self,
+        *,
+        threshold,
+        in_value,
+        out_value,
+        scalars,
+        field,
+        array_dtype,
+        progress_bar: bool,
+    ):
+        """Threshold using vtkImageThreshold."""
+        alg = _vtk.vtkImageThreshold()
+        alg.SetInputDataObject(self)
+        # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+
+        # set the threshold(s) and mode
+        threshold_val = np.atleast_1d(threshold)
+        if (size := threshold_val.size) not in (1, 2):
+            msg = f'Threshold must have one or two values, got {size}.'
+            raise ValueError(msg)
+        if size == 2:
+            alg.ThresholdBetween(threshold_val[0], threshold_val[1])
+        else:
+            alg.ThresholdByUpper(threshold_val[0])
+        # set the replacement values / modes
+        if in_value is not None:
+            alg.SetReplaceIn(True)
+            alg.SetInValue(np.array(in_value).astype(array_dtype))  # type: ignore[arg-type]
+        else:
+            alg.SetReplaceIn(False)
+        if out_value is not None:
+            alg.SetReplaceOut(True)
+            alg.SetOutValue(np.array(out_value).astype(array_dtype))  # type: ignore[arg-type]
+        else:
+            alg.SetReplaceOut(False)
+        # run the algorithm
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
+        return _get_output(alg)
+
+    def _binary_image_threshold(
+        self,
+        *,
+        threshold,
+        in_value,
+        out_value,
+        scalars,
+        field,
+        array_dtype,
+        progress_bar: bool,
+    ):
+        """Threshold using vtkImageBinaryThreshold."""
+        alg = _vtk.vtkImageBinaryThreshold()
+        alg.SetInputDataObject(self)
+        # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+
+        threshold_val = np.atleast_1d(threshold)
+        if (size := threshold_val.size) not in (1, 2):
+            msg = f'Threshold must have one or two values, got {size}.'
+            raise ValueError(msg)
+
+        if size == 2:
+            alg.SetThresholdFunction(_vtk.vtkImageBinaryThreshold.THRESHOLD_BETWEEN)
+            alg.SetLowerThreshold(threshold_val[0])
+            alg.SetUpperThreshold(threshold_val[1])
+        else:
+            alg.SetThresholdFunction(_vtk.vtkImageBinaryThreshold.THRESHOLD_UPPER)
+            alg.SetLowerThreshold(threshold_val[0])
+
+        if in_value is not None:
+            alg.ReplaceInOn()
+            alg.SetInValue(np.array(in_value).astype(array_dtype))
+        else:
+            alg.ReplaceInOff()
+
+        if out_value is not None:
+            alg.ReplaceOutOn()
+            alg.SetOutValue(np.array(out_value).astype(array_dtype))
+        else:
+            alg.ReplaceOutOff()
+
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
+        return _get_output(alg)
+
     @_deprecate_positional_args(allowed=['threshold'])
     def image_threshold(  # noqa: PLR0917
         self,
@@ -1858,38 +1944,21 @@ class ImageDataFilters(DataSetFilters):
         if cast_dtype:
             self[scalars] = self[scalars].astype(float, casting='safe')  # type: ignore[index]
 
-        alg = _vtk.vtkImageThreshold()
-        alg.SetInputDataObject(self)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
-        )  # args: (idx, port, connection, field, name)
-        # set the threshold(s) and mode
-        threshold_val = np.atleast_1d(threshold)
-        if (size := threshold_val.size) not in (1, 2):
-            msg = f'Threshold must have one or two values, got {size}.'
-            raise ValueError(msg)
-        if size == 2:
-            alg.ThresholdBetween(threshold_val[0], threshold_val[1])
-        else:
-            alg.ThresholdByUpper(threshold_val[0])
-        # set the replacement values / modes
-        if in_value is not None:
-            alg.SetReplaceIn(True)
-            alg.SetInValue(np.array(in_value).astype(array_dtype))  # type: ignore[arg-type]
-        else:
-            alg.SetReplaceIn(False)
-        if out_value is not None:
-            alg.SetReplaceOut(True)
-            alg.SetOutValue(np.array(out_value).astype(array_dtype))  # type: ignore[arg-type]
-        else:
-            alg.SetReplaceOut(False)
-        # run the algorithm
-        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
-        output = _get_output(alg)
+        threshold_filter = (
+            self._binary_image_threshold
+            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
+            else self._image_threshold
+        )
+        output = threshold_filter(
+            threshold=threshold,
+            in_value=in_value,
+            out_value=out_value,
+            scalars=scalars,
+            field=field,
+            array_dtype=array_dtype,
+            progress_bar=progress_bar,
+        )
+
         if cast_dtype:
             self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
             output[scalars] = output[scalars].astype(array_dtype)
