@@ -885,6 +885,9 @@ def Wedge() -> UnstructuredGrid:
     """
     R32 = np.sqrt(3) / 2
     points = [[0, 1, 0], [0, 0.5, R32], [0, 0, 0], [1, 1, 0], [1, 0.5, R32], [1, 0.0, 0.0]]
+    if pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
+        points[1], points[2] = points[2], points[1]
+        points[4], points[5] = points[5], points[4]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.WEDGE], points)
 

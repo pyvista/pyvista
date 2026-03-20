@@ -959,7 +959,6 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     def _reorder_wedge(points: list[int]) -> list[int]:
         """Swap points 1,2 and 4,5 for wedge cells."""
-        points = points.copy()
         points[1], points[2] = points[2], points[1]
         points[4], points[5] = points[5], points[4]
         return points

@@ -282,10 +282,6 @@ def test_pyramid():
     assert np.isclose(grid.volume, np.sqrt(2.0) / 6.0)
 
 
-@pytest.mark.needs_vtk_version(
-    (9, 6, 99),  # >= 9,7,0
-    reason='negative volume issues with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
-)
 def test_wedge():
     grid = cells.Wedge()
     assert grid.celltypes[0] == CellType.WEDGE
