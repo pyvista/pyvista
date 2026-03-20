@@ -558,6 +558,6 @@ except ImportError:
     )
 
 with contextlib.suppress(ImportError):  # Introduced VTK 9.7.0
-    from vtkmodules.vtkImagingCore import (
-        vtkImageBinaryThreshold as vtkImageBinaryThreshold,  # type: ignore[attr-defined]
+    from vtkmodules.vtkImagingCore import (  # type: ignore[attr-defined]
+        vtkImageBinaryThreshold as vtkImageBinaryThreshold,
     )
