@@ -7419,8 +7419,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         # Ignore if using a Jupyter display
-        _is_current = self.render_window.IsCurrent()
-        if jupyter_disp is None and not _is_current:
+        _ren_win = self.render_window
+        _is_current = _ren_win is not None and _ren_win.IsCurrent()
+        if _ren_win is None:
+            # Render window was already cleaned up (e.g. plotter.close()
+            # called from a key event callback). Nothing left to do.
+            pass
+        elif jupyter_disp is None and not _is_current:
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
