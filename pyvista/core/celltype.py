@@ -105,6 +105,7 @@ _CELL_TYPE_INFO = dict(
     # Linear cells
     EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
+        example='Empty',
         doc="""Used as a place-holder during processing.""",
     ),
     VERTEX=_CellTypeTuple(
@@ -707,6 +708,7 @@ class CellType(IntEnum):
     _n_points: int
     _n_edges: int
     _n_faces: int
+    _example: str | None
 
     def __new__(  # noqa: PYI034
         cls: type[CellType],
@@ -763,6 +765,7 @@ class CellType(IntEnum):
         """
         self = int.__new__(cls, value)
         self._value_ = value
+        self._example = _example
         self.__doc__ = ''
 
         # Get the vtk class associated with this cell type. For simplicity, skip abstract types
@@ -832,7 +835,7 @@ class CellType(IntEnum):
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(_badges, _doc)
-                if _example is None
+                if (_example is None or _example == 'Empty')
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
                     _example, _example, PLACEHOLDER, _badges, _doc
                 )
