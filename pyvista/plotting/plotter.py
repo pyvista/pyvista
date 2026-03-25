@@ -2658,6 +2658,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         copy_mesh: bool = False,  # noqa: FBT001, FBT002
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
+        force_opaque: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> tuple[Actor, CompositePolyDataMapper]:
         """Add a composite dataset to the plotter.
@@ -2936,6 +2937,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
                 available, `edge_opacity` is set to 1.
 
+        force_opaque : bool, default: False
+            Whether to force the returned actor to be opaque. Can be useful for web visualization
+            with ``culling = "front"`` and ``opacity`` smaller than 1.
+            See https://github.com/Kitware/trame-vtk/issues/105 for more details.
+
+            .. versionadded:: 0.48
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3037,6 +3045,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         actor, _ = self.add_actor(mapper, render=False)
         actor = cast('Actor', actor)
+        actor.force_opaque = force_opaque
 
         prop = Property(
             self._theme,
@@ -3200,6 +3209,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
         remove_existing_actor: bool | None = None,  # noqa: FBT001
+        force_opaque: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3565,6 +3575,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             when adding multiple named actors, particularly during initial scene setup
             where no actors exist yet.
 
+        force_opaque : bool, default: False
+            Whether to force the returned actor to be opaque. Can be useful for web visualization
+            with ``culling = "front"`` and ``opacity`` smaller than 1.
+            See https://github.com/Kitware/trame-vtk/issues/105 for more details.
+
+            .. versionadded:: 0.48
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3823,6 +3840,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
                 remove_existing_actor=remove_existing_actor,
+                force_opaque=force_opaque,
                 **kwargs,
             )
             return actor
@@ -3978,6 +3996,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=mapper)
         actor.user_matrix = user_matrix
+        actor.force_opaque = force_opaque
 
         if texture is not None:
             if isinstance(texture, np.ndarray):

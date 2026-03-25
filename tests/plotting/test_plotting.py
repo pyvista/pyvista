@@ -23,6 +23,7 @@ from typing import get_args
 import numpy as np
 from PIL import Image
 import pytest
+from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import demos
@@ -5399,3 +5400,20 @@ def test_connectivity_cmap():
     mesh = large + medium + small
     connected = mesh.connectivity('all')
     connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+
+
+@parametrize(multi_block=[False, True], force_opaque=[False, True])
+def test_actor_force_opaque(
+    force_opaque: bool,
+    multi_block: bool,
+    multiblock_poly: pv.MultiBlock,
+):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        pv.Sphere() if not multi_block else multiblock_poly,
+        force_opaque=force_opaque,
+        culling='front',
+        opacity=0.5,
+    )
+    pl.show()
+    assert actor.force_opaque == force_opaque
