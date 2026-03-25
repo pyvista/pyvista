@@ -217,6 +217,33 @@ class Actor(Prop3D, _vtk.vtkActor):
         self.SetPickable(value)
 
     @property
+    def force_opaque(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set actor opacity behavior.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then force the
+        actor to be opaque.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.force_opaque
+        False
+        >>> actor.force_opaque = True
+        >>> actor.force_opaque
+        True
+
+        """
+        return bool(self.GetForceOpaque())
+
+    @force_opaque.setter
+    def force_opaque(self, value: bool) -> None:
+        self.SetForceOpaque(value)
+
+    @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor visibility.
 
