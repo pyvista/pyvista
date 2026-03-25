@@ -7420,7 +7420,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         # render window.
         # Ignore if using a Jupyter display
         _ren_win = self.render_window
-        _is_current = _ren_win is not None and _ren_win.IsCurrent()
+        _is_current = _ren_win is not None and _ren_win.IsCurrent()  # type: ignore[redundant-expr]
         if _ren_win is None:
             # Render window was already cleaned up (e.g. plotter.close()
             # called from a key event callback). Nothing left to do.
