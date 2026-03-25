@@ -7424,11 +7424,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if _ren_win is None:
             # Render window was already cleaned up (e.g. plotter.close()
             # called from a key event callback). Nothing left to do.
-            pass
+            pass  # pragma: no cover
         elif jupyter_disp is None and not _is_current:
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
-            if not auto_close:
+            if not auto_close:  # pragma: no cover
                 warn_external(
                     '`auto_close` ignored: by clicking the exit button, '
                     'you have destroyed the render window and we have to '
