@@ -235,6 +235,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         exclude_fields: _LiteralMeshValidationFields
         | Sequence[_LiteralMeshValidationFields]
         | None = None,
+        **cell_validator_kwargs,
     ) -> None:
         if isinstance(mesh, pv.PointSet) and validation_fields is None and exclude_fields is None:
             validation_fields = [
@@ -247,7 +248,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             validation_fields, exclude_fields
         )
         self._validation_report = _MeshValidator._generate_report(
-            mesh, data_fields=data_fields, point_fields=point_fields, cell_fields=cell_fields
+            mesh,
+            data_fields=data_fields,
+            point_fields=point_fields,
+            cell_fields=cell_fields,
+            **cell_validator_kwargs,
         )
 
     @staticmethod
@@ -376,6 +381,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
+        **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
             # Ignore any warnings caused by wrapping alg outputs
@@ -389,6 +395,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
+                    **cell_validator_kwargs,
                 )
             else:
                 return _MeshValidator._validate_multiblock(  # type: ignore[return-value]
@@ -396,6 +403,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
+                    **cell_validator_kwargs,
                 )
 
     @staticmethod
@@ -405,6 +413,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
+        **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetType]:
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
@@ -421,7 +430,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         # Validate cells
         if cell_fields:
             # We also store the output from cell_validator
-            summaries, validated_mesh = _MeshValidator._validate_cells(mesh, cell_fields)
+            summaries, validated_mesh = _MeshValidator._validate_cells(
+                mesh, cell_fields, **cell_validator_kwargs
+            )
             for summary in summaries:
                 field_summaries[summary.name] = summary
 
@@ -451,6 +462,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
+        **cell_validator_kwargs,
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
 
@@ -466,6 +478,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
+                    **cell_validator_kwargs,
                 )
                 reports.append(report)
                 validated_mesh.replace(i, report.mesh)
@@ -506,6 +519,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_cells(
         mesh: _DataSetType,
         validation_fields: tuple[_CellFields, ...],
+        **cell_validator_kwargs,
     ) -> tuple[list[_MeshValidator._FieldSummary], _DataSetType]:
         """Validate cells and only return summary objects for the requested fields."""
 
@@ -531,7 +545,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return ''
 
         summaries: list[_MeshValidator._FieldSummary] = []
-        validated_mesh = mesh.cell_validator()
+        validated_mesh = mesh.cell_validator(**cell_validator_kwargs)
         for name in validation_fields:
             array = validated_mesh.field_data[name].tolist()
             msg = get_message(array)
@@ -560,8 +574,10 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 size = 'length'
             elif ctype.dimension == 2:
                 size = 'area'
-            else:
+            elif ctype.dimension == 3:
                 size = 'volume'
+            else:
+                size = 'size'
             name_norm = name_norm.replace('size', size)
         _MeshValidator._NORMALIZED_MESSAGE_FIELD_NAMES.add(name_norm)
 
@@ -999,6 +1015,7 @@ class DataObjectFilters:
         *,
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         report_body: _ReportBodyOptions = 'message',
+        **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
@@ -1124,6 +1141,11 @@ class DataObjectFilters:
             Using ``'fields'`` as the body is more explicit in terms of showing `which` fields
             have been validated. Using ``'message'`` is typically visually more compact though,
             and the message includes additional cell type-specific information.
+
+            .. versionadded:: 0.48
+
+        cell_validator_kwargs
+            Keyword arguments passed to :meth:`~pyvista.DataObjectFilters.cell_validator`.
 
             .. versionadded:: 0.48
 
@@ -1383,7 +1405,10 @@ class DataObjectFilters:
             _validation.check_contains(allowed, must_contain=action, name='action')
 
         report = _MeshValidator(
-            self, _convert_cell_status(validation_fields), _convert_cell_status(exclude_fields)
+            self,
+            _convert_cell_status(validation_fields),
+            _convert_cell_status(exclude_fields),
+            **cell_validator_kwargs,
         ).validation_report
 
         if action is not None and (message := report.message) is not None:
@@ -1402,13 +1427,13 @@ class DataObjectFilters:
         validation_fields = None if validate is True else validate
         self.validate_mesh(validation_fields, action='error')
 
-    def cell_validator(
+    def cell_validator(  # type:ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
         tolerance: float | None = None,
-        planarity_tolerance: float | None = None,
+        planarity_tolerance: float = 0.1,
         size_tolerance: float | None = None,
-    ):  # type:ignore[misc]
+    ):
         """Check the validity of each cell in this dataset.
 
         The status of each cell is encoded as a bit field cell data array ``'validity_state'``.
@@ -1437,6 +1462,44 @@ class DataObjectFilters:
         .. versionchanged:: 0.48
             The ``'validity_state'`` array is now a 64-bit integer array. Previously, it was a
             16-bit array.
+
+        .. versionadded:: 0.48
+            Add tolerance keywords.
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Value used for most floating point equality checks throughout the cell checking
+            process, e.g. for checking coincident points.
+            The default value is the epsilon (``eps``) of the mesh's points using
+            :attr:`numpy.finfo`.
+
+            .. note::
+                This tolerance is independent from any other tolerances.
+
+        planarity_tolerance : float, default: 0.1
+            Allowed relative distance a planar polygonal cell (or cell face) may protrudes out of
+            its plane compared to the largest distance between a cell (or cell face) center and
+            any of its corner points. Defaults to 0.1, meaning any cells which protrude more than
+            10% of their radius out of the plane will be marked invalid.
+
+            Set this value to 0 to disable planarity checks.
+
+            .. note::
+                This tolerance is independent from any other tolerances.
+
+        size_tolerance : float, optional
+            Value used for evaluating the size of a cell. Cells with a an absolute size less than
+            or equal to this value are flagged as having :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
+            cells with a size less than this value are flagged as having
+            :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
+            The default value is the epsilon (``eps``) of the mesh's points using
+            :attr:`numpy.finfo`.
+
+            Setting this tolerance explicitly may be useful for marking small cells as invalid.
+
+            .. note::
+                This tolerance is independent from any other tolerances.
 
         Returns
         -------
@@ -1548,14 +1611,26 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
+
+        # Set default tolerances based on points dtype
+        def get_points_eps(mesh):
+            if mesh.is_empty:
+                return np.finfo(np.dtype('float32')).eps
+            iterable = (
+                mesh.recursive_iterator(skip_none=True)
+                if isinstance(mesh, pv.MultiBlock)
+                else [mesh]
+            )
+            return max(np.finfo(dataset.points.dtype).eps for dataset in iterable)
+
+        points_eps = get_points_eps(self)
+        tol: float = tolerance if tolerance is not None else points_eps
+        size_tol: float = size_tolerance if size_tolerance is not None else points_eps
+
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
-        if tolerance is not None:
-            cell_validator.SetTolerance(tolerance)
-        if planarity_tolerance is not None:
-            cell_validator.SetPlanarityTolerance(planarity_tolerance)
-        if size_tolerance is None:
-            size_tol = cell_validator.GetTolerance()
+        cell_validator.SetTolerance(tol)
+        cell_validator.SetPlanarityTolerance(planarity_tolerance)
         cell_validator.Update()
         output = _get_output(cell_validator)
 

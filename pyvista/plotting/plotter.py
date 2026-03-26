@@ -158,7 +158,6 @@ def close_all() -> bool:
         ``True`` when all plotters have been closed.
 
     """
-    raise ValueError
     for pl in list(_ALL_PLOTTERS.values()):
         if not pl._closed:
             pl.close()
