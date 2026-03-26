@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 from pyvista._warn_external import warn_external
+from pyvista.jupyter import _get_custom_backend_handler
 
 if TYPE_CHECKING:
     import io
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 
 def handle_plotter(
     plotter: Plotter,
-    backend: JupyterBackendOptions | None = None,
+    backend: JupyterBackendOptions | str | None = None,
     screenshot: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
@@ -46,6 +47,10 @@ def handle_plotter(
     """
     if screenshot is False:
         screenshot = None
+
+    custom_handler = _get_custom_backend_handler(backend) if backend else None
+    if custom_handler is not None:
+        return custom_handler(plotter, screenshot=screenshot, **kwargs)
 
     try:
         if backend in ['server', 'client', 'trame', 'html']:

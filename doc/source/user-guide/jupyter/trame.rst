@@ -27,8 +27,8 @@ within Jupyter:
 
     # long example
     pl = pv.Plotter(notebook=True)
-    plotter.add_mesh(sphere)
-    plotter.show(jupyter_backend='trame')
+    pl.add_mesh(sphere)
+    pl.show(jupyter_backend='trame')
 
 For convenience, you can enable ``trame`` by default with:
 

@@ -282,7 +282,7 @@ def initialize(
 
 def show_trame(
     plotter: Plotter,
-    mode: JupyterBackendOptions | None = None,
+    mode: JupyterBackendOptions | str | None = None,
     name: str | None = None,
     server_proxy_enabled: bool | None = None,
     server_proxy_prefix: str | None = None,

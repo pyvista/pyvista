@@ -33,7 +33,6 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
-from pyvista.core.filters.data_object import _length_distribution_percentile
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -7270,7 +7269,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         colors: str
         | ColorLike
         | Sequence[ColorLike]
-        | dict[float, ColorLike] = 'glasbey_category10',
+        | dict[float, ColorLike]
+        | ColormapOptions = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycle'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
@@ -7619,7 +7619,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 )
                 raise ValueError(msg)
             _is_rgb_sequence = False
-            if isinstance(colors, str):
+            if isinstance(colors, (str, matplotlib.colors.Colormap)):
                 try:
                     cmap = get_cmap_safe(cast('ColormapOptions', colors))
                 except ValueError:
@@ -7644,7 +7644,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             if not _is_rgb_sequence:
                 color_rgb_sequence = [
-                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                    getattr(c, color_type)
+                    for c in _local_validate_color_sequence(colors)  # type: ignore[arg-type]
                 ]
                 if len(color_rgb_sequence) == 1:
                     color_rgb_sequence = color_rgb_sequence * len(array)
@@ -8513,6 +8514,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
+
+
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):
+    percentile = _validation.validate_number(
+        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+    )
+    distribution = _vtk.vtkLengthDistribution()
+    distribution.SetInputData(poly)
+    distribution.SetSampleSize(cell_length_sample_size)
+    _update_alg(
+        distribution, progress_bar=progress_bar, message='Computing cell length distribution'
+    )
+    return distribution.GetLengthQuantile(percentile)
 
 
 def _set_threshold_limit(alg, *, value, method, invert):

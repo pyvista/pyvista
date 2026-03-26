@@ -11,6 +11,7 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
+import ctypes
 from functools import wraps
 import io
 from itertools import cycle
@@ -139,6 +140,7 @@ if TYPE_CHECKING:
 
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
+FPS_1_OVER_60 = 1 / 60
 
 if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -156,6 +158,7 @@ def close_all() -> bool:
         ``True`` when all plotters have been closed.
 
     """
+    raise ValueError
     for pl in list(_ALL_PLOTTERS.values()):
         if not pl._closed:
             pl.close()
@@ -2656,6 +2659,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         copy_mesh: bool = False,  # noqa: FBT001, FBT002
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
+        force_opaque: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> tuple[Actor, CompositePolyDataMapper]:
         """Add a composite dataset to the plotter.
@@ -2934,6 +2938,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
                 available, `edge_opacity` is set to 1.
 
+        force_opaque : bool, default: False
+            Whether to force the returned actor to be opaque. Can be useful for web visualization
+            with ``culling = "front"`` and ``opacity`` smaller than 1.
+            See https://github.com/Kitware/trame-vtk/issues/105 for more details.
+
+            .. versionadded:: 0.48
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3035,6 +3046,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         actor, _ = self.add_actor(mapper, render=False)
         actor = cast('Actor', actor)
+        actor.force_opaque = force_opaque
 
         prop = Property(
             self._theme,
@@ -3198,6 +3210,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
         remove_existing_actor: bool | None = None,  # noqa: FBT001
+        force_opaque: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3563,6 +3576,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             when adding multiple named actors, particularly during initial scene setup
             where no actors exist yet.
 
+        force_opaque : bool, default: False
+            Whether to force the returned actor to be opaque. Can be useful for web visualization
+            with ``culling = "front"`` and ``opacity`` smaller than 1.
+            See https://github.com/Kitware/trame-vtk/issues/105 for more details.
+
+            .. versionadded:: 0.48
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3821,6 +3841,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
                 remove_existing_actor=remove_existing_actor,
+                force_opaque=force_opaque,
                 **kwargs,
             )
             return actor
@@ -3976,6 +3997,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=mapper)
         actor.user_matrix = user_matrix
+        actor.force_opaque = force_opaque
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -7115,7 +7137,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
         cpos: CameraPositionOptions | None = None,
-        jupyter_backend: JupyterBackendOptions | None = None,
+        jupyter_backend: JupyterBackendOptions | str | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
         before_close_callback: Callable[[Plotter], None] | None = None,
@@ -7370,17 +7392,40 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 self.last_vtksz = self.export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
-        if interactive and not self.off_screen:
+        if interactive and not self.off_screen:  # pragma: no cover
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
-                    # Resolves #1260
-                    if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()  # type: ignore[union-attr]
-                    self.iren.start()  # type: ignore[union-attr]
+                    # Workaround for Windows interactor unresponsiveness after focus changes.
+                    # See: https://github.com/pyvista/pyvista/issues/8383
+                    if os.name == 'nt':
+                        vtk_iren = self.iren.interactor  # type: ignore[union-attr]
+                        while True:
+                            tstart_frame = time.time()
+                            vtk_iren.ProcessEvents()
+                            if vtk_iren.GetDone():
+                                break
+                            self.render_window.Render()
 
-                if pv.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                            # target an update rate of 60 FPS
+                            telap = time.time() - tstart_frame
+                            sleep_ms = int((FPS_1_OVER_60 - telap) * 1000)
+                            if sleep_ms > 0:
+                                # instead of time.sleep use MsgWaitForMultipleObjects
+                                # to pump window messages to avoid the window appearing
+                                # unresponsive
+                                ctypes.windll.user32.MsgWaitForMultipleObjects(  # type: ignore[attr-defined]
+                                    0,
+                                    None,
+                                    False,
+                                    sleep_ms,
+                                    0x04FF,  # QS_ALLINPUT
+                                )
+                    else:
+                        self.iren.start()  # type: ignore[union-attr]
+
+                if pv.vtk_version_info < (9, 2, 3):
                     self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
@@ -7394,11 +7439,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         # Ignore if using a Jupyter display
-        _is_current = self.render_window.IsCurrent()
-        if jupyter_disp is None and not _is_current:
+        _ren_win = self.render_window
+        _is_current = _ren_win is not None and _ren_win.IsCurrent()  # type: ignore[redundant-expr]
+        if _ren_win is None:
+            # Render window was already cleaned up (e.g. plotter.close()
+            # called from a key event callback). Nothing left to do.
+            pass  # pragma: no cover
+        elif jupyter_disp is None and not _is_current:
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
-            if not auto_close:
+            if not auto_close:  # pragma: no cover
                 warn_external(
                     '`auto_close` ignored: by clicking the exit button, '
                     'you have destroyed the render window and we have to '

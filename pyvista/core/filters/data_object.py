@@ -31,8 +31,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
-from pyvista.core.celltype import _CELL_TYPES_1D
-from pyvista.core.celltype import _CELL_TYPES_2D
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -556,10 +554,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
-        if cell_type and name_norm in ['zero size', 'negative size']:
-            if cell_type in _CELL_TYPES_1D:
+        ctype = cast('pv.CellType', cell_type)
+        if ctype and name_norm in ['zero size', 'negative size']:
+            if ctype.dimension == 1:
                 size = 'length'
-            elif cell_type in _CELL_TYPES_2D:
+            elif ctype.dimension == 2:
                 size = 'area'
             else:
                 size = 'volume'
@@ -1555,14 +1554,10 @@ class DataObjectFilters:
             cell_validator.SetTolerance(tolerance)
         if planarity_tolerance is not None:
             cell_validator.SetPlanarityTolerance(planarity_tolerance)
+        if size_tolerance is None:
+            size_tol = cell_validator.GetTolerance()
         cell_validator.Update()
         output = _get_output(cell_validator)
-
-        def compute_size_tolerance() -> float:
-            dataset = self.combine() if isinstance(self, pv.MultiBlock) else self.copy(deep=False)
-            _length_distribution_percentile(dataset, 0.9)
-            size_factor = 1e-6
-            return cell_length * size_factor
 
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
@@ -1623,8 +1618,6 @@ class DataObjectFilters:
             state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
             return
 
-        size_tol = compute_size_tolerance() if size_tolerance is None else size_tolerance
-        output.field_data['size_tolerance'] = [size_tol]
         if isinstance(output, pv.DataSet):
             post_process(output)
         else:
@@ -5040,20 +5033,6 @@ class _Crinkler:
                 block.n_cells, dtype=_Crinkler.INT_DTYPE
             )
         return active_scalars_info
-
-
-# def _length_distribution_percentile(mesh: PolyData | UnstructuredGrid, percentile, sample_size=None, *, progress_bar=False):
-#     percentile = _validation.validate_number(
-#         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
-#     )
-#     distribution = _vtk.vtkLengthDistribution()
-#     distribution.SetInputData(mesh)
-#     distribution.SetSampleSize(mesh.n_cells)
-#     distribution.SortSampleOff()
-#     _update_alg(
-#         distribution, progress_bar=progress_bar, message='Computing cell length distribution'
-#     )
-#     mesh.cell_data['lengths'] = pv.Table(distribution.GetOutput()).values()[0]
 
 
 def _cell_status_docs_insert():
