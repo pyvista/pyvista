@@ -4058,8 +4058,7 @@ class DataObjectFilters:
         volume: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         vertex_count: bool = False,  # noqa: FBT001, FBT002
-        *,
-        size: bool = False,
+        size: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
