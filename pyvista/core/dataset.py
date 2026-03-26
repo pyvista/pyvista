@@ -23,7 +23,6 @@ from pyvista.typing.mypy_plugin import promote_type
 from . import _validation
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
-from .celltype import _CELL_TYPE_INFO
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -3238,9 +3237,7 @@ class DataSet(DataSetFilters, DataObject):
         elif isinstance(self, pv.UnstructuredGrid):
             distinct_dimensions = set()
             for cell_type in self.distinct_cell_types:
-                cell_class = _CELL_TYPE_INFO[cell_type.name].cell_class
-                if cell_class is not None:
-                    distinct_dimensions.add(cell_class().GetCellDimension())
+                distinct_dimensions.add(cell_type.dimension)
             return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
@@ -3353,9 +3350,51 @@ class DataSet(DataSetFilters, DataObject):
         """
         if not isinstance(self, pv.UnstructuredGrid):
             return False
-        is_linear = (
-            _vtk.vtkCellTypeUtilities.IsLinear
-            if pv.vtk_version_info >= (9, 6, 0)
-            else _vtk.vtkCellTypes.IsLinear
-        )
-        return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
+        return not all(celltype.is_linear for celltype in self.distinct_cell_types)
+
+    @property
+    def bounding_sphere(self) -> tuple[float, tuple[float, float, float]]:
+        """Compute the radius and center of a bounding sphere.
+
+        The sphere is exact for meshes with 4 points or less, and is otherwise approximated
+        using Ritter's algorithm. Returns NaN values if there are no points.
+
+        Uses :vtk:`vtkCell.ComputeBoundingSphere` internally for the computation.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        float, tuple
+            Sphere radius as a float and center as a tuple of floats.
+
+        Examples
+        --------
+        Get the bounding sphere geometry of a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> radius, center = mesh.bounding_sphere
+
+        Create a sphere and plot it along with the original mesh.
+
+        >>> sphere = pv.Icosphere(radius=radius, center=center)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(sphere, style='wireframe', color='black')
+        >>> pl.view_xy()
+        >>> pl.camera.zoom(1.5)
+        >>> pl.show()
+
+        """
+        # Create grid with a single POLY_VERTEX cell containing all the points
+        n_points = self.n_points
+        cells = np.hstack([[n_points], np.arange(n_points)])
+        celltypes = np.array([pv.CellType.POLY_VERTEX], dtype=np.uint8)
+        grid = pv.UnstructuredGrid(cells, celltypes, self.points)
+
+        # Compute radius and center of the cell
+        center = [0.0, 0.0, 0.0]
+        r2 = grid.GetCell(0).ComputeBoundingSphere(center)
+        return float(r2**0.5), (center[0], center[1], center[2])

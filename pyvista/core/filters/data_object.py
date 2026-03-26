@@ -31,8 +31,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
-from pyvista.core.celltype import _CELL_TYPES_1D
-from pyvista.core.celltype import _CELL_TYPES_2D
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -556,10 +554,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
-        if cell_type and name_norm in ['zero size', 'negative size']:
-            if cell_type in _CELL_TYPES_1D:
+        ctype = cast('pv.CellType', cell_type)
+        if ctype and name_norm in ['zero size', 'negative size']:
+            if ctype.dimension == 1:
                 size = 'length'
-            elif cell_type in _CELL_TYPES_2D:
+            elif ctype.dimension == 2:
                 size = 'area'
             else:
                 size = 'volume'

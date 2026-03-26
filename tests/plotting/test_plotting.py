@@ -23,6 +23,7 @@ from typing import get_args
 import numpy as np
 from PIL import Image
 import pytest
+from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import demos
@@ -3497,15 +3498,25 @@ def test_plot_cell():
 
 
 @pytest.mark.parametrize(
-    ('line_width', 'point_size', 'font_size', 'normals_scale'),
-    [(5, 30, 20, 0.1), (10, 80, 50, 0.25)],
+    ('line_width', 'point_size', 'font_size', 'normals_scale', 'cls'),
+    [
+        (5, 30, 20, 0.1, pv.PolyData),
+        (10, 80, 50, 0.25, pv.MultiBlock),
+    ],
 )
-def test_plot_cell_kwargs(line_width, point_size, font_size, normals_scale, verify_image_cache):
+def test_plot_cell_kwargs(
+    line_width, point_size, font_size, normals_scale, verify_image_cache, cls
+):
     # Skip since variance is too high across operating systems
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
 
     grid = examples.cells.Polyhedron()
+    if cls is pv.MultiBlock:
+        grid = grid.cast_to_multiblock()
+    elif cls is pv.PolyData:
+        grid = grid.extract_surface(algorithm='geometry')
+
     examples.plot_cell(
         grid,
         show_normals=True,
@@ -5335,6 +5346,8 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
         examples.cells.QuadraticWedge,
     ] and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('point ordering changed in newer VTK')
+    if cell_example is examples.cells.ConvexPointSet and pv.vtk_version_info < (9, 3, 0):
+        pytest.xfail('VTK regression: https://gitlab.kitware.com/vtk/vtk/-/issues/19992')
 
     # Skip since variance is too high
     verify_image_cache.macos_skip_image_cache = True
@@ -5387,3 +5400,20 @@ def test_connectivity_cmap():
     mesh = large + medium + small
     connected = mesh.connectivity('all')
     connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+
+
+@parametrize(multi_block=[False, True], force_opaque=[False, True])
+def test_actor_force_opaque(
+    force_opaque: bool,
+    multi_block: bool,
+    multiblock_poly: pv.MultiBlock,
+):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        pv.Sphere() if not multi_block else multiblock_poly,
+        force_opaque=force_opaque,
+        culling='front',
+        opacity=0.5,
+    )
+    pl.show()
+    assert actor.force_opaque == force_opaque

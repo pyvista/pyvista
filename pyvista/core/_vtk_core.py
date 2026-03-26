@@ -224,6 +224,7 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.vtkCommonDataModel import vtkLagrangeCurve as vtkLagrangeCurve
 from vtkmodules.vtkCommonDataModel import vtkLagrangeHexahedron as vtkLagrangeHexahedron
 from vtkmodules.vtkCommonDataModel import vtkLagrangeQuadrilateral as vtkLagrangeQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkLagrangeTetra as vtkLagrangeTetra
 from vtkmodules.vtkCommonDataModel import vtkLagrangeTriangle as vtkLagrangeTriangle
 from vtkmodules.vtkCommonDataModel import vtkLagrangeWedge as vtkLagrangeWedge
 from vtkmodules.vtkCommonDataModel import vtkLine as vtkLine
@@ -411,6 +412,7 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
+from vtkmodules.vtkFiltersSources import vtkCellTypeSource as vtkCellTypeSource
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
@@ -535,5 +537,9 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
     from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 
-with contextlib.suppress(ImportError):  # Introduced VTK 9.6.0
+try:  # Introduced VTK 9.6.0
     from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities as vtkCellTypeUtilities
+except ImportError:
+    from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
+        vtkCellTypes as vtkCellTypeUtilities,  # noqa: F401
+    )

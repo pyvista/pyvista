@@ -28,6 +28,7 @@ from pyvista.core.filters.data_object import MeshValidationFields as MeshValidat
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
+from pyvista.jupyter import register_jupyter_backend as register_jupyter_backend
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report

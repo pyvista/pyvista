@@ -2732,6 +2732,42 @@ def download_brain(load=True):  # noqa: FBT002
 _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 
 
+def download_frd(*, load=True):
+    """Download a sample CalculiX FRD file.
+
+    .. versionadded:: 0.48
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_frd()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Frd Dataset <frd_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`calculix_colormap_example`
+            Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
+
+    """
+    return _download_dataset(_dataset_frd, load=load)
+
+
+_dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd')
+
+
 @_deprecate_positional_args
 def download_structured_grid(load=True):  # noqa: FBT002
     """Download structured grid dataset.
