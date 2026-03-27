@@ -1424,14 +1424,16 @@ class DataObjectFilters:
         .. versionadded:: 0.47
 
         .. versionchanged:: 0.48
-            Include cell status checks for
-            :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES`,
-            :attr:`~pyvista.CellStatus.ZERO_SIZE`,
-            :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
 
-        .. versionchanged:: 0.48
-            The ``'validity_state'`` array is now a 64-bit integer array. Previously, it was a
-            16-bit array.
+            - Include cell status checks for
+              :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES`,
+              :attr:`~pyvista.CellStatus.ZERO_SIZE`,
+              :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
+            - The ``'validity_state'`` array is now a 64-bit integer array. Previously, it was a
+              16-bit array.
+            - The default tolerance used for floating point comparisons is now set dynamically
+              based on the data type of the mesh's points. Previously, it assumed a static
+              ``float32`` tolerance.
 
         Returns
         -------
@@ -1543,13 +1545,25 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
+
+        # Set default tolerances based on points dtype
+        def get_points_eps(mesh):
+            if mesh.is_empty:
+                return np.finfo(np.dtype('float32')).eps
+            iterable = (
+                mesh.recursive_iterator(skip_none=True)
+                if isinstance(mesh, pv.MultiBlock)
+                else [mesh]
+            )
+            return max(np.finfo(dataset.points.dtype).eps for dataset in iterable)
+
+        tolerance = get_points_eps(self)
+
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
+        cell_validator.SetTolerance(tolerance)
         cell_validator.Update()
         output = _get_output(cell_validator)
-
-        # Tolerance for float equality checks. This is on the order of 1e-7,
-        tolerance = cell_validator.GetTolerance()
 
         def is_zero(array):
             return np.abs(array) <= tolerance
