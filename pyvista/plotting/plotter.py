@@ -7074,6 +7074,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         if self.off_screen:
             self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]
+            # On macOS, vtkCocoaRenderWindow creates an NSWindow even for
+            # off-screen rendering, which shows a dock icon and requires
+            # the main thread.  Disconnecting from NSView creates a
+            # standalone CGL context instead — no dock icon, no
+            # main-thread requirement, and enables background-thread rendering.
+            if hasattr(self.render_window, 'SetConnectContextToNSView'):
+                self.render_window.SetConnectContextToNSView(False)
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
