@@ -7080,7 +7080,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # standalone CGL context instead — no dock icon, no
             # main-thread requirement, and enables background-thread rendering.
             if hasattr(self.render_window, 'SetConnectContextToNSView'):
-                self.render_window.SetConnectContextToNSView(False)
+                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
