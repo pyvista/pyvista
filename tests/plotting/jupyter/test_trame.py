@@ -12,6 +12,7 @@ from pyvista import examples
 has_trame = True
 try:
     from trame.app import get_server
+    from trame.app.core import AVAILABLE_SERVERS
 
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
@@ -49,6 +50,15 @@ pytestmark = [
         ':DeprecationWarning:trame_vtk'
     ),
 ]
+
+
+@pytest.fixture(autouse=True)
+def _clear_trame_servers():
+    """Needed since two tests trying to get a server with the same name
+    would return the same instance, which can cause side-effects depending on the test order.
+    """
+    yield
+    AVAILABLE_SERVERS.clear()
 
 
 def test_set_jupyter_backend_trame():
