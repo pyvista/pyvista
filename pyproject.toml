@@ -94,7 +94,7 @@ test = [
   'pytest-cov<7.1.0',
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
-  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista@feat/fixture-resource-cleanup',
+  'pytest-pyvista==0.3.2',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'retry-requests<2.1.0',
