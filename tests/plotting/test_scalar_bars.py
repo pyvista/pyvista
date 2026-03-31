@@ -87,8 +87,9 @@ def test_unique_scalar_bars(sphere, unique_bar: bool, shape: tuple[int, int]):
         pl.subplot(i, j)
         pl.add_mesh(sphere, show_scalar_bar=True, scalar_bar_args={'unique_bar': unique_bar})
 
-    for idx, (i, j) in enumerate(pairs):
-        pl.subplot(i, j)
-        scalar_bar = pl.scalar_bars[KEY]
-        if idx == 0 or unique_bar is False:
-            assert scalar_bar.name in pl.renderer.actors.keys()
+    key_scalar_bars = [b for b in pl.scalar_bars.values() if b.GetTitle() == KEY]
+
+    if unique_bar:
+        assert len(key_scalar_bars) == shape[0] * shape[1]
+    else:
+        assert len(key_scalar_bars) == 1
