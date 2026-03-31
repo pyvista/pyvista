@@ -196,7 +196,7 @@ class ScalarBars(_NoNewAttrMixin):
         render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
         unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
-        unique_bar: bool = True,  # noqa: FBT001, FBT002
+        unique_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -327,7 +327,7 @@ class ScalarBars(_NoNewAttrMixin):
 
             .. versionadded:: 0.44.0
 
-        unique_bar : bool, default: True
+        unique_bar : bool, default: False
             Whether to create a unique scalar bar when a scalar bar
             with the same title already exists.
             If ``False``, then the existing scalar bar will be reused and rendered again.
