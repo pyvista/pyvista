@@ -57,7 +57,7 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.10.0',
+  'cyclopts<4.11.0',
   'matplotlib<3.10.9',
   'numpy<2.4.0',
   'pillow<12.2.0',
@@ -155,7 +155,7 @@ docs = [
   'trame-vtk==2.11.6',
   'trame-vuetify==3.2.1',
   'trame==3.12.0',
-  'trimesh==4.11.3',
+  'trimesh==4.11.5',
   'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]
