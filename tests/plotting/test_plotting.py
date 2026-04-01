@@ -2840,6 +2840,7 @@ def test_chart_plot():
     pl.show()
 
 
+@pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3133,6 +3134,7 @@ def test_add_text():
     pl.show()
 
 
+@pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
 @pytest.mark.needs_vtk_version(9, 4, 0)
 def test_add_text_latex():
     """Test LaTeX symbols."""
