@@ -8,6 +8,7 @@ import pathlib
 import shutil
 import tempfile
 from typing import TYPE_CHECKING
+from typing import overload
 
 import pooch
 
@@ -54,14 +55,14 @@ def _cleanup_temp_files() -> None:
 atexit.register(_cleanup_temp_files)
 
 
-def _save_registry_state() -> dict:
+def _save_registry_state() -> dict[str, dict]:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_readers.copy(),
     }
 
 
-def _restore_registry_state(state: dict) -> None:
+def _restore_registry_state(state: dict[str, dict]) -> None:
     """Restore registry state from a snapshot."""
     _custom_ext_readers.clear()
     _custom_ext_readers.update(state['ext'])
@@ -127,7 +128,7 @@ def _download_uri(uri: str, ext: str) -> str:
                 f'Install it with: pip install fsspec'
             )
             raise ImportError(msg)
-        result = pooch.retrieve(uri, known_hash=None, fname=f'pyvista_download{suffix}')
+        result = pooch.retrieve(uri, known_hash=None, fname=f'pyvista_download{suffix}')  # type: ignore[attr-defined]  # pooch doesn't export retrieve in __all__
         _temp_files.append(result)
         return result
 
@@ -144,12 +145,30 @@ def _download_uri(uri: str, ext: str) -> str:
         return tmp_name
 
 
+@overload
+def register_reader(
+    key: str,
+    handler: None = None,
+    *,
+    override: bool = False,
+) -> Callable[[Callable[..., DataSet]], Callable[..., DataSet]]: ...
+
+
+@overload
+def register_reader(
+    key: str,
+    handler: Callable[..., DataSet],
+    *,
+    override: bool = False,
+) -> None: ...
+
+
 def register_reader(
     key: str,
     handler: Callable[..., DataSet] | None = None,
     *,
     override: bool = False,
-) -> Callable[..., DataSet] | None:
+) -> Callable[[Callable[..., DataSet]], Callable[..., DataSet]] | None:
     """Register a custom reader for a file extension.
 
     Can be used as a plain call or as a decorator.
