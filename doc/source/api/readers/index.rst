@@ -83,6 +83,36 @@ Reader Classes
     XMLUnstructuredGridReader
     XdmfReader
 
+Custom Readers
+~~~~~~~~~~~~~~
+
+Third-party packages can register custom readers so that
+:func:`pyvista.read` handles additional file formats automatically.
+Registration can be done programmatically or via Python entry points
+for zero-config discovery at install time.
+
+.. autofunction:: pyvista.register_reader
+
+**Entry points**
+
+Packages can also register readers in ``pyproject.toml`` so they are
+discovered automatically when installed:
+
+.. code-block:: toml
+
+   [project.entry-points."pyvista.readers"]
+   ".myformat" = "my_package:read_my_format"
+
+**Remote URI support**
+
+When :func:`pyvista.read` is given a remote URI (``https://``,
+``s3://``, etc.), it downloads the file to a local temporary path
+before reading. This uses ``fsspec`` when available (install with
+``pip install pyvista[io]``), falling back to ``pooch`` for HTTP(S)
+URIs. Readers registered with ``cloud=True`` receive the raw URI
+and are expected to handle remote access themselves.
+
+
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
 

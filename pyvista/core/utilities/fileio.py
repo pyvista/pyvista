@@ -16,6 +16,7 @@ from typing import Literal
 from typing import TextIO
 from typing import cast
 from typing import overload
+from urllib.parse import urlparse
 
 import numpy as np
 
@@ -218,6 +219,12 @@ def read(  # noqa: PLR0911, PLR0917
     readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
     meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
+    Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
+    temporary file automatically.  Install ``fsspec`` for full protocol
+    support (``pip install pyvista[io]``); ``pooch`` is used as a
+    fallback for HTTP(S).  Third-party reader plugins registered via
+    :func:`pyvista.register_reader` are also checked.
+
     See :func:`pyvista.get_reader` for list of vtk formats supported.
 
     .. include:: /api/utilities/mesh_io.rst
@@ -298,6 +305,33 @@ def read(  # noqa: PLR0911, PLR0917
             multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
 
+    # Circular import: reader_registry -> reader -> fileio
+    from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _ext_supports_cloud  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _get_scheme_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _has_scheme  # noqa: PLC0415
+
+    # Handle remote URIs before Path coercion
+    if isinstance(filename, str) and _has_scheme(filename):
+        # Check for a registered URI scheme handler first
+        scheme_match = _get_scheme_handler(filename)
+        if scheme_match is not None:
+            handler, _scheme = scheme_match
+            return handler(filename)
+
+        # Extract extension from the URI path
+        uri_ext = get_ext(urlparse(filename).path)
+        ext_to_check = _get_ext_force(filename, force_ext) if force_ext else uri_ext
+
+        # If a cloud-capable custom reader is registered, pass the URI through
+        cloud_handler = _get_ext_handler(ext_to_check)
+        if cloud_handler is not None and _ext_supports_cloud(ext_to_check):
+            return cloud_handler(filename)
+
+        # Download to a temp file and continue with local path
+        filename = _download_uri(filename, uri_ext)
+
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
         msg = f'File ({filename}) not found'
@@ -320,6 +354,11 @@ def read(  # noqa: PLR0911, PLR0917
         raise ValueError(msg)
     if ext in PICKLE_EXT:
         return read_pickle(filename)
+
+    # Check for registered custom extension readers
+    ext_handler = _get_ext_handler(ext)
+    if ext_handler is not None:
+        return ext_handler(str(filename))
 
     try:
         reader = pv.get_reader(filename, force_ext)

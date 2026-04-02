@@ -110,6 +110,7 @@ from .image_sources import ImageGridSource as ImageGridSource
 from .image_sources import ImageMandelbrotSource as ImageMandelbrotSource
 from .image_sources import ImageNoiseSource as ImageNoiseSource
 from .image_sources import ImageSinusoidSource as ImageSinusoidSource
+from .reader_registry import register_reader as register_reader
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource as CapsuleSource
