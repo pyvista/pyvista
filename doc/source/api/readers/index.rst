@@ -106,10 +106,17 @@ discovered automatically when installed:
 **Remote URI support**
 
 When :func:`pyvista.read` is given a remote URI (``https://``,
-``s3://``, etc.), it downloads the file to a local temporary path
-before reading. This uses ``fsspec`` when available (install with
+``s3://``, etc.) and a custom reader is registered for the file
+extension, the URI is passed directly to the reader.  If the reader
+raises :class:`~pyvista.LocalFileRequiredError`, PyVista downloads
+the file to a temporary local path and retries.  For built-in
+formats with no custom reader, the download happens automatically.
+This uses ``fsspec`` when available (install with
 ``pip install pyvista[io]``), falling back to ``pooch`` for HTTP(S)
 URIs.
+
+.. autoclass:: pyvista.LocalFileRequiredError
+.. autofunction:: pyvista.has_scheme
 
 
 Inherited Classes

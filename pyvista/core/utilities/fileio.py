@@ -309,10 +309,10 @@ def read(  # noqa: PLR0911, PLR0917
     from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
-    from pyvista.core.utilities.reader_registry import _has_scheme  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
 
     # Handle remote URIs before Path coercion
-    if isinstance(filename, str) and _has_scheme(filename):
+    if isinstance(filename, str) and has_scheme(filename):
         uri_ext = get_ext(urlparse(filename).path)
         # If a custom reader is registered for this extension, try it
         # with the raw URI first — the reader may handle cloud paths

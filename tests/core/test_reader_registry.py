@@ -12,10 +12,10 @@ from pyvista.core.utilities import reader_registry as _reg_mod
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError
 from pyvista.core.utilities.reader_registry import _custom_ext_readers
 from pyvista.core.utilities.reader_registry import _get_ext_handler
-from pyvista.core.utilities.reader_registry import _has_scheme
 from pyvista.core.utilities.reader_registry import _restore_registry_state
 from pyvista.core.utilities.reader_registry import _save_registry_state
 from pyvista.core.utilities.reader_registry import _temp_files
+from pyvista.core.utilities.reader_registry import has_scheme
 from pyvista.core.utilities.reader_registry import register_reader
 
 
@@ -152,7 +152,7 @@ def test_uri_fallback_downloads_on_local_file_required(tmp_path):
     def handler_needs_local(path, **__):
         nonlocal call_count
         call_count += 1
-        if _has_scheme(path):
+        if has_scheme(path):
             raise LocalFileRequiredError
         return pv.PolyData()
 
@@ -201,13 +201,13 @@ def test_s3_without_fsspec_raises():
             pv.read('s3://bucket/data.vtp')
 
 
-def test_has_scheme_rejects_local_paths():
+def testhas_scheme_rejects_local_paths():
     """Paths with :// after a slash are not URIs."""
-    assert _has_scheme('https://example.com/mesh.vtp') is True
-    assert _has_scheme('s3://bucket/key') is True
-    assert _has_scheme('/data/re://fresh/mesh.vtu') is False
-    assert _has_scheme('mesh.vtu') is False
-    assert _has_scheme('') is False
+    assert has_scheme('https://example.com/mesh.vtp') is True
+    assert has_scheme('s3://bucket/key') is True
+    assert has_scheme('/data/re://fresh/mesh.vtu') is False
+    assert has_scheme('mesh.vtu') is False
+    assert has_scheme('') is False
 
 
 def test_temp_file_cleanup(tmp_path):

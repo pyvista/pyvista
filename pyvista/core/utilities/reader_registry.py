@@ -67,8 +67,21 @@ def _restore_registry_state(state: dict) -> None:
     _custom_ext_readers.update(state['ext'])
 
 
-def _has_scheme(value: str) -> bool:
-    """Return True if *value* starts with a URI scheme (e.g. ``https://``)."""
+def has_scheme(value: str) -> bool:
+    """Return ``True`` if *value* starts with a URI scheme (e.g. ``https://``).
+
+    Parameters
+    ----------
+    value : str
+        The string to check.
+
+    Returns
+    -------
+    bool
+        ``True`` if *value* contains a ``://`` scheme prefix before
+        the first ``/``.
+
+    """
     # Check that :// appears before the first / to avoid false positives
     # on paths like /data/re://fresh/mesh.vtu
     slash = value.find('/')
