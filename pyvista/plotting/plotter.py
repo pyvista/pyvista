@@ -18,7 +18,6 @@ from itertools import cycle
 import logging
 import os
 from pathlib import Path
-import platform
 import sys
 import textwrap
 from threading import Thread
