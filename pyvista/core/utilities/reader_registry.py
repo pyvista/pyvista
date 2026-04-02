@@ -55,14 +55,14 @@ def _cleanup_temp_files() -> None:
 atexit.register(_cleanup_temp_files)
 
 
-def _save_registry_state() -> dict[str, dict]:
+def _save_registry_state() -> dict[str, dict[str, Callable[..., DataSet]]]:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_readers.copy(),
     }
 
 
-def _restore_registry_state(state: dict[str, dict]) -> None:
+def _restore_registry_state(state: dict[str, dict[str, Callable[..., DataSet]]]) -> None:
     """Restore registry state from a snapshot."""
     _custom_ext_readers.clear()
     _custom_ext_readers.update(state['ext'])
