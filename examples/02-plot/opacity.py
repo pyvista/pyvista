@@ -159,9 +159,6 @@ contours.array_names
 # the temperature variance array by the maximum value.  That way high
 # variance will be completely transparent.
 
-# sphinx_gallery_start_ignore
-PYVISTA_GALLERY_FORCE_STATIC = True
-# sphinx_gallery_end_ignore
 contours['Temperature_var'] /= contours['Temperature_var'].max()
 
 pl = pv.Plotter(shape=(1, 2))
