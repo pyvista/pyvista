@@ -18,9 +18,28 @@ if TYPE_CHECKING:
 
     from pyvista.core.dataset import DataSet
 
+
+class LocalFileRequiredError(Exception):
+    """Raise from a registered reader to signal it needs a local file path.
+
+    When :func:`pyvista.read` passes a remote URI to a custom reader and
+    the reader raises this exception, PyVista will download the file to a
+    temporary local path and retry the reader automatically.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista.core.utilities.reader_registry import LocalFileRequiredError
+    >>> @pv.register_reader('.myformat')  # doctest: +SKIP
+    ... def my_reader(path, **kwargs):
+    ...     if '://' in path:
+    ...         raise LocalFileRequiredError
+    ...     ...
+
+    """
+
+
 _custom_ext_readers: dict[str, Callable[..., DataSet]] = {}
-_custom_ext_cloud: dict[str, bool] = {}
-_custom_scheme_readers: dict[str, Callable[..., DataSet]] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 
@@ -39,8 +58,6 @@ def _save_registry_state() -> dict:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_readers.copy(),
-        'cloud': _custom_ext_cloud.copy(),
-        'scheme': _custom_scheme_readers.copy(),
     }
 
 
@@ -48,10 +65,6 @@ def _restore_registry_state(state: dict) -> None:
     """Restore registry state from a snapshot."""
     _custom_ext_readers.clear()
     _custom_ext_readers.update(state['ext'])
-    _custom_ext_cloud.clear()
-    _custom_ext_cloud.update(state['cloud'])
-    _custom_scheme_readers.clear()
-    _custom_scheme_readers.update(state['scheme'])
 
 
 def _has_scheme(value: str) -> bool:
@@ -118,20 +131,13 @@ def _download_uri(uri: str, ext: str) -> str:
         return tmp_name
 
 
-def _ext_supports_cloud(ext: str) -> bool:
-    """Return True if the handler for *ext* was registered with ``cloud=True``."""
-    _ensure_entry_points()
-    return _custom_ext_cloud.get(ext, False)
-
-
 def register_reader(
     key: str,
     handler: Callable[..., DataSet] | None = None,
     *,
-    cloud: bool = False,
     override: bool = False,
 ) -> Callable[..., DataSet] | None:
-    """Register a custom reader handler for a file extension or URI scheme.
+    """Register a custom reader for a file extension.
 
     Can be used as a plain call or as a decorator.
 
@@ -140,17 +146,11 @@ def register_reader(
     Parameters
     ----------
     key : str
-        Either a file extension (e.g. ``'.myformat'``) or a URI scheme
-        prefix (e.g. ``'s3://'``).
+        A file extension (e.g. ``'.myformat'``).
     handler : callable, optional
         A callable with signature ``handler(path: str, **kwargs)`` that
         returns a :class:`pyvista.DataSet`.  When omitted the function
         acts as a decorator and returns the decorated callable unchanged.
-    cloud : bool, default: False
-        If ``True``, the handler accepts remote URIs (``s3://``,
-        ``https://``, etc.) directly.  If ``False``, PyVista will
-        download HTTP(S) URIs to a temporary file before calling the
-        handler.
     override : bool, default: False
         If ``True``, allow overriding a built-in VTK reader for this
         extension.
@@ -180,23 +180,16 @@ def register_reader(
     >>> @pv.register_reader('.myformat')  # doctest: +SKIP
     ... def my_reader(path, **kwargs): ...
 
-    Register a cloud-capable reader.
-
-    >>> @pv.register_reader('.zarr', cloud=True)  # doctest: +SKIP
-    ... def zarr_reader(
-    ...     path, **kwargs
-    ... ): ...  # can handle s3://, https://, etc. natively
-
     """
     if handler is None:
         # Decorator form: @pv.register_reader('.ext')
         def _decorator(fn: Callable[..., DataSet]) -> Callable[..., DataSet]:
-            _register(key, fn, cloud=cloud, override=override)
+            _register(key, fn, override=override)
             return fn
 
         return _decorator
 
-    _register(key, handler, cloud=cloud, override=override)
+    _register(key, handler, override=override)
     return None
 
 
@@ -204,39 +197,24 @@ def _register(
     key: str,
     handler: Callable[..., DataSet],
     *,
-    cloud: bool = False,
     override: bool = False,
 ) -> None:
-    """Register a handler in the appropriate registry."""
-    if _has_scheme(key):
-        _custom_scheme_readers[key.lower()] = handler
-    else:
-        key = key.lower()
-        if not key.startswith('.'):
-            key = f'.{key}'
-        if not override:
-            # Circular import: reader_registry -> reader -> fileio -> reader_registry
-            from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
+    """Register a handler in the extension registry."""
+    key = key.lower()
+    if not key.startswith('.'):
+        key = f'.{key}'
+    if not override:
+        # Circular import: reader_registry -> reader -> fileio -> reader_registry
+        from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
 
-            if key in CLASS_READERS:
-                msg = (
-                    f'Cannot register custom reader for "{key}": '
-                    f'collides with built-in VTK reader. '
-                    f'Use override=True to replace it.'
-                )
-                raise ValueError(msg)
-        _custom_ext_readers[key] = handler
-        _custom_ext_cloud[key] = cloud
-
-
-def _get_scheme_handler(filename: str) -> tuple[Callable[..., DataSet], str] | None:
-    """Return ``(handler, scheme_key)`` if *filename* matches a registered URI scheme."""
-    _ensure_entry_points()
-    filename_lower = filename.lower()
-    for scheme, handler in _custom_scheme_readers.items():
-        if filename_lower.startswith(scheme):
-            return handler, scheme
-    return None
+        if key in CLASS_READERS:
+            msg = (
+                f'Cannot register custom reader for "{key}": '
+                f'collides with built-in VTK reader. '
+                f'Use override=True to replace it.'
+            )
+            raise ValueError(msg)
+    _custom_ext_readers[key] = handler
 
 
 def _get_ext_handler(ext: str) -> Callable[..., DataSet] | None:
@@ -260,23 +238,19 @@ def _ensure_entry_points() -> None:
     seen: dict[str, list[str]] = {}
     for ep in eps:
         key = ep.name.lower()
-        if not _has_scheme(key) and not key.startswith('.'):
+        if not key.startswith('.'):
             key = f'.{key}'
         seen.setdefault(key, []).append(ep.value)
 
     for ep in eps:
         key = ep.name.lower()
-        if _has_scheme(key):
-            registry = _custom_scheme_readers
-        else:
-            if not key.startswith('.'):
-                key = f'.{key}'
-            registry = _custom_ext_readers
+        if not key.startswith('.'):
+            key = f'.{key}'
 
-        if key in registry:
+        if key in _custom_ext_readers:
             continue
         try:
-            registry[key] = ep.load()
+            _custom_ext_readers[key] = ep.load()
         except Exception:  # noqa: BLE001, S112
             continue
 

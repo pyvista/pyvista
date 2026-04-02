@@ -306,30 +306,25 @@ def read(  # noqa: PLR0911, PLR0917
         return multi
 
     # Circular import: reader_registry -> reader -> fileio
+    from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
-    from pyvista.core.utilities.reader_registry import _ext_supports_cloud  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
-    from pyvista.core.utilities.reader_registry import _get_scheme_handler  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _has_scheme  # noqa: PLC0415
 
     # Handle remote URIs before Path coercion
     if isinstance(filename, str) and _has_scheme(filename):
-        # Check for a registered URI scheme handler first
-        scheme_match = _get_scheme_handler(filename)
-        if scheme_match is not None:
-            handler, _scheme = scheme_match
-            return handler(filename)
-
-        # Extract extension from the URI path
         uri_ext = get_ext(urlparse(filename).path)
-        ext_to_check = _get_ext_force(filename, force_ext) if force_ext else uri_ext
-
-        # If a cloud-capable custom reader is registered, pass the URI through
-        cloud_handler = _get_ext_handler(ext_to_check)
-        if cloud_handler is not None and _ext_supports_cloud(ext_to_check):
-            return cloud_handler(filename)
-
-        # Download to a temp file and continue with local path
+        # If a custom reader is registered for this extension, try it
+        # with the raw URI first — the reader may handle cloud paths
+        # natively (e.g. zarr stores on S3). If it fails, fall back to
+        # downloading the file and retrying with a local path.
+        ext_handler = _get_ext_handler(uri_ext)
+        if ext_handler is not None:
+            try:
+                return ext_handler(filename)
+            except LocalFileRequiredError:
+                filename = _download_uri(filename, uri_ext)
+                return ext_handler(filename)
         filename = _download_uri(filename, uri_ext)
 
     filename = Path(filename).expanduser().resolve()

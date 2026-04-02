@@ -109,8 +109,7 @@ When :func:`pyvista.read` is given a remote URI (``https://``,
 ``s3://``, etc.), it downloads the file to a local temporary path
 before reading. This uses ``fsspec`` when available (install with
 ``pip install pyvista[io]``), falling back to ``pooch`` for HTTP(S)
-URIs. Readers registered with ``cloud=True`` receive the raw URI
-and are expected to handle remote access themselves.
+URIs.
 
 
 Inherited Classes
