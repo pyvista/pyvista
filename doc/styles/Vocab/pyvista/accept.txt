@@ -188,6 +188,8 @@ uncomment
 unittest
 unmerged
 unvalidated
+uri
+uris
 venv
 vnc
 voxel
