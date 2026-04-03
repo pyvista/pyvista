@@ -18,7 +18,6 @@ from itertools import cycle
 import logging
 import os
 from pathlib import Path
-import platform
 import sys
 import textwrap
 from threading import Thread
@@ -5175,15 +5174,17 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
-            apple_silicon = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-            if not apple_silicon:  # pragma: no cover
-                # Up to vtk==9.5.0, render windows aren't closed on MacOS,
-                # so the resources are not freed making this unnecessary. Also,
-                # we need this disabled so we can use NSAutoreleasePool in unit
-                # testing.
-                # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
-                self.ren_win.Finalize()
-
+            self.ren_win.Finalize()
+            if (
+                sys.platform == 'darwin'
+                and self.iren is not None
+                and self.iren.interactor is not None
+            ):
+                # Flush pending Cocoa events so the macOS window server
+                # actually dismisses the window. Without this, the NSWindow
+                # is removed from NSApp.windows() but the window server
+                # still draws it as a frozen "zombie" window.
+                self.iren.interactor.ProcessEvents()
             del self.ren_win
 
     def close(self) -> None:
@@ -7074,6 +7075,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         if self.off_screen:
             self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]
+            # On macOS, vtkCocoaRenderWindow creates an NSWindow even for
+            # off-screen rendering, which shows a dock icon and requires
+            # the main thread.  Disconnecting from NSView creates a
+            # standalone CGL context instead — no dock icon, no
+            # main-thread requirement, and enables background-thread rendering.
+            if hasattr(self.render_window, 'SetConnectContextToNSView'):
+                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
