@@ -92,7 +92,7 @@ test = [
   'pandas<=2.4.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.11.0',
-  'pytest-cov<7.1.0',
+  'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
   'pytest-pyvista==0.3.2',
