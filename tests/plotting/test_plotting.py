@@ -5338,18 +5338,14 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
+@pytest.mark.needs_vtk_version(
+    (9, 6, 99),  # >= 9,7,0
+    reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
+)
 @pytest.mark.parametrize('cell_example', cell_example_functions)
 def test_cell_examples_normals(cell_example, verify_image_cache):
     if cell_example is examples.cells.Empty:
         pytest.skip('nothing to plot')
-    if cell_example in [
-        examples.cells.BiQuadraticQuadraticWedge,
-        examples.cells.QuadraticLinearWedge,
-        examples.cells.QuadraticWedge,
-    ] and pv.vtk_version_info < (9, 4, 0):
-        pytest.xfail('point ordering changed in newer VTK')
-    if cell_example is examples.cells.ConvexPointSet and pv.vtk_version_info < (9, 3, 0):
-        pytest.xfail('VTK regression: https://gitlab.kitware.com/vtk/vtk/-/issues/19992')
 
     # Skip since variance is too high
     verify_image_cache.macos_skip_image_cache = True
