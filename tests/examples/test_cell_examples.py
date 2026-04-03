@@ -101,7 +101,6 @@ def test_cell_name(cell_example):
     assert actual == expected
 
 
-@pytest.mark.needs_vtk_version(9, 5, 0, reason='VTK bug for higher-order quads/triangles')
 @parametrize('cell_example', cell_example_functions)
 def test_cell_vtk_class(cell_example):
     cell = cell_example().GetCell(0)
@@ -153,7 +152,6 @@ def test_cell_n_points(cell_example):
         assert celltype.n_points == cell.n_points
 
 
-@pytest.mark.needs_vtk_version(9, 5, 0, reason='VTK bug for higher-order quads/triangles')
 @parametrize('cell_example', cell_example_functions)
 def test_cell_n_edges(cell_example):
     cell = next(cell_example().cell)
