@@ -9,6 +9,7 @@ from typing import NamedTuple
 from typing import cast
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import vtk_version_info
 
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
@@ -772,6 +773,14 @@ class CellType(IntEnum):
         # even though some actually do have a corresponding class. Among other things, skipping
         # abstract types helps avoid the need to work around this VTK bug: https://gitlab.kitware.com/vtk/vtk/-/issues/19988
         _vtk_class_name = _vtk.vtkCellTypeUtilities.GetClassNameFromTypeId(value)
+        if vtk_version_info < (9, 6, 0):
+            # Fix bug with older VTK where higher order Triangle/Quadrilateral are swapped
+            _vtk_class_name = {
+                'vtkBezierTriangle': 'vtkBezierQuadrilateral',
+                'vtkBezierQuadrilateral': 'vtkBezierTriangle',
+                'vtkLagrangeTriangle': 'vtkLagrangeQuadrilateral',
+                'vtkLagrangeQuadrilateral': 'vtkLagrangeTriangle',
+            }.get(_vtk_class_name, _vtk_class_name)
         self._vtk_class = (
             None
             if _vtk_class_name.startswith(('vtkParametric', 'vtkHigherOrder'))  # Abstract
