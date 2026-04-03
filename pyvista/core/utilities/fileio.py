@@ -16,6 +16,7 @@ from typing import Literal
 from typing import TextIO
 from typing import cast
 from typing import overload
+from urllib.parse import urlparse
 
 import numpy as np
 
@@ -218,6 +219,12 @@ def read(  # noqa: PLR0911, PLR0917
     readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
     meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
+    Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
+    temporary file automatically.  Install ``fsspec`` for full protocol
+    support (``pip install pyvista[io]``); ``pooch`` is used as a
+    fallback for HTTP(S).  Third-party reader plugins registered via
+    :func:`pyvista.register_reader` are also checked.
+
     See :func:`pyvista.get_reader` for list of vtk formats supported.
 
     .. include:: /api/utilities/mesh_io.rst
@@ -298,6 +305,28 @@ def read(  # noqa: PLR0911, PLR0917
             multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
 
+    # Circular import: reader_registry -> reader -> fileio
+    from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
+
+    # Handle remote URIs before Path coercion
+    if isinstance(filename, str) and has_scheme(filename):
+        uri_ext = get_ext(urlparse(filename).path)
+        # If a custom reader is registered for this extension, try it
+        # with the raw URI first — the reader may handle cloud paths
+        # natively (e.g. zarr stores on S3). If it fails, fall back to
+        # downloading the file and retrying with a local path.
+        ext_handler = _get_ext_handler(uri_ext)
+        if ext_handler is not None:
+            try:
+                return ext_handler(filename)
+            except LocalFileRequiredError:
+                filename = _download_uri(filename, uri_ext)
+                return ext_handler(filename)
+        filename = _download_uri(filename, uri_ext)
+
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
         msg = f'File ({filename}) not found'
@@ -320,6 +349,11 @@ def read(  # noqa: PLR0911, PLR0917
         raise ValueError(msg)
     if ext in PICKLE_EXT:
         return read_pickle(filename)
+
+    # Check for registered custom extension readers
+    ext_handler = _get_ext_handler(ext)
+    if ext_handler is not None:
+        return ext_handler(str(filename))
 
     try:
         reader = pv.get_reader(filename, force_ext)
