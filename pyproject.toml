@@ -57,7 +57,7 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.10.0',
+  'cyclopts<4.11.0',
   'matplotlib<3.10.9',
   'numpy<2.4.0',
   'pillow<12.2.0',
@@ -92,7 +92,7 @@ test = [
   'pandas<=2.4.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.11.0',
-  'pytest-cov<7.1.0',
+  'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
   'pytest-pyvista==0.3.2',
@@ -133,7 +133,7 @@ docs = [
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
-  'pypandoc==1.16.2',
+  'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.0; python_version >= "3.11"',
@@ -155,7 +155,7 @@ docs = [
   'trame-vtk==2.11.6',
   'trame-vuetify==3.2.1',
   'trame==3.12.0',
-  'trimesh==4.11.3',
+  'trimesh==4.11.5',
   'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]
