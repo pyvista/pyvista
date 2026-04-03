@@ -17,6 +17,8 @@ import vtkmodules.vtkRenderingOpenGL2
 ren = vtkRenderer()
 win = vtkRenderWindow()
 win.OffScreenRenderingOn()
+if hasattr(win, 'SetConnectContextToNSView'):
+    win.SetConnectContextToNSView(False)
 win.AddRenderer(ren)
 win.Render()
 print(win.ReportCapabilities())
