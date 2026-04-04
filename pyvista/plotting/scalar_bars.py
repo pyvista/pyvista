@@ -400,8 +400,8 @@ class ScalarBars(_NoNewAttrMixin):
                 height = theme.colorbar_horizontal.height
 
         display_title = title
-        if unique_bar is True and title in self._scalar_bar_actors:
-            title = f'{title}_{len(self._scalar_bar_actors)}'
+        if unique_bar:
+            title = f'{title}_UNIQUE_ID_{self._plotter.renderers.active_index}'
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
