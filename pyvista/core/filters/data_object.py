@@ -1611,21 +1611,8 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
-
-        # Set default tolerances based on points dtype
-        def get_points_eps(mesh):
-            if mesh.is_empty:
-                return np.finfo(np.dtype('float32')).eps
-            iterable = (
-                mesh.recursive_iterator(skip_none=True)
-                if isinstance(mesh, pv.MultiBlock)
-                else [mesh]
-            )
-            return max(np.finfo(dataset.points.dtype).eps for dataset in iterable)
-
-        points_eps = get_points_eps(self)
-        tol: float = tolerance if tolerance is not None else points_eps
-        size_tol: float = size_tolerance if size_tolerance is not None else points_eps
+        # Use single-precision eps by default (even if points have double precision)
+        tol: float = tolerance if tolerance is not None else np.finfo(np.single).eps
 
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
@@ -1656,6 +1643,11 @@ class DataObjectFilters:
                 mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
 
         def set_pyvista_validity_state(mesh: DataSet):
+            # Use points dtype eps by default
+            size_tol: float = (
+                size_tolerance if size_tolerance is not None else np.finfo(mesh.points.dtype).eps
+            )
+
             state = mesh.cell_data['validity_state']
 
             size_data = mesh.compute_cell_sizes(

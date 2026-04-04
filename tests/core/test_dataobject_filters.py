@@ -1823,8 +1823,8 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Cell types                   : {TRIANGLE}\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
-        "    Invalid fields (4)           : ('non_finite_points', 'unused_points', "
-        "'invalid_point_references', 'non_contiguous_edges')\n"
+        "    Invalid fields (3)           : ('non_finite_points', 'unused_points', "
+        "'invalid_point_references')\n"
         'Invalid data arrays:\n'
         '    Cell data wrong length       : []\n'
         '    Point data wrong length      : []\n'
@@ -1838,7 +1838,7 @@ def test_validate_mesh_str_invalid_mesh(invalid_random_polydata):
         '    Intersecting faces           : []\n'
         '    Invalid point references (1) : [0]\n'
         '    Inverted faces               : []\n'
-        '    Non-contiguous edges (1)     : [0]\n'
+        '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
         '    Wrong number of points       : []'
@@ -1870,8 +1870,8 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    N Blocks                     : 3\n'
         'Report summary:\n'
         '    Is valid                     : False\n'
-        "    Invalid fields (4)           : ('non_finite_points', 'unused_points', "
-        "'invalid_point_references', 'non_contiguous_edges')\n"
+        "    Invalid fields (3)           : ('non_finite_points', 'unused_points', "
+        "'invalid_point_references')\n"
         'Blocks with invalid data arrays:\n'
         '    Cell data wrong length       : []\n'
         '    Point data wrong length      : []\n'
@@ -1885,7 +1885,7 @@ def test_validate_mesh_composite_str_invalid_mesh(invalid_nested_multiblock):
         '    Intersecting faces           : []\n'
         '    Invalid point references (2) : [1, 2]\n'
         '    Inverted faces               : []\n'
-        '    Non-contiguous edges (2)     : [1, 2]\n'
+        '    Non-contiguous edges         : []\n'
         '    Non-convex                   : []\n'
         '    Non-planar faces             : []\n'
         '    Wrong number of points       : []'
@@ -1905,15 +1905,13 @@ def test_validate_mesh_composite_message(invalid_nested_multiblock):
         '   - Mesh has 1 non-finite point. Invalid point id: [20]\n'
         '   - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell '
         'id: [0]\n'
-        '   - Mesh has 1 TRIANGLE cell with non-contiguous edges. Invalid cell id: [0]\n'
         " * Block id 2 'nested' MultiBlock mesh is not valid:\n"
         "   * Block id 0 'poly_nested' PolyData mesh is not valid:\n"
         '     - Mesh has 19 unused points not referenced by any cell. Invalid '
         'point ids: [2, 3, 4, 5, 6, 7, ...]\n'
         '     - Mesh has 1 non-finite point. Invalid point id: [20]\n'
         '     - Mesh has 1 TRIANGLE cell with invalid point references. Invalid cell '
-        'id: [0]\n'
-        '     - Mesh has 1 TRIANGLE cell with non-contiguous edges. Invalid cell id: [0]'
+        'id: [0]'
     )
     assert actual == expected
 
