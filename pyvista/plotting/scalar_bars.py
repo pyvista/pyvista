@@ -328,9 +328,9 @@ class ScalarBars(_NoNewAttrMixin):
             .. versionadded:: 0.44.0
 
         unique_bar : bool, default: False
-            Whether to create a unique scalar bar when a scalar bar
-            with the same title already exists.
-            If ``False``, then the existing scalar bar will be reused and rendered again.
+            Whether to create a scalar bar which is unique to the subplot.
+            If ``True``, the scalar bar will be created with a unique key
+            which is not shared with other subplots, even if the input title is the same.
 
             .. versionadded:: 0.48.0
 
