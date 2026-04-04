@@ -1386,8 +1386,8 @@ datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest
 For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
 featuring two datasets of musical instruments, e.g.
 
-#.  :func:`pyvista.examples.downloads.download_guitar`
-#.  :func:`pyvista.examples.downloads.download_trumpet`
+#.  :func:`pyvista.examples.download_guitar`
+#.  :func:`pyvista.examples.download_trumpet`
 
 complete the following steps:
 
