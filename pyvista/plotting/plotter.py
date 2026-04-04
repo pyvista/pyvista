@@ -18,7 +18,6 @@ from itertools import cycle
 import logging
 import os
 from pathlib import Path
-import platform
 import sys
 import textwrap
 from threading import Thread
@@ -319,6 +318,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
+        self.ren_win: _vtk.vtkRenderWindow | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -454,8 +454,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Subclass must set ``ren_win`` on initialization.
 
         """
-        if not hasattr(self, 'ren_win'):
-            return None
         return self.ren_win
 
     @property
@@ -3530,12 +3528,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             with caution. Defaults to ``False``. This is ignored if the input
             is a :vtk:`vtkAlgorithm` subclass.
 
-            .. versionchanged:: 0.47
-                If the mesh is a :class:`~pyvista.UnstructuredGrid` with hidden ghost cells,
-                a copy is always made with VTK 9.6 or later. This is a necessary workaround to
-                ensure the ghost cells are rendered correctly.
-                See https://gitlab.kitware.com/vtk/vtk/-/issues/19922.
-
         backface_params : dict | Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
             backface rendering. This is useful for instance when the inside of
@@ -3689,11 +3681,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         """
         if (
-            pv.vtk_version_info >= (9, 6, 0)
+            pv.vtk_version_info == (9, 6, 0)
             and isinstance(mesh, pv.UnstructuredGrid)
             and (ghost_name := _vtk.vtkDataSetAttributes.GhostArrayName()) in mesh.cell_data.keys()
         ):
-            # Ghost cells are not rendered properly in VTK 9.6 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
+            # Ghost cells are not rendered properly in VTK 9.6.0 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
             # As a workaround, extract non-hidden cells
             hidden_cells = mesh.cell_data[ghost_name] == _vtk.vtkDataSetAttributes.HIDDENCELL
             if np.any(hidden_cells):
@@ -5174,17 +5166,19 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
-        if hasattr(self, 'ren_win'):
-            apple_silicon = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-            if not apple_silicon:  # pragma: no cover
-                # Up to vtk==9.5.0, render windows aren't closed on MacOS,
-                # so the resources are not freed making this unnecessary. Also,
-                # we need this disabled so we can use NSAutoreleasePool in unit
-                # testing.
-                # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
-                self.ren_win.Finalize()
-
-            del self.ren_win
+        if self.ren_win is not None:
+            self.ren_win.Finalize()
+            if (
+                sys.platform == 'darwin'
+                and self.iren is not None
+                and self.iren.interactor is not None
+            ):
+                # Flush pending Cocoa events so the macOS window server
+                # actually dismisses the window. Without this, the NSWindow
+                # is removed from NSApp.windows() but the window server
+                # still draws it as a frozen "zombie" window.
+                self.iren.interactor.ProcessEvents()
+            self.ren_win = None
 
     def close(self) -> None:
         """Close the render window."""
@@ -7074,6 +7068,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         if self.off_screen:
             self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]
+            # On macOS, vtkCocoaRenderWindow creates an NSWindow even for
+            # off-screen rendering, which shows a dock icon and requires
+            # the main thread.  Disconnecting from NSView creates a
+            # standalone CGL context instead — no dock icon, no
+            # main-thread requirement, and enables background-thread rendering.
+            if hasattr(self.render_window, 'SetConnectContextToNSView'):
+                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen

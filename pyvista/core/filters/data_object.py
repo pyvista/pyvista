@@ -1658,9 +1658,15 @@ class DataObjectFilters:
         def set_pyvista_validity_state(mesh: DataSet):
             state = mesh.cell_data['validity_state']
 
-            size = mesh.compute_cell_sizes(
-                length=True, area=True, volume=True, vertex_count=True, size=True
-            )['Size']
+            size_data = mesh.compute_cell_sizes(
+                vertex_count=True, length=True, area=True, volume=True
+            ).cell_data
+            size = (
+                size_data['VertexCount']
+                + size_data['Length']
+                + size_data['Area']
+                + size_data['Volume']
+            )
 
             # NEGATIVE_SIZE
             state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
@@ -4142,8 +4148,6 @@ class DataObjectFilters:
         volume: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         vertex_count: bool = False,  # noqa: FBT001, FBT002
-        *,
-        size: bool = False,
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -4168,21 +4172,6 @@ class DataObjectFilters:
             Specify whether or not to compute sizes for vertex and polyvertex cells (0D cells).
             The computed value is the number of points in the cell.
             This generates a ``'VertexCount'`` cell data array.
-
-        size : bool, default: False
-            Generate a ``'Size'`` array that consolidates all computed arrays into a single array.
-            For each cell, its value is taken from the corresponding dimension-specific array:
-
-            - ``'VertexCount'`` for 0D cells,
-            - ``'Length'`` for 1D cells,
-            - ``'Area'`` for 2D cells, and
-            - ``'Volume'`` for 3D cells.
-
-            No new geometric computation is performed; the filter only combines existing arrays.
-            If any size arrays are omitted (e.g. if ``vertex_count=False``), then the default value
-            for cells with a missing size is zero.
-
-            .. versionadded:: 0.48
 
         Returns
         -------
@@ -4213,10 +4202,9 @@ class DataObjectFilters:
         >>> mesh_3D = examples.cells.Hexahedron()
         >>> mesh = mesh_0D + mesh_1D + mesh_2D + mesh_3D
 
-        Compute all arrays and compare them. Note that the ``'Size'`` array combines all of
-        the computed values from the other arrays.
+        Compute all arrays and compare them.
 
-        >>> sizes = mesh.compute_cell_sizes(vertex_count=True, size=True)
+        >>> sizes = mesh.compute_cell_sizes(vertex_count=True)
         >>> sizes['VertexCount']
         pyvista_ndarray([1., 0., 0., 0.])
 
@@ -4229,18 +4217,11 @@ class DataObjectFilters:
         >>> sizes['Volume']
         pyvista_ndarray([0., 0., 0., 1.])
 
-        >>> sizes['Size']
-        pyvista_ndarray([1., 1., 1., 1.])
-
         """
 
-        def add_size_array(dataset: DataSet):
-            size_array = np.zeros(dataset.n_cells)
-            cell_data = dataset.cell_data
-            cell_data['Size'] = size_array
-            for name in ('VertexCount', 'Length', 'Area', 'Volume'):
-                if name in cell_data:
-                    size_array += cell_data[name]
+        def ensure_vertex_count_array(dataset: DataSet):
+            if dataset.n_cells == 0:
+                dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
 
         # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
         vert_count = vertex_count and getattr(self, 'n_cells', True)
@@ -4253,11 +4234,11 @@ class DataObjectFilters:
         alg.SetComputeVertexCount(vert_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
         out = _get_output(alg)
-        if size:
+        if vertex_count:
             if isinstance(out, pv.MultiBlock):
-                out.generic_filter(add_size_array)
+                out.generic_filter(ensure_vertex_count_array)
             else:
-                add_size_array(out)
+                ensure_vertex_count_array(out)
         return out
 
     @_deprecate_positional_args
