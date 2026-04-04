@@ -404,6 +404,7 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     assert out == expected
 
 
+@pytest.mark.needs_vtk_version(9, 6, 0, reason='planarity tol is new to 9.6')
 @pytest.mark.usefixtures('patch_app_console')
 def test_validate_tolerance(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
     main(
