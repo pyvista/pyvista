@@ -62,7 +62,9 @@ def test_cell_is_valid(cell_example):
     mesh = cell_example()
     invalid_fields = mesh.validate_mesh().invalid_fields
     cell_type = next(mesh.cell).type
-    if cell_type == pv.CellType.QUADRATIC_WEDGE or (
+    if cell_type == pv.CellType.EMPTY_CELL:
+        assert invalid_fields == ('zero_size',)
+    elif cell_type == pv.CellType.QUADRATIC_WEDGE or (
         cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
     ):
         # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
