@@ -1715,6 +1715,13 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+@pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
+def test_validate_mesh_planarity_tolerance():
+    match = 'Planarity tolerance requires VTK 9.6 or later.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        pv.UnstructuredGrid().validate_mesh(planarity_tolerance=0.2)
+
+
 @pytest.fixture
 def invalid_random_polydata():
     n = 20

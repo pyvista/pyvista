@@ -1431,7 +1431,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         *,
         tolerance: float | None = None,
-        planarity_tolerance: float = 0.1,
+        planarity_tolerance: float | None = None,
         size_tolerance: float | None = None,
     ):
         """Check the validity of each cell in this dataset.
@@ -1621,7 +1621,11 @@ class DataObjectFilters:
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
         cell_validator.SetTolerance(tol)
-        cell_validator.SetPlanarityTolerance(planarity_tolerance)
+        if planarity_tolerance is not None:
+            if pv.vtk_version_info < (9, 6, 0):
+                msg = 'Planarity tolerance requires VTK 9.6 or later.'
+                raise pv.VTKVersionError(msg)
+            cell_validator.SetPlanarityTolerance(planarity_tolerance)
         cell_validator.Update()
         output = _get_output(cell_validator)
 

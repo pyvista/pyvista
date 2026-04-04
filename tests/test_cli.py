@@ -405,6 +405,23 @@ def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+def test_validate_tolerance(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    main(
+        f'validate {str(tmp_ant_file)!r} '
+        f'--tolerance 1e-4 '
+        f'--size-tolerance 1e-4 '
+        f'--planarity-tolerance 0.2'
+    )
+    out = capsys.readouterr().out
+    expected = (
+        "PolyData mesh 'ant.ply' is not valid:\n"
+        ' ▪ Mesh has 20 TRIANGLE cells with zero area. Invalid cell ids: [423, \n'
+        '424, 426, 427, 428, 513, ...]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_validate_invalid_mesh(
     tmp_cow_file_invalid: Path,
     tmp_ant_file_invalid_multiblock: Path,
@@ -621,10 +638,24 @@ def test_validate_help(capsys: pytest.CaptureFixture):
 
     assert '│ * MESH-PATH --mesh-path  -' in out, out
     assert 'Mesh to validate.' in out, out
+
     assert '│ FIELDS --fields          -' in out, out
     assert 'Field(s) to validate.' in out, out
+
     assert '│ --exclude -e             -' in out, out
     assert 'Field(s) to exclude' in out, out
+
+    assert '│ --tolerance              -' in out, out
+    assert 'Field(s) to exclude' in out, out
+
+    assert '│ --planarity-tolerance    -' in out, out
+    assert 'Allowed relative distance' in out, out
+
+    assert '│ --size-tolerance         -' in out, out
+    assert 'Value used for evaluating' in out, out
+
+    assert '│ --report                 -' in out, out
+    assert 'Show report.' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
