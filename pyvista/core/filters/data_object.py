@@ -1468,38 +1468,42 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        tolerance : float, optional
+        tolerance : float, default: 1.1920929e-07
             Value used for most floating point equality checks throughout the cell checking
-            process, e.g. for checking coincident points.
-            The default value is the epsilon (``eps``) of the mesh's points using
+            process, e.g. for checking coincident points or intersecting edges.
+            The default value is the epsilon (``eps``) of ``float32`` dtype using
             :attr:`numpy.finfo`.
 
             .. note::
-                This tolerance is independent from any other tolerances.
+                This tolerance is independent of other tolerances.
 
         planarity_tolerance : float, default: 0.1
-            Allowed relative distance a planar polygonal cell (or cell face) may protrudes out of
-            its plane compared to the largest distance between a cell (or cell face) center and
-            any of its corner points. Defaults to 0.1, meaning any cells which protrude more than
-            10% of their radius out of the plane will be marked invalid.
+            Allowed relative distance a planar polyhedral cell face may protrude out of
+            its plane compared to the largest distance between a face center and
+            any of its corner points. Defaults to 0.1, meaning any polygonal cell whose face
+            protrudes more than 10% of their radius out of the plane will be marked as invalid
+            with status :attr:`~pyvista.CellStatus.NON_PLANAR_FACES`.
 
-            Set this value to 0 to disable planarity checks.
+            Set this value to 0 to disable planarity checks for polyhedron cells.
 
             .. note::
-                This tolerance is independent from any other tolerances.
+                This tolerance only applies to :attr:`~pyvista.CellType.POLYHEDRON` cells, and
+                is independent of other tolerances.
 
         size_tolerance : float, optional
-            Value used for evaluating the size of a cell. Cells with a an absolute size less than
-            or equal to this value are flagged as having :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
+            Value used for evaluating the
+            :meth:`size <pyvista.DataObjectFilters.compute_cell_sizes>` of a cell. Cells with an
+            absolute size less than or equal to this value are flagged as having
+            :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
-            The default value is the epsilon (``eps``) of the mesh's points using
+            The default value is the epsilon (``eps``) of the mesh's points dtype using
             :attr:`numpy.finfo`.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
 
             .. note::
-                This tolerance is independent from any other tolerances.
+                This tolerance is independent of any other tolerances.
 
         Returns
         -------
@@ -1612,7 +1616,7 @@ class DataObjectFilters:
 
         """
         # Use single-precision eps by default (even if points have double precision)
-        tol: float = tolerance if tolerance is not None else np.finfo(np.single).eps
+        tol: float = tolerance if tolerance is not None else np.finfo(np.float32).eps
 
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
