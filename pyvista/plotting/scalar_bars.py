@@ -196,6 +196,7 @@ class ScalarBars(_NoNewAttrMixin):
         render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
         unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
+        unique_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -326,6 +327,13 @@ class ScalarBars(_NoNewAttrMixin):
 
             .. versionadded:: 0.44.0
 
+        unique_bar : bool, default: False
+            Whether to create a scalar bar which is unique to the subplot.
+            If ``True``, the scalar bar will be created with a unique key
+            which is not shared with other subplots, even if the input title is the same.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkScalarBarActor`
@@ -390,6 +398,10 @@ class ScalarBars(_NoNewAttrMixin):
                 height = theme.colorbar_vertical.height
             else:
                 height = theme.colorbar_horizontal.height
+
+        display_title = title
+        if unique_bar:
+            title = f'{title}_UNIQUE_ID_{self._plotter.renderers.active_index}'
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
@@ -528,7 +540,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_ranges[title] = mapper.scalar_range
         self._scalar_bar_mappers[title] = [mapper]
 
-        scalar_bar.SetTitle(title)
+        scalar_bar.SetTitle(display_title)
         title_text = scalar_bar.GetTitleTextProperty()
 
         title_text.SetJustificationToCentered()
