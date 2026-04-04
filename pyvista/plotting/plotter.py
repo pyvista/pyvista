@@ -318,6 +318,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
+        self.ren_win: _vtk.vtkRenderWindow | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -453,8 +454,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Subclass must set ``ren_win`` on initialization.
 
         """
-        if not hasattr(self, 'ren_win'):
-            return None
         return self.ren_win
 
     @property
@@ -5167,7 +5166,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
-        if hasattr(self, 'ren_win'):
+        if self.ren_win is not None:
             self.ren_win.Finalize()
             if (
                 sys.platform == 'darwin'
@@ -5179,7 +5178,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 # is removed from NSApp.windows() but the window server
                 # still draws it as a frozen "zombie" window.
                 self.iren.interactor.ProcessEvents()
-            del self.ren_win
+            self.ren_win = None
 
     def close(self) -> None:
         """Close the render window."""
