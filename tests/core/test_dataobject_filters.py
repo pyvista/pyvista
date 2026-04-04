@@ -2253,6 +2253,7 @@ def test_validate_mesh_degenerate_cells():
 
     # Test valid voxel with tiny volume does not generate false positive
     mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(0.0001, 0.0002, 0.0003))
+    assert np.isclose(mesh.volume, 6e-12)
     assert mesh.validate_mesh().is_valid
 
     # Force invalid with manual tolerance
