@@ -73,6 +73,19 @@ exclude_help = """
 Field(s) to exclude from the validation. This is similar to using FIELDS, but is subtractive
 instead of additive.
 """
+tolerance_help = """
+Value used for most floating point equality checks throughout the cell checking process, e.g. for
+checking coincident points or intersecting edges.
+"""
+planarity_tolerance_help = """
+Allowed relative distance a planar polyhedral cell face may protrude out of its plane compared to
+the largest distance between a face center and any of its corner points.
+"""
+size_tolerance_help = """
+Value used for evaluating the size of a cell. Cells with an absolute size less than or equal to
+this value are flagged as having zero size, and cells with a size less than this value are flagged
+as having negative size.
+"""
 report_help = """
 Show report. Control the body of the report with:
 - ``fields`` to show all validation fields.
@@ -135,6 +148,30 @@ def _validate(
             help=exclude_help,
         ),
     ] = None,
+    tolerance: Annotated[
+        float | None,
+        Parameter(
+            name='tolerance',
+            show_default=False,
+            help=tolerance_help,
+        ),
+    ] = None,
+    planarity_tolerance: Annotated[
+        float | None,
+        Parameter(
+            name='planarity-tolerance',
+            show_default=False,
+            help=planarity_tolerance_help,
+        ),
+    ] = None,
+    size_tolerance: Annotated[
+        float | None,
+        Parameter(
+            name='size-tolerance',
+            show_default=False,
+            help=size_tolerance_help,
+        ),
+    ] = None,
     report: Annotated[
         list[_ReportBodyOptions] | None,
         Parameter(
@@ -153,7 +190,13 @@ def _validate(
     class_name = mesh.__class__.__name__
     try:
         out = pv.DataObjectFilters.validate_mesh(
-            mesh, validation_fields=fields, exclude_fields=exclude, report_body=report_body
+            mesh,
+            validation_fields=fields,
+            exclude_fields=exclude,
+            tolerance=tolerance,
+            planarity_tolerance=planarity_tolerance,
+            size_tolerance=size_tolerance,
+            report_body=report_body,
         )
     except Exception as e:  # noqa: BLE001
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
