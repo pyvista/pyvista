@@ -8,11 +8,13 @@ from functools import partial
 from inspect import signature
 import logging
 import time
+from typing import TYPE_CHECKING
 from typing import Literal
 import weakref
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -22,7 +24,12 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
+from .interactor_style_registry import _get_interactor_style_handler
+from .interactor_style_registry import _validate_interactor_style
 from .opts import PickerType
+
+if TYPE_CHECKING:
+    from .interactor_style_registry import InteractorStyleFactory
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -480,6 +487,10 @@ class RenderWindowInteractor(_NoNewAttrMixin):
     ):
         """Get/set the current interactor style.
 
+        When set to a string, the name is resolved through the
+        interactor style registry (equivalent to calling
+        :meth:`enable_interactor_style`).
+
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
@@ -493,9 +504,14 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         Examples
         --------
-        Set interactor style with a customized vtk interactor
+        Set interactor style by name.
 
         >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.iren.style = 'terrain_style'
+
+        Set interactor style with a customized vtk interactor.
+
         >>> from vtkmodules.vtkInteractionStyle import (
         ...     vtkInteractorStyleTrackballCamera,
         ... )
@@ -514,7 +530,10 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         return self._style_class
 
     @style.setter
-    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | None):
+    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | str | None):
+        if isinstance(style, str):
+            self.enable_interactor_style(style)
+            return
         self._style = 'Interactor'
         self._style_class = style
         self.update_style()
@@ -1194,6 +1213,74 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         """
         self.style = InteractorStyleRubberBand2D(self)
+
+    def _instantiate_registered_interactor_style(
+        self, handler: InteractorStyleFactory
+    ) -> _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin:
+        """Instantiate a registered interactor style handler."""
+        if isinstance(handler, type) and issubclass(handler, InteractorStyleCaptureMixin):
+            style: object = handler(self)
+        elif isinstance(handler, type) and issubclass(handler, _vtk.vtkInteractorStyle):
+            style = handler()
+        else:
+            # Generic callable — pass the interactor so the factory can
+            # configure the style.  The cast is needed because mypy narrows
+            # ``Callable[..., Any]`` to a non-callable after two failing
+            # ``isinstance(handler, type)`` checks.
+            factory: InteractorStyleFactory = handler
+            style = factory(self)
+
+        if not isinstance(style, (_vtk.vtkInteractorStyle, InteractorStyleCaptureMixin)):
+            msg = (
+                'Registered interactor styles must resolve to an instance of `vtkInteractorStyle`.'
+            )
+            raise TypeError(msg)
+
+        return style
+
+    def enable_interactor_style(self, style: str | None = None) -> None:
+        """Set the interactive style to a built-in or registered mode.
+
+        Parameters
+        ----------
+        style : str, optional
+            Name of the interactor style to enable. Built-in styles use
+            names that mirror the public ``enable_*_style`` methods,
+            such as ``'terrain_style'``. If ``None``, use the current
+            plotter theme's :attr:`~pyvista.plotting.themes.Theme.interactor_style`
+            or the global theme when no plotter is attached.
+
+        Raises
+        ------
+        TypeError
+            If the registered handler does not resolve to an interactor
+            style instance.
+
+        ValueError
+            If the style name is not known.
+
+        Examples
+        --------
+        Enable a built-in interactor style by name.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.enable_interactor_style('terrain_style')
+
+        """
+        if style is None:
+            if self._plotter is not None:
+                style = self._plotter.theme.interactor_style
+            else:
+                style = pv.global_theme.interactor_style
+
+        validated = _validate_interactor_style(style)
+        handler = _get_interactor_style_handler(validated)
+
+        if isinstance(handler, str):
+            getattr(self, handler)()
+        elif handler is not None:
+            self.style = self._instantiate_registered_interactor_style(handler)
 
     def _simulate_keypress(self, key):
         """Simulate a keypress."""
