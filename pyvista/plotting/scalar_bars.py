@@ -208,8 +208,17 @@ class ScalarBars(_NoNewAttrMixin):
             Title of the scalar bar.  Default is rendered as an empty title.
 
         mapper : :vtk:`vtkMapper`, optional
-            Mapper used for the scalar bar.  Defaults to the last
-            mapper created by the plotter.
+            Mapper used for the scalar bar. Defaults to the last mapper created
+            by the plotter if none of mapper, lookup_table, or cmap provided.
+
+        lookup_table : :vtk:`vtkLookupTable`, optional
+            Lookup table used for the scalar bar. 
+
+        cmap : str | list | None, optional
+            Colormap used for the scalar bar.
+
+        clim : sequence[float], optional
+            Two item range for the scalar bar.
 
         n_labels : int, default: 5
             Number of labels to use for the scalar bar.
