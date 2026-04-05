@@ -212,7 +212,7 @@ class ScalarBars(_NoNewAttrMixin):
             by the plotter if none of mapper, lookup_table, or cmap provided.
 
         lookup_table : :vtk:`vtkLookupTable`, optional
-            Lookup table used for the scalar bar. 
+            Lookup table used for the scalar bar.
 
         cmap : str | list | None, optional
             Colormap used for the scalar bar.
@@ -385,17 +385,16 @@ class ScalarBars(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-
         if theme is None:
             theme = pv.global_theme
 
         if [mapper is not None, lookup_table is not None, cmap is not None].count(True) != 1:
             msg = 'Exactly one of mapper, lookup_table, and cmap must not be ``None``.'
             raise ValueError(msg)
-        
+
         if cmap is not None:
             assert lookup_table is None
-            lookup_table = pv.LookupTable(cmap=cmap,scalar_range=clim)
+            lookup_table = pv.LookupTable(cmap=cmap, scalar_range=clim)
 
         if lookup_table is not None:
             assert mapper is None
