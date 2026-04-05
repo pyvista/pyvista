@@ -189,9 +189,9 @@ class _FRDParser:
             s = line.strip()
             if s.startswith(end_block):
                 return
-            if s.startswith("-1"):
+            if s.startswith('-1'):
                 line_fixed = _FRDParser._fix_scientific(line)
-                idx = line_fixed.find("-1") + 2
+                idx = line_fixed.find('-1') + 2
                 rest = line_fixed[idx:].rstrip('\n\r')
 
                 # Try long format (10 chars ID)
@@ -245,7 +245,7 @@ class _FRDParser:
 
             if s.startswith(elem_def):
                 elem_line_number = file_stream.line_number
-                idx = line.find("-1") + 2
+                idx = line.find('-1') + 2
                 rest = line[idx:].rstrip('\n\r')
                 try:
                     try:
@@ -271,17 +271,17 @@ class _FRDParser:
                 node_ids = []
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
-                idx = line.find("-2") + 2
+                idx = line.find('-2') + 2
                 rest = line[idx:].rstrip('\n\r')
                 parsed_ids = []
                 try:
                     # Try long format chunks
-                    chunks_10 = [rest[i:i+10] for i in range(0, len(rest), 10)]
+                    chunks_10 = [rest[i : i + 10] for i in range(0, len(rest), 10)]
                     parsed_ids = [int(c) for c in chunks_10 if c.strip()]
                 except ValueError:
                     try:
                         # Fallback to short format chunks
-                        chunks_5 = [rest[i:i+5] for i in range(0, len(rest), 5)]
+                        chunks_5 = [rest[i : i + 5] for i in range(0, len(rest), 5)]
                         parsed_ids = [int(c) for c in chunks_5 if c.strip()]
                     except ValueError:
                         # Fallback to split if delimited
@@ -343,9 +343,9 @@ class _FRDParser:
 
         def _parse_res_line(line_str: str) -> None:
             s_str = line_str.strip()
-            if not s_str.startswith("-1") and not s_str.startswith("-2"):
+            if not s_str.startswith('-1') and not s_str.startswith('-2'):
                 return
-            prefix = "-1" if s_str.startswith("-1") else "-2"
+            prefix = '-1' if s_str.startswith('-1') else '-2'
             line_fixed = _FRDParser._fix_scientific(line_str)
             idx = line_fixed.find(prefix) + 2
             rest = line_fixed[idx:].rstrip('\n\r')
@@ -374,7 +374,7 @@ class _FRDParser:
             s = line.strip()
             if s.startswith(end_block):
                 break
-            if s.startswith("-1") or s.startswith("-2"):
+            if s.startswith('-1') or s.startswith('-2'):
                 _parse_res_line(line)
 
         if data:
