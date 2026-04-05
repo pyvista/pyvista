@@ -181,6 +181,15 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
+      - name: Show Images for Failed Tests
+        if: always()
+        run: |
+          {
+            echo '| File | From cache | From test |'
+            echo '|------|------------|-----------|'
+            echo '| cat | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) |'
+          } >> $GITHUB_STEP_SUMMARY
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
@@ -320,6 +329,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      - name: Show Images for Failed Tests
+        if: always()
+        run: |
+          '| File | From cache | From test |' >> $env:GITHUB_STEP_SUMMARY
+          '|------|------------|-----------|' >> $env:GITHUB_STEP_SUMMARY
+          '| cat | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) |' >> $env:GITHUB_STEP_SUMMARY
 
       - name: Set up Python
         uses: actions/setup-python@v6
