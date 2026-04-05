@@ -348,6 +348,11 @@ class ScalarBars(_NoNewAttrMixin):
         Setting ``title_font_size``, or ``label_font_size`` disables
         automatic font sizing for both the title and label.
 
+        The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used to set a custom
+        color map for the scalar bar; otherwise, the bar will default to the last mapper created
+        by the plotter, for example when a mesh with scalars is added by ``pl.add_mesh()``. See
+        Examples.
+
         See Also
         --------
         :ref:`scalar_bar_example`
@@ -371,6 +376,12 @@ class ScalarBars(_NoNewAttrMixin):
         ...     outline=True,
         ...     fmt='%10.5f',
         ... )
+        >>> pl.show()
+
+        Add a custom scalar bar without (or before) plotting data using the ``cmap`` and ``clim`` parameters:
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.add_scalar_bar('Height', cmap='viridis', clim=(-2, 2))
         >>> pl.show()
 
         """
