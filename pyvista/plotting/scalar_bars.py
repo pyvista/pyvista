@@ -448,6 +448,8 @@ class ScalarBars(_NoNewAttrMixin):
 
             lut = pv.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
+            lut.below_range_color = mapper.lookup_table.below_range_color
+            lut.above_range_color = mapper.lookup_table.above_range_color
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
             use_table = ctable.copy()
