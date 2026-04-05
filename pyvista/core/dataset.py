@@ -1641,12 +1641,12 @@ class DataSet(DataSetFilters, DataObject):
 
         # Grid-specific properties
         if hasattr(self, 'dimensions'):
-            dims = self.dimensions  # type: ignore[attr-defined]
+            dims = self.dimensions
             grid_items: list[tuple[str, str]] = [
                 ('dims', f'{dims[0]} x {dims[1]} x {dims[2]}'),
             ]
             if hasattr(self, 'spacing'):
-                sp = self.spacing  # type: ignore[attr-defined]
+                sp = self.spacing
                 grid_items.append(
                     ('spacing', f'({fmt.format(sp[0])}, {fmt.format(sp[1])}, {fmt.format(sp[2])})')
                 )
@@ -1674,10 +1674,10 @@ class DataSet(DataSetFilters, DataObject):
             fmt = pv.FLOAT_FORMAT
             result: list[tuple[str, int, str, str, str]] = []
             for name, arr in attrs.items():
-                # str values (e.g. string field data) must be wrapped so
-                # .shape / .dtype are available; the arr type is wider than
-                # pyvista_ndarray's signature expects.
-                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[arg-type]
+                # Field data can contain str values at runtime despite
+                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
+                # Wrap str so .shape / .dtype are available.
+                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
                 ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
                 shape = str(tuple(coerced.shape)) if show_shape else ''
                 range_str = ''
