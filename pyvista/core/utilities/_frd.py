@@ -189,12 +189,30 @@ class _FRDParser:
             s = line.strip()
             if s.startswith(end_block):
                 return
-            try:
-                parts = _FRDParser._fix_scientific(s).split()
-                nid = int(parts[1])
-                frd_data.nodes[nid] = [float(parts[2]), float(parts[3]), float(parts[4])]
-            except (ValueError, IndexError):
-                pass
+            if s.startswith("-1"):
+                line_fixed = _FRDParser._fix_scientific(line)
+                idx = line_fixed.find("-1") + 2
+                rest = line_fixed[idx:].rstrip('\n\r')
+
+                # Try long format (10 chars ID)
+                try:
+                    nid = int(rest[:10])
+                    coords = [float(x) for x in rest[10:].split()]
+                    if len(coords) == 3:
+                        frd_data.nodes[nid] = coords
+                        continue
+                except ValueError:
+                    pass
+
+                # Try short format (5 chars ID)
+                try:
+                    nid = int(rest[:5])
+                    coords = [float(x) for x in rest[5:].split()]
+                    if len(coords) == 3:
+                        frd_data.nodes[nid] = coords
+                        continue
+                except ValueError:
+                    pass
 
     @staticmethod
     def _parse_elements(file_stream: Any, frd_data: _FRDData) -> None:
@@ -227,9 +245,15 @@ class _FRDParser:
 
             if s.startswith(elem_def):
                 elem_line_number = file_stream.line_number
-                parts = s.split()
+                idx = line.find("-1") + 2
+                rest = line[idx:].rstrip('\n\r')
                 try:
-                    etype_val = int(parts[2])
+                    try:
+                        # Try long format
+                        etype_val = int(rest[10:20])
+                    except ValueError:
+                        # Try short format
+                        etype_val = int(rest[5:10])
                 except (ValueError, IndexError):
                     etype = None
                     continue
@@ -247,7 +271,23 @@ class _FRDParser:
                 node_ids = []
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
-                node_ids.extend(int(x) for x in s.split()[1:])
+                idx = line.find("-2") + 2
+                rest = line[idx:].rstrip('\n\r')
+                parsed_ids = []
+                try:
+                    # Try long format chunks
+                    chunks_10 = [rest[i:i+10] for i in range(0, len(rest), 10)]
+                    parsed_ids = [int(c) for c in chunks_10 if c.strip()]
+                except ValueError:
+                    try:
+                        # Fallback to short format chunks
+                        chunks_5 = [rest[i:i+5] for i in range(0, len(rest), 5)]
+                        parsed_ids = [int(c) for c in chunks_5 if c.strip()]
+                    except ValueError:
+                        # Fallback to split if delimited
+                        parsed_ids = [int(x) for x in rest.split()]
+
+                node_ids.extend(parsed_ids)
 
                 if (n_nodes := len(node_ids)) < needed:
                     # Element has too few points, and might be invalid, or maybe more points
@@ -289,7 +329,7 @@ class _FRDParser:
             elif s.startswith(comp_def):
                 continue
             elif s.startswith(nodal_vals):
-                _FRDParser._parse_result_data(s, file_stream, name, step_bucket)
+                _FRDParser._parse_result_data(line, file_stream, name, step_bucket)
                 return
             elif s.startswith(end_block):
                 return
@@ -300,24 +340,42 @@ class _FRDParser:
     ) -> None:
         data: dict[int, list[float]] = {}
         end_block = str(CGXRecord.END_OF_BLOCK.value)
-        nodal_vals = str(CGXRecord.NODAL_VALUES.value)
 
-        try:
-            parts = _FRDParser._fix_scientific(first_line).split()
-            data[int(parts[1])] = [float(x) for x in parts[2:]]
-        except (ValueError, IndexError):
-            pass
+        def _parse_res_line(line_str: str) -> None:
+            s_str = line_str.strip()
+            if not s_str.startswith("-1") and not s_str.startswith("-2"):
+                return
+            prefix = "-1" if s_str.startswith("-1") else "-2"
+            line_fixed = _FRDParser._fix_scientific(line_str)
+            idx = line_fixed.find(prefix) + 2
+            rest = line_fixed[idx:].rstrip('\n\r')
+
+            try:
+                nid = int(rest[:10])
+                vals = [float(x) for x in rest[10:].split()]
+                if vals:
+                    data[nid] = vals
+                    return
+            except ValueError:
+                pass
+
+            try:
+                nid = int(rest[:5])
+                vals = [float(x) for x in rest[5:].split()]
+                if vals:
+                    data[nid] = vals
+                    return
+            except ValueError:
+                pass
+
+        _parse_res_line(first_line)
 
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 break
-            if s.startswith(nodal_vals):
-                try:
-                    parts = _FRDParser._fix_scientific(s).split()
-                    data[int(parts[1])] = [float(x) for x in parts[2:]]
-                except (ValueError, IndexError):
-                    pass
+            if s.startswith("-1") or s.startswith("-2"):
+                _parse_res_line(line)
 
         if data:
             step_bucket[name] = data
