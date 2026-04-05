@@ -188,9 +188,6 @@ def test_interactive_plot_moves(tmp_path: Path):
     source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / '_build'
 
-    env = os.environ.copy()
-    env['PYVISTA_TRAME_SERVER_PROXY_ENABLED'] = 'False'
-
     result = subprocess.run(
         [
             'sphinx-build',
@@ -202,7 +199,6 @@ def test_interactive_plot_moves(tmp_path: Path):
         capture_output=True,
         text=True,
         check=False,
-        env=env,
     )
 
     assert result.returncode == 0, result.stderr
@@ -216,12 +212,14 @@ def test_interactive_plot_moves(tmp_path: Path):
 
     try:
         with sync_playwright() as p:
+            # Open docs in browser
             browser = p.chromium.launch()
             page = browser.new_page()
 
             page.goto('http://127.0.0.1:8000/some_plots.html')
             page.wait_for_timeout(1000)
 
+            # Navigate to interactive scene tab
             page.get_by_text('Interactive Scene', exact=True).first.click()
             page.wait_for_timeout(1000)
 
@@ -230,6 +228,7 @@ def test_interactive_plot_moves(tmp_path: Path):
 
             canvas.wait_for(timeout=10000)
 
+            # Simulate interacting with the scene, taking a screenshot before and after
             before = canvas.screenshot()
 
             box = canvas.bounding_box()
@@ -247,9 +246,8 @@ def test_interactive_plot_moves(tmp_path: Path):
 
             after = canvas.screenshot()
 
+            # Interaction is successful if screenshot differs
             assert before != after
-
-            browser.close()
 
     finally:
         server.shutdown()
