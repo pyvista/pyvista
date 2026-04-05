@@ -184,11 +184,11 @@ jobs:
       - name: Show Images for Failed Tests
         if: always()
         run: |
-          {
-            echo '| File | From cache | From test |'
-            echo '|------|------------|-----------|'
-            echo '| cat | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) |'
-          } >> $GITHUB_STEP_SUMMARY
+          python -c "from pathlib import Path; import os; Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('''<table>
+          <tr><th>File</th><th>From cache</th><th>From test</th></tr>
+          <tr><td>cat</td><td><img src=\"https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg\" width=\"200\"></td><td><img src=\"https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg\" width=\"200\"></td></tr>
+          </table>
+          ''')"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -333,9 +333,11 @@ jobs:
       - name: Show Images for Failed Tests
         if: always()
         run: |
-          '| File | From cache | From test |' >> $env:GITHUB_STEP_SUMMARY
-          '|------|------------|-----------|' >> $env:GITHUB_STEP_SUMMARY
-          '| cat | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) | ![](https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg) |' >> $env:GITHUB_STEP_SUMMARY
+          python -c "from pathlib import Path; import os; Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('''<table>
+          <tr><th>File</th><th>From cache</th><th>From test</th></tr>
+          <tr><td>cat</td><td><img src=\"https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg\" width=\"200\"></td><td><img src=\"https://upload.wikimedia.org/wikipedia/commons/3/3a/Gustav_chocolate.jpg\" width=\"200\"></td></tr>
+          </table>
+          ''')"
 
       - name: Set up Python
         uses: actions/setup-python@v6
