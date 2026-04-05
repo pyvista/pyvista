@@ -1681,7 +1681,7 @@ class DataSet(DataSetFilters, DataObject):
                 ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
                 shape = str(tuple(coerced.shape)) if show_shape else ''
                 range_str = ''
-                if show_range and np.issubdtype(coerced.dtype, np.number):
+                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
                     lo = fmt.format(np.nanmin(coerced))
                     hi = fmt.format(np.nanmax(coerced))
                     range_str = f'[{lo}, {hi}]'

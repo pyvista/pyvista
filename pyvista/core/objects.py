@@ -291,7 +291,7 @@ class Table(DataObject, _vtk.vtkTable):
             ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
             dtype = 'None' if arr is None else str(arr.dtype)
             range_str = ''
-            if arr is not None and np.issubdtype(arr.dtype, np.number):
+            if arr is not None and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
                 fmt = '{:.3e}'
                 range_str = f'[{fmt.format(np.nanmin(arr))}, {fmt.format(np.nanmax(arr))}]'
             arrays.append((key, ncomp, dtype, '', range_str))
