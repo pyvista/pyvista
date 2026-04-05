@@ -89,6 +89,7 @@ test = [
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
+  'playwright<1.59.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
