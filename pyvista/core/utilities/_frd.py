@@ -267,9 +267,9 @@ class _FRDParser:
                 elem_line_number = file_stream.line_number
                 idx = line.find('-1') + 2
                 rest = line[idx:].rstrip('\n\r')
-                
+
                 parsed_vals = _FRDParser._parse_line_values(rest)
-                
+
                 try:
                     # Index 1 is always the second numeric value after -1 (Element Type)
                     # matching perfectly with the historical 'int(parts[2])' fallback behavior.
