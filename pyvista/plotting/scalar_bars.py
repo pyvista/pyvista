@@ -170,6 +170,9 @@ class ScalarBars(_NoNewAttrMixin):
         self,
         title='',
         mapper=None,
+        lookup_table=None,
+        cmap=None,
+        clim=None,
         n_labels=5,
         italic: bool = False,  # noqa: FBT001, FBT002
         bold: bool = False,  # noqa: FBT001, FBT002
@@ -362,12 +365,22 @@ class ScalarBars(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        if mapper is None:
-            msg = 'Mapper cannot be ``None`` when creating a scalar bar'
-            raise ValueError(msg)
 
         if theme is None:
             theme = pv.global_theme
+
+        if [mapper is not None, lookup_table is not None, cmap is not None].count(True) != 1:
+            msg = 'Exactly one of mapper, lookup_table, and cmap must not be ``None``.'
+            raise ValueError(msg)
+        
+        if cmap is not None:
+            assert lookup_table is None
+            lookup_table = pv.LookupTable(cmap=cmap,scalar_range=clim)
+
+        if lookup_table is not None:
+            assert mapper is None
+            mapper = pv.DataSetMapper(theme=theme)
+            mapper.lookup_table = lookup_table
 
         if interactive is None:
             interactive = theme.interactive
