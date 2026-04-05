@@ -183,6 +183,26 @@ class _FRDParser:
         return node_ids
 
     @staticmethod
+    def _parse_line_values(rest: str) -> list[int]:
+        """Parse a line of integer values, handling glued columns in 10 or 5 char widths."""
+        # Try 10-char chunks
+        try:
+            chunks = [rest[i : i + 10] for i in range(0, len(rest), 10)]
+            return [int(c) for c in chunks if c.strip()]
+        except ValueError:
+            pass
+
+        # Try 5-char chunks
+        try:
+            chunks = [rest[i : i + 5] for i in range(0, len(rest), 5)]
+            return [int(c) for c in chunks if c.strip()]
+        except ValueError:
+            pass
+
+        # Fallback to split if completely irregular
+        return [int(x) for x in rest.split()]
+
+    @staticmethod
     def _parse_nodes(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         for line in file_stream:
@@ -247,14 +267,14 @@ class _FRDParser:
                 elem_line_number = file_stream.line_number
                 idx = line.find('-1') + 2
                 rest = line[idx:].rstrip('\n\r')
+                
+                parsed_vals = _FRDParser._parse_line_values(rest)
+                
                 try:
-                    try:
-                        # Try long format
-                        etype_val = int(rest[10:20])
-                    except ValueError:
-                        # Try short format
-                        etype_val = int(rest[5:10])
-                except (ValueError, IndexError):
+                    # Index 1 is always the second numeric value after -1 (Element Type)
+                    # matching perfectly with the historical 'int(parts[2])' fallback behavior.
+                    etype_val = parsed_vals[1]
+                except IndexError:
                     etype = None
                     continue
 
@@ -273,19 +293,7 @@ class _FRDParser:
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 idx = line.find('-2') + 2
                 rest = line[idx:].rstrip('\n\r')
-                parsed_ids = []
-                try:
-                    # Try long format chunks
-                    chunks_10 = [rest[i : i + 10] for i in range(0, len(rest), 10)]
-                    parsed_ids = [int(c) for c in chunks_10 if c.strip()]
-                except ValueError:
-                    try:
-                        # Fallback to short format chunks
-                        chunks_5 = [rest[i : i + 5] for i in range(0, len(rest), 5)]
-                        parsed_ids = [int(c) for c in chunks_5 if c.strip()]
-                    except ValueError:
-                        # Fallback to split if delimited
-                        parsed_ids = [int(x) for x in rest.split()]
+                parsed_ids = _FRDParser._parse_line_values(rest)
 
                 node_ids.extend(parsed_ids)
 
