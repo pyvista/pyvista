@@ -57,7 +57,6 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
-    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetType
@@ -1551,9 +1550,6 @@ class DataObjectFilters:
         # Tolerance for float equality checks. This is on the order of 1e-7,
         tolerance = cell_validator.GetTolerance()
 
-        def is_zero(array):
-            return np.abs(array) <= tolerance
-
         def post_process(mesh: DataSet):
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
@@ -1578,71 +1574,29 @@ class DataObjectFilters:
         def set_pyvista_validity_state(mesh: DataSet):
             state = mesh.cell_data['validity_state']
 
-            # We may need to cast to ugrid. Set variable for caching just in case.
-            ugrid: UnstructuredGrid | None = None
-
-            sizes = mesh.compute_cell_sizes(length=True, area=True, volume=True)
-            length = sizes.cell_data['Length']
-            area = sizes.cell_data['Area']
-            volume = sizes.cell_data['Volume']
+            size_data = mesh.compute_cell_sizes(
+                vertex_count=True, length=True, area=True, volume=True
+            ).cell_data
+            size = (
+                size_data['VertexCount']
+                + size_data['Length']
+                + size_data['Area']
+                + size_data['Volume']
+            )
 
             # NEGATIVE_SIZE
-            state[length < -tolerance] |= CellStatus.NEGATIVE_SIZE
-            state[area < -tolerance] |= CellStatus.NEGATIVE_SIZE
-            state[volume < -tolerance] |= CellStatus.NEGATIVE_SIZE
+            state[size < -tolerance] |= CellStatus.NEGATIVE_SIZE
 
             # ZERO_SIZE
-            min_cell_dimensionality = mesh.min_cell_dimensionality
-            max_cell_dimensionality = mesh.max_cell_dimensionality
-            if min_cell_dimensionality == max_cell_dimensionality:
-                # Fast path, we only need to consider a single cell dimension
-                dimensionality = min_cell_dimensionality
-                if dimensionality == 1:
-                    state[is_zero(length)] |= CellStatus.ZERO_SIZE
-                elif dimensionality == 2:
-                    state[is_zero(area)] |= CellStatus.ZERO_SIZE
-                elif dimensionality == 3:
-                    state[is_zero(volume)] |= CellStatus.ZERO_SIZE
-            else:
-                # Mixed cell dimensionality, need to consider separate cell types
-                cell_types_1d = []
-                cell_types_2d = []
-                cell_types_3d = []
-                for cell_type in mesh.distinct_cell_types:
-                    value = cell_type.value
-                    dimension = cell_type.dimension
-                    if dimension == 1:
-                        cell_types_1d.append(value)
-                    elif dimension == 2:
-                        cell_types_2d.append(value)
-                    elif dimension == 3:
-                        cell_types_3d.append(value)
-
-                ugrid = (
-                    mesh
-                    if isinstance(mesh, pv.UnstructuredGrid)
-                    else mesh.cast_to_unstructured_grid()
-                )
-                cell_types_array = ugrid.celltypes
-                if cell_types_1d:
-                    is_1d = np.isin(cell_types_array, cell_types_1d)
-                    is_invalid = is_1d & is_zero(length)
-                    state[is_invalid] |= CellStatus.ZERO_SIZE
-                if cell_types_2d:
-                    is_2d = np.isin(cell_types_array, cell_types_2d)
-                    is_invalid = is_2d & is_zero(area)
-                    state[is_invalid] |= CellStatus.ZERO_SIZE
-                if cell_types_3d:
-                    is_3d = np.isin(cell_types_array, cell_types_3d)
-                    is_invalid = is_3d & is_zero(volume)
-                    state[is_invalid] |= CellStatus.ZERO_SIZE
+            state[np.abs(size) <= tolerance] |= CellStatus.ZERO_SIZE
 
             # INVALID_POINT_REFERENCES
             if hasattr(mesh, 'dimensions'):
                 return  # Cell connectivity is explicitly defined and cannot be invalid
 
-            # Avoid casting a second time if we did so earlier
-            ugrid = mesh.cast_to_unstructured_grid() if ugrid is None else ugrid
+            ugrid = (
+                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+            )
 
             # Find invalid connectivity entries
             conn = ugrid.cell_connectivity
@@ -4117,12 +4071,15 @@ class DataObjectFilters:
         ----------
         length : bool, default: True
             Specify whether or not to compute the length of 1D cells.
+            This generates a ``'Length'`` cell data array.
 
         area : bool, default: True
             Specify whether or not to compute the area of 2D cells.
+            This generates an ``'Area'`` cell data array.
 
         volume : bool, default: True
             Specify whether or not to compute the volume of 3D cells.
+            This generates a ``'Volume'`` cell data array.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4130,6 +4087,7 @@ class DataObjectFilters:
         vertex_count : bool, default: False
             Specify whether or not to compute sizes for vertex and polyvertex cells (0D cells).
             The computed value is the number of points in the cell.
+            This generates a ``'VertexCount'`` cell data array.
 
         Returns
         -------
@@ -4152,15 +4110,52 @@ class DataObjectFilters:
         >>> surf = surf.compute_cell_sizes(length=False, volume=False)
         >>> surf.plot(show_edges=True, scalars='Area')
 
+        Create a mesh with cells of various dimensions.
+
+        >>> mesh_0D = examples.cells.Vertex()
+        >>> mesh_1D = examples.cells.Line()
+        >>> mesh_2D = examples.cells.Quadrilateral()
+        >>> mesh_3D = examples.cells.Hexahedron()
+        >>> mesh = mesh_0D + mesh_1D + mesh_2D + mesh_3D
+
+        Compute all arrays and compare them.
+
+        >>> sizes = mesh.compute_cell_sizes(vertex_count=True)
+        >>> sizes['VertexCount']
+        pyvista_ndarray([1., 0., 0., 0.])
+
+        >>> sizes['Length']
+        pyvista_ndarray([0., 1., 0., 0.])
+
+        >>> sizes['Area']
+        pyvista_ndarray([0., 0., 1., 0.])
+
+        >>> sizes['Volume']
+        pyvista_ndarray([0., 0., 0., 1.])
+
         """
+
+        def ensure_vertex_count_array(dataset: DataSet):
+            if dataset.n_cells == 0:
+                dataset.cell_data['VertexCount'] = np.empty(shape=(0,))
+
+        # Guard against seg fault with some empty mesh types https://gitlab.kitware.com/vtk/vtk/-/issues/19978
+        vert_count = vertex_count and getattr(self, 'n_cells', True)
+
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
-        alg.SetComputeVertexCount(vertex_count)
+        alg.SetComputeVertexCount(vert_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        return _get_output(alg)
+        out = _get_output(alg)
+        if vertex_count:
+            if isinstance(out, pv.MultiBlock):
+                out.generic_filter(ensure_vertex_count_array)
+            else:
+                ensure_vertex_count_array(out)
+        return out
 
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]

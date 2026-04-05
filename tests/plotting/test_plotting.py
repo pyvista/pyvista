@@ -23,6 +23,7 @@ from typing import get_args
 import numpy as np
 from PIL import Image
 import pytest
+from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import demos
@@ -2839,6 +2840,7 @@ def test_chart_plot():
     pl.show()
 
 
+@pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3132,6 +3134,7 @@ def test_add_text():
     pl.show()
 
 
+@pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
 @pytest.mark.needs_vtk_version(9, 4, 0)
 def test_add_text_latex():
     """Test LaTeX symbols."""
@@ -5395,3 +5398,20 @@ def test_connectivity_cmap():
     mesh = large + medium + small
     connected = mesh.connectivity('all')
     connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+
+
+@parametrize(multi_block=[False, True], force_opaque=[False, True])
+def test_actor_force_opaque(
+    force_opaque: bool,
+    multi_block: bool,
+    multiblock_poly: pv.MultiBlock,
+):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        pv.Sphere() if not multi_block else multiblock_poly,
+        force_opaque=force_opaque,
+        culling='front',
+        opacity=0.5,
+    )
+    pl.show()
+    assert actor.force_opaque == force_opaque

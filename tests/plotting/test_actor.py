@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize
 import scipy
 
 import pyvista as pv
@@ -149,14 +150,10 @@ def test_actor_texture(actor):
     assert actor.texture is texture
 
 
-def test_actor_pickable(actor):
-    actor.pickable = True
-    assert actor.pickable is True
-
-
-def test_actor_visible(actor):
-    actor.visibility = True
-    assert actor.visibility is True
+@parametrize(attr=['pickable', 'visibility', 'force_opaque', 'use_bounds'])
+def test_actor_bool_attributes(actor: pv.Actor, attr: str):
+    setattr(actor, attr, v := True)
+    assert getattr(actor, attr) == v
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
