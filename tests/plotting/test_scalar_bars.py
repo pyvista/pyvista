@@ -84,6 +84,20 @@ def test_update_title(scalar_bars):
     assert new_title in scalar_bars._plotter._scalar_bar_slot_lookup
 
 
+def test_update_title_render(scalar_bars):
+    scalar_bars.update_title(KEY, 'NewTitle', render=True)
+    assert 'NewTitle' in scalar_bars
+
+
+def test_update_title_no_slot(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    pl.add_scalar_bar(KEY, mapper=pl.mapper, position_x=0.2, position_y=0.2)
+    pl.scalar_bars.update_title(KEY, 'NewTitle')
+    assert 'NewTitle' in pl.scalar_bars
+
+
 def test_update_title_same(scalar_bars):
     scalar_bars.update_title(KEY, KEY)
     assert KEY in scalar_bars
