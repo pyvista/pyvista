@@ -2,6 +2,29 @@ name: Build Documentation
 
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
+    paths-ignore:
+      - ".github/**"
+      - "!.github/workflows/docs.yml"
+      - "tests/**"
+      - "docker/**"
+      - "hooks/**"
+      - "joss/**"
+      - "logo/**"
+      - "assets/**"
+      - "pyvista-no-vtk/**"
+      - "examples_trame/**"
+      - ".devcontainer/**"
+      - "README.rst"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+      - "FUNDING.yml"
+      - "codecov.yml"
+      - "lychee.toml"
+      - "Makefile"
+      - ".pre-commit-config.yaml"
+      - ".mailmap"
+      - ".gitignore"
+      - ".gitattributes"
   merge_group:
   workflow_dispatch:
   schedule:
