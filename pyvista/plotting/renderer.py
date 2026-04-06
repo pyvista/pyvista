@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+from html import escape
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -23,6 +24,9 @@ from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.formatting_html import _copy_btn
+from pyvista.core.formatting_html import _load_css
+from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -269,6 +273,39 @@ class CameraPosition(_NoNewAttrMixin):
             f'{CameraPosition.__name__}(position={self._position},\n'
             f'               focal_point={self._focal_point},\n'
             f'               viewup={self._viewup})'
+        )
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+
+        def _fmt_vec(vec: tuple[float, ...]) -> str:
+            return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
+
+        pos = _fmt_vec(self._position)
+        foc = _fmt_vec(self._focal_point)
+        vup = _fmt_vec(self._viewup)
+
+        css = _load_css()
+        copy_all = _copy_btn(repr(self.to_list()))
+        meta = _metadata_html(
+            [
+                ('position', [('', pos)], pos),
+                ('focal_point', [('', foc)], foc),
+                ('viewup', [('', vup)], vup),
+            ]
+        )
+        text_fallback = escape(repr(self))
+
+        return (
+            f'<div><style>{css}</style>'
+            f"<pre class='pv-text-repr-fallback'>{text_fallback}</pre>"
+            "<div class='pv-wrap' style='display:none'>"
+            "<div class='pv-header'>"
+            "<div class='pv-header-text'>"
+            f"<div class='pv-obj-type'>CameraPosition{copy_all}</div>"
+            '</div></div>'
+            f'{meta}'
+            '</div></div>'
         )
 
     def __getitem__(self, index):
