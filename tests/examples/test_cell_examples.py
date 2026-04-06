@@ -73,11 +73,15 @@ def test_cell_name(cell_example):
     vtk_name = _vtk.vtkCellTypeUtilities.GetTypeAsString(cell_type)
     expected = vtk_name.replace('-', '').replace(' ', '')
 
-    # Special case some cell types
+    # Special case some cell types where example name in PyVista differs slightly from vtk name
     if expected == 'Polyvertex':
         expected = 'PolyVertex'
     elif expected == 'Polyline':
         expected = 'PolyLine'
+    elif expected == 'ConvexPointset':
+        expected = 'ConvexPointSet'
+    elif expected == 'EmptyCell':
+        expected = 'Empty'
     elif expected == 'UnknownCell':
         # VTK bug with these cells https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786036
         if cell_type == CellType.EMPTY_CELL:
