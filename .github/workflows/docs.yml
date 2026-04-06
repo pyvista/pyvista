@@ -196,19 +196,30 @@ jobs:
           path: .
 
       - name: Preview HTML documentation
+        id: netlify
         uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: .
           production-deploy: ${{ github.ref == 'refs/heads/main' }}
           github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: true
+          enable-pull-request-comment: false
           enable-commit-comment: false
-          overwrites-pull-request-comment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }} # DEV site
         timeout-minutes: 10
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          body-includes: <!-- docs-preview -->
+          body: |
+            <!-- docs-preview -->
+            **Documentation Preview:** ${{ steps.netlify.outputs.deploy-url }}
 
   deploy:
     name: Publish Release Documentation
