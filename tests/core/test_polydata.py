@@ -1006,8 +1006,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
     sphere.clip(
         origin=[0, 0, 0],
@@ -1016,8 +1015,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
 
 def test_extract_largest(sphere):
