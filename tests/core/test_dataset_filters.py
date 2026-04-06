@@ -223,7 +223,11 @@ def test_clip_scalar_multiple():
     mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0)
     assert np.isclose(mesh_clip_y['y'].max(), 0.0)
     mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
-    assert np.isclose(mesh_clip_z['z'].max(), 0.0)
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0):
+        # Regression with vtkClipPolyData https://gitlab.kitware.com/vtk/vtk/-/work_items/20017
+        assert mesh_clip_z['z'].size == 0
+    else:
+        assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
 def test_clip_surface():
