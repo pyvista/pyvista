@@ -141,20 +141,29 @@ _CSS = """\
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 background:var(--bg);color:var(--fg);padding:20px}
-.header{text-align:center;padding:20px 0 30px;
-border-bottom:1px solid var(--border-muted);margin-bottom:30px}
+.header{text-align:center;padding:20px 0 30px;margin-bottom:10px}
 .header h1{font-size:1.8em;margin-bottom:10px;color:var(--fg-heading)}
 .context{margin-bottom:8px;font-size:.9em;color:var(--fg-muted)}
 .context a{color:var(--link)}
 .context code{background:var(--bg-surface);
 padding:2px 6px;border-radius:4px;font-size:.85em}
-.summary{display:flex;gap:10px;justify-content:center;
-flex-wrap:wrap;margin-top:15px}
-.badge{padding:6px 14px;border-radius:20px;font-size:.9em;font-weight:600}
+.nav{position:sticky;top:0;background:var(--bg);
+border-bottom:1px solid var(--border-muted);
+padding:10px 0;z-index:100;margin-bottom:20px}
+.nav-row{display:flex;gap:8px;flex-wrap:wrap;
+justify-content:center;align-items:center}
+.nav-row+.nav-row{margin-top:6px}
+.nav-row a{color:var(--link);text-decoration:none;
+padding:4px 10px;border-radius:4px;font-size:.85em}
+.nav-row a:hover{background:var(--nav-hover)}
+.badge{padding:6px 14px;border-radius:20px;font-size:.9em;
+font-weight:600;cursor:pointer;user-select:none;
+border:2px solid transparent;transition:opacity .15s}
 .badge.error{background:var(--err);color:#fff}
 .badge.warning-error{background:var(--warn-err);color:#fff}
 .badge.warning{background:var(--warn);color:#fff}
 .badge.ok{background:var(--ok);color:#fff}
+.badge.inactive{opacity:.35}
 .job{margin-bottom:40px}
 .job-header{font-size:1.4em;padding:12px 16px;
 background:var(--bg-surface);border:1px solid var(--border);
@@ -183,14 +192,31 @@ color:var(--fg-heading);word-break:break-all}
 border-radius:4px;background:var(--bg-overlay)}
 .no-image{padding:40px;text-align:center;
 border:1px dashed var(--border);border-radius:4px;color:var(--fg-muted)}
-.nav{position:sticky;top:0;background:var(--bg);
-border-bottom:1px solid var(--border-muted);
-padding:10px 0;z-index:100;margin-bottom:20px}
-.nav-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.nav-links a{color:var(--link);text-decoration:none;
-padding:4px 10px;border-radius:4px;font-size:.85em}
-.nav-links a:hover{background:var(--nav-hover)}
+.hidden{display:none}
 """
+
+_JS = """\
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const badges=document.querySelectorAll('.badge[data-cat]');
+  const active=new Set(Array.from(badges).map(b=>b.dataset.cat));
+  function apply(){
+    document.querySelectorAll('.category[data-cat]').forEach(el=>{
+      el.classList.toggle('hidden',!active.has(el.dataset.cat));
+    });
+    document.querySelectorAll('.job').forEach(job=>{
+      const vis=job.querySelectorAll('.category:not(.hidden)');
+      job.classList.toggle('hidden',vis.length===0);
+    });
+    badges.forEach(b=>b.classList.toggle('inactive',!active.has(b.dataset.cat)));
+  }
+  badges.forEach(b=>b.addEventListener('click',()=>{
+    const c=b.dataset.cat;
+    if(active.has(c))active.delete(c);else active.add(c);
+    apply();
+  }));
+});
+</script>"""
 
 
 def _build_card_html(entry: dict[str, Any], css_class: str) -> str:
@@ -242,7 +268,7 @@ def _build_html(
                 continue
             cards = ''.join(_build_card_html(e, css_class) for e in entries)
             sections += (
-                f'<div class="category">'
+                f'<div class="category" data-cat="{category}">'
                 f'<h2 class="category-header {css_class}">{label} ({len(entries)})</h2>'
                 f'{cards}</div>'
             )
@@ -252,20 +278,23 @@ def _build_html(
             f'{sections}</div>'
         )
 
-    # Summary badges
+    # Filter badges
     badges = []
     if summary['num_errors']:
-        badges.append(f'<span class="badge error">{summary["num_errors"]} errors</span>')
+        badges.append(
+            f'<span class="badge error" data-cat="errors">{summary["num_errors"]} errors</span>'
+        )
     if summary['num_errors_as_warnings']:
         badges.append(
-            f'<span class="badge warning-error">'
+            f'<span class="badge warning-error" data-cat="errors_as_warnings">'
             f'{summary["num_errors_as_warnings"]} errors as warnings</span>'
         )
     if summary['num_warnings']:
-        badges.append(f'<span class="badge warning">{summary["num_warnings"]} warnings</span>')
-    summary_html = (
-        ' '.join(badges) if badges else '<span class="badge ok">No image differences</span>'
-    )
+        badges.append(
+            f'<span class="badge warning" data-cat="warnings">'
+            f'{summary["num_warnings"]} warnings</span>'
+        )
+    badge_html = ' '.join(badges)
 
     nav_links = ''.join(f'<a href="#{_safe_dirname(j)}">{html.escape(j)}</a>' for j in results)
 
@@ -299,11 +328,13 @@ def _build_html(
         '<h1>PyVista Test Image Report</h1>\n'
         f'{context_line}'
         f'<p>{subtitle}</p>\n'
-        f'<div class="summary">{summary_html}</div>\n'
         '</div>\n'
-        f'<nav class="nav"><div class="nav-links">'
-        f'{nav_links}</div></nav>\n'
+        f'<nav class="nav">'
+        f'<div class="nav-row">{badge_html}</div>\n'
+        f'<div class="nav-row">{nav_links}</div>'
+        f'</nav>\n'
         f'{content}\n'
+        f'{_JS}\n'
         '</body>\n</html>'
     )
 
