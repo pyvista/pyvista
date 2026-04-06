@@ -2,6 +2,7 @@ name: VTK Master Testing
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       # To resolve issues on VTK master and test, use this branch name pattern
