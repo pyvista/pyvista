@@ -290,8 +290,8 @@ def test_pbr(sphere, verify_image_cache):
         sphere,
         color='w',
         pbr=True,
-        metallic=0.2,  # TODO: revert - intentional breakage for image report testing
-        roughness=0.9,  # TODO: revert - intentional breakage for image report testing
+        metallic=0.8,
+        roughness=0.2,
         smooth_shading=True,
         diffuse=1,
     )
@@ -299,8 +299,8 @@ def test_pbr(sphere, verify_image_cache):
         pv.Sphere(center=(0, 0, 1)),
         color='w',
         pbr=True,
-        metallic=1.0,  # TODO: revert - intentional breakage for image report testing
-        roughness=0.0,  # TODO: revert - intentional breakage for image report testing
+        metallic=0.0,
+        roughness=1.0,
         smooth_shading=True,
         diffuse=1,
     )
@@ -417,7 +417,6 @@ def test_plot_helper_volume(uniform, verify_image_cache):
         parallel_projection=True,
         show_scalar_bar=False,
         show_grid=True,
-        cmap='magma',  # TODO: revert - intentional breakage for image report testing
     )
 
 
@@ -2173,13 +2172,7 @@ def test_opacity_by_array_user_transform(uniform, verify_image_cache):
     uniform['Spatial Point Data'] /= uniform['Spatial Point Data'].max()
 
     # Test with user defined transfer function
-    opacities = [
-        0.9,
-        0.1,
-        0.1,
-        0.9,
-        0.5,
-    ]  # TODO: revert - intentional breakage for image report testing
+    opacities = [0, 0.2, 0.9, 0.2, 0.1]
     pl = pv.Plotter()
     pl.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
     pl.show()
