@@ -431,6 +431,15 @@ def test_compute_cell_sizes(datasets):
     assert np.allclose(grid.volume, volume)
 
 
+def test_compute_cell_sizes_multiblock_vertex_count():
+    multi = pv.MultiBlock([pv.PolyData()])
+    result = multi.compute_cell_sizes(vertex_count=True)[0]
+    assert 'Length' in result.array_names
+    assert 'Area' in result.array_names
+    assert 'Volume' in result.array_names
+    assert 'VertexCount' in result.array_names
+
+
 def test_compute_cell_sizes_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.compute_cell_sizes(progress_bar=True)

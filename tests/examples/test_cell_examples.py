@@ -14,16 +14,6 @@ from pyvista.examples import cells
 from pyvista.examples.cells import _NOT_SUPPORTED_CELL_SOURCE
 from pyvista.examples.cells import _NOT_SUPPORTED_PARAMETRIC
 
-# VTK 9.5.2 swaps Bezier/Lagrange Triangle and Quadrilateral cell types
-_VTK_952_SWAPPED_CELLS = frozenset(
-    {
-        'BezierTriangle',
-        'BezierQuadrilateral',
-        'LagrangeTriangle',
-        'LagrangeQuadrilateral',
-    }
-)
-
 # Collect all functions in the cells module that start with a capital letter
 cell_example_functions = [
     func for name, func in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
@@ -72,7 +62,9 @@ def test_cell_is_valid(cell_example):
     mesh = cell_example()
     invalid_fields = mesh.validate_mesh().invalid_fields
     cell_type = next(mesh.cell).type
-    if cell_type == pv.CellType.QUADRATIC_WEDGE or (
+    if cell_type == pv.CellType.EMPTY_CELL:
+        assert invalid_fields == ('zero_size',)
+    elif cell_type == pv.CellType.QUADRATIC_WEDGE or (
         cell_type == pv.CellType.TRIQUADRATIC_HEXAHEDRON and pv.vtk_version_info >= (9, 6, 0)
     ):
         # Caused by negative volume bug https://gitlab.kitware.com/vtk/vtk/-/issues/19639
@@ -111,11 +103,8 @@ def test_cell_name(cell_example):
     assert actual == expected
 
 
-@pytest.mark.needs_vtk_version(9, 5, 0, reason='VTK bug for higher-order quads/triangles')
 @parametrize('cell_example', cell_example_functions)
 def test_cell_vtk_class(cell_example):
-    if pv.vtk_version_info == (9, 5, 2) and cell_example.__name__ in _VTK_952_SWAPPED_CELLS:
-        pytest.skip('VTK 9.5.2 bug: Bezier/Lagrange Triangle and Quadrilateral types are swapped')
     cell = cell_example().GetCell(0)
     celltype = CellType(cell.GetCellType())
     assert celltype.vtk_class is type(cell)
@@ -165,11 +154,8 @@ def test_cell_n_points(cell_example):
         assert celltype.n_points == cell.n_points
 
 
-@pytest.mark.needs_vtk_version(9, 5, 0, reason='VTK bug for higher-order quads/triangles')
 @parametrize('cell_example', cell_example_functions)
 def test_cell_n_edges(cell_example):
-    if pv.vtk_version_info == (9, 5, 2) and cell_example.__name__ in _VTK_952_SWAPPED_CELLS:
-        pytest.skip('VTK 9.5.2 bug: Bezier/Lagrange Triangle and Quadrilateral types are swapped')
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
     if cell_example.__name__ in (
