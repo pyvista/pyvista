@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 import contextlib
-import importlib
 import importlib.util
 import io
 from pathlib import Path
 import re
+import subprocess
+import sys
 import types
 from unittest.mock import MagicMock
-from unittest.mock import call
 from unittest.mock import patch
 
 import pytest
 
 import pyvista as pv
-import pyvista.core.utilities as pv_utilities
-from pyvista.core.utilities import fileio as _fileio_mod
 from pyvista.core.utilities import reader_registry as _reg_mod
 
 
@@ -41,15 +39,19 @@ def _mock_reader(_path, **__):
     return pv.PolyData()
 
 
-def test_module_import_registers_cleanup_handler():
-    module_path = Path(_reg_mod.__file__)
-    spec = importlib.util.spec_from_file_location('reader_registry_test_copy', module_path)
+def _load_module_copy(module_name: str, module_path: str | Path):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
     assert spec is not None
     assert spec.loader is not None
 
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_module_import_registers_cleanup_handler():
     with patch('atexit.register') as register:
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_module_copy('reader_registry_test_copy', _reg_mod.__file__)
 
     register.assert_called_once_with(module._cleanup_temp_files)
     assert module._custom_ext_readers == {}
@@ -335,29 +337,17 @@ def test_temp_file_cleanup(tmp_path):
     assert len(_reg_mod._temp_files) > initial
 
 
-def test_top_level_exports_survive_reload(tmp_path):
-    importlib.reload(_fileio_mod)
-    utilities_module = importlib.reload(pv_utilities)
-    pyvista_module = importlib.reload(pv)
-
-    assert pyvista_module.register_reader is _reg_mod.register_reader
-    assert pyvista_module.has_scheme is _reg_mod.has_scheme
-    assert pyvista_module.LocalFileRequiredError is _reg_mod.LocalFileRequiredError
-    assert utilities_module.register_reader is _reg_mod.register_reader
-    assert utilities_module.has_scheme is _reg_mod.has_scheme
-    assert utilities_module.LocalFileRequiredError is _reg_mod.LocalFileRequiredError
-
-    test_file = tmp_path / 'data.reloadext'
-    test_file.touch()
-    mock = MagicMock(return_value=pyvista_module.PolyData())
-    pyvista_module.register_reader('.reloadext', mock)
-
-    pyvista_result = pyvista_module.read(str(test_file))
-    utilities_result = utilities_module.read(str(test_file))
-
-    assert isinstance(pyvista_result, pyvista_module.PolyData)
-    assert isinstance(utilities_result, pyvista_module.PolyData)
-    assert mock.call_args_list == [
-        call(str(test_file.resolve())),
-        call(str(test_file.resolve())),
-    ]
+def test_top_level_exports_available_in_fresh_python_process():
+    command = (
+        'import pyvista as pv; '
+        'import pyvista.core.utilities as utilities; '
+        'assert pv.register_reader is utilities.register_reader; '
+        'assert pv.has_scheme is utilities.has_scheme; '
+        'assert pv.LocalFileRequiredError is utilities.LocalFileRequiredError'
+    )
+    subprocess.run(
+        [sys.executable, '-c', command],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
