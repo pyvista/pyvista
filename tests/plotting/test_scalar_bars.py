@@ -65,6 +65,52 @@ def test_clear(scalar_bars):
     assert len(scalar_bars) == 0
 
 
+def test_update_title(scalar_bars):
+    new_title = 'Elevation'
+    scalar_bars.update_title(KEY, new_title)
+
+    # Verify internal dicts are re-keyed
+    assert KEY not in scalar_bars
+    assert new_title in scalar_bars
+    assert new_title in scalar_bars._scalar_bar_ranges
+    assert new_title in scalar_bars._scalar_bar_mappers
+    assert len(scalar_bars) == 1
+
+    # Verify VTK actor title is updated
+    assert scalar_bars[new_title].GetTitle() == new_title
+
+    # Verify slot lookup is re-keyed
+    assert KEY not in scalar_bars._plotter._scalar_bar_slot_lookup
+    assert new_title in scalar_bars._plotter._scalar_bar_slot_lookup
+
+
+def test_update_title_same(scalar_bars):
+    scalar_bars.update_title(KEY, KEY)
+    assert KEY in scalar_bars
+    assert len(scalar_bars) == 1
+
+
+def test_update_title_not_found(scalar_bars):
+    with pytest.raises(KeyError, match='not found'):
+        scalar_bars.update_title('DoesNotExist', 'New')
+
+
+def test_update_title_conflict(scalar_bars):
+    scalar_bars.add_scalar_bar('Other', mapper=scalar_bars._plotter.mapper)
+    with pytest.raises(ValueError, match='already exists'):
+        scalar_bars.update_title(KEY, 'Other')
+
+
+def test_update_title_image(sphere, verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+
+    sphere['Data'] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars='Data')
+    pl.scalar_bars.update_title('Data', 'Elevation')
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012

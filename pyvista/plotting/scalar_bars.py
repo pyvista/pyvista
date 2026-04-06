@@ -165,6 +165,71 @@ class ScalarBars(_NoNewAttrMixin):
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
+    def update_title(
+        self,
+        old_title: str,
+        new_title: str,
+        *,
+        render: bool = False,
+    ) -> None:
+        """Update the title of an existing scalar bar.
+
+        Parameters
+        ----------
+        old_title : str
+            Current title of the scalar bar to update.
+
+        new_title : str
+            New title for the scalar bar.
+
+        render : bool, default: False
+            Force a render after updating the title.
+
+        Raises
+        ------
+        KeyError
+            If no scalar bar with ``old_title`` exists.
+
+        ValueError
+            If a scalar bar with ``new_title`` already exists.
+
+        Examples
+        --------
+        Update the title of a scalar bar.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['Data'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars='Data')
+        >>> pl.scalar_bars.update_title('Data', 'Elevation')
+        >>> pl.show()
+
+        .. versionadded:: 0.48.0
+
+        """
+        if old_title not in self._scalar_bar_actors:
+            msg = f'Scalar bar with title "{old_title}" not found.'
+            raise KeyError(msg)
+        if old_title != new_title and new_title in self._scalar_bar_actors:
+            msg = f'Scalar bar with title "{new_title}" already exists.'
+            raise ValueError(msg)
+
+        if old_title != new_title:
+            self._scalar_bar_actors[new_title] = self._scalar_bar_actors.pop(old_title)
+            self._scalar_bar_ranges[new_title] = self._scalar_bar_ranges.pop(old_title)
+            self._scalar_bar_mappers[new_title] = self._scalar_bar_mappers.pop(old_title)
+            if old_title in self._scalar_bar_widgets:
+                self._scalar_bar_widgets[new_title] = self._scalar_bar_widgets.pop(old_title)
+            slot = self._plotter._scalar_bar_slot_lookup.pop(old_title, None)
+            if slot is not None:
+                self._plotter._scalar_bar_slot_lookup[new_title] = slot
+
+        self._scalar_bar_actors[new_title].SetTitle(new_title)
+
+        if render:
+            self._plotter.render()
+
     @_deprecate_positional_args(allowed=['title'])
     def add_scalar_bar(  # noqa: PLR0917
         self,
