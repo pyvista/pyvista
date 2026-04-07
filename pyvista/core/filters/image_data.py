@@ -1850,7 +1850,7 @@ class ImageDataFilters(DataSetFilters):
             field = self.get_array_association(scalars, preference=preference)
 
         # For some systems integer scalars won't threshold
-        # correctly. Cast to float to be robust.
+        # correctly. Cast to float to be robust. See https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
         cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[union-attr]
         if cast_dtype:
             alg_input = self.copy(deep=False)
