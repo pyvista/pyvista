@@ -472,10 +472,9 @@ def test_frd_reader_coverage_edge_cases(coverage_edge_cases_frd):
     # Invalid elements will raise warnings, which we catch here
     with pytest.warns(pv.InvalidMeshWarning):
         reader = pv.FRDReader(coverage_edge_cases_frd)
-    
+
     mesh = reader.read()
 
     # Validate that the bad node (Node 1) was successfully skipped
     assert '1' not in mesh.point_data['original_node_ids']
     assert '2' in mesh.point_data['original_node_ids']
-    
