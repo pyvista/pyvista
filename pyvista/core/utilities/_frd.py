@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
@@ -160,7 +161,7 @@ class _FRDParser:
                 elif s.startswith(FRDBlock.RESULTS.value):
                     _step_id, step_time = self._parse_100cl_header(s)
                     frd_data.results_by_step.setdefault(step_time, {})
-                    self._parse_results(lines, frd_data.results_by_step[step_time], frd_data)
+                    self._parse_results(lines, frd_data.results_by_step[step_time])
         return frd_data
 
     @staticmethod
@@ -306,10 +307,8 @@ class _FRDParser:
                 else:
                     # Fallback to space-separated values for PyVista's mock test suite files
                     for p in data_str.split():
-                        try:
+                        with contextlib.suppress(ValueError):
                             node_ids.append(int(p))
-                        except ValueError:
-                            pass
 
                 if (n_nodes := len(node_ids)) < needed:
                     continue
@@ -332,7 +331,7 @@ class _FRDParser:
                 node_ids = []
 
     @staticmethod
-    def _parse_results(file_stream: Any, step_bucket: StepBucket, frd_data: _FRDData) -> None:
+    def _parse_results(file_stream: Any, step_bucket: StepBucket) -> None:
         name = 'Unknown'
         attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
         comp_def = str(CGXRecord.COMPONENT_DEFINITION.value)
@@ -348,14 +347,14 @@ class _FRDParser:
             elif s.startswith(comp_def):
                 continue
             elif s.startswith(nodal_vals):
-                _FRDParser._parse_result_data(line, file_stream, name, step_bucket, frd_data)
+                _FRDParser._parse_result_data(line, file_stream, name, step_bucket)
                 return
             elif s.startswith(end_block):
                 return
 
     @staticmethod
     def _parse_result_data(  # noqa: PLR0917
-        first_line: str, file_stream: Any, name: str, step_bucket: StepBucket, frd_data: _FRDData
+        first_line: str, file_stream: Any, name: str, step_bucket: StepBucket
     ) -> None:
         data: dict[int, list[float]] = {}
         end_block = str(CGXRecord.END_OF_BLOCK.value)
