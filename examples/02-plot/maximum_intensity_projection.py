@@ -100,6 +100,9 @@ pl.show()
 
 # %%
 # .. note::
+#    MIP requires VTK >= 9.3.
+#
+# .. note::
 #    MIP does not work correctly with ``opacity < 1`` unless depth
 #    peeling is enabled. See :func:`pyvista.Plotter.enable_depth_peeling`.
 #

@@ -735,12 +735,18 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Raises
         ------
+        RuntimeError
+            If the VTK version is older than 9.3.
+
         ValueError
             If no mapper, dataset, or active scalars are available and
             ``clim`` is not provided.
 
         Warnings
         --------
+        Requires VTK >= 9.3. The vertex shader replacements used by
+        this method are not supported in older VTK versions.
+
         Maximum Intensity Projection does not work correctly with
         ``opacity < 1`` unless depth peeling is enabled. See
         :func:`pyvista.Plotter.enable_depth_peeling`.
@@ -770,6 +776,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.enable_maximum_intensity_projection()
 
         """
+        if pv.vtk_version_info < (9, 3):
+            msg = 'Maximum intensity projection requires VTK >= 9.3.'
+            raise RuntimeError(msg)
+
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:

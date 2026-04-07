@@ -451,6 +451,7 @@ def test_clear_all_shader_replacements(point_cloud_actor):
     assert shader_prop.GetNumberOfShaderReplacements() == 0
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_enable_disable_mip(point_cloud_actor):
     actor = point_cloud_actor
     shader_prop = actor.GetShaderProperty()
@@ -463,12 +464,14 @@ def test_enable_disable_mip(point_cloud_actor):
     assert shader_prop.GetNumberOfShaderReplacements() == 0
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_with_clim(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection(clim=(0.0, 1.0))
     assert 'mip' in actor._shader_replacements
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_no_scalars():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
@@ -479,6 +482,7 @@ def test_mip_no_scalars():
         actor.enable_maximum_intensity_projection()
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_opacity_warning(point_cloud_actor):
     actor = point_cloud_actor
     actor.prop.opacity = 0.5
@@ -487,6 +491,7 @@ def test_mip_opacity_warning(point_cloud_actor):
         actor.enable_maximum_intensity_projection()
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_idempotent(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection()
@@ -496,9 +501,17 @@ def test_mip_idempotent(point_cloud_actor):
     assert len(actor._shader_replacements['mip']) == 1
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_no_mapper():
     actor = pv.Actor()
     with pytest.raises(ValueError, match='mapper'):
+        actor.enable_maximum_intensity_projection()
+
+
+@pytest.mark.needs_vtk_version(less_than=(9, 3))
+def test_mip_vtk_version_error():
+    actor = pv.Actor()
+    with pytest.raises(RuntimeError, match=r'VTK >= 9\.3'):
         actor.enable_maximum_intensity_projection()
 
 
@@ -602,6 +615,7 @@ def test_theme_point_shape_invalid():
         pv.global_theme.point_shape = 'pentagon'
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection()
@@ -670,6 +684,7 @@ def _mip_test_points():
     return cloud
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_maximum_intensity_projection_render(verify_image_cache):
     verify_image_cache.high_variance_test = True
     cloud = _mip_test_points()
@@ -690,6 +705,7 @@ def test_maximum_intensity_projection_render(verify_image_cache):
     pl.show()
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_with_point_sprite_render(verify_image_cache):
     verify_image_cache.high_variance_test = True
     cloud = _mip_test_points()
