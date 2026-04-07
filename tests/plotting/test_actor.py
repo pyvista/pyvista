@@ -53,6 +53,16 @@ def dummy_actor(actor):
 
 
 @pytest.fixture
+def point_cloud_actor():
+    rng = np.random.default_rng(0)
+    points = rng.random((100, 3))
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = points[:, 2]
+    pl = pv.Plotter()
+    return pl.add_mesh(cloud, scalars='scalars', style='points')
+
+
+@pytest.fixture
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
@@ -370,3 +380,271 @@ def test_follower():
     assert follower.mapper is mapper
     assert follower.prop is not None
     assert follower.camera is camera
+
+
+def test_add_shader_replacement(point_cloud_actor):
+    actor = point_cloud_actor
+    shader_prop = actor.GetShaderProperty()
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+    actor.add_shader_replacement(
+        'vertex',
+        '//VTK::LineWidthGLES30::Impl',
+        'gl_Position.z = 0.0;\n//VTK::LineWidthGLES30::Impl\n',
+    )
+    assert '_user' in actor._shader_replacements
+    assert len(actor._shader_replacements['_user']) == 1
+    assert shader_prop.GetNumberOfShaderReplacements() == 1
+
+    actor.clear_shader_replacements(_feature_name='_user')
+    assert '_user' not in actor._shader_replacements
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+
+def test_shader_replacement_invalid_type(point_cloud_actor):
+    with pytest.raises(ValueError, match='Invalid shader_type'):
+        point_cloud_actor.add_shader_replacement(
+            'invalid',
+            '//VTK::Color::Impl',
+            'code;',
+        )
+
+
+def test_shader_replacement_conflict(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.add_shader_replacement(
+        'vertex',
+        '//VTK::LineWidthGLES30::Impl',
+        'code1;',
+        _feature_name='feature_a',
+    )
+    with pytest.raises(ValueError, match='conflict'):
+        actor.add_shader_replacement(
+            'vertex',
+            '//VTK::LineWidthGLES30::Impl',
+            'code2;',
+            _feature_name='feature_b',
+        )
+
+
+def test_clear_all_shader_replacements(point_cloud_actor):
+    actor = point_cloud_actor
+    shader_prop = actor.GetShaderProperty()
+    actor.add_shader_replacement(
+        'vertex',
+        '//VTK::LineWidthGLES30::Impl',
+        'code1;',
+        _feature_name='a',
+    )
+    actor.add_shader_replacement(
+        'fragment',
+        '//VTK::Color::Impl',
+        'code2;',
+        _feature_name='b',
+    )
+    assert len(actor._shader_replacements) == 2
+    assert shader_prop.GetNumberOfShaderReplacements() == 2
+
+    actor.clear_shader_replacements()
+    assert len(actor._shader_replacements) == 0
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+
+def test_enable_disable_mip(point_cloud_actor):
+    actor = point_cloud_actor
+    shader_prop = actor.GetShaderProperty()
+    actor.enable_maximum_intensity_projection()
+    assert 'mip' in actor._shader_replacements
+    assert shader_prop.GetNumberOfShaderReplacements() == 1
+
+    actor.disable_maximum_intensity_projection()
+    assert 'mip' not in actor._shader_replacements
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+
+def test_mip_with_clim(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.enable_maximum_intensity_projection(clim=(0.0, 1.0))
+    assert 'mip' in actor._shader_replacements
+
+
+def test_mip_no_scalars():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(cloud, style='points')
+    actor.mapper.dataset.clear_data()
+
+    with pytest.raises(ValueError, match='scalars'):
+        actor.enable_maximum_intensity_projection()
+
+
+def test_mip_opacity_warning(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.prop.opacity = 0.5
+
+    with pytest.warns(UserWarning, match='[Oo]pacity'):
+        actor.enable_maximum_intensity_projection()
+
+
+def test_mip_idempotent(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.enable_maximum_intensity_projection()
+    assert len(actor._shader_replacements['mip']) == 1
+
+    actor.enable_maximum_intensity_projection(clim=(0.0, 2.0))
+    assert len(actor._shader_replacements['mip']) == 1
+
+
+def test_mip_no_mapper():
+    actor = pv.Actor()
+    with pytest.raises(ValueError, match='mapper'):
+        actor.enable_maximum_intensity_projection()
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_set_point_sprite_shape(shape):
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        style='points',
+        render_points_as_spheres=False,
+        point_size=20,
+    )
+    actor.set_point_sprite_shape(shape)
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_clear_point_sprite_shape(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.set_point_sprite_shape('circle')
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.clear_point_sprite_shape()
+    assert 'point_sprite' not in actor._shader_replacements
+
+
+def test_point_sprite_invalid_shape(point_cloud_actor):
+    with pytest.raises(ValueError, match='Invalid point sprite shape'):
+        point_cloud_actor.set_point_sprite_shape('pentagon')
+
+
+def test_point_sprite_shapes_match_literal():
+    """Ensure _POINT_SPRITE_SHADERS keys stay in sync with the PointSpriteShape Literal."""
+    from typing import get_args
+
+    from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
+    from pyvista.plotting.actor import PointSpriteShape
+
+    assert set(_POINT_SPRITE_SHADERS) == set(get_args(PointSpriteShape))
+
+
+def test_mip_and_point_sprite_coexist(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.enable_maximum_intensity_projection()
+    actor.set_point_sprite_shape('circle')
+
+    assert 'mip' in actor._shader_replacements
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.disable_maximum_intensity_projection()
+    assert 'mip' not in actor._shader_replacements
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.enable_maximum_intensity_projection()
+    assert 'mip' in actor._shader_replacements
+
+    actor.clear_point_sprite_shape()
+    assert 'point_sprite' not in actor._shader_replacements
+    assert 'mip' in actor._shader_replacements
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_render(shape, verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0]],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='scalars',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=80,
+        show_scalar_bar=False,
+    )
+    actor.set_point_sprite_shape(shape)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+def test_maximum_intensity_projection_render(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    # Overlapping points at different depths: low-value point in front,
+    # high-value point behind. MIP should bring the high value forward.
+    points = np.array(
+        [
+            [0.0, 0.0, 0.0],  # front, low value
+            [0.0, 0.0, -1.0],  # behind, high value
+            [1.0, 0.0, 0.0],  # front, medium
+            [1.0, 0.0, -1.0],  # behind, highest
+            [0.0, 1.0, 0.0],
+            [1.0, 1.0, 0.0],
+        ],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['intensity'] = [0.0, 0.8, 0.3, 1.0, 0.5, 0.1]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='intensity',
+        style='points',
+        point_size=60,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    pl.enable_parallel_projection()
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+def test_mip_with_point_sprite_render(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    points = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, -1.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 0.0, -1.0],
+            [0.0, 1.0, 0.0],
+            [1.0, 1.0, 0.0],
+        ],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['intensity'] = [0.0, 0.8, 0.3, 1.0, 0.5, 0.1]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='intensity',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=60,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    actor.set_point_sprite_shape('circle')
+    pl.enable_parallel_projection()
+    pl.camera_position = 'xy'
+    pl.show()
