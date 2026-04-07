@@ -1154,11 +1154,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         --------
         pyvista.PolyData.faces
 
-        Notes
-        -----
-        This property does not validate that the mesh's faces are all
-        actually the same size. If they're not, this property may either
-        raise a `ValueError` or silently return an incorrect array.
+        Raises
+        ------
+        ValueError
+            If the mesh's faces are irregular.
 
         Examples
         --------
