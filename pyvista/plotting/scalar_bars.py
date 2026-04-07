@@ -174,6 +174,7 @@ class ScalarBars(_NoNewAttrMixin):
     ) -> None:
         """Update the title of an existing scalar bar.
 
+        .. versionadded:: 0.48.0
         Parameters
         ----------
         old_title : str
@@ -204,8 +205,6 @@ class ScalarBars(_NoNewAttrMixin):
         >>> _ = pl.add_mesh(mesh, scalars='Data')
         >>> pl.scalar_bars.update_title('Data', 'Elevation')
         >>> pl.show()
-
-        .. versionadded:: 0.48.0
 
         """
         if old_title not in self._scalar_bar_actors:
