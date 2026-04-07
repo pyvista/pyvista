@@ -42,6 +42,11 @@ jobs:
     outputs:
       integration: ${{ steps.filter.outputs.integration }}
     steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/path-filters.yml
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         if: github.event_name == 'pull_request'
         id: filter
