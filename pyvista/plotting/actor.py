@@ -746,6 +746,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         ``opacity < 1`` unless depth peeling is enabled. See
         :func:`pyvista.Plotter.enable_depth_peeling`.
 
+        See Also
+        --------
+        :ref:`maximum_intensity_projection_example`
+
         References
         ----------
         Cowan, E.J., 2014. 'X-ray Plunge Projection' - Understanding
@@ -871,6 +875,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         ``render_points_as_spheres=False`` and ``style='points'``.
         When ``render_points_as_spheres=True``, VTK uses a different
         rendering path that bypasses the fragment shader.
+
+        See Also
+        --------
+        :ref:`point_sprites_example`
 
         Examples
         --------
