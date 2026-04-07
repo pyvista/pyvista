@@ -175,6 +175,7 @@ class ScalarBars(_NoNewAttrMixin):
         """Update the title of an existing scalar bar.
 
         .. versionadded:: 0.48.0
+
         Parameters
         ----------
         old_title : str
