@@ -442,31 +442,30 @@ jobs:
           deploy-message: "Test image report for PR #${{ github.event.pull_request.number }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: test-image-report
+          github-deployment-description: "Test image comparison report"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_IMAGE_REPORT_SITE_ID }}
         timeout-minutes: 5
 
-      - name: Find existing comment
+      - name: Create commit status with report link
         if: steps.report.outputs.has_report == 'true'
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: <!-- test-image-report -->
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state=success \
+            -f context="Test Image Report" \
+            -f description="Image comparison report is ready" \
+            -f target_url="${{ steps.netlify.outputs.deploy-url }}"
 
-      - name: Comment on PR
+      - name: Add report link to job summary
         if: steps.report.outputs.has_report == 'true'
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          edit-mode: replace
-          body: |
-            <!-- test-image-report -->
-            **Test Image Report:** ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.netlify.outputs.deploy-url }}" >> $GITHUB_STEP_SUMMARY
 
   # Publish to PyPI using trusted publishing
   release:

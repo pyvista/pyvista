@@ -230,31 +230,30 @@ jobs:
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: false
           enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: docs-preview
+          github-deployment-description: "Documentation preview"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }} # DEV site
         timeout-minutes: 10
 
-      - name: Find existing comment
+      - name: Create commit status with preview link
         if: github.event_name == 'pull_request'
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: <!-- docs-preview -->
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state=success \
+            -f context="Docs Preview" \
+            -f description="Documentation preview is ready" \
+            -f target_url="${{ steps.netlify.outputs.deploy-url }}"
 
-      - name: Comment on PR
+      - name: Add preview link to job summary
         if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          edit-mode: replace
-          body: |
-            <!-- docs-preview -->
-            **Documentation Preview:** ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Documentation Preview" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.netlify.outputs.deploy-url }}" >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Publish Release Documentation
