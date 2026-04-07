@@ -204,7 +204,7 @@ class _FRDParser:
             # split() is completely immune to varying space widths in both tests and real files
             data_str = _FRDParser._fix_scientific(line[idx + 2 :].rstrip('\n\r'))
             parts = data_str.split()
-            
+
             if len(parts) >= 4:
                 try:
                     nid = int(parts[0])
@@ -284,7 +284,7 @@ class _FRDParser:
 
                 new_nodes = []
                 is_fixed = True
-                
+
                 # Hybrid check: try fixed-width chunking first for standard CalculiX files
                 for i in range(0, len(data_str), width):
                     chunk = data_str[i : i + width]
@@ -371,7 +371,7 @@ class _FRDParser:
 
             data_str = _FRDParser._fix_scientific(line_str[idx + 2 :].rstrip('\n\r'))
             parts = data_str.split()
-            
+
             if len(parts) >= 2:
                 try:
                     nid = int(parts[0])
