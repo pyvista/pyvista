@@ -1851,10 +1851,7 @@ class ImageDataFilters(DataSetFilters):
 
         # For some systems integer scalars won't threshold
         # correctly. Cast to float to be robust.
-        cast_dtype = np.issubdtype(
-            array_dtype := self.active_scalars.dtype,  # type: ignore[attr-defined]
-            int,
-        ) and array_dtype != np.dtype(np.uint8)
+        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[attr-defined]
         if cast_dtype:
             alg_input = self.copy(deep=False)
             alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')  # type: ignore[index]
@@ -1873,7 +1870,6 @@ class ImageDataFilters(DataSetFilters):
             out_value,
             scalars,
             field,
-            array_dtype,
             progress_bar: bool,
         ):
             """Threshold using vtkImageThreshold."""
@@ -1888,12 +1884,12 @@ class ImageDataFilters(DataSetFilters):
             # set the replacement values / modes
             if in_value is not None:
                 alg.SetReplaceIn(True)
-                alg.SetInValue(np.array(in_value).astype(array_dtype))  # type: ignore[arg-type]
+                alg.SetInValue(in_value)  # type: ignore[arg-type]
             else:
                 alg.SetReplaceIn(False)
             if out_value is not None:
                 alg.SetReplaceOut(True)
-                alg.SetOutValue(np.array(out_value).astype(array_dtype))  # type: ignore[arg-type]
+                alg.SetOutValue(out_value)  # type: ignore[arg-type]
             else:
                 alg.SetReplaceOut(False)
 
@@ -1907,7 +1903,6 @@ class ImageDataFilters(DataSetFilters):
             out_value,
             scalars,
             field,
-            array_dtype,
             progress_bar: bool,
         ):
             """Threshold using vtkImageBinaryThreshold."""
@@ -1925,13 +1920,13 @@ class ImageDataFilters(DataSetFilters):
 
             if in_value is not None:
                 alg.ReplaceInOn()
-                alg.SetInValue(np.array(in_value).astype(array_dtype))
+                alg.SetInValue(in_value)
             else:
                 alg.ReplaceInOff()
 
             if out_value is not None:
                 alg.ReplaceOutOn()
-                alg.SetOutValue(np.array(out_value).astype(array_dtype))
+                alg.SetOutValue(out_value)
             else:
                 alg.ReplaceOutOff()
 
@@ -1949,7 +1944,6 @@ class ImageDataFilters(DataSetFilters):
             out_value=out_value,
             scalars=scalars,
             field=field,
-            array_dtype=array_dtype,
             progress_bar=progress_bar,
         )
 
