@@ -458,7 +458,7 @@ jobs:
         run: |
           gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
             -f state=success \
-            -f context="Test Image Report" \
+            -f context="Deploy / Test Image Report" \
             -f description="Image comparison report is ready" \
             -f target_url="$DEPLOY_URL"
 

@@ -246,7 +246,7 @@ jobs:
         run: |
           gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
             -f state=success \
-            -f context="Docs Preview" \
+            -f context="Deploy / Docs Preview" \
             -f description="Documentation preview is ready" \
             -f target_url="$DEPLOY_URL"
 
