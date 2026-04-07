@@ -133,6 +133,10 @@ class _FRDData:
     _has_too_few_points: list[_InvalidElement] = field(default_factory=list)
     _has_unsupported_element: list[_InvalidElement] = field(default_factory=list)
 
+    # Format detection
+    is_long_format: bool = False
+    _format_detected: bool = False
+
 
 class _FRDParser:
     """Parses a CalculiX FRD file into an FRDData object."""
@@ -156,7 +160,7 @@ class _FRDParser:
                 elif s.startswith(FRDBlock.RESULTS.value):
                     _step_id, step_time = self._parse_100cl_header(s)
                     frd_data.results_by_step.setdefault(step_time, {})
-                    self._parse_results(lines, frd_data.results_by_step[step_time])
+                    self._parse_results(lines, frd_data.results_by_step[step_time], frd_data)
         return frd_data
 
     @staticmethod
@@ -183,56 +187,39 @@ class _FRDParser:
         return node_ids
 
     @staticmethod
-    def _parse_line_values(rest: str) -> list[int]:
-        """Parse a line of integer values, handling glued columns in 10 or 5 char widths."""
-        # Try 10-char chunks
-        try:
-            chunks = [rest[i : i + 10] for i in range(0, len(rest), 10)]
-            return [int(c) for c in chunks if c.strip()]
-        except ValueError:
-            pass
-
-        # Try 5-char chunks
-        try:
-            chunks = [rest[i : i + 5] for i in range(0, len(rest), 5)]
-            return [int(c) for c in chunks if c.strip()]
-        except ValueError:
-            pass
-
-        # Fallback to split if completely irregular
-        return [int(x) for x in rest.split()]
-
-    @staticmethod
     def _parse_nodes(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 return
-            if s.startswith('-1'):
-                line_fixed = _FRDParser._fix_scientific(line)
-                idx = line_fixed.find('-1') + 2
-                rest = line_fixed[idx:].rstrip('\n\r')
-
-                # Try long format (10 chars ID)
-                try:
-                    nid = int(rest[:10])
-                    coords = [float(x) for x in rest[10:].split()]
-                    if len(coords) == 3:
-                        frd_data.nodes[nid] = coords
-                        continue
-                except ValueError:
-                    pass
-
-                # Try short format (5 chars ID)
-                try:
-                    nid = int(rest[:5])
-                    coords = [float(x) for x in rest[5:].split()]
-                    if len(coords) == 3:
-                        frd_data.nodes[nid] = coords
-                        continue
-                except ValueError:
-                    pass
+            if not s.startswith('-1'):
+                continue
+            
+            idx = line.find('-1')
+            if idx == -1:
+                continue
+            
+            data_str = line[idx+2:].rstrip('\n\r')
+            if not data_str:
+                continue
+            
+            if not frd_data._format_detected:
+                e_idx = max(data_str.find('E'), data_str.find('D'), data_str.find('e'), data_str.find('d'))
+                id_width = 10 if e_idx > 16 or e_idx == -1 else 5
+                frd_data.is_long_format = (id_width == 10)
+                frd_data._format_detected = True
+                
+            id_width = 10 if frd_data.is_long_format else 5
+            
+            try:
+                nid = int(data_str[:id_width])
+                c_str = _FRDParser._fix_scientific(data_str[id_width:])
+                parts = c_str.split()
+                if len(parts) >= 3:
+                    frd_data.nodes[nid] = [float(parts[0]), float(parts[1]), float(parts[2])]
+            except (ValueError, IndexError):
+                pass
 
     @staticmethod
     def _parse_elements(file_stream: Any, frd_data: _FRDData) -> None:
@@ -248,10 +235,9 @@ class _FRDParser:
 
         for line in file_stream:
             s = line.strip()
+            
+            # Prevent overlapping errors - if the line is not consecutive nodes
             if etype is not None and not s.startswith(elem_faces):
-                # Etype has not been reset, which means we should expect more ids to define the
-                # rest of the element. But since this line does not define faces, the previous
-                # element definition is complete, and hence the element as-is has too few points
                 invalid = _InvalidElement(
                     line_number=elem_line_number,
                     element_type=etype,
@@ -259,22 +245,25 @@ class _FRDParser:
                     n_nodes_actual=len(node_ids),
                 )
                 frd_data._has_too_few_points.append(invalid)
+                etype = None  # Forces state refresh
 
             if s.startswith(end_block):
                 return
 
             if s.startswith(elem_def):
                 elem_line_number = file_stream.line_number
-                idx = line.find('-1') + 2
-                rest = line[idx:].rstrip('\n\r')
-
-                parsed_vals = _FRDParser._parse_line_values(rest)
-
+                
+                # Key: remove "-1" before split so that a glued ID (like "-126412") does not break the parser
+                idx = line.find('-1')
+                if idx == -1:
+                    continue
+                data_str = line[idx+2:]
+                parts = data_str.split()
+                
                 try:
-                    # Index 1 is always the second numeric value after -1 (Element Type)
-                    # matching perfectly with the historical 'int(parts[2])' fallback behavior.
-                    etype_val = parsed_vals[1]
-                except IndexError:
+                    # parts[0] = element ID, parts[1] = element type (e.g., 1 for HE8)
+                    etype_val = int(parts[1])
+                except (ValueError, IndexError):
                     etype = None
                     continue
 
@@ -291,18 +280,33 @@ class _FRDParser:
                 node_ids = []
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
-                idx = line.find('-2') + 2
-                rest = line[idx:].rstrip('\n\r')
-                parsed_ids = _FRDParser._parse_line_values(rest)
-
-                node_ids.extend(parsed_ids)
+                idx = line.find('-2')
+                if idx == -1:
+                    continue
+                data_str = line[idx+2:].rstrip('\n\r')
+                
+                if not frd_data._format_detected:
+                    frd_data.is_long_format = len(data_str.rstrip()) > 55
+                    frd_data._format_detected = True
+                    
+                width = 10 if frd_data.is_long_format else 5
+                
+                new_nodes = []
+                for i in range(0, len(data_str), width):
+                    chunk = data_str[i:i+width]
+                    # Skip completely empty "chunks" that are just padding at the end of the line
+                    if chunk.strip():
+                        try:
+                            new_nodes.append(int(chunk))
+                        except ValueError:
+                            pass
+                
+                node_ids.extend(new_nodes)
 
                 if (n_nodes := len(node_ids)) < needed:
-                    # Element has too few points, and might be invalid, or maybe more points
-                    # are defined on the next line
                     continue
+                
                 if n_nodes > needed:
-                    # Keep track of elements with too many points, but don't skip
                     invalid = _InvalidElement(
                         line_number=elem_line_number,
                         element_type=etype,
@@ -311,17 +315,16 @@ class _FRDParser:
                     )
                     frd_data._has_too_many_points.append(invalid)
 
-                # Take only the first 'needed' nodes
                 final_nodes = _FRDParser._permute_nodes(node_ids, etype)
                 frd_data.elements.append(final_nodes[:needed])
                 frd_data.cell_types.append(vtk_type.value)
 
-                # Reset for next element
+                # Clean start for the next element
                 etype = None
                 node_ids = []
 
     @staticmethod
-    def _parse_results(file_stream: Any, step_bucket: StepBucket) -> None:
+    def _parse_results(file_stream: Any, step_bucket: StepBucket, frd_data: _FRDData) -> None:
         name = 'Unknown'
         attr_header = str(CGXRecord.ATTRIBUTE_HEADER.value)
         comp_def = str(CGXRecord.COMPONENT_DEFINITION.value)
@@ -337,53 +340,54 @@ class _FRDParser:
             elif s.startswith(comp_def):
                 continue
             elif s.startswith(nodal_vals):
-                _FRDParser._parse_result_data(line, file_stream, name, step_bucket)
+                _FRDParser._parse_result_data(line, file_stream, name, step_bucket, frd_data)
                 return
             elif s.startswith(end_block):
                 return
 
     @staticmethod
     def _parse_result_data(  # noqa: PLR0917
-        first_line: str, file_stream: Any, name: str, step_bucket: StepBucket
+        first_line: str, file_stream: Any, name: str, step_bucket: StepBucket, frd_data: _FRDData
     ) -> None:
         data: dict[int, list[float]] = {}
         end_block = str(CGXRecord.END_OF_BLOCK.value)
+        nodal_vals = str(CGXRecord.NODAL_VALUES.value)
 
-        def _parse_res_line(line_str: str) -> None:
-            s_str = line_str.strip()
-            if not s_str.startswith('-1') and not s_str.startswith('-2'):
+        def parse_line(line_str: str) -> None:
+            s = line_str.strip()
+            if not s.startswith(nodal_vals):
                 return
-            prefix = '-1' if s_str.startswith('-1') else '-2'
-            line_fixed = _FRDParser._fix_scientific(line_str)
-            idx = line_fixed.find(prefix) + 2
-            rest = line_fixed[idx:].rstrip('\n\r')
-
+            idx = line_str.find('-1')
+            if idx == -1:
+                return
+                
+            data_str = line_str[idx+2:].rstrip('\n\r')
+            if not data_str:
+                return
+                
+            if not frd_data._format_detected:
+                # If we get this far (no nodes and elements), use a safe threshold.
+                frd_data.is_long_format = len(data_str.rstrip()) > 85 
+                frd_data._format_detected = True
+                
+            id_width = 10 if frd_data.is_long_format else 5
+            
             try:
-                nid = int(rest[:10])
-                vals = [float(x) for x in rest[10:].split()]
+                nid = int(data_str[:id_width])
+                vals_str = _FRDParser._fix_scientific(data_str[id_width:])
+                vals = [float(x) for x in vals_str.split()]
                 if vals:
                     data[nid] = vals
-                    return
-            except ValueError:
+            except (ValueError, IndexError):
                 pass
 
-            try:
-                nid = int(rest[:5])
-                vals = [float(x) for x in rest[5:].split()]
-                if vals:
-                    data[nid] = vals
-                    return
-            except ValueError:
-                pass
-
-        _parse_res_line(first_line)
+        parse_line(first_line)
 
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 break
-            if s.startswith('-1') or s.startswith('-2'):
-                _parse_res_line(line)
+            parse_line(line)
 
         if data:
             step_bucket[name] = data
