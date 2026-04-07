@@ -21,7 +21,6 @@ means that depth ordering is driven entirely by scalar magnitude
 rather than spatial position.
 """
 
-# sphinx_gallery_thumbnail_number = 2
 from __future__ import annotations
 
 import numpy as np
