@@ -12,7 +12,9 @@ tests:
   - "MANIFEST.in"
   - "hooks/**"
   - "examples_trame/**"
+  - ".github/path-filters.yml"
   - ".github/workflows/testing-and-deployment.yml"
+  - ".github/workflows/cache-vtk-data.yml"
 
 integration:
   - "pyvista/**"
@@ -22,6 +24,7 @@ integration:
   - "toxfile.py"
   - "setup.py"
   - "hooks/**"
+  - ".github/path-filters.yml"
   - ".github/workflows/integration-tests.yml"
 
 docs:
@@ -32,4 +35,6 @@ docs:
   - "tox.ini"
   - "toxfile.py"
   - "setup.py"
+  - ".github/path-filters.yml"
   - ".github/workflows/docs.yml"
+  - ".github/workflows/cache-vtk-data.yml"
