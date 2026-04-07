@@ -330,7 +330,8 @@ VALID_ELEMENT_DEFINITIONS = {
         ' -1    9 0.5 0.0 0.0\n -1   10 1.0 0.5 0.0\n -1   11 0.5 1.0 0.0\n -1   12 0.0 0.5 0.0\n'
         ' -1   13 0.5 0.0 1.0\n -1   14 1.0 0.5 1.0\n -1   15 0.5 1.0 1.0\n -1   16 0.0 0.5 1.0\n'
         ' -1   17 0.0 0.0 0.5\n -1   18 1.0 0.0 0.5\n -1   19 1.0 1.0 0.5\n -1   20 0.0 1.0 0.5',
-        '    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17   18   19   20',
+        '    1    2    3    4    5    6    7    8    9   10 '
+        '  11   12   13   14   15   16   17   18   19   20',
     ),
     'PE15': (
         5,
@@ -471,8 +472,10 @@ def test_frd_reader_coverage_edge_cases(coverage_edge_cases_frd):
     # Invalid elements will raise warnings, which we catch here
     with pytest.warns(pv.InvalidMeshWarning):
         reader = pv.FRDReader(coverage_edge_cases_frd)
-        mesh = reader.read()
+    
+    mesh = reader.read()
 
     # Validate that the bad node (Node 1) was successfully skipped
     assert '1' not in mesh.point_data['original_node_ids']
     assert '2' in mesh.point_data['original_node_ids']
+    
