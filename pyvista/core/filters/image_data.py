@@ -1856,7 +1856,10 @@ class ImageDataFilters(DataSetFilters):
             int,
         ) and array_dtype != np.dtype(np.uint8)
         if cast_dtype:
-            self[scalars] = self[scalars].astype(float, casting='safe')  # type: ignore[index]
+            alg_input = self.copy(deep=False)
+            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')  # type: ignore[index]
+        else:
+            alg_input = self
 
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
@@ -1875,7 +1878,7 @@ class ImageDataFilters(DataSetFilters):
         ):
             """Threshold using vtkImageThreshold."""
             alg = _vtk.vtkImageThreshold()
-            alg.SetInputDataObject(self)
+            alg.SetInputDataObject(alg_input)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
 
             if threshold_val.size == 2:
@@ -1909,7 +1912,7 @@ class ImageDataFilters(DataSetFilters):
         ):
             """Threshold using vtkImageBinaryThreshold."""
             alg = _vtk.vtkImageBinaryThreshold()
-            alg.SetInputDataObject(self)
+            alg.SetInputDataObject(alg_input)
             alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
 
             if threshold_val.size == 2:
@@ -1951,7 +1954,6 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if cast_dtype:
-            self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
