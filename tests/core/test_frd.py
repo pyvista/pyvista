@@ -439,3 +439,40 @@ def test_frd_element_sizes(generic_element_frd):
         )
     else:
         pytest.fail(f'Unhandled cell dimension for element {elem_name} with VTK type {vtk_type}.')
+
+
+@pytest.fixture
+def coverage_edge_cases_frd(tmp_path):
+    """Fixture generating an FRD file to cover specific parser edge cases."""
+    content = """1C
+2C
+ -2 Missed continue in node block
+ -1    1 bad_f 0.0 0.0
+ -1    2 0.0 0.0 0.0
+ -3
+3C
+ -1    1    7
+ -2    1badch
+ -3
+100CL 1 0.1
+ -4 STRESS 6
+ -1    2 1.0 2.0 3.0 4.0 5.0 6.0
+ -2 Missed return in result block
+ -1    2 1.0 bad_f 3.0 4.0 5.0 6.0
+ -3
+"""
+    file_path = tmp_path / 'cov_edge_cases.frd'
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path)
+
+
+def test_frd_reader_coverage_edge_cases(coverage_edge_cases_frd):
+    """Tests parsing edge cases to ensure proper error handling and coverage."""
+    # Invalid elements will raise warnings, which we catch here
+    with pytest.warns(pv.InvalidMeshWarning):
+        reader = pv.FRDReader(coverage_edge_cases_frd)
+        mesh = reader.read()
+
+    # Validate that the bad node (Node 1) was successfully skipped
+    assert '1' not in mesh.point_data['original_node_ids']
+    assert '2' in mesh.point_data['original_node_ids']
