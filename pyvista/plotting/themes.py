@@ -1793,6 +1793,7 @@ class Theme(_ThemeConfig):
         '_opacity',
         '_outline_color',
         '_plot_cell',
+        '_point_shape',
         '_point_size',
         '_render_lines_as_tubes',
         '_render_points_as_spheres',
@@ -1856,6 +1857,7 @@ class Theme(_ThemeConfig):
         self._interactive = False
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
+        self._point_shape = None
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
@@ -2723,6 +2725,38 @@ class Theme(_ThemeConfig):
     @render_points_as_spheres.setter
     def render_points_as_spheres(self, render_points_as_spheres: bool):
         self._render_points_as_spheres = bool(render_points_as_spheres)
+
+    @property
+    def point_shape(self) -> str | None:  # numpydoc ignore=RT01
+        """Return or set the default point sprite shape.
+
+        .. versionadded:: 0.48
+
+        When set, points are rendered as the specified shape instead of
+        squares. This automatically disables ``render_points_as_spheres``.
+
+        Must be one of ``'circle'``, ``'triangle'``, ``'hexagon'``,
+        ``'diamond'``, ``'asterisk'``, ``'star'``, or ``None``.
+
+        Examples
+        --------
+        Render all points as circles by default globally.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.point_shape = 'circle'
+
+        """
+        return self._point_shape
+
+    @point_shape.setter
+    def point_shape(self, point_shape: str | None):
+        if point_shape is not None:
+            valid_shapes = ('asterisk', 'circle', 'diamond', 'hexagon', 'star', 'triangle')
+            if point_shape not in valid_shapes:
+                valid = ', '.join(valid_shapes)
+                msg = f'Invalid point_shape {point_shape!r}. Must be one of: {valid}'
+                raise ValueError(msg)
+        self._point_shape = point_shape
 
     @property
     def render_lines_as_tubes(self) -> bool:  # numpydoc ignore=RT01

@@ -542,6 +542,43 @@ def test_point_sprite_shapes_match_literal():
     assert set(_POINT_SPRITE_SHADERS) == set(get_args(PointSpriteShape))
 
 
+def test_add_mesh_point_shape():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(cloud, style='points', point_shape='circle', point_size=20)
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_add_mesh_point_shape_disables_spheres():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    with pytest.warns(UserWarning, match='render_points_as_spheres'):
+        actor = pl.add_mesh(
+            cloud,
+            style='points',
+            point_shape='diamond',
+            render_points_as_spheres=True,
+        )
+    assert 'point_sprite' in actor._shader_replacements
+    assert not actor.prop.render_points_as_spheres
+
+
+def test_theme_point_shape():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    try:
+        pv.global_theme.point_shape = 'hexagon'
+        pl = pv.Plotter()
+        actor = pl.add_mesh(cloud, style='points')
+        assert 'point_sprite' in actor._shader_replacements
+    finally:
+        pv.global_theme.point_shape = None
+
+
+def test_theme_point_shape_invalid():
+    with pytest.raises(ValueError, match='Invalid point_shape'):
+        pv.global_theme.point_shape = 'pentagon'
+
+
 def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection()

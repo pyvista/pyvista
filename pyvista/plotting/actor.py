@@ -770,10 +770,9 @@ class Actor(Prop3D, _vtk.vtkActor):
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:
-            # Use GetMapper() instead of self.mapper to allow the None check;
-            # the mapper property is typed as _BaseMapper (never None) but can
+            # The mapper property is typed as _BaseMapper (never None) but can
             # be None at runtime when no mapper has been assigned.
-            mapper = self.GetMapper()
+            mapper: _BaseMapper | None = self.mapper  # type: ignore[assignment]
             if mapper is None:
                 msg = 'Actor must have a mapper to enable MIP without explicit clim.'
                 raise ValueError(msg)
