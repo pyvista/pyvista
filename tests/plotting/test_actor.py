@@ -590,61 +590,67 @@ def test_point_sprite_shape_render(shape, verify_image_cache):
 
 def test_maximum_intensity_projection_render(verify_image_cache):
     verify_image_cache.high_variance_test = True
-    # Overlapping points at different depths: low-value point in front,
-    # high-value point behind. MIP should bring the high value forward.
+    # A line of 4 points along the Z axis with slight XY offsets, viewed
+    # head-on from +Z. The points overlap in screen space. The highest
+    # scalar value (1.0) is at the back (z=-3). Without MIP, the front
+    # point (z=0, value=0.0) occludes it. With MIP, the back point with
+    # the max value renders in front of all others.
     points = np.array(
         [
-            [0.0, 0.0, 0.0],  # front, low value
-            [0.0, 0.0, -1.0],  # behind, high value
-            [1.0, 0.0, 0.0],  # front, medium
-            [1.0, 0.0, -1.0],  # behind, highest
-            [0.0, 1.0, 0.0],
-            [1.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0],  # closest, lowest value
+            [0.06, 0.03, -1.0],
+            [-0.04, 0.06, -2.0],
+            [0.03, -0.04, -3.0],  # farthest, highest value
         ],
         dtype=float,
     )
     cloud = pv.PolyData(points)
-    cloud['intensity'] = [0.0, 0.8, 0.3, 1.0, 0.5, 0.1]
+    cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
     pl = pv.Plotter()
     actor = pl.add_mesh(
         cloud,
         scalars='intensity',
         style='points',
-        point_size=60,
+        point_size=300,
         show_scalar_bar=False,
     )
     actor.enable_maximum_intensity_projection()
     pl.enable_parallel_projection()
-    pl.camera_position = 'xy'
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.6
     pl.show()
 
 
 def test_mip_with_point_sprite_render(verify_image_cache):
     verify_image_cache.high_variance_test = True
+    # Same head-on overlapping layout, combined with circle sprites.
     points = np.array(
         [
             [0.0, 0.0, 0.0],
-            [0.0, 0.0, -1.0],
-            [1.0, 0.0, 0.0],
-            [1.0, 0.0, -1.0],
-            [0.0, 1.0, 0.0],
-            [1.0, 1.0, 0.0],
+            [0.06, 0.03, -1.0],
+            [-0.04, 0.06, -2.0],
+            [0.03, -0.04, -3.0],
         ],
         dtype=float,
     )
     cloud = pv.PolyData(points)
-    cloud['intensity'] = [0.0, 0.8, 0.3, 1.0, 0.5, 0.1]
+    cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
     pl = pv.Plotter()
     actor = pl.add_mesh(
         cloud,
         scalars='intensity',
         style='points',
         render_points_as_spheres=False,
-        point_size=60,
+        point_size=300,
         show_scalar_bar=False,
     )
     actor.enable_maximum_intensity_projection()
     actor.set_point_sprite_shape('circle')
     pl.enable_parallel_projection()
-    pl.camera_position = 'xy'
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.6
     pl.show()
