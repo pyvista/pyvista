@@ -3,6 +3,30 @@ name: Unit Testing and Deployment
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
+    paths-ignore:
+      - "doc/**"
+      - ".github/**"
+      - "!.github/workflows/testing-and-deployment.yml"
+      - "joss/**"
+      - "logo/**"
+      - "assets/**"
+      - "docker/**"
+      - ".devcontainer/**"
+      - "README.rst"
+      - "CONTRIBUTING.rst"
+      - "AUTHORS.rst"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+      - "FUNDING.yml"
+      - "CITATION.cff"
+      - "CITATION.rst"
+      - "LICENSE"
+      - "codecov.yml"
+      - "lychee.toml"
+      - ".pre-commit-config.yaml"
+      - ".mailmap"
+      - ".gitignore"
+      - ".gitattributes"
   merge_group:
   workflow_dispatch:
   schedule:
@@ -370,6 +394,79 @@ jobs:
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  image-report:
+    name: Test Image Report
+    runs-on: ubuntu-22.04
+    needs: [macOS, Linux, windows]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Download all failed image artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: failed_test_images-*
+          path: all_failed_images
+
+      - name: Generate HTML report
+        id: report
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          tox run -e image-report -- all_failed_images _image_report
+          if [ -f _image_report/index.html ]; then
+            echo "has_report=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Netlify
+        if: steps.report.outputs.has_report == 'true'
+        id: netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: _image_report
+          production-deploy: false
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Test image report for PR #${{ github.event.pull_request.number }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_IMAGE_REPORT_SITE_ID }}
+        timeout-minutes: 5
+
+      - name: Find existing comment
+        if: steps.report.outputs.has_report == 'true'
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: <!-- test-image-report -->
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+
+      - name: Comment on PR
+        if: steps.report.outputs.has_report == 'true'
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          edit-mode: replace
+          body: |
+            <!-- test-image-report -->
+            **Test Image Report:** ${{ steps.netlify.outputs.deploy-url }}
 
   # Publish to PyPI using trusted publishing
   release:

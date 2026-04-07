@@ -41,7 +41,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['imageio', 'meshio>=5.2']
+io = ['fsspec', 'imageio', 'meshio>=5.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
@@ -79,6 +79,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
+  'fsspec<2026.4.0',
   'hypothesis<6.151.10',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
@@ -120,6 +121,7 @@ docs = [
   'colorcet==3.1.0',
   'colour-science==0.4.6',
   'enum-tools==0.13.0',
+  'fsspec==2026.3.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.3',
   'joblib==1.5.3',
@@ -185,6 +187,7 @@ include = ['pyvista', 'pyvista.*']
 
 [tool.setuptools.package-data]
 pyvista = ['py.typed']
+'pyvista.core.static' = ['*.css', '*.svg', 'mesh_icons/*.svg']
 'pyvista.examples' = [
   '2k_earth_daymap.jpg',
   'airplane.ply',

@@ -3,6 +3,30 @@ name: Integration Tests
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
+    paths-ignore:
+      - "doc/**"
+      - ".github/**"
+      - "!.github/workflows/integration-tests.yml"
+      - "joss/**"
+      - "logo/**"
+      - "assets/**"
+      - "docker/**"
+      - ".devcontainer/**"
+      - "README.rst"
+      - "CONTRIBUTING.rst"
+      - "AUTHORS.rst"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+      - "FUNDING.yml"
+      - "CITATION.cff"
+      - "CITATION.rst"
+      - "LICENSE"
+      - "codecov.yml"
+      - "lychee.toml"
+      - ".pre-commit-config.yaml"
+      - ".mailmap"
+      - ".gitignore"
+      - ".gitattributes"
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
