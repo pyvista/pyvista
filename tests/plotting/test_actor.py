@@ -8,6 +8,8 @@ import scipy
 import pyvista as pv
 from pyvista import examples
 from pyvista.plotting import _vtk
+from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
+from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
@@ -532,14 +534,9 @@ def test_point_sprite_invalid_shape(point_cloud_actor):
         point_cloud_actor.set_point_sprite_shape('pentagon')
 
 
-def test_point_sprite_shapes_match_literal():
-    """Ensure _POINT_SPRITE_SHADERS keys stay in sync with the PointSpriteShape Literal."""
-    from typing import get_args
-
-    from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
-    from pyvista.plotting.actor import PointSpriteShape
-
-    assert set(_POINT_SPRITE_SHADERS) == set(get_args(PointSpriteShape))
+def test_point_sprite_shapes_match_enum():
+    """Ensure _POINT_SPRITE_SHADERS keys stay in sync with the PointSpriteShape enum."""
+    assert set(_POINT_SPRITE_SHADERS) == {s.value for s in PointSpriteShape}
 
 
 def test_add_mesh_point_shape():
@@ -547,6 +544,18 @@ def test_add_mesh_point_shape():
     pl = pv.Plotter()
     actor = pl.add_mesh(cloud, style='points', point_shape='circle', point_size=20)
     assert 'point_sprite' in actor._shader_replacements
+
+
+def test_add_mesh_point_shape_enum():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(cloud, style='points', point_shape=PointSpriteShape.STAR, point_size=20)
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_set_point_sprite_shape_enum(point_cloud_actor):
+    point_cloud_actor.set_point_sprite_shape(PointSpriteShape.HEXAGON)
+    assert 'point_sprite' in point_cloud_actor._shader_replacements
 
 
 def test_add_mesh_point_shape_disables_spheres():

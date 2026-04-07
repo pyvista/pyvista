@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Literal
-from typing import get_args
 
 import numpy as np
 
@@ -15,6 +13,7 @@ from pyvista._warn_external import warn_external
 from . import _vtk
 from . import _vtk_gl
 from ._property import Property
+from .opts import ShaderType
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
@@ -23,11 +22,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .mapper import _BaseMapper
-
-ShaderType = Literal['vertex', 'fragment', 'geometry']
-PointSpriteShape = Literal['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star']
-
-_SHADER_TYPE_NAMES: tuple[str, ...] = get_args(ShaderType)
+    from .opts import PointSpriteShape
 
 _POINT_SPRITE_SHADERS: dict[str, str] = {
     'circle': (
@@ -566,7 +561,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def add_shader_replacement(
         self,
-        shader_type: ShaderType,
+        shader_type: ShaderType | str,
         original: str,
         replacement: str,
         *,
@@ -584,8 +579,9 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Parameters
         ----------
-        shader_type : str
-            Type of shader to modify. One of ``'vertex'``, ``'fragment'``,
+        shader_type : ShaderType | str
+            Type of shader to modify. Accepts a :class:`~pyvista.plotting.opts.ShaderType`
+            enum value or a string. One of ``'vertex'``, ``'fragment'``,
             or ``'geometry'``.
 
         original : str
@@ -629,12 +625,14 @@ class Actor(Prop3D, _vtk.vtkActor):
         ... )
 
         """
-        if shader_type not in _SHADER_TYPE_NAMES:
-            valid = ', '.join(sorted(_SHADER_TYPE_NAMES))
+        try:
+            shader_type = ShaderType(shader_type)
+        except ValueError:
+            valid = ', '.join(s.value for s in ShaderType)
             msg = f'Invalid shader_type {shader_type!r}. Must be one of: {valid}'
-            raise ValueError(msg)
+            raise ValueError(msg) from None
 
-        vtk_enum = getattr(_vtk_gl.vtkShader, shader_type.capitalize())
+        vtk_enum = getattr(_vtk_gl.vtkShader, shader_type.value.capitalize())
         key = (shader_type, original, replace_first)
         registry = self._shader_replacements
 
@@ -701,8 +699,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             shader_prop.ClearAllShaderReplacements()
             registry.clear()
         elif _feature_name in registry:
-            for shader_type_name, original, replace_first in registry[_feature_name]:
-                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_name.capitalize())
+            for shader_type_val, original, replace_first in registry[_feature_name]:
+                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_val.capitalize())
                 shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
                     vtk_enum,
                     original,
@@ -843,7 +841,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         self.clear_shader_replacements(_feature_name='mip')
 
-    def set_point_sprite_shape(self, shape: PointSpriteShape) -> None:
+    def set_point_sprite_shape(self, shape: PointSpriteShape | str) -> None:
         """Set a custom point sprite shape via fragment shader.
 
         .. versionadded:: 0.48
@@ -854,8 +852,9 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Parameters
         ----------
-        shape : str
-            The sprite shape to use. Must be one of:
+        shape : PointSpriteShape | str
+            The sprite shape to use. Accepts a :class:`PointSpriteShape`
+            enum value or a string. Must be one of:
 
             * ``'circle'`` - Circular disc
             * ``'triangle'`` - Upward-pointing triangle

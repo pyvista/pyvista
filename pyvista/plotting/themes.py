@@ -2735,8 +2735,10 @@ class Theme(_ThemeConfig):
         When set, points are rendered as the specified shape instead of
         squares. This automatically disables ``render_points_as_spheres``.
 
-        Must be one of ``'circle'``, ``'triangle'``, ``'hexagon'``,
-        ``'diamond'``, ``'asterisk'``, ``'star'``, or ``None``.
+        Accepts a :class:`~pyvista.plotting.opts.PointSpriteShape` enum
+        value or a string. Must be one of ``'circle'``, ``'triangle'``,
+        ``'hexagon'``, ``'diamond'``, ``'asterisk'``, ``'star'``, or
+        ``None``.
 
         Examples
         --------
@@ -2745,12 +2747,19 @@ class Theme(_ThemeConfig):
         >>> import pyvista as pv
         >>> pv.global_theme.point_shape = 'circle'
 
+        Or use the enum.
+
+        >>> from pyvista.plotting.opts import PointSpriteShape
+        >>> pv.global_theme.point_shape = PointSpriteShape.CIRCLE
+
         """
         return self._point_shape
 
     @point_shape.setter
     def point_shape(self, point_shape: str | None):
         if point_shape is not None:
+            # Accept both PointSpriteShape enum and str
+            point_shape = str(point_shape.value if hasattr(point_shape, 'value') else point_shape)
             valid_shapes = ('asterisk', 'circle', 'diamond', 'hexagon', 'star', 'triangle')
             if point_shape not in valid_shapes:
                 valid = ', '.join(valid_shapes)

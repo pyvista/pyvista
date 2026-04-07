@@ -137,6 +137,8 @@ if TYPE_CHECKING:
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
 
+    from .opts import PointSpriteShape
+
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 FPS_1_OVER_60 = 1 / 60
@@ -3177,7 +3179,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         name: str | None = None,
         texture: Texture | NumpyArray[float] | None = None,
         render_points_as_spheres: bool | None = None,  # noqa: FBT001
-        point_shape: str | None = None,
+        point_shape: PointSpriteShape | str | None = None,
         render_lines_as_tubes: bool | None = None,  # noqa: FBT001
         smooth_shading: bool | None = None,  # noqa: FBT001
         split_sharp_edges: bool | None = None,  # noqa: FBT001
@@ -3377,13 +3379,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         render_points_as_spheres : bool, optional
             Render points as spheres rather than dots.
 
-        point_shape : str, optional
+        point_shape : PointSpriteShape | str, optional
             Render points as a custom sprite shape instead of squares.
-            Must be one of ``'circle'``, ``'triangle'``, ``'hexagon'``,
-            ``'diamond'``, ``'asterisk'``, or ``'star'``. Requires
-            ``style='points'``. If ``render_points_as_spheres`` is
-            ``True`` (explicitly or via theme), it will be automatically
-            disabled with a warning.
+            Accepts a :class:`pyvista.plotting.opts.PointSpriteShape`
+            enum value or a string. Must be one of ``'circle'``,
+            ``'triangle'``, ``'hexagon'``, ``'diamond'``, ``'asterisk'``,
+            or ``'star'``. Requires ``style='points'``. If
+            ``render_points_as_spheres`` is ``True`` (explicitly or via
+            theme), it will be automatically disabled with a warning.
 
             .. versionadded:: 0.48
 
