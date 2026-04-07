@@ -4109,7 +4109,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 prop.render_points_as_spheres = render_points_as_spheres
 
         if point_shape is not None:
-            actor.set_point_sprite_shape(point_shape)
+            actor.set_point_sprite_shape(point_shape)  # type: ignore[arg-type]
 
         if backface_params is not None:
             if isinstance(backface_params, Property):

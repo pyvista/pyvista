@@ -772,7 +772,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         else:
             # The mapper property is typed as _BaseMapper (never None) but can
             # be None at runtime when no mapper has been assigned.
-            mapper: _BaseMapper | None = self.mapper  # type: ignore[assignment]
+            mapper: _BaseMapper | None = self.mapper  # type: ignore[assignment,unused-ignore]
             if mapper is None:
                 msg = 'Actor must have a mapper to enable MIP without explicit clim.'
                 raise ValueError(msg)
