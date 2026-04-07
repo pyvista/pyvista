@@ -1154,11 +1154,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         --------
         pyvista.PolyData.faces
 
-        Notes
-        -----
-        This property does not validate that the mesh's faces are all
-        actually the same size. If they're not, this property may either
-        raise a `ValueError` or silently return an incorrect array.
+        Raises
+        ------
+        ValueError
+            If the mesh's faces are irregular.
 
         Examples
         --------
@@ -1174,7 +1173,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                [4, 5, 8, 7]])
 
         """
-        return _get_regular_cells(self.GetPolys())
+        regular_faces = _get_regular_cells(self.GetPolys())
+        if len(regular_faces) != self.GetNumberOfPolys():
+            offsets = _get_offset_array(self.GetPolys())
+            sizes = sorted(np.unique(np.diff(offsets)).tolist())
+            msg = (
+                f'Mesh does not have regular faces. '
+                f'Multiple face sizes detected with different number of points: {sizes}'
+            )
+            raise ValueError(msg)
+        return regular_faces
 
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]) -> None:  # numpydoc ignore=PR01
