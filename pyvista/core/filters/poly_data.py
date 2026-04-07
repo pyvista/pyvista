@@ -4455,6 +4455,11 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        Raises
+        ------
+        RuntimeError
+            If the mesh does not contain lines.
+
         Returns
         -------
         pyvista.PolyData
