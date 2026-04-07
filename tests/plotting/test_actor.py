@@ -9,7 +9,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
-from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
@@ -535,8 +534,8 @@ def test_point_sprite_invalid_shape(point_cloud_actor):
 
 
 def test_point_sprite_shapes_match_enum():
-    """Ensure _POINT_SPRITE_SHADERS keys stay in sync with the PointSpriteShape enum."""
-    assert set(_POINT_SPRITE_SHADERS) == {s.value for s in PointSpriteShape}
+    """Ensure _POINT_SPRITE_SHADERS keys stay in sync with the pv.PointSpriteShape enum."""
+    assert set(_POINT_SPRITE_SHADERS) == {s.value for s in pv.PointSpriteShape}
 
 
 def test_add_mesh_point_shape():
@@ -549,12 +548,12 @@ def test_add_mesh_point_shape():
 def test_add_mesh_point_shape_enum():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
-    actor = pl.add_mesh(cloud, style='points', point_shape=PointSpriteShape.STAR, point_size=20)
+    actor = pl.add_mesh(cloud, style='points', point_shape=pv.PointSpriteShape.STAR, point_size=20)
     assert 'point_sprite' in actor._shader_replacements
 
 
 def test_set_point_sprite_shape_enum(point_cloud_actor):
-    point_cloud_actor.set_point_sprite_shape(PointSpriteShape.HEXAGON)
+    point_cloud_actor.set_point_sprite_shape(pv.PointSpriteShape.HEXAGON)
     assert 'point_sprite' in point_cloud_actor._shader_replacements
 
 
@@ -581,6 +580,21 @@ def test_theme_point_shape():
         assert 'point_sprite' in actor._shader_replacements
     finally:
         pv.global_theme.point_shape = None
+
+
+def test_theme_point_shape_disables_spheres():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    try:
+        pv.global_theme.point_shape = 'circle'
+        pv.global_theme.render_points_as_spheres = True
+        pl = pv.Plotter()
+        with pytest.warns(UserWarning, match='render_points_as_spheres'):
+            actor = pl.add_mesh(cloud, style='points')
+        assert 'point_sprite' in actor._shader_replacements
+        assert not actor.prop.render_points_as_spheres
+    finally:
+        pv.global_theme.point_shape = None
+        pv.global_theme.render_points_as_spheres = False
 
 
 def test_theme_point_shape_invalid():

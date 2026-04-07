@@ -49,6 +49,7 @@ from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
 from .opts import InterpolationType
+from .opts import PointSpriteShape
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -2756,15 +2757,15 @@ class Theme(_ThemeConfig):
         return self._point_shape
 
     @point_shape.setter
-    def point_shape(self, point_shape: str | None):
+    def point_shape(self, point_shape: PointSpriteShape | str | None):
         if point_shape is not None:
-            # Accept both PointSpriteShape enum and str
-            point_shape = str(point_shape.value if hasattr(point_shape, 'value') else point_shape)
-            valid_shapes = ('asterisk', 'circle', 'diamond', 'hexagon', 'star', 'triangle')
-            if point_shape not in valid_shapes:
-                valid = ', '.join(valid_shapes)
+            try:
+                point_shape = PointSpriteShape(point_shape)
+            except ValueError:
+                valid = ', '.join(s.value for s in PointSpriteShape)
                 msg = f'Invalid point_shape {point_shape!r}. Must be one of: {valid}'
-                raise ValueError(msg)
+                raise ValueError(msg) from None
+            point_shape = point_shape.value
         self._point_shape = point_shape
 
     @property

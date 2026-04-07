@@ -170,7 +170,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         else:
             self.prop = prop
         self._name = name
-        self._shader_replacements: dict[str, list[tuple[str, str, bool]]] = {}
+        self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
@@ -700,7 +700,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             registry.clear()
         elif _feature_name in registry:
             for shader_type_val, original, replace_first in registry[_feature_name]:
-                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_val.capitalize())
+                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_val.value.capitalize())
+                # vtkOpenGLShaderProperty at runtime; stubs only know vtkShaderProperty
                 shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
                     vtk_enum,
                     original,
