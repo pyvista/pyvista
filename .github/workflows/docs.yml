@@ -242,18 +242,21 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
         run: |
           gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
             -f state=success \
             -f context="Docs Preview" \
             -f description="Documentation preview is ready" \
-            -f target_url="${{ steps.netlify.outputs.deploy-url }}"
+            -f target_url="$DEPLOY_URL"
 
       - name: Add preview link to job summary
         if: github.event_name == 'pull_request'
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
         run: |
           echo "### Documentation Preview" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.netlify.outputs.deploy-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Publish Release Documentation

@@ -454,18 +454,21 @@ jobs:
         if: steps.report.outputs.has_report == 'true'
         env:
           GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
         run: |
           gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
             -f state=success \
             -f context="Test Image Report" \
             -f description="Image comparison report is ready" \
-            -f target_url="${{ steps.netlify.outputs.deploy-url }}"
+            -f target_url="$DEPLOY_URL"
 
       - name: Add report link to job summary
         if: steps.report.outputs.has_report == 'true'
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
         run: |
           echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.netlify.outputs.deploy-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
 
   # Publish to PyPI using trusted publishing
   release:
