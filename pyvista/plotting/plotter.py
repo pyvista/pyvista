@@ -4104,8 +4104,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             if not render_points_as_spheres and not mapper.emissive and prop.opacity >= 1.0:
                 prop.opacity = 0.9999  # otherwise, weird triangles
 
-        if render_points_as_spheres:
-            if style == 'points_gaussian':
+        if render_points_as_spheres is not None:
+            if render_points_as_spheres and style == 'points_gaussian':
                 mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
