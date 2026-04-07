@@ -3,30 +3,6 @@ name: Unit Testing and Deployment
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
-    paths-ignore:
-      - "doc/**"
-      - ".github/**"
-      - "!.github/workflows/testing-and-deployment.yml"
-      - "joss/**"
-      - "logo/**"
-      - "assets/**"
-      - "docker/**"
-      - ".devcontainer/**"
-      - "README.rst"
-      - "CONTRIBUTING.rst"
-      - "AUTHORS.rst"
-      - "CODE_OF_CONDUCT.md"
-      - "SECURITY.md"
-      - "FUNDING.yml"
-      - "CITATION.cff"
-      - "CITATION.rst"
-      - "LICENSE"
-      - "codecov.yml"
-      - "lychee.toml"
-      - ".pre-commit-config.yaml"
-      - ".mailmap"
-      - ".gitignore"
-      - ".gitattributes"
   merge_group:
   workflow_dispatch:
   schedule:
@@ -62,12 +38,27 @@ permissions:
   id-token: none
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      tests: ${{ steps.filter.outputs.tests }}
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: .github/path-filters.yml
+
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
 
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -75,11 +66,15 @@ jobs:
 
   # For self-hosted runners, we need to cache each runner separately
   cache-macOS-self-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
   cache-ubuntu-self-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -87,7 +82,8 @@ jobs:
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-macOS-self-hosted
+    needs: [cache-macOS-self-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -163,7 +159,8 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-ubuntu-self-hosted
+    needs: [cache-ubuntu-self-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     strategy:
       fail-fast: false
 
@@ -332,7 +329,8 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-github-hosted
+    needs: [cache-github-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -398,8 +396,8 @@ jobs:
   image-report:
     name: Test Image Report
     runs-on: ubuntu-22.04
-    needs: [macOS, Linux, windows]
-    if: always() && github.event_name == 'pull_request'
+    needs: [macOS, Linux, windows, changes]
+    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
     steps:
       - uses: actions/checkout@v6
         with:

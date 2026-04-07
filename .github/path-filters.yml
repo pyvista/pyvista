@@ -1,0 +1,35 @@
+# Shared path filters for CI skip conditions
+# Used by dorny/paths-filter in docs.yml, testing-and-deployment.yml, and integration-tests.yml
+# Each filter defines which file changes should trigger the corresponding workflow's jobs
+
+tests:
+  - "pyvista/**"
+  - "tests/**"
+  - "pyproject.toml"
+  - "tox.ini"
+  - "toxfile.py"
+  - "setup.py"
+  - "MANIFEST.in"
+  - "hooks/**"
+  - "examples_trame/**"
+  - ".github/workflows/testing-and-deployment.yml"
+
+integration:
+  - "pyvista/**"
+  - "tests/**"
+  - "pyproject.toml"
+  - "tox.ini"
+  - "toxfile.py"
+  - "setup.py"
+  - "hooks/**"
+  - ".github/workflows/integration-tests.yml"
+
+docs:
+  - "pyvista/**"
+  - "doc/**"
+  - "examples/**"
+  - "pyproject.toml"
+  - "tox.ini"
+  - "toxfile.py"
+  - "setup.py"
+  - ".github/workflows/docs.yml"
