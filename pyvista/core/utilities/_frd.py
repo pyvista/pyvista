@@ -197,7 +197,7 @@ class _FRDParser:
                 continue
 
             idx = line.find('-1')
-            if idx == -1:
+            if idx == -1:  # pragma: no cover
                 continue
 
             # _fix_scientific handles negative coordinates glued to ID (if any)
@@ -246,7 +246,7 @@ class _FRDParser:
 
                 # Key: remove "-1" before split so that a glued ID does not break the parser
                 idx = line.find('-1')
-                if idx == -1:
+                if idx == -1:  # pragma: no cover
                     continue
                 data_str = line[idx + 2 :]
                 parts = data_str.split()
@@ -272,7 +272,7 @@ class _FRDParser:
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 idx = line.find('-2')
-                if idx == -1:
+                if idx == -1:  # pragma: no cover
                     continue
                 data_str = line[idx + 2 :].rstrip('\n\r')
 
@@ -366,7 +366,7 @@ class _FRDParser:
             if not s.startswith(nodal_vals):
                 return
             idx = line_str.find('-1')
-            if idx == -1:
+            if idx == -1:  # pragma: no cover
                 return
 
             data_str = _FRDParser._fix_scientific(line_str[idx + 2 :].rstrip('\n\r'))
