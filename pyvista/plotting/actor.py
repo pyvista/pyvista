@@ -649,11 +649,13 @@ class Actor(Prop3D, _vtk.vtkActor):
                 )
                 raise ValueError(msg)
 
+        # GetShaderProperty() returns vtkShaderProperty at the type-stub level,
+        # but the runtime object is vtkOpenGLShaderProperty which has these methods.
         shader_prop = self.GetShaderProperty()
 
         # If this feature already owns this slot, clear the old one first
         if _feature_name in registry and key in registry[_feature_name]:
-            shader_prop.ClearShaderReplacement(
+            shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
                 vtk_enum,
                 original,
                 replace_first,
@@ -661,7 +663,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             registry[_feature_name].remove(key)
 
         # Add the replacement
-        shader_prop.AddShaderReplacement(
+        shader_prop.AddShaderReplacement(  # type: ignore[attr-defined]
             vtk_enum,
             original,
             replace_first,
@@ -701,7 +703,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         elif _feature_name in registry:
             for shader_type_name, original, replace_first in registry[_feature_name]:
                 vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_name.capitalize())
-                shader_prop.ClearShaderReplacement(
+                shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
                     vtk_enum,
                     original,
                     replace_first,
@@ -768,10 +770,14 @@ class Actor(Prop3D, _vtk.vtkActor):
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:
-            if self.mapper is None:
+            # Use GetMapper() instead of self.mapper to allow the None check;
+            # the mapper property is typed as _BaseMapper (never None) but can
+            # be None at runtime when no mapper has been assigned.
+            mapper = self.GetMapper()
+            if mapper is None:
                 msg = 'Actor must have a mapper to enable MIP without explicit clim.'
                 raise ValueError(msg)
-            dataset = self.mapper.dataset
+            dataset = mapper.dataset
             if dataset is None:
                 msg = 'Mapper must have a dataset to enable MIP without explicit clim.'
                 raise ValueError(msg)
