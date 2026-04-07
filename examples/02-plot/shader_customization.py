@@ -106,6 +106,10 @@ pl.show()
 # same actor. Here we combine MIP with circular point sprites for
 # a cleaner visualization.
 
+combined_display = dict(
+    cmap='jet', clim=[0, 100], style='points', point_size=15, show_scalar_bar=False
+)
+
 pl = pv.Plotter(shape=(1, 2))
 pl.enable_parallel_projection()
 
@@ -113,15 +117,16 @@ pl.subplot(0, 0)
 actor_normal = pl.add_mesh(
     pts,
     render_points_as_spheres=False,
-    **display,
+    **combined_display,
 )
-pl.add_text('Normal (squares)', font_size=12)
+actor_normal.enable_maximum_intensity_projection()
+pl.add_text('MIP (squares)', font_size=12)
 
 pl.subplot(0, 1)
 actor_combined = pl.add_mesh(
     pts,
     render_points_as_spheres=False,
-    **display,
+    **combined_display,
 )
 actor_combined.enable_maximum_intensity_projection()
 actor_combined.set_point_sprite_shape('circle')
