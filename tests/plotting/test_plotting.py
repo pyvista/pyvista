@@ -5338,6 +5338,7 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(
     (9, 6, 99),  # >= 9,7,0
     reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
