@@ -3,30 +3,6 @@ name: Integration Tests
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
-    paths-ignore:
-      - "doc/**"
-      - ".github/**"
-      - "!.github/workflows/integration-tests.yml"
-      - "joss/**"
-      - "logo/**"
-      - "assets/**"
-      - "docker/**"
-      - ".devcontainer/**"
-      - "README.rst"
-      - "CONTRIBUTING.rst"
-      - "AUTHORS.rst"
-      - "CODE_OF_CONDUCT.md"
-      - "SECURITY.md"
-      - "FUNDING.yml"
-      - "CITATION.cff"
-      - "CITATION.rst"
-      - "LICENSE"
-      - "codecov.yml"
-      - "lychee.toml"
-      - ".pre-commit-config.yaml"
-      - ".mailmap"
-      - ".gitignore"
-      - ".gitattributes"
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
@@ -59,7 +35,28 @@ permissions:
   id-token: none
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      integration: ${{ steps.filter.outputs.integration }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: .github/path-filters.yml
+
   Integration:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.integration == 'true'
     name: ${{matrix.project}}
     strategy:
       fail-fast: false

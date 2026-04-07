@@ -2,29 +2,6 @@ name: Build Documentation
 
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
-    paths-ignore:
-      - ".github/**"
-      - "!.github/workflows/docs.yml"
-      - "tests/**"
-      - "docker/**"
-      - "hooks/**"
-      - "joss/**"
-      - "logo/**"
-      - "assets/**"
-      - "pyvista-no-vtk/**"
-      - "examples_trame/**"
-      - ".devcontainer/**"
-      - "README.rst"
-      - "CODE_OF_CONDUCT.md"
-      - "SECURITY.md"
-      - "FUNDING.yml"
-      - "codecov.yml"
-      - "lychee.toml"
-      - "Makefile"
-      - ".pre-commit-config.yaml"
-      - ".mailmap"
-      - ".gitignore"
-      - ".gitattributes"
   merge_group:
   workflow_dispatch:
   schedule:
@@ -43,7 +20,28 @@ permissions:
   id-token: none
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: .github/path-filters.yml
+
   cache-vtk-data:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -53,7 +51,8 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
-    needs: cache-vtk-data
+    needs: [cache-vtk-data, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
@@ -169,8 +168,8 @@ jobs:
   test:
     name: Test Documentation
     runs-on: ubuntu-22.04
-    needs: doc
-    if: ${{ !cancelled() }}
+    needs: [doc, changes]
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true') }}
     env:
       TOX_COLORED: "yes"
     steps:
@@ -212,8 +211,8 @@ jobs:
   preview:
     name: Preview Development Documentation
     runs-on: ubuntu-22.04
-    needs: doc
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    needs: [doc, changes]
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'pull_request') && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true')
     steps:
       - uses: actions/download-artifact@v8
         with:
