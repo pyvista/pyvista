@@ -1766,7 +1766,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['threshold'])
-    def image_threshold(  # noqa: PLR0917  # type: ignore[misc]
+    def image_threshold(  # type: ignore[misc] # noqa: PLR0917
         self: ImageData,
         threshold,
         in_value=1.0,
@@ -1844,14 +1844,14 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            field, scalars = self.active_scalars_info
         else:
-            field = self.get_array_association(scalars, preference=preference)  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference=preference)
 
         # For some systems integer scalars won't threshold
         # correctly. Cast to float to be robust.
-        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[attr-defined]
+        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[union-attr]
         if cast_dtype:
             alg_input = self.copy(deep=False)
             alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')
