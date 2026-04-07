@@ -4413,7 +4413,11 @@ class PolyDataFilters(DataSetFilters):
         return wrap(mc.GetOutput())
 
     @_deprecate_positional_args
-    def triangulate_contours(self, display_errors: bool = False, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def triangulate_contours(
+        self,
+        display_errors: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> _PolyDataType:
         """Triangulate and fill all 2D contours to create polygons.
 
         .. versionadded:: 0.44.0
@@ -4477,6 +4481,10 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
+        if self.n_lines == 0:
+            msg = '`triangulate_contours` requires the input PolyData to have lines.'
+            raise RuntimeError(msg)
+
         alg = _vtk.vtkContourTriangulator()
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
