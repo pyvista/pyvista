@@ -185,6 +185,7 @@ include = ['pyvista', 'pyvista.*']
 
 [tool.setuptools.package-data]
 pyvista = ['py.typed']
+'pyvista.core.static' = ['*.css', '*.svg', 'mesh_icons/*.svg']
 'pyvista.examples' = [
   '2k_earth_daymap.jpg',
   'airplane.ply',
