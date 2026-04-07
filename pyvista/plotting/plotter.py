@@ -5557,7 +5557,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Return a depth image representing current render window.
 
         .. versionchanged:: 0.47
-            The last image depth is no longer autoatically stored. You must
+            The last image depth is no longer automatically stored. You must
             enable ``store_image_depth=True`` within :meth:`Plotter.show` to
             obtain the image depth after the :class:`pyvista.Plotter` has been
             closed.
