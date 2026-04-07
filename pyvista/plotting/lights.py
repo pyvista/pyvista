@@ -7,16 +7,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-# imports here rather than in _vtk to avoid circular imports
-from vtkmodules.vtkCommonMath import vtkMatrix4x4
-from vtkmodules.vtkRenderingCore import vtkLight
-from vtkmodules.vtkRenderingCore import vtkLightActor
-
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.plotting._vtk import vtkLight
+from pyvista.plotting._vtk import vtkLightActor
 
 from .colors import Color
 
