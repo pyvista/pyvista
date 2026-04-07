@@ -1455,6 +1455,7 @@ def test_regular_faces_mutable():
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
 
 
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Merge order changed')
 def test_regular_faces_raises():
     tri = pv.examples.cells.Triangle().extract_surface(algorithm=None)
     quad = pv.examples.cells.Quadrilateral().extract_surface(algorithm=None)
