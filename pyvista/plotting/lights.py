@@ -3,20 +3,14 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 # imports here rather than in _vtk to avoid circular imports
-try:
-    from vtkmodules.vtkCommonMath import vtkMatrix4x4
-    from vtkmodules.vtkRenderingCore import vtkLight
-    from vtkmodules.vtkRenderingCore import vtkLightActor
-except ImportError:  # pragma: no cover
-    from vtk import vtkLight
-    from vtk import vtkLightActor
-    from vtk import vtkMatrix4x4
-
-from typing import TYPE_CHECKING
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
+from vtkmodules.vtkRenderingCore import vtkLight
+from vtkmodules.vtkRenderingCore import vtkLightActor
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation

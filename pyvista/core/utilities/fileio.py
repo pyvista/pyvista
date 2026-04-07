@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     import imageio
     import meshio
     import trimesh
-    from vtk import vtkWriter
+    from vtkmodules.vtkIOCore import vtkWriter
 
     from pyvista import BaseReader
     from pyvista import DataObject
@@ -515,13 +515,10 @@ def read_exodus(  # noqa: PLR0917
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
-    from .helpers import wrap  # noqa: PLC0415
-
     # lazy import here to avoid loading module on import pyvista
-    try:
-        from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
-    except ImportError:
-        from vtk import vtkExodusIIReader  # noqa: PLC0415
+    from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
+
+    from .helpers import wrap  # noqa: PLC0415
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
