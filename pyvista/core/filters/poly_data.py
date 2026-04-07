@@ -4414,7 +4414,7 @@ class PolyDataFilters(DataSetFilters):
 
     @_deprecate_positional_args
     def triangulate_contours(
-        self,
+        self: _PolyDataType,
         display_errors: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> _PolyDataType:
@@ -4486,7 +4486,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
-        if self.n_lines == 0:
+        if self.n_lines == 0:  # type: ignore[attr-defined]
             msg = '`triangulate_contours` requires the input PolyData to have lines.'
             raise RuntimeError(msg)
 
