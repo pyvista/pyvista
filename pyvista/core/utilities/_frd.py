@@ -195,23 +195,25 @@ class _FRDParser:
                 return
             if not s.startswith('-1'):
                 continue
-            
+
             idx = line.find('-1')
             if idx == -1:
                 continue
-            
-            data_str = line[idx+2:].rstrip('\n\r')
+
+            data_str = line[idx + 2 :].rstrip('\n\r')
             if not data_str:
                 continue
-            
+
             if not frd_data._format_detected:
-                e_idx = max(data_str.find('E'), data_str.find('D'), data_str.find('e'), data_str.find('d'))
+                e_idx = max(
+                    data_str.find('E'), data_str.find('D'), data_str.find('e'), data_str.find('d')
+                )
                 id_width = 10 if e_idx > 16 or e_idx == -1 else 5
-                frd_data.is_long_format = (id_width == 10)
+                frd_data.is_long_format = id_width == 10
                 frd_data._format_detected = True
-                
+
             id_width = 10 if frd_data.is_long_format else 5
-            
+
             try:
                 nid = int(data_str[:id_width])
                 c_str = _FRDParser._fix_scientific(data_str[id_width:])
@@ -235,7 +237,7 @@ class _FRDParser:
 
         for line in file_stream:
             s = line.strip()
-            
+
             # Prevent overlapping errors - if the line is not consecutive nodes
             if etype is not None and not s.startswith(elem_faces):
                 invalid = _InvalidElement(
@@ -252,14 +254,14 @@ class _FRDParser:
 
             if s.startswith(elem_def):
                 elem_line_number = file_stream.line_number
-                
+
                 # Key: remove "-1" before split so that a glued ID (like "-126412") does not break the parser
                 idx = line.find('-1')
                 if idx == -1:
                     continue
-                data_str = line[idx+2:]
+                data_str = line[idx + 2 :]
                 parts = data_str.split()
-                
+
                 try:
                     # parts[0] = element ID, parts[1] = element type (e.g., 1 for HE8)
                     etype_val = int(parts[1])
@@ -283,29 +285,29 @@ class _FRDParser:
                 idx = line.find('-2')
                 if idx == -1:
                     continue
-                data_str = line[idx+2:].rstrip('\n\r')
-                
+                data_str = line[idx + 2 :].rstrip('\n\r')
+
                 if not frd_data._format_detected:
                     frd_data.is_long_format = len(data_str.rstrip()) > 55
                     frd_data._format_detected = True
-                    
+
                 width = 10 if frd_data.is_long_format else 5
-                
+
                 new_nodes = []
                 for i in range(0, len(data_str), width):
-                    chunk = data_str[i:i+width]
+                    chunk = data_str[i : i + width]
                     # Skip completely empty "chunks" that are just padding at the end of the line
                     if chunk.strip():
                         try:
                             new_nodes.append(int(chunk))
                         except ValueError:
                             pass
-                
+
                 node_ids.extend(new_nodes)
 
                 if (n_nodes := len(node_ids)) < needed:
                     continue
-                
+
                 if n_nodes > needed:
                     invalid = _InvalidElement(
                         line_number=elem_line_number,
@@ -360,18 +362,18 @@ class _FRDParser:
             idx = line_str.find('-1')
             if idx == -1:
                 return
-                
-            data_str = line_str[idx+2:].rstrip('\n\r')
+
+            data_str = line_str[idx + 2 :].rstrip('\n\r')
             if not data_str:
                 return
-                
+
             if not frd_data._format_detected:
                 # If we get this far (no nodes and elements), use a safe threshold.
-                frd_data.is_long_format = len(data_str.rstrip()) > 85 
+                frd_data.is_long_format = len(data_str.rstrip()) > 85
                 frd_data._format_detected = True
-                
+
             id_width = 10 if frd_data.is_long_format else 5
-            
+
             try:
                 nid = int(data_str[:id_width])
                 vals_str = _FRDParser._fix_scientific(data_str[id_width:])
