@@ -1766,8 +1766,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['threshold'])
-    def image_threshold(  # noqa: PLR0917
-        self,
+    def image_threshold(  # noqa: PLR0917  # type: ignore[misc]
+        self: ImageData,
         threshold,
         in_value=1.0,
         out_value=0.0,
@@ -1854,7 +1854,7 @@ class ImageDataFilters(DataSetFilters):
         cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[attr-defined]
         if cast_dtype:
             alg_input = self.copy(deep=False)
-            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')  # type: ignore[index]
+            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')
         else:
             alg_input = self
 
@@ -1884,12 +1884,12 @@ class ImageDataFilters(DataSetFilters):
             # set the replacement values / modes
             if in_value is not None:
                 alg.SetReplaceIn(True)
-                alg.SetInValue(in_value)  # type: ignore[arg-type]
+                alg.SetInValue(in_value)
             else:
                 alg.SetReplaceIn(False)
             if out_value is not None:
                 alg.SetReplaceOut(True)
-                alg.SetOutValue(out_value)  # type: ignore[arg-type]
+                alg.SetOutValue(out_value)
             else:
                 alg.SetReplaceOut(False)
 
