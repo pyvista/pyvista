@@ -4018,6 +4018,7 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     pl.show()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_plot_individual_cell(hexbeam):
     hexbeam.get_cell(0).plot(color='b')
 
