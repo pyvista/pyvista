@@ -625,24 +625,31 @@ def test_point_sprite_shape_render(shape, verify_image_cache):
     pl.show()
 
 
-def test_maximum_intensity_projection_render(verify_image_cache):
-    verify_image_cache.high_variance_test = True
-    # A line of 4 points along the Z axis with slight XY offsets, viewed
-    # head-on from +Z. The points overlap in screen space. The highest
-    # scalar value (1.0) is at the back (z=-3). Without MIP, the front
-    # point (z=0, value=0.0) occludes it. With MIP, the back point with
-    # the max value renders in front of all others.
+def _mip_test_points():
+    """Create overlapping points along Z for MIP testing.
+
+    Four points at the same XY, staggered along Z, viewed head-on.
+    The highest scalar value (1.0) is at the back. Without MIP the
+    front point (value 0.0) occludes everything. With MIP the back
+    point renders in front as a single bright yellow square/circle.
+    """
     points = np.array(
         [
-            [0.0, 0.0, 0.0],  # closest, lowest value
-            [0.06, 0.03, -1.0],
-            [-0.04, 0.06, -2.0],
-            [0.03, -0.04, -3.0],  # farthest, highest value
+            [-0.02, 0.02, 0.0],
+            [0.01, 0.01, -1.0],
+            [-0.01, -0.01, -2.0],
+            [0.02, -0.02, -3.0],
         ],
         dtype=float,
     )
     cloud = pv.PolyData(points)
     cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
+    return cloud
+
+
+def test_maximum_intensity_projection_render(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+    cloud = _mip_test_points()
     pl = pv.Plotter()
     actor = pl.add_mesh(
         cloud,
@@ -662,18 +669,7 @@ def test_maximum_intensity_projection_render(verify_image_cache):
 
 def test_mip_with_point_sprite_render(verify_image_cache):
     verify_image_cache.high_variance_test = True
-    # Same head-on overlapping layout, combined with circle sprites.
-    points = np.array(
-        [
-            [0.0, 0.0, 0.0],
-            [0.06, 0.03, -1.0],
-            [-0.04, 0.06, -2.0],
-            [0.03, -0.04, -3.0],
-        ],
-        dtype=float,
-    )
-    cloud = pv.PolyData(points)
-    cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
+    cloud = _mip_test_points()
     pl = pv.Plotter()
     actor = pl.add_mesh(
         cloud,
