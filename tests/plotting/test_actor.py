@@ -617,7 +617,7 @@ def test_point_sprite_shape_render(shape, verify_image_cache):
         scalars='scalars',
         style='points',
         render_points_as_spheres=False,
-        point_size=80,
+        point_size=64,
         show_scalar_bar=False,
     )
     actor.set_point_sprite_shape(shape)
@@ -648,7 +648,7 @@ def test_maximum_intensity_projection_render(verify_image_cache):
         cloud,
         scalars='intensity',
         style='points',
-        point_size=300,
+        point_size=64,
         show_scalar_bar=False,
     )
     actor.enable_maximum_intensity_projection()
@@ -656,7 +656,7 @@ def test_maximum_intensity_projection_render(verify_image_cache):
     pl.camera.position = (0, 0, 10)
     pl.camera.focal_point = (0, 0, 0)
     pl.camera.up = (0, 1, 0)
-    pl.camera.parallel_scale = 0.6
+    pl.camera.parallel_scale = 0.15
     pl.show()
 
 
@@ -680,7 +680,7 @@ def test_mip_with_point_sprite_render(verify_image_cache):
         scalars='intensity',
         style='points',
         render_points_as_spheres=False,
-        point_size=300,
+        point_size=64,
         show_scalar_bar=False,
     )
     actor.enable_maximum_intensity_projection()
@@ -689,5 +689,5 @@ def test_mip_with_point_sprite_render(verify_image_cache):
     pl.camera.position = (0, 0, 10)
     pl.camera.focal_point = (0, 0, 0)
     pl.camera.up = (0, 1, 0)
-    pl.camera.parallel_scale = 0.6
+    pl.camera.parallel_scale = 0.15
     pl.show()
