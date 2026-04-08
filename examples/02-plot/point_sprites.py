@@ -13,7 +13,13 @@ The ``point_shape`` parameter can be passed directly to
 :attr:`pyvista.global_theme.point_shape <pyvista.plotting.themes.Theme.point_shape>`.
 """
 
+# sphinx_gallery_start_ignore
+# shader customizations do not work in interactive examples
 from __future__ import annotations
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 
 import numpy as np
 import pyvista as pv
