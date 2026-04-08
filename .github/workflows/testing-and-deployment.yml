@@ -38,12 +38,33 @@ permissions:
   id-token: none
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      tests: ${{ steps.filter.outputs.tests }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: .github/path-filters.yml
+
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
 
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -51,11 +72,15 @@ jobs:
 
   # For self-hosted runners, we need to cache each runner separately
   cache-macOS-self-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
   cache-ubuntu-self-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -63,7 +88,8 @@ jobs:
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-macOS-self-hosted
+    needs: [cache-macOS-self-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -139,7 +165,8 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-ubuntu-self-hosted
+    needs: [cache-ubuntu-self-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     strategy:
       fail-fast: false
 
@@ -238,7 +265,7 @@ jobs:
   VTK-dev:
     # For PRs, only run this job if the 'vtk-dev-testing' label is applied
     if: |
-      (github.event_name != 'pull_request' && github.event_name != 'push') ||
+      (github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'merge_group') ||
       contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
@@ -308,7 +335,8 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-github-hosted
+    needs: [cache-github-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -374,8 +402,8 @@ jobs:
   image-report:
     name: Test Image Report
     runs-on: ubuntu-22.04
-    needs: [macOS, Linux, windows]
-    if: always() && github.event_name == 'pull_request'
+    needs: [macOS, Linux, windows, changes]
+    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -418,31 +446,33 @@ jobs:
           deploy-message: "Test image report for PR #${{ github.event.pull_request.number }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: test-image-report
+          github-deployment-description: "Test image comparison report"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_IMAGE_REPORT_SITE_ID }}
         timeout-minutes: 5
 
-      - name: Find existing comment
+      - name: Create commit status with report link
         if: steps.report.outputs.has_report == 'true'
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: <!-- test-image-report -->
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state=success \
+            -f context="Deploy / Test Image Report" \
+            -f description="Image comparison report is ready" \
+            -f target_url="$DEPLOY_URL"
 
-      - name: Comment on PR
+      - name: Add report link to job summary
         if: steps.report.outputs.has_report == 'true'
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          edit-mode: replace
-          body: |
-            <!-- test-image-report -->
-            **Test Image Report:** ${{ steps.netlify.outputs.deploy-url }}
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
 
   # Publish to PyPI using trusted publishing
   release:

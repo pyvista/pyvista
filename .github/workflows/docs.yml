@@ -20,7 +20,28 @@ permissions:
   id-token: none
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: .github/path-filters.yml
+
   cache-vtk-data:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -30,7 +51,8 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
-    needs: cache-vtk-data
+    needs: [cache-vtk-data, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
@@ -146,8 +168,8 @@ jobs:
   test:
     name: Test Documentation
     runs-on: ubuntu-22.04
-    needs: doc
-    if: ${{ !cancelled() }}
+    needs: [doc, changes]
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true') }}
     env:
       TOX_COLORED: "yes"
     steps:
@@ -189,8 +211,8 @@ jobs:
   preview:
     name: Preview Development Documentation
     runs-on: ubuntu-22.04
-    needs: doc
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    needs: [doc, changes]
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'pull_request') && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true')
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -207,31 +229,33 @@ jobs:
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: false
           enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: docs-preview
+          github-deployment-description: "Documentation preview"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }} # DEV site
         timeout-minutes: 10
 
-      - name: Find existing comment
+      - name: Create commit status with preview link
         if: github.event_name == 'pull_request'
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: <!-- docs-preview -->
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state=success \
+            -f context="Deploy / Docs Preview" \
+            -f description="Documentation preview is ready" \
+            -f target_url="$DEPLOY_URL"
 
-      - name: Comment on PR
+      - name: Add preview link to job summary
         if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          edit-mode: replace
-          body: |
-            <!-- docs-preview -->
-            **Documentation Preview:** ${{ steps.netlify.outputs.deploy-url }}
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Documentation Preview" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Publish Release Documentation

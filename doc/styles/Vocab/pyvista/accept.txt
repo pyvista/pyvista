@@ -81,6 +81,8 @@ Sphinx
 TetGen
 Trame
 Transifex
+URI
+URIs
 VTK
 autodoc
 autoenum
