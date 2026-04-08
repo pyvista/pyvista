@@ -3944,11 +3944,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 # each pipeline request
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
-            # Otherwise, make sure the mesh object's scalars are set
-            elif field == FieldAssociation.POINT:
-                mesh.point_data.active_scalars_name = original_scalar_name
-            elif field == FieldAssociation.CELL:
-                mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -6707,7 +6702,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
                 # ignore any mappers whose inputs are not datasets
                 if _mapper_has_data_set_input(mapper):
-                    datasets.append(wrap(_mapper_get_data_set_input(mapper)))
+                    if hasattr(mapper, 'dataset') and mapper.dataset is not None:
+                        datasets.append(mapper.dataset)
+                    else:
+                        datasets.append(wrap(_mapper_get_data_set_input(mapper)))
 
         return datasets
 

@@ -26,10 +26,13 @@ from .colors import Color
 from .colors import get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
+from .utilities.algorithms import ActiveScalarsAlgorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
     from pyvista import DataSet
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
 
 
@@ -104,6 +107,8 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         new_mapper.ShallowCopy(self)
         if hasattr(self, 'dataset'):
             new_mapper.dataset = self.dataset
+        if getattr(self, '_input_dataset', None) is not None:
+            new_mapper._input_dataset = self._input_dataset
         return new_mapper
 
     @property
@@ -277,6 +282,9 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def array_name(self, name: str) -> None:
         """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)
+        if self._active_scalars_algo is not None:
+            self._active_scalars_algo.scalars_name = name
+            self._active_scalars_algo.Modified()
 
     @property
     def scalar_map_mode(self) -> str:  # numpydoc ignore=RT01
@@ -397,12 +405,16 @@ class _DataSetMapper(_BaseMapper):
     ) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
+        self._active_scalars_algo: ActiveScalarsAlgorithm | None = None
+        self._input_dataset: DataSet | None = None
         if dataset is not None:
             self.dataset = dataset
 
     @property
     def dataset(self) -> DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
+        if self._input_dataset is not None:
+            return self._input_dataset
         return cast('pv.DataSet | None', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
@@ -410,7 +422,14 @@ class _DataSetMapper(_BaseMapper):
         self,
         obj: DataSet | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
     ) -> None:
-        set_algorithm_input(self, obj)
+        if not isinstance(obj, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
+            self._input_dataset = obj
+        if self._active_scalars_algo is not None:
+            # Reconnect pipeline: new input -> algo -> mapper
+            set_algorithm_input(self._active_scalars_algo, obj)
+            set_algorithm_input(self, self._active_scalars_algo)
+        else:
+            set_algorithm_input(self, obj)
 
     def as_rgba(self) -> None:
         """Convert the active scalars to RGBA.
@@ -425,12 +444,59 @@ class _DataSetMapper(_BaseMapper):
 
         if self.dataset is not None:
             self.dataset.point_data.pop('__rgba__', None)
+            # Get scalars by name since active scalars are managed by the
+            # internal algorithm and may not be set on the dataset directly.
+            if self._active_scalars_algo is not None:
+                name = self._active_scalars_algo.scalars_name
+                pref = self._active_scalars_algo.preference
+                if pref == 'cell':
+                    active_scalars = self.dataset.cell_data[name]
+                else:
+                    active_scalars = self.dataset.point_data[name]
+            else:
+                active_scalars = self.dataset.active_scalars  # type: ignore[assignment]
             self._configure_scalars_mode(
-                scalars=self.lookup_table(self.dataset.active_scalars),
+                scalars=self.lookup_table(active_scalars),
                 scalars_name='__rgba__',
                 preference=self.scalar_map_mode,
                 direct_scalars_color_mode=True,
             )
+
+    def _update_active_scalars_algo(
+        self,
+        name: str,
+        preference: PointLiteral | CellLiteral,
+    ) -> None:
+        """Create or update the internal active scalars algorithm.
+
+        This inserts an :class:`ActiveScalarsAlgorithm` between the mapper's
+        current input and the mapper itself. The algorithm sets the active
+        scalars on a shallow copy of the input data, avoiding mutation of
+        the original dataset.
+
+        Parameters
+        ----------
+        name : str
+            Name of the scalars to set as active.
+
+        preference : str
+            Either ``'point'`` or ``'cell'``.
+
+        """
+        if self._active_scalars_algo is None:
+            self._active_scalars_algo = ActiveScalarsAlgorithm(name=name, preference=preference)
+            # Get current mapper input and insert algo between it and mapper
+            input_conn = self.GetInputConnection(0, 0)
+            if input_conn is not None:
+                self._active_scalars_algo.SetInputConnection(0, input_conn)
+            if self._input_dataset is not None:
+                set_algorithm_input(self._active_scalars_algo, self._input_dataset)
+            # Connect algo output -> mapper
+            self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
+        else:
+            self._active_scalars_algo.scalars_name = name
+            self._active_scalars_algo.preference = preference
+            self._active_scalars_algo.Modified()
 
     def _configure_scalars_mode(
         self,
@@ -460,36 +526,34 @@ class _DataSetMapper(_BaseMapper):
             ``False``, scalars are mapped to the color table.
 
         """
-        if self.dataset is not None:
-            if (
-                scalars.shape[0] == self.dataset.n_points
-                and scalars.shape[0] == self.dataset.n_cells
-            ):
+        dataset = self.dataset
+        if dataset is not None:
+            if scalars.shape[0] == dataset.n_points and scalars.shape[0] == dataset.n_cells:
                 use_points = preference == 'point'
                 use_cells = not use_points
             else:
-                use_points = scalars.shape[0] == self.dataset.n_points
-                use_cells = scalars.shape[0] == self.dataset.n_cells
+                use_points = scalars.shape[0] == dataset.n_points
+                use_cells = scalars.shape[0] == dataset.n_cells
 
             # Scalars interpolation approach
             if use_points:
                 if (
-                    scalars_name not in self.dataset.point_data
+                    scalars_name not in dataset.point_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
-                self.dataset.active_scalars_name = scalars_name
+                    dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
+                self._update_active_scalars_algo(scalars_name, 'point')
                 self.scalar_map_mode = 'point'
             elif use_cells:
                 if (
-                    scalars_name not in self.dataset.cell_data
+                    scalars_name not in dataset.cell_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
-                self.dataset.active_scalars_name = scalars_name
+                    dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+                self._update_active_scalars_algo(scalars_name, 'cell')
                 self.scalar_map_mode = 'cell'
             else:
-                raise_not_matching(scalars, self.dataset)
+                raise_not_matching(scalars, dataset)
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista.plotting import _vtk
 from pyvista.plotting.mapper import DataSetMapper
+from pyvista.plotting.utilities.algorithms import ActiveScalarsAlgorithm
 
 
 @pytest.fixture
@@ -97,3 +99,69 @@ def test_invalid_resolve(dataset_mapper):
     match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
     with pytest.raises(ValueError, match=match):
         dataset_mapper.resolve = 'invalid'
+
+
+def test_mapper_input_dataset_stored(sphere):
+    mapper = DataSetMapper(dataset=sphere)
+    assert mapper._input_dataset is sphere
+
+
+def test_mapper_active_scalars_algo_created(sphere):
+    sphere['data_a'] = sphere.points[:, 0]
+    mapper = DataSetMapper(dataset=sphere)
+    assert mapper._active_scalars_algo is None
+
+    mapper.set_scalars(sphere['data_a'], 'data_a')
+    assert mapper._active_scalars_algo is not None
+    assert mapper._active_scalars_algo.scalars_name == 'data_a'
+
+
+def test_mapper_active_scalars_algo_updated(sphere):
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_a'], 'data_a')
+    first_algo = mapper._active_scalars_algo
+
+    mapper.set_scalars(sphere['data_b'], 'data_b')
+    # Same algo instance should be reused, not recreated
+    assert mapper._active_scalars_algo is first_algo
+    assert mapper._active_scalars_algo.scalars_name == 'data_b'
+
+
+def test_mapper_array_name_syncs_algo(sphere):
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_a'], 'data_a')
+    assert mapper._active_scalars_algo.scalars_name == 'data_a'
+
+    mapper.array_name = 'data_b'
+    assert mapper._active_scalars_algo.scalars_name == 'data_b'
+
+
+def test_mapper_does_not_mutate_mesh_active_scalars(sphere):
+    """Verify that setting scalars on the mapper does not modify the original mesh."""
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+    sphere.set_active_scalars('data_a')
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_b'], 'data_b')
+
+    # The original mesh's active scalars should NOT be changed
+    assert sphere.active_scalars_name == 'data_a'
+
+
+def test_active_scalars_algorithm_shallow_copy():
+    """Verify ActiveScalarsAlgorithm output shares memory with input."""
+    mesh = pv.Sphere()
+    mesh['data'] = np.arange(mesh.n_points, dtype=float)
+
+    algo = ActiveScalarsAlgorithm(name='data', preference='point')
+    algo.SetInputDataObject(mesh)
+    algo.Update()
+    output = pv.wrap(algo.GetOutputDataObject(0))
+
+    # Verify the output shares data arrays with the input (shallow copy)
+    assert np.shares_memory(mesh['data'], output['data'])
