@@ -13,14 +13,14 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Any
 
-    InteractorStyleFactory = Callable[..., Any]
+    InteractorStyleHandler = Callable[..., Any]
 
 
 class _InteractorStyleRegistryState(TypedDict):
     """Stored registry state used by tests."""
 
-    custom: dict[str, InteractorStyleFactory]
-    discovered: dict[str, InteractorStyleFactory]
+    custom: dict[str, InteractorStyleHandler]
+    discovered: dict[str, InteractorStyleHandler]
     discovered_sources: dict[str, str]
     loaded: bool
 
@@ -41,8 +41,8 @@ _BUILTIN_INTERACTOR_STYLE_METHODS = {
     'zoom_style': 'enable_zoom_style',
 }
 
-_custom_interactor_styles: dict[str, InteractorStyleFactory] = {}
-_discovered_entry_point_styles: dict[str, InteractorStyleFactory] = {}
+_custom_interactor_styles: dict[str, InteractorStyleHandler] = {}
+_discovered_entry_point_styles: dict[str, InteractorStyleHandler] = {}
 _discovered_entry_point_sources: dict[str, str] = {}
 _entry_points_loaded: bool = False
 
@@ -74,7 +74,7 @@ def _restore_registry_state(state: _InteractorStyleRegistryState) -> None:
     _entry_points_loaded = state['loaded']
 
 
-def register_interactor_style(name: str, handler: InteractorStyleFactory) -> None:
+def register_interactor_style(name: str, handler: InteractorStyleHandler) -> None:
     """Register a custom interactor style.
 
     Parameters
@@ -85,10 +85,10 @@ def register_interactor_style(name: str, handler: InteractorStyleFactory) -> Non
         ``'terrain_style'``.
 
     handler : callable
-        Factory for the interactor style. This can be a
-        :vtk:`vtkInteractorStyle` subclass or any callable with
-        signature ``handler(interactor)`` that returns an interactor
-        style instance.
+        Handler for the interactor style. This can be a
+        :vtk:`vtkInteractorStyle` subclass (instantiated automatically)
+        or any callable with signature ``handler(interactor)`` that
+        returns an interactor style instance.
 
     Raises
     ------
@@ -98,14 +98,25 @@ def register_interactor_style(name: str, handler: InteractorStyleFactory) -> Non
 
     Examples
     --------
-    Register a custom interactor style and use it from a theme.
+    Register a :vtk:`vtkInteractorStyle` subclass directly and use
+    it from a theme.
 
     >>> import pyvista as pv
+    >>> from vtkmodules.vtkInteractionStyle import (
+    ...     vtkInteractorStyleFlight,
+    ... )
+    >>> pv.register_interactor_style(
+    ...     'flight_style', vtkInteractorStyleFlight
+    ... )  # doctest: +SKIP
+    >>> pv.global_theme.interactor_style = 'flight_style'  # doctest: +SKIP
+
+    A callable that takes the interactor as an argument can also be
+    registered.
+
     >>> def custom_style(interactor): ...
     >>> pv.register_interactor_style(
     ...     'custom_style', custom_style
     ... )  # doctest: +SKIP
-    >>> pv.global_theme.interactor_style = 'custom_style'  # doctest: +SKIP
 
     """
     normalized_name = _normalize_interactor_style_name(name)
@@ -122,7 +133,7 @@ def register_interactor_style(name: str, handler: InteractorStyleFactory) -> Non
     _custom_interactor_styles[normalized_name] = handler
 
 
-def _get_interactor_style_handler(name: str) -> str | InteractorStyleFactory | None:
+def _get_interactor_style_handler(name: str) -> str | InteractorStyleHandler | None:
     """Look up a registered interactor style by name."""
     normalized_name = _normalize_interactor_style_name(name)
     handler = _custom_interactor_styles.get(normalized_name)

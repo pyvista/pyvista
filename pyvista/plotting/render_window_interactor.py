@@ -29,7 +29,7 @@ from .interactor_style_registry import _validate_interactor_style
 from .opts import PickerType
 
 if TYPE_CHECKING:
-    from .interactor_style_registry import InteractorStyleFactory
+    from .interactor_style_registry import InteractorStyleHandler
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -1215,7 +1215,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         self.style = InteractorStyleRubberBand2D(self)
 
     def _instantiate_registered_interactor_style(
-        self, handler: InteractorStyleFactory
+        self, handler: InteractorStyleHandler
     ) -> _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin:
         """Instantiate a registered interactor style handler."""
         if isinstance(handler, type) and issubclass(handler, InteractorStyleCaptureMixin):
@@ -1227,7 +1227,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             # configure the style.  The cast is needed because mypy narrows
             # ``Callable[..., Any]`` to a non-callable after two failing
             # ``isinstance(handler, type)`` checks.
-            factory: InteractorStyleFactory = handler
+            factory: InteractorStyleHandler = handler
             style = factory(self)
 
         if not isinstance(style, (_vtk.vtkInteractorStyle, InteractorStyleCaptureMixin)):
