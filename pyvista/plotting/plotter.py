@@ -2434,6 +2434,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self._get_iren_not_none().enable_trackball_style()
 
+    @wraps(RenderWindowInteractor.enable_interactor_style)
+    def enable_interactor_style(
+        self, style: str | None = None
+    ) -> None:  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_interactor_style."""
+        self._get_iren_not_none().enable_interactor_style(style)
+
     @wraps(RenderWindowInteractor.enable_custom_trackball_style)
     def enable_custom_trackball_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
@@ -7086,7 +7093,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.render_window)
         self.reset_key_events()
-        self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
+        self._get_iren_not_none().enable_interactor_style()
         self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an

@@ -48,6 +48,7 @@ from pyvista.core.utilities.misc import _check_range
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
+from .interactor_style_registry import _validate_interactor_style
 from .opts import InterpolationType
 from .tools import parse_font_family
 
@@ -1779,6 +1780,7 @@ class Theme(_ThemeConfig):
         '_hidden_line_removal',
         '_image_scale',
         '_interactive',
+        '_interactor_style',
         '_interpolate_before_map',
         '_jupyter_backend',
         '_lighting',
@@ -1854,6 +1856,7 @@ class Theme(_ThemeConfig):
         self._show_vertices = False
         self._lighting = True
         self._interactive = False
+        self._interactor_style = 'trackball_style'
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
         self._transparent_background = False
@@ -3080,6 +3083,7 @@ class Theme(_ThemeConfig):
             'Show edges': 'show_edges',
             'Lighting': 'lighting',
             'Interactive': 'interactive',
+            'Interactor style': 'interactor_style',
             'Render points as spheres': 'render_points_as_spheres',
             'Transparent Background': 'transparent_background',
             'Title': 'title',
@@ -3112,6 +3116,43 @@ class Theme(_ThemeConfig):
     @name.setter
     def name(self, name: str):
         self._name = name
+
+    @property
+    def interactor_style(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the default interactor style.
+
+        The value must be the name of a built-in or registered
+        interactor style. Built-in styles use names that mirror the
+        public ``enable_*_style`` methods, such as
+        ``'terrain_style'``.
+
+        Returns
+        -------
+        str
+            The default interactor style name.
+
+        Examples
+        --------
+        Set the default interactor style to terrain.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.interactor_style = 'terrain_style'
+
+        Register and use a custom interactor style.
+
+        >>> def custom_style(interactor): ...
+        >>> pv.register_interactor_style(
+        ...     'custom_style', custom_style
+        ... )  # doctest: +SKIP
+        >>> pv.global_theme.interactor_style = 'custom_style'  # doctest: +SKIP
+
+        """
+        return self._interactor_style
+
+    @interactor_style.setter
+    def interactor_style(self, interactor_style: str) -> None:
+        """Set the default interactor style."""
+        self._interactor_style = _validate_interactor_style(interactor_style)
 
     def load_theme(self, theme: str | Theme) -> None:
         """Overwrite the current theme with a theme.
