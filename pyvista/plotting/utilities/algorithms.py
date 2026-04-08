@@ -346,6 +346,8 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
             inp = self.GetInputData(inInfo, 0, 0)
             out = self.GetOutputData(outInfo, 0)
             out.ShallowCopy(inp)
+            # AddArray does not modify active scalars (unlike PyVista's
+            # __setitem__), so no fixup is needed after insertion.
             if self.point_ids:
                 n = out.GetNumberOfPoints()
                 arr = _vtk.numpy_to_vtk(np.arange(n, dtype=int))

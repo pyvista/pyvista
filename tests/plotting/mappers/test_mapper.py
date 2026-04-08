@@ -6,7 +6,6 @@ import pytest
 import pyvista as pv
 from pyvista.plotting import _vtk
 from pyvista.plotting.mapper import DataSetMapper
-from pyvista.plotting.utilities.algorithms import ActiveScalarsAlgorithm
 
 
 @pytest.fixture
@@ -101,46 +100,13 @@ def test_invalid_resolve(dataset_mapper):
         dataset_mapper.resolve = 'invalid'
 
 
-def test_mapper_input_dataset_stored(sphere):
+def test_mapper_dataset_property_returns_original(sphere):
+    """Verify dataset property returns the original mesh, not the algo output."""
     mapper = DataSetMapper(dataset=sphere)
-    assert mapper._input_dataset is sphere
+    assert mapper.dataset is sphere
 
 
-def test_mapper_active_scalars_algo_created(sphere):
-    sphere['data_a'] = sphere.points[:, 0]
-    mapper = DataSetMapper(dataset=sphere)
-    assert mapper._active_scalars_algo is None
-
-    mapper.set_scalars(sphere['data_a'], 'data_a')
-    assert mapper._active_scalars_algo is not None
-    assert mapper._active_scalars_algo.scalars_name == 'data_a'
-
-
-def test_mapper_active_scalars_algo_updated(sphere):
-    sphere['data_a'] = sphere.points[:, 0]
-    sphere['data_b'] = sphere.points[:, 2]
-    mapper = DataSetMapper(dataset=sphere)
-    mapper.set_scalars(sphere['data_a'], 'data_a')
-    first_algo = mapper._active_scalars_algo
-
-    mapper.set_scalars(sphere['data_b'], 'data_b')
-    # Same algo instance should be reused, not recreated
-    assert mapper._active_scalars_algo is first_algo
-    assert mapper._active_scalars_algo.scalars_name == 'data_b'
-
-
-def test_mapper_array_name_syncs_algo(sphere):
-    sphere['data_a'] = sphere.points[:, 0]
-    sphere['data_b'] = sphere.points[:, 2]
-    mapper = DataSetMapper(dataset=sphere)
-    mapper.set_scalars(sphere['data_a'], 'data_a')
-    assert mapper._active_scalars_algo.scalars_name == 'data_a'
-
-    mapper.array_name = 'data_b'
-    assert mapper._active_scalars_algo.scalars_name == 'data_b'
-
-
-def test_mapper_does_not_mutate_mesh_active_scalars(sphere):
+def test_mapper_set_scalars_does_not_mutate_mesh(sphere):
     """Verify that setting scalars on the mapper does not modify the original mesh."""
     sphere['data_a'] = sphere.points[:, 0]
     sphere['data_b'] = sphere.points[:, 2]
@@ -149,19 +115,66 @@ def test_mapper_does_not_mutate_mesh_active_scalars(sphere):
     mapper = DataSetMapper(dataset=sphere)
     mapper.set_scalars(sphere['data_b'], 'data_b')
 
-    # The original mesh's active scalars should NOT be changed
+    # The original mesh's active scalars must NOT be changed
     assert sphere.active_scalars_name == 'data_a'
 
 
-def test_active_scalars_algorithm_shallow_copy():
-    """Verify ActiveScalarsAlgorithm output shares memory with input."""
-    mesh = pv.Sphere()
-    mesh['data'] = np.arange(mesh.n_points, dtype=float)
+def test_mapper_pipeline_output_active_scalars(sphere):
+    """Verify the mapper's pipeline produces the correct active scalars."""
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
 
-    algo = ActiveScalarsAlgorithm(name='data', preference='point')
-    algo.SetInputDataObject(mesh)
-    algo.Update()
-    output = pv.wrap(algo.GetOutputDataObject(0))
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_a'], 'data_a')
+    assert np.array_equal(mapper._mapped_scalars, sphere['data_a'])
 
-    # Verify the output shares data arrays with the input (shallow copy)
-    assert np.shares_memory(mesh['data'], output['data'])
+    # Changing scalars should update the pipeline output
+    mapper.set_scalars(sphere['data_b'], 'data_b')
+    assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
+
+
+def test_mapper_array_name_setter_updates_pipeline(sphere):
+    """Verify array_name setter syncs with the internal pipeline."""
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_a'], 'data_a')
+    mapper.array_name = 'data_a'  # set explicitly, as plotter would
+    assert mapper.array_name == 'data_a'
+
+    mapper.array_name = 'data_b'
+    assert mapper.array_name == 'data_b'
+    # _mapped_scalars should reflect the new array
+    assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
+
+
+def test_mapper_copy_preserves_scalars_config(sphere):
+    """Verify copy() reproduces the mapper's active scalars configuration."""
+    sphere['data_a'] = sphere.points[:, 0]
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_a'], 'data_a')
+    mapper.array_name = 'data_a'  # set explicitly, as plotter would
+
+    mapper_copy = mapper.copy()
+    assert mapper_copy.array_name == 'data_a'
+    assert mapper_copy.dataset is sphere
+    assert np.array_equal(mapper_copy._mapped_scalars, sphere['data_a'])
+
+
+def test_mapper_dataset_setter_reconnects_pipeline(sphere):
+    """Verify setting a new dataset reconnects the active scalars pipeline."""
+    sphere['data'] = sphere.points[:, 0]
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data'], 'data')
+
+    # Create a new mesh with the same array
+    new_sphere = pv.Sphere()
+    new_sphere['data'] = new_sphere.points[:, 2]
+    mapper.dataset = new_sphere
+
+    # Mapper should now reference the new dataset
+    assert mapper.dataset is new_sphere
+    assert np.array_equal(mapper._mapped_scalars, new_sphere['data'])

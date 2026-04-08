@@ -109,6 +109,15 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
             new_mapper.dataset = self.dataset
         if getattr(self, '_input_dataset', None) is not None:
             new_mapper._input_dataset = self._input_dataset
+        # Reproduce the active-scalars pipeline so the copy maps the same
+        # array as the original.  Pipeline reconnection can clear VTK-level
+        # properties set by ShallowCopy, so restore array_name afterwards.
+        algo = getattr(self, '_active_scalars_algo', None)
+        if algo is not None:
+            new_mapper._update_active_scalars_algo(algo.scalars_name, algo.preference)
+        array_name = self.GetArrayName()
+        if array_name:
+            new_mapper.array_name = array_name
         return new_mapper
 
     @property
@@ -282,9 +291,6 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def array_name(self, name: str) -> None:
         """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)
-        if self._active_scalars_algo is not None:
-            self._active_scalars_algo.scalars_name = name
-            self._active_scalars_algo.Modified()
 
     @property
     def scalar_map_mode(self) -> str:  # numpydoc ignore=RT01
@@ -431,6 +437,31 @@ class _DataSetMapper(_BaseMapper):
         else:
             set_algorithm_input(self, obj)
 
+    @_BaseMapper.array_name.setter
+    def array_name(self, name: str) -> None:
+        """Return or set the array name or number and component to color by."""
+        _BaseMapper.array_name.fset(self, name)
+        if self._active_scalars_algo is not None:
+            self._active_scalars_algo.scalars_name = name
+            self._active_scalars_algo.Modified()
+
+    @property
+    def _mapped_scalars(self) -> pv.pyvista_ndarray | None:
+        """Return the scalars this mapper is configured to display.
+
+        When an :class:`ActiveScalarsAlgorithm` is managing the active
+        scalars, the dataset's own ``active_scalars`` may point to a
+        different array.  This property always returns the correct array.
+        """
+        if self.dataset is None:
+            return None
+        if self._active_scalars_algo is not None:
+            name = self._active_scalars_algo.scalars_name
+            if self._active_scalars_algo.preference == 'cell':
+                return self.dataset.cell_data[name]
+            return self.dataset.point_data[name]
+        return self.dataset.active_scalars  # type: ignore[return-value]
+
     def as_rgba(self) -> None:
         """Convert the active scalars to RGBA.
 
@@ -444,19 +475,8 @@ class _DataSetMapper(_BaseMapper):
 
         if self.dataset is not None:
             self.dataset.point_data.pop('__rgba__', None)
-            # Get scalars by name since active scalars are managed by the
-            # internal algorithm and may not be set on the dataset directly.
-            if self._active_scalars_algo is not None:
-                name = self._active_scalars_algo.scalars_name
-                pref = self._active_scalars_algo.preference
-                if pref == 'cell':
-                    active_scalars = self.dataset.cell_data[name]
-                else:
-                    active_scalars = self.dataset.point_data[name]
-            else:
-                active_scalars = self.dataset.active_scalars  # type: ignore[assignment]
             self._configure_scalars_mode(
-                scalars=self.lookup_table(active_scalars),
+                scalars=self.lookup_table(self._mapped_scalars),
                 scalars_name='__rgba__',
                 preference=self.scalar_map_mode,
                 direct_scalars_color_mode=True,
@@ -535,7 +555,10 @@ class _DataSetMapper(_BaseMapper):
                 use_points = scalars.shape[0] == dataset.n_points
                 use_cells = scalars.shape[0] == dataset.n_cells
 
-            # Scalars interpolation approach
+            # Set active scalars via an internal algorithm rather than mutating
+            # the dataset directly.  This allows multiple mappers to share the
+            # same dataset while each independently controlling which array is
+            # active (see https://github.com/pyvista/pyvista/issues/542).
             if use_points:
                 if (
                     scalars_name not in dataset.point_data

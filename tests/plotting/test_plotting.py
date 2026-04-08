@@ -607,13 +607,9 @@ def test_shared_mesh_different_scalars_subplots():
     # Verify the original mesh's active scalars were NOT modified
     assert mesh.active_scalars_name == 'data_a'
 
-    # Each mapper should have its own active scalars algorithm
-    algo_a = actor_a.mapper._active_scalars_algo
-    algo_b = actor_b.mapper._active_scalars_algo
-    assert algo_a is not None
-    assert algo_b is not None
-    assert algo_a.scalars_name == 'data_a'
-    assert algo_b.scalars_name == 'data_b'
+    # Each mapper should target a different array
+    assert actor_a.mapper.array_name == 'data_a'
+    assert actor_b.mapper.array_name == 'data_b'
 
 
 def test_shared_mesh_different_cell_scalars_subplots():
@@ -634,24 +630,27 @@ def test_shared_mesh_different_cell_scalars_subplots():
 
 
 def test_shared_mesh_subplots_with_clim():
-    """Reproduce the exact scenario from issue #542 with clim."""
+    """Verify clim is respected per-subplot when sharing a mesh.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
     grid = pv.Wavelet()
     grid['RTData**2'] = grid['RTData'] ** 2
 
     pl = pv.Plotter(shape=(1, 2))
     pl.subplot(0, 0)
-    actor_a = pl.add_mesh(grid, scalars='RTData')
+    actor_a = pl.add_mesh(grid, scalars='RTData', clim=[0, 100])
     pl.subplot(0, 1)
-    actor_b = pl.add_mesh(grid, scalars='RTData**2')
+    actor_b = pl.add_mesh(grid, scalars='RTData**2', clim=[0, 50000])
     pl.show()
 
-    # Verify each mapper targets the correct array
+    # Each mapper must target the correct array
     assert actor_a.mapper.array_name == 'RTData'
     assert actor_b.mapper.array_name == 'RTData**2'
-    algo_a = actor_a.mapper._active_scalars_algo
-    algo_b = actor_b.mapper._active_scalars_algo
-    assert algo_a.scalars_name == 'RTData'
-    assert algo_b.scalars_name == 'RTData**2'
+
+    # Each mapper must honour its own clim independently
+    assert actor_a.mapper.scalar_range == (0, 100)
+    assert actor_b.mapper.scalar_range == (0, 50000)
 
 
 def test_lighting_init_light_kit(sphere):

@@ -69,6 +69,7 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _BaseMapper
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
@@ -131,7 +132,6 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
-    from pyvista.plotting.mapper import _BaseMapper
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
     from pyvista.trame.jupyter import EmbeddableWidget
@@ -6702,7 +6702,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
                 # ignore any mappers whose inputs are not datasets
                 if _mapper_has_data_set_input(mapper):
-                    if hasattr(mapper, 'dataset') and mapper.dataset is not None:
+                    if isinstance(mapper, _BaseMapper) and mapper.dataset is not None:
                         datasets.append(mapper.dataset)
                     else:
                         datasets.append(wrap(_mapper_get_data_set_input(mapper)))
