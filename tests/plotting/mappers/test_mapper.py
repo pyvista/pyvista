@@ -178,3 +178,67 @@ def test_mapper_dataset_setter_reconnects_pipeline(sphere):
     # Mapper should now reference the new dataset
     assert mapper.dataset is new_sphere
     assert np.array_equal(mapper._mapped_scalars, new_sphere['data'])
+
+
+def test_mapped_scalars_cell_data():
+    """Verify _mapped_scalars returns the correct cell array after set_scalars.
+
+    Exercises the cell-data branch: when scalars are cell-sized, the
+    mapper's internal algorithm should use preference='cell' and
+    _mapped_scalars must return the cell array, not point data.
+    """
+    mesh = pv.Cube()
+    expected = np.arange(mesh.n_cells, dtype=float)
+    mesh.cell_data['cell_val'] = expected
+
+    mapper = DataSetMapper(dataset=mesh)
+    mapper.set_scalars(expected, 'cell_val')
+
+    result = mapper._mapped_scalars
+    assert result is not None
+    assert np.array_equal(result, expected)
+    # Verify it actually came from cell_data, not point_data
+    assert 'cell_val' not in mesh.point_data
+
+
+def test_mapped_scalars_fallback_without_algo(sphere):
+    """Verify _mapped_scalars falls back to active_scalars when no algo.
+
+    When set_scalars has never been called, the mapper has no internal
+    ActiveScalarsAlgorithm and _mapped_scalars should delegate to the
+    dataset's own active_scalars.
+    """
+    sphere['data'] = sphere.points[:, 0]
+    sphere.set_active_scalars('data')
+
+    mapper = DataSetMapper(dataset=sphere)
+    # No set_scalars call — _active_scalars_algo remains None
+    assert mapper._mapped_scalars is not None
+    assert np.array_equal(mapper._mapped_scalars, sphere['data'])
+    # Also verify the None-dataset edge case
+    empty_mapper = DataSetMapper()
+    assert empty_mapper._mapped_scalars is None
+
+
+def test_as_rgba_uses_mapped_scalars(sphere):
+    """Verify as_rgba produces RGBA from the correct mapped scalars.
+
+    When an ActiveScalarsAlgorithm manages the active array, as_rgba
+    must use that array (via _mapped_scalars), not the dataset's own
+    active_scalars which may point elsewhere.
+    """
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+    sphere.set_active_scalars('data_a')
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data_b'], 'data_b')
+    mapper.as_rgba()
+
+    assert mapper.color_mode == 'direct'
+    assert '__rgba__' in sphere.point_data
+    # The mesh's own active scalars must still be data_a
+    assert sphere.active_scalars_name == 'data_a'
+    # Calling as_rgba again should be a no-op (already direct)
+    mapper.as_rgba()
+    assert mapper.color_mode == 'direct'
