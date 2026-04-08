@@ -437,10 +437,14 @@ class _DataSetMapper(_BaseMapper):
         else:
             set_algorithm_input(self, obj)
 
-    @_BaseMapper.array_name.setter
-    def array_name(self, name: str) -> None:
+    @property
+    def array_name(self) -> str:  # numpydoc ignore=RT01
         """Return or set the array name or number and component to color by."""
-        _BaseMapper.array_name.fset(self, name)
+        return self.GetArrayName()
+
+    @array_name.setter
+    def array_name(self, name: str) -> None:
+        self.SetArrayName(name)
         if self._active_scalars_algo is not None:
             self._active_scalars_algo.scalars_name = name
             self._active_scalars_algo.Modified()
@@ -460,7 +464,7 @@ class _DataSetMapper(_BaseMapper):
             if self._active_scalars_algo.preference == 'cell':
                 return self.dataset.cell_data[name]
             return self.dataset.point_data[name]
-        return self.dataset.active_scalars  # type: ignore[return-value]
+        return self.dataset.active_scalars
 
     def as_rgba(self) -> None:
         """Convert the active scalars to RGBA.

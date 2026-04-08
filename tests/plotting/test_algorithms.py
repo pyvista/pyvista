@@ -37,9 +37,6 @@ def cube_with_cell_data():
     return mesh
 
 
-# --- algorithm_to_mesh_handler ---
-
-
 def test_algorithm_to_mesh_handler_passthrough(sphere_with_scalars):
     mesh, algo = algorithm_to_mesh_handler(sphere_with_scalars)
     assert mesh is sphere_with_scalars
@@ -51,9 +48,6 @@ def test_algorithm_to_mesh_handler_with_algorithm(sphere_with_scalars):
     mesh, algo = algorithm_to_mesh_handler(alg)
     assert isinstance(mesh, pv.DataSet)
     assert algo is alg
-
-
-# --- set_algorithm_input ---
 
 
 def test_set_algorithm_input_dataset(sphere_with_scalars):
@@ -70,9 +64,6 @@ def test_set_algorithm_input_algorithm(sphere_with_scalars):
     alg2.Update()
     out = pv.wrap(alg2.GetOutputDataObject(0))
     assert out.n_points > 0
-
-
-# --- ActiveScalarsAlgorithm ---
 
 
 def test_active_scalars_algo_point(sphere_with_scalars):
@@ -123,9 +114,6 @@ def test_active_scalars_algo_wrapper(sphere_with_scalars):
     assert out.GetPointData().GetScalars().GetName() == 'z'
 
 
-# --- PointSetToPolyDataAlgorithm ---
-
-
 def test_pointset_to_polydata_conversion():
     points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=float)
     pointset = pv.PointSet(points)
@@ -143,9 +131,6 @@ def test_pointset_to_polydata_wrapper():
     algo.Update()
     out = pv.wrap(algo.GetOutputDataObject(0))
     assert isinstance(out, pv.PolyData)
-
-
-# --- AddIDsAlgorithm ---
 
 
 def test_add_ids_point_and_cell(sphere_with_scalars):
@@ -193,9 +178,6 @@ def test_add_ids_wrapper(sphere_with_scalars):
     assert 'cell_ids' in out.cell_data
 
 
-# --- CrinkleAlgorithm ---
-
-
 def test_crinkle():
     source = pv.Sphere()
     source.cell_data['data'] = np.arange(source.n_cells)
@@ -206,9 +188,6 @@ def test_crinkle():
     algo.Update()
     out = pv.wrap(algo.GetOutputDataObject(0))
     assert out.n_cells > 0
-
-
-# --- VTK-based algorithms (wrapper functions) ---
 
 
 def test_outline(sphere_with_scalars):
