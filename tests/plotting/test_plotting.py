@@ -5419,3 +5419,94 @@ def test_actor_force_opaque(
     )
     pl.show()
     assert actor.force_opaque == force_opaque
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_render(shape, verify_image_cache_wrapper):
+    verify_image_cache_wrapper.high_variance_test = True
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0]],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='scalars',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.set_point_sprite_shape(shape)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+@pytest.fixture
+def mip_test_points():
+    """Create overlapping points along Z for MIP testing.
+
+    Four points at the same XY, staggered along Z, viewed head-on.
+    The highest scalar value (1.0) is at the back. Without MIP the
+    front point (value 0.0) occludes everything. With MIP the back
+    point renders in front as a single bright yellow square/circle.
+    """
+    points = np.array(
+        [
+            [-0.02, 0.02, 0.0],
+            [0.01, 0.01, -1.0],
+            [-0.01, -0.01, -2.0],
+            [0.02, -0.02, -3.0],
+        ],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
+    return cloud
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_test_points):
+    verify_image_cache_wrapper.high_variance_test = True
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mip_test_points,
+        scalars='intensity',
+        style='points',
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    pl.enable_parallel_projection()
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.15
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_points):
+    verify_image_cache_wrapper.high_variance_test = True
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mip_test_points,
+        scalars='intensity',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    actor.set_point_sprite_shape('circle')
+    pl.enable_parallel_projection()
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.15
+    pl.show()
