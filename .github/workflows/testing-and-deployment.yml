@@ -256,12 +256,13 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
       - name: Check package
         run: |
@@ -480,6 +481,31 @@ jobs:
         run: |
           echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
           echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+
+  upload-coverage-:
+    name: Upload coverage reports
+    runs-on: ubuntu-22.04
+    needs: [Linux, changes]
+    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
+    steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage_reports-*
+          path: coverage*.xml
+
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # Publish to PyPI using trusted publishing
   release:
