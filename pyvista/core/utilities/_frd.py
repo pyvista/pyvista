@@ -311,6 +311,8 @@ class _FRDParser:
                             node_ids.append(int(p))
 
                 if (n_nodes := len(node_ids)) < needed:
+                    # Element has too few points, and might be invalid, or maybe more points
+                    # are defined on the next line
                     continue
 
                 if n_nodes > needed:
