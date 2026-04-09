@@ -13,6 +13,11 @@ coverage:
         if_not_found: success
         if_ci_failed: error
         if_no_uploads: error
+        # Wait for all 6 Linux CI jobs to upload coverage before reporting
+        # status. Without this, Codecov reports failure on partial data which
+        # causes the merge queue to dequeue the PR before the final status
+        # flips to success.
+        after_n_builds: 6
     patch:
       default:
         # basic
@@ -20,3 +25,4 @@ coverage:
         if_not_found: success
         if_ci_failed: error
         if_no_uploads: error
+        after_n_builds: 6
