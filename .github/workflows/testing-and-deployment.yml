@@ -488,6 +488,12 @@ jobs:
     needs: [Linux, changes]
     if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
     steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
       - name: Download coverage reports
         uses: actions/download-artifact@v8
         with:
