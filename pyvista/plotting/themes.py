@@ -1877,7 +1877,7 @@ class Theme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend: str = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')
+        self._jupyter_backend: str | None = os.environ.get('PYVISTA_JUPYTER_BACKEND')
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
@@ -2103,7 +2103,7 @@ class Theme(_ThemeConfig):
     @property
     def jupyter_backend(
         self,
-    ) -> str:  # numpydoc ignore=RT01
+    ) -> str | None:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
         Jupyter backend to use when plotting.  Must be one of the
@@ -2147,13 +2147,17 @@ class Theme(_ThemeConfig):
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
 
+        >>> pv.set_jupyter_backend('none')  # doctest:+SKIP
+
+        Reset to auto-detect the best available backend.
+
         >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
         """
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: str):
+    def jupyter_backend(self, backend: str | None):
         from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
