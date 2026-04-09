@@ -451,7 +451,7 @@ class StructuredPointsWriter(BaseWriter, _DataFormatMixin):
 
     Wraps :vtk:`vtkStructuredPointsWriter`.
 
-    .. versionadded:: 0.47.0
+    .. versionadded:: 0.48.0
 
     """
 
