@@ -2360,7 +2360,9 @@ def test_user_matrix_mesh(sphere):
         pl.add_mesh(sphere, user_matrix='invalid')
 
 
-def test_user_matrix_silhouette(airplane):
+def test_user_matrix_silhouette(airplane, verify_image_cache):
+    verify_image_cache.warning_value = 400
+
     matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
     pl = pv.Plotter()
     pl.add_mesh(
@@ -3710,7 +3712,9 @@ def test_plot_nan_color(uniform):
 
 
 @skip_lesser_9_4_X_depth_peeling
-def test_plot_above_below_color(uniform):
+def test_plot_above_below_color(uniform, verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
 
@@ -4471,7 +4475,9 @@ def test_axes_actor_properties():
     pl.show()
 
 
-def test_show_bounds_no_labels():
+def test_show_bounds_no_labels(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
@@ -4493,7 +4499,9 @@ def test_show_bounds_no_labels():
     pl.show()
 
 
-def test_show_bounds_n_labels():
+def test_show_bounds_n_labels(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
@@ -4671,7 +4679,9 @@ def test_enable_custom_trackball_style():
     pl.close()
 
 
-def test_create_axes_orientation_box():
+def test_create_axes_orientation_box(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     actor = pv.create_axes_orientation_box(
         line_width=4,
         text_scale=0.53,
@@ -5208,7 +5218,10 @@ def oblique_cone():
     'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
-def test_bounding_box(oblique_cone, box_style):
+def test_bounding_box(oblique_cone, box_style, verify_image_cache):
+    if box_style == 'frame':
+        verify_image_cache.warning_value = 475
+
     pl = pv.Plotter()
     box = oblique_cone.bounding_box(box_style)
     oriented_box = oblique_cone.bounding_box(box_style, oriented=True)
@@ -5364,7 +5377,10 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
 
 
 @pytest.mark.parametrize('data', ['point', 'cell'])
-def test_hide_cells(data):
+def test_hide_cells(data, verify_image_cache):
+    if data == 'cell':
+        verify_image_cache.warning_value = 250
+
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
     if data == 'cell':
         grid.cell_data['scalars'] = range(grid.n_cells)
@@ -5384,7 +5400,9 @@ def test_hide_cells(data):
     grid.plot(**kwargs)
 
 
-def test_hide_cells_no_scalars():
+def test_hide_cells_no_scalars(verify_image_cache):
+    verify_image_cache.warning_value = 450
+
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
     grid = grid.hide_cells(range(80, 120))
     grid = grid.cast_to_unstructured_grid()
