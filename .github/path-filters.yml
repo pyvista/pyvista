@@ -10,6 +10,7 @@
 
 tests:
   # Directories that don't affect unit tests
+  - "!.github/**"
   - "!doc/**"
   - "!joss/**"
   - "!logo/**"
@@ -35,6 +36,7 @@ tests:
 
 docs:
   # Directories that don't affect documentation
+  - "!.github/**"
   - "!tests/**"
   - "!hooks/**"
   - "!joss/**"
