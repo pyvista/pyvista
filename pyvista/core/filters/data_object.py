@@ -1618,14 +1618,19 @@ class DataObjectFilters:
         # Use single-precision eps by default (even if points have double precision)
         tol: float = tolerance if tolerance is not None else np.finfo(np.float32).eps
 
+        if planarity_tolerance is not None and pv.vtk_version_info < (9, 6, 0):
+            msg = 'Planarity tolerance requires VTK 9.6 or later.'
+            raise pv.VTKVersionError(msg)
+
         cell_validator = _vtk.vtkCellValidator()
         cell_validator.SetInputData(self)
         cell_validator.SetTolerance(tol)
-        if planarity_tolerance is not None:
-            if pv.vtk_version_info < (9, 6, 0):
-                msg = 'Planarity tolerance requires VTK 9.6 or later.'
-                raise pv.VTKVersionError(msg)
-            cell_validator.SetPlanarityTolerance(planarity_tolerance)
+        if pv.vtk_version_info >= (9, 6, 0):
+            # vtkCellValidator stores PlanarityTolerance as static class state, so we must
+            # always set it (defaulting to VTK's 0.1) to avoid leaking values across calls.
+            cell_validator.SetPlanarityTolerance(
+                planarity_tolerance if planarity_tolerance is not None else 0.1
+            )
         cell_validator.Update()
         output = _get_output(cell_validator)
 

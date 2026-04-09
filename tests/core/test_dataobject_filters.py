@@ -1722,6 +1722,43 @@ def test_validate_mesh_planarity_tolerance():
         pv.UnstructuredGrid().validate_mesh(planarity_tolerance=0.2)
 
 
+@pytest.mark.needs_vtk_version(9, 6, 0)
+def test_validate_mesh_planarity_tolerance_polyhedron():
+    # Build a hex-shaped polyhedron whose top face is non-planar (one vertex
+    # pushed up out of the plane). With a strict planarity tolerance the
+    # mesh is flagged invalid; with a loose tolerance it is accepted.
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 2.0],  # pushed up out of the top face plane
+        [0.0, 1.0, 1.0],
+    ]
+    faces = [
+        [4, 0, 1, 2, 3],  # bottom
+        [4, 4, 5, 6, 7],  # top (non-planar)
+        [4, 0, 1, 5, 4],
+        [4, 1, 2, 6, 5],
+        [4, 2, 3, 7, 6],
+        [4, 3, 0, 4, 7],
+    ]
+    polyhedron_connectivity = [len(faces), *[item for face in faces for item in face]]
+    cells = [len(polyhedron_connectivity), *polyhedron_connectivity]
+    mesh = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
+
+    # Strict tolerance flags non-planarity
+    report_strict = mesh.validate_mesh(planarity_tolerance=0.001)
+    assert not report_strict.is_valid
+    assert 'non-planar' in str(report_strict.message).lower()
+
+    # Loose tolerance accepts the mesh's planarity (no NON_PLANAR_FACES status)
+    report_loose = mesh.validate_mesh(planarity_tolerance=10.0)
+    assert 'non-planar' not in str(report_loose.message or '').lower()
+
+
 @pytest.fixture
 def invalid_random_polydata():
     n = 20
