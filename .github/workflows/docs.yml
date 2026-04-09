@@ -208,6 +208,81 @@ jobs:
           name: doc-generated-test-images
           path: _doc_generated_test_images
 
+  image-report:
+    name: Doc Image Report
+    runs-on: ubuntu-22.04
+    needs: [test, changes]
+    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.docs == 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Download doc failed image artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: doc-failed-test-images
+          path: all_doc_failed_images
+
+      - name: Generate HTML report
+        id: report
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          tox run -e image-report -- all_doc_failed_images _doc_image_report
+          if [ -f _doc_image_report/index.html ]; then
+            echo "has_report=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Netlify
+        if: steps.report.outputs.has_report == 'true'
+        id: netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: _doc_image_report
+          production-deploy: false
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Doc image report for PR #${{ github.event.pull_request.number }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: doc-image-report
+          github-deployment-description: "Doc image comparison report"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOC_IMAGE_REPORT_SITE_ID }}
+        timeout-minutes: 5
+
+      - name: Create commit status with report link
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
+            -f state=success \
+            -f context="Deploy / Doc Image Report" \
+            -f description="Doc image comparison report is ready" \
+            -f target_url="$DEPLOY_URL"
+
+      - name: Add report link to job summary
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Doc Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+
   preview:
     name: Preview Development Documentation
     runs-on: ubuntu-22.04
