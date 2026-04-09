@@ -95,6 +95,31 @@ def _discover_entry_points() -> None:
                 _custom_backends[name] = ep.load()
 
 
+def _resolve_backend() -> str:
+    """Auto-detect the best available Jupyter backend.
+
+    Priority: registered custom backends > trame > static.
+
+    Returns
+    -------
+    str
+        Name of the best available backend.
+
+    """
+    _discover_entry_points()
+    if _custom_backends:
+        return next(iter(_custom_backends))
+
+    try:
+        from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
+    except ImportError:
+        pass
+    else:
+        return 'trame'
+
+    return 'static'
+
+
 def _is_jupyter_backend(backend: str) -> TypeIs[JupyterBackendOptions]:
     """Return True if backend is allowed jupyter backend."""
     return backend in ALLOWED_BACKENDS
