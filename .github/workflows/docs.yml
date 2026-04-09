@@ -25,7 +25,7 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      docs: ${{ steps.filter.outputs.docs }}
+      docs: ${{ steps.filter.outputs.docs == 'true' || steps.self.outputs.changed == 'true' }}
     steps:
       - uses: actions/checkout@v6
         if: github.event_name == 'pull_request'
@@ -38,6 +38,13 @@ jobs:
         with:
           predicate-quantifier: "every"
           filters: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: self
+        with:
+          filters: |
+            changed:
+              - ".github/workflows/docs.yml"
 
   cache-vtk-data:
     needs: changes
