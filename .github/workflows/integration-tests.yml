@@ -5,12 +5,12 @@ on: # zizmor: ignore[cache-poisoning]
   pull_request:
   workflow_dispatch:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 4 * * 1" # Every Monday at 04:00 UTC
   push:
-    tags:
-      - "*"
     branches:
       - main
+      # To resolve integration test issues, use this branch name pattern
+      - "maint/integration*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,28 +35,11 @@ permissions:
   id-token: none
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      integration: ${{ steps.filter.outputs.integration }}
-    steps:
-      - uses: actions/checkout@v6
-        if: github.event_name == 'pull_request'
-        with:
-          persist-credentials: false
-          sparse-checkout: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: filter
-        with:
-          predicate-quantifier: "every"
-          filters: .github/path-filters.yml
-
   Integration:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.integration == 'true'
+    # For PRs, only run when the 'integration-testing' label is applied
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'integration-testing')
     name: ${{matrix.project}}
     strategy:
       fail-fast: false
@@ -90,14 +73,58 @@ jobs:
 
       - name: Run tests (no xvfb)
         if: ${{matrix.project != 'geovista'}}
-        run: tox run -e integration-${{matrix.project}}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          command: tox run -e integration-${{matrix.project}}
 
       - name: Run tests (geovista)
         if: ${{matrix.project == 'geovista'}}
-        run: xvfb-run -a tox run -e integration-${{matrix.project}}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          command: xvfb-run -a tox run -e integration-${{matrix.project}}
 
       - uses: actions/cache@v5
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
         with:
           key: ${{ env.TESTING_VERSION }}
           path: ~/mne_data
+
+  alert-on-failure:
+    needs: Integration
+    if: >-
+      failure() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Report integration test failure
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REF: ${{ github.ref }}
+        run: |
+          body=$(cat <<EOF
+          ### Integration Test Failure
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Run:** ${RUN_URL}
+          **Ref:** \`${REF}\`
+          EOF
+          )
+
+          # Check for an existing open issue
+          existing=$(gh issue list --label "integration-test-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Integration test failure" --label "integration-test-failure" --body "$body"
+          fi
