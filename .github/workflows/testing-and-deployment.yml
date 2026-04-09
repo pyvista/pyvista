@@ -56,18 +56,18 @@ jobs:
       matrix:
         include:
           # Self-hosted runner configurations
-          # - name: MacOS Unit Testing (3.10)
-          #   python-version: "3.10"
-          #   runner-labels: "not-quite-ready"
-          # - name: MacOS Unit Testing (3.11)
-          #   python-version: "3.11"
-          #   runner-labels: "not-quite-ready"
-          # - name: MacOS Unit Testing (3.12)
-          #   python-version: "3.12"
-          #   runner-labels: "not-quite-ready"
-          # - name: MacOS Unit Testing (3.13)
-          #   python-version: "3.13"
-          #   runner-labels: "not-quite-ready"
+          - name: MacOS Unit Testing (3.10)
+            python-version: "3.10"
+            runner-labels: "not-quite-ready"
+          - name: MacOS Unit Testing (3.11)
+            python-version: "3.11"
+            runner-labels: "not-quite-ready"
+          - name: MacOS Unit Testing (3.12)
+            python-version: "3.12"
+            runner-labels: "not-quite-ready"
+          - name: MacOS Unit Testing (3.13)
+            python-version: "3.13"
+            runner-labels: "not-quite-ready"
           - name: MacOS Unit Testing (3.14)
             python-version: "3.14"
             runner-labels: "not-quite-ready"
