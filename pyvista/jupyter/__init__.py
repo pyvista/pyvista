@@ -127,15 +127,17 @@ def _is_jupyter_backend(backend: str) -> TypeIs[JupyterBackendOptions]:
 
 def _validate_jupyter_backend(
     backend: str | None,
-) -> str:
+) -> str | None:
     """Validate that a jupyter backend is valid.
 
-    Returns the normalized name of the backend. Raises if the backend is invalid.
+    Returns the normalized name of the backend, or ``None`` to indicate that
+    the backend should be auto-detected at display time. Raises if the backend
+    is invalid.
 
     """
-    # Must be a string
+    # ``None`` is the auto-detect sentinel; preserve it
     if backend is None:
-        backend = 'none'
+        return None
     backend = backend.lower()
 
     if not importlib.util.find_spec('IPython'):
@@ -203,7 +205,8 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwarg
           virtual framebuffer.
 
         Custom backends registered via :func:`~pyvista.register_jupyter_backend`
-        are also accepted.
+        are also accepted. Pass ``None`` to reset to auto-detection at display
+        time.
 
     name : str, optional
         The unique name identifier for the server.
@@ -222,6 +225,10 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwarg
 
     Disable all plotting within JupyterLab and display using a
     standard desktop VTK render window.
+
+    >>> pv.set_jupyter_backend('none')  # doctest:+SKIP
+
+    Reset to auto-detect the best available backend.
 
     >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 

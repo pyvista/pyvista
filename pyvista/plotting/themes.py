@@ -2147,6 +2147,10 @@ class Theme(_ThemeConfig):
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
 
+        >>> pv.set_jupyter_backend('none')  # doctest:+SKIP
+
+        Reset to auto-detect the best available backend.
+
         >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
         """
