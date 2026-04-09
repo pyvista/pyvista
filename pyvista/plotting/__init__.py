@@ -38,6 +38,7 @@ from .errors import RenderWindowUnavailable as RenderWindowUnavailable
 from .follower import Follower as Follower
 from .helpers import plot_arrows as plot_arrows
 from .helpers import plot_compare_four as plot_compare_four
+from .interactor_style_registry import register_interactor_style as register_interactor_style
 from .lights import Light as Light
 from .lookup_table import LookupTable as LookupTable
 from .mapper import DataSetMapper as DataSetMapper
