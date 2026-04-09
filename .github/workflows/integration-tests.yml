@@ -5,7 +5,7 @@ on: # zizmor: ignore[cache-poisoning]
   pull_request:
   workflow_dispatch:
   schedule:
-    - cron: "0 4 * * 1" # Every Monday at 04:00 UTC
+    - cron: "0 4 * * *"
   push:
     branches:
       - main
