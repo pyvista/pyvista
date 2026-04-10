@@ -10,6 +10,7 @@ from typing import Protocol
 from typing import TypedDict
 from typing import overload
 
+import pyvista as pv
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
@@ -56,30 +57,17 @@ def _get_builtin_writer_exts() -> frozenset[str]:
     if _builtin_writer_exts is not None:
         return _builtin_writer_exts
 
-    # Lazy imports avoid a circular import at module load time: every
-    # concrete ``DataObject`` subclass transitively imports this module
-    # through ``pyvista.core.dataobject``.
-    from pyvista.core.composite import MultiBlock  # noqa: PLC0415
-    from pyvista.core.grid import ImageData  # noqa: PLC0415
-    from pyvista.core.grid import RectilinearGrid  # noqa: PLC0415
-    from pyvista.core.partitioned import PartitionedDataSet  # noqa: PLC0415
-    from pyvista.core.pointset import ExplicitStructuredGrid  # noqa: PLC0415
-    from pyvista.core.pointset import PointSet  # noqa: PLC0415
-    from pyvista.core.pointset import PolyData  # noqa: PLC0415
-    from pyvista.core.pointset import StructuredGrid  # noqa: PLC0415
-    from pyvista.core.pointset import UnstructuredGrid  # noqa: PLC0415
-
     exts: set[str] = set()
     for cls in (
-        ImageData,
-        RectilinearGrid,
-        StructuredGrid,
-        PolyData,
-        UnstructuredGrid,
-        ExplicitStructuredGrid,
-        PointSet,
-        MultiBlock,
-        PartitionedDataSet,
+        pv.ImageData,
+        pv.RectilinearGrid,
+        pv.StructuredGrid,
+        pv.PolyData,
+        pv.UnstructuredGrid,
+        pv.ExplicitStructuredGrid,
+        pv.PointSet,
+        pv.MultiBlock,
+        pv.PartitionedDataSet,
     ):
         writers = getattr(cls, '_WRITERS', None) or {}
         exts.update(writers.keys())
@@ -251,6 +239,9 @@ def _ensure_entry_points() -> None:
             continue
         winner = eps[0]
         try:
+            # ep.load() runs third-party import machinery — it can raise
+            # literally anything. Convert to a warning so one broken plugin
+            # cannot take down every pyvista.save call.
             _custom_ext_writers[key] = winner.load()
         except Exception as err:  # noqa: BLE001
             warn_external(

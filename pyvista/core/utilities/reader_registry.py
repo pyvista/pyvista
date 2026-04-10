@@ -17,6 +17,7 @@ from typing import overload
 import pooch
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.reader import CLASS_READERS
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -262,17 +263,13 @@ def _register(
     key = key.lower()
     if not key.startswith('.'):
         key = f'.{key}'
-    if not override:
-        # Circular import: reader_registry -> reader -> fileio -> reader_registry
-        from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
-
-        if key in CLASS_READERS:
-            msg = (
-                f'Cannot register custom reader for "{key}": '
-                f'collides with built-in VTK reader. '
-                f'Use override=True to replace it.'
-            )
-            raise ValueError(msg)
+    if not override and key in CLASS_READERS:
+        msg = (
+            f'Cannot register custom reader for "{key}": '
+            f'collides with built-in VTK reader. '
+            f'Use override=True to replace it.'
+        )
+        raise ValueError(msg)
     _custom_ext_readers[key] = handler
 
 
@@ -306,6 +303,9 @@ def _ensure_entry_points() -> None:
             continue
         winner = eps[0]
         try:
+            # ep.load() runs third-party import machinery — it can raise
+            # literally anything. Convert to a warning so one broken plugin
+            # cannot take down every pyvista.read call.
             _custom_ext_readers[key] = winner.load()
         except Exception as err:  # noqa: BLE001
             warn_external(
