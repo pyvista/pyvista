@@ -2426,7 +2426,9 @@ def test_user_matrix_mesh(sphere):
         pl.add_mesh(sphere, user_matrix='invalid')
 
 
-def test_user_matrix_silhouette(airplane):
+def test_user_matrix_silhouette(airplane, verify_image_cache):
+    verify_image_cache.warning_value = 400
+
     matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
     pl = pv.Plotter()
     pl.add_mesh(
@@ -3559,12 +3561,14 @@ def test_tight_square(noise_2d):
     )
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 def test_plot_cell():
     grid = examples.cells.Tetrahedron()
     examples.plot_cell(grid)
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize(
     ('line_width', 'point_size', 'font_size', 'normals_scale', 'cls'),
     [
@@ -3595,6 +3599,7 @@ def test_plot_cell_kwargs(
     )
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 @pytest.mark.parametrize('wrong_orientation', [True, False])
 def test_plot_cell_polyhedron(wrong_orientation):
@@ -3610,6 +3615,7 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
 def test_plot_cell_multiple_cell_types(verify_image_cache):
     verify_image_cache.high_variance_test = True
@@ -3776,7 +3782,9 @@ def test_plot_nan_color(uniform):
 
 
 @skip_lesser_9_4_X_depth_peeling
-def test_plot_above_below_color(uniform):
+def test_plot_above_below_color(uniform, verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
 
@@ -4080,6 +4088,7 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     pl.show()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_plot_individual_cell(hexbeam):
     hexbeam.get_cell(0).plot(color='b')
 
@@ -4391,6 +4400,7 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
 def test_axes_geometry_shaft_type_tip_type(geometry_type):
     if geometry_type == 'custom':
@@ -4537,7 +4547,9 @@ def test_axes_actor_properties():
     pl.show()
 
 
-def test_show_bounds_no_labels():
+def test_show_bounds_no_labels(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
@@ -4559,7 +4571,9 @@ def test_show_bounds_no_labels():
     pl.show()
 
 
-def test_show_bounds_n_labels():
+def test_show_bounds_n_labels(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
@@ -4737,7 +4751,9 @@ def test_enable_custom_trackball_style():
     pl.close()
 
 
-def test_create_axes_orientation_box():
+def test_create_axes_orientation_box(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     actor = pv.create_axes_orientation_box(
         line_width=4,
         text_scale=0.53,
@@ -4881,6 +4897,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
     positive_dir = direction == 'pos'
@@ -5274,7 +5291,10 @@ def oblique_cone():
     'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
-def test_bounding_box(oblique_cone, box_style):
+def test_bounding_box(oblique_cone, box_style, verify_image_cache):
+    if box_style == 'frame':
+        verify_image_cache.warning_value = 475
+
     pl = pv.Plotter()
     box = oblique_cone.bounding_box(box_style)
     oriented_box = oblique_cone.bounding_box(box_style, oriented=True)
@@ -5404,18 +5424,15 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
+@pytest.mark.needs_vtk_version(
+    (9, 6, 99),  # >= 9,7,0
+    reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
+)
 @pytest.mark.parametrize('cell_example', cell_example_functions)
 def test_cell_examples_normals(cell_example, verify_image_cache):
     if cell_example is examples.cells.Empty:
         pytest.skip('nothing to plot')
-    if cell_example in [
-        examples.cells.BiQuadraticQuadraticWedge,
-        examples.cells.QuadraticLinearWedge,
-        examples.cells.QuadraticWedge,
-    ] and pv.vtk_version_info < (9, 4, 0):
-        pytest.xfail('point ordering changed in newer VTK')
-    if cell_example is examples.cells.ConvexPointSet and pv.vtk_version_info < (9, 3, 0):
-        pytest.xfail('VTK regression: https://gitlab.kitware.com/vtk/vtk/-/issues/19992')
 
     # Skip since variance is too high
     verify_image_cache.macos_skip_image_cache = True
@@ -5430,7 +5447,10 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
 
 
 @pytest.mark.parametrize('data', ['point', 'cell'])
-def test_hide_cells(data):
+def test_hide_cells(data, verify_image_cache):
+    if data == 'cell':
+        verify_image_cache.warning_value = 250
+
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
     if data == 'cell':
         grid.cell_data['scalars'] = range(grid.n_cells)
@@ -5450,7 +5470,9 @@ def test_hide_cells(data):
     grid.plot(**kwargs)
 
 
-def test_hide_cells_no_scalars():
+def test_hide_cells_no_scalars(verify_image_cache):
+    verify_image_cache.warning_value = 450
+
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
     grid = grid.hide_cells(range(80, 120))
     grid = grid.cast_to_unstructured_grid()

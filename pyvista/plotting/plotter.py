@@ -7373,7 +7373,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
-            if jupyter_backend.lower() != 'none':
+            if jupyter_backend is None or jupyter_backend.lower() != 'none':
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         self.render()

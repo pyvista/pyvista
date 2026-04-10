@@ -1,5 +1,5 @@
 # Shared path filters for CI skip conditions
-# Used by dorny/paths-filter in docs.yml, testing-and-deployment.yml, and integration-tests.yml
+# Used by dorny/paths-filter in docs.yml and testing-and-deployment.yml
 #
 # DENYLIST approach with predicate-quantifier: 'every'
 # A file triggers the filter only if it matches ALL patterns (i.e., is not excluded by any).
@@ -10,6 +10,7 @@
 
 tests:
   # Directories that don't affect unit tests
+  - "!.github/**"
   - "!doc/**"
   - "!joss/**"
   - "!logo/**"
@@ -33,33 +34,9 @@ tests:
   - "!.gitignore"
   - "!.gitattributes"
 
-integration:
-  # Directories that don't affect integration tests
-  - "!doc/**"
-  - "!joss/**"
-  - "!logo/**"
-  - "!assets/**"
-  - "!docker/**"
-  - "!.devcontainer/**"
-  # Root files that don't affect integration tests
-  - "!README.rst"
-  - "!CONTRIBUTING.rst"
-  - "!AUTHORS.rst"
-  - "!CODE_OF_CONDUCT.md"
-  - "!SECURITY.md"
-  - "!FUNDING.yml"
-  - "!CITATION.cff"
-  - "!CITATION.rst"
-  - "!LICENSE"
-  - "!codecov.yml"
-  - "!lychee.toml"
-  - "!.pre-commit-config.yaml"
-  - "!.mailmap"
-  - "!.gitignore"
-  - "!.gitattributes"
-
 docs:
   # Directories that don't affect documentation
+  - "!.github/**"
   - "!tests/**"
   - "!hooks/**"
   - "!joss/**"

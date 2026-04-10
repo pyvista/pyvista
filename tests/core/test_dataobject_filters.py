@@ -1715,6 +1715,50 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+@pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
+def test_validate_mesh_planarity_tolerance():
+    match = 'Planarity tolerance requires VTK 9.6 or later.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        pv.UnstructuredGrid().validate_mesh(planarity_tolerance=0.2)
+
+
+@pytest.mark.needs_vtk_version(9, 6, 0)
+def test_validate_mesh_planarity_tolerance_polyhedron():
+    # Build a hex-shaped polyhedron whose top face is non-planar (one vertex
+    # pushed up out of the plane). With a strict planarity tolerance the
+    # mesh is flagged invalid; with a loose tolerance it is accepted.
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 2.0],  # pushed up out of the top face plane
+        [0.0, 1.0, 1.0],
+    ]
+    faces = [
+        [4, 0, 1, 2, 3],  # bottom
+        [4, 4, 5, 6, 7],  # top (non-planar)
+        [4, 0, 1, 5, 4],
+        [4, 1, 2, 6, 5],
+        [4, 2, 3, 7, 6],
+        [4, 3, 0, 4, 7],
+    ]
+    polyhedron_connectivity = [len(faces), *[item for face in faces for item in face]]
+    cells = [len(polyhedron_connectivity), *polyhedron_connectivity]
+    mesh = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
+
+    # Strict tolerance flags non-planarity
+    report_strict = mesh.validate_mesh(planarity_tolerance=0.001)
+    assert not report_strict.is_valid
+    assert 'non-planar' in str(report_strict.message).lower()
+
+    # Loose tolerance accepts the mesh's planarity (no NON_PLANAR_FACES status)
+    report_loose = mesh.validate_mesh(planarity_tolerance=10.0)
+    assert 'non-planar' not in str(report_loose.message or '').lower()
+
+
 @pytest.fixture
 def invalid_random_polydata():
     n = 20
@@ -2244,6 +2288,24 @@ def test_validate_mesh_degenerate_cells():
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
             mesh.validate_mesh(action='error')
+
+    # POLY_VERTEX with no points
+    invalid_mesh = pv.UnstructuredGrid([0], [pv.CellType.POLY_VERTEX], [])
+    match = 'Mesh has 1 POLY_VERTEX cell with zero size. Invalid cell id: [0]'
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        invalid_mesh.validate_mesh(action='error')
+
+    # Test valid voxel with tiny volume does not generate false positive
+    mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(0.0001, 0.0002, 0.0003))
+    assert np.isclose(mesh.volume, 6e-12)
+    assert mesh.validate_mesh().is_valid
+
+    # Force invalid with manual tolerance
+    match = 'Mesh has 1 VOXEL cell with zero volume. Invalid cell id: [0]'
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        mesh.validate_mesh(size_tolerance=1e-8, action='error')
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
 
 
 def test_validate_mesh_invalid_point_references():

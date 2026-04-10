@@ -48,6 +48,11 @@ pytestmark = [
         r'\(Use ExportLegacyFormat, or GetOffsetsArray/GetConnectivityArray instead\.\)'
         ':DeprecationWarning:trame_vtk'
     ),
+    pytest.mark.filterwarnings(
+        r'ignore:Call to deprecated method GetSize\. '
+        r'\(Use GetCapacity\(\) instead\)'
+        r':DeprecationWarning:trame_vtk'
+    ),
 ]
 
 
