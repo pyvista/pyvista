@@ -105,6 +105,10 @@ from vtkmodules.vtkCommonCore import vtkTypeUInt32Array as vtkTypeUInt32Array
 from vtkmodules.vtkCommonCore import vtkUnsignedCharArray as vtkUnsignedCharArray
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkCommonCore import vtkWeakReference as vtkWeakReference
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkCommonCore import vtkSMPTools as vtkSMPTools
+
 from vtkmodules.vtkCommonDataModel import VTK_BEZIER_CURVE as VTK_BEZIER_CURVE
 from vtkmodules.vtkCommonDataModel import VTK_BEZIER_HEXAHEDRON as VTK_BEZIER_HEXAHEDRON
 from vtkmodules.vtkCommonDataModel import VTK_BEZIER_PYRAMID as VTK_BEZIER_PYRAMID
