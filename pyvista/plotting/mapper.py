@@ -421,6 +421,8 @@ class _DataSetMapper(_BaseMapper):
         """Return or set the dataset assigned to this mapper."""
         if self._input_dataset is not None:
             return self._input_dataset
+        # Fall back to the VTK pipeline input when the mapper was wired up
+        # with a vtkAlgorithm rather than a direct DataSet assignment.
         return cast('pv.DataSet | None', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
@@ -428,7 +430,9 @@ class _DataSetMapper(_BaseMapper):
         self,
         obj: DataSet | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
     ) -> None:
-        if not isinstance(obj, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
+        if isinstance(obj, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
+            self._input_dataset = None
+        else:
             self._input_dataset = obj
         if self._active_scalars_algo is not None:
             # Reconnect pipeline: new input -> algo -> mapper

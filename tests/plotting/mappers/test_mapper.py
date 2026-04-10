@@ -21,6 +21,23 @@ def test_init(sphere):
     assert mapper.dataset is sphere
 
 
+def test_dataset_reassign_dataset_then_algorithm(sphere):
+    """Reassigning to a vtkAlgorithm must not return the previously cached DataSet."""
+    mapper = DataSetMapper()
+    mapper.dataset = sphere
+    assert mapper.dataset is sphere
+
+    source = _vtk.vtkSphereSource()
+    source.SetRadius(2.0)
+    mapper.dataset = source
+    mapper.update()
+
+    result = mapper.dataset
+    assert result is not sphere
+    assert isinstance(result, pv.DataSet)
+    assert np.isclose(np.max(np.abs(result.bounds)), 2.0)
+
+
 def test_scalar_range(dataset_mapper):
     assert isinstance(dataset_mapper.scalar_range, tuple)
     rng = (0, 2)
