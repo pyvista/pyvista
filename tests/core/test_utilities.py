@@ -593,6 +593,8 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'jupyter-server-proxy':
         pytest.xfail('not installed with --test group')
+    elif package == 'pyvista-zstd':
+        pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
     assert package in REPORT
 
 

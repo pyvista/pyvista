@@ -41,7 +41,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',

@@ -31,6 +31,8 @@ from .utilities.fileio import save_pickle
 from .utilities.helpers import wrap
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
+from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
+from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_exts
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -191,16 +193,30 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         file_path = file_path.resolve()
         file_ext = get_ext(file_path)
 
-        if file_ext == '.vtkhdf' and binary is False:
-            msg = '.vtkhdf files can only be written in binary format.'
-            raise ValueError(msg)
-
         # Store complex and bitarray types as field data
         self._store_metadata()
 
-        # Save the object
+        # Dispatch order mirrors :func:`pyvista.read`: custom writers
+        # registered via :func:`pyvista.register_writer` win over
+        # built-in writers, so ``override=True`` actually replaces a
+        # built-in writer at save time.
         writer_exts = self._WRITERS.keys()
-        if file_ext in writer_exts:
+        if (custom_writer := _get_writer_ext_handler(file_ext)) is not None:
+            if not file_path.parent.exists():
+                msg = f'Parent directory does not exist: {file_path.parent}'
+                raise FileNotFoundError(msg)
+
+            custom_writer(self, str(file_path))
+
+            if not file_path.exists():
+                msg = f'Custom writer failed to write file: {file_path}'
+                raise OSError(msg)
+
+        elif file_ext in writer_exts:
+            if file_ext == '.vtkhdf' and binary is False:
+                msg = '.vtkhdf files can only be written in binary format.'
+                raise ValueError(msg)
+
             # Save using the writer
             writer = self._WRITERS[file_ext](file_path, self)
             data_format = 'binary' if binary else 'ascii'
@@ -208,13 +224,13 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 texture=texture, data_format=data_format, compression=compression
             )
 
-            if file_path.parent.exists() is False:
+            if not file_path.parent.exists():
                 msg = f'Parent directory does not exist: {file_path.parent}'
                 raise FileNotFoundError(msg)
 
             writer.write()
 
-            if file_path.exists() is False:
+            if not file_path.exists():
                 msg = f'VTK writer failed to write file: {file_path}'
                 raise OSError(msg)
 
@@ -223,7 +239,8 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         else:
             msg = (
                 f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
-                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Must be one of: '
+                f'{list(writer_exts) + list(PICKLE_EXT) + _list_custom_writer_exts()}'
             )
             raise ValueError(msg)
 
