@@ -290,6 +290,94 @@ def test_save_custom_writer_failed_to_create_file(tmp_path):
         pv.Sphere().save(target)
 
 
+def test_save_forwards_writer_kwargs_to_custom_handler(tmp_path):
+    target = tmp_path / 'mesh.myext'
+    received: dict[str, object] = {}
+
+    def writer(_dataset, path, *, level, threads=1):
+        received['level'] = level
+        received['threads'] = threads
+        Path(path).touch()
+
+    pv.register_writer('.myext', writer)
+    pv.Sphere().save(target, level=9, threads=4)
+
+    assert received == {'level': 9, 'threads': 4}
+
+
+def test_save_custom_handler_without_kwargs_still_works(tmp_path):
+    target = tmp_path / 'mesh.myext'
+
+    # Handler does not declare **kwargs and we pass no extras — must not raise.
+    def writer(_dataset, path):
+        Path(path).touch()
+
+    pv.register_writer('.myext', writer)
+    pv.Sphere().save(target)
+    assert target.exists()
+
+
+def test_save_custom_handler_without_kwargs_rejects_extras(tmp_path):
+    target = tmp_path / 'mesh.myext'
+
+    def writer(_dataset, path):
+        Path(path).touch()  # pragma: no cover — raises before reaching here
+
+    pv.register_writer('.myext', writer)
+    # Python itself raises TypeError when the handler does not accept kwargs.
+    with pytest.raises(TypeError, match="unexpected keyword argument 'level'"):
+        pv.Sphere().save(target, level=9)
+
+
+def test_save_builtin_writer_rejects_unexpected_kwargs(tmp_path):
+    target = tmp_path / 'mesh.vtp'
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"unexpected keyword arguments \['level'\] for "
+            r"built-in VTK writer for extension '\.vtp'"
+        ),
+    ):
+        pv.Sphere().save(target, level=9)
+    # Strict rejection — file must not have been written.
+    assert not target.exists()
+
+
+def test_save_builtin_writer_rejects_multiple_unexpected_kwargs(tmp_path):
+    target = tmp_path / 'mesh.vtp'
+    with pytest.raises(
+        TypeError,
+        match=r"unexpected keyword arguments \['level', 'threads'\]",
+    ):
+        pv.Sphere().save(target, level=9, threads=4)
+
+
+def test_save_pickle_rejects_unexpected_kwargs(tmp_path):
+    target = tmp_path / 'mesh.pkl'
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"unexpected keyword arguments \['level'\] for "
+            r"pickle format for extension '\.pkl'"
+        ),
+    ):
+        pv.Sphere().save(target, level=9)
+    assert not target.exists()
+
+
+def test_save_override_custom_writer_receives_kwargs(tmp_path):
+    # override=True path still forwards kwargs to the custom writer.
+    received: dict[str, object] = {}
+
+    def custom(_ds, path, *, level):
+        received['level'] = level
+        Path(path).touch()
+
+    pv.register_writer('.vtp', custom, override=True)
+    pv.Sphere().save(tmp_path / 'mesh.vtp', level=22)
+    assert received == {'level': 22}
+
+
 def test_top_level_exports_available_in_fresh_python_process():
     command = (
         'import pyvista as pv; '

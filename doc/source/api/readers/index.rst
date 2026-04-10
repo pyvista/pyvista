@@ -132,10 +132,15 @@ for zero-config discovery at install time.
 
 **Handler signature**
 
-A writer handler is a callable ``handler(dataset, path)`` that writes
-*dataset* to *path*.  Writer-specific options (compression level,
-threading, etc.) are configured through the handler's own API, not
-through :meth:`pyvista.DataObject.save`.
+A writer handler is a callable ``handler(dataset, path, **kwargs)``
+that writes *dataset* to *path*.  Any extra keyword arguments passed
+to :meth:`pyvista.DataObject.save` beyond its documented parameters
+are forwarded verbatim to the handler as ``**kwargs`` — use them to
+expose format-specific options such as compression level, thread
+count, or chunking.  When no custom writer is registered for the
+target extension, passing extra keyword arguments to
+:meth:`~pyvista.DataObject.save` raises :class:`TypeError`; PyVista
+never silently drops writer options.
 
 **Entry points**
 

@@ -51,6 +51,23 @@ DEFAULT_VECTOR_KEY = '_vectors'
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+def _raise_unexpected_writer_kwargs(
+    writer_kwargs: dict[str, Any],
+    file_ext: str,
+    *,
+    target: str,
+) -> None:
+    """Raise :class:`TypeError` for extras that would be silently dropped."""
+    names = sorted(writer_kwargs)
+    msg = (
+        f'save() got unexpected keyword arguments {names} for '
+        f'{target} for extension {file_ext!r}. Extra keyword arguments '
+        f'are only forwarded to custom writers registered via '
+        f'pyvista.register_writer.'
+    )
+    raise TypeError(msg)
+
+
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
 class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
@@ -130,6 +147,7 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Save this vtk object to file.
 
@@ -175,6 +193,25 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
 
             .. versionadded:: 0.47
 
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  Use
+            these to expose format-specific options such as compression
+            level or thread count.  When the target extension dispatches
+            to a built-in VTK writer or to the pickle path, passing any
+            extra keyword arguments raises :class:`TypeError` — PyVista
+            never silently drops writer options.
+
+            .. versionadded:: 0.48
+
+        Raises
+        ------
+        TypeError
+            If ``**writer_kwargs`` are provided but the target extension
+            does not dispatch to a registered custom writer.
+        ValueError
+            If ``file_ext`` is not a supported extension.
+
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
@@ -206,13 +243,19 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 msg = f'Parent directory does not exist: {file_path.parent}'
                 raise FileNotFoundError(msg)
 
-            custom_writer(self, str(file_path))
+            custom_writer(self, str(file_path), **writer_kwargs)
 
             if not file_path.exists():
                 msg = f'Custom writer failed to write file: {file_path}'
                 raise OSError(msg)
 
         elif file_ext in writer_exts:
+            if writer_kwargs:
+                _raise_unexpected_writer_kwargs(
+                    writer_kwargs,
+                    file_ext,
+                    target='built-in VTK writer',
+                )
             if file_ext == '.vtkhdf' and binary is False:
                 msg = '.vtkhdf files can only be written in binary format.'
                 raise ValueError(msg)
@@ -235,6 +278,12 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 raise OSError(msg)
 
         elif file_ext in PICKLE_EXT:
+            if writer_kwargs:
+                _raise_unexpected_writer_kwargs(
+                    writer_kwargs,
+                    file_ext,
+                    target='pickle format',
+                )
             save_pickle(filename, self)
         else:
             msg = (

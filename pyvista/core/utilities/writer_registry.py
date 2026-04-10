@@ -5,6 +5,8 @@ from __future__ import annotations
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Protocol
 from typing import TypedDict
 from typing import overload
 
@@ -15,7 +17,11 @@ if TYPE_CHECKING:
 
     from pyvista.core.dataobject import DataObject
 
-    WriterHandler = Callable[[DataObject, str], None]
+    class WriterHandler(Protocol):
+        """Callable that writes *dataset* to *path*."""
+
+        def __call__(self, dataset: DataObject, path: str, /, **kwargs: Any) -> None:
+            """Write *dataset* to *path*, consuming format-specific *kwargs*."""
 
 
 class _RegistryState(TypedDict):
@@ -118,9 +124,16 @@ def register_writer(
         A file extension (e.g. ``'.myformat'``).
 
     handler : callable, optional
-        A callable with signature ``handler(dataset, path)`` that writes
-        *dataset* to *path*.  When omitted the function acts as a
-        decorator and returns the decorated callable unchanged.
+        A callable with signature ``handler(dataset, path, **kwargs)`` that
+        writes *dataset* to *path*.  Any extra keyword arguments passed to
+        :meth:`pyvista.DataObject.save` are forwarded to the handler as
+        ``**kwargs`` — use them to expose format-specific options such as
+        compression level, thread count, or chunking.  Handlers that do
+        not need per-call options can omit ``**kwargs``; a call to
+        :meth:`~pyvista.DataObject.save` that passes extras to such a
+        handler will raise :class:`TypeError` from Python itself.  When
+        ``handler`` is omitted the function acts as a decorator and
+        returns the decorated callable unchanged.
 
     override : bool, default: False
         If ``True``, allow overriding a built-in PyVista writer for this
@@ -153,18 +166,27 @@ def register_writer(
     ``override=True`` is therefore the only way to replace a built-in
     writer at save time.
 
+    Any keyword arguments passed to :meth:`~pyvista.DataObject.save`
+    beyond its documented parameters are forwarded verbatim to the
+    registered handler.  When no custom writer is registered for the
+    target extension, extra keyword arguments raise :class:`TypeError`
+    from :meth:`~pyvista.DataObject.save` — PyVista never silently
+    drops writer options.
+
     Examples
     --------
-    Register a writer for a custom file extension.
+    Register a writer for a custom file extension with a
+    format-specific option.
 
     >>> import pyvista as pv
-    >>> def my_writer(dataset, path): ...
+    >>> def my_writer(dataset, path, *, level=3): ...
     >>> pv.register_writer('.myformat', my_writer)  # doctest: +SKIP
+    >>> pv.Sphere().save('sphere.myformat', level=9)  # doctest: +SKIP
 
     Use as a decorator.
 
     >>> @pv.register_writer('.myformat')  # doctest: +SKIP
-    ... def my_writer(dataset, path): ...
+    ... def my_writer(dataset, path, **kwargs): ...
 
     """
     if handler is None:
