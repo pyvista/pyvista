@@ -8,6 +8,7 @@ from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
 from .composite import MultiBlock as MultiBlock
+from .config import global_config as global_config
 from .dataobject import DataObject as DataObject
 from .dataset import DataSet as DataSet
 from .datasetattributes import DataSetAttributes as DataSetAttributes

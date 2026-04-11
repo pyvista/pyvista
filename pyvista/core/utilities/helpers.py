@@ -56,59 +56,110 @@ _NORMALS = {
 _NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
-def _warn_if_invalid_data(obj: DataObject):
-    if pv.vtk_version_info >= (9, 3, 0) and hasattr(obj, 'validate_mesh'):
-        obj.validate_mesh('data', action='warn')
+def _dataset_array_lengths_match(obj: DataSet) -> bool:
+    """Return ``True`` when every point/cell data array length matches the geometry.
+
+    Direct Python loop over the underlying VTK arrays. Used as a fast-path
+    short-circuit by :func:`_warn_if_invalid_data`: when this returns ``True``
+    the slow :meth:`~pyvista.DataObject.validate_mesh` machinery can be skipped
+    entirely. The check is the same one performed by
+    ``validate_mesh('data', ...)`` (its ``cell_data_wrong_length`` and
+    ``point_data_wrong_length`` fields), so skipping the slow path is
+    semantically equivalent for valid datasets.
+
+    See https://github.com/pyvista/pyvista/issues/8473 for the motivating
+    benchmarks.
+
+    """
+    n_points = obj.GetNumberOfPoints()
+    n_cells = obj.GetNumberOfCells()
+    point_data = obj.GetPointData()
+    for i in range(point_data.GetNumberOfArrays()):
+        arr = point_data.GetArray(i)
+        if arr is not None and arr.GetNumberOfTuples() != n_points:
+            return False
+    cell_data = obj.GetCellData()
+    for i in range(cell_data.GetNumberOfArrays()):
+        arr = cell_data.GetArray(i)
+        if arr is not None and arr.GetNumberOfTuples() != n_cells:
+            return False
+    return True
+
+
+def _warn_if_invalid_data(obj: DataObject) -> None:
+    if pv.vtk_version_info < (9, 3, 0) or not hasattr(obj, 'validate_mesh'):
+        return
+    # Fast path: for a plain DataSet, a direct Python-side array-length check
+    # avoids the ~600us setup cost of the validate_mesh machinery on the
+    # common valid case. Composite and table types fall through to
+    # validate_mesh so their warning behavior is unchanged. When the fast
+    # path detects a mismatch we still call validate_mesh to produce the
+    # detailed warning message.
+    if isinstance(obj, pv.DataSet) and _dataset_array_lengths_match(obj):
+        return
+    obj.validate_mesh('data', action='warn')
 
 
 # vtkDataSet overloads
 # Overload types should match the mappings in the `pyvista._wrappers` dict
 # Overloads should be ordered from narrow types (child class) to general types (parent class)
 @overload
-def wrap(dataset: _vtk.vtkPolyData) -> PolyData: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _vtk.vtkPolyData, *, validate: bool | None = ...) -> PolyData: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkStructuredGrid) -> StructuredGrid: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _vtk.vtkStructuredGrid, *, validate: bool | None = ...) -> StructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkExplicitStructuredGrid) -> ExplicitStructuredGrid: ...  # type: ignore[overload-overlap]
+def wrap(  # type: ignore[overload-overlap]
+    dataset: _vtk.vtkExplicitStructuredGrid,
+    *,
+    validate: bool | None = ...,
+) -> ExplicitStructuredGrid: ...
 @overload
-def wrap(dataset: _vtk.vtkUnstructuredGrid) -> UnstructuredGrid: ...  # type: ignore[overload-overlap]
+def wrap(  # type: ignore[overload-overlap]
+    dataset: _vtk.vtkUnstructuredGrid,
+    *,
+    validate: bool | None = ...,
+) -> UnstructuredGrid: ...
 @overload
-def wrap(dataset: _vtk.vtkPointSet) -> PointSet: ...
+def wrap(dataset: _vtk.vtkPointSet, *, validate: bool | None = ...) -> PointSet: ...
 @overload
-def wrap(dataset: _vtk.vtkRectilinearGrid) -> RectilinearGrid: ...
+def wrap(dataset: _vtk.vtkRectilinearGrid, *, validate: bool | None = ...) -> RectilinearGrid: ...
 @overload
-def wrap(dataset: _vtk.vtkStructuredPoints) -> ImageData: ...
+def wrap(dataset: _vtk.vtkStructuredPoints, *, validate: bool | None = ...) -> ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkImageData) -> ImageData: ...
+def wrap(dataset: _vtk.vtkImageData, *, validate: bool | None = ...) -> ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkMultiBlockDataSet) -> MultiBlock: ...
+def wrap(dataset: _vtk.vtkMultiBlockDataSet, *, validate: bool | None = ...) -> MultiBlock: ...
 @overload
-def wrap(dataset: _vtk.vtkTable) -> Table: ...
+def wrap(dataset: _vtk.vtkTable, *, validate: bool | None = ...) -> Table: ...
 @overload
-def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
+def wrap(
+    dataset: _vtk.vtkPartitionedDataSet,
+    *,
+    validate: bool | None = ...,
+) -> PartitionedDataSet: ...
 
 
 # General catch-all cases
 @overload
-def wrap(dataset: _vtk.vtkDataSet) -> DataSet: ...
+def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: ...
 @overload
-def wrap(dataset: _vtk.vtkDataObject) -> DataObject: ...
+def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
 
 
 # Misc overloads
 @overload
-def wrap(dataset: NumpyArray[float]) -> PolyData | ImageData: ...
+def wrap(dataset: NumpyArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkAbstractArray) -> pyvista_ndarray: ...
+def wrap(dataset: _vtk.vtkAbstractArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
-def wrap(dataset: None) -> None: ...
+def wrap(dataset: None, *, validate: bool | None = ...) -> None: ...
 
 
 # Third-party meshes
 @overload
-def wrap(dataset: trimesh.Trimesh) -> PolyData: ...
+def wrap(dataset: trimesh.Trimesh, *, validate: bool | None = ...) -> PolyData: ...
 @overload
-def wrap(dataset: meshio.Mesh) -> UnstructuredGrid: ...
+def wrap(dataset: meshio.Mesh, *, validate: bool | None = ...) -> UnstructuredGrid: ...
 def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
@@ -117,6 +168,8 @@ def wrap(  # noqa: PLR0911
     | _vtk.vtkAbstractArray
     | NumpyArray[float]
     | None,
+    *,
+    validate: bool | None = None,
 ) -> DataObject | pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -141,6 +194,24 @@ def wrap(  # noqa: PLR0911
     ----------
     dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
         Dataset to wrap.
+
+    validate : bool, optional
+        When ``True``, confirm that every point and cell data array on the
+        wrapped VTK dataset has a tuple count that matches the dataset's
+        point or cell count, and emit a :class:`~pyvista.InvalidMeshWarning`
+        on any mismatch. When ``False``, skip the check entirely. When
+        ``None`` (the default), honor
+        :attr:`pyvista.global_config.validate_on_wrap` (which itself
+        defaults to ``True``).
+
+        Pass ``validate=False`` in hot loops where the caller already trusts
+        the input, or set
+        ``pyvista.global_config.validate_on_wrap = False`` to disable the
+        check globally. This only affects raw VTK dataset inputs;
+        ``meshio`` and ``trimesh`` paths perform their own checks
+        independently.
+
+        .. versionadded:: 0.48
 
     Returns
     -------
@@ -255,8 +326,9 @@ def wrap(  # noqa: PLR0911
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
         else:
-            # Warn if data arrays are invalid
-            _warn_if_invalid_data(wrapped_vtk)
+            should_validate = pv.global_config.validate_on_wrap if validate is None else validate
+            if should_validate:
+                _warn_if_invalid_data(wrapped_vtk)
             return wrapped_vtk
 
     # wrap meshio

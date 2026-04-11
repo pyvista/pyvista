@@ -285,8 +285,20 @@ class BaseReader(_FileIOBase):
         self.reader.SetFileName(filename)
         self._update_information()
 
-    def read(self):
+    def read(self, *, validate: bool | None = None) -> pv.DataObject:
         """Read data in file.
+
+        Parameters
+        ----------
+        validate : bool, optional
+            Forwarded to :func:`pyvista.wrap` as the ``validate`` keyword.
+            When ``True``, perform a cheap array-length sanity check on the
+            read dataset and emit a :class:`~pyvista.InvalidMeshWarning` on a
+            mismatch. When ``False``, skip the check entirely. When ``None``
+            (the default), honor
+            :attr:`pyvista.global_config.validate_on_wrap`.
+
+            .. versionadded:: 0.48
 
         Returns
         -------
@@ -297,7 +309,7 @@ class BaseReader(_FileIOBase):
         from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
-        data = wrap(self.reader.GetOutputDataObject(0))
+        data = wrap(self.reader.GetOutputDataObject(0), validate=validate)
         if data is None:  # pragma: no cover
             msg = 'File reader failed to read and/or produced no output.'
             raise RuntimeError(msg)
@@ -2859,7 +2871,12 @@ class GaussianCubeReader(BaseReader):
     _vtk_class_name = 'vtkGaussianCubeReader'
 
     @_deprecate_positional_args
-    def read(self, grid: bool = True):  # noqa: FBT001, FBT002
+    def read(
+        self,
+        grid: bool = True,  # noqa: FBT001, FBT002
+        *,
+        validate: bool | None = None,
+    ) -> pv.DataObject:
         """Read the file and return the output.
 
         Parameters
@@ -2867,12 +2884,24 @@ class GaussianCubeReader(BaseReader):
         grid : bool, default: False
             Output as a grid if ``True``, otherwise return the polydata.
 
+        validate : bool, optional
+            Forwarded to :func:`pyvista.wrap`. See :meth:`BaseReader.read`.
+
+            .. versionadded:: 0.48
+
+        Returns
+        -------
+        pyvista.DataObject
+            PyVista dataset read from the file.
+
         """
         from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = (
-            wrap(self.reader.GetGridOutput()) if grid else wrap(self.reader.GetOutputDataObject(0))
+            wrap(self.reader.GetGridOutput(), validate=validate)
+            if grid
+            else wrap(self.reader.GetOutputDataObject(0), validate=validate)
         )
         if data is None:  # pragma: no cover
             msg = 'File reader failed to read and/or produced no output.'

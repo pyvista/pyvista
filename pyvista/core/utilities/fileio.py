@@ -211,6 +211,8 @@ def read(  # noqa: PLR0911, PLR0917
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,  # noqa: FBT001, FBT002
+    *,
+    validate: bool | None = None,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -267,6 +269,15 @@ def read(  # noqa: PLR0911, PLR0917
     progress_bar : bool, default: False
         Optionally show a progress bar. Ignored when using ``meshio``.
 
+    validate : bool, optional
+        Forwarded to :func:`pyvista.wrap` as the ``validate`` keyword when
+        using a ``vtk`` reader. When ``None`` (the default), honors
+        :attr:`pyvista.global_config.validate_on_wrap`. Pass ``False`` to
+        skip the cheap array-length sanity check on very large trusted
+        files. Has no effect for ``meshio`` or pickle code paths.
+
+        .. versionadded:: 0.48
+
     Returns
     -------
     pyvista.DataSet
@@ -302,7 +313,7 @@ def read(  # noqa: PLR0911, PLR0917
         multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
+            multi.append(read(each, file_format=file_format, validate=validate), name)  # type: ignore[arg-type]
         return multi
 
     # Circular import: reader_registry -> reader -> fileio
@@ -374,7 +385,7 @@ def read(  # noqa: PLR0911, PLR0917
         observer.observe(reader.reader)
         if progress_bar:
             reader.show_progress()
-        mesh = reader.read()
+        mesh = reader.read(validate=validate)
         if observer.has_event_occurred():
             warn_external(
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
