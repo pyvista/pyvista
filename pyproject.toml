@@ -25,12 +25,12 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
-  # VTK is not available in WASM/Pyodide environments (emscripten platform).
+  # VTK is not available in WASM environments (wasm32 machine or emscripten platform).
   # For browser-based Python environments, use pyvista-wasm which provides VTK.wasm.
-  'vtk!=9.4.0; sys_platform != "emscripten"',
-  'vtk!=9.4.1; sys_platform != "emscripten"',
-  'vtk<9.7.0; sys_platform != "emscripten"',
-  'vtk>=9.2.2; sys_platform != "emscripten"',
+  'vtk!=9.4.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk!=9.4.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk<9.7.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk>=9.2.2; platform_machine != "wasm32" and sys_platform != "emscripten"',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
