@@ -368,7 +368,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         parent,
         border=True,  # noqa: FBT002
         border_color='w',
-        border_width=2.0,
+        border_width=1.0,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
@@ -811,7 +811,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='white', width=2.0):
+    def add_border(self, color='white', width=1.0, edges=None):
         """Add borders around the frame.
 
         Parameters
@@ -819,8 +819,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         color : ColorLike, default: "white"
             Color of the border.
 
-        width : float, default: 2.0
+        width : float, default: 1.0
             Width of the border.
+
+        edges : sequence[str], optional
+            Which edges of the frame to draw. Any subset of
+            ``('top', 'left', 'bottom', 'right')``. When ``None``
+            (the default) all four edges are drawn.
 
         Returns
         -------
@@ -830,7 +835,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         points = np.array([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
 
-        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
+        edge_lines = {
+            'top': [2, 0, 1],
+            'left': [2, 1, 2],
+            'bottom': [2, 2, 3],
+            'right': [2, 3, 0],
+        }
+        if edges is None:
+            edges = ('top', 'left', 'bottom', 'right')
+        lines = np.array([edge_lines[e] for e in edges]).ravel()
 
         poly = pv.PolyData()
         poly.points = points
@@ -872,6 +885,35 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
+
+    def _refresh_interior_border(self):
+        """Rebuild the border so only interior edges are drawn.
+
+        Edges touching the window boundary (viewport component at
+        ``0`` or ``1``) are dropped so borders only appear between
+        adjacent subplots rather than around the outside of the
+        render window.
+        """
+        border_actor = self._border_actor
+        if border_actor is None:
+            return
+        color = self.border_color
+        width = self.border_width
+        xmin, ymin, xmax, ymax = self.GetViewport()
+        interior: list[str] = []
+        if ymax < 1.0:
+            interior.append('top')
+        if xmin > 0.0:
+            interior.append('left')
+        if ymin > 0.0:
+            interior.append('bottom')
+        if xmax < 1.0:
+            interior.append('right')
+        self.RemoveViewProp(border_actor)
+        self._border_actor = None
+        self.Modified()
+        if interior:
+            self.add_border(color, width, edges=interior)
 
     def add_chart(self, chart, *charts):
         """Add a chart to this renderer.

@@ -60,8 +60,8 @@ class Renderers(_NoNewAttrMixin):
         col_weights=None,
         groups=None,
         border=None,
-        border_color='k',
-        border_width=2.0,
+        border_color=None,
+        border_width=None,
     ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
@@ -72,6 +72,10 @@ class Renderers(_NoNewAttrMixin):
         # by default add border for multiple plots
         if border is None:
             border = shape != (1, 1)
+        if border_color is None:
+            border_color = plotter.theme.border_color
+        if border_width is None:
+            border_width = plotter.theme.border_width
 
         self.groups = np.empty((0, 4), dtype=int)
 
@@ -240,6 +244,13 @@ class Renderers(_NoNewAttrMixin):
                         self.groups[group, 0],
                         self.groups[group, 1],
                     ]
+
+        # For multi-subplot layouts, drop the exterior edges of each
+        # renderer's border so only the seams between neighboring
+        # subplots are drawn (instead of a box around every subplot).
+        if len(self._renderers) > 1:
+            for renderer in self._renderers:
+                renderer._refresh_interior_border()
 
         # each render will also have an associated background renderer
         self._background_renderers: list[None | BackgroundRenderer] = [

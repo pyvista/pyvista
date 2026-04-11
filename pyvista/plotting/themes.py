@@ -1763,6 +1763,8 @@ class Theme(_ThemeConfig):
         '_before_close_callback',
         '_before_close_callback',
         '_below_range_color',
+        '_border_color',
+        '_border_width',
         '_camera',
         '_cmap',
         '_color',
@@ -1833,6 +1835,8 @@ class Theme(_ThemeConfig):
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
         self._edge_color = Color('black')
+        self._border_color = Color('grey')
+        self._border_width = 1.0
         self._line_width = 1.0
         self._point_size = 5.0
         self._outline_color = Color('white')
@@ -2536,6 +2540,45 @@ class Theme(_ThemeConfig):
         self._outline_color = Color(outline_color)
 
     @property
+    def border_color(self) -> Color:  # numpydoc ignore=RT01
+        """Return or set the default subplot border color.
+
+        The color is used when a ``Plotter`` is constructed with
+        ``border=True`` (implicit for multi-subplot layouts) and no
+        explicit ``border_color`` is provided.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.border_color = 'lightgray'
+
+        """
+        return self._border_color
+
+    @border_color.setter
+    def border_color(self, border_color: ColorLike):
+        self._border_color = Color(border_color)
+
+    @property
+    def border_width(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the default subplot border width in pixels.
+
+        Used when a ``Plotter`` is constructed with ``border=True``
+        and no explicit ``border_width`` is provided.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.border_width = 2.0
+
+        """
+        return self._border_width
+
+    @border_width.setter
+    def border_width(self, border_width: float):
+        self._border_width = float(border_width)
+
+    @property
     def floor_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the default floor color.
 
@@ -3078,6 +3121,8 @@ class Theme(_ThemeConfig):
             'Color Cycler': 'color_cycler',
             'NaN color': 'nan_color',
             'Edge color': 'edge_color',
+            'Border color': 'border_color',
+            'Border width': 'border_width',
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',

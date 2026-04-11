@@ -228,19 +228,27 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
-    border : bool, default: False
-        Draw a border around each render window.
+    border : bool, optional
+        Draw a border between subplots. Defaults to ``True`` when the
+        plotter has more than one subplot (``shape != (1, 1)``) and
+        ``False`` otherwise. For multi-subplot layouts only the
+        interior seams are drawn — the outer frame is omitted.
 
-    border_color : ColorLike, default: 'k'
-        Either a string, rgb list, or hex color string.  For example:
+    border_color : ColorLike, optional
+        Color of the border. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
-    border_width : float, default: 2.0
-        Width of the border in pixels when enabled.
+    border_width : float, optional
+        Width of the border in pixels when enabled. Defaults to
+        :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
 
     title : str, optional
         Window title.
@@ -295,8 +303,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self,
         shape: Sequence[int] | str = (1, 1),
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
-        border_width: float = 2.0,
+        border_color: ColorLike | None = None,
+        border_width: float | None = None,
         title: str | None = None,
         splitting_position: float | None = None,
         groups: Sequence[int] | None = None,
@@ -342,6 +350,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if title is None:
             title = self._theme.title
         self.title = str(title)
+
+        if border_color is None:
+            border_color = self._theme.border_color
+        if border_width is None:
+            border_width = self._theme.border_width
 
         # add renderers
         self.renderers = Renderers(
@@ -6936,15 +6949,25 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
-        Draw a border around each render window.
+        Draw a border between subplots. Defaults to ``True`` when the
+        plotter has more than one subplot and ``False`` otherwise. In
+        multi-subplot layouts only the interior seams are drawn.
 
-    border_color : ColorLike, default: "k"
-        Either a string, rgb list, or hex color string.  For example:
+    border_color : ColorLike, optional
+        Color of the border. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
 
             * ``color='white'``
             * ``color='w'``
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
+
+    border_width : float, optional
+        Width of the border in pixels when enabled. Defaults to
+        :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
 
     window_size : sequence[int], optional
         Window size in pixels.  Defaults to ``[1024, 768]``, unless
@@ -6998,8 +7021,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         border: bool | None = None,  # noqa: FBT001
-        border_color: ColorLike = 'k',
-        border_width: float = 2.0,
+        border_color: ColorLike | None = None,
+        border_width: float | None = None,
         window_size: list[int] | None = None,
         line_smoothing: bool = False,  # noqa: FBT001, FBT002
         point_smoothing: bool = False,  # noqa: FBT001, FBT002

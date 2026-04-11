@@ -122,7 +122,7 @@ def _plot(
     zoom: Annotated[float | str | None, Parameter(group=Groups.RENDERING)] = None,
     border: Annotated[bool, Parameter(group=Groups.PLOTTER)] = False,
     border_color: Annotated[str, Parameter(group=Groups.PLOTTER)] = 'k',
-    border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 2.0,
+    border_width: Annotated[float, Parameter(group=Groups.PLOTTER)] = 1.0,
     ssao: Annotated[bool, Parameter(group=Groups.RENDERING)] = False,
     **kwargs: Annotated[
         Any,
