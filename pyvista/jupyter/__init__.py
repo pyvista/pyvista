@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib.util
+import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
@@ -16,7 +17,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationW
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
+JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'wasm', 'none']
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
 _custom_backends: dict[str, Callable[..., object]] = {}
@@ -95,10 +96,22 @@ def _discover_entry_points() -> None:
                 _custom_backends[name] = ep.load()
 
 
+def _is_pyodide() -> bool:
+    """Check if running in a Pyodide/WASM environment.
+
+    Returns
+    -------
+    bool
+        True if running in a Pyodide/WASM environment, False otherwise.
+
+    """
+    return sys.platform == 'emscripten'
+
+
 def _resolve_backend() -> str:
     """Auto-detect the best available Jupyter backend.
 
-    Priority: registered custom backends > trame > static.
+    Priority: registered custom backends > wasm (in pyodide) > trame > static.
 
     Returns
     -------
@@ -109,6 +122,10 @@ def _resolve_backend() -> str:
     _discover_entry_points()
     if _custom_backends:
         return next(iter(_custom_backends))
+
+    # Check for WASM/Pyodide environment first
+    if _is_pyodide() and importlib.util.find_spec('pyvista_wasm'):
+        return 'wasm'
 
     try:
         from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
@@ -150,6 +167,10 @@ def _validate_jupyter_backend(
                 from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
             except ImportError:  # pragma: no cover
                 msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+                raise ImportError(msg)
+        if backend == 'wasm':
+            if not importlib.util.find_spec('pyvista_wasm'):  # pragma: no cover
+                msg = 'Please install pyvista-wasm for WASM support: pip install pyvista-wasm'
                 raise ImportError(msg)
         return backend
 
@@ -198,6 +219,11 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwarg
 
         * ``'html'`` : Export/serialize the scene graph to be rendered
           with the Trame client backend but in a static HTML file.
+
+        * ``'wasm'`` : Use VTK.wasm for rendering in browser-based Python
+          environments like JupyterLite and Pyodide. Requires ``pyvista-wasm``
+          to be installed. This backend enables interactive 3D visualization
+          in web browsers without requiring a backend server.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
