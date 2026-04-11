@@ -28,6 +28,7 @@ Enums
 Flownet
 Fortran
 Framebuffer
+GLSL
 Geoscience
 Geosciences
 GitHub
@@ -46,6 +47,7 @@ Kitware
 Kratos
 Kubernetes
 List-like
+MIP
 Magnetoencephalography
 ManyLinux
 Meshio
@@ -55,6 +57,7 @@ Namespace
 NumPy
 Numpydoc
 OSMesa
+Ore
 PAT
 PVGeo
 Parametrizing

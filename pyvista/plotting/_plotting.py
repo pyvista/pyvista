@@ -199,6 +199,7 @@ def _common_arg_parser(
     split_sharp_edges,
     show_scalar_bar,
     render_points_as_spheres,
+    point_shape,
     smooth_shading,
     pbr,
     clim,
@@ -248,6 +249,16 @@ def _common_arg_parser(
         else:
             render_points_as_spheres = theme.render_points_as_spheres
 
+    if point_shape is None:
+        point_shape = theme.point_shape
+
+    if point_shape is not None and render_points_as_spheres:
+        warn_external(
+            f'point_shape={point_shape!r} requires render_points_as_spheres=False. '
+            'Disabling render_points_as_spheres.',
+        )
+        render_points_as_spheres = False
+
     if smooth_shading is None:
         smooth_shading = True if pbr else theme.smooth_shading
 
@@ -286,6 +297,7 @@ def _common_arg_parser(
         show_scalar_bar,
         feature_angle,
         render_points_as_spheres,
+        point_shape,
         smooth_shading,
         clim,
         cmap,

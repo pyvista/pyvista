@@ -48,6 +48,8 @@ from .mapper import OpenGLGPUVolumeRayCastMapper as OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper as PointGaussianMapper
 from .mapper import SmartVolumeMapper as SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolumeRayCastMapper
+from .opts import PointSpriteShape as PointSpriteShape
+from .opts import ShaderType as ShaderType
 from .picking import PickingHelper as PickingHelper
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
