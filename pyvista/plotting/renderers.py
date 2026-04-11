@@ -654,9 +654,7 @@ class Renderers(_NoNewAttrMixin):
         """Overlay renderer that draws interior subplot seams, if any."""
         return self._border_overlay_renderer
 
-    def _build_border_overlay_renderer(
-        self, *, border_color, border_width
-    ) -> Renderer | None:
+    def _build_border_overlay_renderer(self, *, border_color, border_width) -> Renderer | None:
         """Create an overlay renderer that draws every interior seam once.
 
         Each interior edge of a subplot viewport is expressed directly
