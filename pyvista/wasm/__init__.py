@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 
 import numpy as np
 
@@ -95,7 +96,7 @@ def _ensure_numpy_in_pyodide() -> None:
             try:
                 import asyncio  # noqa: PLC0415
 
-                import micropip  # type: ignore[import-not-found]  # noqa: PLC0415
+                import micropip  # type: ignore[import-not-found,unused-ignore]  # noqa: PLC0415
 
                 asyncio.get_event_loop().run_until_complete(micropip.install('numpy'))
             except ImportError:
@@ -127,10 +128,10 @@ class WASMPlotter:
         """Initialize the WASM plotter wrapper."""
         self._wasm_plotter = None
         self._kwargs = kwargs
-        self._actors: list = []
-        self._meshes: list = []
+        self._actors: list[Any] = []
+        self._meshes: list[Any] = []
 
-    def _get_wasm_plotter(self) -> object:
+    def _get_wasm_plotter(self) -> Any:
         """Get or create the underlying WASM plotter."""
         if self._wasm_plotter is None:
             try:
@@ -140,7 +141,7 @@ class WASMPlotter:
             except ImportError as e:
                 msg = (
                     'The WASM backend requires pyvista-wasm.\n'
-                    'Install it with: pip install pyvista-wasm\n\n'
+                    'Install it with: pip install "pyvista[wasm]"\n\n'
                     'For Pyodide/JupyterLite, use:\n'
                     'import micropip\n'
                     'await micropip.install("pyvista-wasm")'
@@ -294,7 +295,7 @@ class WASMPlotter:
         wasm_plotter.view_isometric()
 
     @property
-    def background_color(self) -> tuple:
+    def background_color(self) -> tuple[Any, ...]:
         """Get or set the background color.
 
         Returns
@@ -307,7 +308,7 @@ class WASMPlotter:
         return wasm_plotter.background_color
 
     @background_color.setter
-    def background_color(self, color: tuple | str) -> None:
+    def background_color(self, color: tuple[Any, ...] | str) -> None:
         """Set the background color.
 
         Parameters
@@ -389,7 +390,14 @@ def generate_standalone_html(plotter: Plotter, **kwargs) -> str:
 
     # Transfer background color
     if hasattr(plotter, 'background_color'):
-        wasm_plotter.background_color = plotter.background_color
+        bg_color = plotter.background_color
+        # Convert Color type to tuple if necessary
+        if hasattr(bg_color, 'float_rgb'):
+            wasm_plotter.background_color = bg_color.float_rgb
+        elif hasattr(bg_color, '__iter__'):
+            wasm_plotter.background_color = tuple(bg_color)
+        else:
+            wasm_plotter.background_color = str(bg_color)
 
     return wasm_plotter.generate_standalone_html()
 

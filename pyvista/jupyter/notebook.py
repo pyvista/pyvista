@@ -150,9 +150,10 @@ def show_wasm(
             wasm_mesh = _convert_to_wasm_mesh(mesh)
             if wasm_mesh is not None:
                 # Transfer actor properties
-                color = actor.prop.color if hasattr(actor.prop, 'color') else None
-                opacity = actor.prop.opacity if hasattr(actor.prop, 'opacity') else 1.0
-                show_edges = actor.prop.show_edges if hasattr(actor.prop, 'show_edges') else False
+                prop = getattr(actor, 'prop', None)
+                color = getattr(prop, 'color', None) if prop is not None else None
+                opacity = getattr(prop, 'opacity', 1.0) if prop is not None else 1.0
+                show_edges = getattr(prop, 'show_edges', False) if prop is not None else False
                 wasm_plotter.add_mesh(
                     wasm_mesh,
                     color=color,
