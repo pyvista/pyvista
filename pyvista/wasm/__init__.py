@@ -1,8 +1,27 @@
 """WASM/Pyodide support module for PyVista.
 
-This module provides utilities for running PyVista in WebAssembly environments
-such as JupyterLite, Pyodide, and Stlite. It enables interactive 3D visualization
-in web browsers without requiring a backend server.
+This module provides utilities for running PyVista in WebAssembly (WASM)
+environments such as JupyterLite, Pyodide, and Stlite. It enables interactive
+3D visualization in web browsers without requiring a backend server.
+
+Background
+----------
+WebAssembly (WASM) is a binary instruction format designed as a portable
+target for compilation of high-level languages like C/C++. Pyodide is a
+port of CPython to WebAssembly that runs in browsers, enabling Python
+execution client-side without a server.
+
+In WASM environments:
+- The regular VTK Python package (compiled for x86/ARM) is not available
+- VTK.wasm (VTK C++ compiled to WebAssembly) provides rendering capabilities
+- pyvista-wasm bridges PyVista's API with VTK.wasm
+- sys.platform returns 'emscripten' and platform.machine() returns 'wasm32'
+
+See Also
+--------
+- https://pyodide.org/ - Pyodide documentation
+- https://pyodide.org/en/stable/usage/wasm-constraints.html - WASM constraints
+- https://github.com/tkoyama010/pyvista-wasm - pyvista-wasm package
 
 Examples
 --------

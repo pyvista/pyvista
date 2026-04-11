@@ -25,8 +25,12 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
-  # VTK is not available in WASM environments (wasm32 machine or emscripten platform).
-  # For browser-based Python environments, use pyvista-wasm which provides VTK.wasm.
+  # VTK Python package is not available in WASM/WebAssembly environments.
+  # The platform markers exclude VTK from being installed when:
+  #   - platform_machine == 'wasm32' (WASM32 architecture)
+  #   - OR sys_platform == 'emscripten' (Emscripten/browser platform)
+  # In these environments, pyvista-wasm provides VTK.wasm (WebAssembly port of VTK C++)
+  # instead of the regular VTK Python package.
   'vtk!=9.4.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
   'vtk!=9.4.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
   'vtk<9.7.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
