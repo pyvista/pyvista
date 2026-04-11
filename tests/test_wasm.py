@@ -157,173 +157,164 @@ class TestWasmModuleExports:
         assert hasattr(pv, 'wasm')
 
 
-# =============================================================================
-# Pyodide Integration Tests
-# =============================================================================
-# These tests run in an actual Pyodide/WebAssembly environment using pytest-pyodide.
-# Mark with 'pyodide' to allow selective execution.
+@pytest.mark.pyodide
+class TestPyodideIntegration:
+    """Pyodide integration tests for WASM support.
 
-pyodide_only = pytest.mark.pyodide
+    These tests run in an actual Pyodide/WebAssembly environment using
+    pytest-pyodide. They verify that pyvista works correctly in browser-based
+    Python environments.
 
+    To run these tests:
+        pytest tests/test_wasm.py -m pyodide --runtime=node
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_is_pyodide_detection(selenium):
-    """Test that is_pyodide returns True in actual Pyodide environment."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
+    To skip these tests and run only unit tests:
+        pytest tests/test_wasm.py -m "not pyodide"
+    """
 
-        import pyvista as pv
-        from pyvista import wasm
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_is_pyodide_detection(self, selenium):
+        """Test that is_pyodide returns True in actual Pyodide environment."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
 
-        # In Pyodide, is_pyodide should return True
-        assert wasm.is_pyodide() is True, "is_pyodide() should return True in Pyodide"
-    """)
+            import pyvista as pv
+            from pyvista import wasm
 
+            # In Pyodide, is_pyodide should return True
+            assert wasm.is_pyodide() is True, "is_pyodide() should return True in Pyodide"
+        """)
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_wasm_plotter_creation(selenium):
-    """Test WASMPlotter creation in actual Pyodide environment."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_plotter_creation(self, selenium):
+        """Test WASMPlotter creation in actual Pyodide environment."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
-        import pyvista as pv
-        from pyvista import wasm
+            import pyvista as pv
+            from pyvista import wasm
 
-        # Create WASMPlotter
-        plotter = wasm.WASMPlotter()
-        assert plotter is not None
+            # Create WASMPlotter
+            plotter = wasm.WASMPlotter()
+            assert plotter is not None
 
-        # Test that internal plotter is not created until needed
-        assert plotter._wasm_plotter is None
-    """)
+            # Test that internal plotter is not created until needed
+            assert plotter._wasm_plotter is None
+        """)
 
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_add_mesh(self, selenium):
+        """Test adding mesh to WASMPlotter in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_wasm_add_mesh(selenium):
-    """Test adding mesh to WASMPlotter in Pyodide."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
+            import pyvista as pv
+            from pyvista import wasm
 
-        import pyvista as pv
-        from pyvista import wasm
+            # Create mesh and plotter
+            mesh = pv.Sphere()
+            plotter = wasm.WASMPlotter()
 
-        # Create mesh and plotter
-        mesh = pv.Sphere()
-        plotter = wasm.WASMPlotter()
+            # Add mesh (should not raise)
+            actor = plotter.add_mesh(mesh)
 
-        # Add mesh (should not raise)
-        actor = plotter.add_mesh(mesh)
+            # Verify mesh was tracked
+            assert len(plotter._meshes) == 1
+        """)
 
-        # Verify mesh was tracked
-        assert len(plotter._meshes) == 1
-    """)
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_generate_standalone_html(self, selenium):
+        """Test generating standalone HTML in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
+            import pyvista as pv
+            from pyvista import wasm
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_wasm_generate_standalone_html(selenium):
-    """Test generating standalone HTML in Pyodide."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
+            # Create plotter with mesh
+            plotter = pv.Plotter()
+            plotter.add_mesh(pv.Sphere())
 
-        import pyvista as pv
-        from pyvista import wasm
+            # Generate HTML
+            html = wasm.generate_standalone_html(plotter)
 
-        # Create plotter with mesh
-        plotter = pv.Plotter()
-        plotter.add_mesh(pv.Sphere())
+            # Verify HTML is generated
+            assert isinstance(html, str)
+            assert '<!DOCTYPE html>' in html or '<html' in html.lower()
+        """)
 
-        # Generate HTML
-        html = wasm.generate_standalone_html(plotter)
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_jupyter_backend_wasm(self, selenium):
+        """Test setting Jupyter backend to wasm in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
-        # Verify HTML is generated
-        assert isinstance(html, str)
-        assert '<!DOCTYPE html>' in html or '<html' in html.lower()
-    """)
+            import pyvista as pv
 
+            # Set backend to wasm
+            pv.set_jupyter_backend('wasm')
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_jupyter_backend_wasm(selenium):
-    """Test setting Jupyter backend to wasm in Pyodide."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
+            # Verify backend is set
+            assert pv.global_theme.jupyter.backend == 'wasm'
+        """)
 
-        import pyvista as pv
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_backend_auto_detection(self, selenium):
+        """Test that wasm backend is auto-detected in actual Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
-        # Set backend to wasm
-        pv.set_jupyter_backend('wasm')
+            import pyvista as pv
+            from pyvista.jupyter import _resolve_backend
 
-        # Verify backend is set
-        assert pv.global_theme.jupyter.backend == 'wasm'
-    """)
+            # In Pyodide, should resolve to 'wasm' when pyvista-wasm is available
+            backend = _resolve_backend()
+            assert backend == 'wasm', f"Expected 'wasm' but got '{backend}'"
+        """)
 
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_plotter_views(self, selenium):
+        """Test WASMPlotter view methods in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_wasm_backend_auto_detection(selenium):
-    """Test that wasm backend is auto-detected in actual Pyodide."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
+            import pyvista as pv
+            from pyvista import wasm
 
-        import pyvista as pv
-        from pyvista.jupyter import _resolve_backend
+            # Create plotter and add mesh
+            plotter = wasm.WASMPlotter()
+            plotter.add_mesh(pv.Sphere())
 
-        # In Pyodide, should resolve to 'wasm' when pyvista-wasm is available
-        backend = _resolve_backend()
-        assert backend == 'wasm', f"Expected 'wasm' but got '{backend}'"
-    """)
+            # Test view methods (should not raise)
+            plotter.view_xy()
+            plotter.view_xz()
+            plotter.view_yz()
+            plotter.view_isometric()
+        """)
 
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_plotter_background_color(self, selenium):
+        """Test WASMPlotter background color property in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
 
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_wasm_plotter_views(selenium):
-    """Test WASMPlotter view methods in Pyodide."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
+            import pyvista as pv
+            from pyvista import wasm
 
-        import pyvista as pv
-        from pyvista import wasm
+            # Create plotter
+            plotter = wasm.WASMPlotter()
 
-        # Create plotter and add mesh
-        plotter = wasm.WASMPlotter()
-        plotter.add_mesh(pv.Sphere())
+            # Set background color
+            plotter.background_color = (0.1, 0.2, 0.3)
 
-        # Test view methods (should not raise)
-        plotter.view_xy()
-        plotter.view_xz()
-        plotter.view_yz()
-        plotter.view_isometric()
-    """)
-
-
-@pytest.mark.driver_timeout(120)
-@pyodide_only
-def test_pyodide_wasm_plotter_background_color(selenium):
-    """Test WASMPlotter background color property in Pyodide."""
-    selenium.run_js("""
-        await micropip.install("pyvista");
-        await micropip.install("pyvista-wasm");
-
-        import pyvista as pv
-        from pyvista import wasm
-
-        # Create plotter
-        plotter = wasm.WASMPlotter()
-
-        # Set background color
-        plotter.background_color = (0.1, 0.2, 0.3)
-
-        # Get background color
-        bg = plotter.background_color
-        assert len(bg) == 3
-    """)
+            # Get background color
+            bg = plotter.background_color
+            assert len(bg) == 3
+        """)
