@@ -587,6 +587,72 @@ def test_lighting_subplots(sphere):
     pl.show()
 
 
+def test_shared_mesh_different_scalars_subplots():
+    """Test that the same mesh can be plotted in subplots with different scalars.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
+    mesh = pv.Sphere()
+    mesh['data_a'] = mesh.points[:, 0]
+    mesh['data_b'] = mesh.points[:, 2]
+    mesh.set_active_scalars('data_a')
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    actor_a = pl.add_mesh(mesh, scalars='data_a')
+    pl.subplot(0, 1)
+    actor_b = pl.add_mesh(mesh, scalars='data_b')
+    pl.show()
+
+    # Verify the original mesh's active scalars were NOT modified
+    assert mesh.active_scalars_name == 'data_a'
+
+    # Each mapper should target a different array
+    assert actor_a.mapper.array_name == 'data_a'
+    assert actor_b.mapper.array_name == 'data_b'
+
+
+def test_shared_mesh_different_cell_scalars_subplots():
+    """Test shared mesh with different cell scalars in subplots."""
+    mesh = pv.Cube()
+    mesh.cell_data['cell_a'] = range(mesh.n_cells)
+    mesh.cell_data['cell_b'] = range(mesh.n_cells, 0, -1)
+    mesh.set_active_scalars('cell_a', preference='cell')
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(mesh, scalars='cell_a')
+    pl.subplot(0, 1)
+    pl.add_mesh(mesh, scalars='cell_b')
+    pl.show()
+
+    assert mesh.cell_data.active_scalars_name == 'cell_a'
+
+
+def test_shared_mesh_subplots_with_clim():
+    """Verify clim is respected per-subplot when sharing a mesh.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
+    grid = pv.Wavelet()
+    grid['RTData**2'] = grid['RTData'] ** 2
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    actor_a = pl.add_mesh(grid, scalars='RTData', clim=[0, 100])
+    pl.subplot(0, 1)
+    actor_b = pl.add_mesh(grid, scalars='RTData**2', clim=[0, 50000])
+    pl.show()
+
+    # Each mapper must target the correct array
+    assert actor_a.mapper.array_name == 'RTData'
+    assert actor_b.mapper.array_name == 'RTData**2'
+
+    # Each mapper must honour its own clim independently
+    assert actor_a.mapper.scalar_range == (0, 100)
+    assert actor_b.mapper.scalar_range == (0, 50000)
+
+
 def test_lighting_init_light_kit(sphere):
     pl = pv.Plotter(lighting='light kit')
     pl.add_mesh(sphere)
