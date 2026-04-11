@@ -332,6 +332,17 @@ class ScalarBars(_NoNewAttrMixin):
             If ``True``, the scalar bar will be created with a unique key
             which is not shared with other subplots, even if the input title is the same.
 
+            .. note::
+                Scalar bars are managed by a dictionary with the title
+                as the key. By default, if a scalar bar with the same title
+                already exists, the scalar bar will be shared.
+                If ``unique_bar`` is ``True``, the scalar bar will be created
+                with a unique key which is the title suffixed with
+                ``_UNIQUE_ID_{active_renderer_index}``, where ``active_renderer_index``
+                is the index of the active renderer in the plotter.
+                This allows for multiple scalar bars with the same title
+                to be created across different subplots.
+
             .. versionadded:: 0.48.0
 
         Returns
