@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: ["mne", "trame", "pyvistaqt", "geovista"]
+        project: ["mne", "trame", "pyvistaqt", "geovista", "pyodide"]
     runs-on: ubuntu-22.04-self-hosted
     defaults:
       run:
@@ -71,6 +71,11 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      - uses: actions/setup-node@v6
+        if: ${{matrix.project == 'pyodide'}}
+        with:
+          node-version: "20"
+
       - name: Run tests (no xvfb)
         if: ${{matrix.project != 'geovista'}}
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
@@ -86,6 +91,14 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           command: xvfb-run -a tox run -e integration-${{matrix.project}}
+
+      - name: Run tests (pyodide)
+        if: ${{matrix.project == 'pyodide'}}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 30
+          max_attempts: 2
+          command: tox run -e integration-pyodide
 
       - uses: actions/cache@v5
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
