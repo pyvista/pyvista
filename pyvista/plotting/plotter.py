@@ -7094,6 +7094,17 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.renderers.shadow_renderer.SetLayer(current_layer + 1)
         self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
+        # Border overlay renderer draws interior subplot seams in
+        # window-normalized coordinates from a single actor so that
+        # neighboring subplots can't render inconsistent copies of
+        # the same boundary line.
+        border_overlay = self.renderers.border_overlay_renderer
+        if border_overlay is not None:
+            number_or_layers = self.render_window.GetNumberOfLayers()  # type: ignore[union-attr]
+            self.render_window.SetNumberOfLayers(number_or_layers + 1)  # type: ignore[union-attr]
+            self.render_window.AddRenderer(border_overlay)  # type: ignore[union-attr]
+            border_overlay.SetLayer(number_or_layers)
+
         if self.off_screen:
             self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]
             # On macOS, vtkCocoaRenderWindow creates an NSWindow even for

@@ -886,34 +886,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
 
-    def _refresh_interior_border(self):
-        """Rebuild the border so only interior edges are drawn.
+    def _drop_border_actor(self):
+        """Remove this renderer's own border actor, if any.
 
-        Edges touching the window boundary (viewport component at
-        ``0`` or ``1``) are dropped so borders only appear between
-        adjacent subplots rather than around the outside of the
-        render window.
+        Used when subplot seams are being drawn by a shared overlay
+        renderer so neighboring renderers don't each rasterize their
+        own clipped copy of the boundary line.
         """
         border_actor = self._border_actor
         if border_actor is None:
             return
-        color = self.border_color
-        width = self.border_width
-        xmin, ymin, xmax, ymax = self.GetViewport()
-        interior: list[str] = []
-        if ymax < 1.0:
-            interior.append('top')
-        if xmin > 0.0:
-            interior.append('left')
-        if ymin > 0.0:
-            interior.append('bottom')
-        if xmax < 1.0:
-            interior.append('right')
         self.RemoveViewProp(border_actor)
         self._border_actor = None
         self.Modified()
-        if interior:
-            self.add_border(color, width, edges=interior)
 
     def add_chart(self, chart, *charts):
         """Add a chart to this renderer.

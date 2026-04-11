@@ -12,8 +12,65 @@ import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
+from . import _vtk
 from .background_renderer import BackgroundRenderer
+from .colors import Color
 from .renderer import Renderer
+
+_SeamSegment = tuple[tuple[float, float], tuple[float, float]]
+
+
+def _merge_intervals(
+    intervals: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    """Merge a list of ``(start, end)`` intervals that touch or overlap."""
+    if not intervals:
+        return []
+    intervals = sorted(intervals)
+    merged: list[tuple[float, float]] = [intervals[0]]
+    for start, end in intervals[1:]:
+        last_start, last_end = merged[-1]
+        if start <= last_end:
+            merged[-1] = (last_start, max(last_end, end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _collect_interior_seams(
+    viewports: list[tuple[float, float, float, float]],
+) -> list[_SeamSegment]:
+    """Return the unique interior seam line segments for a set of viewports.
+
+    Every edge of every viewport that lies strictly inside the render
+    window ``(0, 1) x (0, 1)`` is contributed to either a vertical or
+    horizontal group keyed by its axial coordinate. Each group's
+    intervals are then merged, so adjacent cells sharing a seam
+    produce a single continuous line rather than one segment per
+    contributor. The resulting segments are drawn once from a single
+    overlay actor so that every seam rasterizes to a single pixel
+    row/column regardless of neighbor viewport rounding.
+    """
+    vertical: dict[float, list[tuple[float, float]]] = {}
+    horizontal: dict[float, list[tuple[float, float]]] = {}
+    for xmin, ymin, xmax, ymax in viewports:
+        if xmax < 1.0:
+            vertical.setdefault(xmax, []).append((ymin, ymax))
+        if xmin > 0.0:
+            vertical.setdefault(xmin, []).append((ymin, ymax))
+        if ymax < 1.0:
+            horizontal.setdefault(ymax, []).append((xmin, xmax))
+        if ymin > 0.0:
+            horizontal.setdefault(ymin, []).append((xmin, xmax))
+
+    segments: list[_SeamSegment] = []
+    for x, intervals in vertical.items():
+        for y0, y1 in _merge_intervals(intervals):
+            segments.append(((x, y0), (x, y1)))
+    for y, intervals in horizontal.items():
+        for x0, x1 in _merge_intervals(intervals):
+            segments.append(((x0, y), (x1, y)))
+    return segments
 
 
 class Renderers(_NoNewAttrMixin):
@@ -245,12 +302,21 @@ class Renderers(_NoNewAttrMixin):
                         self.groups[group, 1],
                     ]
 
-        # For multi-subplot layouts, drop the exterior edges of each
-        # renderer's border so only the seams between neighboring
-        # subplots are drawn (instead of a box around every subplot).
-        if len(self._renderers) > 1:
+        # For multi-subplot layouts, replace each renderer's own
+        # border with a single shared overlay that draws every
+        # interior seam exactly once. Having each neighbor rasterize
+        # its own copy of the boundary line caused seams to sometimes
+        # appear thicker in one direction or disappear entirely
+        # because the boundary falls right at each viewport's clip
+        # edge and rounds inconsistently.
+        self._border_overlay_renderer: Renderer | None = None
+        if border and len(self._renderers) > 1:
             for renderer in self._renderers:
-                renderer._refresh_interior_border()
+                renderer._drop_border_actor()
+            self._border_overlay_renderer = self._build_border_overlay_renderer(
+                border_color=border_color,
+                border_width=border_width,
+            )
 
         # each render will also have an associated background renderer
         self._background_renderers: list[None | BackgroundRenderer] = [
@@ -476,6 +542,8 @@ class Renderers(_NoNewAttrMixin):
             renderer.deep_clean()
         if self._shadow_renderer is not None:
             self._shadow_renderer.deep_clean()
+        if self._border_overlay_renderer is not None:
+            self._border_overlay_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
             for renderer in self._background_renderers:
                 if renderer is not None:
@@ -557,6 +625,9 @@ class Renderers(_NoNewAttrMixin):
 
         self._shadow_renderer.close()  # type: ignore[union-attr]
 
+        if self._border_overlay_renderer is not None:
+            self._border_overlay_renderer.close()
+
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.close()
@@ -577,6 +648,61 @@ class Renderers(_NoNewAttrMixin):
 
         """
         return self._shadow_renderer
+
+    @property
+    def border_overlay_renderer(self) -> Renderer | None:  # numpydoc ignore=RT01
+        """Overlay renderer that draws interior subplot seams, if any."""
+        return self._border_overlay_renderer
+
+    def _build_border_overlay_renderer(
+        self, *, border_color, border_width
+    ) -> Renderer | None:
+        """Create an overlay renderer that draws every interior seam once.
+
+        Each interior edge of a subplot viewport is expressed directly
+        in window-normalized coordinates, so both halves of every seam
+        rasterize to the same pixel row/column regardless of how any
+        particular neighbor's viewport happens to round.
+        """
+        segments = _collect_interior_seams(
+            [renderer.GetViewport() for renderer in self._renderers]
+        )
+        if not segments:
+            return None
+
+        overlay = Renderer(self._plotter, border=False)
+        overlay.viewport = (0, 0, 1, 1)
+        overlay.SetInteractive(False)
+        overlay.SetErase(False)
+        overlay.SetBackgroundAlpha(0.0)
+
+        points = _vtk.vtkPoints()
+        lines = _vtk.vtkCellArray()
+        for (x0, y0), (x1, y1) in segments:
+            p0 = points.InsertNextPoint(x0, y0, 0.0)
+            p1 = points.InsertNextPoint(x1, y1, 0.0)
+            lines.InsertNextCell(2)
+            lines.InsertCellPoint(p0)
+            lines.InsertCellPoint(p1)
+        poly = _vtk.vtkPolyData()
+        poly.SetPoints(points)
+        poly.SetLines(lines)
+
+        coordinate = _vtk.vtkCoordinate()
+        coordinate.SetCoordinateSystemToNormalizedViewport()
+
+        mapper = _vtk.vtkPolyDataMapper2D()
+        mapper.SetInputData(poly)
+        mapper.SetTransformCoordinate(coordinate)
+
+        actor = _vtk.vtkActor2D()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(Color(border_color).float_rgb)
+        actor.GetProperty().SetLineWidth(border_width)
+
+        overlay.AddViewProp(actor)
+        overlay._border_actor = actor
+        return overlay
 
     @_deprecate_positional_args(allowed=['color'])
     def set_background(  # noqa: PLR0917
@@ -744,3 +870,4 @@ class Renderers(_NoNewAttrMixin):
     def __del__(self):
         """Destructor."""
         self._shadow_renderer = None
+        self._border_overlay_renderer = None

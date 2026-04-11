@@ -202,9 +202,10 @@ def test_border_defaults_from_theme():
     try:
         expected_color = pv.global_theme.border_color
         expected_width = pv.global_theme.border_width
-        for renderer in pl.renderers:
-            assert renderer.border_color == expected_color
-            assert renderer.border_width == expected_width
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay.border_color == expected_color
+        assert overlay.border_width == expected_width
     finally:
         pl.close()
 
@@ -212,9 +213,10 @@ def test_border_defaults_from_theme():
 def test_border_explicit_overrides_theme():
     pl = pv.Plotter(shape=(1, 2), border_color='red', border_width=3)
     try:
-        for renderer in pl.renderers:
-            assert renderer.border_color == pv.Color('red')
-            assert renderer.border_width == 3
+        overlay = pl.renderers.border_overlay_renderer
+        assert overlay is not None
+        assert overlay.border_color == pv.Color('red')
+        assert overlay.border_width == 3
     finally:
         pl.close()
 
@@ -235,59 +237,60 @@ def test_add_border_edges_single_side(side):
         pl.close()
 
 
-def _border_line_count(renderer):
-    if not renderer.has_border:
+def _overlay_seam_count(pl):
+    overlay = pl.renderers.border_overlay_renderer
+    if overlay is None or overlay._border_actor is None:
         return 0
-    return renderer._border_actor.GetMapper().GetInput().GetNumberOfLines()
+    return overlay._border_actor.GetMapper().GetInput().GetNumberOfLines()
 
 
-def test_interior_border_1x2():
-    """A 1x2 plotter should draw exactly one seam per subplot."""
+def _per_renderer_has_border(pl):
+    return [renderer.has_border for renderer in pl.renderers]
+
+
+def test_interior_border_overlay_1x2():
+    """A 1x2 plotter gets one interior seam, drawn from the overlay renderer."""
     pl = pv.Plotter(shape=(1, 2))
     try:
-        # Each of the two renderers contributes its single interior edge
-        # (the left panel's right edge and the right panel's left edge).
-        assert _border_line_count(pl.renderers[0]) == 1
-        assert _border_line_count(pl.renderers[1]) == 1
+        # Per-subplot borders are dropped in favor of the shared overlay.
+        assert _per_renderer_has_border(pl) == [False, False]
+        # One vertical seam between the two subplots.
+        assert _overlay_seam_count(pl) == 1
     finally:
         pl.close()
 
 
-def test_interior_border_2x2():
-    """A 2x2 plotter should draw two interior edges per corner subplot."""
+def test_interior_border_overlay_2x2():
+    """A 2x2 plotter produces exactly two interior seams (one H, one V)."""
     pl = pv.Plotter(shape=(2, 2))
     try:
-        for renderer in pl.renderers:
-            # Every subplot in a 2x2 is a corner, so exactly two of its
-            # edges are interior (one horizontal + one vertical).
-            assert _border_line_count(renderer) == 2
+        assert _per_renderer_has_border(pl) == [False] * 4
+        # Two seams total: one horizontal and one vertical.
+        assert _overlay_seam_count(pl) == 2
     finally:
         pl.close()
 
 
-def test_interior_border_3x1_middle_has_two_edges():
-    """In a 3x1 layout the middle subplot has both top and bottom as interior."""
+def test_interior_border_overlay_3x1():
+    """A 3x1 plotter produces two horizontal seams from the overlay."""
     pl = pv.Plotter(shape=(3, 1))
     try:
-        # Row 0 (top): only its bottom edge is interior.
-        assert _border_line_count(pl.renderers[0]) == 1
-        # Row 1 (middle): top and bottom edges are interior.
-        assert _border_line_count(pl.renderers[1]) == 2
-        # Row 2 (bottom): only its top edge is interior.
-        assert _border_line_count(pl.renderers[2]) == 1
+        assert _per_renderer_has_border(pl) == [False] * 3
+        # Two horizontal seams between the three stacked rows.
+        assert _overlay_seam_count(pl) == 2
     finally:
         pl.close()
 
 
-def test_interior_border_string_shape():
-    """String-shape layouts should also render interior-only borders."""
+def test_interior_border_overlay_string_shape():
+    """String-shape layouts also route seams through the overlay renderer."""
     pl = pv.Plotter(shape='1|3')
     try:
-        for renderer in pl.renderers:
-            count = _border_line_count(renderer)
-            # Every subplot in a "1|3" layout has at least one interior
-            # neighbor, and none has all four edges interior.
-            assert 1 <= count <= 3
+        assert all(h is False for h in _per_renderer_has_border(pl))
+        # "1|3" has one vertical seam separating the big left panel from
+        # the right column, plus two horizontal seams inside the right
+        # column — 3 segments total.
+        assert _overlay_seam_count(pl) == 3
     finally:
         pl.close()
 
@@ -297,6 +300,7 @@ def test_interior_border_disabled_single_plotter():
     pl = pv.Plotter()
     try:
         assert not pl.renderer.has_border
+        assert pl.renderers.border_overlay_renderer is None
     finally:
         pl.close()
 
@@ -310,7 +314,9 @@ def test_interior_border_preserves_full_border_on_explicit_single():
     pl = pv.Plotter(border=True)
     try:
         assert pl.renderer.has_border
-        assert _border_line_count(pl.renderer) == 4
+        # The lone renderer keeps all four edges of its own border actor.
+        assert pl.renderer._border_actor.GetMapper().GetInput().GetNumberOfLines() == 4
+        assert pl.renderers.border_overlay_renderer is None
     finally:
         pl.close()
 
