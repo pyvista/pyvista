@@ -12,16 +12,19 @@ port of CPython to WebAssembly that runs in browsers, enabling Python
 execution client-side without a server.
 
 In WASM environments:
-- The regular VTK Python package (compiled for x86/ARM) is not available
-- VTK.wasm (VTK C++ compiled to WebAssembly) provides rendering capabilities
-- pyvista-wasm bridges PyVista's API with VTK.wasm
-- sys.platform returns 'emscripten' and platform.machine() returns 'wasm32'
 
-See Also
---------
-- https://pyodide.org/ - Pyodide documentation
-- https://pyodide.org/en/stable/usage/wasm-constraints.html - WASM constraints
-- https://github.com/tkoyama010/pyvista-wasm - pyvista-wasm package
+* The regular VTK Python package (compiled for x86/ARM) is not available.
+* VTK.wasm (VTK C++ compiled to WebAssembly) provides rendering capabilities.
+* pyvista-wasm bridges PyVista's API with VTK.wasm.
+* sys.platform returns 'emscripten' and platform.machine() returns 'wasm32'.
+
+References
+----------
+For more information, see:
+
+* Pyodide documentation: https://pyodide.org/
+* WASM constraints: https://pyodide.org/en/stable/usage/wasm-constraints.html
+* pyvista-wasm package: https://github.com/tkoyama010/pyvista-wasm
 
 Examples
 --------

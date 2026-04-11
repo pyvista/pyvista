@@ -62,7 +62,8 @@ jupyter = [
 # WASM/Pyodide support for browser-based Python environments (JupyterLite, Pyodide, Stlite)
 # Note: In WASM environments, the regular VTK package is not used; instead VTK.wasm
 # is provided via pyvista-wasm. Install with: pip install "pyvista[wasm]"
-wasm = ['pyvista-wasm>=0.3.0']
+# Note: pyvista-wasm requires Python>=3.12
+wasm = ['pyvista-wasm>=0.3.0; python_version >= "3.12"']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
