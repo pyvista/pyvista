@@ -78,6 +78,8 @@ def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
 
 @pytest.fixture
 def vtk_poly_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
+    # sphere_with_invalid_arrays is a pv.PolyData, we need a vtkPolyData
+    # to validate pv.wrap()'s validation behavior.
     vtk_poly = _vtk.vtkPolyData()
     vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
     return vtk_poly
