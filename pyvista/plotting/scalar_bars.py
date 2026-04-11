@@ -333,6 +333,7 @@ class ScalarBars(_NoNewAttrMixin):
             which is not shared with other subplots, even if the input title is the same.
 
             .. note::
+
                 Scalar bars are managed by a dictionary with the title
                 as the key. By default, if a scalar bar with the same title
                 already exists, the scalar bar will be shared.
