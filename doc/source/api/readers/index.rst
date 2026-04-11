@@ -135,7 +135,7 @@ for zero-config discovery at install time.
 A writer handler is a callable ``handler(dataset, path, **kwargs)``
 that writes *dataset* to *path*.  Any extra keyword arguments passed
 to :meth:`pyvista.DataObject.save` beyond its documented parameters
-are forwarded verbatim to the handler as ``**kwargs`` — use them to
+are forwarded verbatim to the handler as ``**kwargs``. Use them to
 expose format-specific options such as compression level, thread
 count, or chunking.  When no custom writer is registered for the
 target extension, passing extra keyword arguments to
@@ -156,18 +156,18 @@ discovered automatically when installed:
 
 When :meth:`~pyvista.DataObject.save` is called, custom writers
 registered via :func:`pyvista.register_writer` are dispatched *before*
-built-in VTK writers for the same extension — mirroring the dispatch
+built-in VTK writers for the same extension, mirroring the dispatch
 order used by :func:`pyvista.read`.  By default, registering a
 handler for an extension that collides with a built-in PyVista writer
 raises :class:`ValueError`; pass ``override=True`` to replace the
 built-in writer.
 
 
-The ``.pv`` format — PyVista's native binary format
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``.pv`` Format: PyVista's Native Binary Format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyVista has a native Zstd-compressed binary format with the ``.pv``
-extension, implemented by the
+PyVista has a native ``zstd``-compressed binary format with the
+``.pv`` extension, implemented by the
 `pyvista-zstd <https://github.com/pyvista/pyvista-zstd>`_ companion
 package.  It is a compact, multi-threaded format for fast dataset
 I/O and is included in the ``io`` extra::
@@ -175,8 +175,8 @@ I/O and is included in the ``io`` extra::
    pip install pyvista[io]
 
 Once installed, ``.pv`` round-trips "just work" via the
-``pyvista.readers`` and ``pyvista.writers`` entry-point hooks — no
-manual registration is needed::
+``pyvista.readers`` and ``pyvista.writers`` entry-point hooks
+without any manual registration::
 
    import pyvista as pv
 
@@ -188,7 +188,7 @@ Supported dataset types include :class:`~pyvista.ImageData`,
 :class:`~pyvista.PolyData`, :class:`~pyvista.StructuredGrid`,
 :class:`~pyvista.RectilinearGrid`, :class:`~pyvista.UnstructuredGrid`,
 :class:`~pyvista.MultiBlock`, and
-:class:`~pyvista.ExplicitStructuredGrid`.  The format uses Zstd
+:class:`~pyvista.ExplicitStructuredGrid`.  The format uses ``zstd``
 compression with multi-threaded encode/decode and is a good choice
 over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.
