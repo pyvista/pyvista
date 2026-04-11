@@ -39,7 +39,7 @@ readme = 'README.rst'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter]']
+all = ['pyvista[colormaps,io,jupyter,wasm]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 io = ['fsspec', 'imageio', 'meshio>=5.2']
 jupyter = [
@@ -53,6 +53,10 @@ jupyter = [
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
 ]
+# WASM/Pyodide support for browser-based Python environments (JupyterLite, Pyodide, Stlite)
+# Note: In WASM environments, the regular VTK package is not used; instead VTK.wasm
+# is provided via pyvista-wasm. Install with: pip install "pyvista[wasm]"
+wasm = ['pyvista-wasm>=0.3.0']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
