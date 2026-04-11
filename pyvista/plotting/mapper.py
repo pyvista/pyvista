@@ -107,17 +107,6 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         new_mapper.ShallowCopy(self)
         if hasattr(self, 'dataset'):
             new_mapper.dataset = self.dataset
-        if getattr(self, '_input_dataset', None) is not None:
-            new_mapper._input_dataset = self._input_dataset
-        # Reproduce the active-scalars pipeline so the copy maps the same
-        # array as the original.  Pipeline reconnection can clear VTK-level
-        # properties set by ShallowCopy, so restore array_name afterwards.
-        algo = getattr(self, '_active_scalars_algo', None)
-        if algo is not None:
-            new_mapper._update_active_scalars_algo(algo.scalars_name, algo.preference)
-        array_name = self.GetArrayName()
-        if array_name:
-            new_mapper.array_name = array_name
         return new_mapper
 
     @property
@@ -450,8 +439,9 @@ class _DataSetMapper(_BaseMapper):
     def array_name(self, name: str) -> None:
         self.SetArrayName(name)
         if self._active_scalars_algo is not None:
+            # The algorithm's setter calls Modified() on change, so the
+            # next render re-runs the pipeline against the new array.
             self._active_scalars_algo.scalars_name = name
-            self._active_scalars_algo.Modified()
 
     @property
     def _mapped_scalars(self) -> pv.pyvista_ndarray | None:
@@ -490,41 +480,95 @@ class _DataSetMapper(_BaseMapper):
                 direct_scalars_color_mode=True,
             )
 
-    def _update_active_scalars_algo(
+    def set_active_scalars(
         self,
         name: str,
-        preference: PointLiteral | CellLiteral,
+        preference: PointLiteral | CellLiteral = 'point',
     ) -> None:
-        """Create or update the internal active scalars algorithm.
+        """Set the active scalars for this mapper without mutating its dataset.
 
-        This inserts an :class:`ActiveScalarsAlgorithm` between the mapper's
+        Inserts an :class:`ActiveScalarsAlgorithm` between the mapper's
         current input and the mapper itself. The algorithm sets the active
-        scalars on a shallow copy of the input data, avoiding mutation of
-        the original dataset.
+        scalars on a shallow copy of the input data, so the original
+        dataset is never mutated and the same dataset can be shared across
+        multiple mappers with different active scalars.
+
+        If an algorithm is already in place, it is updated in place.
 
         Parameters
         ----------
         name : str
-            Name of the scalars to set as active.
+            Name of the scalars array to set as active.
 
-        preference : str
+        preference : str, default: 'point'
             Either ``'point'`` or ``'cell'``.
+
+        See Also
+        --------
+        clear_active_scalars
+        set_scalars
 
         """
         if self._active_scalars_algo is None:
             self._active_scalars_algo = ActiveScalarsAlgorithm(name=name, preference=preference)
-            # Get current mapper input and insert algo between it and mapper
+            # Splice the algo between the mapper and its current input.
             input_conn = self.GetInputConnection(0, 0)
             if input_conn is not None:
                 self._active_scalars_algo.SetInputConnection(0, input_conn)
             if self._input_dataset is not None:
                 set_algorithm_input(self._active_scalars_algo, self._input_dataset)
-            # Connect algo output -> mapper
             self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
         else:
             self._active_scalars_algo.scalars_name = name
             self._active_scalars_algo.preference = preference
-            self._active_scalars_algo.Modified()
+        # Also point the mapper at the array directly. SetInputConnection
+        # above clears the VTK-level array name, so this must come last.
+        self.SetArrayName(name)
+
+    def clear_active_scalars(self) -> None:
+        """Detach the active scalars algorithm, if any.
+
+        Reconnects the mapper directly to its original input. This is the
+        inverse of :meth:`set_active_scalars` and is typically used when
+        switching back to solid-color rendering.
+
+        See Also
+        --------
+        set_active_scalars
+
+        """
+        if self._active_scalars_algo is None:
+            return
+        algo = self._active_scalars_algo
+        self._active_scalars_algo = None
+        if self._input_dataset is not None:
+            set_algorithm_input(self, self._input_dataset)
+        else:
+            in_conn = algo.GetInputConnection(0, 0)
+            if in_conn is not None:
+                self.SetInputConnection(0, in_conn)
+
+    def copy(self) -> _BaseMapper:
+        """Create a copy of this mapper.
+
+        Reproduces the active-scalars pipeline so the copy maps the same
+        array as the original while remaining independent of it.
+
+        Returns
+        -------
+        pyvista.DataSetMapper
+            A copy of this dataset mapper with its own active-scalars
+            pipeline.
+
+        """
+        new_mapper = cast('_DataSetMapper', super().copy())
+        new_mapper._input_dataset = self._input_dataset
+        if self._active_scalars_algo is not None:
+            new_mapper.set_active_scalars(
+                self._active_scalars_algo.scalars_name,
+                self._active_scalars_algo.preference,
+            )
+        return new_mapper
 
     def _configure_scalars_mode(
         self,
@@ -573,7 +617,7 @@ class _DataSetMapper(_BaseMapper):
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
-                self._update_active_scalars_algo(scalars_name, 'point')
+                self.set_active_scalars(scalars_name, 'point')
                 self.scalar_map_mode = 'point'
             elif use_cells:
                 if (
@@ -581,7 +625,7 @@ class _DataSetMapper(_BaseMapper):
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
-                self._update_active_scalars_algo(scalars_name, 'cell')
+                self.set_active_scalars(scalars_name, 'cell')
                 self.scalar_map_mode = 'cell'
             else:
                 raise_not_matching(scalars, dataset)

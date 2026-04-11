@@ -202,8 +202,30 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
     def __init__(self, name: str, preference: PointLiteral | CellLiteral = 'point'):
         """Initialize algorithm."""
         super().__init__()
-        self.scalars_name = name
-        self.preference = preference
+        self._scalars_name = name
+        self._preference: PointLiteral | CellLiteral = preference
+
+    @property
+    def scalars_name(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the name of the active scalars array."""
+        return self._scalars_name
+
+    @scalars_name.setter
+    def scalars_name(self, name: str) -> None:
+        if name != self._scalars_name:
+            self._scalars_name = name
+            self.Modified()
+
+    @property
+    def preference(self) -> PointLiteral | CellLiteral:  # numpydoc ignore=RT01
+        """Return or set the preferred field association (``'point'`` or ``'cell'``)."""
+        return self._preference
+
+    @preference.setter
+    def preference(self, preference: PointLiteral | CellLiteral) -> None:
+        if preference != self._preference:
+            self._preference = preference
+            self.Modified()
 
     def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.

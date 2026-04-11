@@ -151,33 +151,38 @@ def test_mapper_pipeline_output_active_scalars(sphere):
 
 
 def test_mapper_array_name_setter_updates_pipeline(sphere):
-    """Verify array_name setter syncs with the internal pipeline."""
+    """Setting ``array_name`` must redirect the internal pipeline too."""
     sphere['data_a'] = sphere.points[:, 0]
     sphere['data_b'] = sphere.points[:, 2]
 
     mapper = DataSetMapper(dataset=sphere)
-    mapper.set_scalars(sphere['data_a'], 'data_a')
-    mapper.array_name = 'data_a'  # set explicitly, as plotter would
+    mapper.set_active_scalars('data_a', preference='point')
     assert mapper.array_name == 'data_a'
+    assert np.array_equal(mapper._mapped_scalars, sphere['data_a'])
 
     mapper.array_name = 'data_b'
     assert mapper.array_name == 'data_b'
-    # _mapped_scalars should reflect the new array
     assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
 
 
 def test_mapper_copy_preserves_scalars_config(sphere):
-    """Verify copy() reproduces the mapper's active scalars configuration."""
+    """copy() must reproduce the active-scalars pipeline."""
     sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
 
     mapper = DataSetMapper(dataset=sphere)
-    mapper.set_scalars(sphere['data_a'], 'data_a')
-    mapper.array_name = 'data_a'  # set explicitly, as plotter would
+    mapper.set_active_scalars('data_a', preference='point')
 
     mapper_copy = mapper.copy()
-    assert mapper_copy.array_name == 'data_a'
+    assert mapper_copy is not mapper
     assert mapper_copy.dataset is sphere
+    assert mapper_copy.array_name == 'data_a'
     assert np.array_equal(mapper_copy._mapped_scalars, sphere['data_a'])
+
+    # The copy's pipeline must be independent of the original
+    mapper_copy.set_active_scalars('data_b', preference='point')
+    assert mapper.array_name == 'data_a'
+    assert mapper_copy.array_name == 'data_b'
 
 
 def test_mapper_dataset_setter_reconnects_pipeline(sphere):
@@ -235,6 +240,103 @@ def test_mapped_scalars_fallback_without_algo(sphere):
     # Also verify the None-dataset edge case
     empty_mapper = DataSetMapper()
     assert empty_mapper._mapped_scalars is None
+
+
+def test_set_active_scalars_does_not_mutate_dataset(sphere):
+    """Public API: set_active_scalars must leave the dataset unchanged."""
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+    sphere.set_active_scalars('data_a')
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_active_scalars('data_b', preference='point')
+
+    # Mapper points at data_b
+    assert mapper.array_name == 'data_b'
+    assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
+    # Dataset is untouched
+    assert sphere.active_scalars_name == 'data_a'
+
+
+def test_set_active_scalars_in_place_update(sphere):
+    """Calling set_active_scalars twice updates the existing algorithm."""
+    sphere['data_a'] = sphere.points[:, 0]
+    sphere['data_b'] = sphere.points[:, 2]
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_active_scalars('data_a', preference='point')
+    algo = mapper._active_scalars_algo
+    assert algo is not None
+
+    mapper.set_active_scalars('data_b', preference='point')
+    # The same algorithm instance must be reused — not a new pipeline
+    assert mapper._active_scalars_algo is algo
+    assert algo.scalars_name == 'data_b'
+    assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
+
+
+def test_set_active_scalars_cell_preference():
+    """Cell preference must wire the cell-data array, not point data."""
+    mesh = pv.Cube()
+    cell_array = np.arange(mesh.n_cells, dtype=float)
+    mesh.cell_data['c'] = cell_array
+
+    mapper = DataSetMapper(dataset=mesh)
+    mapper.set_active_scalars('c', preference='cell')
+
+    assert mapper._active_scalars_algo.preference == 'cell'
+    assert np.array_equal(mapper._mapped_scalars, cell_array)
+    # Verify the array is *not* on point data — exercises the cell branch
+    assert 'c' not in mesh.point_data
+
+
+def test_clear_active_scalars_detaches_pipeline(sphere):
+    """clear_active_scalars must remove the algorithm and reset the input."""
+    sphere['data'] = sphere.points[:, 0]
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_active_scalars('data', preference='point')
+    assert mapper._active_scalars_algo is not None
+
+    mapper.clear_active_scalars()
+    assert mapper._active_scalars_algo is None
+    # The mapper must still see its dataset
+    assert mapper.dataset is sphere
+    # And the VTK pipeline must produce valid output
+    mapper.update()
+    out = pv.wrap(mapper.GetInputDataObject(0, 0))
+    assert out.n_points == sphere.n_points
+
+
+def test_clear_active_scalars_noop_when_unset(sphere):
+    """Calling clear_active_scalars on a fresh mapper is a safe no-op."""
+    mapper = DataSetMapper(dataset=sphere)
+    assert mapper._active_scalars_algo is None
+    mapper.clear_active_scalars()
+    assert mapper._active_scalars_algo is None
+    assert mapper.dataset is sphere
+
+
+def test_clear_active_scalars_after_algorithm_input():
+    """clear_active_scalars must restore the upstream algorithm input.
+
+    When the mapper was originally fed by a vtkAlgorithm (not a dataset),
+    detaching the active-scalars algo must reconnect the mapper to that
+    upstream algorithm — not leave it dangling.
+    """
+    source = _vtk.vtkSphereSource()
+    source.SetRadius(2.0)
+
+    mapper = DataSetMapper()
+    mapper.dataset = source
+    mapper.set_active_scalars('Normals', preference='point')
+    assert mapper._active_scalars_algo is not None
+
+    mapper.clear_active_scalars()
+    mapper.update()
+    out = pv.wrap(mapper.GetInputDataObject(0, 0))
+    # Output bounds should still come from the upstream sphere source
+    assert np.isclose(np.max(np.abs(out.bounds)), 2.0)
 
 
 def test_as_rgba_uses_mapped_scalars(sphere):

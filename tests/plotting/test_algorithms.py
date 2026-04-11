@@ -266,3 +266,46 @@ def test_decimation(sphere_with_scalars):
     algo.Update()
     out = pv.wrap(algo.GetOutputDataObject(0))
     assert out.n_points < sphere_with_scalars.n_points
+
+
+def test_active_scalars_algo_modified_propagates(sphere_with_scalars):
+    """Re-running after Modified() must reflect the new array name.
+
+    Targets the rewritten ``RequestData`` — the Modified() pathway is what
+    lets ``DataSetMapper.set_active_scalars`` swap arrays in place without
+    re-splicing the pipeline.
+    """
+    sphere_with_scalars.point_data['x'] = sphere_with_scalars.points[:, 0]
+
+    algo = ActiveScalarsAlgorithm(name='x', preference='point')
+    set_algorithm_input(algo, sphere_with_scalars)
+    algo.Update()
+    assert algo.GetOutputDataObject(0).GetPointData().GetScalars().GetName() == 'x'
+
+    algo.scalars_name = 'z'  # setter calls Modified()
+    algo.Update()
+    assert algo.GetOutputDataObject(0).GetPointData().GetScalars().GetName() == 'z'
+
+
+def test_active_scalars_algo_does_not_mutate_input(sphere_with_scalars):
+    """The original mesh's active scalars must not change when the algo runs."""
+    sphere_with_scalars.point_data['x'] = sphere_with_scalars.points[:, 0]
+    sphere_with_scalars.set_active_scalars('x')
+
+    algo = active_scalars_algorithm(sphere_with_scalars, 'z', preference='point')
+    algo.Update()
+
+    assert sphere_with_scalars.active_scalars_name == 'x'
+
+
+def test_add_ids_preserves_active_scalars(sphere_with_scalars):
+    """Adding ID arrays must not steal the active-scalars slot."""
+    sphere_with_scalars.set_active_scalars('z')
+
+    algo = add_ids_algorithm(sphere_with_scalars, point_ids=True, cell_ids=True)
+    algo.Update()
+    out = pv.wrap(algo.GetOutputDataObject(0))
+
+    assert out.point_data.active_scalars_name == 'z'
+    # Original is also untouched
+    assert sphere_with_scalars.active_scalars_name == 'z'
