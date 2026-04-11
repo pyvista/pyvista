@@ -1145,7 +1145,11 @@ def test_copy_implicit_vtk_array(plane):
     # Use the connectivity filter to generate an implicit vtkDataArray
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
-    if pv.vtk_version_info >= (9, 4):
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        from vtkmodules.numpy_interface.vtk_implicit_array import VTKImplicitArray
+
+        assert isinstance(vtk_object, VTKImplicitArray)
+    elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
         assert type(vtk_object) is _vtk.vtkDataArray
     else:
@@ -1155,7 +1159,11 @@ def test_copy_implicit_vtk_array(plane):
     plane['test'] = conn['RegionId']
 
     new_vtk_object = plane['test'].VTKObject
-    if pv.vtk_version_info >= (9, 4):
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        from vtkmodules.numpy_interface.vtk_aos_array import VTKAOSArray
+
+        assert isinstance(new_vtk_object, VTKAOSArray)
+    elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
         assert type(new_vtk_object) is _vtk.vtkTypeInt64Array
     else:

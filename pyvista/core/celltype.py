@@ -785,6 +785,7 @@ class CellType(IntEnum):
             None
             if _vtk_class_name.startswith(('vtkParametric', 'vtkHigherOrder'))  # Abstract
             or _vtk_class_name in ('vtkLagrangePyramid', 'vtkBezierPyramid')  # Missing vtk class
+            or _vtk_class_name == 'UnknownClass'  # Abstract/missing classes in vtk 9.7.0
             else getattr(_vtk, _vtk_class_name)
         )
 
