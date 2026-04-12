@@ -1173,6 +1173,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> bool(np.any(np.isnan(cleaned.point_data['values'])))
         False
 
+        See :ref:`using_filters_example` for an end-to-end filter pipeline
+        that begins with this filter.
+
         """
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
