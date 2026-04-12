@@ -24,5 +24,23 @@ coverage-docs:
 
 # Install vale first with `pip install vale`
 docstyle:
-	@echo "Running vale"
-	@vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst,_autosummary,source/examples}*'
+	@vale --config doc/.vale.ini doc pyvista examples --glob='!*{_build,AUTHORS.rst,_
+	@echo "Running vale"autosummary,source/examples}*'
+
+sync:
+	@echo "Installing dev dependencies"
+	@uv sync --group dev
+	@uv tool install tox --with tox-uv
+
+lint:
+	@echo "Running pre-commit"
+	@uv run pre-commit run --all-files
+
+typecheck:
+	@echo "Running mypy"
+	@tox run -e mypy
+
+# Extra pytest args can be passed via ARGS, e.g. `make test ARGS="-n 10 -k filters"`
+test:
+	@echo "Running tests"
+	@uv run pytest -vv tests/ $(ARGS)

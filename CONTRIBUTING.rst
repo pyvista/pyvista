@@ -151,6 +151,36 @@ This section provides a guide to how we conduct development in the
 PyVista repository. Please follow the practices outlined here when
 contributing directly to this repository.
 
+Quick Development Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, the most common developer tasks are wrapped as ``make``
+targets in the repository's top-level ``Makefile``. These are the
+recommended entry points for day-to-day development:
+
+.. code-block:: bash
+
+    make sync       # install dev dependencies via uv and tox (+tox-uv)
+    make lint       # run pre-commit on all files
+    make typecheck  # run mypy via tox
+    make test       # run the unit test suite with pytest
+
+Additional arguments can be forwarded to ``pytest`` via the ``ARGS``
+variable, for example:
+
+.. code-block:: bash
+
+    make test ARGS="-n 10"          # run tests in parallel with 10 workers
+    make test ARGS="-k filters"     # only run tests matching "filters"
+    make test ARGS="-n auto -x"     # auto parallelism, stop on first failure
+
+These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
+and ``pytest``. If you need more control (e.g., running against a
+specific ``vtk`` or ``numpy`` version, or building documentation), see
+the `Unit Testing`_, `Style Checking`_, and `Building the
+Documentation`_ sections below, which document the underlying tools
+directly.
+
 Guidelines
 ~~~~~~~~~~
 
