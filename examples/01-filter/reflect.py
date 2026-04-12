@@ -4,13 +4,14 @@
 Reflect Meshes
 ~~~~~~~~~~~~~~
 
-This example reflects a mesh across a plane.
+This example reflects a mesh across a plane using
+:meth:`~pyvista.DataObjectFilters.reflect`.
 
 """
 
 from __future__ import annotations
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 # %%
@@ -26,9 +27,9 @@ airplane_reflected = airplane.reflect((0, 0, 1), point=(0, 0, -100))
 
 # %%
 # Plot the reflected mesh:
-p = pyvista.Plotter()
-p.add_mesh(airplane, show_edges=True)
-p.add_mesh(airplane_reflected, show_edges=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(airplane, show_edges=True)
+pl.add_mesh(airplane_reflected, show_edges=True)
+pl.show()
 # %%
 # .. tags:: filter

@@ -1,4 +1,6 @@
 """
+.. _legend_example:
+
 Legends and glyphs
 ~~~~~~~~~~~~~~~~~~
 
@@ -21,7 +23,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # Default legend for glyphs
 # +++++++++++++++++++++++++
 #
-# The method :func:`pyvista.PolyData.add_legend` is able to retrieve and use
+# The method :func:`~pyvista.Plotter.add_legend` is able to retrieve and use
 # the glyphs for each plot.
 #
 pl = pv.Plotter()
@@ -36,7 +38,9 @@ mesh['NormalInversed'] = -1 * mesh['Normals'].copy()
 arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 pl.add_mesh(arrows, color='blue', label='Top pressure')
 
-arrows_inversed = mesh.glyph(scale='NormalInversed', orient='NormalInversed', tolerance=0.05)
+arrows_inversed = mesh.glyph(
+    scale='NormalInversed', orient='NormalInversed', tolerance=0.05
+)
 pl.add_mesh(arrows_inversed, color='red', label='Lower pressure')
 
 # Adding surface mesh
@@ -52,7 +56,7 @@ pl.show()
 # Using custom legends
 # ++++++++++++++++++++
 #
-# You can use specific labels with :func:`pyvista.PolyData.add_legend`
+# You can use specific labels with :func:`~pyvista.Plotter.add_legend`
 #
 
 pl = pv.Plotter()
@@ -71,7 +75,7 @@ legend = ['New top pressure', 'New lower pressure']
 pl.add_legend(legend)
 
 # In this case, the default values are used, not the ones from the
-# :func:`pyvista.PolyData.add_mesh`.
+# :func:`~pyvista.Plotter.add_mesh`.
 
 pl.show()
 

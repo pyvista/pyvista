@@ -7,10 +7,8 @@ import pytest
 
 import pyvista as pv
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: PT004
-    """A large number of tests here fail gc."""
+# A large number of tests here fail gc
+pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture
@@ -31,9 +29,10 @@ def test_cube_axes_actor():
     assert isinstance(actor.camera, pv.Camera)
 
     # ensure label format is set to default
-    assert actor.x_label_format == '%.1f'
-    assert actor.y_label_format == '%.1f'
-    assert actor.z_label_format == '%.1f'
+    expected_fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
+    assert actor.x_label_format == expected_fmt
+    assert actor.y_label_format == expected_fmt
+    assert actor.z_label_format == expected_fmt
 
 
 def test_labels(cube_axes_actor):
@@ -50,7 +49,7 @@ def test_labels(cube_axes_actor):
     assert np.allclose(values, expected)
 
     # standard format
-    cube_axes_actor.z_label_format = '%.1f'
+    cube_axes_actor.z_label_format = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
     assert len(cube_axes_actor.z_labels) == 5
     assert all(len(label) < 5 for label in cube_axes_actor.z_labels)
 
@@ -111,11 +110,43 @@ def test_axis_minor_tick_visibility(cube_axes_actor):
     assert cube_axes_actor.z_axis_minor_tick_visibility is False
 
 
-def test_offset(cube_axes_actor):
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 3, 0),
+    reason='title offset is a tuple of floats from vtk >= 9.3',
+)
+def test_title_offset(cube_axes_actor):
     assert isinstance(cube_axes_actor.title_offset, float)
     cube_axes_actor.title_offset = 0.01
     assert cube_axes_actor.title_offset == 0.01
 
+    with pytest.warns(
+        UserWarning,
+        match=r'Setting title_offset with a sequence is only supported from vtk >= 9\.3. '
+        rf'Considering only the second value \(ie\. y-offset\) of {(y := 0.02)}',
+    ):
+        cube_axes_actor.title_offset = [0.01, y]
+    assert cube_axes_actor.title_offset == y
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_title_offset_sequence(cube_axes_actor):
+    assert isinstance(cube_axes_actor.title_offset, tuple)
+    cube_axes_actor.title_offset = (t := (0.01, 0.02))
+    assert cube_axes_actor.title_offset == t
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_title_offset_float(cube_axes_actor):
+    with pytest.warns(
+        UserWarning,
+        match=r'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a '
+        r'sequence of \(x,y\) offsets. Setting the x offset to 0\.0',
+    ):
+        cube_axes_actor.title_offset = (t := 0.01)
+    assert cube_axes_actor.title_offset == (0.0, t)
+
+
+def test_label_offset(cube_axes_actor):
     assert isinstance(cube_axes_actor.label_offset, float)
     cube_axes_actor.label_offset = 0.01
     assert cube_axes_actor.label_offset == 0.01

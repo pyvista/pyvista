@@ -1,28 +1,28 @@
 from __future__ import annotations
 
-import platform
-
 import numpy as np
 import pytest
+from pytest_cases import parametrize
 import scipy
-import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
+from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
 
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
-
 
 @pytest.fixture
 def actor():
     return pv.Plotter().add_mesh(pv.Plane())
+
+
+@pytest.fixture
+def volume():
+    return pv.Plotter().add_volume(pv.Wavelet())
 
 
 @pytest.fixture
@@ -51,6 +51,16 @@ def dummy_actor(actor):
     assert isinstance(dummy_actor, _Prop3DMixin)
     assert dummy_actor.bounds == actor.GetBounds()
     return dummy_actor
+
+
+@pytest.fixture
+def point_cloud_actor():
+    rng = np.random.default_rng(0)
+    points = rng.random((100, 3))
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = points[:, 2]
+    pl = pv.Plotter()
+    return pl.add_mesh(cloud, scalars='scalars', style='points')
 
 
 @pytest.fixture
@@ -101,25 +111,39 @@ def test_actor_from_plotter():
     assert 'Mapper' in repr(actor)
 
 
-def test_actor_copy_deep(actor):
-    actor_copy = actor.copy()
-    assert actor_copy is not actor
+@pytest.mark.parametrize('include_mapper', [True, False])
+@pytest.mark.parametrize(('prop3d', 'prop_attr'), [(pv.Volume, 'shade'), (pv.Actor, 'lighting')])
+def test_actor_copy_deep(prop3d, prop_attr, actor, volume, include_mapper):
+    obj = actor if prop3d is pv.Actor else volume
+    if include_mapper:
+        assert obj.mapper is not None
+    else:
+        obj.mapper = None
+        assert obj.mapper is None
 
-    assert actor_copy.prop is not actor.prop
-    actor_copy.prop.lighting = not actor_copy.prop.lighting
-    assert actor_copy.prop.lighting is not actor.prop.lighting
+    copied = obj.copy()
+    assert copied is not obj
+    assert copied.prop is not obj.prop
 
-    assert actor_copy.mapper is not actor.mapper
-    assert actor_copy.mapper.dataset is actor.mapper.dataset
-    actor_copy.mapper.dataset = None
-    assert actor.mapper.dataset is not None
+    setattr(copied.prop, prop_attr, not getattr(copied.prop, prop_attr))
+    assert getattr(copied.prop, prop_attr) is not getattr(obj.prop, prop_attr)
+
+    if include_mapper:
+        assert copied.mapper is not obj.mapper
+        assert copied.mapper.dataset is obj.mapper.dataset
+        copied.mapper.dataset = None
+        assert obj.mapper.dataset is not None
+    else:
+        assert copied.mapper is None
 
 
-def test_actor_copy_shallow(actor):
-    actor_copy = actor.copy(deep=False)
-    assert actor_copy is not actor
-    assert actor_copy.prop is actor.prop
-    assert actor_copy.mapper is actor.mapper
+@pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
+def test_actor_copy_shallow(prop3d, actor, volume):
+    obj = actor if prop3d is pv.Actor else volume
+    copied = obj.copy(deep=False)
+    assert copied is not obj
+    assert copied.prop is obj.prop
+    assert copied.mapper is obj.mapper
 
 
 def test_actor_mblock_copy_shallow(actor_from_multi_block):
@@ -130,21 +154,17 @@ def test_actor_mblock_copy_shallow(actor_from_multi_block):
     assert actor_copy.mapper.dataset is actor_from_multi_block.mapper.dataset
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_actor_texture(actor):
     texture = examples.download_masonry_texture()
     actor.texture = texture
     assert actor.texture is texture
 
 
-def test_actor_pickable(actor):
-    actor.pickable = True
-    assert actor.pickable is True
-
-
-def test_actor_visible(actor):
-    actor.visibility = True
-    assert actor.visibility is True
+@parametrize(attr=['pickable', 'visibility', 'force_opaque', 'use_bounds'])
+def test_actor_bool_attributes(actor: pv.Actor, attr: str):
+    setattr(actor, attr, v := True)
+    assert getattr(actor, attr) == v
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
@@ -228,7 +248,9 @@ def test_actor_user_matrix(klass, actor, dummy_actor):
     actor = actor if klass == 'Prop3D' else dummy_actor
     assert np.allclose(actor.user_matrix, np.eye(4))
 
-    arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
+    arr = np.array(
+        [[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]]
+    )
 
     actor.user_matrix = arr
     assert isinstance(actor.user_matrix, np.ndarray)
@@ -250,7 +272,7 @@ def test_actor_center(klass, actor, dummy_actor):
 
 def test_actor_name(actor):
     actor.name = 1
-    assert actor._name == 1
+    assert actor._name == '1'
 
     with pytest.raises(ValueError, match='Name must be truthy'):
         actor.name = None
@@ -268,15 +290,17 @@ def test_actor_backface_prop(actor):
 
 
 def test_vol_actor_prop(vol_actor):
-    assert isinstance(vol_actor.prop, vtk.vtkVolumeProperty)
+    assert isinstance(vol_actor.prop, _vtk.vtkVolumeProperty)
 
-    prop = vtk.vtkVolumeProperty()
+    prop = _vtk.vtkVolumeProperty()
     vol_actor.prop = prop
     assert vol_actor.prop is prop
 
 
 @pytest.mark.parametrize(
-    'func', [np.array, scipy.spatial.transform.Rotation.from_matrix], ids=['numpy', 'scipy']
+    'func',
+    [np.array, scipy.spatial.transform.Rotation.from_matrix],
+    ids=['numpy', 'scipy'],
 )
 def test_rotation_from(actor, func):
     array = [
@@ -331,3 +355,282 @@ def test_convert_orientation_to_rotation_matrix(order):
     assert isinstance(actual_orientation, tuple)
     assert len(actual_orientation) == 3
     assert np.allclose(actual_orientation, orientation)
+
+
+@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+def test_transform_actor(actor, multiply_mode):
+    translation = pv.Transform().translate((1, 2, 3))
+    scaling = pv.Transform().scale(2)
+
+    expected = pv.Transform([translation, scaling], multiply_mode=multiply_mode)
+
+    actor1 = actor.transform(translation, multiply_mode=multiply_mode, inplace=True)
+    assert actor1 is actor
+    actor2 = actor1.transform(scaling, multiply_mode=multiply_mode, inplace=False)
+    assert actor2 is not actor1
+
+    assert np.allclose(actor2.user_matrix, expected.matrix)
+
+
+def test_follower():
+    mesh = pv.Sphere()
+    mapper = pv.DataSetMapper(mesh)
+    follower = pv.Follower(mapper=mapper)
+    camera = pv.Camera()
+    follower.camera = camera
+    assert follower.mapper is mapper
+    assert follower.prop is not None
+    assert follower.camera is camera
+
+
+def test_add_shader_replacement(point_cloud_actor):
+    actor = point_cloud_actor
+    shader_prop = actor.GetShaderProperty()
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+    actor.add_shader_replacement(
+        'vertex',
+        '//VTK::LineWidthGLES30::Impl',
+        'gl_Position.z = 0.0;\n//VTK::LineWidthGLES30::Impl\n',
+    )
+    assert '_user' in actor._shader_replacements
+    assert len(actor._shader_replacements['_user']) == 1
+    assert shader_prop.GetNumberOfShaderReplacements() == 1
+
+    actor.clear_shader_replacements(_feature_name='_user')
+    assert '_user' not in actor._shader_replacements
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+
+def test_shader_replacement_invalid_type(point_cloud_actor):
+    with pytest.raises(ValueError, match='Invalid shader_type'):
+        point_cloud_actor.add_shader_replacement(
+            'invalid',
+            '//VTK::Color::Impl',
+            'code;',
+        )
+
+
+def test_shader_replacement_conflict(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.add_shader_replacement(
+        'vertex',
+        '//VTK::LineWidthGLES30::Impl',
+        'code1;',
+        _feature_name='feature_a',
+    )
+    with pytest.raises(ValueError, match='conflict'):
+        actor.add_shader_replacement(
+            'vertex',
+            '//VTK::LineWidthGLES30::Impl',
+            'code2;',
+            _feature_name='feature_b',
+        )
+
+
+def test_clear_all_shader_replacements(point_cloud_actor):
+    actor = point_cloud_actor
+    shader_prop = actor.GetShaderProperty()
+    actor.add_shader_replacement(
+        'vertex',
+        '//VTK::LineWidthGLES30::Impl',
+        'code1;',
+        _feature_name='a',
+    )
+    actor.add_shader_replacement(
+        'fragment',
+        '//VTK::Color::Impl',
+        'code2;',
+        _feature_name='b',
+    )
+    assert len(actor._shader_replacements) == 2
+    assert shader_prop.GetNumberOfShaderReplacements() == 2
+
+    actor.clear_shader_replacements()
+    assert len(actor._shader_replacements) == 0
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_enable_disable_mip(point_cloud_actor):
+    actor = point_cloud_actor
+    shader_prop = actor.GetShaderProperty()
+    actor.enable_maximum_intensity_projection()
+    assert 'mip' in actor._shader_replacements
+    assert shader_prop.GetNumberOfShaderReplacements() == 1
+
+    actor.disable_maximum_intensity_projection()
+    assert 'mip' not in actor._shader_replacements
+    assert shader_prop.GetNumberOfShaderReplacements() == 0
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_with_clim(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.enable_maximum_intensity_projection(clim=(0.0, 1.0))
+    assert 'mip' in actor._shader_replacements
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_no_scalars():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(cloud, style='points')
+    actor.mapper.dataset.clear_data()
+
+    with pytest.raises(ValueError, match='scalars'):
+        actor.enable_maximum_intensity_projection()
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_opacity_warning(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.prop.opacity = 0.5
+
+    with pytest.warns(UserWarning, match='[Oo]pacity'):
+        actor.enable_maximum_intensity_projection()
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_idempotent(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.enable_maximum_intensity_projection()
+    assert len(actor._shader_replacements['mip']) == 1
+
+    actor.enable_maximum_intensity_projection(clim=(0.0, 2.0))
+    assert len(actor._shader_replacements['mip']) == 1
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_no_mapper():
+    actor = pv.Actor()
+    with pytest.raises(ValueError, match='mapper'):
+        actor.enable_maximum_intensity_projection()
+
+
+@pytest.mark.needs_vtk_version(less_than=(9, 3))
+def test_mip_vtk_version_error():
+    actor = pv.Actor()
+    with pytest.raises(RuntimeError, match=r'VTK >= 9\.3'):
+        actor.enable_maximum_intensity_projection()
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_set_point_sprite_shape(shape):
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        style='points',
+        render_points_as_spheres=False,
+        point_size=20,
+    )
+    actor.set_point_sprite_shape(shape)
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_clear_point_sprite_shape(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.set_point_sprite_shape('circle')
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.clear_point_sprite_shape()
+    assert 'point_sprite' not in actor._shader_replacements
+
+
+def test_point_sprite_invalid_shape(point_cloud_actor):
+    with pytest.raises(ValueError, match='Invalid point sprite shape'):
+        point_cloud_actor.set_point_sprite_shape('pentagon')
+
+
+def test_point_sprite_shapes_match_enum():
+    """Ensure _POINT_SPRITE_SHADERS keys stay in sync with the pv.PointSpriteShape enum."""
+    assert set(_POINT_SPRITE_SHADERS) == {s.value for s in pv.PointSpriteShape}
+
+
+def test_add_mesh_point_shape():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(cloud, style='points', point_shape='circle', point_size=20)
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_add_mesh_point_shape_enum():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    actor = pl.add_mesh(cloud, style='points', point_shape=pv.PointSpriteShape.STAR, point_size=20)
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_set_point_sprite_shape_enum(point_cloud_actor):
+    point_cloud_actor.set_point_sprite_shape(pv.PointSpriteShape.HEXAGON)
+    assert 'point_sprite' in point_cloud_actor._shader_replacements
+
+
+def test_add_mesh_point_shape_disables_spheres():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    pl = pv.Plotter()
+    with pytest.warns(UserWarning, match='render_points_as_spheres'):
+        actor = pl.add_mesh(
+            cloud,
+            style='points',
+            point_shape='diamond',
+            render_points_as_spheres=True,
+        )
+    assert 'point_sprite' in actor._shader_replacements
+    assert not actor.prop.render_points_as_spheres
+
+
+def test_theme_point_shape():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    try:
+        pv.global_theme.point_shape = 'hexagon'
+        pl = pv.Plotter()
+        actor = pl.add_mesh(cloud, style='points')
+        assert 'point_sprite' in actor._shader_replacements
+    finally:
+        pv.global_theme.point_shape = None
+
+
+def test_theme_point_shape_disables_spheres():
+    cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+    try:
+        pv.global_theme.point_shape = 'circle'
+        pv.global_theme.render_points_as_spheres = True
+        pl = pv.Plotter()
+        with pytest.warns(UserWarning, match='render_points_as_spheres'):
+            actor = pl.add_mesh(cloud, style='points')
+        assert 'point_sprite' in actor._shader_replacements
+        assert not actor.prop.render_points_as_spheres
+    finally:
+        pv.global_theme.point_shape = None
+        pv.global_theme.render_points_as_spheres = False
+
+
+def test_theme_point_shape_invalid():
+    with pytest.raises(ValueError, match='Invalid point_shape'):
+        pv.global_theme.point_shape = 'pentagon'
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_and_point_sprite_coexist(point_cloud_actor):
+    actor = point_cloud_actor
+    actor.enable_maximum_intensity_projection()
+    actor.set_point_sprite_shape('circle')
+
+    assert 'mip' in actor._shader_replacements
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.disable_maximum_intensity_projection()
+    assert 'mip' not in actor._shader_replacements
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.enable_maximum_intensity_projection()
+    assert 'mip' in actor._shader_replacements
+
+    actor.clear_point_sprite_shape()
+    assert 'point_sprite' not in actor._shader_replacements
+    assert 'mip' in actor._shader_replacements

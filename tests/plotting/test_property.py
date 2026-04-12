@@ -46,7 +46,7 @@ def test_property_opacity(prop):
         prop.opacity = 2
 
 
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Functions not implemented before 9.3.X')
+@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_property_edge_opacity(prop):
     edge_opacity = 0.5
     prop.edge_opacity = edge_opacity
@@ -173,11 +173,6 @@ def test_property_specular_color(prop):
 
 def test_property_anisotropy(prop):
     value = 0.1
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.anisotropy = value
-        return
-
     assert isinstance(prop.anisotropy, float)
     prop.anisotropy = value
     assert prop.anisotropy == value

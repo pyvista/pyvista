@@ -4,14 +4,14 @@
 Chart Basics
 ~~~~~~~~~~~~
 
-This example shows how different types of charts can be added to the scene. A more complex example, showing how to
-combine multiple charts as overlays in the same renderer, is given in :ref:`chart_overlays_example`.
+This example shows how different types of charts can be added to the scene.
+A more complex example, showing how to combine multiple charts as overlays
+in the same renderer, is given in :ref:`chart_overlays_example`.
 """
 
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore
@@ -19,13 +19,15 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-rng = np.random.default_rng(1)  # Seeded random number generator for consistent data generation
+rng = np.random.default_rng(
+    1
+)  # Seeded random number generator for consistent data generation
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
-# datapoints. By default, the chart automatically rescales its axes such that
-# all plotted data is visible. By right clicking on the chart you can enable
-# zooming and panning of the chart.
+# datapoints using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
+# rescales its axes such that all plotted data is visible. By right clicking on the chart
+# you can enable zooming and panning of the chart.
 
 x = rng.standard_normal(100)
 y = rng.standard_normal(100)
@@ -35,8 +37,8 @@ chart.show()
 
 # %%
 # To connect datapoints with lines, you can create a 2D line plot as shown in
-# the example below. You can also dynamically 'zoom in' on the plotted data
-# by specifying a custom axis range yourself.
+# the example below using :func:`~pyvista.Chart2D.line`. You can also dynamically
+# 'zoom in' on the plotted data by specifying a custom axis range yourself.
 
 x = np.linspace(0, 10, 1000)
 y = np.sin(x**2)
@@ -47,7 +49,7 @@ chart.show()
 
 # %%
 # You can also easily combine scatter and line plots using the general
-# :func:`pyvista.Chart2D.plot` function, specifying both the line and marker
+# :func:`~pyvista.Chart2D.plot` function, specifying both the line and marker
 # style at once.
 
 x = np.arange(11)
@@ -58,7 +60,8 @@ chart.plot(x, y, 'x--b')  # Marker style 'x', striped line style '--', blue colo
 chart.show()
 
 # %%
-# The following example shows how to create filled areas between two polylines.
+# The following example shows how to create filled areas between two polylines
+# using :func:`~pyvista.Chart2D.area`.
 
 x = np.linspace(0, 10, 1000)
 y1 = np.cos(x) + np.sin(3 * x)
@@ -71,8 +74,8 @@ chart.title = 'Area plot'  # Set custom chart title
 chart.show()
 
 # %%
-# Bar charts are also supported. Multiple bar plots are placed next to each
-# other.
+# Bar charts are also supported using :func:`~pyvista.Chart2D.bar`.
+# Multiple bar plots are placed next to each other.
 
 x = np.arange(1, 13)
 y1 = rng.integers(1e2, 1e4, 12)
@@ -116,7 +119,8 @@ chart.grid = False  # Disable the grid lines
 chart.show()
 
 # %%
-# In a similar way, you can stack multiple area plots on top of each other.
+# In a similar way, you can stack multiple area plots on top of
+# each other using :func:`~pyvista.Chart2D.stack`.
 
 x = np.arange(0, 11)
 ys = [rng.integers(1, 11, 11) for _ in range(5)]
@@ -128,7 +132,7 @@ chart.show()
 # %%
 # Beside the flexible Chart2D used in the previous examples, there are a couple
 # other dedicated charts you can create. The example below shows how a pie
-# chart can be created.
+# chart can be created using :class:`~pyvista.ChartPie`.
 
 data = np.array([8.4, 6.1, 2.7, 2.4, 0.9])
 chart = pv.ChartPie(data)
@@ -136,7 +140,8 @@ chart.plot.labels = [f'slice {i}' for i in range(len(data))]
 chart.show()
 
 # %%
-# To summarize statistics of datasets, you can easily create a boxplot.
+# To summarize statistics of datasets, you can easily create a boxplot
+# using :class:`~pyvista.ChartBox`.
 
 data = [rng.poisson(lam, 20) for lam in range(2, 12, 2)]
 chart = pv.ChartBox(data)
@@ -158,18 +163,21 @@ f, ax = plt.subplots(
 alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]
 N = int(1e4)
-data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]
-labels = [f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$' for alpha, beta in zip(alphas, betas)]
+data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=True)]
+labels = [
+    f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$'
+    for alpha, beta in zip(alphas, betas, strict=True)
+]
 ax.violinplot(data)
 ax.set_xticks(np.arange(1, 1 + len(labels)))
 ax.set_xticklabels(labels)
 ax.set_title('$B(\\alpha, \\beta)$')
 
 # Next, embed the figure into a pyvista plotting window
-p = pv.Plotter()
+pl = pv.Plotter()
 chart = pv.ChartMPL(f)
 chart.background_color = 'w'
-p.add_chart(chart)
-p.show()
+pl.add_chart(chart)
+pl.show()
 # %%
 # .. tags:: plot

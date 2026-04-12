@@ -31,12 +31,16 @@ There are two ways to set the jupyter plotting backend. First, it can
 be done on a plot by plot basis by setting the ``jupyter_backend`` parameter in
 either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 <pyvista.DataSet.plot>`. You can also set it globally with the
-:func:`pyvista.set_jupyter_backend`. For further details:
+:func:`pyvista.set_jupyter_backend`. Custom backends are also supported with
+:func:`pyvista.register_jupyter_backend`. For further details:
 
 
-.. code:: python
+.. code-block:: python
 
-   import pyvista as pv
-   pv.set_jupyter_backend('trame')
+    import pyvista as pv
+
+    pv.set_jupyter_backend('trame')
 
 .. autofunction:: pyvista.set_jupyter_backend
+
+.. autofunction:: pyvista.register_jupyter_backend

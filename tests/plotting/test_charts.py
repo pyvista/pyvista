@@ -3,32 +3,18 @@
 from __future__ import annotations
 
 import itertools
-import platform
 import weakref
 
 import numpy as np
 import pytest
-from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting import _vtk
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
-
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: PT004
-    """A large number of tests here fail gc."""
-
-
-# skip all tests if VTK<9.2.0
-if pv.vtk_version_info < (9, 2):
-    pytestmark = pytest.mark.skip
+pytestmark = pytest.mark.skip_check_gc  # A large number of tests here fail gc
 
 
 def vtk_array_to_tuple(arr):
@@ -66,9 +52,9 @@ class PlotterChanged:
 
 @pytest.fixture
 def pl():
-    p = pv.Plotter(window_size=(600, 600))
-    p.background_color = 'w'
-    return p
+    pl = pv.Plotter(window_size=(600, 600))
+    pl.background_color = 'w'
+    return pl
 
 
 @pytest.fixture
@@ -172,7 +158,7 @@ def test_pen():
 def test_wrapping():
     width = 5
     # Test wrapping of VTK Pen object
-    pen = vtkPen()
+    pen = _vtk.vtkPen()
     wrappedPen = charts.Pen(_wrap=pen)
     assert wrappedPen.__this__ == pen.__this__
     assert wrappedPen.width == pen.GetWidth()
@@ -181,7 +167,7 @@ def test_wrapping():
     assert pen.GetWidth() == width
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_brush():
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     t_masonry = examples.download_masonry_texture()
@@ -226,6 +212,8 @@ def test_axis_init():
     assert np.allclose(axis.range, r_fix)
     assert axis.behavior == 'fixed'
     assert axis.grid
+    assert isinstance(axis.pen, charts.Pen)
+    assert isinstance(axis.grid_pen, charts.Pen)
 
 
 def test_axis_label(axis):
@@ -268,7 +256,9 @@ def test_axis_margin(axis):
 @pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
-    chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
+    # We have to call show to update all chart properties
+    # (calls Update and Paint methods of chart/plot objects).
+    chart_2d.show()
     assert axis.log_scale
     assert axis.GetLogScaleActive()
 
@@ -276,8 +266,9 @@ def test_axis_scale(chart_2d, axis):
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
-    # Should be fixed on VTK side, but tricky without breaking stuff (see !8828 for reference).
+    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions"
+    # warning to be printed. Should be fixed on VTK side, but tricky without breaking
+    # stuff (see !8828 for reference).
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
@@ -393,7 +384,22 @@ def test_axis_label_font_size(chart_2d):
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.parametrize('chart_f', [('chart_2d'), ('chart_box'), ('chart_pie'), ('chart_mpl')])
+@pytest.mark.parametrize(
+    'chart_f',
+    [
+        ('chart_2d'),
+        ('chart_box'),
+        ('chart_pie'),
+        pytest.param(
+            'chart_mpl',
+            marks=pytest.mark.filterwarnings(
+                r'ignore:No artists with labels found to put in legend\.  Note that artists '
+                r'whose label start with an underscore are ignored when legend\(\) is called '
+                r'with no argument\.:UserWarning'
+            ),
+        ),
+    ],
+)
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
@@ -439,7 +445,10 @@ def test_chart_common(pl, chart_f, request):
 
     # Check is_within
     assert chart._is_within(
-        ((chart.loc[0] + chart.size[0] / 2) * w, (chart.loc[1] + chart.size[1] / 2) * h),
+        (
+            (chart.loc[0] + chart.size[0] / 2) * w,
+            (chart.loc[1] + chart.size[1] / 2) * h,
+        ),
     )
     assert not chart._is_within(((chart.loc[0] + chart.size[0] / 2) * w, chart.loc[1] * h - 5))
     assert not chart._is_within((chart.loc[0] * w - 5, (chart.loc[1] + chart.size[1] / 2) * h))
@@ -537,7 +546,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.color_scheme = cs
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]['id']
-    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
+    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors, strict=True))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
     ]
@@ -551,7 +560,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.colors = cs
     assert plot.color_scheme == cs
     plot.colors = colors
-    assert all(pc == c for pc, c in zip(plot.colors, colors))
+    assert all(pc == c for pc, c in zip(plot.colors, colors, strict=True))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
     ]
@@ -590,7 +599,7 @@ def test_lineplot2d(chart_2d, line_plot_2d):
     l = 'Line'
 
     # Test constructor
-    plot = charts.LinePlot2D(chart_2d, x, y, c, w, s, l)
+    plot = charts.LinePlot2D(chart_2d, x, y, color=c, width=w, style=s, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
@@ -612,12 +621,12 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     sz = 5
     st, st_inv = 'o', '^'
     l = 'Scatter'
-    assert (
-        st_inv not in charts.ScatterPlot2D.MARKER_STYLES
-    ), 'New marker styles added? Change this test.'
+    assert st_inv not in charts.ScatterPlot2D.MARKER_STYLES, (
+        'New marker styles added? Change this test.'
+    )
 
     # Test constructor
-    plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
+    plot = charts.ScatterPlot2D(chart_2d, x, y, color=c, size=sz, style=st, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
@@ -652,7 +661,7 @@ def test_areaplot(chart_2d, area_plot):
     l = 'Line'
 
     # Test constructor
-    plot = charts.AreaPlot(chart_2d, x, y1, y2, c, l)
+    plot = charts.AreaPlot(chart_2d, x, y1, y2, color=c, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y1, y1)
@@ -676,16 +685,16 @@ def test_barplot(chart_2d, bar_plot):
     assert ori_inv not in charts.BarPlot.ORIENTATIONS, 'New orientations added? Change this test.'
 
     # Test multi comp constructor
-    plot = charts.BarPlot(chart_2d, x, y, c, ori, l)
+    plot = charts.BarPlot(chart_2d, x, y, color=c, orientation=ori, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
     assert plot.orientation == ori
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.BarPlot(chart_2d, x, y[0], c[0], ori, l[0])
+    plot = charts.BarPlot(chart_2d, x, y[0], color=c[0], orientation=ori, label=l[0])
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y[0])
@@ -694,13 +703,13 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
-        charts.BarPlot(chart_2d, x, y, c[0], ori, l)
+    with pytest.raises(TypeError):
+        charts.BarPlot(chart_2d, x, y, color=c[0], orientation=ori, label=l)
     # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.BarPlot(chart_2d, x, y[0], c, ori, l[0])
+        charts.BarPlot(chart_2d, x, y[0], color=c, orientation=ori, label=l[0])
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.BarPlot(chart_2d, x, y[0], c[0], ori, l)
+        charts.BarPlot(chart_2d, x, y[0], color=c[0], orientation=ori, label=l)
 
     # Test remaining properties
     bar_plot.update(x, y)
@@ -721,15 +730,15 @@ def test_stackplot(chart_2d, stack_plot):
     l = ['Foo', 'Spam', 'Bla']
 
     # Test multi comp constructor
-    plot = charts.StackPlot(chart_2d, x, ys, c, l)
+    plot = charts.StackPlot(chart_2d, x, ys, colors=c, labels=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.StackPlot(chart_2d, x, ys[0], c[0], l[0])
+    plot = charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l[0])
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys[0])
@@ -737,13 +746,13 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys, c[0], l)
+    with pytest.raises(TypeError):
+        charts.StackPlot(chart_2d, x, ys, colors=c[0], labels=l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys[0], c, l[0])
+        charts.StackPlot(chart_2d, x, ys[0], colors=c, labels=l[0])
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys[0], c[0], l)
+        charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l)
 
     # Test remaining properties
     stack_plot.update(x, ys)
@@ -771,7 +780,7 @@ def test_chart_2d(pl, chart_2d):
     ori = 'V'
 
     # Test constructor
-    chart = pv.Chart2D(size, loc, lx, ly, False)
+    chart = pv.Chart2D(size=size, loc=loc, x_label=lx, y_label=ly, grid=False)
     assert chart.size == size
     assert chart.loc == loc
     assert chart.x_label == lx
@@ -792,7 +801,11 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ['#fa09b6', '0xa53a8d', '#b02239f0', '0xcee6927f']
-    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ''])
+    colors = itertools.chain(
+        pv.plotting.colors._formatted_hex_colors,
+        pv.plotting.colors._formatted_color_synonyms,
+        [*hex_colors, ''],
+    )
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
@@ -830,7 +843,7 @@ def test_chart_2d(pl, chart_2d):
     chart_2d.clear()
     assert len([*chart_2d.plots()]) == 0
 
-    s = chart_2d.scatter(x, y, col, sz, ms, lx)
+    s = chart_2d.scatter(x, y, color=col, size=sz, style=ms, label=lx)
     assert np.allclose(s.x, x)
     assert np.allclose(s.y, y)
     assert s.color == col
@@ -840,7 +853,7 @@ def test_chart_2d(pl, chart_2d):
     assert s in chart_2d.plots('scatter')
     assert chart_2d.GetPlotIndex(s) >= 0
 
-    l = chart_2d.line(x, y, col, w, ls, lx)
+    l = chart_2d.line(x, y, color=col, width=w, style=ls, label=lx)
     assert np.allclose(l.x, x)
     assert np.allclose(l.y, y)
     assert l.color == col
@@ -850,7 +863,7 @@ def test_chart_2d(pl, chart_2d):
     assert l in chart_2d.plots('line')
     assert chart_2d.GetPlotIndex(l) >= 0
 
-    a = chart_2d.area(x, -y, y, col, lx)
+    a = chart_2d.area(x, -y, y, color=col, label=lx)
     assert np.allclose(a.x, x)
     assert np.allclose(a.y1, -y)
     assert np.allclose(a.y2, y)
@@ -859,7 +872,7 @@ def test_chart_2d(pl, chart_2d):
     assert a in chart_2d.plots('area')
     assert chart_2d.GetPlotIndex(a) >= 0
 
-    b = chart_2d.bar(x, -y, col, ori, lx)
+    b = chart_2d.bar(x, -y, color=col, orientation=ori, label=lx)
     assert np.allclose(b.x, x)
     assert np.allclose(b.y, -y)
     assert b.color == col
@@ -868,7 +881,7 @@ def test_chart_2d(pl, chart_2d):
     assert b in chart_2d.plots('bar')
     assert chart_2d.GetPlotIndex(b) >= 0
 
-    s = chart_2d.stack(x, ys, cs, [lx, ly])
+    s = chart_2d.stack(x, ys, colors=cs, labels=[lx, ly])
     assert np.allclose(s.x, x)
     assert np.allclose(s.ys, ys)
     assert s.color_scheme == cs
@@ -929,7 +942,7 @@ def test_chart_box(pl, chart_box, box_plot):
     ls = ['Datalabel']
 
     # Test constructor
-    chart = pv.ChartBox(data, cs, ls, size, loc)
+    chart = pv.ChartBox(data, colors=cs, labels=ls, size=size, loc=loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -965,7 +978,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     ls = ['Tic', 'Tac', 'Toe']
 
     # Test constructor
-    chart = pv.ChartPie(data, cs, ls, size, loc)
+    chart = pv.ChartPie(data, colors=cs, labels=ls, size=size, loc=loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -992,15 +1005,15 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @pytest.mark.skip_plotting
-def test_chart_mpl(pl, chart_mpl):
+def test_chart_mpl(pl):
     import matplotlib.pyplot as plt
 
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
 
     # Test constructor
-    f, ax = plt.subplots()
-    chart = pv.ChartMPL(f, size, loc)
+    f, _ax = plt.subplots()
+    chart = pv.ChartMPL(f, size=size, loc=loc)
     assert chart.size == size
     assert chart.loc == loc
 
@@ -1214,7 +1227,7 @@ def test_chart_interaction():
     assert pl.iren._context_style.GetScene() is None
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy
