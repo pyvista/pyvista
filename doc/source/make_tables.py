@@ -847,7 +847,7 @@ class ColorTable(DocTable):
                 colors_dict[name]['synonyms'].append(s)
         return colors_dict.values()
 
-@classmethod
+    @classmethod
     def get_header(cls, _):
         return cls.header.format(cls.title)
 
@@ -858,6 +858,2306 @@ class ColorTable(DocTable):
         name = ' or '.join(name_template.format(n) for n in names)
         source_badge = _get_color_source_badge(row_data['name'])
         return cls.row_template.format(source_badge, name, row_data['hex'], row_data['hex'])
+
+
+def _get_color_source_badge(name: str) -> str:
+    if name in _CSS_COLORS:
+        return ':bdg-primary:`CSS`'
+    elif name in _TABLEAU_COLORS:
+        return ':bdg-success:`TAB`'
+    elif name in _PARAVIEW_COLORS:
+        return ':bdg-danger:`PV`'
+    elif name in _VTK_COLORS:
+        return ':bdg-secondary:`VTK`'
+    else:
+        msg = f'Invalid color name "{name}".'
+        raise KeyError(msg)
+
+
+def _sort_colors_by_hls(colors: Sequence[Color]):
+    return sorted(colors, key=lambda c: c._float_hls)
+
+
+ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hex_colors.keys())
+
+# Saturation constants
+GRAYS_SATURATION_THRESHOLD = 0.15
+
+# Lightness constants
+LOWER_LIGHTNESS_THRESHOLD = 0.15
+UPPER_LIGHTNESS_THRESHOLD = 0.9
+
+BROWN_SATURATION_LIGHTNESS_THRESHOLD = 1.2
+
+# Hue constants in range [0, 1]
+_360 = 360.0
+RED_UPPER_BOUND = 8 / _360
+ORANGE_UPPER_BOUND = 39 / _360
+YELLOW_UPPER_BOUND = 61 / _360
+GREEN_UPPER_BOUND = 157 / _360
+CYAN_UPPER_BOUND = 187 / _360
+BLUE_UPPER_BOUND = 248 / _360
+VIOLET_UPPER_BOUND = 290 / _360
+MAGENTA_UPPER_BOUND = 351 / _360
+
+
+class ColorClassification(StrEnum):
+    WHITE = auto()
+    BLACK = auto()
+    GRAY = auto()
+    RED = auto()
+    YELLOW = auto()
+    ORANGE = auto()
+    BROWN = auto()
+    GREEN = auto()
+    CYAN = auto()
+    BLUE = auto()
+    VIOLET = auto()
+    MAGENTA = auto()
+
+
+def classify_color(color: Color) -> ColorClassification:  # noqa: PLR0911
+    """Classify color based on its Hue, Lightness, and Saturation (HLS)."""
+    hue, lightness, saturation = color._float_hls
+
+    # Classify by lightness
+    if lightness > UPPER_LIGHTNESS_THRESHOLD:
+        return ColorClassification.WHITE
+    elif lightness < LOWER_LIGHTNESS_THRESHOLD:
+        return ColorClassification.BLACK
+
+    # Classify by saturation
+    elif saturation < GRAYS_SATURATION_THRESHOLD:
+        return ColorClassification.GRAY
+
+    # Classify by hue
+    elif hue >= MAGENTA_UPPER_BOUND or hue < RED_UPPER_BOUND:
+        return ColorClassification.RED
+    elif RED_UPPER_BOUND <= hue < ORANGE_UPPER_BOUND:
+        # Split oranges into oranges and browns
+        # Browns have a relatively low lightness and/or saturation
+        if (lightness + saturation) < BROWN_SATURATION_LIGHTNESS_THRESHOLD:
+            return ColorClassification.BROWN
+        else:
+            return ColorClassification.ORANGE
+    elif ORANGE_UPPER_BOUND <= hue < YELLOW_UPPER_BOUND:
+        return ColorClassification.YELLOW
+    elif YELLOW_UPPER_BOUND <= hue < GREEN_UPPER_BOUND:
+        return ColorClassification.GREEN
+    elif GREEN_UPPER_BOUND <= hue < CYAN_UPPER_BOUND:
+        return ColorClassification.CYAN
+    elif CYAN_UPPER_BOUND <= hue < BLUE_UPPER_BOUND:
+        return ColorClassification.BLUE
+    elif BLUE_UPPER_BOUND <= hue < VIOLET_UPPER_BOUND:
+        return ColorClassification.VIOLET
+    elif VIOLET_UPPER_BOUND <= hue < MAGENTA_UPPER_BOUND:
+        return ColorClassification.MAGENTA
+    else:
+        msg = (
+            f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, '
+            f'was not categorized.\nDouble-check classifier logic.'
+        )
+        raise RuntimeError(msg)
+
+
+class ColorClassificationTable(ColorTable):
+    """Class to generate sorted colors table."""
+
+    classification: ColorClassification
+
+    @property
+    @final
+    def path(self):
+        return f'{COLORS_TABLE_DIR}/color_table_{self.classification.name}.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        colors = [color for color in ALL_COLORS if classify_color(color) == cls.classification]
+        colors = _sort_colors_by_hls(colors)
+        return cls._table_data_from_color_sequence(colors)
+
+
+class ColorTableWHITE(ColorClassificationTable):
+    """Class to generate WHITE colors table."""
+
+    classification = ColorClassification.WHITE
+
+
+class ColorTableBLACK(ColorClassificationTable):
+    """Class to generate BLACK colors table."""
+
+    classification = ColorClassification.BLACK
+
+
+class ColorTableGRAY(ColorClassificationTable):
+    """Class to generate GRAY colors table."""
+
+    classification = ColorClassification.GRAY
+
+
+class ColorTableRED(ColorClassificationTable):
+    """Class to generate RED colors table."""
+
+    classification = ColorClassification.RED
+
+
+class ColorTableORANGE(ColorClassificationTable):
+    """Class to generate ORANGE colors table."""
+
+    classification = ColorClassification.ORANGE
+
+
+class ColorTableBROWN(ColorClassificationTable):
+    """Class to generate BROWN colors table."""
+
+    classification = ColorClassification.BROWN
+
+
+class ColorTableYELLOW(ColorClassificationTable):
+    """Class to generate YELLOW colors table."""
+
+    classification = ColorClassification.YELLOW
+
+
+class ColorTableGREEN(ColorClassificationTable):
+    """Class to generate GREEN colors table."""
+
+    classification = ColorClassification.GREEN
+
+
+class ColorTableCYAN(ColorClassificationTable):
+    """Class to generate CYAN colors table."""
+
+    classification = ColorClassification.CYAN
+
+
+class ColorTableBLUE(ColorClassificationTable):
+    """Class to generate BLUE colors table."""
+
+    classification = ColorClassification.BLUE
+
+
+class ColorTableVIOLET(ColorClassificationTable):
+    """Class to generate VIOLET colors table."""
+
+    classification = ColorClassification.VIOLET
+
+
+class ColorTableMAGENTA(ColorClassificationTable):
+    """Class to generate MAGENTA colors table."""
+
+    classification = ColorClassification.MAGENTA
+
+
+class ColormapKind(StrEnum):
+    LINEAR = auto()
+    MULTI_SEQUENTIAL = auto()
+    DIVERGING = auto()
+    CYCLIC = auto()
+    CATEGORICAL = auto()
+    MISC = auto()
+    CET_LINEAR = auto()
+    CET_DIVERGING = auto()
+    CET_CYCLIC = auto()
+    CET_RAINBOW = auto()
+    CET_ISOLUMINANT = auto()
+
+
+@dataclass
+class _ColormapInfo:
+    package: str
+    kind: ColormapKind | None
+    name: str
+
+
+@dataclass
+class _ColormapSortOptions:
+    initial_cmap: str
+    n_samples: int = 11
+    sort_by: Literal['hue', 'cam02ucs'] = 'cam02ucs'
+    pre_sort: bool = False
+
+
+# Define colormap info based on manual review of documentation from each package.
+_COLORMAP_INFO: list[_ColormapInfo] = [
+    # LINEAR
+    # Order here does NOT matter since these will be auto-sorted
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgy'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgyw'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbgyw'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'haline'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'viridis'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cividis'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'batlow'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'batlowW'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'batlowK'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cubehelix'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmw'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmy'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'devon'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'oslo'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbc'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kb'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kgy'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kg'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kr'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'lajolla'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'fire'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'hot'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'afmhot'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'solar'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_heat'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'magma'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'inferno'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'plasma'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'copper'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'pink'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'ice'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'dense'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'matter'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'amp'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'turbid'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'speed'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'algae'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'deep'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'tempo'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'rain'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'blues'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Blues'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuGn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuPu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'GnBu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Greens'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'OrRd'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Oranges'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBuGn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuRd'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Purples'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'RdPu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Reds'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGnBu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrBr'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrRd'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Wistia'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'autumn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'spring'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'summer'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'winter'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cool'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'bone'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gray'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'gray'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gray'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'dimgray'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_gray'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_yarg'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'binary'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Grays'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'oxy'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'lapaz'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'bamako'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'davos'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'bilbao'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'nuuk'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'hawaii'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'tokyo'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'buda'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'acton'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'turku'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'imola'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'glasgow'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'lipari'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'navia'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'grayC'),
+    # MULTI SEQUENTIAL
+    # The order of the cmaps here will be reflected in the docs.
+    _ColormapInfo('cmocean', ColormapKind.MULTI_SEQUENTIAL, 'topo'),
+    _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'bukavu'),
+    _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'oleron'),
+    _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'fes'),
+    # DIVERGING
+    # Order here does NOT matter since these will be auto-sorted
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'berlin'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'tofino'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'lisbon'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vanimo'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'managua'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bjy'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bwy'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'cwr'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'gwv'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'delta'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'curl'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'diff'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'tarn'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'BrBG'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PuOr'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PRGn'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PiYG'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'bam'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdGy'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdBu'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlBu'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlGn'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'Spectral'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'roma'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'coolwarm'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'coolwarm'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'bwr'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'seismic'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'balance'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vik'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'broc'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'cork'),
+    # CYCLIC
+    # The order of the cmaps here will be reflected in the docs.
+    _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase'),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel'),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv'),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight'),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight_shifted'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'vikO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'romaO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'bamO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'brocO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'corkO'),
+    # CATEGORICAL
+    # The order of the 'colorcet' and 'matplotlib' cmaps here
+    # will be reflected in the docs. The 'cmcrameri' cmaps are auto-sorted.
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_warm'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_dark'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_light'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_category10'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_hv'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'batlowS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'batlowWS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'batlowKS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'turkuS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'devonS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'lajollaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'bamakoS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'davosS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'bilbaoS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'nuukS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'osloS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'hawaiiS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'lapazS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'tokyoS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'budaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'actonS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'imolaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'glasgowS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'lipariS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'naviaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'grayCS'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set1'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set3'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab10'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c'),
+    # MISC
+    # The order of the cmaps here will be reflected in the docs.
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum'),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4'),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'rainbow'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_rainbow'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'jet'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'turbo'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'nipy_spectral'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_ncar'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'CMRmap'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'brg'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_stern'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot2'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'ocean'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_earth'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'terrain'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'prism'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'flag'),
+]
+
+
+def _create_cet_colormap_info():
+    # Get all 'CET' named cmaps
+    cmaps = sorted(
+        [cmap for cmap in colorcet.cm.keys() if cmap.startswith('CET') and not cmap.endswith('_r')]
+    )
+
+    # The cmaps are string-sorted and therefore `C10` precedes `C2`
+    # The following code fixes the sorting
+
+    # Separate prefix, letters, number, and suffix
+    pattern = re.compile(r'(CET_)([A-Z]+)(\d+)([A-Za-z]*)')
+    parsed = [
+        (m.group(1), m.group(2), int(m.group(3)), m.group(4))
+        for cmap in cmaps
+        for m in [pattern.match(cmap)]
+    ]
+
+    # Sort by letter code and numeric value
+    parsed.sort(key=lambda x: (x[1], x[2]))
+
+    # Reconstruct the original strings in sorted order and classify the colormap
+    colormap_infos = []
+    colormap_types = {
+        'C': ColormapKind.CET_CYCLIC,
+        'D': ColormapKind.CET_DIVERGING,
+        'L': ColormapKind.CET_LINEAR,
+        'R': ColormapKind.CET_RAINBOW,
+        'I': ColormapKind.CET_ISOLUMINANT,
+    }
+    for prefix, letters, number, suffix in parsed:
+        name = f'{prefix}{letters}{number}{suffix}'
+        type_letter = letters[-1]
+        kind = colormap_types[type_letter]
+
+        # Store as colormap info
+        info = _ColormapInfo(package='colorcet', name=name, kind=kind)
+        colormap_infos.append(info)
+
+    # Sanity check - make sure we didn't mangle anything
+    for info in colormap_infos:
+        assert info.name in cmaps
+
+    return colormap_infos
+
+
+_CET_COLORMAP_INFO = _create_cet_colormap_info()
+
+
+class ColormapTable(DocTable):
+    """Class to generate a colormap table."""
+
+    info_source = _COLORMAP_INFO
+    kind: ColormapKind | str
+    sort_options: ClassVar[_ColormapSortOptions | dict[str, _ColormapSortOptions] | None] = None
+
+    title = ''
+    header = _aligned_dedent(
+        r"""
+        |.. list-table:: {}
+        |   :widths: 21 25 18 18 18
+        |   :header-rows: 1
+        |   :stub-columns: 1
+        |
+        |   * - Tags
+        |     - Name
+        |     - Swatch
+        |     - Lightness :math:`L^*`
+        |     - Cumulative ΔE
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - .. image:: /{}
+        |     - .. image:: /{}
+        |     - .. image:: /{}
+        """,
+    )
+
+    @property
+    @final
+    def path(self):
+        kind = self.kind
+        name = kind.name if isinstance(kind, ColormapKind) else kind
+        return f'{COLORMAP_TABLE_DIR}/colormap_table_{name}.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        data = [info for info in cls.info_source if info.kind == cls.kind]
+        data_out = data
+        if (options := cls.sort_options) is not None:
+            if isinstance(options, dict):
+                # Sort (or don't) each package separately with separate options
+                data_out = []
+                for package, pkg_options in options.items():
+                    pkg_data = [info for info in data if info.package == package]
+                    if pkg_options is not None:
+                        pkg_data = ColormapTable.sort_data(
+                            pkg_data,
+                            initial_cmap=pkg_options.initial_cmap,
+                            n_samples=pkg_options.n_samples,
+                            sort_by=pkg_options.sort_by,
+                            pre_sort=pkg_options.pre_sort,
+                        )
+                    data_out.extend(pkg_data)
+            else:
+                data_out = ColormapTable.sort_data(
+                    data,
+                    initial_cmap=options.initial_cmap,
+                    n_samples=options.n_samples,
+                    sort_by=options.sort_by,
+                    pre_sort=options.pre_sort,
+                )
+        return data_out
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header.format(cls.title)
+
+    @classmethod
+    def get_row(cls, _, colormap_info):
+        source_badge_mapping = {
+            'cmcrameri': ':bdg-danger:`cmc`',
+            'cmocean': ':bdg-primary:`cmo`',
+            'colorcet': ':bdg-success:`cc`',
+            'matplotlib': ':bdg-secondary:`mpl`',
+        }
+        type_mapping = {
+            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LSC`',
+            mpl.colors.ListedColormap: ':bdg-muted:`LC`',
+        }
+        perceptually_uniform_mapping = {
+            True: ':material-regular:`visibility;2em;sd-text-info`',
+            False: ':material-regular:`visibility_off;2em;sd-text-warning`',
+        }
+
+        if colormap_info.package == 'matplotlib':
+            cmap_source = mpl.colormaps
+        elif colormap_info.package == 'colorcet':
+            cmap_source = colorcet.cm
+        elif colormap_info.package == 'cmocean':
+            cmap_source = cmocean.cm.cmap_d
+        elif colormap_info.package == 'cmcrameri':
+            cmap_source = cmcrameri.cm.cmaps
+        else:
+            raise RuntimeError
+        cmap = cmap_source[colormap_info.name]
+
+        # Generate images
+        img_path_swatch = (
+            f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        )
+        cls.generate_img_swatch(cmap, img_path_swatch)
+
+        img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
+        r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
+
+        img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
+        r2_deltaE = cls.generate_img_delta_e(cmap, img_path_deltaE)
+
+        # Perceptually uniform if constant delta in lightness and color
+        r2_threshold = 0.99
+        perceptually_uniform = r2_deltaL > r2_threshold and r2_deltaE > r2_threshold
+
+        # Generate tags
+        source_rst = source_badge_mapping[colormap_info.package]
+        type_rst = type_mapping[type(cmap)]
+        perceptually_uniform_rst = perceptually_uniform_mapping[perceptually_uniform]
+        tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
+
+        name_rst = f'``{colormap_info.name}``'
+        return cls.row_template.format(
+            tags, name_rst, img_path_swatch, img_path_lightness, img_path_deltaE
+        )
+
+    @staticmethod
+    def generate_img_swatch(cmap, img_path):
+        """Generate and save an image of the given colormap."""
+        width = 256
+        height = 100
+        N = 256
+        # Create a smooth gradient across the colormap resolution
+        gradient = np.linspace(0, 1, N)
+        gradient = np.vstack((gradient,) * height)
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.imshow(gradient, aspect='auto', cmap=cmap)
+        ax.set_axis_off()
+
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+
+    @staticmethod
+    def generate_img_lightness(cmap, img_path):
+        def rgb_to_cam02ucs(rgb):
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            return colour.XYZ_to_CAM02UCS(xyz)
+
+        x = np.linspace(0.0, 1.0, cmap.N)
+
+        rgb = cmap(x)[np.newaxis, :, :3]
+        lab = rgb_to_cam02ucs(rgb)
+        y = lab[0, :, 0]
+
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
+
+        # Compute linearity of the lightness.
+        # r^2 is good for ramps, but not for iso-luminant colormaps
+        # First check for constant lightness
+        max_deviation = np.max(np.abs(y - np.mean(y)))  # max deviation from mean
+        if max_deviation < 3.0:  # Lightness change of 3.0 is not very perceivable
+            return 1.0  # Return r^2 of 1.0, i.e. is perceptually uniform
+
+        cumulative_abs_delta_lightness = np.concatenate([[0], np.cumsum(np.abs(np.diff(y)))])
+        return ColormapTable.linear_regression(x, cumulative_abs_delta_lightness)
+
+    @staticmethod
+    def generate_img_delta_e(cmap, img_path):
+        def delta_e_cie2000(rgb):
+            # Compute ΔE between adjacent colors
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            lab = colour.XYZ_to_Lab(xyz)
+            return colour.difference.delta_E_CIE2000(lab[:-1], lab[1:])
+
+        x = np.linspace(0.0, 1.0, cmap.N)
+
+        rgb = cmap(x)[:, :3]
+        delta_e = delta_e_cie2000(rgb)
+        y = np.concatenate([[0], np.cumsum(delta_e)])
+
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        return ColormapTable.linear_regression(x, y)
+
+    @staticmethod
+    def save_scatter_plot(x, y, cmap, img_path, y_lim=None):  # noqa: PLR0917
+        width = 256
+        height = 64
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0, clip_on=False)
+        ax.set_axis_off()
+        if y_lim:
+            ax.set_ylim(*y_lim)
+
+        # Add a dummy set of axes to add asymmetric padding to the figure
+        left, bottom, width, height = 0.08, -0.18, 0.87, 1.37
+        ax = fig.add_axes([left, bottom, width, height])
+        ax.set_axis_off()
+
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0.0)
+        plt.close(fig)
+
+    @staticmethod
+    def linear_regression(x, y):
+        """Compute r^2 value from linear regression between x and y."""
+        _, _, r_value, _, _ = linregress(x, y)
+        return r_value**2
+
+    @staticmethod
+    def sort_data(
+        data: list[_COLORMAP_INFO],
+        *,
+        initial_cmap: str,
+        n_samples: int,
+        sort_by: Literal['hue', 'cam02ucs'],
+        pre_sort: bool = False,
+    ):
+        """Sort colormaps by color similarity.
+
+        Parameters
+        ----------
+        data
+            List of colormap info to be sorted.
+
+        initial_cmap
+            Name of colormap to initialize the sorting with. This will be the first
+            colormap.
+
+        n_samples
+            Number of samples to use for each colormap for the sorting. Using more samples
+            is more computationally expensive but may better represent the colormap.
+
+        sort_by
+            Method used to sort the colormaps. Sort by ``'hue'`` (using HLS color space)
+            or ``cam02ucs`` to sort colormaps by perceptual difference.
+
+        pre_sort
+            Whether to sort the colors within each colormap before sampling. This is useful
+            for categorical colormaps to ensure consistent progression for comparison.
+
+        Returns
+        -------
+        Sorted list of colormap info.
+
+        """
+        import colour
+
+        _validation.check_contains(['hue', 'cam02ucs'], sort_by, name='sort_by')
+
+        def sort_colormap_colors(colors, sort_by: Literal['hue', 'cam02ucs']):
+            """Sort a list of RGB colors within a colormap."""
+            if sort_by == 'cam02ucs':
+                xyz = colour.sRGB_to_XYZ(colors)
+                cam02 = colour.XYZ_to_CAM02UCS(xyz)
+
+                n = len(cam02)
+                visited = np.zeros(n, dtype=bool)
+                order = [0]
+                visited[0] = True
+                for _ in range(n - 1):
+                    last = order[-1]
+                    candidates = np.where(~visited)[0]
+                    dists = np.linalg.norm(cam02[candidates] - cam02[last], axis=1)
+                    next_idx = candidates[np.argmin(dists)]
+                    visited[next_idx] = True
+                    order.append(next_idx)
+                return colors[order]
+
+            else:  # sort_by == 'hue':
+                hls = np.array(list(starmap(rgb_to_hls, colors)))
+                hue_sorted_indices = np.argsort(hls[:, 0])
+                return colors[hue_sorted_indices]
+
+        def sample_cmap(cmap_name: str, n_samples: int = 5):
+            cmap = pv.get_cmap_safe(cmap_name)
+            rgb_full = cmap(np.linspace(0, 1, cmap.N))[:, :3]
+
+            if pre_sort:
+                rgb_full = sort_colormap_colors(rgb_full, sort_by)
+
+            idx = np.linspace(0, len(rgb_full) - 1, n_samples, dtype=int)
+            rgb_sampled = rgb_full[idx]
+
+            if sort_by == 'cam02ucs':
+                xyz = colour.sRGB_to_XYZ(rgb_sampled)
+                return colour.XYZ_to_CAM02UCS(xyz)
+            else:  # sort_by == 'hue':
+                hls = np.array(list(starmap(rgb_to_hls, rgb_sampled)))
+                return hls[:, 0]
+
+        def compute_delta_between_swatches(swatch1, swatch2, weights):
+            if sort_by == 'cam02ucs':
+                # Use perceptual Delta E in CAM02-UCS space
+                delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)
+                return np.sum(weights * delta_e)
+            else:  # sort_by == 'hue':
+                # Use circular difference for hue in [0, 1]
+                diff = np.abs(swatch1 - swatch2)
+                diff = np.minimum(diff, 1 - diff)  # hue wraparound
+                return np.sum(weights * diff.ravel())
+
+        def compute_delta_matrix_for_all_groups(grouped_colors, weights):
+            n = len(grouped_colors)
+            delta_matrix = np.zeros((n, n))
+
+            for i in range(n):
+                for j in range(i + 1, n):
+                    delta = compute_delta_between_swatches(
+                        grouped_colors[i], grouped_colors[j], weights
+                    )
+                    delta_matrix[i, j] = delta
+                    delta_matrix[j, i] = delta
+
+            return delta_matrix
+
+        def sort_color_groups_by_similarity(grouped_colors, start_index, weights):
+            n_colormaps = len(grouped_colors)
+            delta_matrix = compute_delta_matrix_for_all_groups(grouped_colors, weights)
+
+            visited = np.zeros(n_colormaps, dtype=bool)
+            order = [start_index]
+            visited[start_index] = True
+
+            # Track the last 3 selected colormaps
+            memory_indices = [start_index]
+
+            for _ in range(n_colormaps - 1):
+                candidates = np.where(~visited)[0]
+
+                # Compute average distance from all memory indices
+                total_distance = np.zeros(len(candidates))
+                for mem_idx in memory_indices:
+                    total_distance += delta_matrix[mem_idx, candidates]
+                total_distance /= len(memory_indices)
+
+                next_idx = candidates[np.argmin(total_distance)]
+                order.append(next_idx)
+                visited[next_idx] = True
+
+                # Update memory: keep only the last 3
+                memory_indices.append(next_idx)
+                if len(memory_indices) > 3:
+                    memory_indices.pop(0)
+
+            return [grouped_colors[i] for i in order], order
+
+        # Sample swatches for each colormap
+        grouped_colors = [sample_cmap(info.name, n_samples) for info in data]
+
+        # Validate and locate the initial colormap
+        cmaps = [info.name for info in data]
+        _validation.check_contains(cmaps, must_contain=initial_cmap, name='initial_cmap')
+        start_index = cmaps.index(initial_cmap)
+
+        # Sort colormaps based on selected method
+        weights = np.ones((n_samples,))
+        _sorted_groups, order = sort_color_groups_by_similarity(
+            grouped_colors, start_index, weights
+        )
+        return [data[i] for i in order]
+
+
+class ColormapTableLINEAR(ColormapTable):
+    """Class to generate linear colormap table."""
+
+    kind = ColormapKind.LINEAR
+    sort_options = _ColormapSortOptions(initial_cmap=pv.global_theme.cmap)
+
+
+class ColormapTableDIVERGING(ColormapTable):
+    """Class to generate diverging colormap table."""
+
+    kind = ColormapKind.DIVERGING
+    sort_options = _ColormapSortOptions(initial_cmap='coolwarm', sort_by='hue')
+
+
+class ColormapTableMULTISEQUENTIAL(ColormapTable):
+    """Class to generate multi-sequential colormap table."""
+
+    kind = ColormapKind.MULTI_SEQUENTIAL
+
+
+class ColormapTableCYCLIC(ColormapTable):
+    """Class to generate cyclic colormap table."""
+
+    kind = ColormapKind.CYCLIC
+
+
+class ColormapTableCATEGORICAL(ColormapTable):
+    """Class to generate categorical colormap table."""
+
+    kind = ColormapKind.CATEGORICAL
+    sort_options: ClassVar[_ColormapSortOptions | dict[str:_ColormapSortOptions]] = {
+        'colorcet': None,
+        'cmcrameri': _ColormapSortOptions(initial_cmap='grayCS', pre_sort=True),
+        'matplotlib': None,
+    }
+
+
+class ColormapTableMISC(ColormapTable):
+    """Class to generate misc colormap table."""
+
+    kind = ColormapKind.MISC
+
+
+class CETColormapTable(ColormapTable):
+    """Class to generate all colorcet CET colormap table."""
+
+    info_source = _CET_COLORMAP_INFO
+
+
+class CETColormapTableLINEAR(CETColormapTable):
+    """Class to generate linear colormap table."""
+
+    kind = ColormapKind.CET_LINEAR
+
+
+class CETColormapTableDIVERGING(CETColormapTable):
+    """Class to generate diverging colormap table."""
+
+    kind = ColormapKind.CET_DIVERGING
+
+
+class CETColormapTableCYCLIC(CETColormapTable):
+    """Class to generate cyclic colormap table."""
+
+    kind = ColormapKind.CET_CYCLIC
+
+
+class CETColormapTableRAINBOW(CETColormapTable):
+    """Class to generate rainbow colormap table."""
+
+    kind = ColormapKind.CET_RAINBOW
+
+
+class CETColormapTableISOLUMINANT(CETColormapTable):
+    """Class to generate isoluminant colormap table."""
+
+    kind = ColormapKind.CET_ISOLUMINANT
+
+
+def _get_doc(func: Callable[[], Any]) -> str | None:
+    """Return the first line of the callable's docstring."""
+    doc = func.__doc__
+    return doc.splitlines()[0] if doc else None
+
+
+def _get_fullname(typ: type[Any]) -> str:
+    """Return the fully qualified name of the given type object."""
+    return f'{typ.__module__}.{typ.__qualname__}'
+
+
+def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
+    """Left-justify a list of lines."""
+    min_width = min_width or _max_width(lines)
+    return [line.ljust(min_width) for line in lines]
+
+
+def _max_width(lines: list[str]) -> int:
+    """Compute the max line-width from a list of lines."""
+    return max(map(len, lines))
+
+
+def _repeat_string(string: str, num_repeat: int) -> str:
+    """Repeat `string` `num_repeat` times."""
+    return ''.join([string] * num_repeat)
+
+
+def _pad_lines(
+    lines: str | list[str],
+    *,
+    pad_left: str = '',
+    pad_right: str = '',
+    ljust=False,
+    return_shape=False,
+):
+    """Add padding to the left or right of each line with a specified string.
+
+    Optionally, padding may be applied to left-justify the text such that the lines
+    all have the same width.
+
+    Optionally, the lines may be padded using a specified string on the left or right.
+
+    Parameters
+    ----------
+    lines : str | list[str]
+        Lines to be padded. If a string, it is first split with splitlines.
+
+    pad_left : str, default: ''
+        String to pad the left of each line with.
+
+    pad_right : str, default: ''
+        String to pad the right of each line with.
+
+    ljust : bool, default: False
+        If ``True``, left-justify the lines such that they have equal width
+        before applying any padding.
+
+    return_shape : bool, default: False
+        If ``True``, also return the width and height of the padded lines.
+
+    """
+    if is_str := isinstance(lines, str):
+        lines = lines.splitlines()
+    # Justify
+    lines = _ljust_lines(lines) if ljust else lines
+    # Pad
+    lines = [pad_left + line + pad_right for line in lines]
+
+    if return_shape:
+        width, height = _max_width(lines), len(lines)
+        lines = '\n'.join(lines) if is_str else lines
+        return lines, width, height
+    return '\n'.join(lines) if is_str else lines
+
+
+def _indent_multi_line_string(
+    string: str,
+    *,
+    indent_size=3,
+    indent_level: int = 1,
+    omit_first_line=True,
+) -> str:
+    r"""Indent each line of a multi-line string by a specified indentation level.
+
+    Optionally specify the indent size (e.g. 3 spaces for rst).
+    Optionally omit indentation from the first line if it is already indented.
+
+    This function is used to support de-denting formatted multi-line strings.
+    E.g. for the following rst text with item {} indented by 3 levels:
+
+        |      .. some_directive::
+        |
+        |         {}
+
+    a multi-line string input such as 'line1\nline2\nline3' will be formatted as:
+
+        |      .. some_directive::
+        |
+        |         line1\n         line2\n         line3
+        |
+
+    which will result in the correct indentation applied to all lines of the string.
+
+    """
+    lines = string.splitlines()
+    if len(lines) > 0:
+        indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
+        first_line = lines.pop(0) if omit_first_line else None
+        lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
+        lines.insert(0, first_line) if first_line else None
+        return '\n'.join(lines)
+    return string
+
+
+def _as_iterable(item) -> Iterable[Any]:
+    return [item] if not isinstance(item, (Iterable, str)) else item
+
+
+class DatasetCard:
+    """Class for creating a rst-formatted card for a dataset.
+
+    Create a card with header, footer, and four grid items.
+    The four grid items are displayed as:
+        - 2x2 grid for large screens
+        - 4x1 grid for small screens
+
+    Each card has roughly the following structure:
+
+        +-Card----------------------+
+        | Header: Dataset name      |
+        |                           |
+        | +-Grid------------------+ |
+        | | Dataset doc           | |
+        | +-----------------------+ |
+        | | Image                 | |
+        | +-----------------------+ |
+        | | Dataset metadata      | |
+        | +-----------------------+ |
+        | | File metadata         | |
+        | +-----------------------+ |
+        | See also                  |
+        | Footer: Data source links |
+        +---------------------------+
+
+    See https://sphinx-design.readthedocs.io/en/latest/index.html for
+    details on the directives used and their formatting.
+    """
+
+    card_template = _aligned_dedent(
+        """
+        |.. card::
+        |
+        |   {}
+        |
+        |   ^^^
+        |
+        |   .. grid:: 1 2 2 2
+        |      :margin: 1
+        |
+        |      .. grid-item::
+        |         :columns: 12 8 8 8
+        |
+        |         {}
+        |
+        |      .. grid-item::
+        |         :columns: 12 4 4 4
+        |
+        |         {}
+        |
+        |      .. grid-item::
+        |
+        |         .. card::
+        |            :shadow: none
+        |            :class-header: sd-text-center sd-font-weight-bold sd-px-0 sd-border-right-0 sd-border-left-0 sd-border-top-0
+        |            :class-body: sd-border-0
+        |
+        |            :octicon:`info` Dataset Info
+        |            ^^^
+        |            {}
+        |
+        |      .. grid-item::
+        |
+        |         .. card::
+        |            :shadow: none
+        |            :class-header: sd-text-center sd-font-weight-bold sd-px-0 sd-border-right-0 sd-border-left-0 sd-border-top-0
+        |            :class-body: sd-border-0
+        |
+        |            :octicon:`file` File Info
+        |            ^^^
+        |            {}
+        |
+        |   {}
+        |
+        |   {}
+        |
+        |
+        """,  # noqa: E501
+    )
+
+    HEADER_FOOTER_INDENT_LEVEL = 1
+    GRID_ITEM_INDENT_LEVEL = 3
+    GRID_ITEM_FIELDS_INDENT_LEVEL = 4
+    REF_ANCHOR_INDENT_LEVEL = 2
+
+    # Template for dataset name and badges
+    header_template = _aligned_dedent(
+        """
+        |.. grid:: 1
+        |   :margin: 0
+        |
+        |   .. grid-item::
+        |      :class: sd-text-center sd-font-weight-bold sd-fs-5
+        |
+        |      {}
+        |
+        |   .. grid-item::
+        |      :class: sd-text-center
+        |
+        |      {}
+        |
+        """,
+    )[1:-1]
+
+    # Template title with a reference anchor
+    dataset_title_with_ref_template = _aligned_dedent(
+        """
+        |.. _{}:
+        |
+        |{}
+        """,
+    )[1:-1]
+
+    # Template for dataset func and doc
+    dataset_info_template = _aligned_dedent(
+        """
+        |{}
+        |
+        |{}
+        """,
+    )[1:-1]
+
+    # Template for dataset image
+    # The image is encapsulated in its own card
+    image_template = _aligned_dedent(
+        """
+        |.. card::
+        |   :class-body: sd-px-0 sd-py-0 sd-rounded-3
+        |
+        |   .. image:: /{}
+        """,
+    )[1:-1]
+
+    seealso_template = _aligned_dedent(
+        """
+        |See also {}
+        """,
+    )[1:-1]
+
+    footer_template = _aligned_dedent(
+        """
+        |+++
+        |.. dropdown:: Data Source
+        |   :icon: mark-github
+        |
+        |   {}
+        """,
+    )[1:-1]
+
+    # Format fields in a grid where the first item is a left-justified
+    # name and the second is a right-justified value.
+    # The grid boxes are justified to push them toward opposite sides.
+    #
+    #   Smaller entries should fit on one line:
+    #       | Name        Value |
+    #
+    #   Longer entries should fit on two lines:
+    #       | LongerName        |
+    #       |       LongerValue |
+    #
+    #   Fields with many values should align to the right
+    #   and can stack together on one line if they fit.
+    #       | LongerName        |
+    #       |       LongerValue |
+    #       |    ExtraLongValue |
+    #       |     Value3 Value4 |
+    field_grid_template = _aligned_dedent(
+        """
+        |.. grid:: auto
+        |   :class-container: sd-col
+        |   :class-row: sd-align-major-justify sd-px-0
+        |   :margin: 1
+        |   :padding: 0
+        |   :gutter: 1
+        |
+        |   .. grid-item::
+        |      :columns: auto
+        |      :class: sd-text-nowrap
+        |
+        |      **{}**
+        |
+        |   .. grid-item::
+        |      :columns: auto
+        |      :class: sd-text-right sd-text-nowrap
+        |      :child-align: justify
+        |
+        |      {}
+        |
+        """,
+    )[1:-1]
+
+    # If the field has more than one value, all additional values are
+    # placed in a second grid and aligned towards the 'right' side
+    # of the grid.
+    field_grid_extra_values_grid_template = _aligned_dedent(
+        """
+        |.. grid:: auto
+        |   :class-container: sd-align-major-end sd-px-0
+        |   :class-row: sd-align-major-end sd-px-0
+        |   :margin: 1
+        |   :padding: 0
+        |   :gutter: 1
+        |
+        """,
+    )[1:-1]
+    field_grid_extra_values_item_template = _aligned_dedent(
+        """
+        |   .. grid-item::
+        |      :columns: auto
+        |      :class: sd-text-right sd-text-nowrap
+        |
+        |      {}
+        |
+        """,
+    )[1:-1]
+
+    _NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
+
+    def __init__(
+        self,
+        dataset_name: str,
+        loader: _DatasetLoader,
+    ):
+        self.dataset_name = dataset_name
+        self.loader = loader
+        self._badges: list[_BaseDatasetBadge | None] = []
+        self.card = None
+        self.ref = None
+
+    def add_badge(self, badge: _BaseDatasetBadge):
+        self._badges.append(badge)
+
+    def generate(self):
+        # Get rst dataset name-related info
+        index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name(
+            self.dataset_name,
+        )
+        # Get thumbnail image path
+        module_name = self.loader._module.__name__.replace('.', '-')
+        ext = DATASET_GALLERY_IMAGE_EXT_DICT.get(self.dataset_name, '.png')
+        if ext is None:
+            img_path = self._create_default_image()
+        else:
+            # Use the first image generated by the .. pyvista_plot:: directive
+            # We use a placeholder here since each image is named using the
+            # hash of the directive code
+            filename = f'{module_name}-{func_name}-{PLACEHOLDER}_00_00{ext}'
+            img_path = Path(DATASET_GALLERY_IMAGE_DIR, filename).as_posix()
+
+        # Get rst file and instance metadata
+        (
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            dataset_type,
+            datasource_links,
+            n_cells,
+            n_points,
+            length,
+            dimensions,
+            spacing,
+            n_arrays,
+        ) = DatasetCard._generate_dataset_properties(self.loader)
+
+        # Get cross-references from docs
+        cross_references = DatasetCard._generate_cross_references(
+            self.dataset_name, index_name, header_name
+        )
+
+        # Generate rst for badges
+        carousel_badges = self._generate_carousel_badges(self._badges)
+        celltype_badges = self._generate_celltype_badges(self._badges)
+
+        # Assemble rst parts into main blocks used by the card
+        header_block, header_ref_block = self._create_header_block(
+            index_name,
+            header_name,
+            carousel_badges,
+        )
+        info_block = self._create_info_block(func_ref, func_doc)
+        img_block = self._create_image_block(img_path)
+        dataset_props_block = self._create_dataset_props_block(
+            dataset_type=dataset_type,
+            celltype_badges=celltype_badges,
+            n_cells=n_cells,
+            n_points=n_points,
+            length=length,
+            dimensions=dimensions,
+            spacing=spacing,
+            n_arrays=n_arrays,
+        )
+        file_info_block = self._create_file_props_block(
+            loader=self.loader,
+            file_size=file_size,
+            num_files=num_files,
+            file_ext=file_ext,
+            reader_type=reader_type,
+        )
+        seealso_block = self._create_seealso_block(cross_references)
+        footer_block = self._create_footer_block(datasource_links)
+
+        # Create two versions of the card
+        # First version has no ref label
+        card_no_ref = self.card_template.format(
+            header_block,
+            info_block,
+            img_block,
+            dataset_props_block,
+            file_info_block,
+            seealso_block,
+            footer_block,
+        )
+        # Second version has a ref label in header
+        card_with_ref = self.card_template.format(
+            header_ref_block,
+            info_block,
+            img_block,
+            dataset_props_block,
+            file_info_block,
+            seealso_block,
+            footer_block,
+        )
+
+        return card_no_ref, card_with_ref
+
+    @staticmethod
+    def _generate_dataset_properties(loader):
+        # Get data from loader
+        if isinstance(loader, _Downloadable):
+            loader.download()
+
+        # properties collected by the loader
+        file_size = DatasetPropsGenerator.generate_file_size(loader)
+        num_files = DatasetPropsGenerator.generate_num_files(loader)
+        file_ext = DatasetPropsGenerator.generate_file_ext(loader)
+        reader_type = DatasetPropsGenerator.generate_reader_type(loader)
+        dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+        datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
+
+        # properties collected directly from the dataset
+        n_cells = DatasetPropsGenerator.generate_n_cells(loader)
+        n_points = DatasetPropsGenerator.generate_n_points(loader)
+        length = DatasetPropsGenerator.generate_length(loader)
+        dimensions = DatasetPropsGenerator.generate_dimensions(loader)
+        spacing = DatasetPropsGenerator.generate_spacing(loader)
+        n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
+
+        return (
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            dataset_type,
+            datasource_links,
+            n_cells,
+            n_points,
+            length,
+            dimensions,
+            spacing,
+            n_arrays,
+        )
+
+    @staticmethod
+    def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
+        # Get the corresponding function of the loader
+        func = None
+
+        # Get `download` function from downloads.py or planets.py
+        func_name = 'download_' + dataset_name
+        if hasattr(pv.examples.downloads, func_name):
+            func = getattr(pv.examples.downloads, func_name)
+        elif hasattr(pv.examples.planets, func_name):
+            func = getattr(pv.examples.planets, func_name)
+        else:
+            # Get `load` function from examples.py
+            func_name = 'load_' + dataset_name
+            if hasattr(pv.examples.examples, func_name):
+                func = getattr(pv.examples.examples, func_name)
+
+        if func is None:
+            msg = f'Dataset function {func_name} does not exist.'
+            raise RuntimeError(msg)
+        return func, func_name
+
+    @staticmethod
+    def _generate_dataset_name(dataset_name: str):
+        # Format dataset name for indexing and section heading
+        index_name = dataset_name + '_dataset'
+        header = ' '.join([word.capitalize() for word in index_name.split('_')])
+
+        # Get the card's header info
+        func, func_name = DatasetCard._get_dataset_function(dataset_name)
+        func_ref = f':func:`~{_get_fullname(func)}`'
+        func_doc = _get_doc(func)
+        return index_name, header, func_ref, func_doc, func_name
+
+    @staticmethod
+    def _generate_cross_references(dataset_name: str, index_name: str, header_name):
+        def find_seealso_refs(func: FunctionType) -> list[str]:
+            # Find and return the :ref: references from the .. seealso:: directive
+            # in the docstring of a function.
+            if not callable(func):
+                msg = 'Input must be a callable function.'
+                raise TypeError(msg)
+
+            # Get the docstring of the function
+            docstring = func.__doc__
+            if not docstring:
+                return []
+
+            # Search for the .. seealso:: section
+            seealso_start = docstring.find('.. seealso::')
+            if seealso_start == -1:
+                return []
+
+            # Extract lines from the start of the seealso section
+            lines = docstring[seealso_start:].splitlines()
+
+            # Determine the expected indentation of the section body
+            refs = []
+            body_indent = None
+
+            for line in lines[1:]:  # Skip the .. seealso:: line itself
+                if not line.strip():  # Allow blank lines within the block
+                    continue
+
+                # Detect indentation level of the body
+                if body_indent is None and line.startswith(' '):
+                    body_indent = len(line) - len(line.lstrip())
+
+                # Stop if the line is less indented than the body
+                current_indent = len(line) - len(line.lstrip())
+                if body_indent is not None and current_indent < body_indent:
+                    break
+
+                # Only capture lines starting with :ref:
+                if line.strip().startswith(':ref:'):
+                    refs.append(line.strip())
+
+            return refs
+
+        func, _ = DatasetCard._get_dataset_function(dataset_name)
+        refs = find_seealso_refs(func)
+
+        # Filter the references
+        self_ref = f':ref:`{header_name} <{index_name}>`'
+        self_ref_count = 0
+        keep_refs = []
+        for ref in refs:
+            # strip any refs to galleries since there is already a badge for that
+            if '_gallery' in ref:
+                continue
+            # skip refs to self
+            if self_ref in ref:
+                self_ref_count += 1
+                continue
+
+            keep_refs.append(ref)
+
+        assert self_ref_count == 1, (
+            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding "
+            f'entry in the Dataset Gallery.\n'
+            f'A reference link should be included in a see also directive, e.g.:\n'
+            f'\n'
+            f'    .. seealso::\n'
+            f'\n'
+            f'        {self_ref}\n'
+            '            See this dataset in the Dataset Gallery for more info.'
+        )
+
+        return ', '.join(keep_refs)
+
+    @staticmethod
+    def _generate_carousel_badges(badges: list[_BaseDatasetBadge]):
+        """Sort badges by type and join all badge rst into a single string."""
+        module_badges, datatype_badges, special_badges, category_badges = [], [], [], []
+        for badge in badges:
+            if isinstance(badge, ModuleBadge):
+                module_badges.append(badge)
+            elif isinstance(badge, DataTypeBadge):
+                datatype_badges.append(badge)
+            elif isinstance(badge, SpecialDataTypeBadge):
+                special_badges.append(badge)
+            elif isinstance(badge, CategoryBadge):
+                category_badges.append(badge)
+            elif isinstance(badge, CellTypeBadge):
+                pass  # process these separately
+            elif isinstance(badge, _BaseDatasetBadge):
+                msg = f'No implementation for badge type {type(badge)}.'
+                raise NotImplementedError(msg)
+        all_badges = module_badges + datatype_badges + special_badges + category_badges
+        return ' '.join([badge.generate() for badge in all_badges])
+
+    @staticmethod
+    def _generate_celltype_badges(badges: list[_BaseDatasetBadge]):
+        """Sort badges by type and join all badge rst into a single string."""
+        celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
+        rst = '\n'.join([badge.generate() for badge in celltype_badges])
+        if rst == '':
+            rst = '``None``'
+        return rst
+
+    @staticmethod
+    def _create_default_image():
+        """Process the thumbnail image to ensure it's the right size."""
+        from PIL import Image
+
+        img_path = Path(DATASET_GALLERY_DIR, 'not_available.png').as_posix()
+        if os.path.isfile(img_path):
+            return img_path
+        IMG_WIDTH, IMG_HEIGHT = 400, 300
+        not_available_mesh = pv.Text3D('Not Available')
+        pl = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
+        pl.background_color = 'white'
+        pl.add_mesh(not_available_mesh, color='black')
+        pl.view_xy()
+        pl.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
+        pl.enable_parallel_projection()
+        img_array = pl.show(screenshot=True)
+        img = Image.fromarray(img_array)
+        img.save(img_path)
+        return img_path
+
+    @staticmethod
+    def _format_and_indent_from_template(*args, template=None, indent_level=None):
+        """Format args using a template and indent all formatted lines by some amount."""
+        assert template is not None
+        assert indent_level is not None
+        formatted = template.format(*args)
+        return _indent_multi_line_string(formatted, indent_level=indent_level)
+
+    @classmethod
+    def _generate_field_grid(cls, field_name, field_values):
+        """Generate a rst grid with field data.
+
+        The grid uses the class templates for the field name and field value(s).
+        """
+        if field_values in [None, '']:
+            return None
+        value_lines = str(field_values).splitlines()
+        first_value = value_lines.pop(0)
+        field = cls.field_grid_template.format(field_name, first_value)
+        if len(value_lines) >= 1:
+            # Add another grid for extra values
+            extra_values_grid = cls.field_grid_extra_values_grid_template
+            extra_values = [
+                cls.field_grid_extra_values_item_template.format(val) for val in value_lines
+            ]
+            return '\n'.join([field, extra_values_grid, *extra_values])
+        return field
+
+    @staticmethod
+    def _generate_field_block(fields: list[tuple[str, str | None]], indent_level: int = 0):
+        """Generate a grid for each field and combine them into an indented multi-line rst block.
+
+        Any fields with a `None` value are completely excluded from the block.
+        """
+        field_grids = list(starmap(DatasetCard._generate_field_grid, fields))
+        block = '\n'.join([grid for grid in field_grids if grid])
+        return _indent_multi_line_string(block, indent_level=indent_level)
+
+    @classmethod
+    def _create_header_block(cls, index_name, header_name, carousel_badges):
+        """Generate header rst block."""
+        # Two headers are created: one with a reference target and one without
+        header = cls._format_and_indent_from_template(
+            header_name,
+            carousel_badges,
+            template=cls.header_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
+
+        header_name_with_ref = DatasetCard._format_and_indent_from_template(
+            index_name,
+            header_name,
+            template=cls.dataset_title_with_ref_template,
+            indent_level=cls.REF_ANCHOR_INDENT_LEVEL,
+        )
+        header_ref = DatasetCard._format_and_indent_from_template(
+            header_name_with_ref,
+            carousel_badges,
+            template=cls.header_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
+        return header, header_ref
+
+    @classmethod
+    def _create_image_block(cls, img_path):
+        """Generate rst block for the dataset image."""
+        return cls._format_and_indent_from_template(
+            img_path,
+            template=cls.image_template,
+            indent_level=cls.GRID_ITEM_INDENT_LEVEL,
+        )
+
+    @classmethod
+    def _create_info_block(cls, func_ref, func_doc):
+        return cls._format_and_indent_from_template(
+            func_ref,
+            func_doc,
+            template=cls.dataset_info_template,
+            indent_level=cls.GRID_ITEM_INDENT_LEVEL,
+        )
+
+    @classmethod
+    def _create_dataset_props_block(
+        cls,
+        *,
+        dataset_type,
+        celltype_badges,
+        n_cells,
+        n_points,
+        length,
+        dimensions,
+        spacing,
+        n_arrays,
+    ):
+        dataset_fields = [
+            ('Data Type', dataset_type),
+            ('Cell Type', celltype_badges),
+            ('N Cells', n_cells),
+            ('N Points', n_points),
+            ('Length', length),
+            ('Dimensions', dimensions),
+            ('Spacing', spacing),
+            ('N Arrays', n_arrays),
+        ]
+        return cls._generate_field_block(
+            dataset_fields,
+            indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
+        )
+
+    @classmethod
+    def _create_file_props_block(cls, *, loader, file_size, num_files, file_ext, reader_type):
+        if isinstance(loader, _DatasetLoader):
+            file_info_fields = [
+                ('File Size', file_size),
+                ('Num Files', num_files),
+                ('File Ext', file_ext),
+                ('Reader', reader_type),
+            ]
+            return DatasetCard._generate_field_block(
+                file_info_fields,
+                indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
+            )
+        file_info_fields = '``Not Applicable.``\n\n``Dataset is not loaded from file.``'
+        return _indent_multi_line_string(
+            file_info_fields,
+            indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
+        )
+
+    @classmethod
+    def _create_seealso_block(cls, cross_references):
+        if cross_references:
+            return cls._format_and_indent_from_template(
+                cross_references,
+                template=cls.seealso_template,
+                indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+            )
+        # Return empty content
+        return ''
+
+    @classmethod
+    def _create_footer_block(cls, datasource_links):
+        if datasource_links:
+            # indent links one level from the dropdown directive in template
+            datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
+            return cls._format_and_indent_from_template(
+                datasource_links,
+                template=cls.footer_template,
+                indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+            )
+        # Return empty footer content
+        return ''
+
+
+class DatasetPropsGenerator:
+    """Static class to generate rst for dataset properties collected by a dataset loader.
+
+    This class is purely static and is only useful to separate rst generation from the
+    dataset loader from all other rst generation.
+    """
+
+    @staticmethod
+    def generate_file_size(loader: _DatasetLoader):
+        sz = DatasetPropsGenerator._try_getattr(loader, 'total_size')
+        return '``' + sz + '``' if sz else None
+
+    @staticmethod
+    def generate_num_files(loader: _DatasetLoader):
+        num = DatasetPropsGenerator._try_getattr(loader, 'num_files')
+        return '``' + str(num) + '``' if num else None
+
+    @staticmethod
+    def generate_file_ext(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
+        # Format extension as single str with rst backticks
+        # Multiple extensions are comma-separated
+        def _format_ext(file_ext_: list[str]):
+            return sep.join(['``' + ext + '``' for ext in file_ext_])
+
+        sep = ',\n'
+        file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
+        if file_ext:
+            file_ext = loader.unique_extension
+            file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
+            if len(file_ext) > 10:
+                # Limit number of extensions displayed
+                first = _format_ext(file_ext[:3])
+                last = _format_ext(file_ext[-3:])
+                return first + sep + '...' + sep + last
+            return _format_ext(file_ext)
+        return None
+
+    @staticmethod
+    def generate_reader_type(
+        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+    ):
+        """Format reader type(s) with doc references to reader class(es)."""
+        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if reader_type is None:
+            return '``None``'
+        else:
+            reader_type = (
+                repr(loader.unique_reader_type)
+                .replace("<class '", ':class:`~')
+                .replace("'>", '`')
+                .replace('(', '')
+                .replace(')', '')
+            ).replace(', ', '\n')
+        return reader_type
+
+    @staticmethod
+    def generate_dataset_type(loader: _DatasetLoader):
+        """Format dataset type(s) with doc references to dataset class(es)."""
+        return (
+            repr(loader.unique_dataset_type)
+            .replace("<class '", ':class:`~')
+            .replace("'>", '`')
+            .replace('(', '')
+            .replace(')', '')
+        ).replace(', ', '\n')
+
+    @staticmethod
+    def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
+        """Format the dataset's representation as a single multi-line string.
+
+        The returned string is indented up to the specified indent level.
+        """
+        # Replace any hex code memory addresses with ellipses
+        dataset_repr = repr(loader.dataset)
+        dataset_repr = re.sub(
+            pattern=r'0x[0-9a-f]*',
+            repl='...',
+            string=dataset_repr,
+        )
+        return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def generate_datasource_links(loader: _DatasetLoader) -> str | None:
+        def _rst_link(name, url):
+            return f'`{name} <{url}>`_'
+
+        if not isinstance(loader, _Downloadable):
+            return None
+        # Collect url names and links as sequences
+        name = loader.source_name
+        names = [name] if isinstance(name, str) else name
+        url = loader.source_url_blob
+        urls = [url] if isinstance(url, str) else url
+
+        # Use dict to create an ordered set to make sure links are unique
+        url_dict = {url: name for name, url in zip(names, urls, strict=True)}
+
+        rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
+        return '\n'.join(rst_links)
+
+    @staticmethod
+    def generate_n_cells(loader):
+        return DatasetPropsGenerator._generate_number(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'),
+            fmt='spaced',
+        )
+
+    @staticmethod
+    def generate_n_points(loader):
+        return DatasetPropsGenerator._generate_number(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'),
+            fmt='spaced',
+        )
+
+    @staticmethod
+    def generate_length(loader):
+        return DatasetPropsGenerator._generate_number(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'length'),
+            fmt='exp',
+        )
+
+    @staticmethod
+    def generate_dimensions(loader):
+        dimensions = DatasetPropsGenerator._try_getattr(loader.dataset, 'dimensions')
+        if dimensions:
+            return ', '.join([DatasetPropsGenerator._generate_number(dim) for dim in dimensions])
+        return None
+
+    @staticmethod
+    def generate_spacing(loader):
+        spacing = DatasetPropsGenerator._try_getattr(loader.dataset, 'spacing')
+        if spacing:
+            # Format as regular decimals if possible
+            spacing_maybe = [DatasetPropsGenerator._generate_number(num) for num in spacing]
+            if any(len(space) > 8 for space in spacing_maybe):
+                # Too long, use scientific notation
+                return ', '.join(
+                    [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing],
+                )
+            return ', '.join(spacing_maybe)
+        return None
+
+    @staticmethod
+    def generate_n_arrays(loader):
+        return DatasetPropsGenerator._generate_number(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_arrays'),
+        )
+
+    @staticmethod
+    def _try_getattr(dataset, attr: str):
+        try:
+            return getattr(dataset, attr)
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def _generate_number(num: float | None, fmt: Literal['exp', 'spaced'] | None = None):
+        """Format a number and add rst backticks."""
+        if num is None:
+            return None
+        if fmt == 'exp':
+            num_fmt = f'{num:.2e}'
+        elif fmt == 'spaced':
+            num_fmt = f'{num:,}'.replace(',', ' ')
+        else:
+            num_fmt = str(num)
+        return f'``{num_fmt}``'
+
+
+class DatasetCardFetcher:
+    """Class for storing and retrieving dataset card info."""
+
+    # Dict of all card objects
+    DATASET_CARDS_OBJ: ClassVar[dict[str, DatasetCard]] = {}
+
+    # Dict of generated rst cards
+    DATASET_CARDS_RST_REF: ClassVar[dict[str, str]] = {}
+    DATASET_CARDS_RST: ClassVar[dict[str, str]] = {}
+
+    @classmethod
+    def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
+        """Add a new dataset card so that it can be fetched later."""
+        cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
+
+    @classmethod
+    def init_cards(cls):
+        """Download and load all datasets and initialize a card object for each dataset."""
+        cls._init_cards_from_module(pv.examples.examples)
+        cls._init_cards_from_module(pv.examples.downloads)
+        cls._init_cards_from_module(pv.examples.planets)
+        cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
+
+    @classmethod
+    def clear_datasets(cls):
+        """Clear loaded datasets."""
+        [loader.clear_dataset() for _, loader in cls.fetch_all_dataset_loaders()]
+
+    @classmethod
+    def _init_cards_from_module(cls, module: ModuleType):
+        # Collect all `_dataset_<name>` file loaders from the module
+        module_members: dict[str, FunctionType] = dict(inspect.getmembers(module))
+
+        for name, item in sorted(module_members.items()):
+            # Extract data set name from loader name
+
+            if name.startswith('_dataset_') and isinstance(item, _DatasetLoader):
+                # Create a card for this dataset
+                dataset_name = name.replace('_dataset_', '')
+                dataset_loader = item
+                # Store module as a dynamic property for access later
+                dataset_loader._module = module
+
+                cls._add_dataset_card(dataset_name, dataset_loader)
+
+                # Load data
+                print(f'loading datasets... {dataset_name}', flush=True)
+                if isinstance(dataset_loader, _Downloadable):
+                    dataset_loader.download()
+                dataset_loader.load_and_store_dataset()
+                assert dataset_loader.dataset is not None
+
+    @classmethod
+    def generate_rst_all_cards(cls):
+        """Generate formatted rst output for all cards."""
+        for name in cls.DATASET_CARDS_OBJ:
+            card, card_with_ref = cls.DATASET_CARDS_OBJ[name].generate()
+            # indent one level from the carousel header directive
+            cls.DATASET_CARDS_RST_REF[name] = _pad_lines(card_with_ref, pad_left='   ')
+            cls.DATASET_CARDS_RST[name] = _pad_lines(card, pad_left='   ')
+
+    @classmethod
+    def generate_alphabet_index(cls, dataset_names):
+        """Generate single-letter index buttons to link to the datasets by their first letter."""
+
+        def _generate_button(string, ref):
+            return _indent_multi_line_string(
+                f'.. button-ref:: {ref}\n\n   {string}\n',
+                indent_level=1,
+            )
+
+        def _generate_grid_item(string):
+            return _aligned_dedent(
+                """
+                    |.. grid-item::
+                    |   :columns: auto
+                    |
+                    |   {}
+                    """,
+            )[1:].format(_indent_multi_line_string(string, indent_level=1))
+
+        def _generate_grid(string):
+            return _aligned_dedent(
+                """
+                |.. grid::
+                |   :margin: 1
+                |   :padding: 0
+                |   :gutter: 1
+                |
+                |   {}
+                """,
+            )[1:].format(_indent_multi_line_string(string, indent_level=1))
+
+        # Get mapping of alphabet letters to first dataset name which begins with each letter
+        alphabet_dict = {}
+        for dataset_name in sorted(dataset_names):
+            index_character = dataset_name[0].upper()
+            try:
+                int(index_character)
+            except ValueError:
+                pass
+            else:
+                index_character = '#'
+
+            alphabet_dict.setdefault(index_character, dataset_name)
+
+        buttons = []
+        for letter, dataset_name in alphabet_dict.items():
+            # Get reference target for this dataset
+            target_name = DatasetCard._generate_dataset_name(dataset_name)[0]
+            button_rst = _generate_grid_item(_generate_button(letter, target_name))
+            buttons.append(button_rst)
+        return _generate_grid('\n'.join(buttons))
+
+    @classmethod
+    def add_badge_to_cards(cls, dataset_names: list[str], badge: _BaseDatasetBadge | None):
+        """Add a single badge to all specified datasets."""
+        if badge:
+            for dataset_name in dataset_names:
+                cls.DATASET_CARDS_OBJ[dataset_name].add_badge(badge)
+
+    @classmethod
+    def add_cell_badges_to_all_cards(cls):
+        """Add cell type badge(s) to every dataset."""
+        for card in cls.DATASET_CARDS_OBJ.values():
+            for cell_type in card.loader.unique_cell_types:
+                name = cell_type.name
+                card.add_badge(CellTypeBadge(name, 'pyvista.CellType.' + name))
+
+    @classmethod
+    def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:
+        for name, dataset_iterable in cls.fetch_all_dataset_objects():
+            if datatype in [type(data) for data in dataset_iterable]:
+                yield name
+
+    @classmethod
+    def fetch_dataset_names_by_module(cls, module) -> Iterator[str]:
+        for name, loader in cls.fetch_all_dataset_loaders():
+            if loader._module is module:  # type: ignore[attr-defined]
+                yield name
+
+    @classmethod
+    def fetch_all_dataset_objects(cls) -> Iterator[tuple[str, Iterable[DatasetObject]]]:
+        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
+            yield name, card.loader.dataset_iterable
+
+    @classmethod
+    def fetch_all_dataset_loaders(cls) -> Iterator[tuple[str, _DatasetLoader]]:
+        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
+            yield name, card.loader
+
+    @classmethod
+    def fetch_and_filter(cls, filter_func: Callable[..., bool]) -> list[str]:
+        """Return dataset names where any dataset object returns 'True' for a given function."""
+        names_dict: dict[str, None] = {}  # Use dict as an ordered set
+        for name, dataset_iterable in cls.fetch_all_dataset_objects():
+            for obj in dataset_iterable:
+                try:
+                    keep = filter_func(obj)
+                except AttributeError:
+                    keep = False
+                if keep:
+                    names_dict[name] = None
+        names_list = list(names_dict.keys())
+        assert len(names_list) > 0, f'No datasets were matched by the filter {filter_func}.'
+        return names_list
+
+    @classmethod
+    def fetch_multiblock(cls, kind: Literal['hetero', 'homo', 'single']):
+        dataset_names = []
+        for name, dataset_objects in cls.fetch_all_dataset_objects():
+            types_list = [type(obj) for obj in dataset_objects]
+            if pv.MultiBlock in types_list:
+                types_list.remove(pv.MultiBlock)
+                num_datasets = len(types_list)
+                num_types = len(set(types_list))
+
+                is_single = num_datasets == 1
+                is_homo = num_datasets >= 2 and num_types == 1
+                is_hetero = num_datasets >= 2 and num_types > 1
+                if (
+                    (is_single and kind == 'single')
+                    or (is_homo and kind == 'homo')
+                    or (is_hetero and kind == 'hetero')
+                ):
+                    dataset_names.append(name)
+        return dataset_names
+
+
+@dataclass
+class _BaseDatasetBadge:
+    class SemanticColorEnum(StrEnum):
+        """Enum of badge colors.
+
+        See: https://sphinx-design.readthedocs.io/en/pydata-theme/badges_buttons.html
+        """
+
+        primary = auto()
+        secondary = auto()
+        success = auto()
+        muted = auto()
+
+    # Name of the badge
+    name: str
+
+    # Internal reference label for the badge to link to
+    ref: str = None  # type: ignore[assignment]
+
+    def __post_init__(self: _BaseDatasetBadge):
+        """Use post-init to set private variables.
+
+        Sub classes should configure these options as required.
+        """
+        # Configure whether the badge should appear filled or not.
+        # If False, a badge outline is shown.
+        self.filled: bool = True
+
+        # Set the badge's color
+        self.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None  # type: ignore[assignment]
+
+    def generate(self):
+        # Generate rst
+        color = self.semantic_color.name
+        name = self.name
+        line = '-line' if hasattr(self, 'filled') and not self.filled else ''
+        if self.ref:
+            # the badge's bdg-ref uses :any: under the hood to find references
+            # so we use _gallery to point to the explicit reference instead
+            # of the carousel's rst file
+            ref_name = self.ref.replace('_carousel', '_gallery')
+            ref_link_rst = f' <{ref_name}>'
+            bdg_ref_rst = 'ref-'
+        else:
+            bdg_ref_rst = ''
+            ref_link_rst = ''
+        return f':bdg-{bdg_ref_rst}{color}{line}:`{name}{ref_link_rst}`'
+
+
+@dataclass
+class ModuleBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based on its source module.
+
+    e.g. 'Downloads' for datasets from `pyvista.examples.downloads`.
+    """
+
+    name: str
+    ref: str
+
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.primary
+
+
+@dataclass
+class DataTypeBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based strictly on its type.
+
+    The badge name should correspond to the type of the dataset.
+    e.g. 'UnstructuredGrid'.
+    """
+
+    name: str
+    ref: str
+
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
+
+
+@dataclass
+class SpecialDataTypeBadge(_BaseDatasetBadge):
+    """Badge given to a dataset with special properties.
+
+    Use this badge for specializations of data types (e.g. 2D ImageData
+    as a special kind of ImageData, or Cubemap as a special kind of Texture),
+    or for special classifications of datasets (e.g. point clouds).
+    """
+
+    name: str
+    ref: str
+
+    @classmethod
+    def __post_init__(cls):
+        cls.filled = False
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
+
+
+@dataclass
+class CategoryBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based on its application or use.
+
+    e.g. 'Medical' for medical datasets.
+    """
+
+    name: str
+    ref: str
+
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.success
+
+
+@dataclass
+class CellTypeBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based with a specific cell type."""
+
+    name: str
+    ref: str
+
+    @classmethod
+    def __post_init__(cls):
+        cls.filled = False
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.muted
+
+
+class DatasetGalleryCarousel(DocTable):
+    # Print the doc, badges, and dataset count
+    # The header defines the start of the card carousel
+    header_template = _aligned_dedent(
+        """
+        |{}
+        |
+        |{}
+        |:Dataset Count: ``{}``
+        |
+        |.. card-carousel:: 1
+        |
+        """,
+    )[1:-1]
+
+    # Subclasses should give the carousel a name
+    # The name should end with '_carousel'
+    name: str = None  # type: ignore[assignment]
+
+    # Subclasses should give the carousel a short description
+    # describing the carousel's contents
+    doc: str = None  # type: ignore[assignment]
+
+    # Subclasses may optionally define a badge for the carousel
+    # All datasets in the carousel will be given this badge.
+    badge: _BaseDatasetBadge | None = None
+
+    dataset_names: list[str] = None  # type: ignore[assignment]
+
+    @property
+    @final
+    def path(self):
+        assert isinstance(self.name, str), 'Table name must be defined.'
+        assert self.name.endswith('_carousel'), 'Table name must end with "_carousel".'
+        return f'{DATASET_GALLERY_DIR}/{self.name}.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        return list(cls.dataset_names)
+
+    @classmethod
+    @abstractmethod
+    def fetch_dataset_names(cls) -> list[str]:
+        """Return all dataset names to include in the gallery."""
+
+    @classmethod
+    @final
+    def init_dataset_names(cls):
+        names = list(cls.fetch_dataset_names())
+        assert names is not None, (
+            f'Dataset names cannot be None, {cls.fetch_dataset_names} must return '
+            f'a string iterable.'
+        )
+        cls.dataset_names = names
+
+    @classmethod
+    @final
+    def get_header(cls, data):
+        """Generate the rst for the carousel's header."""
+        assert isinstance(cls.name, str), f'Carousel {cls} must have a name.'
+        # Get doc value
+        doc = cls.doc.fget(cls) if isinstance(cls.doc, property) else cls.doc
+        assert isinstance(doc, str), f'Carousel {cls} must have a doc string.'
+
+        badge_info = f':Section Badge: {cls.badge.generate()}' if cls.badge else ''
+        num_datasets = len(data)
+        assert num_datasets > 0, f'No datasets were found for carousel {cls}.'
+        return cls.header_template.format(cls.doc, badge_info, num_datasets)
+
+    @classmethod
+    def get_row(cls, _, dataset_name: str):
+        """Generate the rst card for a given dataset.
+
+        A standard card is returned by default. Subclasses
+        should override this method to customize the card.
+        """
+        assert isinstance(
+            dataset_name,
+            str,
+        ), f'Dataset name {dataset_name} for {cls} must be a string.'
+        return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
 
 
 class AllDatasetsCarousel(DatasetGalleryCarousel):
