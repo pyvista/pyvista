@@ -326,6 +326,7 @@ from vtkmodules.vtkFiltersModeling import vtkButterflySubdivisionFilter
 from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter
 from vtkmodules.vtkFiltersModeling import vtkDijkstraGraphGeodesicPath
 from vtkmodules.vtkFiltersModeling import vtkFillHolesFilter
+from vtkmodules.vtkFiltersModeling import vtkFitToHeightMapFilter
 from vtkmodules.vtkFiltersModeling import vtkLinearExtrusionFilter
 from vtkmodules.vtkFiltersModeling import vtkLinearSubdivisionFilter
 from vtkmodules.vtkFiltersModeling import vtkLoopSubdivisionFilter
@@ -345,7 +346,10 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource
-from vtkmodules.vtkFiltersSources import vtkCapsuleSource
+
+with contextlib.suppress(ImportError):
+    # vtkCapsuleSource was removed in VTK 9.4+
+    from vtkmodules.vtkFiltersSources import vtkCapsuleSource
 from vtkmodules.vtkFiltersSources import vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource

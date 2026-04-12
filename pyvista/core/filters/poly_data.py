@@ -1314,8 +1314,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter = _vtk.vtkLoopSubdivisionFilter()
         else:
             raise ValueError(
-                "Subdivision filter must be one of the following: "
-                "'butterfly', 'loop', or 'linear'",
+                "Subdivision filter must be one of the following: 'butterfly', 'loop', or 'linear'",
             )
 
         # Subdivide
@@ -3289,6 +3288,117 @@ class PolyDataFilters(DataSetFilters):
             self.copy_from(output, deep=False)
             return self
         return output
+
+    def fit_to_height_map(
+        self,
+        height_map,
+        fitting_strategy="point_projection",
+        use_height_map_offset=True,
+        inplace=False,
+        progress_bar=False,
+    ):
+        """Fit polygonal data to a height map (image data).
+
+        Adjust the z-coordinates of the input polygonal data so that
+        they drape over a height map (i.e., an :class:`pyvista.ImageData`
+        dataset). The height map is sampled to determine the z-coordinate
+        at each input point or cell center, depending on the fitting
+        strategy.
+
+        Parameters
+        ----------
+        height_map : pyvista.ImageData
+            The height map to fit the input data to. This must be a
+            :class:`pyvista.ImageData` dataset with scalar values
+            representing elevation.
+
+        fitting_strategy : str, default: "point_projection"
+            Strategy used to fit the data to the height map. One of the
+            following:
+
+            * ``"point_projection"`` -- project input points onto the
+              height map.
+            * ``"point_minimum_height"`` -- use the minimum height at each
+              input point.
+            * ``"point_maximum_height"`` -- use the maximum height at each
+              input point.
+            * ``"point_average_height"`` -- use the average height at each
+              input point.
+            * ``"cell_minimum_height"`` -- use the minimum height at each
+              cell center.
+            * ``"cell_maximum_height"`` -- use the maximum height at each
+              cell center.
+            * ``"cell_average_height"`` -- use the average height at each
+              cell center.
+
+        use_height_map_offset : bool, default: True
+            If ``True``, the height map values are offset by the current
+            z-coordinate of the input data. This means that height map
+            values are added to the existing z-coordinates rather than
+            replacing them.
+
+        inplace : bool, default: False
+            Overwrites the original mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            The mesh fitted to the height map.
+
+        Examples
+        --------
+        Fit polygons to a height map.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> height_map = pv.ImageData(dimensions=(10, 10, 1))
+        >>> height_map.origin = (0.0, 0.0, 0.0)
+        >>> height_map.spacing = (1.0, 1.0, 1.0)
+        >>> height_map.point_data["elevation"] = np.random.default_rng().random(
+        ...     height_map.n_points
+        ... )
+        >>> polygon = pv.Polygon(n_sides=4, radius=0.4, center=(4.5, 4.5, 0))
+        >>> result = polygon.fit_to_height_map(height_map)
+        >>> result.bounds  # doctest:+SKIP
+
+        """
+        fitting_strategies = {
+            "point_projection": 0,
+            "point_minimum_height": 1,
+            "point_maximum_height": 2,
+            "point_average_height": 3,
+            "cell_minimum_height": 4,
+            "cell_maximum_height": 5,
+            "cell_average_height": 6,
+        }
+        if isinstance(fitting_strategy, str):
+            if fitting_strategy not in fitting_strategies:
+                raise ValueError(
+                    f'Invalid fitting strategy "{fitting_strategy}". '
+                    f'Expected one of {list(fitting_strategies)}.'
+                )
+            fitting_strategy = fitting_strategies[fitting_strategy]
+        else:
+            raise TypeError('Invalid type given to `fitting_strategy`. Must be a string.')
+
+        alg = _vtk.vtkFitToHeightMapFilter()
+        alg.SetInputData(self)
+        alg.SetHeightMapData(height_map)
+        alg.SetFittingStrategy(fitting_strategy)
+        if use_height_map_offset:
+            alg.UseHeightMapOffsetOn()
+        else:
+            alg.UseHeightMapOffsetOff()
+        _update_alg(alg, progress_bar, 'Fitting to height map')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)
+            return self
+        return mesh
 
     def strip(
         self,
