@@ -1,101 +1,82 @@
-"""Image Gradient"""
-#!/usr/bin/env python
+"""
+.. _image_gradient_example:
 
-# noinspection PyUnresolvedReferences
+Image Gradient
+~~~~~~~~~~~~~~
+
+Compute the gradient of an image using :func:`pyvista.ImageDataFilters.gradient`.
+
+The gradient is a vector field that points in the direction of the greatest rate
+of increase of the scalar field, with its magnitude representing the rate of
+change.
+
+This example is inspired by the `VTK ImageGradient example
+<https://examples.vtk.org/site/Python/VisualizationAlgorithms/ImageGradient/>`_.
+
+See also :func:`pyvista.ImageDataFilters.gradient_magnitude`.
+
+"""
+
+# sphinx_gallery_thumbnail_number = 2
 from __future__ import annotations
 
 import numpy as np
-from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.vtkImagingColor import vtkImageHSVToRGB
-from vtkmodules.vtkImagingCore import vtkImageConstantPad
-from vtkmodules.vtkImagingCore import vtkImageExtractComponents
-from vtkmodules.vtkImagingCore import vtkImageMagnify
-from vtkmodules.vtkImagingGeneral import vtkImageEuclideanToPolar
-from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
-from vtkmodules.vtkImagingGeneral import vtkImageGradient
-from vtkmodules.vtkInteractionImage import vtkImageViewer
-from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
 
 import pyvista as pv
 from pyvista import examples
 
-# noinspection PyUnresolvedReferences
+# %%
+# Load the dataset and convert to float.
+# We use the built-in ``download_full_head`` example dataset, which is a CT scan
+# of a human head.
 
+image = examples.download_full_head()
+image['MetaImage'] = image['MetaImage'].astype(np.float64)
 
-file_name = examples.downloads.download_full_head(load=False)
-colors = vtkNamedColors()
+# %%
+# Compute the 2D gradient of the image data.
+# Here we compute the gradient in 2D, which produces a 2-component
+# vector field (gradient in X and Y).
 
-# Read the CT data of the human head.
-reader = pv.get_reader(file_name)
-image_data = reader.read()
-image_data['MetaImage'] = image_data['MetaImage'].astype(np.float64)
+gradient = image.gradient(dimensionality=2)
+gradient
 
-# Magnify the image.
-magnify = vtkImageMagnify()
-magnify.SetInputConnection(cast.GetOutputPort())  # noqa: F821
-magnify.SetMagnificationFactors(2, 2, 1)
-magnify.InterpolateOn()
+# %%
+# Visualize the gradient magnitude as a heatmap for a single slice.
+# We extract the Z-slice and show the gradient magnitude.
 
-# Smooth the data.
-# Remove high frequency artifacts due to linear interpolation.
-smooth = vtkImageGaussianSmooth()
-smooth.SetInputConnection(magnify.GetOutputPort())
-smooth.SetDimensionality(2)
-smooth.SetStandardDeviations(1.5, 1.5, 0.0)
-smooth.SetRadiusFactors(2.01, 2.01, 0.0)
+slice_z = 22
+grad_mag = image.gradient_magnitude(dimensionality=2)
 
-# Compute the 2D gradient.
-gradient = vtkImageGradient()
-gradient.SetInputConnection(smooth.GetOutputPort())
-gradient.SetDimensionality(2)
+plot_kwargs = dict(
+    cpos='xy',
+    cmap='inferno',
+    scalar_bar_args={'title': 'Gradient Magnitude'},
+)
 
-# Convert the data to polar coordinates.
-# The image magnitude is mapped into saturation value,
-# whilst the gradient direction is mapped into hue value.
-polar = vtkImageEuclideanToPolar()
-polar.SetInputConnection(gradient.GetOutputPort())
-polar.SetThetaMaximum(255.0)
+pl = pv.Plotter(shape=(1, 2))
+pl.subplot(0, 0)
+pl.add_text('Original Image (Slice 22)', font_size=10)
+pl.add_mesh(image.extract_subset([0, 256, 0, 256, slice_z, slice_z]), cmap='gray', cpos='xy')
+pl.subplot(0, 1)
+pl.add_text('Gradient Magnitude (Slice 22)', font_size=10)
+pl.add_mesh(
+    grad_mag.extract_subset([0, 256, 0, 256, slice_z, slice_z]),
+    **plot_kwargs,
+)
+pl.link_views()
+pl.show()
 
-# Add a third component to the data.
-# This is needed since the gradient filter only generates two components,
-#  and we need three components to represent color.
-pad = vtkImageConstantPad()
-pad.SetInputConnection(polar.GetOutputPort())
-pad.SetOutputNumberOfScalarComponents(3)
-pad.SetConstant(200.0)
+# %%
+# Compute the 3D gradient and visualize the gradient vectors.
+# For 3D data, the gradient produces a 3-component vector field.
 
-# At this point we have Hue, Value, Saturation.
-# Permute components so saturation will be constant.
-# Re-arrange components into HSV order.
-permute = vtkImageExtractComponents()
-permute.SetInputConnection(pad.GetOutputPort())
-permute.SetComponents(0, 2, 1)
+gradient_3d = image.gradient(dimensionality=3)
 
-# Convert back into RGB values.
-rgb = vtkImageHSVToRGB()
-rgb.SetInputConnection(permute.GetOutputPort())
-rgb.SetMaximum(255.0)
+# Extract a slice and warp the surface by the gradient magnitude
+# for a 3D visualization
+grad_mag_3d = image.gradient_magnitude(dimensionality=3)
+grad_mag_3d.plot(volume=True, cmap='inferno')
 
-# Set up a viewer for the image.
-# Note that vtkImageViewer and vtkImageViewer2 are convenience wrappers around
-# vtkActor2D, vtkImageMapper, vtkRenderer, and vtkRenderWindow.
-# So all that needs to be supplied is the interactor.
-viewer = vtkImageViewer()
-viewer.SetInputConnection(rgb.GetOutputPort())
-viewer.SetZSlice(22)
-viewer.SetColorWindow(255.0)
-viewer.SetColorLevel(127.0)
-viewer.GetRenderWindow().SetSize(512, 512)
-viewer.GetRenderer().SetBackground(colors.GetColor3d('Silver'))
-viewer.GetRenderWindow().SetWindowName('ImageGradient')
-
-# Create the RenderWindowInteractor.
-iren = vtkRenderWindowInteractor()
-viewer.SetupInteractor(iren)
-viewer.Render()
-
-plotter = pv.Plotter()
-plotter.iren = iren
-plotter = pv.Plotter()
-plotter.iren = iren
-plotter.show()
+# %%
+# .. tags:: filter

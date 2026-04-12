@@ -2795,6 +2795,81 @@ def test_median_smooth_output_type():
     assert isinstance(volume_smooth, pv.ImageData)
 
 
+def test_gradient_output_type():
+    volume = examples.load_uniform()
+    gradient = volume.gradient()
+    assert isinstance(gradient, pv.ImageData)
+    gradient = volume.gradient(scalars='Spatial Point Data')
+    assert isinstance(gradient, pv.ImageData)
+
+
+def test_gradient_dimensionality():
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = np.random.default_rng(0).random(10 * 10 * 10)
+    gradient_3d = volume.gradient(dimensionality=3)
+    assert gradient_3d.point_data.active_scalars_name == 'point_dataGradient'
+    assert gradient_3d.point_data['point_dataGradient'].shape == (1000, 3)
+    gradient_2d = volume.gradient(dimensionality=2)
+    assert gradient_2d.point_data.active_scalars_name == 'point_dataGradient'
+    assert gradient_2d.point_data['point_dataGradient'].shape == (1000, 2)
+
+
+def test_gradient_invalid_dimensionality():
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = np.random.default_rng(0).random(10 * 10 * 10)
+    with pytest.raises(ValueError, match='Dimensionality must be 2 or 3'):
+        volume.gradient(dimensionality=1)
+
+
+def test_gradient_cell_data_error():
+    point_data = np.ones((10, 10, 10))
+    cell_data = np.ones((9, 9, 9))
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    with pytest.raises(ValueError):  # noqa: PT011
+        volume.gradient(scalars='cell_data')
+    volume.set_active_scalars('cell_data')
+    with pytest.raises(ValueError):  # noqa: PT011
+        volume.gradient()
+
+
+def test_gradient_magnitude_output_type():
+    volume = examples.load_uniform()
+    grad_mag = volume.gradient_magnitude()
+    assert isinstance(grad_mag, pv.ImageData)
+    grad_mag = volume.gradient_magnitude(scalars='Spatial Point Data')
+    assert isinstance(grad_mag, pv.ImageData)
+
+
+def test_gradient_magnitude_dimensionality():
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = np.random.default_rng(0).random(10 * 10 * 10)
+    grad_mag_3d = volume.gradient_magnitude(dimensionality=3)
+    assert grad_mag_3d.point_data.active_scalars.ndim == 1
+    assert grad_mag_3d.point_data.active_scalars_name == 'point_data'
+    grad_mag_2d = volume.gradient_magnitude(dimensionality=2)
+    assert grad_mag_2d.point_data.active_scalars.ndim == 1
+
+
+def test_gradient_magnitude_cell_data_error():
+    point_data = np.ones((10, 10, 10))
+    cell_data = np.ones((9, 9, 9))
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    volume.point_data['point_data'] = point_data.flatten(order='F')
+    volume.cell_data['cell_data'] = cell_data.flatten(order='F')
+    with pytest.raises(ValueError):  # noqa: PT011
+        volume.gradient_magnitude(scalars='cell_data')
+
+
+def test_median_smooth_output_type_orig():
+    volume = examples.load_uniform()
+    volume_smooth = volume.median_smooth()
+    assert isinstance(volume_smooth, pv.ImageData)
+    volume_smooth = volume.median_smooth(scalars='Spatial Point Data')
+    assert isinstance(volume_smooth, pv.ImageData)
+
+
 def test_median_smooth_constant_data():
     point_data = np.ones((10, 10, 10))
     volume = pv.ImageData(dimensions=(10, 10, 10))

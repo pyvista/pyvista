@@ -123,6 +123,200 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
         return _get_output(alg)
 
+    def gradient(
+        self,
+        dimensionality: int = 3,
+        *,
+        handle_boundaries: bool = True,
+        scalars=None,
+        progress_bar: bool = False,
+    ):
+        """Compute the gradient of an image.
+
+        Produces a vector field from a scalar field. The gradient
+        computation is done on a per-cell basis, and the output includes
+        gradient vectors at each point.
+
+        For a 3D input, the output will have 3-component vectors
+        (x, y, z gradients). For a 2D input (when dimensionality is set
+        to 2), the output will have 2-component vectors.
+
+        Parameters
+        ----------
+        dimensionality : int, default: 3
+            The dimensionality of the gradient computation. Use ``2`` to
+            compute a 2D gradient, or ``3`` for a 3D gradient.
+
+        handle_boundaries : bool, default: True
+            If ``True``, the gradient filter will handle boundary pixels
+            by replicating the boundary values. If ``False``, the gradient
+            at boundaries will be set to zero.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image with gradient vectors as point data.
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        See Also
+        --------
+        gradient_magnitude
+            Compute the magnitude of the gradient.
+
+        Examples
+        --------
+        Compute the gradient of an image.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> gradient = grid.gradient()
+        >>> gradient.point_data  # doctest:+SKIP
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : Gradient
+        Active Vectors  : Gradient
+        ...
+
+        See :ref:`image_gradient_example` for a full example using this filter.
+
+        """
+        if dimensionality not in (2, 3):
+            msg = f'Dimensionality must be 2 or 3, got {dimensionality}.'
+            raise ValueError(msg)
+
+        alg = _vtk.vtkImageGradient()
+        alg.SetInputDataObject(self)
+        alg.SetDimensionality(dimensionality)
+        alg.SetHandleBoundaries(handle_boundaries)
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            if field.value == 1:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            if field.value == 1:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
+        )  # args: (idx, port, connection, field, name)
+        _update_alg(alg, progress_bar, 'Performing Gradient')
+        result = _get_output(alg)
+        result.set_active_scalars(f'{scalars}Gradient', preference='point')  # type: ignore[attr-defined]
+        return result
+
+    def gradient_magnitude(
+        self,
+        dimensionality: int = 3,
+        *,
+        handle_boundaries: bool = True,
+        scalars=None,
+        progress_bar: bool = False,
+    ):
+        """Compute the magnitude of the gradient of an image.
+
+        This is similar to :meth:`gradient`, but returns a scalar field
+        (the magnitude of the gradient) rather than a vector field.
+
+        Parameters
+        ----------
+        dimensionality : int, default: 3
+            The dimensionality of the gradient computation. Use ``2`` to
+            compute a 2D gradient magnitude, or ``3`` for a 3D gradient magnitude.
+
+        handle_boundaries : bool, default: True
+            If ``True``, the gradient filter will handle boundary pixels
+            by replicating the boundary values. If ``False``, the gradient
+            at boundaries will be set to zero.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image with gradient magnitude as point data.
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        See Also
+        --------
+        gradient
+            Compute the gradient vectors.
+
+        Examples
+        --------
+        Compute the gradient magnitude of an image.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
+        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grad_mag = grid.gradient_magnitude()
+        >>> grad_mag.point_data  # doctest:+SKIP
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : GradientMagnitude
+        ...
+
+        """
+        if dimensionality not in (2, 3):
+            msg = f'Dimensionality must be 2 or 3, got {dimensionality}.'
+            raise ValueError(msg)
+
+        alg = _vtk.vtkImageGradientMagnitude()
+        alg.SetInputDataObject(self)
+        alg.SetDimensionality(dimensionality)
+        alg.SetHandleBoundaries(handle_boundaries)
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            if field.value == 1:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            if field.value == 1:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
+        )  # args: (idx, port, connection, field, name)
+        _update_alg(alg, progress_bar, 'Performing Gradient Magnitude')
+        result = _get_output(alg)
+        result.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+        return result
+
     def median_smooth(
         self,
         kernel_size=(3, 3, 3),

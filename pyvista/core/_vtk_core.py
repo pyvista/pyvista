@@ -466,6 +466,10 @@ from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
+from vtkmodules.vtkImagingGeneral import vtkImageGradient as vtkImageGradient
+from vtkmodules.vtkImagingGeneral import (
+    vtkImageGradientMagnitude as vtkImageGradientMagnitude,
+)
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction as vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import (
