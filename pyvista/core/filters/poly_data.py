@@ -3991,13 +3991,17 @@ class PolyDataFilters(DataSetFilters):
         }
         if isinstance(fitting_strategy, str):
             if fitting_strategy not in fitting_strategies:
-                raise ValueError(
+                msg = (
                     f'Invalid fitting strategy "{fitting_strategy}". '
                     f'Expected one of {list(fitting_strategies)}.'
                 )
+                raise ValueError(
+                    msg
+                )
             fitting_strategy = fitting_strategies[fitting_strategy]
         else:
-            raise TypeError('Invalid type given to `fitting_strategy`. Must be a string.')
+            msg = 'Invalid type given to `fitting_strategy`. Must be a string.'
+            raise TypeError(msg)
 
         alg = _vtk.vtkFitToHeightMapFilter()
         alg.SetInputData(self)
