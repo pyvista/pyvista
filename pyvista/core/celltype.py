@@ -891,6 +891,7 @@ class CellType(IntEnum):
         See Also
         --------
         pyvista.Cell.dimension
+        with_dimension
 
         Examples
         --------
@@ -1112,6 +1113,60 @@ class CellType(IntEnum):
             )
             raise ValueError(msg)
         return n_faces
+
+    @classmethod
+    def with_dimension(cls, dimension: _Dimension) -> frozenset[CellType]:
+        """Return the set of all cell types with the given topological dimension.
+
+        The groupings are derived from each member's :attr:`dimension`, which in
+        turn comes from :vtk:`vtkCellTypeUtilities.GetDimension`. This avoids
+        maintaining hard-coded lists of 0D/1D/2D/3D cell types and stays in sync
+        with VTK automatically as new cell types are added.
+
+        .. versionadded:: 0.48
+
+        Parameters
+        ----------
+        dimension : int
+            Topological dimension. Must be ``0``, ``1``, ``2``, or ``3``.
+
+        Returns
+        -------
+        frozenset[CellType]
+            All :class:`CellType` members whose :attr:`dimension` equals
+            ``dimension``.
+
+        See Also
+        --------
+        dimension
+        pyvista.DataSet.max_cell_dimensionality
+        pyvista.DataSet.min_cell_dimensionality
+        pyvista.DataSet.distinct_cell_types
+
+        Examples
+        --------
+        Common 2D cell types such as :attr:`TRIANGLE` and :attr:`TRIANGLE_STRIP`
+        are in the 2D grouping.
+
+        >>> import pyvista as pv
+        >>> two_d = pv.CellType.with_dimension(2)
+        >>> pv.CellType.TRIANGLE in two_d
+        True
+        >>> pv.CellType.TRIANGLE_STRIP in two_d
+        True
+
+        Check whether a mesh contains only 2D cells by combining this with
+        :attr:`~pyvista.DataSet.distinct_cell_types`.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.distinct_cell_types <= pv.CellType.with_dimension(2)
+        True
+
+        """
+        if dimension not in (0, 1, 2, 3):
+            msg = f'`dimension` must be 0, 1, 2, or 3, got {dimension!r}.'
+            raise ValueError(msg)
+        return frozenset(member for member in cls if member.dimension == dimension)
 
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
     VERTEX = _CELL_TYPE_INFO['VERTEX']

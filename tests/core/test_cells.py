@@ -188,6 +188,45 @@ def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
+def test_celltype_with_dimension():
+    sets = {d: CellType.with_dimension(d) for d in (0, 1, 2, 3)}
+
+    for grouping in sets.values():
+        assert isinstance(grouping, frozenset)
+        assert all(isinstance(m, CellType) for m in grouping)
+
+    assert CellType.VERTEX in sets[0]
+    assert CellType.POLY_VERTEX in sets[0]
+    assert CellType.LINE in sets[1]
+    assert CellType.POLY_LINE in sets[1]
+    assert CellType.TRIANGLE in sets[2]
+    assert CellType.QUAD in sets[2]
+    assert CellType.POLYGON in sets[2]
+    assert CellType.PIXEL in sets[2]
+    assert CellType.TRIANGLE_STRIP in sets[2]
+    assert CellType.TETRA in sets[3]
+    assert CellType.HEXAHEDRON in sets[3]
+    assert CellType.VOXEL in sets[3]
+    assert CellType.POLYHEDRON in sets[3]
+
+    for i in (0, 1, 2, 3):
+        for j in (0, 1, 2, 3):
+            if i != j:
+                assert sets[i].isdisjoint(sets[j])
+
+    union = sets[0] | sets[1] | sets[2] | sets[3]
+    assert union == set(CellType)
+
+    for member in CellType:
+        assert member in sets[member.dimension]
+
+
+@pytest.mark.parametrize('bad', [-1, 4, 1.5, '2'])
+def test_celltype_with_dimension_invalid(bad):
+    with pytest.raises(ValueError, match='`dimension` must be 0, 1, 2, or 3'):
+        CellType.with_dimension(bad)
+
+
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
