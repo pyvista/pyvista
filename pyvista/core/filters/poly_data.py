@@ -4010,9 +4010,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
         >>> _ = pl.add_mesh(terrain, scalars='elevation', opacity=0.7, cmap='terrain')
         >>> _ = pl.add_mesh(result_cell, color='red', opacity=0.9)
-        >>> _ = pl.add_text(
-        ...     'Cell Average Height', position='upper_left', font_size=12
-        ... )
+        >>> _ = pl.add_text('Cell Average Height', position='upper_left', font_size=12)
         >>> pl.view_isometric()
         >>> pl.show()
 
