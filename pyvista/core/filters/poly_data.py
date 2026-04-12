@@ -3995,9 +3995,7 @@ class PolyDataFilters(DataSetFilters):
                     f'Invalid fitting strategy "{fitting_strategy}". '
                     f'Expected one of {list(fitting_strategies)}.'
                 )
-                raise ValueError(
-                    msg
-                )
+                raise ValueError(msg)
             fitting_strategy = fitting_strategies[fitting_strategy]
         else:
             msg = 'Invalid type given to `fitting_strategy`. Must be a string.'
