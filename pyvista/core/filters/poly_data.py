@@ -3904,13 +3904,13 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def fit_to_height_map(
+    def fit_to_height_map(  # noqa: PLR0917
         self,
         height_map,
         fitting_strategy='point_projection',
-        use_height_map_offset=True,
-        inplace=False,
-        progress_bar=False,
+        use_height_map_offset: bool = True,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Fit polygonal data to a height map (image data).
 
