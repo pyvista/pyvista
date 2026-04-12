@@ -166,15 +166,23 @@ def register_writer(
     Register a writer for a custom file extension with a
     format-specific option.
 
-    >>> import pyvista as pv
-    >>> def my_writer(dataset, path, *, level=3): ...
-    >>> pv.register_writer('.myformat', my_writer)  # doctest: +SKIP
-    >>> pv.Sphere().save('sphere.myformat', level=9)  # doctest: +SKIP
+    .. code-block:: python
+
+        import pyvista as pv
+
+
+        def my_writer(dataset, path, *, level=3): ...
+
+
+        pv.register_writer('.myformat', my_writer)
+        pv.Sphere().save('sphere.myformat', level=9)
 
     Use as a decorator.
 
-    >>> @pv.register_writer('.myformat')  # doctest: +SKIP
-    ... def my_writer(dataset, path, **kwargs): ...
+    .. code-block:: python
+
+        @pv.register_writer('.myformat')
+        def my_writer(dataset, path, **kwargs): ...
 
     """
     if handler is None:
