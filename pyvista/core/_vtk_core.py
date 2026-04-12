@@ -457,9 +457,7 @@ from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
 from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageGradient as vtkImageGradient
-from vtkmodules.vtkImagingGeneral import (
-    vtkImageGradientMagnitude as vtkImageGradientMagnitude,
-)
+from vtkmodules.vtkImagingGeneral import vtkImageGradientMagnitude as vtkImageGradientMagnitude
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkGaussianSplatter as vtkGaussianSplatter
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction as vtkSampleFunction

@@ -21,7 +21,6 @@ See also :func:`pyvista.ImageDataFilters.gradient_magnitude`.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -57,7 +56,9 @@ plot_kwargs = dict(
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
 pl.add_text('Original Image (Slice 22)', font_size=10)
-pl.add_mesh(image.extract_subset([0, 256, 0, 256, slice_z, slice_z]), cmap='gray', cpos='xy')
+pl.add_mesh(
+    image.extract_subset([0, 256, 0, 256, slice_z, slice_z]), cmap='gray', cpos='xy'
+)
 pl.subplot(0, 1)
 pl.add_text('Gradient Magnitude (Slice 22)', font_size=10)
 pl.add_mesh(
