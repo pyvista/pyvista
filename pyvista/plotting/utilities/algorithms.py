@@ -197,7 +197,7 @@ def _resolve_output_type(output_type: str | type) -> str:
     """
     if isinstance(output_type, str):
         return output_type
-    if isinstance(output_type, type) and issubclass(output_type, pv.DataSet):
+    if issubclass(output_type, pv.DataSet):
         return output_type().GetClassName()
     msg = (
         f'Invalid output_type: {output_type!r}. '
