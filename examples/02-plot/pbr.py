@@ -19,6 +19,8 @@ a statue as though it were metallic.
 
 # sphinx_gallery_start_ignore
 # physically based rendering does not seem to work in vtk-js
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -35,21 +37,25 @@ mesh.rotate_x(-90.0, inplace=True)  # rotate to orient with the skybox
 cubemap = examples.download_sky_box_cube_map()
 
 
-###############################################################################
+# %%
 # Let's render the mesh with a base color of "linen" to give it a metal looking
 # finish.
-p = pv.Plotter()
-p.add_actor(cubemap.to_skybox())
-p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
-p.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
+pl = pv.Plotter()
+pl.add_actor(cubemap.to_skybox())
+pl.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
+pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
 
 # Define a nice camera perspective
-cpos = [(-313.40, 66.09, 1000.61), (0.0, 0.0, 0.0), (0.018, 0.99, -0.06)]
+cpos = pv.CameraPosition(
+    position=(-313.40, 66.09, 1000.61),
+    focal_point=(0.0, 0.0, 0.0),
+    viewup=(0.018, 0.99, -0.06),
+)
 
-p.show(cpos=cpos)
+pl.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # Show the variation of the metallic and roughness parameters.
 #
 # Plot with metallic increasing from left to right and roughness
@@ -57,18 +63,18 @@ p.show(cpos=cpos)
 
 colors = ['red', 'teal', 'black', 'orange', 'silver']
 
-p = pv.Plotter()
-p.set_environment_texture(cubemap)
+pl = pv.Plotter()
+pl.set_environment_texture(cubemap)
 
 for i, j in product(range(5), range(6)):
     sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
-    p.add_mesh(sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5)
+    pl.add_mesh(sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5)
 
-p.view_vector((-1, 0, 0), (0, 1, 0))
-p.show()
+pl.view_vector((-1, 0, 0), (0, 1, 0))
+pl.show()
 
 
-###############################################################################
+# %%
 # Combine custom lighting and physically based rendering.
 
 # download louis model
@@ -76,22 +82,28 @@ mesh = examples.download_louis_louvre()
 mesh.rotate_z(140, inplace=True)
 
 
-plotter = pv.Plotter(lighting=None)
-plotter.set_background('black')
-plotter.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
+pl = pv.Plotter(lighting=None)
+pl.set_background('black')
+pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
 
 
 # set up lighting
-light = pv.Light((-2, 2, 0), (0, 0, 0), 'white')
-plotter.add_light(light)
+light = pv.Light(position=(-2, 2, 0), focal_point=(0, 0, 0), color='white')
+pl.add_light(light)
 
-light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549))
-plotter.add_light(light)
+light = pv.Light(position=(2, 0, 0), focal_point=(0, 0, 0), color=(0.7, 0.0862, 0.0549))
+pl.add_light(light)
 
-light = pv.Light((0, 0, 10), (0, 0, 0), 'white')
-plotter.add_light(light)
+light = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
+pl.add_light(light)
 
 
 # plot with a good camera position
-plotter.camera_position = [(9.51, 13.92, 15.81), (-2.836, -0.93, 10.2), (-0.22, -0.18, 0.959)]
-cpos = plotter.show()
+pl.camera_position = pv.CameraPosition(
+    position=(9.51, 13.92, 15.81),
+    focal_point=(-2.836, -0.93, 10.2),
+    viewup=(-0.22, -0.18, 0.959),
+)
+cpos = pl.show()
+# %%
+# .. tags:: plot

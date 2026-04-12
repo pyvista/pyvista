@@ -20,7 +20,9 @@ Perform many ray traces simultaneously with a PolyData Object
     sphere = pv.Sphere(radius=0.85)
 
     # Define a list of origin points and a list of direction vectors for each ray
-    vectors = [ [cos(radians(x)), sin(radians(x)), 0] for x in range(0, 360, 5)]
+    vectors = [
+        [cos(radians(x)), sin(radians(x)), 0] for x in range(0, 360, 5)
+    ]
     origins = [[0, 0, 0]] * len(vectors)
 
     # Perform ray trace
@@ -31,17 +33,26 @@ Perform many ray traces simultaneously with a PolyData Object
     intersections = pv.PolyData(points)
 
     # Render the result
-    p = pv.Plotter()
-    p.add_mesh(sphere,
-               show_edges=True, opacity=0.5, color="w",
-               lighting=False, label="Test Mesh")
-    p.add_mesh(rays[0], color="blue", line_width=5, label="Ray Segments")
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        show_edges=True,
+        opacity=0.5,
+        color="w",
+        lighting=False,
+        label="Test Mesh",
+    )
+    pl.add_mesh(rays[0], color="blue", line_width=5, label="Ray Segments")
     for ray in rays[1:]:
-        p.add_mesh(ray, color="blue", line_width=5)
-    p.add_mesh(intersections, color="maroon",
-               point_size=25, label="Intersection Points")
-    p.add_legend()
-    p.show()
+        pl.add_mesh(ray, color="blue", line_width=5)
+    pl.add_mesh(
+        intersections,
+        color="maroon",
+        point_size=25,
+        label="Intersection Points",
+    )
+    pl.add_legend()
+    pl.show()
 
 
 .. image:: ../images/user-generated/ray_trace.png
@@ -79,7 +90,9 @@ plane.
 
     # Get origins and normals
     origins = planes.cell_centers().points
-    normals = planes.compute_normals(cell_normals=True, point_normals=False)["Normals"]
+    normals = planes.compute_normals(
+        cell_normals=True, point_normals=False
+    )["Normals"]
 
     # Vectorized Ray trace
     points, pt_inds, cell_inds = data.multi_ray_trace(
@@ -140,16 +153,16 @@ plane.
     ]
 
     # Plot results
-    p = pv.Plotter()
-    p.add_mesh(x_axis, color="r")
-    p.add_point_labels(x_label, "label", show_points=False, font_size=24)
-    p.add_mesh(y_axis, color="r")
-    p.add_point_labels(y_label, "label", show_points=False, font_size=24)
-    p.add_mesh(z_axis, color="r")
-    p.add_point_labels(z_label, "label", show_points=False, font_size=24)
-    p.add_mesh(data)
-    p.add_mesh(planes)
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(x_axis, color="r")
+    pl.add_point_labels(x_label, "label", show_points=False, font_size=24)
+    pl.add_mesh(y_axis, color="r")
+    pl.add_point_labels(y_label, "label", show_points=False, font_size=24)
+    pl.add_mesh(z_axis, color="r")
+    pl.add_point_labels(z_label, "label", show_points=False, font_size=24)
+    pl.add_mesh(data)
+    pl.add_mesh(planes)
+    pl.show()
 
 
 .. image:: ../images/user-generated/project_to_plane.png

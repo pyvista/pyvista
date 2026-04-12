@@ -1,17 +1,26 @@
-# flake8: noqa: D102,D103,D107
 """PyVista Trame Viewer class for a Vue 2 client.
 
 This class, derived from `pyvista.trame.ui.base_viewer`,
 is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
-from trame.ui.vuetify2 import VAppLayout
-from trame.widgets import html, vuetify as vuetify
-from trame_client.ui.core import AbstractLayout
 
-from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from trame.ui.vuetify2 import VAppLayout
+from trame.widgets import html
+from trame.widgets import vuetify
+
+from pyvista.trame.views import PyVistaLocalView
+from pyvista.trame.views import PyVistaRemoteLocalView
+from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
+
+if TYPE_CHECKING:
+    from trame_client.ui.core import AbstractLayout
 
 
 def button(click, icon, tooltip):  # numpydoc ignore=PR01
@@ -92,6 +101,7 @@ class Viewer(BaseViewer):
         -------
         VAppLayout (vue2)
             A layout this viewer can be embedded in.
+
         """
         return VAppLayout(*args, **kwargs)
 
@@ -123,10 +133,11 @@ class Viewer(BaseViewer):
         ) as row:
             server = row.server
             # Listen to state changes
-            server.state.change(self.EDGES)(self.on_edge_visiblity_change)
-            server.state.change(self.GRID)(self.on_grid_visiblity_change)
-            server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
-            server.state.change(self.AXIS)(self.on_axis_visiblity_change)
+            server.state.change(self.EDGES)(self.on_edge_visibility_change)
+            server.state.change(self.GRID)(self.on_grid_visibility_change)
+            server.state.change(self.OUTLINE)(self.on_outline_visibility_change)
+            server.state.change(self.AXIS)(self.on_axis_visibility_change)
+            server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
             button(
@@ -182,19 +193,28 @@ class Viewer(BaseViewer):
                 checkbox(
                     model=(self.SERVER_RENDERING, default_server_rendering),
                     icons=('mdi-dns', 'mdi-open-in-app'),
-                    tooltip=f"Toggle rendering mode ({{{{ {self.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
+                    tooltip=f'Toggle rendering mode '
+                    f"({{{{ {self.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
                 )
             with vuetify.VRow(
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center',
             ):
+                checkbox(
+                    model=(self.PARALLEL, False),
+                    icons=('mdi-camera-off', 'mdi-camera-switch'),
+                    tooltip=f'Toggle parallel projection '
+                    f"({{{{ {self.PARALLEL} ? 'on' : 'off' }}}})",
+                )
 
                 def attach_screenshot():
                     return server.protocol.addAttachment(self.screenshot())
 
                 button(
                     # Must use single-quote string for JS here
-                    click=f"utils.download('screenshot.png', trigger('{server.trigger_name(attach_screenshot)}'), 'image/png')",
+                    click=f"utils.download('screenshot.png', "
+                    f"trigger('{server.trigger_name(attach_screenshot)}'), "
+                    f"'image/png')",
                     icon='mdi-file-png-box',
                     tooltip='Save screenshot',
                 )
@@ -204,7 +224,9 @@ class Viewer(BaseViewer):
 
             button(
                 # Must use single-quote string for JS here
-                click=f"utils.download('scene-export.html', trigger('{server.trigger_name(attach_export)}'), 'application/octet-stream')",
+                click="utils.download('scene-export.html', "
+                f"trigger('{server.trigger_name(attach_export)}'), "
+                "'application/octet-stream')",
                 icon='mdi-download',
                 tooltip='Export scene as HTML',
             )
@@ -250,16 +272,15 @@ class Viewer(BaseViewer):
 
         Returns
         -------
-        PyVistaRemoteLocalView, PyVistaRemoteView, or PyVistaLocalView
+        output : PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
             Trame view interface for pyvista.
 
         """
         if mode is None:
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
-            raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
-            )
+            msg = f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+            raise ValueError(msg)
         if mode != 'trame':
             default_server_rendering = mode == 'server'
 
@@ -273,9 +294,9 @@ class Viewer(BaseViewer):
             # Initialize state variables
             server.state[self.EDGES] = False
             server.state[self.GRID] = self.plotter.renderer.cube_axes_actor is not None
-            server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
+            server.state[self.OUTLINE] = self.plotter.renderer._box_object is not None
             server.state[self.AXIS] = (
-                hasattr(self.plotter.renderer, 'axes_widget')
+                self.plotter.renderer.axes_widget is not None
                 and self.plotter.renderer.axes_widget.GetEnabled()
             )
             server.state[self.SERVER_RENDERING] = default_server_rendering
@@ -318,6 +339,7 @@ class Viewer(BaseViewer):
                 view = PyVistaLocalView(self.plotter, **kwargs)
 
             self._html_views.add(view)
-            view.menu = self.menu
+            if add_menu:
+                view.menu = self.menu
 
         return view

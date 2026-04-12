@@ -1,24 +1,26 @@
+from __future__ import annotations
+
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server()
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVista Many Actors"
+state.trame__title = 'PyVista Many Actors'
 
 # -----------------------------------------------------------------------------
 
-plotter = pv.Plotter()
+pl = pv.Plotter()
 
 for i in range(25):
     for j in range(25):
-        actor = plotter.add_mesh(pv.Sphere(center=(i, j, 0)))
+        actor = pl.add_mesh(pv.Sphere(center=(i, j, 0)))
 
 
 # -----------------------------------------------------------------------------
@@ -30,11 +32,11 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text(state.trame__title)
 
     with layout.toolbar:
-        vuetify.VSpacer()
+        vuetify3.VSpacer()
 
     with layout.content:
         # Use PyVista UI template for Plotters
-        view = plotter_ui(plotter)
+        view = plotter_ui(pl)
         ctrl.view_update = view.update
 
     # hide footer

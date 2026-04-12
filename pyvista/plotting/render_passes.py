@@ -1,5 +1,11 @@
 """Render passes module for PyVista."""
+
+from __future__ import annotations
+
 import weakref
+
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
@@ -17,22 +23,22 @@ POST_PASS = [
 ]
 
 
-class RenderPasses:
+class RenderPasses(_NoNewAttrMixin):
     """Class to support multiple render passes for a renderer.
 
     Notes
     -----
-    Passes are organized here as "primary" (vtkOpenGLRenderPass) that act
-    within the renderer and "post-processing" (vtkImageProcessingPass) passes,
+    Passes are organized here as "primary" (:vtk:`vtkOpenGLRenderPass`) that act
+    within the renderer and "post-processing" (:vtk:`vtkImageProcessingPass`) passes,
     which act on the image generated from the renderer.
 
-    The primary passes are added as part of a vtk.vtkRenderPassCollection or
+    The primary passes are added as part of a :vtk:`vtkRenderPassCollection` or
     are "stacked", while the post-processing passes are added as a final pass
     to the rendered image.
 
     Parameters
     ----------
-    renderer : vtk.vtkRenderer
+    renderer : :vtk:`vtkRenderer`
         Renderer to initialize render passes for.
 
     """
@@ -107,12 +113,13 @@ class RenderPasses:
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
+        return None  # type: ignore[unreachable]
 
     def deep_clean(self):
         """Delete all render passes."""
         if self._renderer is not None:
             self._renderer.SetPass(None)
-        self._renderer_ref = None
+        self._renderer_ref = None  # type: ignore[assignment]
         if self.__seq_pass is not None:
             self.__seq_pass.SetPasses(None)
         self.__seq_pass = None
@@ -131,12 +138,12 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkEDLShading
+        :vtk:`vtkEDLShading`
             The enabled EDL pass.
 
         """
         if self._edl_pass is not None:
-            return
+            return None
         self._edl_pass = _vtk.vtkEDLShading()
         self._add_pass(self._edl_pass)
         return self._edl_pass
@@ -149,13 +156,13 @@ class RenderPasses:
         self._edl_pass = None
 
     def add_blur_pass(self):
-        """Add a vtkGaussianBlurPass pass.
+        """Add a :vtk:`vtkGaussianBlurPass` pass.
 
-        This is a vtkImageProcessingPass and delegates to the last pass.
+        This is a :vtk:`vtkImageProcessingPass` and delegates to the last pass.
 
         Returns
         -------
-        vtk.vtkGaussianBlurPass
+        :vtk:`vtkGaussianBlurPass`
             The added Gaussian blur pass.
 
         """
@@ -165,7 +172,7 @@ class RenderPasses:
         return blur_pass
 
     def remove_blur_pass(self):
-        """Remove a single vtkGaussianBlurPass pass."""
+        """Remove a single :vtk:`vtkGaussianBlurPass` pass."""
         if self._blur_passes:
             # order of the blur passes does not matter
             self._remove_pass(self._blur_passes.pop())
@@ -175,13 +182,13 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkShadowMapPass
+        :vtk:`vtkShadowMapPass`
             The enabled shadow pass.
 
         """
         # shadow pass can be directly added to the base pass collection
         if self._shadow_map_pass is not None:
-            return
+            return None
         self._shadow_map_pass = _vtk.vtkShadowMapPass()
         self._pass_collection.AddItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.AddItem(self._shadow_map_pass)
@@ -196,7 +203,8 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance=True):
+    @_deprecate_positional_args
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001, FBT002
         """Enable the depth of field pass.
 
         Parameters
@@ -207,15 +215,16 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkDepthOfFieldPass
+        :vtk:`vtkDepthOfFieldPass`
             The enabled depth of field pass.
 
         """
         if self._dof_pass is not None:
-            return
+            return None
 
         if self._ssao_pass is not None:
-            raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
+            msg = 'Depth of field pass is incompatible with the SSAO pass.'
+            raise RuntimeError(msg)
 
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
@@ -229,7 +238,10 @@ class RenderPasses:
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
 
-    def enable_ssao_pass(self, radius, bias, kernel_size, blur):
+    @_deprecate_positional_args
+    def enable_ssao_pass(  # noqa: PLR0917
+        self, radius, bias, kernel_size, blur
+    ):
         """Enable the screen space ambient occlusion pass.
 
         Parameters
@@ -245,15 +257,16 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkSSAOPass
+        :vtk:`vtkSSAOPass`
             The enabled screen space ambient occlusion pass.
 
         """
         if self._dof_pass is not None:
-            raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
+            msg = 'SSAO pass is incompatible with the depth of field pass.'
+            raise RuntimeError(msg)
 
         if self._ssao_pass is not None:
-            return
+            return None
         self._ssao_pass = _vtk.vtkSSAOPass()
         self._ssao_pass.SetRadius(radius)
         self._ssao_pass.SetBias(bias)
@@ -274,12 +287,12 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkSSAAPass
+        :vtk:`vtkSSAAPass`
             The enabled super-sample anti-aliasing pass.
 
         """
         if self._ssaa_pass is not None:
-            return
+            return None
         self._ssaa_pass = _vtk.vtkSSAAPass()
         self._add_pass(self._ssaa_pass)
         return self._ssaa_pass
@@ -293,8 +306,9 @@ class RenderPasses:
 
     def _update_passes(self):
         """Reassemble pass delegation."""
-        if self._renderer is None:  # pragma: no cover
-            raise RuntimeError('The renderer has been closed.')
+        if hasattr(self._renderer, '_closed') and self._renderer._closed:
+            msg = 'The renderer has been closed.'
+            raise RuntimeError(msg)
 
         current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:

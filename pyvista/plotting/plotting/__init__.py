@@ -1,8 +1,11 @@
 """Deprecated pyvista.plotting.plotting module."""
+
+from __future__ import annotations
+
 import importlib
 import inspect
-import warnings
 
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 
@@ -15,13 +18,15 @@ def __getattr__(name):
         try:
             value = inspect.getattr_static(module, name)
         except AttributeError:
-            raise AttributeError(
-                f'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `{name}`.'
-            ) from None
+            msg = (
+                f'Module `pyvista.plotting.plotting` has been deprecated and we could not '
+                f'automatically find `{name}`.'
+            )
+            raise AttributeError(msg) from None
     import_path = f'from pyvista.plotting import {name}'
-    message = f'The `pyvista.plotting.plotting` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
-    warnings.warn(
-        message,
-        PyVistaDeprecationWarning,
+    message = (
+        f'The `pyvista.plotting.plotting` module has been deprecated. '
+        f'`{name}` is now imported as: `{import_path}`.'
     )
+    warn_external(message, PyVistaDeprecationWarning)
     return value

@@ -1,16 +1,21 @@
-# flake8: noqa: D102,D103,D107
 """PyVista Trame Base Viewer class.
 
 This base class defines methods to manipulate a PyVista Plotter.
 This base class does not define a `ui` method, but its derived classes do.
 See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived classes.
 """
+
+from __future__ import annotations
+
 import io
+from typing import TYPE_CHECKING
 
 from trame.app import get_server
-from trame_client.ui.core import AbstractLayout
 
-import pyvista
+import pyvista as pv
+
+if TYPE_CHECKING:
+    from trame_client.ui.core import AbstractLayout
 
 
 class BaseViewer:
@@ -24,6 +29,7 @@ class BaseViewer:
         Current Server for Trame Application.
     suppress_rendering : bool, default=False
         Whether to suppress rendering on the Plotter.
+
     """
 
     def __init__(self, plotter, server=None, suppress_rendering=False):
@@ -41,7 +47,8 @@ class BaseViewer:
         self.GRID = f'{plotter._id_name}_grid_visibility'
         self.OUTLINE = f'{plotter._id_name}_outline_visibility'
         self.EDGES = f'{plotter._id_name}_edge_visibility'
-        self.AXIS = f'{plotter._id_name}_axis_visiblity'
+        self.AXIS = f'{plotter._id_name}_axis_visibility'
+        self.PARALLEL = f'{plotter._id_name}_parallel_projection'
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
         self.VALID_UI_MODES = [
             'trame',
@@ -53,13 +60,14 @@ class BaseViewer:
         server.state[self.OUTLINE] = False
         server.state[self.EDGES] = False
         server.state[self.AXIS] = False
+        server.state[self.PARALLEL] = False
 
     @property
     def views(self):  # numpydoc ignore=RT01
         """Get a set of all associate trame views for this viewer."""
         return self._html_views
 
-    def update(self, **kwargs):
+    def update(self, **kwargs):  # noqa: ARG002
         """Update all associated views.
 
         Parameters
@@ -71,7 +79,7 @@ class BaseViewer:
         for view in self._html_views:
             view.update()
 
-    def push_camera(self, **kwargs):
+    def push_camera(self, **kwargs):  # noqa: ARG002
         """Push camera to all associated views.
 
         Parameters
@@ -83,7 +91,7 @@ class BaseViewer:
         for view in self._html_views:
             view.push_camera()
 
-    def reset_camera(self, **kwargs):
+    def reset_camera(self, **kwargs):  # noqa: ARG002
         """Reset camera for all associated views.
 
         Parameters
@@ -95,7 +103,7 @@ class BaseViewer:
         for view in self._html_views:
             view.reset_camera()
 
-    def update_image(self, **kwargs):
+    def update_image(self, **kwargs):  # noqa: ARG002
         """Update image for all associated views.
 
         Parameters
@@ -107,7 +115,7 @@ class BaseViewer:
         for view in self._html_views:
             view.update_image()
 
-    def update_camera(self, **kwargs):
+    def update_camera(self, **kwargs):  # noqa: ARG002
         """Update image and camera for all associated views.
 
         Parameters
@@ -139,7 +147,24 @@ class BaseViewer:
         self.plotter.view_xy(render=False)
         self.update_camera()
 
-    def on_edge_visiblity_change(self, **kwargs):
+    def on_parallel_projection_change(self, **kwargs):
+        """Toggle parallel projection for all renderers.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
+        value = kwargs[self.PARALLEL]
+        for renderer in self.plotter.renderers:
+            if value:
+                renderer.enable_parallel_projection()
+            else:
+                renderer.disable_parallel_projection()
+        self.update()
+
+    def on_edge_visibility_change(self, **kwargs):
         """Toggle edge visibility for all actors.
 
         Parameters
@@ -150,12 +175,12 @@ class BaseViewer:
         """
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
-            for _, actor in renderer.actors.items():
-                if isinstance(actor, pyvista.Actor):
+            for actor in renderer.actors.values():
+                if isinstance(actor, pv.Actor):
                     actor.prop.show_edges = value
         self.update()
 
-    def on_grid_visiblity_change(self, **kwargs):
+    def on_grid_visibility_change(self, **kwargs):
         """Handle axes grid visibility.
 
         Parameters
@@ -172,7 +197,7 @@ class BaseViewer:
                 renderer.remove_bounds_axes()
         self.update()
 
-    def on_outline_visiblity_change(self, **kwargs):
+    def on_outline_visibility_change(self, **kwargs):
         """Handle outline visibility.
 
         Parameters
@@ -189,7 +214,7 @@ class BaseViewer:
                 renderer.remove_bounding_box()
         self.update()
 
-    def on_axis_visiblity_change(self, **kwargs):
+    def on_axis_visibility_change(self, **kwargs):
         """Handle outline visibility.
 
         Parameters
@@ -206,13 +231,14 @@ class BaseViewer:
                 renderer.hide_axes()
         for view in self._html_views:
             if view.set_widgets:
-                # VtkRemoteView does not have set_widgets function, but VtkRemoteLocalView and VtkLocalView do.
+                # VtkRemoteView does not have set_widgets function, but
+                # VtkRemoteLocalView and VtkLocalView do.
                 view.set_widgets(
                     [
                         ren.axes_widget
                         for ren in self.plotter.renderers
-                        if hasattr(ren, 'axes_widget')
-                    ]
+                        if ren.axes_widget is not None
+                    ],
                 )
         self.update()
 
@@ -231,7 +257,7 @@ class BaseViewer:
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Get dataset actors."""
-        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pyvista.Actor)}
+        return {k: v for k, v in self.plotter.actors.items() if isinstance(v, pv.Actor)}
 
     def screenshot(self):
         """Take screenshot and add attachament.
@@ -253,7 +279,8 @@ class BaseViewer:
         """Export the scene as a zip file."""
         for view in self._html_views:
             return memoryview(view.export_html())
-        raise TypeError('This viewer cannot be exported.')
+        msg = 'This viewer cannot be exported.'
+        raise TypeError(msg)
 
     def ui(self):
         """Implement in derived classes."""
@@ -274,5 +301,6 @@ class BaseViewer:
         -------
         AbstractLayout
             A layout this viewer can be embedded in.
+
         """
         raise NotImplementedError

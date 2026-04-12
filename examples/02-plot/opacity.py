@@ -1,13 +1,16 @@
 """
-.. _plot_opacity_example:
+.. _opacity_example:
 
 Plot with Opacity
 ~~~~~~~~~~~~~~~~~
 
-Plot a mesh's scalar array with an opacity transfer function or opacity mapping
-based on a scalar array.
+Plot a mesh's scalar array with an :class:`~pyvista.opacity_transfer_function`
+or opacity mapping based on a scalar array.
 """
+
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -16,27 +19,27 @@ image = examples.download_st_helens()
 mesh = image.warp_by_scalar()
 
 
-###############################################################################
+# %%
 # Global Value
 # ++++++++++++
 #
 # You can also apply a global opacity value to the mesh by passing a single
 # float between 0 and 1 which would enable you to see objects behind the mesh:
 
-p = pv.Plotter()
-p.add_mesh(
+pl = pv.Plotter()
+pl.add_mesh(
     image.contour(),
     line_width=5,
 )
-p.add_mesh(mesh, opacity=0.85, color=True)
-p.show()
+pl.add_mesh(mesh, opacity=0.85, color=True)
+pl.show()
 
-###############################################################################
+# %%
 # Note that you can specify ``use_transparency=True`` to convert opacities to
 # transparencies in any of the following examples.
 
 
-###############################################################################
+# %%
 # Transfer Functions
 # ++++++++++++++++++
 #
@@ -47,32 +50,38 @@ p.show()
 #
 # Opacity transfer functions are:
 #
-# - ``'linear'``: linearly vary (increase) opacity across the plotted scalar range from low to high
-# - ``'linear_r'``: linearly vary (increase) opacity across the plotted scalar range from high to low
-# - ``'geom'``: on a log scale, vary (increase) opacity across the plotted scalar range from low to high
-# - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted scalar range from high to low
-# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar range from low to high
-# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar range from high to low
+# - ``'linear'``: linearly vary (increase) opacity across the plotted scalar
+#   range from low to high
+# - ``'linear_r'``: linearly vary (increase) opacity across the plotted scalar
+#   range from high to low
+# - ``'geom'``: on a log scale, vary (increase) opacity across the plotted scalar
+#   range from low to high
+# - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted scalar
+#   range from high to low
+# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted
+#   scalar range from low to high
+# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted
+#   scalar range from high to low
 
 # Show the linear opacity transfer function
-mesh.plot(opacity="linear")
+mesh.plot(opacity='linear')
 
-###############################################################################
+# %%
 
 # Show the sigmoid opacity transfer function
-mesh.plot(opacity="sigmoid")
+mesh.plot(opacity='sigmoid')
 
-###############################################################################
+# %%
 # It's also possible to use your own transfer function that will be linearly
 # mapped to the scalar array plotted. For example, we can create an opacity
 # mapping as:
 opacity = [0, 0.2, 0.9, 0.6, 0.3]
 
-###############################################################################
+# %%
 # When given a minimized opacity mapping like that above, PyVista interpolates
 # it across a range of how many colors are shown when mapping the scalars.
-# If ``scipy`` is available, then a quadratic interpolation is used -
-# otherwise, a simple linear interpolation is used.
+# Linear interpolation is used by default, but other kinds of interpolation
+# can be used if ``scipy`` is available.
 # Curious what that opacity transfer function looks like? You can fetch it:
 
 # Have PyVista interpolate the transfer function
@@ -86,40 +95,47 @@ plt.ylabel('Opacity')
 plt.xlabel('Index along scalar mapping')
 plt.show()
 
-###############################################################################
+# %%
 # That opacity mapping will have an opacity of 0.0 at the minimum scalar range,
 # a value or 0.9 at the middle of the scalar range, and a value of 0.3 at the
 # maximum of the scalar range:
 
 mesh.plot(opacity=opacity)
 
-###############################################################################
+# %%
 # Opacity mapping is often useful when plotting DICOM images. For example,
 # download the sample knee DICOM image:
 knee = examples.download_knee()
 
-###############################################################################
+# %%
 # And here we inspect the DICOM image with a few different opacity mappings:
-p = pv.Plotter(shape=(2, 2), border=False)
+pl = pv.Plotter(shape=(2, 2), border=False)
 
-p.add_mesh(knee, cmap="bone", scalar_bar_args={'title': "No Opacity"})
-p.view_xy()
+pl.add_mesh(knee, cmap='bone', scalar_bar_args={'title': 'No Opacity'})
+pl.view_xy()
 
-p.subplot(0, 1)
-p.add_mesh(knee, cmap="bone", opacity="linear", scalar_bar_args={'title': "Linear Opacity"})
-p.view_xy()
+pl.subplot(0, 1)
+pl.add_mesh(
+    knee, cmap='bone', opacity='linear', scalar_bar_args={'title': 'Linear Opacity'}
+)
+pl.view_xy()
 
-p.subplot(1, 0)
-p.add_mesh(knee, cmap="bone", opacity="sigmoid", scalar_bar_args={'title': "Sigmoidal Opacity"})
-p.view_xy()
+pl.subplot(1, 0)
+pl.add_mesh(
+    knee, cmap='bone', opacity='sigmoid', scalar_bar_args={'title': 'Sigmoidal Opacity'}
+)
+pl.view_xy()
 
-p.subplot(1, 1)
-p.add_mesh(knee, cmap="bone", opacity="geom_r", scalar_bar_args={'title': "Log Scale Opacity"})
-p.view_xy()
+pl.subplot(1, 1)
+pl.add_mesh(
+    knee, cmap='bone', opacity='geom_r', scalar_bar_args={'title': 'Log Scale Opacity'}
+)
+pl.view_xy()
 
-p.show()
 
-###############################################################################
+pl.show()
+
+# %%
 # Opacity by Array
 # ++++++++++++++++
 #
@@ -135,7 +151,7 @@ model = examples.download_model_with_variance()
 contours = model.contour(10, scalars='Temperature')
 contours.array_names
 
-###############################################################################
+# %%
 # Make sure to flag ``use_transparency=True`` since we want areas of high
 # variance to have high transparency.
 #
@@ -145,11 +161,11 @@ contours.array_names
 
 contours['Temperature_var'] /= contours['Temperature_var'].max()
 
-p = pv.Plotter(shape=(1, 2))
+pl = pv.Plotter(shape=(1, 2))
 
-p.subplot(0, 0)
-p.add_text('Opacity by Array')
-p.add_mesh(
+pl.subplot(0, 0)
+pl.add_text('Opacity by Array')
+pl.add_mesh(
     contours.copy(),
     scalars='Temperature',
     opacity='Temperature_var',
@@ -157,7 +173,9 @@ p.add_mesh(
     cmap='bwr',
 )
 
-p.subplot(0, 1)
-p.add_text('No Opacity')
-p.add_mesh(contours, scalars='Temperature', cmap='bwr')
-p.show()
+pl.subplot(0, 1)
+pl.add_text('No Opacity')
+pl.add_mesh(contours, scalars='Temperature', cmap='bwr')
+pl.show()
+# %%
+# .. tags:: plot

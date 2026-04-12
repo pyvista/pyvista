@@ -16,7 +16,7 @@ The wrapping function :func:`pyvista.wrap` is usable from the top level of
 PyVista. This allows users to quickly wrap any VTK dataset they have as a
 PyVista object:
 
-.. code:: python
+.. code-block:: python
 
     import vtk
     import pyvista as pv
@@ -35,6 +35,7 @@ passing the filename:
 .. code-block:: python
 
     import pyvista as pv
+
     mesh = pv.read('my_strange_vtk_file.vtk')
 
 
@@ -48,13 +49,13 @@ assigned to the nodes or cells of the mesh respectively).
 
 First, check out some common meta-properties:
 
-.. code:: python
+.. code-block:: python
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> import numpy as np
 
-.. code:: python
+.. code-block:: python
 
     >>> mesh = examples.load_airplane()
 
@@ -74,19 +75,24 @@ First, check out some common meta-properties:
 
     What are the mesh bounds?
     >>> mesh.bounds
-    [139.061, 1654.93, 32.09, 1319.95, -17.74, 282.13]
+    BoundsTuple(x_min =  139.06100463867188,
+                x_max = 1654.9300537109375,
+                y_min =   32.09429931640625,
+                y_max = 1319.949951171875,
+                z_min =  -17.741199493408203,
+                z_max =  282.1300048828125)
 
     Where is the center of this mesh?
 
     >>> mesh.center
-    [897.0, 676.02, 132.19]
+    (897.0, 676.02, 132.19)
 
 
 Access the points by fetching the :attr:`points
 <pyvista.DataSet.points>` attribute on any PyVista mesh
 as a :class:`numpy.ndarray`:
 
-.. code:: python
+.. code-block:: python
 
     >>> the_pts = mesh.points
     >>> isinstance(the_pts, np.ndarray)
@@ -147,14 +153,14 @@ that is bound to each PyVista data object.
    :context:
 
    # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.smooth_shading = True
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.smooth_shading = True
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 
 .. pyvista-plot::
@@ -178,10 +184,10 @@ code after calling :func:`show() <pyvista.Plotter.show>`.
 
     mesh = examples.load_airplane()
 
-    plotter = pv.Plotter()    # instantiate the plotter
-    plotter.add_mesh(mesh)    # add a mesh to the scene
-    plotter.camera.zoom(2)    # Note how we can now access underlying attributes
-    plotter.show()            # show the rendering window
+    pl = pv.Plotter()    # instantiate the plotter
+    pl.add_mesh(mesh)    # add a mesh to the scene
+    pl.camera.zoom(2)    # Note how we can now access underlying attributes
+    pl.show()            # show the rendering window
 
 
 Optionally :func:`show() <pyvista.Plotter.show>` can return
@@ -194,14 +200,14 @@ after it's closed).
 You can then use this cached camera position for additional plotting
 without having to manually interact with the plotting window:
 
-.. code:: python
+.. code-block:: python
 
     # reuse the camera position from the previous plotter
-    cpos = plotter.camera_position
-    plotter = pv.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='lightblue')
-    plotter.camera_position = cpos
-    plotter.show(screenshot='airplane.png')
+    cpos = pl.camera_position
+    pl = pv.Plotter(off_screen=True)
+    pl.add_mesh(mesh, color='lightblue')
+    pl.camera_position = cpos
+    pl.show(screenshot='airplane.png')
 
 
 Be sure to check out all the available plotters and their options for
@@ -215,6 +221,29 @@ your use case:
 
 .. _pyvistaqt: https://qtdocs.pyvista.org/
 
+Command Line
+------------
+
+Starting from version ``0.47``, meshes can be plotted from one (or more)
+files using a command line tool such that:
+
+.. code-block:: shell
+
+    pyvista plot <files> [OPTIONS]
+    python -m pyvista plot <files> [OPTIONS]
+
+.. note::
+    Providing multiple files renders them inside the same window.
+
+Most options available in :func:`pyvista.plot` are exposed by the command line.
+Run the ``--help`` command to see all options:
+
+
+.. code-block:: shell
+
+    pyvista plot --help
+    python -m pyvista plot --help
+
 
 
 Exporting
@@ -224,7 +253,7 @@ Any PyVista mesh object can be saved to a VTK file format using
 :func:`save() <pyvista.DataObject.save>`. For example, the mesh in the
 code block above could be saved like:
 
-.. code:: python
+.. code-block:: python
 
     mesh.save("mesh.vtk")
 

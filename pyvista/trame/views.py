@@ -1,12 +1,20 @@
 """Trame view interface for PyVista."""
+
+from __future__ import annotations
+
 import io
 import weakref
 
 from trame.app import get_server as trame_get_server
-from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
+from trame.widgets.vtk import VtkLocalView
+from trame.widgets.vtk import VtkRemoteLocalView
+from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
-CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
+CLOSED_PLOTTER_ERROR = (
+    'The render window for this plotter has been destroyed. '
+    'Do not call `show()` for the plotter before passing to trame.'
+)
 
 
 def get_server(*args, **kwargs):  # numpydoc ignore=RT01
@@ -24,6 +32,7 @@ def get_server(*args, **kwargs):  # numpydoc ignore=RT01
     -------
     trame_server.core.Server
         Trame server.
+
     """
     server = trame_get_server(*args, **kwargs)
     if 'client_type' in kwargs:
@@ -36,51 +45,53 @@ class _BasePyVistaView:
         """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
-        self._plotter_render_callback = lambda *args: self.update()
+        self._plotter_render_callback = lambda *_: self.update()  # type: ignore[attr-defined]
 
     def pyvista_initialize(self):
-        if self._plotter().render_window is None:
+        if self._plotter().render_window is None:  # type: ignore[union-attr]
             raise RuntimeError(CLOSED_PLOTTER_ERROR)
-        for renderer in self._plotter().renderers:
+        for renderer in self._plotter().renderers:  # type: ignore[union-attr]
             if not renderer.camera.is_set:
                 renderer.camera_position = renderer.get_default_cam_pos()
                 renderer.ResetCamera()
 
     def _post_initialize(self):
-        if self._server.running:
-            self.update()
+        if self._server.running:  # type: ignore[attr-defined]
+            self.update()  # type: ignore[attr-defined]
         else:
-            self._server.controller.on_server_ready.add(self.update)
+            self._server.controller.on_server_ready.add(self.update)  # type: ignore[attr-defined]
 
         # Callback to sync view on PyVista's render call when renders are suppressed
-        self._plotter().add_on_render_callback(self._plotter_render_callback, render_event=False)
+        self._plotter().add_on_render_callback(self._plotter_render_callback, render_event=False)  # type: ignore[union-attr]
 
     def update_camera(self):
         """Update camera or push the image."""
-        self.push_camera()
-        self.update_image()
+        self.push_camera()  # type: ignore[attr-defined]
+        self.update_image()  # type: ignore[attr-defined]
 
     def export_html(self):
         """Export scene to HTML as StringIO buffer."""
         content = io.StringIO()
         if isinstance(self, PyVistaLocalView):
-            data = self.export(format="zip")
+            data = self.export(format='zip')
             if data is None:
-                raise ValueError('No data to write.')
+                msg = 'No data to write.'
+                raise ValueError(msg)
             write_html(data, content)
             content.seek(0)
         elif isinstance(self, PyVistaRemoteLocalView):
-            data = self.export_geometry(format="zip")
+            data = self.export_geometry(format='zip')
             if data is None:
-                raise ValueError('No data to write.')
+                msg = 'No data to write.'
+                raise ValueError(msg)
             write_html(data, content)
             content.seek(0)
         else:
-            content = self._plotter().export_html(filename=None)
+            content = self._plotter().export_html(filename=None)  # type: ignore[union-attr]
         return io.BytesIO(content.read().encode('utf8')).read()
 
 
-class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
+class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame ``VtkRemoteView`` for server rendering.
 
     This will connect to a PyVista plotter and stream the server-side
@@ -120,7 +131,12 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     """
 
     def __init__(
-        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+        self,
+        plotter,
+        interactive_ratio=None,
+        still_ratio=None,
+        namespace=None,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
@@ -132,7 +148,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
             still_ratio = plotter._theme.trame.still_ratio
         VtkRemoteView.__init__(
             self,
-            self._plotter().render_window,
+            self._plotter().render_window,  # type: ignore[union-attr]
             interactive_ratio=interactive_ratio,
             still_ratio=still_ratio,
             __properties=[('still_ratio', 'stillRatio')],
@@ -142,16 +158,15 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         )
         self._post_initialize()
 
-    def push_camera(self, *args, **kwargs):
+    def push_camera(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match local viewers."""
-        pass  # pragma: no cover
 
-    def update_image(self, *args, **kwargs):
+    def update_image(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Wrap update call."""
         return self.update(*args, **kwargs)
 
 
-class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
+class PyVistaLocalView(VtkLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame VtkLocalView for in-browser rendering.
 
     This will connect to and synchronize with a PyVista plotter to
@@ -179,7 +194,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
             namespace = f'{plotter._id_name}'
         VtkLocalView.__init__(
             self,
-            self._plotter().render_window,
+            self._plotter().render_window,  # type: ignore[union-attr]
             ref=f'view_{plotter._id_name}',
             namespace=namespace,
             **kwargs,
@@ -189,15 +204,14 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+            [ren.axes_widget for ren in self._plotter().renderers if ren.axes_widget is not None],  # type: ignore[union-attr]
         )
 
-    def update_image(self, *args, **kwargs):
+    def update_image(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match remote viewers."""
-        pass  # pragma: no cover
 
 
-class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
+class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame ``VtkRemoteLocalView``.
 
     Dynamically switch between client and server rendering.
@@ -231,7 +245,12 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     """
 
     def __init__(
-        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+        self,
+        plotter,
+        interactive_ratio=None,
+        still_ratio=None,
+        namespace=None,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
@@ -243,7 +262,7 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
             still_ratio = plotter._theme.trame.still_ratio
         VtkRemoteLocalView.__init__(
             self,
-            self._plotter().render_window,
+            self._plotter().render_window,  # type: ignore[union-attr]
             interactive_ratio=interactive_ratio,
             still_ratio=still_ratio,
             __properties=[('still_ratio', 'stillRatio')],
@@ -259,5 +278,5 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+            [ren.axes_widget for ren in self._plotter().renderers if ren.axes_widget is not None],  # type: ignore[union-attr]
         )

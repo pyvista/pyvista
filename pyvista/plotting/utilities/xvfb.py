@@ -1,6 +1,12 @@
 """Start xvfb from Python."""
+
+from __future__ import annotations
+
 import os
 import time
+
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 XVFB_INSTALL_NOTES = """Please install Xvfb with:
 
@@ -29,8 +35,8 @@ def start_xvfb(wait=3, window_size=None):
 
     Notes
     -----
-    Only available on Linux.  Be sure to install ``libgl1-mesa-glx
-    xvfb`` in your package manager.
+    Only available on Linux.  Be sure to install ``xvfb``
+    and ``libgl1-mesa-glx`` in your package manager.
 
     Examples
     --------
@@ -38,10 +44,18 @@ def start_xvfb(wait=3, window_size=None):
     >>> pv.start_xvfb()  # doctest:+SKIP
 
     """
-    from pyvista import global_theme
+    # Deprecated on 0.45.0, estimated removal on 0.48.0
+    warn_external(
+        'This function is deprecated and will be removed in future version of '
+        'PyVista. Use vtk with osmesa instead.',
+        PyVistaDeprecationWarning,
+    )
+
+    from pyvista import global_theme  # noqa: PLC0415
 
     if os.name != 'posix':
-        raise OSError('`start_xvfb` is only supported on Linux')
+        msg = '`start_xvfb` is only supported on Linux'
+        raise OSError(msg)
 
     if os.system('which Xvfb > /dev/null'):
         raise OSError(XVFB_INSTALL_NOTES)

@@ -1,5 +1,7 @@
 """Plotting GL checks."""
 
+from __future__ import annotations
+
 from pyvista.plotting import _vtk
 
 
@@ -36,8 +38,10 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     actor.GetProperty().SetOpacity(0.5)
     renderer = _vtk.vtkRenderer()
     renderWindow = _vtk.vtkRenderWindow()
-    renderWindow.AddRenderer(renderer)
     renderWindow.SetOffScreenRendering(True)
+    if hasattr(renderWindow, 'SetConnectContextToNSView'):
+        renderWindow.SetConnectContextToNSView(False)
+    renderWindow.AddRenderer(renderer)
     renderWindow.SetAlphaBitPlanes(True)
     renderWindow.SetMultiSamples(0)
     renderer.AddActor(actor)
@@ -56,6 +60,7 @@ def uses_egl() -> bool:
     bool
         ``True`` if VTK has been compiled with EGL support via OSMesa,
         otherwise ``False``.
+
     """
     ren_win_str = str(type(_vtk.vtkRenderWindow()))
     return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str

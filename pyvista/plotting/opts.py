@@ -1,5 +1,61 @@
 """Module with enum options classes for plotting."""
+
+from __future__ import annotations
+
+from enum import Enum
+
 from pyvista.core.utilities.misc import AnnotatedIntEnum
+
+
+class ShaderType(str, Enum):
+    """Shader types for GLSL shader replacements.
+
+    .. versionadded:: 0.48
+
+    Attributes
+    ----------
+    VERTEX : str
+        Vertex shader.
+    FRAGMENT : str
+        Fragment shader.
+    GEOMETRY : str
+        Geometry shader.
+
+    """
+
+    VERTEX = 'vertex'
+    FRAGMENT = 'fragment'
+    GEOMETRY = 'geometry'
+
+
+class PointSpriteShape(str, Enum):
+    """Point sprite shape options for fragment shader rendering.
+
+    .. versionadded:: 0.48
+
+    Attributes
+    ----------
+    CIRCLE : str
+        Circular disc.
+    TRIANGLE : str
+        Upward-pointing triangle.
+    HEXAGON : str
+        Regular hexagon.
+    DIAMOND : str
+        Diamond (rotated square).
+    ASTERISK : str
+        Five-pointed asterisk.
+    STAR : str
+        Five-pointed star.
+
+    """
+
+    CIRCLE = 'circle'
+    TRIANGLE = 'triangle'
+    HEXAGON = 'hexagon'
+    DIAMOND = 'diamond'
+    ASTERISK = 'asterisk'
+    STAR = 'star'
 
 
 class InterpolationType(AnnotatedIntEnum):

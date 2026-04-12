@@ -1,17 +1,22 @@
 """Organize Renderers for ``pyvista.Plotter``."""
-import collections
+
+from __future__ import annotations
+
+from collections.abc import Sequence
 from itertools import product
 from weakref import proxy
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
 
 
-class Renderers:
+class Renderers(_NoNewAttrMixin):
     """Organize Renderers for ``pyvista.Plotter``.
 
     Parameters
@@ -42,9 +47,11 @@ class Renderers:
 
     border_width : float, optional
         The width of the border around each subplot.
+
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         shape=(1, 1),
@@ -64,10 +71,7 @@ class Renderers:
 
         # by default add border for multiple plots
         if border is None:
-            if shape != (1, 1):
-                border = True
-            else:
-                border = False
+            border = shape != (1, 1)
 
         self.groups = np.empty((0, 4), dtype=int)
 
@@ -80,48 +84,58 @@ class Renderers:
             else:
                 m = int(shape.split('/')[0])
                 n = int(shape.split('/')[1])
-                rangen = range(n)
-                rangem = range(m)
+                rangen = range(n)  # type: ignore[assignment]
+                rangem = range(m)  # type: ignore[assignment]
 
             if splitting_position is None:
-                splitting_position = pyvista.global_theme.multi_rendering_splitting_position
+                splitting_position = pv.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
-                if n >= m:
-                    xsplit = m / (n + m)
-                else:
-                    xsplit = 1 - n / (n + m)
+                xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
             else:
                 xsplit = splitting_position
 
             for i in rangen:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = Renderer(
+                    self._plotter,
+                    border=border,
+                    border_color=border_color,
+                    border_width=border_width,
+                )
                 if '|' in shape:
-                    arenderer.SetViewport(0, i / n, xsplit, (i + 1) / n)
+                    arenderer.viewport = (0, i / n, xsplit, (i + 1) / n)
                 else:
-                    arenderer.SetViewport(i / n, 0, (i + 1) / n, xsplit)
+                    arenderer.viewport = (i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = Renderer(
+                    self._plotter,
+                    border=border,
+                    border_color=border_color,
+                    border_width=border_width,
+                )
                 if '|' in shape:
-                    arenderer.SetViewport(xsplit, i / m, 1, (i + 1) / m)
+                    arenderer.viewport = (xsplit, i / m, 1, (i + 1) / m)
                 else:
-                    arenderer.SetViewport(i / m, xsplit, (i + 1) / m, 1)
+                    arenderer.viewport = (i / m, xsplit, (i + 1) / m, 1)
                 self._renderers.append(arenderer)
 
             self._shape = (n + m,)
             self._render_idxs = np.arange(n + m)
 
         else:
-            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
-                raise TypeError('"shape" should be a list, tuple or string descriptor')
+            if not isinstance(shape, (np.ndarray, Sequence)):
+                msg = '"shape" should be a list, tuple or string descriptor'
+                raise TypeError(msg)
             if len(shape) != 2:
-                raise ValueError('"shape" must have length 2.')
+                msg = '"shape" must have length 2.'
+                raise ValueError(msg)
             shape = np.asarray(shape)
             if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
-                raise ValueError('"shape" must contain only positive integers.')
-            # always assign shape as a tuple
-            self._shape = tuple(shape)
+                msg = '"shape" must contain only positive integers.'
+                raise ValueError(msg)
+            # always assign shape as a tuple of native ints
+            self._shape = tuple(size.item() for size in shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
             # Check if row and col weights correspond to given shape,
             # or initialize them to defaults (equally weighted).
@@ -136,17 +150,19 @@ class Renderers:
             row_weights = np.abs(np.asanyarray(row_weights).ravel())
             col_weights = np.abs(np.asanyarray(col_weights).ravel())
             if row_weights.size != shape[0]:
-                raise ValueError(
+                msg = (
                     f'"row_weights" must have {shape[0]} items '
                     f'for {shape[0]} rows of subplots, not '
                     f'{row_weights.size}.'
                 )
+                raise ValueError(msg)
             if col_weights.size != shape[1]:
-                raise ValueError(
+                msg = (
                     f'"col_weights" must have {shape[1]} items '
                     f'for {shape[1]} columns of subplots, not '
                     f'{col_weights.size}.'
                 )
+                raise ValueError(msg)
             row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
             col_off = np.cumsum(col_weights) / np.sum(col_weights)
@@ -157,25 +173,26 @@ class Renderers:
             # top left cell)
 
             if groups is not None:
-                if not isinstance(groups, collections.abc.Sequence):
-                    raise TypeError(
-                        f'"groups" should be a list or tuple, not {type(groups).__name__}.'
-                    )
+                if not isinstance(groups, Sequence):
+                    msg = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+                    raise TypeError(msg)
                 for group in groups:
-                    if not isinstance(group, collections.abc.Sequence):
-                        raise TypeError(
+                    if not isinstance(group, Sequence):
+                        msg = (
                             'Each group entry should be a list or '
                             f'tuple, not {type(group).__name__}.'
                         )
+                        raise TypeError(msg)
                     if len(group) != 2:
-                        raise ValueError('Each group entry must have length 2.')
+                        msg = 'Each group entry must have length 2.'
+                        raise ValueError(msg)
 
                     rows = group[0]
                     if isinstance(rows, slice):
                         rows = np.arange(self.shape[0], dtype=int)[rows]
                     cols = group[1]
                     if isinstance(cols, slice):
-                        cols = np.arange(self.shape[1], dtype=int)[cols]
+                        cols = np.arange(self.shape[1], dtype=int)[cols]  # type: ignore[misc]
                     # Get the normalized group, i.e. extract top left corner
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
@@ -185,11 +202,11 @@ class Renderers:
                         range(norm_group[1], norm_group[3] + 1),
                     ):
                         if self.loc_to_group((i, j)) is not None:
-                            raise ValueError(
-                                f'Groups cannot overlap. Overlap found at position {(i, j)}.'
-                            )
+                            msg = f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                            raise ValueError(msg)
                     self.groups = np.concatenate(
-                        (self.groups, np.array([norm_group], dtype=int)), axis=0
+                        (self.groups, np.array([norm_group], dtype=int)),
+                        axis=0,
                     )
             # Create subplot renderers
             for row, col in product(range(shape[0]), range(shape[1])):
@@ -205,25 +222,35 @@ class Renderers:
                     nb_rows = 1
                     nb_cols = 1
                 if nb_rows is not None:
-                    renderer = Renderer(self._plotter, border, border_color, border_width)
+                    renderer = Renderer(
+                        self._plotter,
+                        border=border,
+                        border_color=border_color,
+                        border_width=border_width,
+                    )
                     x0 = col_off[col]
                     y0 = row_off[row + nb_rows]
-                    x1 = col_off[col + nb_cols]
+                    x1 = col_off[col + nb_cols]  # type: ignore[operator]
                     y1 = row_off[row]
-                    renderer.SetViewport(x0, y0, x1, y1)
+                    renderer.viewport = (x0, y0, x1, y1)
                     self._render_idxs[row, col] = len(self)
                     self._renderers.append(renderer)
                 else:
                     self._render_idxs[row, col] = self._render_idxs[
-                        self.groups[group, 0], self.groups[group, 1]
+                        self.groups[group, 0],
+                        self.groups[group, 1],
                     ]
 
         # each render will also have an associated background renderer
-        self._background_renderers = [None for _ in range(len(self))]
+        self._background_renderers: list[None | BackgroundRenderer] = [
+            None for _ in range(len(self))
+        ]
 
         # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
-        self._shadow_renderer.SetViewport(0, 0, 1, 1)
+        self._shadow_renderer = Renderer(
+            self._plotter, border=border, border_color=border_color, border_width=border_width
+        )
+        self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
     def loc_to_group(self, loc):
@@ -239,6 +266,7 @@ class Renderers:
         -------
         int
             Index of the render window.
+
         """
         group_idxs = np.arange(self.groups.shape[0])
         index = (
@@ -267,18 +295,22 @@ class Renderers:
         """
         if isinstance(loc, (int, np.integer)):
             return loc
-        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
-            if not len(loc) == 2:
-                raise ValueError('"loc" must contain two items')
+        elif isinstance(loc, (np.ndarray, Sequence)):
+            if len(loc) != 2:
+                msg = '"loc" must contain two items'
+                raise ValueError(msg)
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
-                raise IndexError(f'Row index is out of range ({self.shape[0]})')
-            if index_column < 0 or index_column >= self.shape[1]:
-                raise IndexError(f'Column index is out of range ({self.shape[1]})')
+                msg = f'Row index is out of range ({self.shape[0]})'
+                raise IndexError(msg)
+            if index_column < 0 or index_column >= self.shape[1]:  # type: ignore[misc]
+                msg = f'Column index is out of range ({self.shape[1]})'  # type: ignore[misc]
+                raise IndexError(msg)
             return self._render_idxs[index_row, index_column]
         else:
-            raise TypeError('"loc" must be an integer or a sequence.')
+            msg = '"loc" must be an integer or a sequence.'
+            raise TypeError(msg)
 
     def __getitem__(self, index):
         """Return a renderer based on an index."""
@@ -300,6 +332,7 @@ class Renderers:
         -------
         int
             Active index.
+
         """
         return self._active_index
 
@@ -313,16 +346,19 @@ class Renderers:
 
         Returns
         -------
-        numpy.ndarray
+        output : numpy.ndarray | numpy.int64
             2D location on the plotting grid.
+
         """
         if not isinstance(index, (int, np.integer)):
-            raise TypeError('"index" must be a scalar integer.')
+            msg = '"index" must be a scalar integer.'
+            raise TypeError(msg)
         if len(self.shape) == 1:
-            return index
+            return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
-            raise IndexError(f'Index ({index}) is out of range.')
+            msg = f'Index ({index}) is out of range.'
+            raise IndexError(msg)
         return args[0]
 
     @property
@@ -333,17 +369,19 @@ class Renderers:
         -------
         Renderer
             Active renderer.
+
         """
         return self._renderers[self._active_index]
 
     @property
-    def shape(self):  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of the renderers.
 
         Returns
         -------
-        tuple
+        output : tuple[int] | tuple[int, int]
             Shape of the renderers.
+
         """
         return self._shape
 
@@ -364,14 +402,16 @@ class Renderers:
             return
 
         if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError(f'Row index is out of range ({self.shape[0]})')
+            msg = f'Row index is out of range ({self.shape[0]})'
+            raise IndexError(msg)
         if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError(f'Column index is out of range ({self.shape[1]})')
+            msg = f'Column index is out of range ({self.shape[1]})'
+            raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
-    def set_chart_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for the active renderer.
+    @_deprecate_positional_args(allowed=['interactive'])
+    def set_chart_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001, FBT002
+        """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
         Interaction with other charts in the active renderer is only disabled
@@ -395,14 +435,16 @@ class Renderers:
 
         Returns
         -------
-        list of Chart
+        list[Chart]
             The list of all interactive charts for the active renderer.
 
         """
         interactive_scene, interactive_charts = None, []
         if self.active_renderer.has_charts:
             interactive_scene = self.active_renderer._charts._scene
-            interactive_charts = self.active_renderer.set_chart_interaction(interactive, toggle)
+            interactive_charts = self.active_renderer.set_chart_interaction(
+                interactive, toggle=toggle
+            )
         # Disable chart interaction for other renderers
         for renderer in self:
             if renderer is not self.active_renderer:
@@ -462,13 +504,13 @@ class Renderers:
             self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
-        renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
+        renderer = BackgroundRenderer(self._plotter, image_path, scale=scale, view_port=view_port)
         renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
 
     @property
-    def has_active_background_renderer(self):  # numpydoc ignore=RT01
+    def has_active_background_renderer(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when Renderer has an active background renderer.
 
         Returns
@@ -494,7 +536,7 @@ class Renderers:
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
-        self._shadow_renderer.clear()
+        self._shadow_renderer.clear()  # type: ignore[union-attr]
         self.clear_background_renderers()
 
     def close(self):
@@ -502,7 +544,7 @@ class Renderers:
         for renderer in self:
             renderer.close()
 
-        self._shadow_renderer.close()
+        self._shadow_renderer.close()  # type: ignore[union-attr]
 
         for renderer in self._background_renderers:
             if renderer is not None:
@@ -521,11 +563,19 @@ class Renderers:
         -------
         pyvista.plotting.renderer.Renderer
             Shadow renderer.
+
         """
         return self._shadow_renderer
 
-    def set_background(
-        self, color, top=None, right=None, side=None, corner=None, all_renderers=True
+    @_deprecate_positional_args(allowed=['color'])
+    def set_background(  # noqa: PLR0917
+        self,
+        color,
+        top=None,
+        right=None,
+        side=None,
+        corner=None,
+        all_renderers: bool = True,  # noqa: FBT001, FBT002
     ):
         """Set the background color.
 
@@ -569,11 +619,11 @@ class Renderers:
         Set the background color to black.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> plotter.set_background('black')
-        >>> plotter.background_color
+        >>> pl = pv.Plotter()
+        >>> pl.set_background('black')
+        >>> pl.background_color
         Color(name='black', hex='#000000ff', opacity=255)
-        >>> plotter.close()
+        >>> pl.close()
 
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.
@@ -588,16 +638,21 @@ class Renderers:
         if all_renderers:
             for renderer in self:
                 renderer.set_background(color, top=top, right=right, side=side, corner=corner)
-            self._shadow_renderer.set_background(color)
+            self._shadow_renderer.set_background(color)  # type: ignore[union-attr]
         else:
             self.active_renderer.set_background(
-                color, top=top, right=right, side=side, corner=corner
+                color,
+                top=top,
+                right=right,
+                side=side,
+                corner=corner,
             )
 
-    def set_color_cycler(self, color_cycler, all_renderers=True):
+    @_deprecate_positional_args(allowed=['color_cycler'])
+    def set_color_cycler(self, color_cycler, all_renderers: bool = True):  # noqa: FBT001, FBT002
         """Set or reset the color cycler.
 
-        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`
         call to set the default color of the dataset being plotted.
 
         When setting, the value must be either a list of color-like objects,
@@ -606,10 +661,16 @@ class Renderers:
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
+
+        .. note::
+            If a mesh has scalar data, set ``color=True`` in the call to :meth:`add_mesh`
+            to color the mesh with the next color in the cycler. Otherwise the mesh's
+            scalars are used to color the mesh by default.
 
         Parameters
         ----------
@@ -619,6 +680,10 @@ class Renderers:
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
+
+        See Also
+        --------
+        :ref:`color_cycler_example`
 
         Examples
         --------
@@ -660,7 +725,8 @@ class Renderers:
         """
         renderer = self._background_renderers[self.active_index]
         if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
+            msg = 'No background image to remove at this subplot'
+            raise RuntimeError(msg)
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 

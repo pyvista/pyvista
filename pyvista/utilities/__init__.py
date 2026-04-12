@@ -1,7 +1,11 @@
 """Deprecated utilities subpackage."""
+
+from __future__ import annotations
+
 import importlib
 import inspect
-import warnings
+
+from pyvista._warn_external import warn_external
 
 # Places to look for the utility
 _MODULES = [
@@ -48,8 +52,6 @@ def __getattr__(name):
         pyvista.utilities.
 
     """
-    from pyvista.core.errors import PyVistaDeprecationWarning
-
     try:
         return globals()[name]
     except KeyError:
@@ -60,15 +62,19 @@ def __getattr__(name):
         if feature is not None:
             break
     else:
-        raise AttributeError(
-            f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
-        ) from None
+        msg = (
+            f'Module `pyvista.utilities` has been deprecated and we could not automatically '
+            f'find `{name}`. This feature has moved.'
+        )
+        raise AttributeError(msg) from None
 
-    message = f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
-
-    warnings.warn(
-        message,
-        PyVistaDeprecationWarning,
+    message = (
+        f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported '
+        f'as: `{import_path}`.'
     )
+
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+    warn_external(message, PyVistaDeprecationWarning)
 
     return feature

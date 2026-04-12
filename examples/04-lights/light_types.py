@@ -20,7 +20,10 @@ For headlights the :py:attr:`pyvista.Camera.position` and
 where you move the camera, the light always emanates from the view point:
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -28,17 +31,17 @@ mesh = examples.download_bunny()
 mesh.rotate_x(90, inplace=True)
 mesh.rotate_z(180, inplace=True)
 
-plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
+pl = pv.Plotter(lighting='none')
+pl.add_mesh(mesh, color='lightblue', smooth_shading=True)
 light = pv.Light(light_type='headlight')
 # these don't do anything for a headlight:
 light.position = (1, 2, 3)
 light.focal_point = (4, 5, 6)
-plotter.add_light(light)
-plotter.show()
+pl.add_light(light)
+pl.show()
 
 
-###############################################################################
+# %%
 # Camera light
 # ============
 #
@@ -51,24 +54,26 @@ plotter.show()
 # coordinates please see the documentation of
 # :func:`pyvista.Light.set_camera_light`.
 
-plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
+pl = pv.Plotter(lighting='none')
+pl.add_mesh(mesh, color='lightblue', smooth_shading=True)
 # a light that always shines from the right of the camera
 light = pv.Light(position=(1, 0, 0), light_type='camera light')
-plotter.add_light(light)
-plotter.show()
+pl.add_light(light)
+pl.show()
 
 
-###############################################################################
+# %%
 # Scene light
 # ===========
 #
 # Scene lights are attached to the scene, their position and focal point are
 # interpreted as global coordinates:
 
-plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
+pl = pv.Plotter(lighting='none')
+pl.add_mesh(mesh, color='lightblue', smooth_shading=True)
 # a light that always shines on the left side of the bunny
 light = pv.Light(position=(0, 1, 0), light_type='scene light')
-plotter.add_light(light)
-plotter.show()
+pl.add_light(light)
+pl.show()
+# %%
+# .. tags:: lights

@@ -2,10 +2,43 @@
 PyVista
 #######
 
+    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
+
 .. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
+PyVista is:
+
+* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
+.. image:: https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
+
+PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
+through NumPy and direct array access through a variety of methods and classes.
+This package provides a Pythonic, well-documented interface exposing
+VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
+and visual integration of spatially referenced datasets.
+
+This module can be used for scientific plotting for presentations and research
+papers as well as a supporting module for other mesh 3D rendering dependent
+Python modules; see Connections for a list of projects that leverage
+PyVista.
+
+PyVista is a NumFOCUS affiliated project
+
+.. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
+   :alt: NumFOCUS affiliated projects
+   :height: 60px
+
+Status badges
+=============
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
    :target: https://zenodo.org/records/8415866
@@ -18,6 +51,9 @@ PyVista
 
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
+
+.. |nix| image:: https://img.shields.io/badge/nix-unstable-blue.svg?logo=nixos&logoColor=white
+   :target: https://search.nixos.org/packages?channel=unstable&show=python3Packages.pyvista&query=pyvista
 
 .. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
@@ -43,15 +79,11 @@ PyVista
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
-.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat
-  :target: https://timothycrosley.github.io/isort
-  :alt: isort
+.. |prettier| image:: https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat
+  :target: https://github.com/prettier/prettier
+  :alt: prettier
 
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
-  :target: https://github.com/psf/black
-  :alt: black
-
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.10+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
@@ -64,65 +96,46 @@ PyVista
    :target: https://github.com/astral-sh/ruff
    :alt: Ruff
 
-+----------------------+------------------------+-------------+
-| Deployment           | |pypi|                 | |conda|     |
-+----------------------+------------------------+-------------+
-| Build Status         | |GH-CI|                | |python|    |
-|                      +------------------------+-------------+
-|                      | |pre-commit.ci status| |             |
-+----------------------+------------------------+-------------+
-| Metrics              | |codacy|               | |codecov|   |
-+----------------------+------------------------+-------------+
-| Activity             | |PyPIact|              | |condaact|  |
-+----------------------+------------------------+-------------+
-| Citation             | |joss|                 | |zenodo|    |
-+----------------------+------------------------+-------------+
-| License              | |MIT|                  |             |
-+----------------------+------------------------+-------------+
-| Community            | |slack|                | |discuss|   |
-+----------------------+------------------------+-------------+
-| Formatter            | |black|                | |isort|     |
-+----------------------+------------------------+-------------+
-| Linter               | |Ruff|                               |
-+----------------------+------------------------+-------------+
-| Affiliated           | |NumFOCUS Affiliated|                |
-+----------------------+------------------------+-------------+
+.. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
+   :target: https://github.com/nschloe/awesome-scientific-computing
 
+.. |Packaging status| image:: https://repology.org/badge/tiny-repos/python:pyvista.svg
+   :target: https://repology.org/project/python:pyvista/versions
 
-    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
+.. |Good first issue| image:: https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue
+   :target: https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 
-PyVista is:
+.. |GitHub Repo stars| image:: https://img.shields.io/github/stars/pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/stargazers
 
-* *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets
-* 3D plotting made simple and built for large/complex data geometries
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/pyvista.svg?color=orange&logo=python&label=python&logoColor=white
+    :target: https://pypi.org/project/pyvista
+    :alt: Python versions
 
-.. _Visualization Toolkit: https://vtk.org
-
-PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
-through NumPy and direct array access through a variety of methods and classes.
-This package provides a Pythonic, well-documented interface exposing
-VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
-and visual integration of spatially referenced datasets.
-
-This module can be used for scientific plotting for presentations and research
-papers as well as a supporting module for other mesh 3D rendering dependent
-Python modules; see Connections for a list of projects that leverage
-PyVista.
-
-
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on X: |tweet|
-
-
-PyVista is a NumFOCUS affiliated project
-
-.. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
-   :target: https://numfocus.org/sponsored-projects/affiliated-projects
-   :alt: NumFOCUS affiliated projects
-   :height: 60px
++----------------------+------------------------------------------------------+
+| Deployment           | |pypi| |pyversions| |conda| |nix| |Packaging status| |
++----------------------+------------------------------------------------------+
+| Build Status         | |GH-CI| |python| |pre-commit.ci status|              |
++----------------------+------------------------------------------------------+
+| Metrics              | |codacy| |codecov|                                   |
++----------------------+------------------------------------------------------+
+| Activity             | |PyPIact| |condaact|                                 |
++----------------------+------------------------------------------------------+
+| Citation             | |joss| |zenodo|                                      |
++----------------------+------------------------------------------------------+
+| License              | |MIT|                                                |
++----------------------+------------------------------------------------------+
+| Community            | |slack| |discuss| |Good first issue|                 |
+|                      | |GitHub Repo stars|                                  |
++----------------------+------------------------------------------------------+
+| Formatter            | |prettier|                                           |
++----------------------+------------------------------------------------------+
+| Linter               | |Ruff|                                               |
++----------------------+------------------------------------------------------+
+| Affiliated           | |NumFOCUS Affiliated|                                |
++----------------------+------------------------------------------------------+
+| Mentioned            | |Awesome Scientific Computing|                       |
++----------------------+------------------------------------------------------+
 
 
 Highlights
@@ -178,7 +191,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.8::
+using ``pip`` on Python >= 3.10::
 
     pip install pyvista
 
@@ -224,7 +237,7 @@ Made with `contrib rocks`_.
 Contributing
 ============
 
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg
    :target: CODE_OF_CONDUCT.md
 
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
@@ -250,7 +263,6 @@ their ideas. To learn more about contributing to PyVista, please see the
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
-
 Citing PyVista
 ==============
 
@@ -265,7 +277,7 @@ visibility by citing our work.
 
 BibTex:
 
-.. code::
+.. code:: latex
 
     @article{sullivan2019pyvista,
       doi = {10.21105/joss.01450},
@@ -284,17 +296,12 @@ BibTex:
 Professional Support
 ====================
 
-While PyVista is an Open Source project with a big community, you might be looking for professional support.
-This section aims to list companies with VTK/PyVista expertise who can help you with your software project.
+PyVista is a community-driven Open Source project, but many users and organizations rely on it in production workflows, research pipelines, and custom visualization systems. If you need expert guidance, development help, or guaranteed support, there are several ways to engage with the people who build and maintain PyVista.
 
-+---------------+-----------------------------------------+
-| Company Name  | Kitware Inc.                            |
-+---------------+-----------------------------------------+
-| Description   | Kitware is dedicated to build solutions |
-|               | for our customers based on our          |
-|               | well-established open source platforms. |
-+---------------+-----------------------------------------+
-| Expertise     | CMake, VTK, PyVista, ParaView, Trame    |
-+---------------+-----------------------------------------+
-| Contact       | https://www.kitware.com/contact/        |
-+---------------+-----------------------------------------+
+For general inquiries, reach out to info@pyvista.org and we can help connect you with the right community experts for your 3D visualization or analysis needs.
+
+If you are looking for professional services (consulting, custom development, feature design, integration support, or training), consider sponsoring PyVista's core developers through the “Sponsor this project” section on GitHub. Sponsorship not only provides direct access to experts but also helps sustain critical maintenance and ongoing feature work that keeps PyVista reliable and modern.
+
+More details can be found in the discussion post: https://github.com/pyvista/pyvista/discussions/4033
+
+Sponsoring a developer supports both your project and the health of the PyVista ecosystem, ensuring continued improvements, long-term stability, and expert help when you need it.

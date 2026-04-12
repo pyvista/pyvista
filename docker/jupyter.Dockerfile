@@ -1,4 +1,4 @@
-FROM jupyter/base-notebook:python-3.10
+FROM jupyter/base-notebook:python-3.11
 LABEL maintainer="PyVista Developers"
 LABEL repo="https://github.com/pyvista/pyvista"
 
@@ -10,9 +10,6 @@ WORKDIR /build-context/
 
 RUN pip install --no-cache-dir pyvista*.tar.gz
 RUN pip install -r requirements.txt
-# Install vtk-osmesa wheel
-RUN pip uninstall vtk -y
-RUN pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa
 
 WORKDIR $HOME
 
