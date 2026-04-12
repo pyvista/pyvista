@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import os
-import platform
-
 import numpy as np
 import pytest
 
@@ -12,7 +9,7 @@ from pyvista.plotting import system_supports_plotting
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(),
-    reason="Test requires system to support plotting",
+    reason='Test requires system to support plotting',
 )
 
 
@@ -36,12 +33,9 @@ def test_logo_voxel():
     assert grid.n_cells
 
 
-@pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS testing on Azure fails when downloading',
-)
+@pytest.mark.skip_mac('MacOS testing on Azure fails when downloading')
 @skip_no_plotting
-@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+@pytest.mark.skip_windows
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()
@@ -54,7 +48,7 @@ def test_plot_datasets():
 
 
 def test_plot_datasets_dataset_type():
-    with pytest.raises(ValueError, match="Invalid dataset_type"):
+    with pytest.raises(ValueError, match='Invalid dataset_type'):
         demos.plot_datasets(dataset_type='foo')
 
 

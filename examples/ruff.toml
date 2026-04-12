@@ -1,0 +1,5 @@
+# Use main project config
+extend = "../pyproject.toml"
+
+# But use a different line length.
+line-length = 90

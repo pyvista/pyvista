@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
-@no_new_attr
-class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
+class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource):
     """Create a binary image of an ellipsoid class.
 
     .. versionadded:: 0.44.0
@@ -41,7 +41,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
     ...     center=(10, 10, 0),
     ...     radius=(3, 4, 5),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -76,7 +76,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
             The extent of the whole output image.
 
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -140,8 +140,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
+class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource):
     """Create an image of the Mandelbrot set.
 
     .. versionadded:: 0.44.0
@@ -163,7 +162,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     maxiter=100,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -196,7 +195,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
             The extent of the whole output image.
 
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def maxiter(self) -> int:
@@ -236,8 +235,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageNoiseSource(_vtk.vtkImageNoiseSource):
+class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -267,13 +265,12 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     maximum=255,
     ...     seed=0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         whole_extent=(0, 255, 0, 255, 0, 0),
         minimum=0.0,
@@ -388,8 +385,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
+class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
 
     .. versionadded:: 0.44.0
@@ -423,13 +419,12 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     ...     amplitude=255,
     ...     direction=(1.0, 0.0, 0.0),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         whole_extent=None,
         direction=None,
@@ -503,7 +498,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The direction of the sinusoid.
 
         """
-        self.SetDirection(direction)
+        self.SetDirection(direction)  # type: ignore[call-overload]
 
     @property
     def period(self) -> float:
@@ -539,7 +534,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The phase of the sinusoid in pixel.
 
         """
-        return self.GetPhase()
+        return self.GetPhase()  # type: ignore[return-value]
 
     @phase.setter
     def phase(self, phase: Sequence[float]) -> None:
@@ -551,7 +546,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The phase of the sinusoid in pixel.
 
         """
-        self.SetPhase(phase)
+        self.SetPhase(phase)  # type: ignore[arg-type]
 
     @property
     def amplitude(self) -> float:
@@ -591,8 +586,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageGaussianSource(_vtk.vtkImageGaussianSource):
+class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
     """Create a binary image with Gaussian pixel values.
 
     .. versionadded:: 0.44.0
@@ -622,13 +616,14 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     ...     maximum=255,
     ...     std=100.0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
-
-    def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
+        self, center=None, whole_extent=None, maximum=None, std=None
+    ) -> None:
         super().__init__()
         if center is not None:
             self.center = center
@@ -757,8 +752,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ImageGridSource(_vtk.vtkImageGridSource):
+class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSource):
     """Create an image of a grid.
 
     .. versionadded:: 0.44.0
@@ -783,7 +777,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
     ...     extent=(0, 20, 0, 20, 0, 0),
     ...     spacing=(1, 1, 1),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -818,7 +812,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
             The origin of the grid.
 
         """
-        self.SetGridOrigin(origin)
+        self.SetGridOrigin(origin)  # type: ignore[arg-type]
 
     @property
     def extent(self) -> Sequence[int]:

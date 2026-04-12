@@ -1,5 +1,5 @@
 """
-.. _blur_example:
+.. _blurring_example:
 
 Blurring
 ~~~~~~~~

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from matplotlib.pyplot import get_cmap
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -55,7 +54,9 @@ curvsurf.plot(texture=tex)
 
 elevated = curvsurf.elevation()
 
-elevated.plot(scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False)
+elevated.plot(
+    scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False
+)
 
 
 # %%
@@ -72,7 +73,7 @@ curvsurf.plot(texture=tex)
 #
 # What about loading your own texture from an image? This is often most easily
 # done using the :func:`pyvista.read_texture` function - simply pass an image
-# file's path, and this function with handle making a ``vtkTexture`` for you to
+# file's path, and this function with handle making a :vtk:`vtkTexture` for you to
 # use.
 
 image_file = examples.mapfile
@@ -95,11 +96,11 @@ A, b = 500, 100
 zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
 
 # Creating a custom RGB image
-cmap = get_cmap("nipy_spectral")
+cmap = get_cmap('nipy_spectral')
 norm = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
 hue = norm(zz.ravel())
 colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
-image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
 # Convert 3D numpy array to texture
 tex = pv.numpy_to_texture(image)
@@ -112,15 +113,15 @@ curvsurf.plot(texture=tex)
 # +++++++++++++++++++++++++++++++++++++++++
 # Generate a moving gif from an active plotter with updating textures.
 
-mesh = curvsurf.extract_surface()
+mesh = curvsurf.extract_surface(algorithm=None)
 
 # Create a plotter object
-plotter = pv.Plotter(notebook=False, off_screen=True)
+pl = pv.Plotter(notebook=False, off_screen=True)
 
-actor = plotter.add_mesh(mesh, smooth_shading=True, color="white")
+actor = pl.add_mesh(mesh, smooth_shading=True, color='white')
 
 # Open a gif
-plotter.open_gif("texture.gif")
+pl.open_gif('texture.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
@@ -133,18 +134,18 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     hue = norm(zz.ravel()) * 0.5 * (1.0 + np.sin(phase))
     colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
-    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
     # Convert 3D numpy array to texture
     actor.texture = pv.numpy_to_texture(image)
 
     # must update normals when smooth shading is enabled
     mesh.compute_normals(cell_normals=False, inplace=True)
-    plotter.write_frame()
-    plotter.clear()
+    pl.write_frame()
+    pl.clear()
 
 # Closes and finalizes movie
-plotter.close()
+pl.close()
 
 # %%
 # Textures with Transparency
@@ -198,7 +199,7 @@ curvsurf.active_texture_coordinates = puppy_coords
 
 # use the puppy image
 tex = examples.download_puppy_texture()
-curvsurf.plot(texture=tex, cpos="xy")
+curvsurf.plot(texture=tex, cpos='xy')
 
 
 # %%

@@ -3,14 +3,40 @@ from __future__ import annotations
 from itertools import permutations
 import re
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 
 import pyvista as pv
 
 
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
+def test_pyramid_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 5 np.ndarray or list.')
+    ):
+        pv.Pyramid(points=points)
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 3))
+def test_triangle_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 3 np.ndarray or list')
+    ):
+        pv.Triangle(points=points)
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 4))
+def test_quadrilateral_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 4 np.ndarray or list')
+    ):
+        pv.Quadrilateral(points=points)
+
+
 def test_cylinder():
-    surf = pv.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
+    surf = pv.Cylinder(center=[0, 10, 0], direction=[1, 1, 1], radius=1, height=5)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
@@ -23,14 +49,14 @@ def test_cylinder_structured():
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
 def test_arrow(scale):
-    surf = pv.Arrow([0, 0, 0], [1, 1, 1], scale=scale)
+    surf = pv.Arrow(start=[0, 0, 0], direction=[1, 1, 1], scale=scale)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 
 def test_arrow_raises_error():
     with pytest.raises(TypeError):
-        pv.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
+        pv.Arrow(start=[0, 0, 0], direction=[1, 1, 1], scale='badarg')
 
 
 def test_sphere():
@@ -194,36 +220,36 @@ def test_solid_sphere_resolution_edge_cases():
 
 
 def test_solid_sphere_resolution_errors():
-    with pytest.raises(ValueError, match="minimum radius cannot be negative"):
+    with pytest.raises(ValueError, match='minimum radius cannot be negative'):
         pv.SolidSphere(inner_radius=-1)
-    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
+    with pytest.raises(ValueError, match='max theta and min theta must be within 360 degrees'):
         pv.SolidSphere(start_theta=-1)
-    with pytest.raises(ValueError, match="minimum phi cannot be negative"):
+    with pytest.raises(ValueError, match='minimum phi cannot be negative'):
         pv.SolidSphere(start_phi=-1)
-    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
+    with pytest.raises(ValueError, match='max theta and min theta must be within 360 degrees'):
         pv.SolidSphere(end_theta=370)
-    with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
+    with pytest.raises(ValueError, match='maximum phi cannot be > 180'):
         pv.SolidSphere(end_phi=190)
     with pytest.raises(
         ValueError,
-        match=re.escape("max theta and min theta must be within 2 * np.pi"),
+        match=re.escape('max theta and min theta must be within 2 * np.pi'),
     ):
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
-    with pytest.raises(ValueError, match="maximum phi cannot be > np.pi"):
+    with pytest.raises(ValueError, match=r'maximum phi cannot be > np.pi'):
         pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
 
-    with pytest.raises(ValueError, match="radius is not monotonically increasing"):
+    with pytest.raises(ValueError, match='radius is not monotonically increasing'):
         pv.SolidSphereGeneric(radius=(0, 10, 1))
-    with pytest.raises(ValueError, match="theta is not monotonically increasing"):
+    with pytest.raises(ValueError, match='theta is not monotonically increasing'):
         pv.SolidSphereGeneric(theta=(0, 180, 90))
-    with pytest.raises(ValueError, match="phi is not monotonically increasing"):
+    with pytest.raises(ValueError, match='phi is not monotonically increasing'):
         pv.SolidSphereGeneric(phi=(0, 180, 90))
 
-    with pytest.raises(ValueError, match="radius resolution must be 2 or more"):
+    with pytest.raises(ValueError, match='radius resolution must be 2 or more'):
         pv.SolidSphere(radius_resolution=1)
-    with pytest.raises(ValueError, match="theta resolution must be 2 or more"):
+    with pytest.raises(ValueError, match='theta resolution must be 2 or more'):
         pv.SolidSphere(theta_resolution=1)
-    with pytest.raises(ValueError, match="phi resolution must be 2 or more"):
+    with pytest.raises(ValueError, match='phi resolution must be 2 or more'):
         pv.SolidSphere(phi_resolution=1)
 
 
@@ -302,7 +328,7 @@ def test_solid_sphere_tol_radius():
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
 
 
-@pytest.mark.parametrize("radians", [True, False])
+@pytest.mark.parametrize('radians', [True, False])
 def test_solid_sphere_tol_angle(radians):
     max_phi = np.pi if radians else 180.0
 
@@ -372,15 +398,15 @@ def test_line():
     line = pv.Line(pointa, pointb)
     assert line.n_points == 2
     assert line.n_cells == 1
-    line = pv.Line(pointa, pointb, 10)
+    line = pv.Line(pointa, pointb, resolution=10)
     assert line.n_points == 11
     assert line.n_cells == 1
 
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.Line(pointa, pointb, -1)
+        pv.Line(pointa, pointb, resolution=-1)
 
     with pytest.raises(TypeError):
-        pv.Line(pointa, pointb, 0.1)  # from vtk
+        pv.Line(pointa, pointb, resolution=0.1)  # from vtk
 
     with pytest.raises(TypeError):
         pv.Line((0, 0), pointb)
@@ -412,21 +438,28 @@ def test_tube():
     tube = pv.Tube(n_sides=3)
     assert tube.n_points == 6
     assert tube.n_cells == 3
-    tube = pv.Tube(pointa, pointb, 10)
+    tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=10)
     assert tube.n_points == 165
     assert tube.n_cells == 15
 
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.Tube(pointa, pointb, -1)
+        pv.Tube(pointa=pointa, pointb=pointb, resolution=-1)
 
     with pytest.raises(TypeError):
-        pv.Tube(pointa, pointb, 0.1)  # from vtk
+        pv.Tube(pointa=pointa, pointb=pointb, resolution=0.1)  # from vtk
 
     with pytest.raises(TypeError):
-        pv.Tube((0, 0), pointb)
+        pv.Tube(pointa=(0, 0), pointb=pointb)
 
     with pytest.raises(TypeError):
-        pv.Tube(pointa, (10, 1.0))
+        pv.Tube(pointa=pointa, pointb=(10, 1.0))
+
+
+@pytest.mark.parametrize('capping', [True, False])
+def test_tube_capping(capping: bool):
+    # Clean due to duplicated points at the cylinder end borders.
+    tube: pv.PolyData = pv.Tube(capping=capping).clean().triangulate()
+    assert tube.is_manifold is capping
 
 
 def test_capsule():
@@ -439,8 +472,8 @@ def test_capsule():
 @pytest.mark.parametrize('center', [(4, 5, 6), (1, 1, 1)])
 @pytest.mark.parametrize('direction', [(0, 1, -1), (1, 1, 0)])
 def test_capsule_center(center, direction):
-    capsule = pv.Capsule(center, direction)
-    cylinder = pv.Cylinder(center, direction)
+    capsule = pv.Capsule(center=center, direction=direction)
+    cylinder = pv.Cylinder(center=center, direction=direction)
     assert np.allclose(capsule.center, cylinder.center)
 
 
@@ -453,6 +486,11 @@ def test_cube():
     assert np.any(cube.points)
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
+
+    assert 'Normals' in cube.point_data.keys()
+    normals = cube.point_data['Normals']
+    expected = 0.57735026
+    assert np.allclose(np.abs(normals), expected)
 
 
 @pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
@@ -471,20 +509,34 @@ def test_cone():
     assert np.any(cone.faces)
 
 
-def test_box():
-    geom = pv.Box()
-    assert np.any(geom.points)
-
+@pytest.mark.parametrize('level', [3, (3, 3, 3)])
+def test_box(level):
+    level_int = 3 if isinstance(level, int) else level[0]
     bounds = [-10.0, 10.0, 10.0, 20.0, -5.0, 5.0]
-    level = 3
     quads = True
-    mesh1 = pv.Box(bounds, level, quads)
-    assert mesh1.n_cells == (level + 1) * (level + 1) * 6
+    mesh1 = pv.Box(bounds, level=level, quads=quads)
+    assert mesh1.n_cells == (level_int + 1) * (level_int + 1) * 6
     assert np.allclose(mesh1.bounds, bounds)
 
     quads = False
-    mesh2 = pv.Box(bounds, level, quads)
+    mesh2 = pv.Box(bounds, level=level, quads=quads)
     assert mesh2.n_cells == mesh1.n_cells * 2
+
+
+def test_box_multi_level_equal():
+    box1 = pv.Box(level=5)
+    box2 = pv.Box(level=[5, 5, 5])
+    assert box1 == box2
+
+
+@pytest.mark.parametrize('level', [[3, 4, 5], (3, 3, 3)])
+@pytest.mark.parametrize(
+    ('quads', 'celltype'), [(True, pv.CellType.QUAD), (False, pv.CellType.TRIANGLE)]
+)
+def test_box_multi_level_cell_type(level, quads, celltype):
+    box = pv.Box(level=level, quads=quads)
+    celltypes = set(box.cast_to_unstructured_grid().celltypes)
+    assert celltypes == {celltype}
 
 
 def test_polygon():
@@ -530,23 +582,18 @@ def test_superquadric():
 
 
 def test_text_3d():
-    mesh = pv.Text3D("foo", 0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
+    mesh = pv.Text3D('foo', depth=0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
     assert mesh.n_points
     assert mesh.n_cells
 
-    bnds = mesh.bounds
-    actual_width, actual_height, actual_depth = (
-        bnds.x_max - bnds.x_min,
-        bnds.y_max - bnds.y_min,
-        bnds.z_max - bnds.z_min,
-    )
+    actual_width, actual_height, actual_depth = mesh.bounds_size
     assert np.isclose(actual_width, 2.0)
     assert np.isclose(actual_height, 3.0)
     assert np.isclose(actual_depth, 0.5)
     assert np.allclose(mesh.center, [1.0, 2.0, 3.0])
 
     # Test setting empty string returns empty mesh with zeros as bounds
-    mesh = pv.Text3D(string="")
+    mesh = pv.Text3D(string='')
     assert mesh.n_points == 1
     assert mesh.bounds == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
@@ -563,7 +610,7 @@ def test_circular_arc():
     center = [0, 0, 0]
     resolution = 100
 
-    mesh = pv.CircularArc(pointa, pointb, center, resolution)
+    mesh = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
     distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi / 2.0
@@ -571,7 +618,9 @@ def test_circular_arc():
 
     # pointa and pointb are not equidistant from center
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh = pv.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
+        mesh = pv.CircularArc(
+            pointa=[-1, 0, 0], pointb=[-0.99, 0.001, 0], center=[0, 0, 0], resolution=100
+        )
 
 
 def test_circular_arc_from_normal():
@@ -581,7 +630,9 @@ def test_circular_arc_from_normal():
     angle = 90
     resolution = 100
 
-    mesh = pv.CircularArcFromNormal(center, resolution, normal, polar, angle)
+    mesh = pv.CircularArcFromNormal(
+        center=center, resolution=resolution, normal=normal, polar=polar, angle=angle
+    )
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
     distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi
@@ -632,7 +683,7 @@ def test_quadrilateral():
 
 
 @pytest.mark.parametrize(
-    "points",
+    'points',
     [
         ([3.0, 1.0, 1.0], [3.0, 2.0, 1.0], [1.0, 2.0, 1.0], [1.0, 1.0, 1.0]),
         (
@@ -673,7 +724,7 @@ def test_rectangle_not_orthognal_entries():
         np.array([pointa, pointb, pointc]),
     )
 
-    with pytest.raises(ValueError, match="The three points should defined orthogonal vectors"):
+    with pytest.raises(ValueError, match='The three points should defined orthogonal vectors'):
         pv.Rectangle(rotated)
 
 
@@ -691,7 +742,7 @@ def test_rectangle_two_identical_points():
 
     with pytest.raises(
         ValueError,
-        match="Unable to build a rectangle with less than three different points",
+        match='Unable to build a rectangle with less than three different points',
     ):
         pv.Rectangle(rotated)
 
@@ -700,14 +751,14 @@ def test_rectangle_not_enough_points():
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
 
-    with pytest.raises(TypeError, match='Points must be given as length 3 np.ndarray or list'):
+    with pytest.raises(TypeError, match=r'Points must be given as length 3 np.ndarray or list'):
         pv.Rectangle([pointa, pointb])
 
 
 def test_circle():
     radius = 1.0
 
-    mesh = pv.Circle(radius)
+    mesh = pv.Circle(radius=radius)
     assert mesh.n_points
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
@@ -739,6 +790,7 @@ def test_ellipse():
         range(5),
         [4, 8, 6, 12, 20],
         [4, 6, 8, 20, 12],
+        strict=True,
     ),
 )
 def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):

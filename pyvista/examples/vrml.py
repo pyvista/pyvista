@@ -23,7 +23,7 @@ def download_teapot():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("vrml/teapot.wrl")
+    return download_file('vrml/teapot.wrl')
 
 
 def download_sextant():  # pragma: no cover
@@ -44,7 +44,7 @@ def download_sextant():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("vrml/sextant.wrl")
+    return download_file('vrml/sextant.wrl')
 
 
 def download_grasshopper():  # pragma: no cover
@@ -64,12 +64,12 @@ def download_grasshopper():  # pragma: no cover
     >>> vrml_file = examples.vrml.download_grasshopper()
     >>> pl = pv.Plotter()
     >>> pl.import_vrml(vrml_file)
-    >>> pl.camera_position = [
-    ...     (25.0, 32.0, 44.0),
-    ...     (0.0, 0.931, -6.68),
-    ...     (-0.20, 0.90, -0.44),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(25.0, 32.0, 44.0),
+    ...     focal_point=(0.0, 0.931, -6.68),
+    ...     viewup=(-0.20, 0.90, -0.44),
+    ... )
     >>> pl.show()
 
     """
-    return download_file("grasshopper/grasshop.wrl")
+    return download_file('grasshopper/grasshop.wrl')

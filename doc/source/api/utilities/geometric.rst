@@ -4,7 +4,7 @@ Geometry
 --------
 PyVista includes several functions to generate simple geometric
 objects. The API reference for these functions is on this page. For
-additional details see :ref:`geometric_example` example.
+additional details see :ref:`create_geometric_objects_example` example.
 
 PyVista provides both geometric objects and geometric sources. These two types
 serve similar but distinct purposes. Both allow you to create various types of
