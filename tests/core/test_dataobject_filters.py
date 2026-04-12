@@ -375,6 +375,56 @@ def test_clip_slab_zero_normal():
         mesh.clip_slab(thickness=0.2, normal=(0.0, 0.0, 0.0))
 
 
+def _two_clip_reference(mesh, normal, origin, thickness):
+    """Reference implementation: two chained clips with opposing normals."""
+    unit = np.asarray(normal, dtype=float)
+    unit = unit / np.linalg.norm(unit)
+    origin = np.asarray(origin, dtype=float)
+    half = thickness / 2.0
+    return mesh.clip(normal=unit, origin=origin + unit * half).clip(
+        normal=-unit, origin=origin - unit * half
+    )
+
+
+@pytest.mark.parametrize(
+    ('normal', 'thickness'),
+    [
+        ((0.0, 0.0, 1.0), 0.4),
+        ((1.0, 1.0, 1.0), 0.3),
+        ((2.0, -1.0, 0.5), 0.25),
+    ],
+)
+def test_clip_slab_matches_two_clip_workaround(normal, thickness):
+    """``clip_slab`` must match the historical two-clip chain geometrically."""
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    origin = (0.0, 0.0, 0.0)
+    new = mesh.clip_slab(thickness=thickness, normal=normal, origin=origin)
+    old = _two_clip_reference(mesh, normal, origin, thickness)
+    assert new.n_points == old.n_points
+    assert new.n_cells == old.n_cells
+    assert np.allclose(new.bounds, old.bounds, atol=1e-12)
+    assert new.volume == pytest.approx(old.volume, rel=1e-12)
+    # Symmetric nearest-neighbor distance: the point sets must be identical
+    # up to storage order.
+    new_tree = new.find_closest_point
+    old_tree = old.find_closest_point
+    max_forward = max(np.linalg.norm(new.points[new_tree(p)] - p) for p in old.points)
+    max_backward = max(np.linalg.norm(old.points[old_tree(p)] - p) for p in new.points)
+    assert max_forward < 1e-10
+    assert max_backward < 1e-10
+
+
+def test_clip_slab_matches_two_clip_workaround_polydata():
+    """``clip_slab`` on surface data must match the two-clip chain."""
+    mesh = pv.Sphere()
+    new = mesh.clip_slab(thickness=0.2, normal='y', origin=(0, 0, 0))
+    old = _two_clip_reference(mesh, (0, 1, 0), (0, 0, 0), 0.2)
+    assert new.n_points == old.n_points
+    assert new.n_cells == old.n_cells
+    assert np.allclose(new.bounds, old.bounds, atol=1e-12)
+    assert new.area == pytest.approx(old.area, rel=1e-12)
+
+
 def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
