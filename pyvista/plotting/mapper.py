@@ -512,11 +512,11 @@ class _DataSetMapper(_BaseMapper):
         if self._active_scalars_algo is None:
             self._active_scalars_algo = ActiveScalarsAlgorithm(name=name, preference=preference)
             # Splice the algo between the mapper and its current input.
-            input_conn = self.GetInputConnection(0, 0)
-            if input_conn is not None:
-                self._active_scalars_algo.SetInputConnection(0, input_conn)
-            if self._input_dataset is not None:
-                set_algorithm_input(self._active_scalars_algo, self._input_dataset)
+            # Use the existing pipeline connection so that upstream
+            # modifications propagate correctly on re-render.  VTK always
+            # provides a connection here (wrapping data objects in a
+            # vtkTrivialProducer when SetInputDataObject was used).
+            self._active_scalars_algo.SetInputConnection(0, self.GetInputConnection(0, 0))
             self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
         else:
             self._active_scalars_algo.scalars_name = name

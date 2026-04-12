@@ -53,7 +53,6 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from . import _vtk
 from ._plotting import _common_arg_parser
-from ._plotting import prepare_smooth_shading
 from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
@@ -84,12 +83,14 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
+from .utilities.algorithms import SmoothShadingAlgorithm
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
 from .utilities.algorithms import extract_surface_algorithm
 from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
+from .utilities.algorithms import smooth_shading_algorithm
 from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
 from .utilities.regression import image_from_window
@@ -3972,17 +3973,36 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
-            if algo is not None:
-                msg = 'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
-                raise TypeError(msg)
-            mesh, scalars = prepare_smooth_shading(
-                mesh=mesh,
-                scalars=scalars,
-                texture=texture,
+            input_n_points = mesh.n_points
+            input_n_cells = mesh.n_cells
+            algo = smooth_shading_algorithm(
+                algo or mesh,
                 split_sharp_edges=split_sharp_edges,
                 feature_angle=feature_angle,
-                preference=preference,
             )
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
+            # The smooth-shading stage may change the topology (surface
+            # extraction and/or sharp-edge splitting).  Re-resolve the scalars
+            # numpy array against the new mesh so it matches the post-pipeline
+            # topology that will be handed to the mapper.
+            if scalars is not None and (
+                mesh.n_points != input_n_points or mesh.n_cells != input_n_cells
+            ):
+                if original_scalar_name is not None:
+                    resolved = get_array(
+                        mesh, original_scalar_name, preference=preference, err=False
+                    )
+                    if resolved is not None:
+                        scalars = resolved
+                elif (
+                    SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME in mesh.point_data
+                    and scalars.shape[0] == input_n_points
+                ):
+                    tracker = np.asarray(
+                        mesh.point_data[SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME]
+                    )
+                    scalars = np.asarray(scalars)[tracker]
 
         if rgb:
             show_scalar_bar = False

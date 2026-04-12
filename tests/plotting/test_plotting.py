@@ -4196,6 +4196,62 @@ def test_add_ids_algorithm():
     assert 'cell_ids' in result.cell_data
 
 
+@pytest.mark.parametrize('smooth_shading', [True, False])
+def test_add_mesh_smooth_shading_with_algorithm(smooth_shading):
+    """Smooth shading works when the input is a vtkAlgorithm."""
+    algo = pv.PlatonicSolidSource('dodecahedron')
+    pl = pv.Plotter()
+    pl.add_mesh(algo, smooth_shading=smooth_shading, show_scalar_bar=False)
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_with_algorithm_and_scalars():
+    """Algorithm input + scalars + smooth_shading composes pipeline stages."""
+    mesh = pv.Wavelet()
+    mesh.point_data['z'] = mesh.points[:, 2].astype(float)
+
+    source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
+    surface = algorithms.callback_algorithm(
+        source,
+        lambda m: m.clip('x'),
+        output_type=pv.UnstructuredGrid,
+    )
+
+    pl = pv.Plotter()
+    pl.add_mesh(
+        surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
+    )
+
+    # Modify source data after add_mesh to verify the changes propagate
+    # through the smooth shading and active scalars algorithm pipeline
+    mesh.point_data['z'][::10] = 0
+    source.Modified()
+
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_unstructured_grid_scalars():
+    """Smooth shading on a tet-mesh UnstructuredGrid with point scalars.
+
+    Exercises the full pipeline: extract surface from a volume tet mesh,
+    compute normals with split sharp edges, and render with scalar coloring.
+    """
+    mesh = examples.download_letter_a().rotate_y(90)
+    source = algorithms.source_algorithm(mesh.elevation, output_type=pv.UnstructuredGrid)
+
+    pl = pv.Plotter()
+    pl.add_mesh(
+        source,
+        scalars='Elevation',
+        smooth_shading=True,
+        split_sharp_edges=True,
+        feature_angle=30.0,
+        show_scalar_bar=False,
+    )
+    pl.camera_position = 'yz'
+    pl.show()
+
+
 @skip_windows_mesa
 def test_plot_volume_rgba(uniform):
     with pytest.raises(ValueError, match='dimensions'):

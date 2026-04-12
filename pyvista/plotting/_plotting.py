@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
-import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.arrays import get_array
@@ -15,101 +12,6 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
-
-if TYPE_CHECKING:
-    from pyvista import DataSet
-    from pyvista import PolyData
-    from pyvista.core._typing_core import NumpyArray
-
-
-@_deprecate_positional_args
-def prepare_smooth_shading(  # noqa: PLR0917
-    mesh: DataSet, scalars, texture, split_sharp_edges, feature_angle, preference
-) -> tuple[PolyData, NumpyArray[float]]:
-    """Prepare a dataset for smooth shading.
-
-    VTK requires datasets with Phong shading to have active normals.
-    This requires extracting the external surfaces from non-polydata
-    datasets and computing the point normals.
-
-    Parameters
-    ----------
-    mesh : pyvista.DataSet
-        Dataset to prepare smooth shading for.
-
-    scalars : sequence
-        Sequence of scalars.
-
-    texture : pyvista.Texture or np.ndarray, optional
-        A texture to apply to the mesh.
-
-    split_sharp_edges : bool
-        Split sharp edges exceeding 30 degrees when plotting with
-        smooth shading.  Control the angle with the optional
-        keyword argument ``feature_angle``.  By default this is
-        ``False``.  Note that enabling this will create a copy of
-        the input mesh within the plotter.  See
-        :ref:`shading_example`.
-
-    feature_angle : float
-        Angle to consider an edge a sharp edge.
-
-    preference : str
-        If the number of points is identical to the number of cells.
-        Either ``'point'`` or ``'cell'``.
-
-    Returns
-    -------
-    pyvista.PolyData
-        Always a surface as we need to compute point normals.
-
-    """
-    is_polydata = isinstance(mesh, pv.PolyData)
-    indices_array = None
-
-    has_scalars = scalars is not None
-    use_points = False
-    if has_scalars:
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-        if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
-            use_points = preference == 'point'
-        else:
-            use_points = scalars.shape[0] == mesh.n_points
-
-    # extract surface if not already a surface
-    if not is_polydata:
-        mesh = mesh.extract_surface(
-            algorithm=None,
-            pass_pointid=use_points or texture is not None,
-            pass_cellid=not use_points,
-        )
-        indices_array = 'vtkOriginalPointIds' if use_points else 'vtkOriginalCellIds'
-
-    try:
-        if split_sharp_edges:
-            mesh = mesh.compute_normals(
-                cell_normals=False,
-                split_vertices=True,
-                feature_angle=feature_angle,
-            )
-            if is_polydata:
-                if has_scalars and use_points:
-                    # we must track the original IDs with our own array from compute_normals
-                    indices_array = 'pyvistaOriginalPointIds'
-        elif mesh.point_data.active_normals is None:
-            mesh.compute_normals(cell_normals=False, inplace=True)
-    except TypeError as e:
-        if 'Normals cannot be computed' in repr(e):
-            pass
-        else:
-            raise
-
-    if has_scalars and indices_array is not None:
-        ind = mesh[indices_array]
-        scalars = np.asarray(scalars)[ind]
-
-    return mesh, scalars  # type: ignore[return-value]
 
 
 @_deprecate_positional_args
