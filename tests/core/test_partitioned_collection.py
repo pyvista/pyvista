@@ -755,16 +755,6 @@ def test_combine_produces_unstructured_grid():
     assert merged_pts.n_points < merged.n_points
 
 
-def test_plot_collection_runs():
-    col = PartitionedDataSetCollection([pv.Sphere(), pv.Cube(center=(2, 0, 0))])
-    pl = pv.Plotter(off_screen=True)
-    try:
-        pl.add_mesh(col)
-        pl.show()
-    finally:
-        pl.close()
-
-
 def test_repr_html_uses_multiblock_icon():
     col = PartitionedDataSetCollection([pv.Sphere()])
     # The MultiBlock icon is the only reasonable icon for composite containers;

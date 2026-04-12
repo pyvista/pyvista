@@ -5424,6 +5424,13 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
+def test_partitioned_dataset_collection(sphere):
+    col = pv.PartitionedDataSetCollection([sphere, pv.Cube(center=(2, 0, 0))])
+    pl = pv.Plotter()
+    pl.add_mesh(col)
+    pl.show()
+
+
 @pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(
     (9, 6, 99),  # >= 9,7,0
