@@ -25,8 +25,8 @@ elevation = np.sin(xx) * np.cos(yy) * 10 + 20
 height_map.point_data['elevation'] = elevation.flatten(order='C')
 
 # Create polygons to drape over the height map
-polygon1 = pv.Rectangle(bounds=(10, 30, 10, 30, 0, 0))
-polygon2 = pv.Rectangle(bounds=(5, 15, 35, 45, 0, 0))
+polygon1 = pv.Rectangle([[10.0, 10.0, 0.0], [30.0, 10.0, 0.0], [30.0, 30.0, 0.0]])
+polygon2 = pv.Rectangle([[5.0, 35.0, 0.0], [15.0, 35.0, 0.0], [15.0, 45.0, 0.0]])
 
 # Fit using point projection strategy
 result1 = polygon1.fit_to_height_map(
