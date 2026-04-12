@@ -8112,9 +8112,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         scalars = (  # Init with background value
             np.zeros(scalars_shape, dtype=scalars_dtype)
             if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value  # type: ignore[operator]
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars
+        binary_mask['mask'] = scalars  # type: ignore[type-var]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
