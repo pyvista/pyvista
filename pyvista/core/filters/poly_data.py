@@ -4011,11 +4011,11 @@ class PolyDataFilters(DataSetFilters):
             alg.UseHeightMapOffsetOn()
         else:
             alg.UseHeightMapOffsetOff()
-        _update_alg(alg, progress_bar, 'Fitting to height map')
+        _update_alg(alg, progress_bar=progress_bar, message='Fitting to height map')
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh, deep=False)
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return self
         return mesh
 
