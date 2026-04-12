@@ -3978,11 +3978,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # stage runs so (1) smooth-shading extract_surface carries it
         # forward and (2) users can later mutate it via ``mesh[name] = ...``
         # and have the renderer pick up the change on the next render.
+        # Only fires when ``shape[0]`` directly matches points or cells;
+        # ``ravel``-compatible shapes (e.g. 2D image scalars) fall through
+        # and are raveled by ``mapper.set_scalars`` further down.
         if (
             algo is None
             and scalars is not None
             and original_scalar_name is None
             and isinstance(scalars, np.ndarray)
+            and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
         ):
             preference = _resolve_scalars_field(scalars, mesh, preference)
             if preference == 'point':

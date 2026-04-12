@@ -12,7 +12,6 @@ from pyvista.plotting.utilities.algorithms import CallbackFilterAlgorithm
 from pyvista.plotting.utilities.algorithms import PointSetToPolyDataAlgorithm
 from pyvista.plotting.utilities.algorithms import SmoothShadingAlgorithm
 from pyvista.plotting.utilities.algorithms import SourceAlgorithm
-from pyvista.plotting.utilities.algorithms import _resolve_output_type
 from pyvista.plotting.utilities.algorithms import active_scalars_algorithm
 from pyvista.plotting.utilities.algorithms import add_ids_algorithm
 from pyvista.plotting.utilities.algorithms import algorithm_to_mesh_handler
@@ -652,11 +651,6 @@ def test_smooth_shading_pipeline_propagates_input_data_changes():
     assert np.allclose(z_after, 0.0)
     assert out_after.point_data.active_scalars_name == 'z'
     assert out_after.point_data.active_normals is not None
-
-
-def test_resolve_output_type_invalid_raises():
-    with pytest.raises(TypeError, match='Invalid output_type'):
-        _resolve_output_type(42)
 
 
 def test_source_algorithm_default_output():

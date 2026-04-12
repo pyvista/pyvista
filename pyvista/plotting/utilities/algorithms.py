@@ -179,37 +179,6 @@ class PreserveTypeAlgorithmBase(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPy
         return 1
 
 
-def _resolve_output_type(output_type: str | type) -> str:
-    """Resolve an output type to a VTK class name string.
-
-    Parameters
-    ----------
-    output_type : str | type[pv.DataSet]
-        Output type specification.  Accepts a VTK class name string (e.g.
-        ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
-        (e.g. ``pv.PolyData``).
-
-    Returns
-    -------
-    str
-        VTK class name (e.g. ``'vtkPolyData'``).
-
-    """
-    if isinstance(output_type, str):
-        return output_type
-    try:
-        is_dataset_subclass = issubclass(output_type, pv.DataSet)
-    except TypeError:
-        is_dataset_subclass = False
-    if is_dataset_subclass:
-        return output_type().GetClassName()
-    msg = (
-        f'Invalid output_type: {output_type!r}. '
-        'Expected a VTK class name string or a pyvista.DataSet subclass.'
-    )
-    raise TypeError(msg)
-
-
 class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Algorithm that generates data from a callable with no input.
 
@@ -235,12 +204,13 @@ class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgori
         output_type: str | type = pv.UnstructuredGrid,
     ):
         """Initialize algorithm."""
-        resolved = _resolve_output_type(output_type)
         _vtk.VTKPythonAlgorithmBase.__init__(
             self,
             nInputPorts=0,
             nOutputPorts=1,
-            outputType=resolved,
+            outputType=(
+                output_type if isinstance(output_type, str) else output_type().GetClassName()
+            ),
         )
         self._generator = generator
 
@@ -308,10 +278,13 @@ class CallbackFilterAlgorithm(PreserveTypeAlgorithmBase):
         nOutputPorts: int = 1,
     ):
         """Initialize algorithm."""
-        if output_type is not None:
-            self._fixed_output_type: str | None = _resolve_output_type(output_type)
-        else:
-            self._fixed_output_type = None
+        self._fixed_output_type: str | None = (
+            None
+            if output_type is None
+            else output_type
+            if isinstance(output_type, str)
+            else output_type().GetClassName()
+        )
         if self._fixed_output_type is not None:
             _vtk.VTKPythonAlgorithmBase.__init__(
                 self,
