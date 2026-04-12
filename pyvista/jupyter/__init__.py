@@ -114,10 +114,10 @@ def _is_pyodide() -> bool:
     bool
         True if running in a Pyodide/WASM environment, False otherwise.
 
-    See Also
-    --------
-    https://pyodide.org/ - Pyodide documentation
-    https://emscripten.org/ - Emscripten documentation
+    References
+    ----------
+    * Pyodide documentation: https://pyodide.org/
+    * Emscripten documentation: https://emscripten.org/
 
     """
     return sys.platform == 'emscripten'
@@ -151,8 +151,15 @@ def _resolve_backend() -> str:
     # In Pyodide/WASM environments, prefer the WASM backend if pyvista-wasm
     # is available. This enables interactive 3D visualization in browsers
     # using VTK.wasm instead of the regular VTK Python package.
-    if _is_pyodide() and importlib.util.find_spec('pyvista_wasm'):
-        return 'wasm'
+    if _is_pyodide():
+        try:
+            import pyvista_wasm  # noqa: PLC0415, F401
+        except (ImportError, ValueError):
+            has_wasm = False
+        else:
+            has_wasm = True
+        if has_wasm:
+            return 'wasm'
 
     try:
         from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415

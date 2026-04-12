@@ -31,7 +31,7 @@ Examples
 Check if running in a WASM environment:
 
 >>> import pyvista as pv
->>> pv.wasm.is_pyodide()
+>>> pv.wasm.is_pyodide()  # doctest: +SKIP
 False
 
 Generate standalone HTML for embedding:
@@ -39,8 +39,8 @@ Generate standalone HTML for embedding:
 >>> import pyvista as pv
 >>> plotter = pv.Plotter()
 >>> _ = plotter.add_mesh(pv.Sphere())
->>> html = pv.wasm.generate_standalone_html(plotter)
->>> '<!DOCTYPE html>' in html
+>>> html = pv.wasm.generate_standalone_html(plotter)  # doctest: +SKIP
+>>> '<!DOCTYPE html>' in html  # doctest: +SKIP
 True
 
 """
@@ -75,8 +75,8 @@ def is_pyodide() -> bool:
     Examples
     --------
     >>> import pyvista as pv
-    >>> is_pyodide()
-    False  # When running in standard Python
+    >>> is_pyodide()  # doctest: +SKIP
+    False
 
     """
     return sys.platform == 'emscripten'
@@ -118,9 +118,9 @@ class WASMPlotter:
     Examples
     --------
     >>> import pyvista as pv
-    >>> plotter = pv.wasm.WASMPlotter()
-    >>> _ = plotter.add_mesh(pv.Sphere(), color='red')
-    >>> html = plotter.generate_standalone_html()
+    >>> plotter = pv.wasm.WASMPlotter()  # doctest: +SKIP
+    >>> _ = plotter.add_mesh(pv.Sphere(), color='red')  # doctest: +SKIP
+    >>> html = plotter.generate_standalone_html()  # doctest: +SKIP
 
     """
 
@@ -190,7 +190,17 @@ class WASMPlotter:
             The converted WASM mesh, or None if conversion fails.
 
         """
-        import pyvista_wasm  # noqa: PLC0415
+        try:
+            import pyvista_wasm  # noqa: PLC0415
+        except ImportError as e:
+            msg = (
+                'The WASM backend requires pyvista-wasm.\n'
+                'Install it with: pip install "pyvista[wasm]"\n\n'
+                'For Pyodide/JupyterLite, use:\n'
+                'import micropip\n'
+                'await micropip.install("pyvista-wasm")'
+            )
+            raise ImportError(msg) from e
 
         try:
             # Extract points
@@ -350,8 +360,8 @@ def generate_standalone_html(plotter: Plotter, **kwargs) -> str:
     >>> import pyvista as pv
     >>> plotter = pv.Plotter()
     >>> _ = plotter.add_mesh(pv.Sphere())
-    >>> html = pv.wasm.generate_standalone_html(plotter)
-    >>> '<!DOCTYPE html>' in html
+    >>> html = pv.wasm.generate_standalone_html(plotter)  # doctest: +SKIP
+    >>> '<!DOCTYPE html>' in html  # doctest: +SKIP
     True
 
     """

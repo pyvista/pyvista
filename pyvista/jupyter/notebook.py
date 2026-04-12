@@ -99,7 +99,7 @@ def handle_plotter(
 
     # WASM backend for Pyodide/JupyterLite environments
     if backend == 'wasm':
-        return show_wasm(plotter)
+        return show_wasm(plotter)  # type: ignore[return-value]
 
     return show_static_image(plotter, screenshot)
 
@@ -136,8 +136,19 @@ def show_wasm(
     >>> plotter.show()  # doctest: +SKIP
 
     """
+    try:
+        import pyvista_wasm  # noqa: PLC0415
+    except ImportError as e:
+        msg = (
+            'The WASM backend requires pyvista-wasm.\n'
+            'Install it with: pip install "pyvista[wasm]"\n\n'
+            'For Pyodide/JupyterLite, use:\n'
+            'import micropip\n'
+            'await micropip.install("pyvista-wasm")'
+        )
+        raise ImportError(msg) from e
+
     from IPython.display import HTML  # noqa: PLC0415
-    import pyvista_wasm  # noqa: PLC0415
 
     # Create a WASM plotter from the current plotter
     wasm_plotter = pyvista_wasm.Plotter()
