@@ -3187,9 +3187,12 @@ def test_writer_data_mode_mixin(writer_cls):
         pytest.skip(f'{writer_cls.__name__} does not support ASCII mode, skipping')
 
     assert _DataFormatMixin in writer_cls.__mro__, f'{writer_cls.__name__} missing DataModeMixin'
-    mesh = (
-        pv.PartitionedDataSet() if writer_cls is pv.XMLPartitionedDataSetWriter else pv.PolyData()
-    )
+    if writer_cls is pv.XMLPartitionedDataSetWriter:
+        mesh = pv.PartitionedDataSet()
+    elif writer_cls is pv.XMLPartitionedDataSetCollectionWriter:
+        mesh = pv.PartitionedDataSetCollection()
+    else:
+        mesh = pv.PolyData()
 
     obj = writer_cls('', mesh)
     assert obj.data_format == 'binary'

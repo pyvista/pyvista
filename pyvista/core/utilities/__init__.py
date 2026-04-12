@@ -229,6 +229,7 @@ from .reader import VTKPDataSetReader as VTKPDataSetReader
 from .reader import XdmfReader as XdmfReader
 from .reader import XMLImageDataReader as XMLImageDataReader
 from .reader import XMLMultiBlockDataReader as XMLMultiBlockDataReader
+from .reader import XMLPartitionedDataSetCollectionReader as XMLPartitionedDataSetCollectionReader
 from .reader import XMLPartitionedDataSetReader as XMLPartitionedDataSetReader
 from .reader import XMLPImageDataReader as XMLPImageDataReader
 from .reader import XMLPolyDataReader as XMLPolyDataReader
@@ -263,6 +264,7 @@ from .writer import TIFFWriter as TIFFWriter
 from .writer import UnstructuredGridWriter as UnstructuredGridWriter
 from .writer import XMLImageDataWriter as XMLImageDataWriter
 from .writer import XMLMultiBlockDataWriter as XMLMultiBlockDataWriter
+from .writer import XMLPartitionedDataSetCollectionWriter as XMLPartitionedDataSetCollectionWriter
 from .writer import XMLPartitionedDataSetWriter as XMLPartitionedDataSetWriter
 from .writer import XMLPolyDataWriter as XMLPolyDataWriter
 from .writer import XMLRectilinearGridWriter as XMLRectilinearGridWriter

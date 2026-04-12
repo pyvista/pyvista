@@ -40,6 +40,7 @@ from .grid import ImageData as ImageData
 from .grid import RectilinearGrid as RectilinearGrid
 from .objects import Table as Table
 from .partitioned import PartitionedDataSet as PartitionedDataSet
+from .partitioned import PartitionedDataSetCollection as PartitionedDataSetCollection
 from .pointset import ExplicitStructuredGrid as ExplicitStructuredGrid
 from .pointset import PointGrid as PointGrid
 from .pointset import PointSet as PointSet

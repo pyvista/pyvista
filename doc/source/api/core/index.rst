@@ -60,6 +60,11 @@ PyVista has the following mesh types:
   encapsulates a dataset consisting of partitions. The :class:`pyvista.PartitionedDataSet`
   class is an extension of :vtk:`vtkPartitionedDataSet`.
 
+- :class:`pyvista.PartitionedDataSetCollection` is a composite container for
+  an ordered collection of :class:`pyvista.PartitionedDataSet` instances with an
+  optional :vtk:`vtkDataAssembly` describing a hierarchical view of its members.
+  It is an extension of :vtk:`vtkPartitionedDataSetCollection`.
+
 .. toctree::
    :maxdepth: 2
 

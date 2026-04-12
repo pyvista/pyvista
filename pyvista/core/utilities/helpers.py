@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
+    from pyvista import PartitionedDataSetCollection
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
@@ -272,7 +273,9 @@ def wrap(  # noqa: PLR0911
     raise NotImplementedError(msg)
 
 
-def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDataSet]:
+def is_pyvista_dataset(
+    obj: Any,
+) -> TypeIs[DataSet | MultiBlock | PartitionedDataSet | PartitionedDataSetCollection]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -286,7 +289,10 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDat
         ``True`` when the object is a :class:`pyvista.DataSet`.
 
     """
-    return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
+    return isinstance(
+        obj,
+        (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet, pv.PartitionedDataSetCollection),
+    )
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):

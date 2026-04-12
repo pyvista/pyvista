@@ -207,6 +207,7 @@ from vtkmodules.vtkCommonDataModel import vtkColor3ub as vtkColor3ub
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet as vtkCompositeDataSet
 from vtkmodules.vtkCommonDataModel import vtkConvexPointSet as vtkConvexPointSet
 from vtkmodules.vtkCommonDataModel import vtkCubicLine as vtkCubicLine
+from vtkmodules.vtkCommonDataModel import vtkDataAssembly as vtkDataAssembly
 from vtkmodules.vtkCommonDataModel import vtkDataObject as vtkDataObject
 from vtkmodules.vtkCommonDataModel import vtkDataSet as vtkDataSet
 from vtkmodules.vtkCommonDataModel import vtkDataSetAttributes as vtkDataSetAttributes
@@ -231,6 +232,9 @@ from vtkmodules.vtkCommonDataModel import vtkLine as vtkLine
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet as vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator as vtkNonMergingPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet as vtkPartitionedDataSet
+from vtkmodules.vtkCommonDataModel import (
+    vtkPartitionedDataSetCollection as vtkPartitionedDataSetCollection,
+)
 from vtkmodules.vtkCommonDataModel import vtkPentagonalPrism as vtkPentagonalPrism
 from vtkmodules.vtkCommonDataModel import vtkPerlinNoise as vtkPerlinNoise
 from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction as vtkPiecewiseFunction

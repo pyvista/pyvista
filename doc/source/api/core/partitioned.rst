@@ -82,3 +82,38 @@ base class is analogous to VTK's :vtk:`vtkPartitionedDataSet` class.
    :toctree: _autosummary
 
    pyvista.PartitionedDataSet
+
+PartitionedDataSetCollection
+----------------------------
+
+The :class:`pyvista.PartitionedDataSetCollection` class is a composite
+container that holds an ordered collection of
+:class:`pyvista.PartitionedDataSet` instances. It mirrors the
+:class:`pyvista.MultiBlock` API where it makes sense and additionally
+exposes a :vtk:`vtkDataAssembly` describing a hierarchical view of its
+members. It is an extension of :vtk:`vtkPartitionedDataSetCollection`.
+
+.. jupyter-execute::
+
+   import pyvista as pv
+   collection = pv.PartitionedDataSetCollection(
+       {
+           'sphere': pv.Sphere(),
+           'cube': pv.Cube(center=(2, 0, 0)),
+       }
+   )
+   collection
+
+Build a hierarchy on top of the collection using the data assembly.
+
+.. jupyter-execute::
+
+   group_id = collection.add_assembly_node('/', 'shapes')
+   collection.assign_dataset_to_node(group_id, 0)
+   collection.assign_dataset_to_node(group_id, 1)
+   collection.select_datasets('//shapes')
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.PartitionedDataSetCollection

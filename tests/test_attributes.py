@@ -200,6 +200,9 @@ def get_default_class_init_kwargs(pyvista_class):
     elif pyvista_class is pv.XMLPartitionedDataSetWriter:
         kwargs['path'] = ''
         kwargs['data_object'] = pv.PartitionedDataSet()
+    elif pyvista_class is pv.XMLPartitionedDataSetCollectionWriter:
+        kwargs['path'] = ''
+        kwargs['data_object'] = pv.PartitionedDataSetCollection()
     elif issubclass(pyvista_class, pv.BaseWriter):
         kwargs['path'] = ''
         kwargs['data_object'] = pv.PolyData()
