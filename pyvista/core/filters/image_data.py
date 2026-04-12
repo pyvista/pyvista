@@ -366,7 +366,6 @@ class ImageDataFilters(DataSetFilters):
         result.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
         return result
 
-    def median_smooth(
     @_deprecate_positional_args
     def median_smooth(  # noqa: PLR0917
         self,
