@@ -3904,10 +3904,10 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-def fit_to_height_map(
+    def fit_to_height_map(
         self,
         height_map,
-        fitting_strategy="point_projection",
+        fitting_strategy='point_projection',
         use_height_map_offset=True,
         inplace=False,
         progress_bar=False,
@@ -3972,7 +3972,7 @@ def fit_to_height_map(
         >>> height_map = pv.ImageData(dimensions=(10, 10, 1))
         >>> height_map.origin = (0.0, 0.0, 0.0)
         >>> height_map.spacing = (1.0, 1.0, 1.0)
-        >>> height_map.point_data["elevation"] = np.random.default_rng().random(
+        >>> height_map.point_data['elevation'] = np.random.default_rng().random(
         ...     height_map.n_points
         ... )
         >>> polygon = pv.Polygon(n_sides=4, radius=0.4, center=(4.5, 4.5, 0))
@@ -3981,13 +3981,13 @@ def fit_to_height_map(
 
         """
         fitting_strategies = {
-            "point_projection": 0,
-            "point_minimum_height": 1,
-            "point_maximum_height": 2,
-            "point_average_height": 3,
-            "cell_minimum_height": 4,
-            "cell_maximum_height": 5,
-            "cell_average_height": 6,
+            'point_projection': 0,
+            'point_minimum_height': 1,
+            'point_maximum_height': 2,
+            'point_average_height': 3,
+            'cell_minimum_height': 4,
+            'cell_maximum_height': 5,
+            'cell_average_height': 6,
         }
         if isinstance(fitting_strategy, str):
             if fitting_strategy not in fitting_strategies:
