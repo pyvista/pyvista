@@ -295,6 +295,9 @@ def create_axes_orientation_box(  # noqa: PLR0917
 
     Parameters
     ----------
+    line_width : float, optional
+        The width of the marker lines.
+
     text_scale : float, optional
         Size of the text relative to the faces.
 

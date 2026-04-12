@@ -312,10 +312,10 @@ def test_translate_should_fail_bad_points_or_transform():
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))
     bad_trans = np.random.default_rng().random((2, 4))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='must be of shape'):
         pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='must be of shape'):
         pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 

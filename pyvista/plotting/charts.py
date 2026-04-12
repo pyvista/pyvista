@@ -1126,9 +1126,8 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-
-def paint(self, _) -> bool:
-    return True
+    def paint(self, _) -> bool:
+        return True
 
 
 class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
