@@ -604,13 +604,11 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     Add the geometry actor (teapot) to the plotter
 
-    >>> actor = plotter.add_mesh(
-    ...     normals, color=(0.5, 0.8, 0.3), show_edges=True
-    ... )
+    >>> actor = plotter.add_mesh(normals, color=(0.5, 0.8, 0.3), show_edges=True)
 
     Create an outline filter using VTK and add it to the plotter
 
-    >>> _ = plotter.add_mesh(pv.outline_algorithm(normals), color="white")
+    >>> _ = plotter.add_mesh(pv.outline_algorithm(normals), color='white')
 
     Set up the camera.
 
@@ -635,7 +633,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes.maximum_angle = 210.0
     >>> polaxes.number_of_radial_axes = 10
     >>> polaxes.camera = camera
-    >>> polaxes.SetPolarLabelFormat("%6.1f")
+    >>> polaxes.SetPolarLabelFormat('%6.1f')
     >>> polaxes.GetLastRadialAxisProperty().SetColor(0.0, 1.0, 0.0)
     >>> polaxes.GetSecondaryRadialAxesProperty().SetColor(0.0, 0.0, 1.0)
     >>> polaxes.GetPolarArcsProperty().SetColor(1.0, 0.0, 0.0)
@@ -644,9 +642,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes.GetPolarAxisTitleTextProperty().SetColor(0.0, 0.0, 0.0)
     >>> polaxes.GetPolarAxisLabelTextProperty().SetColor(1.0, 1.0, 0.0)
     >>> polaxes.GetLastRadialAxisTextProperty().SetColor(0.0, 0.5, 0.0)
-    >>> polaxes.GetSecondaryRadialAxesTextProperty().SetColor(
-    ...     0.0, 1.0, 1.0
-    ... )
+    >>> polaxes.GetSecondaryRadialAxesTextProperty().SetColor(0.0, 1.0, 1.0)
     >>> polaxes.screen_size = 9.0
 
     Add the polar axes to the plotter
