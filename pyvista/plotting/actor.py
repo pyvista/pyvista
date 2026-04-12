@@ -867,13 +867,13 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         The chosen shape is **persisted on the actor** and is only
         injected into the fragment shader while the actor's
-        :attr:`~pyvista.Property.representation` is ``'points'``. When
-        the representation is ``'surface'`` or ``'wireframe'`` the
-        shader replacement is transparently removed, because the
-        underlying GLSL relies on ``gl_PointCoord`` which is undefined
-        for non-point primitives and would otherwise corrupt the
-        rendering. Switching ``prop.representation`` back to
-        ``'points'`` later will re-install the shader automatically.
+        :attr:`~pyvista.Property.style` is ``'points'``. When the style
+        is ``'surface'`` or ``'wireframe'`` the shader replacement is
+        transparently removed, because the underlying GLSL relies on
+        ``gl_PointCoord`` which is undefined for non-point primitives
+        and would otherwise corrupt the rendering. Switching
+        ``prop.style`` back to ``'points'`` later will re-install the
+        shader automatically.
 
         Parameters
         ----------

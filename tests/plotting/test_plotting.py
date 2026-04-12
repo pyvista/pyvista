@@ -39,7 +39,6 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.opts import PointSpriteShape
-from pyvista.plotting.opts import RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -5584,7 +5583,7 @@ def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
         point_size=64,
         show_scalar_bar=False,
     )
-    actor.prop.representation = RepresentationType.POINTS
+    actor.prop.style = 'points'
     actor.set_point_sprite_shape(shape)
     pl.camera_position = 'xy'
     pl.show()
