@@ -22,10 +22,10 @@ coverage-docs:
 	@make -C doc html SPHINXOPTS="-Q" -b coverage
 	@cat doc/_build/coverage/python.txt
 
-# Install vale first with `pip install vale`
+# Install vale first: `uv tool install vale`
 docstyle:
-	@vale --config doc/.vale.ini doc pyvista examples --glob='!*{_build,AUTHORS.rst,_
-	@echo "Running vale"autosummary,source/examples}*'
+	@echo "Running vale"
+	@vale --config doc/.vale.ini doc pyvista examples
 
 sync:
 	@echo "Installing dev dependencies"
