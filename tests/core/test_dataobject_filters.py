@@ -281,6 +281,100 @@ def test_clip_box_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_clip_slab_axis_aligned():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0))
+    assert slab.n_cells > 0
+    assert slab.bounds.z_min == pytest.approx(-0.2, abs=1e-6)
+    assert slab.bounds.z_max == pytest.approx(0.2, abs=1e-6)
+    # Untouched axes should span the original bounds
+    assert slab.bounds.x_min == pytest.approx(mesh.bounds.x_min)
+    assert slab.bounds.x_max == pytest.approx(mesh.bounds.x_max)
+
+
+def test_clip_slab_default_origin_is_mesh_center():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='x')
+    cx = mesh.center[0]
+    assert slab.bounds.x_min == pytest.approx(cx - 0.2, abs=1e-6)
+    assert slab.bounds.x_max == pytest.approx(cx + 0.2, abs=1e-6)
+
+
+def test_clip_slab_string_normal():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    pos = mesh.clip_slab(thickness=0.4, normal='y', origin=(0, 0, 0))
+    neg = mesh.clip_slab(thickness=0.4, normal='-y', origin=(0, 0, 0))
+    assert pos.n_cells == neg.n_cells
+    assert np.allclose(pos.bounds, neg.bounds)
+
+
+def test_clip_slab_invert():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0))
+    outside = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0), invert=True)
+    assert slab.n_cells > 0
+    assert outside.n_cells > 0
+    # Every kept-slab cell center must lie inside the half-thickness band.
+    slab_z = slab.cell_centers().points[:, 2]
+    assert slab_z.min() >= -0.2 - 1e-9
+    assert slab_z.max() <= 0.2 + 1e-9
+    # No inverted cell center may lie strictly inside the slab.
+    out_z = outside.cell_centers().points[:, 2]
+    assert not np.any((out_z > -0.2 + 1e-9) & (out_z < 0.2 - 1e-9))
+
+
+def test_clip_slab_oblique_normal():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    normal = np.array([1.0, 1.0, 1.0])
+    unit = normal / np.linalg.norm(normal)
+    slab = mesh.clip_slab(thickness=0.3, normal=normal, origin=(0, 0, 0))
+    assert slab.n_cells > 0
+    # Every point must lie within half-thickness of the reference plane.
+    projections = slab.points @ unit
+    assert projections.min() >= -0.15 - 1e-6
+    assert projections.max() <= 0.15 + 1e-6
+
+
+def test_clip_slab_plane_argument():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    plane = pv.Plane(center=(0, 0, 0), direction=(0, 0, 1))
+    slab = mesh.clip_slab(thickness=0.4, plane=plane)
+    assert slab.bounds.z_min == pytest.approx(-0.2, abs=1e-6)
+    assert slab.bounds.z_max == pytest.approx(0.2, abs=1e-6)
+
+
+def test_clip_slab_polydata_preserves_type():
+    sphere = pv.Sphere()
+    slab = sphere.clip_slab(thickness=0.2, normal='y')
+    assert isinstance(slab, pv.PolyData)
+    assert slab.n_cells > 0
+
+
+def test_clip_slab_composite(multiblock_all):
+    output = multiblock_all.clip_slab(thickness=5.0, normal='x', progress_bar=True)
+    assert isinstance(output, pv.MultiBlock)
+    assert output.n_blocks == multiblock_all.n_blocks
+
+
+def test_clip_slab_crinkle():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0), crinkle=True)
+    assert 'cell_ids' in slab.cell_data
+
+
+@pytest.mark.parametrize('thickness', [0.0, -1.0])
+def test_clip_slab_invalid_thickness(thickness):
+    mesh = pv.Sphere()
+    with pytest.raises(ValueError, match='strictly positive'):
+        mesh.clip_slab(thickness=thickness, normal='x')
+
+
+def test_clip_slab_zero_normal():
+    mesh = pv.Sphere()
+    with pytest.raises(ValueError, match='non-zero'):
+        mesh.clip_slab(thickness=0.2, normal=(0.0, 0.0, 0.0))
+
+
 def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
