@@ -16,6 +16,8 @@ Run all tests:
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 import sys
 from unittest import mock
 
@@ -23,6 +25,12 @@ import pytest
 
 import pyvista as pv
 from pyvista import wasm
+
+
+def _pyodide_dist_available():
+    """Check if a Pyodide distribution is available for testing."""
+    dist_dir = os.environ.get('PYODIDE_DIST_DIR', 'pyodide')
+    return Path(dist_dir).is_dir()
 
 
 class TestIsPyodide:
@@ -158,6 +166,7 @@ class TestWasmModuleExports:
 
 
 @pytest.mark.pyodide
+@pytest.mark.skipif(not _pyodide_dist_available(), reason='Pyodide distribution not available')
 class TestPyodideIntegration:
     """Pyodide integration tests for WASM support.
 
