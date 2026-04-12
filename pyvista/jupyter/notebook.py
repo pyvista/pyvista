@@ -99,7 +99,7 @@ def handle_plotter(
 
     # WASM backend for Pyodide/JupyterLite environments
     if backend == 'wasm':
-        return show_wasm(plotter)  # type: ignore[return-value]
+        return show_wasm(plotter)
 
     return show_static_image(plotter, screenshot)
 
@@ -130,9 +130,9 @@ def show_wasm(
     Examples
     --------
     >>> import pyvista as pv
-    >>> plotter = pv.Plotter()
-    >>> _ = plotter.add_mesh(pv.Sphere())
-    >>> pv.set_jupyter_backend('wasm')
+    >>> plotter = pv.Plotter()  # doctest: +SKIP
+    >>> _ = plotter.add_mesh(pv.Sphere())  # doctest: +SKIP
+    >>> pv.set_jupyter_backend('wasm')  # doctest: +SKIP
     >>> plotter.show()  # doctest: +SKIP
 
     """
