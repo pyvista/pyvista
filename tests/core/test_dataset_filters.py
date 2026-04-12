@@ -392,6 +392,118 @@ def test_threshold_multicomponent():
         mesh.threshold(value=0.5, scalars='data', component_mode='component', component=0.5)
 
 
+def test_remove_nan_cells_point_data():
+    grid = pv.ImageData(dimensions=(5, 5, 5))
+    values = np.arange(grid.n_points, dtype=float)
+    nan_point_mask = np.zeros(grid.n_points, dtype=bool)
+    nan_point_mask[::7] = True
+    values[nan_point_mask] = np.nan
+    grid.point_data['values'] = values
+
+    cleaned = grid.remove_nan_cells(scalars='values')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    assert cleaned.n_cells < grid.n_cells
+    assert not np.any(np.isnan(cleaned.point_data['values']))
+
+    # The surviving cells should be exactly the cells with no NaN point.
+    expected_cells = []
+    for cid in range(grid.n_cells):
+        point_ids = grid.get_cell(cid).point_ids
+        if not np.any(nan_point_mask[point_ids]):
+            expected_cells.append(cid)
+    assert cleaned.n_cells == len(expected_cells)
+
+
+def test_remove_nan_cells_cell_data():
+    grid = pv.ImageData(dimensions=(5, 5, 5))
+    cvals = np.arange(grid.n_cells, dtype=float)
+    cvals[::3] = np.nan
+    grid.cell_data['cvals'] = cvals
+
+    cleaned = grid.remove_nan_cells(scalars='cvals', preference='cell')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    expected_n = int(np.sum(~np.isnan(cvals)))
+    assert cleaned.n_cells == expected_n
+    assert not np.any(np.isnan(cleaned.cell_data['cvals']))
+
+
+def test_remove_nan_cells_active_scalars_default():
+    grid = pv.ImageData(dimensions=(4, 4, 4))
+    values = np.arange(grid.n_points, dtype=float)
+    values[::5] = np.nan
+    grid.point_data['values'] = values
+    grid.set_active_scalars('values')
+
+    explicit = grid.remove_nan_cells(scalars='values')
+    implicit = grid.remove_nan_cells()
+    assert explicit.n_cells == implicit.n_cells
+
+
+def test_remove_nan_cells_multicomponent():
+    mesh = pv.Plane()
+    data = np.zeros((mesh.n_cells, 3))
+    data[0, 0] = np.nan
+    data[1, :] = np.nan
+    mesh['data'] = data
+
+    # component_mode='all' drops any cell with any NaN component.
+    cleaned_all = mesh.remove_nan_cells(scalars='data', preference='cell', component_mode='all')
+    assert cleaned_all.n_cells == mesh.n_cells - 2
+
+    # component_mode='component' only checks the specified component.
+    cleaned_c0 = mesh.remove_nan_cells(
+        scalars='data', preference='cell', component_mode='component', component=0
+    )
+    assert cleaned_c0.n_cells == mesh.n_cells - 2
+
+    cleaned_c2 = mesh.remove_nan_cells(
+        scalars='data', preference='cell', component_mode='component', component=2
+    )
+    assert cleaned_c2.n_cells == mesh.n_cells - 1
+
+
+def test_remove_nan_cells_all_nan():
+    grid = pv.ImageData(dimensions=(3, 3, 3))
+    grid.point_data['values'] = np.full(grid.n_points, np.nan)
+    cleaned = grid.remove_nan_cells(scalars='values')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    assert cleaned.n_cells == 0
+
+
+def test_remove_nan_cells_integer_array():
+    grid = pv.ImageData(dimensions=(3, 3, 3))
+    grid.point_data['ints'] = np.arange(grid.n_points, dtype=np.int32)
+    cleaned = grid.remove_nan_cells(scalars='ints')
+    assert isinstance(cleaned, pv.UnstructuredGrid)
+    assert cleaned.n_cells == grid.n_cells
+
+
+def test_remove_nan_cells_missing_scalar():
+    grid = pv.ImageData(dimensions=(3, 3, 3))
+    grid.point_data['values'] = np.arange(grid.n_points, dtype=float)
+    with pytest.raises(ValueError, match='No array'):
+        grid.remove_nan_cells(scalars='does_not_exist')
+
+
+def test_remove_nan_cells_matches_ptc_threshold_helper():
+    """The new filter should match the user's existing ptc-then-threshold recipe."""
+    grid = pv.ImageData(dimensions=(6, 6, 6))
+    values = np.arange(grid.n_points, dtype=float)
+    values[::11] = np.nan
+    grid.point_data['values'] = values
+    # Tag cells so we can compare surviving cell identities, not just counts.
+    grid.cell_data['cell_ids'] = np.arange(grid.n_cells, dtype=int)
+
+    cleaned = grid.remove_nan_cells(scalars='values')
+
+    # Reference implementation: ptc-then-threshold with the same cell tags.
+    threshed = grid.point_data_to_cell_data().threshold(scalars='values')
+    expected_ids = np.sort(threshed.cell_data['cell_ids'])
+    actual_ids = np.sort(cleaned.cell_data['cell_ids'])
+
+    np.testing.assert_array_equal(actual_ids, expected_ids)
+
+
 def test_threshold_percent(datasets):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
     inverts = [False, True, False, True, False]
