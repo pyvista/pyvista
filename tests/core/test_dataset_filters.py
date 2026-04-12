@@ -393,16 +393,17 @@ def test_threshold_multicomponent():
 
 
 def test_remove_nan_cells_point_data():
-    grid = pv.ImageData(dimensions=(5, 5, 5))
+    grid = pv.ImageData(dimensions=(7, 7, 7))
     values = np.arange(grid.n_points, dtype=float)
+    # Sparse, explicit NaN points so that some cells survive.
     nan_point_mask = np.zeros(grid.n_points, dtype=bool)
-    nan_point_mask[::7] = True
+    nan_point_mask[[0, 50, 100, 200, 300]] = True
     values[nan_point_mask] = np.nan
     grid.point_data['values'] = values
 
     cleaned = grid.remove_nan_cells(scalars='values')
     assert isinstance(cleaned, pv.UnstructuredGrid)
-    assert cleaned.n_cells < grid.n_cells
+    assert 0 < cleaned.n_cells < grid.n_cells
     assert not np.any(np.isnan(cleaned.point_data['values']))
 
     # The surviving cells should be exactly the cells with no NaN point.
@@ -483,6 +484,64 @@ def test_remove_nan_cells_missing_scalar():
     grid.point_data['values'] = np.arange(grid.n_points, dtype=float)
     with pytest.raises(ValueError, match='No array'):
         grid.remove_nan_cells(scalars='does_not_exist')
+
+
+def test_remove_nan_cells_only_checks_selected_array():
+    """Only the selected scalar array should drive NaN removal.
+
+    A NaN in a different point-data array must not cause a cell to be dropped,
+    and the untouched array must still carry its NaNs in the output. This is
+    the property the user was worried ``all_scalars=True`` might break —
+    ``all_scalars`` refers to "all points of a cell for the one selected
+    input array", not "all arrays in the dataset".
+    """
+    grid = pv.ImageData(dimensions=(7, 7, 7))
+
+    # 'target' has NaNs that we DO want to drive cell removal.
+    target = np.arange(grid.n_points, dtype=float)
+    target_nan_mask = np.zeros(grid.n_points, dtype=bool)
+    target_nan_mask[[0, 50, 100]] = True
+    target[target_nan_mask] = np.nan
+    grid.point_data['target'] = target
+
+    # 'other' has NaNs at entirely different points and must be ignored.
+    other = np.arange(grid.n_points, dtype=float) * 10.0
+    other_nan_mask = np.zeros(grid.n_points, dtype=bool)
+    other_nan_mask[[200, 250, 300]] = True
+    assert not np.any(target_nan_mask & other_nan_mask)
+    other[other_nan_mask] = np.nan
+    grid.point_data['other'] = other
+
+    cleaned = grid.remove_nan_cells(scalars='target')
+
+    # Some cells must survive or the test is vacuous.
+    assert cleaned.n_cells > 0
+
+    # No surviving cell should touch a 'target' NaN point.
+    assert not np.any(np.isnan(cleaned.point_data['target']))
+
+    # 'other' must be carried through with its NaNs intact — remove_nan_cells
+    # must not scrub unrelated arrays.
+    assert 'other' in cleaned.point_data
+    assert np.any(np.isnan(cleaned.point_data['other']))
+
+    # Cell count must match what you would get by checking only 'target'.
+    expected_kept = 0
+    for cid in range(grid.n_cells):
+        point_ids = grid.get_cell(cid).point_ids
+        if not np.any(target_nan_mask[point_ids]):
+            expected_kept += 1
+    assert cleaned.n_cells == expected_kept
+
+    # And the surviving set must be strictly larger than what you'd get if
+    # 'other' also gated removal — proving the two arrays are independent.
+    combined_mask = target_nan_mask | other_nan_mask
+    stricter_kept = 0
+    for cid in range(grid.n_cells):
+        point_ids = grid.get_cell(cid).point_ids
+        if not np.any(combined_mask[point_ids]):
+            stricter_kept += 1
+    assert cleaned.n_cells > stricter_kept
 
 
 def test_remove_nan_cells_matches_ptc_threshold_helper():
