@@ -3965,19 +3965,56 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Fit polygons to a height map.
+        Fit two rectangles to a sinusoidal height map and compare
+        point-projection vs cell-average-height fitting strategies.
 
-        >>> import pyvista as pv
         >>> import numpy as np
-        >>> height_map = pv.ImageData(dimensions=(10, 10, 1))
+        >>> import pyvista as pv
+        >>> height_map = pv.ImageData(dimensions=(50, 50, 1))
         >>> height_map.origin = (0.0, 0.0, 0.0)
         >>> height_map.spacing = (1.0, 1.0, 1.0)
-        >>> height_map.point_data['elevation'] = np.random.default_rng().random(
-        ...     height_map.n_points
+        >>> xx, yy = np.meshgrid(
+        ...     np.linspace(0, 2 * np.pi, 50),
+        ...     np.linspace(0, 2 * np.pi, 50),
         ... )
-        >>> polygon = pv.Polygon(n_sides=4, radius=0.4, center=(4.5, 4.5, 0))
-        >>> result = polygon.fit_to_height_map(height_map)
-        >>> result.bounds  # doctest:+SKIP
+        >>> elevation = np.sin(xx) * np.cos(yy) * 10 + 20
+        >>> height_map.point_data['elevation'] = elevation.flatten(order='C')
+        >>> polygon1 = pv.Rectangle(
+        ...     [[10.0, 10.0, 0.0], [30.0, 10.0, 0.0], [30.0, 30.0, 0.0]]
+        ... )
+        >>> polygon2 = pv.Rectangle(
+        ...     [[5.0, 35.0, 0.0], [15.0, 35.0, 0.0], [15.0, 45.0, 0.0]]
+        ... )
+        >>> result1 = polygon1.fit_to_height_map(
+        ...     height_map,
+        ...     fitting_strategy='point_projection',
+        ...     use_height_map_offset=True,
+        ... )
+        >>> result2 = polygon2.fit_to_height_map(
+        ...     height_map,
+        ...     fitting_strategy='point_projection',
+        ...     use_height_map_offset=True,
+        ... )
+        >>> terrain = height_map.warp_by_scalar(scalars='elevation')
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(terrain, scalars='elevation', opacity=0.7, cmap='terrain')
+        >>> _ = pl.add_mesh(result1, color='red', opacity=0.9)
+        >>> _ = pl.add_mesh(result2, color='blue', opacity=0.9)
+        >>> _ = pl.add_text('Point Projection', position='upper_left', font_size=12)
+        >>> pl.view_isometric()
+        >>> pl.subplot(0, 1)
+        >>> result_cell = polygon1.fit_to_height_map(
+        ...     height_map,
+        ...     fitting_strategy='cell_average_height',
+        ...     use_height_map_offset=True,
+        ... )
+        >>> _ = pl.add_mesh(terrain, scalars='elevation', opacity=0.7, cmap='terrain')
+        >>> _ = pl.add_mesh(result_cell, color='red', opacity=0.9)
+        >>> _ = pl.add_text(
+        ...     'Cell Average Height', position='upper_left', font_size=12
+        ... )
+        >>> pl.view_isometric()
+        >>> pl.show()
 
         """
         fitting_strategies = {
