@@ -22,6 +22,7 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk
+from ._plotting import reduce_component_scalars
 from .colors import Color
 from .colors import get_cmap_safe
 from .lookup_table import LookupTable
@@ -799,21 +800,7 @@ class _DataSetMapper(_BaseMapper):
                 scalars.shape[0] == self.dataset.n_points  # type: ignore[union-attr]
                 or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
-                if not isinstance(component, (int, type(None))):
-                    msg = 'component must be either None or an integer'
-                    raise TypeError(msg)
-                if component is None:
-                    scalars = np.linalg.norm(scalars.copy(), axis=1)
-                    scalars_name = f'{scalars_name}-normed'
-                elif component < scalars.shape[1] and component >= 0:
-                    scalars = np.array(scalars[:, component]).copy()
-                    scalars_name = f'{scalars_name}-{component}'
-                else:
-                    msg = (
-                        'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
-                    )
-                    raise ValueError(msg)
+                scalars, scalars_name = reduce_component_scalars(scalars, scalars_name, component)
             else:
                 scalars = scalars.ravel()
 

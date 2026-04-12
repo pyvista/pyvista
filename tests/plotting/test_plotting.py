@@ -4252,6 +4252,28 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
     pl.show()
 
 
+def test_add_mesh_smooth_shading_multi_component_scalars():
+    """Multi-component scalars with ``component=`` + ``smooth_shading``.
+
+    Regression test for a scenario where ``mapper.set_scalars`` reduces a
+    2D scalar array to a synthesized 1D array (``name-<component>`` or
+    ``name-normed``) and stamps it on the post-pipeline dataset. Under
+    smooth shading, each ``SmoothShadingAlgorithm.RequestData`` re-emits
+    a fresh surface-extracted polydata, wiping the stamped derived array,
+    so the spliced ``ActiveScalarsAlgorithm`` would fail to activate it
+    and the render would silently fall back to no scalar mapping.
+    """
+    mesh = pv.Wavelet().cast_to_unstructured_grid()
+    # Use point coordinates as the vector field so component=1 picks out
+    # a clean y-axis gradient — easy to verify visually against the cache.
+    mesh.point_data['vec'] = mesh.points.astype(np.float32)
+
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
 @pytest.mark.parametrize('smooth_shading', [True, False])
 def test_add_mesh_numpy_scalars_mutation_propagates(smooth_shading):
     """Mutating the input mesh after add_mesh propagates to the renderer.

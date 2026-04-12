@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import operator
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -12,6 +15,88 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core.dataset import DataSet
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
+
+
+def _resolve_scalars_field(
+    scalars: NumpyArray[float],
+    mesh: DataSet,
+    preference: PointLiteral | CellLiteral,
+) -> PointLiteral | CellLiteral:
+    """Decide whether raw numpy ``scalars`` attach to points or cells.
+
+    Matches by length. When both dimensions coincide (``n_points ==
+    n_cells``), falls back to ``preference``. Raises ``ValueError`` when
+    the array length matches neither — callers previously would silently
+    drop the array and fail cryptically downstream.
+    """
+    matches_points = scalars.shape[0] == mesh.n_points
+    matches_cells = scalars.shape[0] == mesh.n_cells
+    if matches_points and matches_cells:
+        return preference
+    if matches_points:
+        return 'point'
+    if matches_cells:
+        return 'cell'
+    msg = (
+        f'Length of scalars array ({scalars.shape[0]}) must match either the '
+        f'number of points ({mesh.n_points}) or cells ({mesh.n_cells}) in the mesh.'
+    )
+    raise ValueError(msg)
+
+
+def reduce_component_scalars(
+    scalars: NumpyArray[float],
+    scalars_name: str,
+    component: int | None,
+) -> tuple[NumpyArray[float], str]:
+    """Reduce a 2D scalar array to 1D by magnitude or component index.
+
+    Produces the derived array and synthesized name (``{name}-normed`` for
+    magnitude or ``{name}-{component}`` for a component pick) that
+    :meth:`DataSetMapper.set_scalars` and smooth-shading pre-processing
+    both rely on. Keeping this in one place prevents the two call sites
+    from drifting on naming or bounds checks.
+
+    Parameters
+    ----------
+    scalars : numpy.ndarray
+        2D scalar array of shape ``(n, k)``.
+
+    scalars_name : str
+        Base name of the input array.
+
+    component : int | None
+        Component index to extract, or ``None`` for vector magnitude.
+
+    Returns
+    -------
+    reduced : numpy.ndarray
+        1D array of shape ``(n,)``.
+
+    derived_name : str
+        Synthesized name carrying the reduction semantics.
+
+    """
+    if component is None:
+        return np.linalg.norm(scalars, axis=1), f'{scalars_name}-normed'
+    try:
+        component_index = operator.index(component)
+    except TypeError:
+        msg = 'component must be None or an integer.'
+        raise TypeError(msg) from None
+    if not 0 <= component_index < scalars.shape[1]:
+        msg = (
+            'component must be nonnegative and less than the '
+            f'dimensionality of the scalars array: {scalars.shape[1]}'
+        )
+        raise ValueError(msg)
+    return np.array(scalars[:, component_index]), f'{scalars_name}-{component_index}'
 
 
 @_deprecate_positional_args
