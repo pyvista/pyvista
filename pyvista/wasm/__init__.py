@@ -32,7 +32,7 @@ Check if running in a WASM environment:
 
 >>> import pyvista as pv
 >>> pv.wasm.is_pyodide()
-False  # When running in standard Python
+False
 
 Generate standalone HTML for embedding:
 
