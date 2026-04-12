@@ -294,12 +294,12 @@ class PartitionedCollection(DataObject, MutableSequence, _vtk.vtkPartitionedData
 
     Examples
     --------
+    Create a :class:`PartitionedCollection` from a list of meshes.
+
     >>> import pyvista as pv
-    >>> from pyvista.core import _vtk_core as _vtk
-    >>> collection = _vtk.vtkPartitionedDataSetCollection()
-    >>> collection.SetPartitionedDataSet(0, _vtk.vtkRectilinearGrid())
-    >>> collection.SetPartitionedDataSet(1, _vtk.vtkStructuredGrid())
-    >>> collection = pv.PartitionedCollection(collection)
+    >>> meshes = [pv.RectilinearGrid(), pv.StructuredGrid()]
+    >>> partitions = [pv.PartitionedDataSet([m]) for m in meshes]
+    >>> collection = pv.PartitionedCollection(partitions)
     >>> len(collection)
     2
 
@@ -387,7 +387,7 @@ class PartitionedCollection(DataObject, MutableSequence, _vtk.vtkPartitionedData
         index = range(self.n_partitions)[index]
         self.n_partitions += 1
         for i in reversed(range(index, self.n_partitions - 1)):
-            self[i + 1] = self[i]
+            self[i + 1] = self[i]  # type: ignore[assignment]
         self[index] = dataset
 
     def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01  # noqa: ARG002
