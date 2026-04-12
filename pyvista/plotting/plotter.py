@@ -3971,6 +3971,39 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
 
+        # If the caller passed a raw numpy ``scalars`` array against an
+        # actual mesh (not an upstream algorithm), stamp it onto the mesh
+        # under ``scalars_name`` *before* any pipeline stage runs. This is
+        # required for two related invariants:
+        #
+        #   1. The smooth-shading pipeline below feeds the mapper from the
+        #      algorithm's output port. Each ``RequestData`` shallow copies
+        #      the upstream mesh, so any array we want to render must
+        #      already live on that upstream mesh.
+        #   2. Users expect to mutate the array later via
+        #      ``mesh['Data'] = ...`` and have the renderer pick it up.
+        #       That only works if the array genuinely lives on their
+        #       ``mesh`` reference.
+        if (
+            algo is None
+            and scalars is not None
+            and original_scalar_name is None
+            and isinstance(scalars, np.ndarray)
+        ):
+            if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
+                use_points = preference == 'point'
+            else:
+                use_points = scalars.shape[0] == mesh.n_points
+            if use_points:
+                mesh.point_data.set_array(scalars, scalars_name, deep_copy=False)
+                preference = 'point'
+            elif scalars.shape[0] == mesh.n_cells:
+                mesh.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+                preference = 'cell'
+            # Now treat it like a by-name scalar so downstream pipeline
+            # stages (active_scalars_algorithm, smooth shading) see it.
+            original_scalar_name = scalars_name
+
         # Compute surface normals if using smooth shading
         if smooth_shading:
             input_n_points = mesh.n_points

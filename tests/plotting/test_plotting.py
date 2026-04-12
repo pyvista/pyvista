@@ -4252,6 +4252,27 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
     pl.show()
 
 
+@pytest.mark.parametrize('smooth_shading', [True, False])
+def test_add_mesh_numpy_scalars_mutation_propagates(smooth_shading):
+    """Mutating the input mesh after add_mesh propagates to the renderer.
+
+    When ``add_mesh`` is called with raw numpy ``scalars`` against a mesh,
+    the array must be stamped onto the user's mesh under the generated
+    name (``DEFAULT_SCALARS_NAME``). The user can then later replace it
+    via ``mesh[name] = ...`` and the renderer must reflect the change on
+    the next ``render()`` — including when smooth shading inserts an
+    upstream pipeline stage.
+    """
+    sphere = pv.Sphere()
+    initial = np.zeros(sphere.n_points)
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=initial, smooth_shading=smooth_shading, clim=[0, 1])
+    assert pv.DEFAULT_SCALARS_NAME in sphere.point_data
+    sphere[pv.DEFAULT_SCALARS_NAME] = np.ones(sphere.n_points)
+    pl.show()
+
+
 @skip_windows_mesa
 def test_plot_volume_rgba(uniform):
     with pytest.raises(ValueError, match='dimensions'):
