@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 @impl
-def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: ARG001, D103
+def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: D103
     if os.environ.get('CI', 'false').lower() != 'true':
         return
 

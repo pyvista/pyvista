@@ -365,7 +365,7 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
-    def __call__(self, obj, *args) -> None:  # noqa: ARG002
+    def __call__(self, obj, *args) -> None:
         """Call progress update callback.
 
         On an event occurrence, this function executes.

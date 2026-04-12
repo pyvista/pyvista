@@ -63,7 +63,7 @@ def test_compare_images_raises(mocker: MockerFixture):
     class Foo:
         n_calls: int = 0
 
-        def __call__(self, v):  # noqa: ARG002
+        def __call__(self, v):
             self.n_calls += 1
             return Bar(self.n_calls)
 

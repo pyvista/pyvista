@@ -580,7 +580,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
 
-    def fun(plotter):  # noqa: ARG001
+    def fun(plotter):
         pass
 
     dark_theme.before_close_callback = fun

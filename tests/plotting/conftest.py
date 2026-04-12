@@ -37,7 +37,7 @@ def pytest_runtest_setup(item):
 if APPLE_SILICON:
 
     @pytest.fixture(autouse=True)
-    def macos_memory_leak(request):  # noqa: ARG001
+    def macos_memory_leak(request):
         # Without this, only 500 render windows can be created in a single Python
         # process on MacOS using Apple silicon
         # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713

@@ -426,11 +426,11 @@ fixable = ['ALL']
 ignore = [
   'ANN002', # Missing annotations for `*args`
   'ANN003', # Missing annotations for `*kwargs`
+  'ANN401', # Disallow `Any`
   'ARG001', # Unused function argument
   'ARG002', # Unused method argument
   'ARG003', # Unused class method argument
   'ARG004', # Unused static method argument
-  'ANN401', # Disallow `Any`
   'B904', # https://github.com/pyvista/pyvista/pull/6022
   'COM812', # May cause conflicts when used with the formatter
   'D105', # Missing docstring in magic method

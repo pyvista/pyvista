@@ -51,7 +51,7 @@ def test_leak_pv() -> None:
 def test_leak_pv_plotter() -> None:
     """Trigger a leak in pyvista.Plotter by disabling cleanup ."""
 
-    def noop(*args: Any, **kwargs: Any):  # noqa: ARG001
+    def noop(*args: Any, **kwargs: Any):
         return None
 
     pl = pv.Plotter()

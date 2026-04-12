@@ -96,7 +96,7 @@ Show report. Control the body of the report with:
 
 
 def _converter_report(
-    type_: type,  # noqa: ARG001
+    type_: type,
     tokens: Sequence[Token],
 ) -> list[_ReportBodyOptions]:
     values: list[str] = [t.value for t in tokens]

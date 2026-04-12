@@ -456,7 +456,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
+def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a

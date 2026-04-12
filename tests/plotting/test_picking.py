@@ -26,7 +26,7 @@ def test_single_cell_picking():
         def __init__(self):
             self.called = False
 
-        def __call__(self, *args, **kwargs):  # noqa: ARG002
+        def __call__(self, *args, **kwargs):
             self.called = True
 
     pl = pv.Plotter(
@@ -586,7 +586,7 @@ def test_block_picking(multiblock_poly):
 
     picked_blocks = []
 
-    def turn_blue(index, dataset):  # noqa: ARG001
+    def turn_blue(index, dataset):
         mapper.block_attr[index].color = 'blue'
         picked_blocks.append(index)
 
@@ -786,7 +786,7 @@ def test_block_picking_across_four_subplots():
     # Record each block index picked up
     picked = []
 
-    def callback(index, dataset):  # noqa: ARG001
+    def callback(index, dataset):
         picked.append(index)
 
     pl = pv.Plotter(shape=(2, 2), window_size=[400, 400])

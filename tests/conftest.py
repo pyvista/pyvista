@@ -520,7 +520,7 @@ def pytest_runtest_setup(item: pytest.Item):
         pytest.skip(f'Downloads not enabled with {flag}')
 
 
-def pytest_report_header(config):  # noqa: ARG001
+def pytest_report_header(config):
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}

@@ -56,7 +56,7 @@ class BackgroundRenderer(Renderer):
         self.reset_camera()  # necessary to get first render
         self.resize()
 
-    def resize(self, *args):  # noqa: ARG002
+    def resize(self, *args):
         """Resize a background renderer.
 
         Parameters

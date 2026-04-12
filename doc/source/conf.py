@@ -422,7 +422,7 @@ def _filter_sphinx_gallery_warnings():
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):  # noqa: ARG002
+    def __call__(self, gallery_conf, fname):
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.

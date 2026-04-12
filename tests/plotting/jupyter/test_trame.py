@@ -238,12 +238,12 @@ def test_trame_custom_menu_items(client_type):
     ctrl.view_update = widget.viewer.update
 
     @state.change('resolution')
-    def update_resolution(resolution, **kwargs):  # noqa: ARG001
+    def update_resolution(resolution, **kwargs):
         algo.resolution = resolution
         ctrl.view_update()
 
     @state.change('visibility')
-    def set_visibility(visibility, **kwargs):  # noqa: ARG001
+    def set_visibility(visibility, **kwargs):
         toggle = {'Hide': 0, 'Show': 1}
         mesh_actor.visibility = toggle[visibility]
         ctrl.view_update()
@@ -334,7 +334,7 @@ def test_trame_jupyter_custom_size():
 
 
 def test_trame_jupyter_custom_handler():
-    def handler(viewer, src, **kwargs):  # noqa: ARG001
+    def handler(viewer, src, **kwargs):
         return IFrame(src, '75%', '500px')
 
     pl = pv.Plotter(notebook=True)

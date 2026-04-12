@@ -100,11 +100,11 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
 
 def pv_html_page_context(  # noqa: PLR0917
-    app,  # noqa: ARG001
+    app,
     pagename: str,
-    templatename: str,  # noqa: ARG001
+    templatename: str,
     context,
-    doctree,  # noqa: ARG001
+    doctree,
 ) -> None:  # pragma: no cover
     """Add a function for returning an "edit this page" link pointing to `main`.
 

@@ -1113,7 +1113,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 @abstract_class
 class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item) -> bool:  # noqa: ARG002, N802
+        def Initialize(self, item) -> bool:  # noqa: N802
             # item is the _CustomContextItem subclass instance
             return True
 

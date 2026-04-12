@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 T = TypeVar('T', bound=type)
 
 
-def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
+def promote_type(*types: type[Any]) -> Callable[[T], T]:
     """Duck-type type-promotion decorator used by the mypy plugin.
 
     Apply this decorator to a class to promote its type statically.
@@ -82,6 +82,6 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
                 return _promote_type_callback
             return None
 
-    def plugin(version: str) -> type[_PyVistaPlugin]:  # numpydoc ignore: RT01  # noqa: ARG001
+    def plugin(version: str) -> type[_PyVistaPlugin]:  # numpydoc ignore: RT01
         """Entry-point for mypy."""
         return _PyVistaPlugin

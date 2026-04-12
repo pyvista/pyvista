@@ -1064,7 +1064,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):  # noqa: ARG001
+        def end_pick_call_back(*args):
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
@@ -1673,7 +1673,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
+        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
             loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]

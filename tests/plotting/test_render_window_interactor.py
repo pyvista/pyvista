@@ -83,7 +83,7 @@ def test_observers():
         pl.add_key_event('w', 1)
 
     # Callback must not have any  empty arguments.
-    def callback(a, b, *, c, d=1.0):  # noqa: ARG001
+    def callback(a, b, *, c, d=1.0):
         pass
 
     with pytest.raises(TypeError):
@@ -176,10 +176,10 @@ def test_track_click_position_multi_render():
 def test_track_click_position():
     events = []
 
-    def single_click_callback(mouse_position):  # noqa: ARG001
+    def single_click_callback(mouse_position):
         events.append('single')
 
-    def double_click_callback(mouse_position):  # noqa: ARG001
+    def double_click_callback(mouse_position):
         events.append('double')
 
     pl = pv.Plotter()
@@ -221,7 +221,7 @@ def test_timer():
     delay = 5 * duration  # Extra time we wait for the timers to fire at least once
     events = []
 
-    def on_timer(obj, event):  # noqa: ARG001
+    def on_timer(obj, event):
         # TimerEvent callback
         events.append(event)
 

@@ -1291,7 +1291,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
         box=None,
-        box_args=None,  # noqa: ARG002
+        box_args=None,
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):

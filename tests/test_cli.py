@@ -258,7 +258,7 @@ def tmp_ant_file_invalid_multiblock(tmp_ant_file):
 
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
-def test_convert_called(tokens, expected_file, tmp_ant_file):  # noqa: ARG001
+def test_convert_called(tokens, expected_file, tmp_ant_file):
     main(shlex.split(f'convert {tokens}', posix=True))
     assert Path(expected_file).is_file()
 

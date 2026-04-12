@@ -15,7 +15,7 @@ from .utils import _console_error
 from .utils import _converter_files
 
 
-def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
+def _validator_has_extension(type_: type, value: str) -> None:
     path = Path(value)
     has_suffix = bool(path.suffix)
     is_suffix = not path.suffix and path.stem.startswith('.')

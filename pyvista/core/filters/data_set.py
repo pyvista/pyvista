@@ -5908,9 +5908,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     @_deprecate_positional_args(allowed=['quality_measure'])
     def compute_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
-        quality_measure: str = 'scaled_jacobian',  # noqa: ARG002
-        null_value: float = -1.0,  # noqa: ARG002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002, ARG002
+        quality_measure: str = 'scaled_jacobian',
+        null_value: float = -1.0,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 

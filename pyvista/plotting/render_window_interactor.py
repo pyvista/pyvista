@@ -458,7 +458,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Clear key event callbacks."""
         self._key_press_event_callbacks.clear()
 
-    def key_press_event(self, *args):  # noqa: ARG002
+    def key_press_event(self, *args):
         """Listen for key press event."""
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')

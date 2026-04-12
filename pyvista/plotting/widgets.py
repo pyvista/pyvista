@@ -834,9 +834,9 @@ class WidgetHelper:
         self,
         volume,
         normal='x',
-invert: bool = False,  # noqa: ARG002, FBT001, FBT002
+        invert: bool = False,  # noqa: FBT001, FBT002
         widget_color=None,
-        value=0.0,  # noqa: ARG002
+        value=0.0,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
         origin_translation: bool = True,  # noqa: FBT001, FBT002

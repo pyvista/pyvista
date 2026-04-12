@@ -28,13 +28,13 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-def _validator_window_size(type_: type, value: list[int] | None) -> None:  # noqa: ARG001
+def _validator_window_size(type_: type, value: list[int] | None) -> None:
     if value is not None and len(value) != 2:
         msg = 'Window size must be a list of two integers.'
         raise ValueError(msg)
 
 
-def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202, ARG001
+def _kwargs_converter(type_, tokens: Sequence[Token]):  # noqa: ANN001, ANN202
     for token in tokens:
         # Check hyphen in keyword value
         if (h := '-') in (key := token.keys[0]):

@@ -31,7 +31,7 @@ actor = pl.add_mesh(mesh, cmap='viridis')
 
 
 @state.change('cmap')
-def update_cmap(cmap='viridis', **kwargs):  # noqa: ARG001
+def update_cmap(cmap='viridis', **kwargs):
     actor.mapper.lookup_table.cmap = cmap
     ctrl.view_update()
 

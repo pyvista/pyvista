@@ -49,7 +49,7 @@ def description(entry: HelpEntry):  # noqa: ANN202
 
 
 class _PyvistaHelpFormatter(DefaultFormatter):
-    def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
+    def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:
         """Render the usage line."""
         if usage:  # pragma: no branch
             console.print(usage)
@@ -98,7 +98,7 @@ def _console_error(*, app: App, message: str | Group, title: str = 'PyVista Erro
 
 
 def _converter_files(
-    type_: type,  # noqa: ARG001
+    type_: type,
     tokens: Sequence[Token],
 ) -> list[_MeshAndPath]:
     """Helper function used to read provided files.

@@ -319,7 +319,6 @@ def test_translate_should_fail_bad_points_or_transform():
         pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 
-
 def test_make_points_double(hexbeam):
     hexbeam.points = hexbeam.points.astype(np.float32)
     assert hexbeam.points.dtype == np.float32

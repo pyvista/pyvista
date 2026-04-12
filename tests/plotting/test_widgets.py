@@ -58,14 +58,14 @@ def r_mat_to_euler_angles(r):
 def test_add_plane_widget_raises():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='assign_to_axis not understood'):
-        pl.add_plane_widget(lambda *x: True, assign_to_axis='foo')  # noqa: ARG005
+        pl.add_plane_widget(lambda *x: True, assign_to_axis='foo')
 
 
 def test_add_slider_widget_raises():
     pl = pv.Plotter()
     pl.close()
     with pytest.raises(RuntimeError, match=r'Cannot add a widget to a closed plotter.'):
-        pl.add_slider_widget(lambda *x: True, rng=[0, 1])  # noqa: ARG005
+        pl.add_slider_widget(lambda *x: True, rng=[0, 1])
 
 
 def test_add_mesh_threshold_raises():

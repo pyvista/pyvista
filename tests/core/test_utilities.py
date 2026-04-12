@@ -363,7 +363,7 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
-def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
     mock_show_progress.assert_called_once()
@@ -2650,7 +2650,7 @@ def test_allow_new_attributes():
     not HAS_RUNTIME_SMP_BACKEND_SELECTION,
     reason='Requires runtime SMP backend selection support in VTK.',
 )
-def test_enable_smp_tools_default_backend(reset_smp_tools):  # noqa: ARG001
+def test_enable_smp_tools_default_backend(reset_smp_tools):
     _vtk.vtkSMPTools.SetBackend('Sequential')
     _vtk.vtkSMPTools.Initialize(1)
 
@@ -2664,7 +2664,7 @@ def test_enable_smp_tools_default_backend(reset_smp_tools):  # noqa: ARG001
     not HAS_RUNTIME_SMP_BACKEND_SELECTION,
     reason='Requires runtime SMP backend selection support in VTK.',
 )
-def test_enable_smp_tools_sets_threads(reset_smp_tools):  # noqa: ARG001
+def test_enable_smp_tools_sets_threads(reset_smp_tools):
     pv.enable_smp_tools(n_threads=2)
 
     assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
