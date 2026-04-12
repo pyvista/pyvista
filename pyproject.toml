@@ -270,8 +270,8 @@ filterwarnings = [
   'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.', # https://numpy.org/devdocs/release/2.4.0-notes.html - triggered by VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
-  'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
   'ignore:The \(path: py.path.local\) argument is deprecated.*:pytest.PytestRemovedIn9Warning', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local → pathlib.Path)
+  'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
   'always:(?s).*This test has multiple cached images.*:UserWarning',
