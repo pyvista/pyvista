@@ -11,7 +11,6 @@ Fit polygonal data to a height map image using
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # Create a height map (ImageData with elevation values)
