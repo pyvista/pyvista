@@ -268,9 +268,9 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-        _update_alg(alg, progress_bar, 'Performing Gradient')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Gradient')
         result = _get_output(alg)
-        result.set_active_scalars(f'{scalars}Gradient', preference='point')  # type: ignore[attr-defined]
+        result.set_active_scalars(f'{scalars}Gradient', preference='point')
         return result
 
     def gradient_magnitude(
@@ -361,9 +361,9 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-        _update_alg(alg, progress_bar, 'Performing Gradient Magnitude')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Gradient Magnitude')
         result = _get_output(alg)
-        result.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+        result.set_active_scalars(scalars, preference='point')
         return result
 
     @_deprecate_positional_args
