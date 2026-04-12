@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import weakref
 
 import numpy as np
 
@@ -13,6 +14,7 @@ from pyvista._warn_external import warn_external
 from . import _vtk
 from . import _vtk_gl
 from ._property import Property
+from .opts import PointSpriteShape
 from .opts import ShaderType
 from .prop3d import Prop3D
 
@@ -22,7 +24,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .mapper import _BaseMapper
-    from .opts import PointSpriteShape
 
 _POINT_SPRITE_SHADERS: dict[str, str] = {
     'circle': (
@@ -171,6 +172,9 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.prop = prop
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
+        self._point_sprite_shape: str | None = None
+        self._point_sprite_applied: str | None = None
+        self._point_sprite_observer: int | None = None
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
@@ -861,6 +865,16 @@ class Actor(Prop3D, _vtk.vtkActor):
         defined by a GLSL fragment shader. This uses the ``discard``
         instruction to clip fragments outside the desired shape boundary.
 
+        The chosen shape is **persisted on the actor** and is only
+        injected into the fragment shader while the actor's
+        :attr:`~pyvista.Property.style` is ``'points'``. When the style
+        is ``'surface'`` or ``'wireframe'`` the shader replacement is
+        transparently removed, because the underlying GLSL relies on
+        ``gl_PointCoord`` which is undefined for non-point primitives
+        and would otherwise corrupt the rendering. Switching
+        ``prop.style`` back to ``'points'`` later will re-install the
+        shader automatically.
+
         Parameters
         ----------
         shape : PointSpriteShape | str
@@ -912,14 +926,9 @@ class Actor(Prop3D, _vtk.vtkActor):
             msg = f'Invalid point sprite shape {shape!r}. Must be one of: {valid}'
             raise ValueError(msg)
 
-        self.add_shader_replacement(
-            'fragment',
-            '//VTK::Color::Impl',
-            _POINT_SPRITE_SHADERS[shape],
-            replace_first=True,
-            replace_all=False,
-            _feature_name='point_sprite',
-        )
+        self._point_sprite_shape = shape.value if isinstance(shape, PointSpriteShape) else shape
+        self._install_point_sprite_observer()
+        self._sync_point_sprite_shader()
 
     def clear_point_sprite_shape(self) -> None:
         """Clear the custom point sprite shape.
@@ -927,7 +936,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         .. versionadded:: 0.48
 
         Restores the default square point rendering by removing the
-        fragment shader replacement.
+        fragment shader replacement and stopping the representation
+        observer installed by :meth:`set_point_sprite_shape`.
 
         Examples
         --------
@@ -940,4 +950,71 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.clear_point_sprite_shape()
 
         """
-        self.clear_shader_replacements(_feature_name='point_sprite')
+        self._point_sprite_shape = None
+        if self._point_sprite_observer is not None:
+            self.prop.RemoveObserver(self._point_sprite_observer)
+            self._point_sprite_observer = None
+        self._sync_point_sprite_shader()
+
+    def _install_point_sprite_observer(self) -> None:
+        """Install the property-level observer that syncs the sprite shader.
+
+        The point sprite fragment shader uses ``gl_PointCoord`` which is
+        only valid when the current primitive is drawn as ``GL_POINTS``.
+        Rather than leaving the shader replacement in place across all
+        representations (which corrupts surface and wireframe rendering),
+        we attach a lightweight observer to the actor's :class:`Property`
+        and re-sync the shader replacement whenever the representation
+        state changes.
+        """
+        if self._point_sprite_observer is not None:
+            return
+
+        # Use a weak reference to avoid a strong reference cycle between
+        # the Python-level Actor and the vtkCommand retained by vtkProperty.
+        self_ref = weakref.ref(self)
+
+        def _on_property_modified(
+            caller: object,  # noqa: ARG001
+            event: str,  # noqa: ARG001
+        ) -> None:
+            owner = self_ref()
+            if owner is not None:
+                owner._sync_point_sprite_shader()
+
+        self._point_sprite_observer = self.prop.AddObserver(
+            'ModifiedEvent',
+            _on_property_modified,
+        )
+
+    def _sync_point_sprite_shader(self) -> None:
+        """Install, update, or remove the point sprite shader replacement.
+
+        The replacement is only active while the representation is
+        ``'Points'`` — for any other representation the ``gl_PointCoord``
+        built-in is undefined and would otherwise corrupt fragment output.
+        Tracks the currently-applied shape (rather than a boolean) so
+        that unrelated property modifications (color, opacity, ...) do
+        not repeatedly rebuild the shader, while still honoring real
+        shape changes and representation transitions.
+        """
+        shape = self._point_sprite_shape
+        is_points = self.prop.GetRepresentationAsString() == 'Points'
+        target = shape if is_points else None
+
+        if target == self._point_sprite_applied:
+            return
+
+        if target is not None:
+            self.add_shader_replacement(
+                'fragment',
+                '//VTK::Color::Impl',
+                _POINT_SPRITE_SHADERS[target],
+                replace_first=True,
+                replace_all=False,
+                _feature_name='point_sprite',
+            )
+        else:
+            self.clear_shader_replacements(_feature_name='point_sprite')
+
+        self._point_sprite_applied = target
