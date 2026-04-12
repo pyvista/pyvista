@@ -26,6 +26,7 @@ considered "The PyVista Developers":
 - Matthew Flamm, (`@MatthewFlamm <https://github.com/MatthewFlamm>`_)
 - Darik Gamble, (`@darikg <https://github.com/darikg>`_)
 - Bram De Cooman, (`@dcbr <https://github.com/dcbr>`_)
+- `@user27182 <https://github.com/user27182>`_
 
 
 .. |contrib.rocks| image:: https://contrib.rocks/image?repo=pyvista/pyvista

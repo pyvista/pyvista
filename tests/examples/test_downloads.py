@@ -1,127 +1,66 @@
-from dataclasses import dataclass
-import inspect
+from __future__ import annotations
+
 import os
-from pathlib import Path, PureWindowsPath
-from types import FunctionType
-from typing import Any, Callable, Dict, List, Tuple, Union
+import pathlib
+from pathlib import Path
+from pathlib import PureWindowsPath
+import re
 
 import pytest
 import requests
+from retry_requests import retry
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
-from pyvista.examples._dataset_loader import (
-    _MultiFileDownloadableLoadable,
-    _SingleFileDownloadableLoadable,
-)
-
-
-@dataclass
-class ExampleTestCaseData:
-    dataset_name: str
-    download_func: Tuple[str, FunctionType]
-    load_func: Tuple[str, Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable]]
-
-
-def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
-    """Generate a list of test cases with all download functions and file loaders"""
-
-    test_cases_dict: Dict = {}
-
-    def add_to_dict(func_name: str, func: Callable[[], Any]):
-        # Function for stuffing example functions into a dict.
-        # We use a dict to allow for any entry to be made based on example name alone.
-        # This way, we can defer checking for any mismatch between the download functions
-        # and file loaders to test time.
-        nonlocal test_cases_dict
-        if func_name.startswith('_dataset_'):
-            case_name = func_name.split('_dataset_')[1]
-            key = 'load_func'
-        elif func_name.startswith('download_'):
-            case_name = func_name.split('download_')[1]
-            key = 'download_func'
-        else:
-            raise RuntimeError(f'Invalid case specified: {(func_name, func)}')
-        test_cases_dict.setdefault(case_name, {})
-        test_cases_dict[case_name][key] = (func_name, func)
-
-    module_members = dict(inspect.getmembers(pv.examples.downloads))
-
-    # Collect all `download_<name>` functions
-    download_dataset_functions = {
-        name: item
-        for name, item in module_members.items()
-        if name.startswith('download_') and isinstance(item, FunctionType)
-    }
-    del download_dataset_functions['download_file']
-    [add_to_dict(name, func) for name, func in download_dataset_functions.items()]
-
-    # Collect all `_dataset_<name>` file loaders
-    dataset_file_loaders = {
-        name: item
-        for name, item in module_members.items()
-        if name.startswith('_dataset_')
-        and isinstance(item, (_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable))
-    }
-    [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
-
-    # Flatten dict
-    test_cases_list: List[ExampleTestCaseData] = []
-    for name, content in sorted(test_cases_dict.items()):
-        download_func = content.setdefault('download_func', None)
-        load_func = content.setdefault('load_func', None)
-        test_case = ExampleTestCaseData(
-            dataset_name=name, download_func=download_func, load_func=load_func
-        )
-        test_cases_list.append(test_case)
-
-    return test_cases_list
+from pyvista.examples.downloads import _get_user_data_path
+from pyvista.examples.downloads import _get_vtk_data_source
+from pyvista.examples.downloads import _warn_if_path_not_accessible
+from tests.examples.test_dataset_loader import DatasetLoaderTestCase
+from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
+from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
 
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
         # Generate a separate test case for each downloadable dataset
-        test_cases = _generate_dataset_loader_test_cases()
+        test_cases_downloads = _generate_dataset_loader_test_cases_from_module(
+            pv.examples.downloads
+        )
+        test_cases_planets = _generate_dataset_loader_test_cases_from_module(pv.examples.planets)
+        # Exclude `load` functions
+        test_cases_planets = [
+            case for case in test_cases_planets if case.dataset_function[0].startswith('download')
+        ]
+        test_cases = [*test_cases_downloads, *test_cases_planets]
         ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
 
-def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
-    if test_case.download_func is None:
-        return (
-            f"A file loader:\n\t\'{test_case.load_func[0]}\'\n\t{test_case.load_func[1]}\n"
-            f"was found but is missing a corresponding download function.\n\n"
-            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.download_func}"
-        )
-    elif test_case.load_func is None:
-        return (
-            f"A download function:\n\t\'{test_case.download_func[0]}\'\n\t{test_case.download_func[1]}\n"
-            f"was found but is missing a corresponding file loader.\n\n"
-            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.load_func}"
-        )
-    else:
-        return None
-
-
-def test_dataset_loader_name_matches_download_name(test_case: ExampleTestCaseData):
+def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestCase):
     if (msg := _get_mismatch_fail_msg(test_case)) is not None:
         pytest.fail(msg)
 
 
 def _is_valid_url(url):
+    session = retry(
+        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
+        retries=5,
+        backoff_factor=2.0,
+    )
     try:
-        requests.get(url)
-        return True
+        session.get(url)
     except requests.RequestException:
         return False
+    else:
+        return True
 
 
-def test_dataset_loader_source_url_blob(test_case: ExampleTestCaseData):
+def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
-        sources = test_case.load_func[1].source_url_blob
+        sources = test_case.dataset_loader[1].source_url_blob
     except pv.VTKVersionError as e:
         reason = e.args[0]
         pytest.skip(reason)
@@ -129,15 +68,16 @@ def test_dataset_loader_source_url_blob(test_case: ExampleTestCaseData):
     # Test valid url
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
-        if not _is_valid_url(url):
-            pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.dataset_name}:\n{url}")
+        # Check is_file() in case local cache of vtk-data is used
+        if not (Path(url).is_file() or _is_valid_url(url)):
+            pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
 
 def test_delete_downloads(tmpdir):
     # change the path so we don't delete the examples cache
     old_path = examples.downloads.USER_DATA_PATH
     try:
-        examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir("tmpdir"))
+        examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir('tmpdir'))
         assert Path(examples.downloads.USER_DATA_PATH).is_dir()
         tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
         with Path(tmp_file).open('w') as fid:
@@ -200,24 +140,109 @@ def test_file_copier(tmpdir):
         examples.downloads._file_copier('not a file', output_file, None)
 
 
-def test_local_file_cache(tmpdir):
+def test_local_file_cache(tmp_path: Path):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
     basename = Path(examples.planefile).name
     dirname = str(Path(examples.planefile).parent)
     downloads.FETCHER.registry[basename] = None
+    old_path = downloads.FETCHER.path
 
     try:
         downloads.FETCHER.base_url = dirname + '/'
         downloads.FETCHER.registry[basename] = None
         downloads._FILE_CACHE = True
+        downloads.FETCHER.path = tmp_path
         filename = downloads._download_and_read(basename, load=False)
         assert Path(filename).is_file()
 
         dataset = downloads._download_and_read(basename, load=True)
         assert isinstance(dataset, pv.DataSet)
-        Path(filename).unlink()
 
     finally:
-        downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+        downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)
+        downloads.FETCHER.path = old_path
+
+
+@pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
+def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
+    path = (tmp_path / 'mypath').as_posix()
+    if endswith:
+        path = path + '/' + endswith
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
+    path_no_trailing_slash = path.removesuffix('/')
+    match = (
+        f'The given {downloads._VTK_DATA_VARNAME} is not a valid directory '
+        f'and will not be used:\n{path_no_trailing_slash}'
+    )
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        _ = _get_vtk_data_source()
+    Path(path).mkdir(parents=True)
+    source, file_cache = _get_vtk_data_source()
+    assert source.endswith('/Data/')  # it should append Data and /
+    assert file_cache is True
+
+
+def test_get_vtk_data_path_without_env_var(monkeypatch):
+    monkeypatch.delenv(downloads._VTK_DATA_VARNAME, raising=False)
+    source, file_cache = _get_vtk_data_source()
+    assert source == downloads._DEFAULT_VTK_DATA_SOURCE
+    assert file_cache is False
+
+
+def test_get_user_data_path_env_var_valid(monkeypatch, tmp_path):
+    valid_dir = tmp_path / 'valid'
+    valid_dir.mkdir()
+    monkeypatch.setenv(downloads._USERDATA_PATH_VARNAME, str(valid_dir))
+    result = _get_user_data_path()
+    assert result == str(valid_dir)
+
+
+def test_get_user_data_path_env_var_invalid(monkeypatch, tmp_path):
+    not_a_dir = tmp_path / 'file'
+    not_a_dir.write_text('not a directory')
+    monkeypatch.setenv(downloads._USERDATA_PATH_VARNAME, not_a_dir.as_posix())
+    match = (
+        f'The given {downloads._USERDATA_PATH_VARNAME} is not a valid directory '
+        f'and will not be used:\n{not_a_dir.as_posix()}'
+    )
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        result = _get_user_data_path()
+    # should fall back to pooch path
+    assert result == downloads._DEFAULT_USER_DATA_PATH
+
+
+def test_get_user_data_path_no_env_var(monkeypatch):
+    monkeypatch.delenv(downloads._USERDATA_PATH_VARNAME, raising=False)
+    result = _get_user_data_path()
+    assert result == downloads._DEFAULT_USER_DATA_PATH
+
+
+def test_warn_if_path_not_accessible_creates_dir(tmp_path):
+    path = tmp_path / 'newdir'
+    assert not path.exists()
+    # Should create without warning
+    _warn_if_path_not_accessible(path, 'MY_ENV')
+    assert path.is_dir()
+
+
+def test_warn_if_path_not_accessible_file_blocks(tmp_path):
+    blocked_path = tmp_path / 'blocked'
+    blocked_path.write_text('not a dir')
+    match = (
+        f'Unable to access path: {blocked_path.as_posix()}\nManually specify the PyVista '
+        f'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
+    )
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        _warn_if_path_not_accessible(blocked_path.as_posix(), downloads._user_data_path_warn_msg)
+
+
+@pytest.mark.skip_windows(reason='CI has admin rights and can write to system dirs.')
+def test_warn_if_path_not_accessible_no_write_permission():
+    system_dir = pathlib.Path('/etc')
+    assert system_dir.exists()
+    assert not os.access(system_dir, os.W_OK)
+    blocked_dir = system_dir / 'blocked'
+    with pytest.warns(UserWarning, match='Unable to access'):
+        _warn_if_path_not_accessible(blocked_dir, downloads._user_data_path_warn_msg)

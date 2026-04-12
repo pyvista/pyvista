@@ -10,12 +10,13 @@ Generate iso-lines or -surfaces for the scalars of a surface or volume.
 meshes can have 1D iso-lines of a scalar field extracted.
 """
 
-import numpy as np
+from __future__ import annotations
 
+import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Iso-Lines
 # +++++++++
 #
@@ -26,11 +27,11 @@ contours = mesh.contour()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, opacity=0.85)
-pl.add_mesh(contours, color="white", line_width=5)
+pl.add_mesh(contours, color='white', line_width=5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Iso-Surfaces
 # ++++++++++++
 #
@@ -40,32 +41,33 @@ mesh = examples.download_embryo()
 contours = mesh.contour(np.linspace(50, 200, 5))
 
 pl = pv.Plotter()
-pl.add_mesh(mesh.outline(), color="k")
+pl.add_mesh(mesh.outline(), color='k')
 pl.add_mesh(contours, opacity=0.25, clim=[0, 200])
-pl.camera_position = [
-    (-130.99381142132086, 644.4868354828589, 163.80447435848686),
-    (125.21748748157661, 123.94368717158413, 108.83283586619626),
-    (0.2780372840777734, 0.03547871361794171, 0.9599148553609699),
-]
+pl.camera_position = pv.CameraPosition(
+    position=(-130.99381142132086, 644.4868354828589, 163.80447435848686),
+    focal_point=(125.21748748157661, 123.94368717158413, 108.83283586619626),
+    viewup=(0.2780372840777734, 0.03547871361794171, 0.9599148553609699),
+)
 pl.show()
 
 
-###############################################################################
+# %%
 # Banded Contours
 # +++++++++++++++
-# Create banded contours for surface meshes using :func:`contour_banded() <pyvista.PolyDataFilters.contour_banded>`.
+# Create banded contours for surface meshes using
+# :func:`~pyvista.PolyDataFilters.contour_banded`.
 mesh = examples.load_random_hills()
 
-###############################################################################
+# %%
 # Set number of contours and produce mesh and lines
 n_contours = 8
 contours, edges = mesh.contour_banded(n_contours)
 
-###############################################################################
+# %%
 # Also make normal vectors
-arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 
-###############################################################################
+# %%
 
 # Common display arguments
 dargs = dict(scalars='Elevation', n_colors=n_contours - 1, cmap='Set3')
@@ -76,14 +78,16 @@ pl.add_mesh(contours, **dargs)
 pl.add_mesh(arrows, **dargs)
 pl.show()
 
-###############################################################################
+# %%
 # Contours from a label map
 # +++++++++++++++++++++++++
 #
 # Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
-# using :func:`contour_labeled() <pyvista.ImageDataFilters.contour_labeled>`.
+# using :func:`~pyvista.ImageDataFilters.contour_labels`.
 # Requires VTK version 9.3
 if pv.vtk_version_info >= (9, 3):
-    label_map = pv.examples.download_frog_tissue()
-    mesh = label_map.contour_labeled()
-    mesh.plot(cmap="glasbey_warm", cpos="yx", show_scalar_bar=False)
+    label_map = pv.examples.load_frog_tissues()
+    mesh = label_map.contour_labels()
+    mesh.plot(cmap='glasbey', cpos='yx', categories=True)
+# %%
+# .. tags:: filter

@@ -1,4 +1,3 @@
-# flake8: noqa: D102,D103,D107
 """PyVista Trame User Interface.
 
 This module builds a base UI for manipulating a PyVista Plotter.
@@ -6,16 +5,22 @@ The UI generated here is the default for rendering in Jupyter
 environments and provides a starting point for custom user-built
 applications.
 """
-from typing import Dict
-import warnings
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from trame.app import get_server
 
-from .base_viewer import BaseViewer
+from pyvista._warn_external import warn_external
+
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
 
-_VIEWERS: Dict[str, BaseViewer] = {}
+if TYPE_CHECKING:
+    from .base_viewer import BaseViewer
+
+_VIEWERS: dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 
@@ -46,8 +51,8 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
         viewer = _VIEWERS[plotter._id_name]
         if suppress_rendering != plotter.suppress_rendering:
             plotter.suppress_rendering = suppress_rendering
-            warnings.warn(
-                "Suppress rendering on the plotter is changed to " + str(suppress_rendering),
+            warn_external(
+                'Suppress rendering on the plotter is changed to ' + str(suppress_rendering),
                 UserWarning,
             )
         return viewer
@@ -64,7 +69,12 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
 
 
 def plotter_ui(
-    plotter, mode=None, default_server_rendering=True, collapse_menu=False, add_menu=True, **kwargs
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    add_menu=True,
+    **kwargs,
 ):
     """Create a UI view for the given Plotter.
 
@@ -97,7 +107,7 @@ def plotter_ui(
 
     Returns
     -------
-    PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
+    output : PyVistaRemoteLocalView | PyVistaRemoteView | PyVistaLocalView
         Trame view interface for pyvista.
 
     """

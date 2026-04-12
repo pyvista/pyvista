@@ -18,26 +18,25 @@ help:
 
 .PHONY: help Makefile
 
-clean:
-	rm -rf $(BUILDDIR)/*
-	rm -rf $(SOURCEDIR)/examples/
-	rm -f errors.txt
-	rm -f sphinx_warnings.txt
-	rm -rf $(SOURCEDIR)/images/auto-generated
-	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
-	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
+clean-dataset-gallery:
+	rm -rf "$(SOURCEDIR)/api/examples/dataset-gallery"
 
-clean-except-examples:
-	rm -rf $(BUILDDIR)/*
-	rm -f errors.txt
-	rm -f sphinx_warnings.txt
-	rm -rf $(SOURCEDIR)/images/auto-generated
+clean-external-examples:
 	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
-	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
 
 # remove autosummary files
 clean-autosummary:
 	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
+
+clean-except-examples: clean-dataset-gallery clean-external-examples clean-autosummary
+	rm -rf $(BUILDDIR)/*
+	rm -f errors.txt
+	rm -f sphinx_warnings.txt
+	rm -rf $(SOURCEDIR)/images/auto-generated
+	rm -rf $(SOURCEDIR)/tags
+
+clean: clean-except-examples
+	rm -rf $(SOURCEDIR)/examples/
 
 # build html docs in parallel using all available CPUs
 # WARNING: this is a resource hog
@@ -49,35 +48,27 @@ phtml:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(DEFAULTS) $(O)
 
-# deploy to https://github.com/pyvista/pyvista-docs
-# WARNING: Use with care as this overwrites history of gh-pages
-deploy:
-	@echo "*** Warning ***"
-	@echo "You are about to deploy to 'pyvista docs'."
-	@echo "This overwrites the history of gh-pages."
-	@echo "Are you sure? [y/N] " && read answer && [ $${answer:-N} = y ]
-	@echo "Deploying..."
-	cp README.md _build/html
-	cp ads.txt _build/html
-	touch _build/html/.nojekyll
-	echo "docs.pyvista.org" >> _build/html/CNAME
-	cd _build/html && git init
-	cd _build/html && git add .
-	cd _build/html && git checkout -b gh-pages
-	cd _build/html && git commit -am "manual build"
-	cd _build/html && git remote add origin https://github.com/pyvista/pyvista-docs
-	cd _build/html && git push -u origin gh-pages --force
-	rm -rf _build/html/.git
-
 update-intersphinx:
 	cd intersphinx && ./update.sh
 
-# nitpicky linkcheck
-linkcheck:
-	@$(SPHINXBUILD) -b linkcheck "$(SOURCEDIR)" -D nitpicky=1 -d _build/doctrees . _build/linkcheck
+gen-dataset-gallery:
+	@if [ ! -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
+		echo "Dataset gallery directory not found, running make_table.py..."; \
+		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery"; \
+		cd "$(SOURCEDIR)" && python make_tables.py; \
+	else \
+		echo "Dataset gallery directory already exists, skipping generation."; \
+		echo "Run clean-dataset-gallery to clear the gallery."; \
+	fi
 
-linkcheck-grep:
-	@! grep -h "^.*:.*: \[\(\(local\)\|\(broken\)\)\]" _build/linkcheck/output.txt
+gen-external-examples:
+	@if [ ! -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
+		echo "external_examples.rst not found, running make_external_examples.py..."; \
+		cd "$(SOURCEDIR)" && python make_external_gallery.py; \
+	else \
+		echo "The file external_examples.rst already exists, skipping generation."; \
+		echo "Run clean-external-examples to clear the file."; \
+	fi
 
 # Spin up a local http server to view the rendered documentation.
 # This is required for interactive examples to work.

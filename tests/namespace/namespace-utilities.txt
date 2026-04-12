@@ -20,6 +20,7 @@ Disc, <function Disc at 0x7f72f5cac280>
 Dodecahedron, <function Dodecahedron at 0x7f72f5cacaf0>
 Ellipse, <function Ellipse at 0x7f72f5cac820>
 EnSightReader, <class 'pyvista.utilities.reader.EnSightReader'>
+ExodusIIReader, <class 'pyvista.utilities.reader.ExodusIIReader'>
 FacetReader, <class 'pyvista.utilities.reader.FacetReader'>
 FieldAssociation, <enum 'FieldAssociation'>
 FluentReader, <class 'pyvista.utilities.reader.FluentReader'>
@@ -39,13 +40,11 @@ MissingDataError, <class 'pyvista.errors.MissingDataError'>
 MultiBlockPlot3DReader, <class 'pyvista.utilities.reader.MultiBlockPlot3DReader'>
 MultipleLines, <function MultipleLines at 0x7f72f5d21ee0>
 NIFTIReader, <class 'pyvista.utilities.reader.NIFTIReader'>
-NORMALS, {'x': [1, 0, 0], 'y': [0, 1, 0], 'z': [0, 0, 1], '-x': [-1, 0, 0], '-y': [0, -1, 0], '-z': [0, 0, -1]}
 NRRDReader, <class 'pyvista.utilities.reader.NRRDReader'>
 OBJReader, <class 'pyvista.utilities.reader.OBJReader'>
 Observer, <class 'pyvista.utilities.errors.Observer'>
 Octahedron, <function Octahedron at 0x7f72f5caca60>
 OpenFOAMReader, <class 'pyvista.utilities.reader.OpenFOAMReader'>
-Optional, typing.Optional
 PLYReader, <class 'pyvista.utilities.reader.PLYReader'>
 PNGReader, <class 'pyvista.utilities.reader.PNGReader'>
 PNMReader, <class 'pyvista.utilities.reader.PNMReader'>
@@ -90,6 +89,8 @@ SLCReader, <class 'pyvista.utilities.reader.SLCReader'>
 STLReader, <class 'pyvista.utilities.reader.STLReader'>
 Scraper, <class 'pyvista.utilities.sphinx_gallery.Scraper'>
 SegYReader, <class 'pyvista.utilities.reader.SegYReader'>
+SeriesDataSet, <class 'pyvista.utilities.reader.SeriesDataSet'>
+SeriesReader, <class 'pyvista.utilities.reader.SeriesReader'>
 Sphere, <function Sphere at 0x7f72f5d21d30>
 Spline, <function Spline at 0x7f72f5cb03a0>
 Superquadric, <function Superquadric at 0x7f72f5cac8b0>
@@ -134,6 +135,7 @@ convert_string_array, <function convert_string_array at 0x7f72f5e055e0>
 create_grid, <function create_grid at 0x7f72f5d21160>
 cubemap, <function cubemap at 0x7f72f5e07ca0>
 cubemap_from_filenames, <function cubemap_from_filenames at 0x7f72f5e07d30>
+enable_smp_tools
 errors, <module 'pyvista.utilities.errors' from 'pyvista/utilities/errors.py'>
 features, <module 'pyvista.utilities.features' from 'pyvista/utilities/features.py'>
 field_array, <function field_array at 0x7f72f5e058b0>
@@ -180,7 +182,6 @@ set_algorithm_input, <function set_algorithm_input at 0x7f72f5e07f70>
 set_default_active_scalars, <function set_default_active_scalars at 0x7f72f5e07ee0>
 set_default_active_vectors, <function set_default_active_vectors at 0x7f72f5e07e50>
 set_error_output_file, <function set_error_output_file at 0x7f72f5cea3a0>
-set_vtkwriter_mode, <function set_vtkwriter_mode at 0x7f72f5e02e50>
 sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/utilities/sphinx_gallery.py'>
 start_xvfb, <function start_xvfb at 0x7f72f5cb4940>
 surface_from_para, <function surface_from_para at 0x7f72f5cb4160>

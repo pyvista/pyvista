@@ -1,16 +1,23 @@
+from __future__ import annotations
+
+import importlib.util
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.jupyter import _validate_jupyter_backend
 
-has_ipython = True
-try:
-    import IPython  # noqa: F401
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+has_ipython = bool(importlib.util.find_spec('IPython'))
+if has_ipython:
     from PIL.Image import Image
-except:
-    has_ipython = False
 
-skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")
+
+skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython package')
 
 
 def test_set_jupyter_backend_fail():
@@ -18,9 +25,26 @@ def test_set_jupyter_backend_fail():
         pv.set_jupyter_backend('not a backend')
 
 
-@pytest.mark.parametrize('backend', [None, 'none'])
-def test_set_jupyter_backend_none(backend):
-    pv.set_jupyter_backend(backend)
+def test_validate_jupyter_backend_raises(mocker: MockerFixture):
+    from pyvista import jupyter
+
+    m = mocker.patch.object(jupyter, 'importlib')
+    m.util.find_spec.return_value = False
+    with pytest.raises(
+        ImportError, match=r'Install IPython to display with pyvista in a notebook.'
+    ):
+        _validate_jupyter_backend('foo')
+
+
+def test_set_jupyter_backend_none():
+    pv.set_jupyter_backend('none')
+    assert pv.global_theme.jupyter_backend == 'none'
+
+
+def test_set_jupyter_backend_none_resets_to_auto():
+    pv.set_jupyter_backend('static')
+    assert pv.global_theme.jupyter_backend == 'static'
+    pv.set_jupyter_backend(None)
     assert pv.global_theme.jupyter_backend is None
 
 
@@ -32,7 +56,7 @@ def test_set_jupyter_backend_static():
 
 
 @skip_no_ipython
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 @pytest.mark.parametrize('return_viewer', [True, False])
 def test_static_from_show(sphere, return_viewer):
     window_size = (100, 100)
@@ -48,7 +72,7 @@ def test_static_from_show(sphere, return_viewer):
 
 
 @skip_no_ipython
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_show_return_values(sphere: pv.PolyData):
     # Three possible return values: (cpos, image, widget)
     img, viewer = sphere.plot(

@@ -4,6 +4,8 @@ This is a full-fledged example on building your own user interface
 with client-side rendering.
 """
 
+from __future__ import annotations
+
 from trame.app import get_server
 from trame.ui.vuetify3 import SinglePageLayout
 from trame.widgets import vuetify3
@@ -12,18 +14,18 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.trame import PyVistaLocalView
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVistaLocalView"
+state.trame__title = 'PyVistaLocalView'
 
 # -----------------------------------------------------------------------------
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter(off_screen=True)
-actor = plotter.add_mesh(mesh)
-plotter.set_background('lightgrey')
+pl = pv.Plotter(off_screen=True)
+actor = pl.add_mesh(mesh)
+pl.set_background('lightgrey')
 
 
 # -----------------------------------------------------------------------------
@@ -32,7 +34,7 @@ plotter.set_background('lightgrey')
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVistaLocalView")
+    layout.title.set_text('PyVistaLocalView')
 
     with layout.toolbar:
         vuetify3.VSpacer()
@@ -40,9 +42,9 @@ with SinglePageLayout(server) as layout:
     with layout.content:
         with vuetify3.VContainer(
             fluid=True,
-            classes="pa-0 fill-height",
+            classes='pa-0 fill-height',
         ):
-            view = PyVistaLocalView(plotter)
+            view = PyVistaLocalView(pl)
             ctrl.view_update = view.update
             ctrl.view_reset_camera = view.reset_camera
 
@@ -53,5 +55,5 @@ with SinglePageLayout(server) as layout:
 # Main
 # -----------------------------------------------------------------------------
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     server.start()

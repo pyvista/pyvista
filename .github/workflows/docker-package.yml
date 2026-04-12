@@ -16,10 +16,13 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  packages: write
+
 jobs:
   build-and-publish:
     name: Build and Publish Docker Image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # For Pull Requests, only runs from `docker`
     if: github.event_name == 'push' ||
       ( github.event_name == 'pull_request' &&
@@ -27,12 +30,14 @@ jobs:
       startsWith(github.event.pull_request.head.ref, 'docker')
       )
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
         with:
-          python-version: "3.10"
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
 
       - name: Create PyVista package
         run: |
@@ -40,7 +45,7 @@ jobs:
           python -m build --sdist
 
       - name: Log into the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
         with:
           registry: ${{ env.REGISTRY }}
           username: token
@@ -48,11 +53,11 @@ jobs:
 
       - name: Extract metadata for the Jupyter Docker image
         id: jupyter_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       - name: Build and push the Jupyter Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           context: .
           file: docker/jupyter.Dockerfile
@@ -62,14 +67,14 @@ jobs:
 
       - name: Extract metadata for the Slim Docker image
         id: slim_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=auto
             suffix=-slim,onlatest=true
       - name: Build and push the Slim Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           context: .
           file: docker/slim.Dockerfile

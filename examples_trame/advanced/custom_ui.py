@@ -4,6 +4,8 @@ This example demonstrates how to use ``plotter_ui`` to add a PyVista
 ``Plotter`` to a UI with scene controls and standard UI features.
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 from trame.app import get_server
 from trame.ui.vuetify3 import SinglePageLayout
@@ -15,21 +17,21 @@ from pyvista.trame.ui import get_viewer
 
 pv.OFF_SCREEN = True
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVista UI Template"
+state.trame__title = 'PyVista UI Template'
 
 # -----------------------------------------------------------------------------
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap="viridis")
+pl = pv.Plotter()
+actor = pl.add_mesh(mesh, cmap='viridis')
 
 
-@state.change("cmap")
-def update_cmap(cmap="viridis", **kwargs):
+@state.change('cmap')
+def update_cmap(cmap='viridis', **kwargs):  # noqa: ARG001
     actor.mapper.lookup_table.cmap = cmap
     ctrl.view_update()
 
@@ -38,11 +40,11 @@ def update_cmap(cmap="viridis", **kwargs):
 # GUI
 # -----------------------------------------------------------------------------
 
-viewer = get_viewer(plotter)
+viewer = get_viewer(pl)
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVista Colormaps")
+    layout.title.set_text('PyVista Colormaps')
 
     with layout.toolbar:
         # Make sure `mode` matches
@@ -51,14 +53,14 @@ with SinglePageLayout(server) as layout:
         vuetify3.VSpacer()
 
         vuetify3.VSelect(
-            label="Color map",
-            v_model=("cmap", "viridis"),
-            items=("array_list", plt.colormaps()),
+            label='Color map',
+            v_model=('cmap', 'viridis'),
+            items=('array_list', plt.colormaps()),
             hide_details=True,
-            density="compact",
+            density='compact',
             outlined=True,
-            classes="pt-1 ml-2",
-            style="max-width: 250px",
+            classes='pt-1 ml-2',
+            style='max-width: 250px',
         )
 
     with layout.content:

@@ -4,29 +4,33 @@ Dataset Gallery
 ===============
 Browse PyVista datasets and their metadata.
 
+.. _all_datasets_gallery:
+
+Browse All Datasets
+-------------------
+
+.. include:: /api/examples/dataset-gallery/all_datasets_carousel.rst
+
 Browse Datasets by Module
 -------------------------
 Datasets in this section are organized by the module they are imported from.
 
-.. dropdown:: Downloads
-    :name: downloads_gallery
-    :open:
+.. dropdown:: Dataset Modules
+    :name: modules_gallery
 
     .. tab-set::
 
-        .. tab-item:: All
+        .. tab-item:: Built-in
+
+            .. include:: /api/examples/dataset-gallery/builtin_carousel.rst
+
+        .. tab-item:: Downloads
 
             .. include:: /api/examples/dataset-gallery/downloads_carousel.rst
 
-            ..
-                TODO: add builtin datasets
-                .. tab-item:: Built-in
-                .. include:: /api/examples/dataset-gallery/builtin_carousel.rst
+        .. tab-item:: Planets
 
-            ..
-                TODO: add planets
-                .. tab-item:: Planets
-                .. include:: /api/examples/dataset-gallery/planets_carousel.rst
+            .. include:: /api/examples/dataset-gallery/planets_carousel.rst
 
 
 Browse Datasets by Type
@@ -58,10 +62,9 @@ Browse datasets with explicit geometry. See :doc:`/api/core/pointsets` for detai
 
             .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rst
 
-            ..
-                TODO: Add this dataset and carousel
-                .. tab-item:: ExplicitStructuredGrid
-                .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rst
+        .. tab-item:: ExplicitStructuredGrid
+
+            .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rst
 
 Browse point sets with a specific kind of representation.
 
@@ -159,7 +162,6 @@ Miscellaneous Datasets
         .. tab-item:: All
 
             .. include:: /api/examples/dataset-gallery/misc_carousel.rst
-
 
 .. _dataset_gallery_category:
 

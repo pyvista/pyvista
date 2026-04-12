@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from matplotlib.pyplot import imread
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper, Scraper
+from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -14,11 +17,12 @@ class QApplication:
     def __init__(self, *args):
         pass
 
-    def processEvents(self):
+    def processEvents(self):  # noqa: N802
         pass
 
 
-def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
+def test_scraper_with_app(tmpdir, monkeypatch):
+    n_win = 2
     pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
@@ -29,7 +33,7 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
 
     # add cone, change view to test that it takes effect
     plotters[0].iren.initialize()
-    plotters[0].app = QApplication([])  # fake QApplication
+    pv.set_new_attribute(plotters[0], 'app', QApplication([]))  # fake QApplication
     plotters[0].add_mesh(pv.Cone())
     plotters[0].camera_position = 'xy'
 
@@ -41,7 +45,7 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
     ]
 
-    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    gallery_conf = {'src_dir': src_dir, 'builder_name': 'html'}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
@@ -59,7 +63,8 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
     for img_fname in img_fnames:
         assert Path(img_fname).is_file()
 
-    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
+    # test that the plot has the camera position updated with a checksum
+    # when the Plotter has an app instance
     assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
 
     for plotter in plotters:
@@ -83,7 +88,8 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
         scraper = DynamicScraper()
         assert repr(scraper) == '<DynamicScraper object>'
     else:
-        raise ValueError(f'Invalid scraper type: {scraper}')
+        msg = f'Invalid scraper type: {scraper}'
+        raise ValueError(msg)
 
     src_dir = str(tmpdir)
     out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
@@ -97,9 +103,9 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     plotter_gif.write_frame()
     plotter_gif.close()
 
-    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    gallery_conf = {'src_dir': src_dir, 'builder_name': 'html'}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
-    block = ("empty_block", "", 0)
+    block = ('empty_block', '', 0)
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
         example_globals=dict(a=1, PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT=True),
@@ -123,12 +129,12 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
 def test_scraper_raise(tmpdir):
     pytest.importorskip('sphinx_gallery')
     pv.close_all()
-    plotter = pv.Plotter(off_screen=True)
+    pl = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
     out_dir = str(Path(tmpdir) / '_build' / 'html')
     img_fname = str(Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png')
-    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    gallery_conf = {'src_dir': src_dir, 'builder_name': 'html'}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
@@ -140,10 +146,10 @@ def test_scraper_raise(tmpdir):
     assert not Path(img_fname).is_file()
     Path(out_dir).mkdir(parents=True)
 
-    with pytest.raises(RuntimeError, match="pyvista.BUILDING_GALLERY"):
+    with pytest.raises(RuntimeError, match=r'pyvista.BUILDING_GALLERY'):
         scraper(block, block_vars, gallery_conf)
 
-    plotter.close()
+    pl.close()
 
 
 def test_namespace_contract():

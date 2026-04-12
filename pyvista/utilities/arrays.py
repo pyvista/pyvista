@@ -1,3 +1,5 @@
 """Deprecated module."""
 
-from . import __getattr__  # noqa: F401
+from __future__ import annotations
+
+from . import __getattr__

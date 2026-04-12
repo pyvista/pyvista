@@ -8,6 +8,8 @@ Add a background image with :func:`pyvista.Plotter.add_background_image`.
 
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -16,7 +18,7 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Plot an airplane with the map of the earth in the background
 earth_alt = examples.download_topo_global()
 
@@ -25,7 +27,7 @@ actor = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
 pl.add_background_image(examples.mapfile)
 pl.show()
 
-###############################################################################
+# %%
 # Plot several earth related plots
 
 pl = pv.Plotter(shape=(2, 2))
@@ -50,3 +52,5 @@ pl.add_text('Earth Visible as Globe')
 pl.add_mesh(globe, texture=texture, smooth_shading=True)
 
 pl.show()
+# %%
+# .. tags:: plot

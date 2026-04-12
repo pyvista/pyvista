@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from trame.app import get_server
 from trame.ui.vuetify3 import SinglePageLayout
 from trame.widgets import vuetify3
@@ -14,10 +16,10 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "Contour"
+state.trame__title = 'Contour'
 ctrl.on_server_ready.add(ctrl.view_update)
 
 
@@ -50,7 +52,7 @@ contour.SetValue(0, contour_value)
 
 
 pl = pv.Plotter()
-actor = pl.add_mesh(contour, cmap="viridis", clim=data_range)
+actor = pl.add_mesh(contour, cmap='viridis', clim=data_range)
 
 
 # -----------------------------------------------------------------------------
@@ -58,8 +60,8 @@ actor = pl.add_mesh(contour, cmap="viridis", clim=data_range)
 # -----------------------------------------------------------------------------
 
 
-@state.change("contour_value")
-def update_contour(contour_value, **kwargs):
+@state.change('contour_value')
+def update_contour(contour_value, **kwargs):  # noqa: ARG001
     contour.SetValue(0, contour_value)
     ctrl.view_update_image()
 
@@ -70,17 +72,17 @@ def update_contour(contour_value, **kwargs):
 
 
 with SinglePageLayout(server) as layout:
-    layout.title.set_text("Contour")
+    layout.title.set_text('Contour')
 
     with layout.toolbar:
         vuetify3.VSpacer()
         vuetify3.VSlider(
-            v_model="contour_value",
-            min=("data_range[0]",),
-            max=("data_range[1]",),
+            v_model='contour_value',
+            min=('data_range[0]',),
+            max=('data_range[1]',),
             hide_details=True,
-            density="compact",
-            style="max-width: 300px",
+            density='compact',
+            style='max-width: 300px',
             start="trigger('demoAnimateStart')",
             end="trigger('demoAnimateStop')",
             change=ctrl.view_update,
@@ -90,13 +92,13 @@ with SinglePageLayout(server) as layout:
             indeterminate=True,
             absolute=True,
             bottom=True,
-            active=("trame__busy",),
+            active=('trame__busy',),
         )
 
     with layout.content:
         with vuetify3.VContainer(
             fluid=True,
-            classes="pa-0 fill-height",
+            classes='pa-0 fill-height',
         ):
             # Use PyVista UI template for Plotters
             view = plotter_ui(pl, namespace='demo')
