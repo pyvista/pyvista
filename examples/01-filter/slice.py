@@ -56,10 +56,10 @@ slices.plot(cmap=cmap)
 # Single slice - origin defaults to the center of the mesh
 single_slice = mesh.slice(normal=[1, 1, 0])
 
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='k')
-p.add_mesh(single_slice, cmap=cmap)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='k')
+pl.add_mesh(single_slice, cmap=cmap)
+pl.show()
 # %%
 # Adding slicing planes uniformly across an axial direction can also be
 # automated with the :func:`pyvista.DataObjectFilters.slice_along_axis` filter:
@@ -73,8 +73,8 @@ slices.plot(cmap=cmap)
 # Slice Along Line
 # ++++++++++++++++
 #
-# We can also slice a dataset along a :func:`pyvista.Spline` or
-# :func:`pyvista.Line` using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
+# We can also slice a dataset along a :func:`pyvista.Spline` or :func:`pyvista.Line`
+# using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
 #
 # First, define a line source through the dataset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while
@@ -94,7 +94,7 @@ def path(y):
 x, y = path(np.arange(model.bounds.y_min, model.bounds.y_max, 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
-spline = pv.Spline(points, 15)
+spline = pv.Spline(points, n_points=15)
 spline
 
 
@@ -105,10 +105,10 @@ slc
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(slc, cmap=cmap)
-p.add_mesh(model.outline())
-p.show(cpos=[1, -1, 1])
+pl = pv.Plotter()
+pl.add_mesh(slc, cmap=cmap)
+pl.add_mesh(model.outline())
+pl.show(cpos=[1, -1, 1])
 
 
 # %%
@@ -130,7 +130,7 @@ b = mesh.center - normal * mesh.length / 3.0
 
 # Define the line/points for the slices
 n_slices = 5
-line = pv.Line(a, b, n_slices)
+line = pv.Line(a, b, resolution=n_slices)
 
 # Generate all of the slices
 slices = pv.MultiBlock()
@@ -139,11 +139,11 @@ for point in line.points:
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(mesh.outline(), color='k')
-p.add_mesh(slices, opacity=0.75)
-p.add_mesh(line, color='red', line_width=5)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh.outline(), color='k')
+pl.add_mesh(slices, opacity=0.75)
+pl.add_mesh(line, color='red', line_width=5)
+pl.show()
 
 
 # %%
@@ -173,9 +173,41 @@ slices
 
 # %%
 # And now display it.
-p = pv.Plotter()
-p.add_mesh(slices, cmap=cmap)
-p.add_mesh(model.outline())
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(slices, cmap=cmap)
+pl.add_mesh(model.outline())
+pl.show()
+
+# %%
+# Slice ImageData With Indexing
+# +++++++++++++++++++++++++++++
+# Most slicing filters return :class:`~pyvista.PolyData` or
+# :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs, however,
+# it's often desirable to return :class:`~pyvista.ImageData`. The
+# :meth:`~pyvista.ImageDataFilters.slice_index` filter supports this use case.
+#
+# Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
+# :func:`~pyvista.examples.examples.load_frog_tissues`.
+
+mask = examples.load_frog_tissues()
+sliced = mask.slice_index(k=50)
+colored = sliced.color_labels()
+colored.plot(cpos='xy', zoom='tight', lighting=False)
+
+# %%
+# Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we
+# define indices to extract the frog's head.
+
+sliced = mask.slice_index(i=[300, 500], j=[110, 350], k=[0, 100])
+surface = sliced.contour_labels()
+colored = surface.color_labels()
+
+cpos = pv.CameraPosition(
+    position=(520.0, 461.0, -402.0),
+    focal_point=(372.0, 243.0, 52.0),
+    viewup=(-0.73, -0.50, -0.47),
+)
+colored.plot(cpos=cpos)
+
 # %%
 # .. tags:: filter

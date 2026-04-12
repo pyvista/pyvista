@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkCamera."""
+"""Module containing pyvista implementation of :vtk:`vtkCamera`."""
 
 from __future__ import annotations
 
@@ -9,13 +9,16 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
@@ -45,14 +48,15 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self._elevation = 0.0
         self._azimuth = 0.0
         self._is_set = False
+        self._focus = None  # Used by BackgroundRenderer
 
         if renderer:
-            if not isinstance(renderer, pyvista.Renderer):
+            if not isinstance(renderer, pv.Renderer):
                 msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
                 raise TypeError(msg)
             self._renderer = proxy(renderer)
         else:
-            self._renderer = None
+            self._renderer = None  # type: ignore[assignment]
 
     def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
@@ -81,6 +85,8 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
             return False
         return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
 
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
+
     def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""
         repr_str = f'{self.__class__.__name__} ({hex(id(self))})'
@@ -102,7 +108,6 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     def __del__(self):
         """Delete the camera."""
         self.RemoveAllObservers()
-        self.parent = None
 
     @property
     def is_set(self) -> bool:  # numpydoc ignore=RT01
@@ -268,7 +273,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
-        if self._renderer:
+        if self._renderer:  # type: ignore[truthy-bool]
             self.reset_clipping_range()
         self.is_set = True
 
@@ -286,7 +291,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'  # type: ignore[unreachable]
             raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
@@ -587,11 +592,11 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> plotter.camera.view_angle
+        >>> pl = pv.Plotter()
+        >>> pl.camera.view_angle
         30.0
-        >>> plotter.camera.view_angle = 60.0
-        >>> plotter.camera.view_angle
+        >>> pl.camera.view_angle = 60.0
+        >>> pl.camera.view_angle
         60.0
 
         """
@@ -631,8 +636,8 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         Examples
         --------
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter()
-        >>> frustum = plotter.camera.view_frustum(1.0)
+        >>> pl = pv.Plotter()
+        >>> frustum = pl.camera.view_frustum(1.0)
         >>> frustum.n_points
         8
         >>> frustum.n_cells
@@ -649,7 +654,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         frustum_source.Update()
 
-        return pyvista.wrap(frustum_source.GetOutput())
+        return pv.wrap(frustum_source.GetOutput())
 
     @property
     def roll(self):  # numpydoc ignore=RT01
@@ -795,8 +800,13 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         return new_camera
 
-    def tight(
-        self, padding=0.0, adjust_render_window: bool = True, view='xy', negative: bool = False
+    @_deprecate_positional_args
+    def tight(  # noqa: PLR0917
+        self,
+        padding=0.0,
+        adjust_render_window: bool = True,  # noqa: FBT001, FBT002
+        view='xy',
+        negative: bool = False,  # noqa: FBT001, FBT002
     ):
         """Adjust the camera position so that the actors fill the entire renderer.
 
@@ -831,20 +841,20 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         Examples
         --------
-        Display the puppy image with a tight view.
+        Display the bird image with a tight view.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> puppy = examples.download_puppy()
+        >>> bird = examples.download_bird()
         >>> pl = pv.Plotter(border=True, border_width=5)
-        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> _ = pl.add_mesh(bird, rgb=True)
         >>> pl.camera.tight()
         >>> pl.show()
 
         Set the background to blue use a 5% padding around the image.
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(puppy, rgb=True)
+        >>> _ = pl.add_mesh(bird, rgb=True)
         >>> pl.background_color = 'b'
         >>> pl.camera.tight(padding=0.05)
         >>> pl.show()
@@ -863,7 +873,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         objects_size = position1 - position0
         position = position0 + objects_size / 2
 
-        direction, viewup = view_vectors(view, negative)
+        direction, viewup = view_vectors(view, negative=negative)
         horizontal = np.cross(direction, viewup)
 
         vert_dist = abs(objects_size @ viewup)

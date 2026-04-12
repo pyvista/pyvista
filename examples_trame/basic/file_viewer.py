@@ -31,7 +31,7 @@ pl = pv.Plotter()
 
 
 @server.state.change('file_exchange')
-def handle(file_exchange, **kwargs):
+def handle(file_exchange, **kwargs):  # noqa: ARG001
     # Vuetify3 File Input always returns list
     if file_exchange and len(file_exchange) > 0:
         file = ClientFile(file_exchange[0])

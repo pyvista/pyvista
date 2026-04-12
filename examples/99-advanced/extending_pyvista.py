@@ -25,11 +25,10 @@ classes are nearly always used for particular types of DataSets.
 from __future__ import annotations
 
 import numpy as np
+import pyvista as pv
 import vtk
 
-import pyvista
-
-pyvista.set_plot_theme('document')
+pv.set_plot_theme('document')
 
 # %%
 # A user defined subclass of :class:`pyvista.PolyData`, ``FooData`` is defined.
@@ -37,7 +36,7 @@ pyvista.set_plot_theme('document')
 # furthest along in the (1, 0, 1) direction.
 
 
-class FooData(pyvista.PolyData):  # noqa: D101
+class FooData(pv.PolyData):  # noqa: D101
     @property
     def max_point(self):
         """Returns index of point that is furthest along (1, 0, 1) direction."""
@@ -54,7 +53,7 @@ class FooData(pyvista.PolyData):  # noqa: D101
 # direction (1, 0, 1) is :math:`0.5\sqrt{0.5}\approx0.354`
 #
 
-foo_sphere = FooData(pyvista.Sphere(theta_resolution=100, phi_resolution=100))
+foo_sphere = FooData(pv.Sphere(theta_resolution=100, phi_resolution=100))
 print('Original foo sphere:')
 print(f'Type: {type(foo_sphere)}')
 print(f'Maximum point index: {foo_sphere.max_point}')
@@ -100,13 +99,13 @@ print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
 # that the key is the underlying vtk object.
 
-pyvista._wrappers['vtkPolyData'] = FooData
+pv._wrappers['vtkPolyData'] = FooData
 
 # %%
 # It is no longer necessary to specifically wrap :class:`pyvista.PolyData`
 # objects to obtain a ``FooData`` object.
 
-foo_sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
+foo_sphere = pv.Sphere(theta_resolution=100, phi_resolution=100)
 print('Original foo sphere:')
 print(f'Type: {type(foo_sphere)}')
 print(f'Maximum point index: {foo_sphere.max_point}')
@@ -137,7 +136,7 @@ print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
 # using this method may incur unintended consequences.  In this case,
 # it is recommended to use the directly managing types method.
 
-poly_object = pyvista.PolyData(vtk.vtkPolyData())
+poly_object = pv.PolyData(vtk.vtkPolyData())
 print(f'Type: {type(poly_object)}')
 # catch error
 try:
@@ -149,14 +148,14 @@ except TypeError:
 # Usage of ``pyvista._wrappers`` may require resetting the default value
 # to avoid leaking the setting into cases where it is unused.
 
-pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+pv._wrappers['vtkPolyData'] = pv.PolyData
 
 # %%
 # For instances where a localized usage is preferred, a tear-down method is
 # recommended.  One example is a ``try...finally`` block.
 
 try:
-    pyvista._wrappers['vtkPolyData'] = FooData
+    pv._wrappers['vtkPolyData'] = FooData
     # some operation that sometimes raises an error
 finally:
-    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+    pv._wrappers['vtkPolyData'] = pv.PolyData

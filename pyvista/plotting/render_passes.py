@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import weakref
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+
 from . import _vtk
 
 # The order of both the pre and post-passes matters.
@@ -20,22 +23,22 @@ POST_PASS = [
 ]
 
 
-class RenderPasses:
+class RenderPasses(_NoNewAttrMixin):
     """Class to support multiple render passes for a renderer.
 
     Notes
     -----
-    Passes are organized here as "primary" (vtkOpenGLRenderPass) that act
-    within the renderer and "post-processing" (vtkImageProcessingPass) passes,
+    Passes are organized here as "primary" (:vtk:`vtkOpenGLRenderPass`) that act
+    within the renderer and "post-processing" (:vtk:`vtkImageProcessingPass`) passes,
     which act on the image generated from the renderer.
 
-    The primary passes are added as part of a vtk.vtkRenderPassCollection or
+    The primary passes are added as part of a :vtk:`vtkRenderPassCollection` or
     are "stacked", while the post-processing passes are added as a final pass
     to the rendered image.
 
     Parameters
     ----------
-    renderer : vtk.vtkRenderer
+    renderer : :vtk:`vtkRenderer`
         Renderer to initialize render passes for.
 
     """
@@ -135,7 +138,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkEDLShading
+        :vtk:`vtkEDLShading`
             The enabled EDL pass.
 
         """
@@ -153,13 +156,13 @@ class RenderPasses:
         self._edl_pass = None
 
     def add_blur_pass(self):
-        """Add a vtkGaussianBlurPass pass.
+        """Add a :vtk:`vtkGaussianBlurPass` pass.
 
-        This is a vtkImageProcessingPass and delegates to the last pass.
+        This is a :vtk:`vtkImageProcessingPass` and delegates to the last pass.
 
         Returns
         -------
-        vtk.vtkGaussianBlurPass
+        :vtk:`vtkGaussianBlurPass`
             The added Gaussian blur pass.
 
         """
@@ -169,7 +172,7 @@ class RenderPasses:
         return blur_pass
 
     def remove_blur_pass(self):
-        """Remove a single vtkGaussianBlurPass pass."""
+        """Remove a single :vtk:`vtkGaussianBlurPass` pass."""
         if self._blur_passes:
             # order of the blur passes does not matter
             self._remove_pass(self._blur_passes.pop())
@@ -179,7 +182,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkShadowMapPass
+        :vtk:`vtkShadowMapPass`
             The enabled shadow pass.
 
         """
@@ -200,7 +203,8 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):
+    @_deprecate_positional_args
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001, FBT002
         """Enable the depth of field pass.
 
         Parameters
@@ -211,7 +215,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkDepthOfFieldPass
+        :vtk:`vtkDepthOfFieldPass`
             The enabled depth of field pass.
 
         """
@@ -234,7 +238,10 @@ class RenderPasses:
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
 
-    def enable_ssao_pass(self, radius, bias, kernel_size, blur):
+    @_deprecate_positional_args
+    def enable_ssao_pass(  # noqa: PLR0917
+        self, radius, bias, kernel_size, blur
+    ):
         """Enable the screen space ambient occlusion pass.
 
         Parameters
@@ -250,7 +257,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkSSAOPass
+        :vtk:`vtkSSAOPass`
             The enabled screen space ambient occlusion pass.
 
         """
@@ -280,7 +287,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkSSAAPass
+        :vtk:`vtkSSAAPass`
             The enabled super-sample anti-aliasing pass.
 
         """
@@ -299,7 +306,7 @@ class RenderPasses:
 
     def _update_passes(self):
         """Reassemble pass delegation."""
-        if self._renderer is None:  # pragma: no cover
+        if hasattr(self._renderer, '_closed') and self._renderer._closed:
             msg = 'The renderer has been closed.'
             raise RuntimeError(msg)
 

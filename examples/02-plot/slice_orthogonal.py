@@ -25,46 +25,46 @@ mesh.bounds
 slices = mesh.slice_orthogonal(x=100, z=75)
 
 # %%
-cpos = [
-    (540.9115516905358, -617.1912234499737, 180.5084853429126),
-    (128.31920055083387, 126.4977720785509, 111.77682599082095),
-    (-0.1065160140819035, 0.032750075477590124, 0.9937714884722322),
-]
+cpos = pv.CameraPosition(
+    position=(540.9115516905358, -617.1912234499737, 180.5084853429126),
+    focal_point=(128.31920055083387, 126.4977720785509, 111.77682599082095),
+    viewup=(-0.1065160140819035, 0.032750075477590124, 0.9937714884722322),
+)
 dargs = dict(cmap='gist_ncar_r')
 
-p = pv.Plotter()
-p.add_mesh(slices, **dargs)
-p.show_grid()
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(slices, **dargs)
+pl.show_grid()
+pl.show(cpos=cpos)
 
 
 # %%
 
-p = pv.Plotter(shape=(2, 2))
+pl = pv.Plotter(shape=(2, 2))
 # XYZ - show 3D scene first
-p.subplot(1, 1)
-p.add_mesh(slices, **dargs)
-p.show_grid()
-p.camera_position = cpos
+pl.subplot(1, 1)
+pl.add_mesh(slices, **dargs)
+pl.show_grid()
+pl.camera_position = cpos
 # XY
-p.subplot(0, 0)
-p.add_mesh(slices, **dargs)
-p.show_grid()
-p.camera_position = 'xy'
-p.enable_parallel_projection()
+pl.subplot(0, 0)
+pl.add_mesh(slices, **dargs)
+pl.show_grid()
+pl.camera_position = 'xy'
+pl.enable_parallel_projection()
 # ZY
-p.subplot(0, 1)
-p.add_mesh(slices, **dargs)
-p.show_grid()
-p.camera_position = 'zy'
-p.enable_parallel_projection()
+pl.subplot(0, 1)
+pl.add_mesh(slices, **dargs)
+pl.show_grid()
+pl.camera_position = 'zy'
+pl.enable_parallel_projection()
 # XZ
-p.subplot(1, 0)
-p.add_mesh(slices, **dargs)
-p.show_grid()
-p.camera_position = 'xz'
-p.enable_parallel_projection()
+pl.subplot(1, 0)
+pl.add_mesh(slices, **dargs)
+pl.show_grid()
+pl.camera_position = 'xz'
+pl.enable_parallel_projection()
 
-p.show()
+pl.show()
 # %%
 # .. tags:: plot

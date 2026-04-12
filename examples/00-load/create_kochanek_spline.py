@@ -15,7 +15,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -39,15 +38,17 @@ points[0:5, :]
 # Interpolate those points onto a parametric Kochanek spline
 
 # Create Kochanek spline with 6 interpolation points
-p = pv.Plotter(shape=(3, 5))
+pl = pv.Plotter(shape=(3, 5))
 
 c = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
-    kochanek_spline = pv.KochanekSpline(points, continuity=[c[i], c[i], c[i]], n_points=1000)
-    p.subplot(0, i)
-    p.add_text('c = ' + str(c[i]))
-    p.add_mesh(kochanek_spline, color='k', point_size=10)
-    p.add_mesh(
+    kochanek_spline = pv.KochanekSpline(
+        points, continuity=[c[i], c[i], c[i]], n_points=1000
+    )
+    pl.subplot(0, i)
+    pl.add_text('c = ' + str(c[i]))
+    pl.add_mesh(kochanek_spline, color='k', point_size=10)
+    pl.add_mesh(
         pv.PolyData(points),
         color='k',
         point_size=10,
@@ -57,10 +58,10 @@ for i in range(5):
 t = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
     kochanek_spline = pv.KochanekSpline(points, tension=[t[i], t[i], t[i]], n_points=1000)
-    p.subplot(1, i)
-    p.add_text('t = ' + str(t[i]))
-    p.add_mesh(kochanek_spline, color='k')
-    p.add_mesh(
+    pl.subplot(1, i)
+    pl.add_text('t = ' + str(t[i]))
+    pl.add_mesh(kochanek_spline, color='k')
+    pl.add_mesh(
         pv.PolyData(points),
         color='k',
         point_size=10,
@@ -70,16 +71,16 @@ for i in range(5):
 b = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
     kochanek_spline = pv.KochanekSpline(points, bias=[b[i], b[i], b[i]], n_points=1000)
-    p.subplot(2, i)
-    p.add_text('b = ' + str(b[i]))
-    p.add_mesh(kochanek_spline, color='k')
-    p.add_mesh(
+    pl.subplot(2, i)
+    pl.add_text('b = ' + str(b[i]))
+    pl.add_mesh(kochanek_spline, color='k')
+    pl.add_mesh(
         pv.PolyData(points),
         color='k',
         point_size=10,
         render_points_as_spheres=True,
     )
 
-p.show(cpos='xy')
+pl.show(cpos='xy')
 # %%
 # .. tags:: load

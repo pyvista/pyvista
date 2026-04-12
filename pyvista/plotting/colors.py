@@ -8,10 +8,28 @@ Used code from matplotlib.colors.  Thanks for your work.
 from __future__ import annotations
 
 from colorsys import rgb_to_hls
+import contextlib
+import importlib
 import inspect
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 from cycler import Cycler
 from cycler import cycler
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
+import numpy as np
+
+import pyvista as pv
+from pyvista import _validation
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+
+from . import _vtk
 
 try:
     from matplotlib import colormaps
@@ -22,20 +40,9 @@ except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps  # type: ignore[assignment]
     from matplotlib import colors
 
-from typing import TYPE_CHECKING
-from typing import Any
-
-from matplotlib.colors import ListedColormap
-import matplotlib.pyplot as plt
-import numpy as np
-
-import pyvista
-from pyvista.core.utilities.misc import has_module
-
-from . import _vtk
-
 if TYPE_CHECKING:
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -59,145 +66,145 @@ def _format_color_dict(colors: dict[str, str]):
 # Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
 # but with synonyms removed
 _CSS_COLORS = {
-    'aliceblue': '#F0F8FF',
-    'antiquewhite': '#FAEBD7',
-    'aquamarine': '#7FFFD4',
-    'azure': '#F0FFFF',
-    'beige': '#F5F5DC',
-    'bisque': '#FFE4C4',
+    'alice_blue': '#f0f8ff',
+    'antique_white': '#faebd7',
+    'aquamarine': '#7fffd4',
+    'azure': '#f0ffff',
+    'beige': '#f5f5dc',
+    'bisque': '#ffe4c4',
     'black': '#000000',
-    'blanchedalmond': '#FFEBCD',
-    'blue': '#0000FF',
-    'blueviolet': '#8A2BE2',
-    'brown': '#A52A2A',
-    'burlywood': '#DEB887',
-    'cadetblue': '#5F9EA0',
-    'chartreuse': '#7FFF00',
-    'chocolate': '#D2691E',
-    'coral': '#FF7F50',
-    'cornflowerblue': '#6495ED',
-    'cornsilk': '#FFF8DC',
-    'crimson': '#DC143C',
-    'cyan': '#00FFFF',
-    'darkblue': '#00008B',
-    'darkcyan': '#008B8B',
-    'darkgoldenrod': '#B8860B',
-    'darkgray': '#A9A9A9',
-    'darkgreen': '#006400',
-    'darkkhaki': '#BDB76B',
-    'darkmagenta': '#8B008B',
-    'darkolivegreen': '#556B2F',
-    'darkorange': '#FF8C00',
-    'darkorchid': '#9932CC',
-    'darkred': '#8B0000',
-    'darksalmon': '#E9967A',
-    'darkseagreen': '#8FBC8F',
-    'darkslateblue': '#483D8B',
-    'darkslategray': '#2F4F4F',
-    'darkturquoise': '#00CED1',
-    'darkviolet': '#9400D3',
-    'deeppink': '#FF1493',
-    'deepskyblue': '#00BFFF',
-    'dimgray': '#696969',
-    'dodgerblue': '#1E90FF',
-    'firebrick': '#B22222',
-    'floralwhite': '#FFFAF0',
-    'forestgreen': '#228B22',
-    'gainsboro': '#DCDCDC',
-    'ghostwhite': '#F8F8FF',
-    'gold': '#FFD700',
-    'goldenrod': '#DAA520',
+    'blanched_almond': '#ffebcd',
+    'blue': '#0000ff',
+    'blue_violet': '#8a2be2',
+    'brown': '#a52a2a',
+    'burly_wood': '#deb887',
+    'cadet_blue': '#5f9ea0',
+    'chartreuse': '#7fff00',
+    'chocolate': '#d2691e',
+    'coral': '#ff7f50',
+    'cornflower_blue': '#6495ed',
+    'corn_silk': '#fff8dc',
+    'crimson': '#dc143c',
+    'cyan': '#00ffff',
+    'dark_blue': '#00008b',
+    'dark_cyan': '#008b8b',
+    'dark_goldenrod': '#b8860b',
+    'dark_gray': '#a9a9a9',
+    'dark_green': '#006400',
+    'dark_khaki': '#bdb76b',
+    'dark_magenta': '#8b008b',
+    'dark_olive_green': '#556b2f',
+    'dark_orange': '#ff8c00',
+    'dark_orchid': '#9932cc',
+    'dark_red': '#8b0000',
+    'dark_salmon': '#e9967a',
+    'dark_sea_green': '#8fbc8f',
+    'dark_slate_blue': '#483d8b',
+    'dark_slate_gray': '#2f4f4f',
+    'dark_turquoise': '#00ced1',
+    'dark_violet': '#9400d3',
+    'deep_pink': '#ff1493',
+    'deep_sky_blue': '#00bfff',
+    'dim_gray': '#696969',
+    'dodger_blue': '#1e90ff',
+    'fire_brick': '#b22222',
+    'floral_white': '#fffaf0',
+    'forest_green': '#228b22',
+    'gainsboro': '#dcdcdc',
+    'ghost_white': '#f8f8ff',
+    'gold': '#ffd700',
+    'goldenrod': '#daa520',
     'gray': '#808080',
     'green': '#008000',
-    'greenyellow': '#ADFF2F',
-    'honeydew': '#F0FFF0',
-    'hotpink': '#FF69B4',
-    'indianred': '#CD5C5C',
-    'indigo': '#4B0082',
-    'ivory': '#FFFFF0',
-    'khaki': '#F0E68C',
-    'lavender': '#E6E6FA',
-    'lavenderblush': '#FFF0F5',
-    'lawngreen': '#7CFC00',
-    'lemonchiffon': '#FFFACD',
-    'lightblue': '#ADD8E6',
-    'lightcoral': '#F08080',
-    'lightcyan': '#E0FFFF',
-    'lightgoldenrodyellow': '#FAFAD2',
-    'lightgray': '#D3D3D3',
-    'lightgreen': '#90EE90',
-    'lightpink': '#FFB6C1',
-    'lightsalmon': '#FFA07A',
-    'lightseagreen': '#20B2AA',
-    'lightskyblue': '#87CEFA',
-    'lightslategray': '#778899',
-    'lightsteelblue': '#B0C4DE',
-    'lightyellow': '#FFFFE0',
-    'lime': '#00FF00',
-    'limegreen': '#32CD32',
-    'linen': '#FAF0E6',
-    'magenta': '#FF00FF',
+    'green_yellow': '#adff2f',
+    'honeydew': '#f0fff0',
+    'hot_pink': '#ff69b4',
+    'indian_red': '#cd5c5c',
+    'indigo': '#4b0082',
+    'ivory': '#fffff0',
+    'khaki': '#f0e68c',
+    'lavender': '#e6e6fa',
+    'lavender_blush': '#fff0f5',
+    'lawn_green': '#7cfc00',
+    'lemon_chiffon': '#fffacd',
+    'light_blue': '#add8e6',
+    'light_coral': '#f08080',
+    'light_cyan': '#e0ffff',
+    'light_goldenrod_yellow': '#fafad2',
+    'light_gray': '#d3d3d3',
+    'light_green': '#90ee90',
+    'light_pink': '#ffb6c1',
+    'light_salmon': '#ffa07a',
+    'light_sea_green': '#20b2aa',
+    'light_sky_blue': '#87cefa',
+    'light_slate_gray': '#778899',
+    'light_steel_blue': '#b0c4de',
+    'light_yellow': '#ffffe0',
+    'lime': '#00ff00',
+    'lime_green': '#32cd32',
+    'linen': '#faf0e6',
+    'magenta': '#ff00ff',
     'maroon': '#800000',
-    'mediumaquamarine': '#66CDAA',
-    'mediumblue': '#0000CD',
-    'mediumorchid': '#BA55D3',
-    'mediumpurple': '#9370DB',
-    'mediumseagreen': '#3CB371',
-    'mediumslateblue': '#7B68EE',
-    'mediumspringgreen': '#00FA9A',
-    'mediumturquoise': '#48D1CC',
-    'mediumvioletred': '#C71585',
-    'midnightblue': '#191970',
-    'mintcream': '#F5FFFA',
-    'mistyrose': '#FFE4E1',
-    'moccasin': '#FFE4B5',
-    'navajowhite': '#FFDEAD',
+    'medium_aquamarine': '#66cdaa',
+    'medium_blue': '#0000cd',
+    'medium_orchid': '#ba55d3',
+    'medium_purple': '#9370db',
+    'medium_sea_green': '#3cb371',
+    'medium_slate_blue': '#7b68ee',
+    'medium_spring_green': '#00fa9a',
+    'medium_turquoise': '#48d1cc',
+    'medium_violet_red': '#c71585',
+    'midnight_blue': '#191970',
+    'mint_cream': '#f5fffa',
+    'misty_rose': '#ffe4e1',
+    'moccasin': '#ffe4b5',
+    'navajo_white': '#ffdead',
     'navy': '#000080',
-    'oldlace': '#FDF5E6',
+    'old_lace': '#fdf5e6',
     'olive': '#808000',
-    'olivedrab': '#6B8E23',
-    'orange': '#FFA500',
-    'orangered': '#FF4500',
-    'orchid': '#DA70D6',
-    'palegoldenrod': '#EEE8AA',
-    'palegreen': '#98FB98',
-    'paleturquoise': '#AFEEEE',
-    'palevioletred': '#DB7093',
-    'papayawhip': '#FFEFD5',
-    'peachpuff': '#FFDAB9',
-    'peru': '#CD853F',
-    'pink': '#FFC0CB',
-    'plum': '#DDA0DD',
-    'powderblue': '#B0E0E6',
+    'olive_drab': '#6b8e23',
+    'orange': '#ffa500',
+    'orange_red': '#ff4500',
+    'orchid': '#da70d6',
+    'pale_goldenrod': '#eee8aa',
+    'pale_green': '#98fb98',
+    'pale_turquoise': '#afeeee',
+    'pale_violet_red': '#db7093',
+    'papaya_whip': '#ffefd5',
+    'peach_puff': '#ffdab9',
+    'peru': '#cd853f',
+    'pink': '#ffc0cb',
+    'plum': '#dda0dd',
+    'powder_blue': '#b0e0e6',
     'purple': '#800080',
-    'rebeccapurple': '#663399',
-    'red': '#FF0000',
-    'rosybrown': '#BC8F8F',
-    'royalblue': '#4169E1',
-    'saddlebrown': '#8B4513',
-    'salmon': '#FA8072',
-    'sandybrown': '#F4A460',
-    'seagreen': '#2E8B57',
-    'seashell': '#FFF5EE',
-    'sienna': '#A0522D',
-    'silver': '#C0C0C0',
-    'skyblue': '#87CEEB',
-    'slateblue': '#6A5ACD',
-    'slategray': '#708090',
-    'snow': '#FFFAFA',
-    'springgreen': '#00FF7F',
-    'steelblue': '#4682B4',
-    'tan': '#D2B48C',
+    'rebecca_purple': '#663399',
+    'red': '#ff0000',
+    'rosy_brown': '#bc8f8f',
+    'royal_blue': '#4169e1',
+    'saddle_brown': '#8b4513',
+    'salmon': '#fa8072',
+    'sandy_brown': '#f4a460',
+    'sea_green': '#2e8b57',
+    'seashell': '#fff5ee',
+    'sienna': '#a0522d',
+    'silver': '#c0c0c0',
+    'sky_blue': '#87ceeb',
+    'slate_blue': '#6a5acd',
+    'slate_gray': '#708090',
+    'snow': '#fffafa',
+    'spring_green': '#00ff7f',
+    'steel_blue': '#4682b4',
+    'tan': '#d2b48c',
     'teal': '#008080',
-    'thistle': '#D8BFD8',
-    'tomato': '#FF6347',
-    'turquoise': '#40E0D0',
-    'violet': '#EE82EE',
-    'wheat': '#F5DEB3',
-    'white': '#FFFFFF',
-    'whitesmoke': '#F5F5F5',
-    'yellow': '#FFFF00',
-    'yellowgreen': '#9ACD32',
+    'thistle': '#d8bfd8',
+    'tomato': '#ff6347',
+    'turquoise': '#40e0d0',
+    'violet': '#ee82ee',
+    'wheat': '#f5deb3',
+    'white': '#ffffff',
+    'white_smoke': '#f5f5f5',
+    'yellow': '#ffff00',
+    'yellow_green': '#9acd32',
 }
 
 # Tableau colors. Matches matplotlib.colors.TABLEAU_COLORS
@@ -213,7 +220,10 @@ _TABLEAU_COLORS = {
     'tab:olive': '#bcbd22',
     'tab:cyan': '#17becf',
 }
-_PARAVIEW_COLORS = {'paraview_background': '#52576e'}
+_PARAVIEW_COLORS = {
+    'paraview_background': '#54596d',
+    'paraview_background_warm': '#625d5a',
+}
 
 # Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
 # The vtk colors are only partially supported:
@@ -272,7 +282,7 @@ _VTK_COLORS = {
     'permanent_green': '#0ac92b',
     'permanent_red_violet': '#db2645',
     'raspberry': '#872657',
-    'raw_sienna': '#C76114',
+    'raw_sienna': '#c76114',
     'raw_umber': '#734a12',
     'rose_madder': '#e33638',
     'sap_green': '#308014',
@@ -290,9 +300,36 @@ _VTK_COLORS = {
     'zinc_white': '#fcf7ff',
 }
 
-hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS)
+hex_colors = _CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS
+_formatted_hex_colors = _format_color_dict(hex_colors)
 
-color_names = {h: n for n, h in hexcolors.items()}
+
+def _get_deprecated_hexcolors():
+    msg = (
+        "'hexcolors' is deprecated; use 'hex_colors' instead. "
+        'The color names in `hex_colors` are delimited with `_`.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if pv.version_info >= (0, 51):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove hexcolors.'
+        raise RuntimeError(msg)
+    return _formatted_hex_colors
+
+
+def __getattr__(name: str):
+    if name == 'hexcolors':
+        return _get_deprecated_hexcolors()
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove colors.__getattr__.'
+        raise RuntimeError(msg)
+    msg = f'module {__name__!r} has no attribute {name!r}'
+    raise AttributeError(msg)
+
+
+color_names = {h: n for n, h in hex_colors.items()}
 
 color_char_to_word = {
     'b': 'blue',
@@ -305,38 +342,249 @@ color_char_to_word = {
     'w': 'white',
 }
 
-_color_synonyms = {
+color_synonyms = {
     **color_char_to_word,
     'aqua': 'cyan',
-    'darkgrey': 'darkgray',
-    'darkslategrey': 'darkslategray',
-    'dimgrey': 'dimgray',
+    'dark_grey': 'dark_gray',
+    'dark_slate_grey': 'dark_slate_gray',
+    'dim_grey': 'dimgray',
     'fuchsia': 'magenta',
     'grey': 'gray',
-    'lightgrey': 'lightgray',
-    'lightslategrey': 'lightslategray',
+    'light_grey': 'light_gray',
+    'light_slate_grey': 'light_slate_gray',
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
-    'slategrey': 'slategray',
-    'lightgoldenrod': 'lightgoldenrodyellow',
+    'paraview_warm': 'paraview_background_warm',
+    'slate_grey': 'slate_gray',
+    'light_goldenrod': 'light_goldenrod_yellow',
 }
 
-color_synonyms = {
-    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
+_formatted_color_synonyms = {
+    _format_color_name(syn): _format_color_name(name) for syn, name in color_synonyms.items()
 }
 
-matplotlib_default_colors = [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
+
+_ALL_COLORS_LITERAL = Literal[
+    # CSS colors
+    'alice_blue',
+    'antique_white',
+    'aquamarine',
+    'azure',
+    'beige',
+    'bisque',
+    'black',
+    'blanched_almond',
+    'blue',
+    'blue_violet',
+    'brown',
+    'burly_wood',
+    'cadet_blue',
+    'chartreuse',
+    'chocolate',
+    'coral',
+    'cornflower_blue',
+    'corn_silk',
+    'crimson',
+    'cyan',
+    'dark_blue',
+    'dark_cyan',
+    'dark_goldenrod',
+    'dark_gray',
+    'dark_green',
+    'dark_khaki',
+    'dark_magenta',
+    'dark_olive_green',
+    'dark_orange',
+    'dark_orchid',
+    'dark_red',
+    'dark_salmon',
+    'dark_sea_green',
+    'dark_slate_blue',
+    'dark_slate_gray',
+    'dark_turquoise',
+    'dark_violet',
+    'deep_pink',
+    'deep_sky_blue',
+    'dim_gray',
+    'dodger_blue',
+    'fire_brick',
+    'floral_white',
+    'forest_green',
+    'gainsboro',
+    'ghost_white',
+    'gold',
+    'goldenrod',
+    'gray',
+    'green',
+    'green_yellow',
+    'honeydew',
+    'hot_pink',
+    'indian_red',
+    'indigo',
+    'ivory',
+    'khaki',
+    'lavender',
+    'lavender_blush',
+    'lawn_green',
+    'lemon_chiffon',
+    'light_blue',
+    'light_coral',
+    'light_cyan',
+    'light_goldenrod_yellow',
+    'light_gray',
+    'light_green',
+    'light_pink',
+    'light_salmon',
+    'light_sea_green',
+    'light_sky_blue',
+    'light_slate_gray',
+    'light_steel_blue',
+    'light_yellow',
+    'lime',
+    'lime_green',
+    'linen',
+    'magenta',
+    'maroon',
+    'medium_aquamarine',
+    'medium_blue',
+    'medium_orchid',
+    'medium_purple',
+    'medium_sea_green',
+    'medium_slate_blue',
+    'medium_spring_green',
+    'medium_turquoise',
+    'medium_violet_red',
+    'midnight_blue',
+    'mint_cream',
+    'misty_rose',
+    'moccasin',
+    'navajo_white',
+    'navy',
+    'old_lace',
+    'olive',
+    'olive_drab',
+    'orange',
+    'orange_red',
+    'orchid',
+    'pale_goldenrod',
+    'pale_green',
+    'pale_turquoise',
+    'pale_violet_red',
+    'papaya_whip',
+    'peach_puff',
+    'peru',
+    'pink',
+    'plum',
+    'powder_blue',
+    'purple',
+    'rebecca_purple',
+    'red',
+    'rosy_brown',
+    'royal_blue',
+    'saddle_brown',
+    'salmon',
+    'sandy_brown',
+    'sea_green',
+    'seashell',
+    'sienna',
+    'silver',
+    'sky_blue',
+    'slate_blue',
+    'slate_gray',
+    'snow',
+    'spring_green',
+    'steel_blue',
+    'tan',
+    'teal',
+    'thistle',
+    'tomato',
+    'turquoise',
+    'violet',
+    'wheat',
+    'white',
+    'white_smoke',
+    'yellow',
+    'yellow_green',
+    # Tableau colors
+    'tab:blue',
+    'tab:orange',
+    'tab:green',
+    'tab:red',
+    'tab:purple',
+    'tab:brown',
+    'tab:pink',
+    'tab:gray',
+    'tab:olive',
+    'tab:cyan',
+    # ParaView colors
+    'paraview_background',
+    'paraview_background_warm',
+    # VTK colors
+    'alizarin_crimson',
+    'aureoline_yellow',
+    'banana',
+    'brick',
+    'brown_madder',
+    'brown_ochre',
+    'burnt_sienna',
+    'burnt_umber',
+    'cadmium_lemon',
+    'cadmium_orange',
+    'cadmium_yellow',
+    'carrot',
+    'cerulean',
+    'chrome_oxide_green',
+    'cinnabar_green',
+    'cobalt',
+    'cobalt_green',
+    'cold_grey',
+    'deep_cadmium_red',
+    'deep_cobalt_violet',
+    'deep_naples_yellow',
+    'deep_ochre',
+    'eggshell',
+    'emerald_green',
+    'english_red',
+    'flesh',
+    'flesh_ochre',
+    'geranium_lake',
+    'gold_ochre',
+    'greenish_umber',
+    'ivory_black',
+    'lamp_black',
+    'light_cadmium_red',
+    'light_cadmium_yellow',
+    'light_slate_blue',
+    'light_viridian',
+    'madder_lake_deep',
+    'manganese_blue',
+    'mars_orange',
+    'mars_yellow',
+    'melon',
+    'mint',
+    'peacock',
+    'permanent_green',
+    'permanent_red_violet',
+    'raspberry',
+    'raw_sienna',
+    'raw_umber',
+    'rose_madder',
+    'sap_green',
+    'sepia',
+    'terre_verte',
+    'titanium_white',
+    'turquoise_blue',
+    'ultramarine',
+    'ultramarine_violet',
+    'van_dyke_brown',
+    'venetian_red',
+    'violet_red',
+    'warm_grey',
+    'yellow_ochre',
+    'zinc_white',
 ]
+
+matplotlib_default_colors = list(_TABLEAU_COLORS.values())
 
 COLOR_SCHEMES = {
     'spectrum': {
@@ -346,7 +594,10 @@ COLOR_SCHEMES = {
     'warm': {'id': _vtk.vtkColorSeries.WARM, 'descr': 'dark red → yellow'},
     'cool': {'id': _vtk.vtkColorSeries.COOL, 'descr': 'green → blue → purple'},
     'blues': {'id': _vtk.vtkColorSeries.BLUES, 'descr': 'Different shades of blue'},
-    'wild_flower': {'id': _vtk.vtkColorSeries.WILD_FLOWER, 'descr': 'blue → purple → pink'},
+    'wild_flower': {
+        'id': _vtk.vtkColorSeries.WILD_FLOWER,
+        'descr': 'blue → purple → pink',
+    },
     'citrus': {'id': _vtk.vtkColorSeries.CITRUS, 'descr': 'green → yellow → orange'},
     'div_purple_orange11': {
         'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
@@ -542,7 +793,8 @@ COLOR_SCHEMES = {
     },
     'qual_accent': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
-        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray',
+        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, '
+        'brown, gray',
     },
     'qual_dark2': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
@@ -550,7 +802,8 @@ COLOR_SCHEMES = {
     },
     'qual_set3': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
-        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow',
+        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, '
+        'pink, gray, purple, light green, yellow',
     },
     'qual_set2': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
@@ -570,7 +823,8 @@ COLOR_SCHEMES = {
     },
     'qual_paired': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
-        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow',
+        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, '
+        'light purple, purple, light yellow',
     },
     'custom': {'id': _vtk.vtkColorSeries.CUSTOM, 'descr': None},
 }
@@ -582,7 +836,7 @@ SCHEME_NAMES = {
 
 # Define colormaps that require colorcet
 # matches set(colorcet.cm.keys()) - set(mpl.colormaps)
-_COLORCET_CMAPS = [
+_COLORCET_CMAPS_LITERAL = Literal[
     'CET_C1',
     'CET_C10',
     'CET_C10_r',
@@ -998,10 +1252,11 @@ _COLORCET_CMAPS = [
     'rainbow_bgyrm_35_85_c71',
     'rainbow_bgyrm_35_85_c71_r',
 ]
+_COLORCET_CMAPS = get_args(_COLORCET_CMAPS_LITERAL)
 
 # Define colormaps that require cmocean
 # matches set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
-_CMOCEAN_CMAPS = [
+_CMOCEAN_CMAPS_LITERAL = Literal[
     'algae',
     'algae_i',
     'algae_i_r',
@@ -1111,9 +1366,294 @@ _CMOCEAN_CMAPS = [
     'turbid_r',
     'turbid_r_i',
 ]
+_CMOCEAN_CMAPS = get_args(_CMOCEAN_CMAPS_LITERAL)
+
+_CMCRAMERI_CMAPS_LITERAL = Literal[
+    'acton',
+    'actonS',
+    'acton_r',
+    'bam',
+    'bamO',
+    'bamO_r',
+    'bam_r',
+    'bamako',
+    'bamakoS',
+    'bamako_r',
+    'batlow',
+    'batlowK',
+    'batlowKS',
+    'batlowK_r',
+    'batlowS',
+    'batlowW',
+    'batlowWS',
+    'batlowW_r',
+    'batlow_r',
+    'bilbao',
+    'bilbaoS',
+    'bilbao_r',
+    'broc',
+    'brocO',
+    'brocO_r',
+    'broc_r',
+    'buda',
+    'budaS',
+    'buda_r',
+    'bukavu',
+    'bukavu_r',
+    'cork',
+    'corkO',
+    'corkO_r',
+    'cork_r',
+    'davos',
+    'davosS',
+    'davos_r',
+    'devon',
+    'devonS',
+    'devon_r',
+    'fes',
+    'fes_r',
+    'glasgow',
+    'glasgowS',
+    'glasgow_r',
+    'grayC',
+    'grayCS',
+    'grayC_r',
+    'hawaii',
+    'hawaiiS',
+    'hawaii_r',
+    'imola',
+    'imolaS',
+    'imola_r',
+    'lajolla',
+    'lajollaS',
+    'lajolla_r',
+    'lapaz',
+    'lapazS',
+    'lapaz_r',
+    'lipari',
+    'lipariS',
+    'lipari_r',
+    'lisbon',
+    'lisbon_r',
+    'navia',
+    'naviaS',
+    'navia_r',
+    'nuuk',
+    'nuukS',
+    'nuuk_r',
+    'oleron',
+    'oleron_r',
+    'oslo',
+    'osloS',
+    'oslo_r',
+    'roma',
+    'romaO',
+    'romaO_r',
+    'roma_r',
+    'tofino',
+    'tofino_r',
+    'tokyo',
+    'tokyoS',
+    'tokyo_r',
+    'turku',
+    'turkuS',
+    'turku_r',
+    'vik',
+    'vikO',
+    'vikO_r',
+    'vik_r',
+]
+_CMCRAMERI_CMAPS = get_args(_CMCRAMERI_CMAPS_LITERAL)
+
+_MATPLOTLIB_CMAPS_LITERAL = Literal[
+    'Accent',
+    'Accent_r',
+    'Blues',
+    'Blues_r',
+    'BrBG',
+    'BrBG_r',
+    'BuGn',
+    'BuGn_r',
+    'BuPu',
+    'BuPu_r',
+    'CMRmap',
+    'CMRmap_r',
+    'Dark2',
+    'Dark2_r',
+    'GnBu',
+    'GnBu_r',
+    'Grays',
+    'Grays_r',
+    'Greens',
+    'Greens_r',
+    'Greys',
+    'Greys_r',
+    'OrRd',
+    'OrRd_r',
+    'Oranges',
+    'Oranges_r',
+    'PRGn',
+    'PRGn_r',
+    'Paired',
+    'Paired_r',
+    'Pastel1',
+    'Pastel1_r',
+    'Pastel2',
+    'Pastel2_r',
+    'PiYG',
+    'PiYG_r',
+    'PuBu',
+    'PuBuGn',
+    'PuBuGn_r',
+    'PuBu_r',
+    'PuOr',
+    'PuOr_r',
+    'PuRd',
+    'PuRd_r',
+    'Purples',
+    'Purples_r',
+    'RdBu',
+    'RdBu_r',
+    'RdGy',
+    'RdGy_r',
+    'RdPu',
+    'RdPu_r',
+    'RdYlBu',
+    'RdYlBu_r',
+    'RdYlGn',
+    'RdYlGn_r',
+    'Reds',
+    'Reds_r',
+    'Set1',
+    'Set1_r',
+    'Set2',
+    'Set2_r',
+    'Set3',
+    'Set3_r',
+    'Spectral',
+    'Spectral_r',
+    'Wistia',
+    'Wistia_r',
+    'YlGn',
+    'YlGnBu',
+    'YlGnBu_r',
+    'YlGn_r',
+    'YlOrBr',
+    'YlOrBr_r',
+    'YlOrRd',
+    'YlOrRd_r',
+    'afmhot',
+    'afmhot_r',
+    'autumn',
+    'autumn_r',
+    'berlin',
+    'berlin_r',
+    'binary',
+    'binary_r',
+    'bone',
+    'bone_r',
+    'brg',
+    'brg_r',
+    'bwr',
+    'bwr_r',
+    'cividis',
+    'cividis_r',
+    'cool',
+    'cool_r',
+    'coolwarm',
+    'coolwarm_r',
+    'copper',
+    'copper_r',
+    'cubehelix',
+    'cubehelix_r',
+    'flag',
+    'flag_r',
+    'gist_earth',
+    'gist_earth_r',
+    'gist_gray',
+    'gist_gray_r',
+    'gist_grey',
+    'gist_grey_r',
+    'gist_heat',
+    'gist_heat_r',
+    'gist_ncar',
+    'gist_ncar_r',
+    'gist_rainbow',
+    'gist_rainbow_r',
+    'gist_stern',
+    'gist_stern_r',
+    'gist_yarg',
+    'gist_yarg_r',
+    'gist_yerg',
+    'gist_yerg_r',
+    'gnuplot',
+    'gnuplot2',
+    'gnuplot2_r',
+    'gnuplot_r',
+    'gray',
+    'gray_r',
+    'grey',
+    'grey_r',
+    'hot',
+    'hot_r',
+    'hsv',
+    'hsv_r',
+    'inferno',
+    'inferno_r',
+    'jet',
+    'jet_r',
+    'magma',
+    'magma_r',
+    'managua',
+    'managua_r',
+    'nipy_spectral',
+    'nipy_spectral_r',
+    'ocean',
+    'ocean_r',
+    'okabe_ito',
+    'okabe_ito_r',
+    'pink',
+    'pink_r',
+    'plasma',
+    'plasma_r',
+    'prism',
+    'prism_r',
+    'rainbow',
+    'rainbow_r',
+    'seismic',
+    'seismic_r',
+    'spring',
+    'spring_r',
+    'summer',
+    'summer_r',
+    'tab10',
+    'tab10_r',
+    'tab20',
+    'tab20_r',
+    'tab20b',
+    'tab20b_r',
+    'tab20c',
+    'tab20c_r',
+    'terrain',
+    'terrain_r',
+    'turbo',
+    'turbo_r',
+    'twilight',
+    'twilight_r',
+    'twilight_shifted',
+    'twilight_shifted_r',
+    'vanimo',
+    'vanimo_r',
+    'viridis',
+    'viridis_r',
+    'winter',
+    'winter_r',
+]
+
+_MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
-class Color:
+class Color(_NoNewAttrMixin):
     """Helper class to convert between different color representations used in the pyvista library.
 
     Many pyvista methods accept :data:`ColorLike` parameters. This helper class
@@ -1193,7 +1733,8 @@ class Color:
         {'alpha', 'a', 'opacity'},  # 3
     )
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['color', 'opacity'])
+    def __init__(  # noqa: PLR0917
         self,
         color: ColorLike | None = None,
         opacity: float | str | None = None,
@@ -1207,8 +1748,11 @@ class Color:
 
         # Use default color if no color is provided
         if color is None:
-            color = pyvista.global_theme.color if default_color is None else default_color
+            color = pv.global_theme.color if default_color is None else default_color
 
+        _validation.check_instance(
+            color, (Color, str, dict, list, tuple, np.ndarray, _vtk.vtkColor3ub), name='color'
+        )
         try:
             if isinstance(color, Color):
                 # Create copy of color instance
@@ -1225,10 +1769,10 @@ class Color:
             elif isinstance(color, _vtk.vtkColor3ub):
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
-            else:
-                msg = f'Unsupported color type: {type(color)}'
-                raise ValueError(msg)
-            self._name = color_names.get(self.hex_rgb, None)
+            else:  # pragma: no cover
+                msg = f'Unexpected color type: {type(color)}'
+                raise TypeError(msg)
+            self._name = color_names.get(self.hex_rgb)
         except ValueError as e:
             msg = (
                 '\n'
@@ -1273,9 +1817,7 @@ class Color:
 
         """
         h = h.lstrip('#')
-        if h.startswith('0x'):
-            h = h[2:]
-        return h
+        return h.removeprefix('0x')
 
     @staticmethod
     def convert_color_channel(
@@ -1356,7 +1898,9 @@ class Color:
         arg = h
         h = self.strip_hex_prefix(h)
         try:
-            self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
+            self._from_rgba(
+                [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]
+            )
         except ValueError:
             msg = f'Invalid hex string: {arg}'
             raise ValueError(msg) from None
@@ -1365,14 +1909,14 @@ class Color:
         """Construct color from a name or hex string."""
         arg = n
         n = _format_color_name(n)
-        if n in color_synonyms:
+        if n in _formatted_color_synonyms:
             # Synonym of registered color name
             # Convert from synonym to full hex
-            n = color_synonyms[n]
-            self._from_hex(hexcolors[n])
-        elif n in hexcolors:
+            n = _formatted_color_synonyms[n]
+            self._from_hex(_formatted_hex_colors[n])
+        elif n in _formatted_hex_colors:
             # Color name
-            self._from_hex(hexcolors[n])
+            self._from_hex(_formatted_hex_colors[n])
         else:
             # Otherwise, try conversion to hex
             try:
@@ -1457,7 +2001,12 @@ class Color:
         (1.0, 0.0, 0.0, 0.2)
 
         """
-        return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
+        return (
+            self._red / 255.0,
+            self._green / 255.0,
+            self._blue / 255.0,
+            self._opacity / 255.0,
+        )
 
     @property
     def float_rgb(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1548,14 +2097,19 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
-        The name is always formatted as a lower case string without
-        any delimiters.
+        The name is always formatted as a lower case string with
+        underscore delimiters between words.
 
         See :ref:`named_colors` for a list of supported colors.
 
+        .. versionchanged:: 0.48
+
+            Multi-word names are now delimited with ``_`` e.g. ``'alice_blue'`` instead of
+            ``'aliceblue'``.
+
         Returns
         -------
-        str | None
+        output : str | None
             The color name, in case this color has a name; otherwise ``None``.
 
         Examples
@@ -1565,7 +2119,7 @@ class Color:
         >>> import pyvista as pv
         >>> c = pv.Color('darkblue', default_opacity=0.5)
         >>> c
-        Color(name='darkblue', hex='#00008b80', opacity=128)
+        Color(name='dark_blue', hex='#00008b80', opacity=128)
 
         When creating a new ``Color``, the name may be delimited with a space,
         hyphen, underscore, or written as a single word.
@@ -1576,10 +2130,10 @@ class Color:
 
         >>> c = pv.Color('DarkBlue', default_opacity=0.5)
 
-        However, the name is always standardized as a single lower-case word.
+        However, the name is always standardized as lower-case with an underscore between words.
 
         >>> c
-        Color(name='darkblue', hex='#00008b80', opacity=128)
+        Color(name='dark_blue', hex='#00008b80', opacity=128)
 
         """
         return self._name
@@ -1695,16 +2249,19 @@ class Color:
         return f'Color({kwargs})'
 
 
-PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
+PARAVIEW_BACKGROUND = Color('paraview').float_rgb
 
 
-def get_cmap_safe(cmap):
-    """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
+    """Fetch a colormap by name from matplotlib, colorcet, cmocean, or cmcrameri.
+
+    See :ref:`named_colormaps` for supported colormaps.
 
     Parameters
     ----------
-    cmap : str or list of str
-        Name of the colormap to fetch. If the input is a list of strings,
+    cmap : str | list[str] | matplotlib.colors.Colormap
+        Name of the colormap to fetch. If the input is a list of strings, the
+        strings must be color names (from :ref:`named_colors`), and
         it will create a ``ListedColormap`` with the input list.
 
     Returns
@@ -1720,62 +2277,72 @@ def get_cmap_safe(cmap):
         If the input is a list of items that are not strings.
 
     """
+    _validation.check_instance(cmap, (str, list, colors.Colormap), name='cmap')
+
+    def get_3rd_party_cmap(cmap_):
+        cmap_sources = {
+            'colorcet.cm': _COLORCET_CMAPS,
+            'cmocean.cm.cmap_d': _CMOCEAN_CMAPS,
+            'cmcrameri.cm.cmaps': _CMCRAMERI_CMAPS,
+        }
+
+        def get_nested_attr(obj, attr_path):
+            for attr in attr_path:
+                obj = getattr(obj, attr)
+            return obj
+
+        # Try importing and returning cmap from each package
+        for cmap_import, known_cmaps in cmap_sources.items():
+            parts = cmap_import.split('.')
+            top_module = parts[0]
+
+            with contextlib.suppress(ImportError):
+                mod = importlib.import_module(top_module)
+                cmap_dict = get_nested_attr(mod, parts[1:])
+                with contextlib.suppress(KeyError):
+                    return cmap_dict[cmap_]
+
+            if cmap_ in known_cmaps:  # pragma: no cover
+                msg = (
+                    f'Package `{top_module}` is required to use colormap {cmap_!r}.\n'
+                    'Install PyVista with `pyvista[colormaps]` to install it by default.'
+                )
+                raise ModuleNotFoundError(msg)
+        return None
+
+    if isinstance(cmap, colors.Colormap):
+        return cmap
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
-            cmap = IPYGANY_MAP[cmap]
+            cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
 
-        msg_template = (
-            'Package `{}` is required to use colormap {!r}.\n'
-            'Install PyVista with `pyvista[colormaps]` to install it by default.'
-        )
-        # Try colorcet first
-        if has_module(module := 'colorcet'):  # pragma: no branch
-            import colorcet
-
-            try:
-                return colorcet.cm[cmap]
-            except KeyError:
-                pass
-        elif cmap in _COLORCET_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        # Try cmocean second
-        if has_module(module := 'cmocean'):  # pragma: no branch
-            import cmocean
-
-            try:
-                return cmocean.cm.cmap_d[cmap]
-            except KeyError:
-                pass
-        elif cmap in _CMOCEAN_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        if not isinstance(cmap, colors.Colormap):
+        cmap_3rd_party = get_3rd_party_cmap(cmap)
+        if cmap_3rd_party:
+            return cmap_3rd_party
+        elif not isinstance(cmap, colors.Colormap):
             if inspect.ismodule(colormaps):  # pragma: no cover
                 # Backwards compatibility with matplotlib<3.5.0
                 if not hasattr(colormaps, cmap):
                     msg = f'Invalid colormap "{cmap}"'
                     raise ValueError(msg)
-                cmap = getattr(colormaps, cmap)
+                cmap_obj = getattr(colormaps, cmap)
             else:
                 try:
-                    cmap = colormaps[cmap]
+                    cmap_obj = colormaps[cmap]
                 except KeyError:
                     msg = f"Invalid colormap '{cmap}'"
                     raise ValueError(msg) from None
 
-    elif isinstance(cmap, list):
+    else:  # input is a list
         for item in cmap:
             if not isinstance(item, str):
-                msg = 'When inputting a list as a cmap, each item should be a string.'
+                msg = 'When inputting a list as a cmap, each item should be a string.'  # type: ignore[unreachable]
                 raise TypeError(msg)
 
-        cmap = ListedColormap(cmap)
+        cmap_obj = ListedColormap(cmap)
 
-    return cmap
+    return cmap_obj
 
 
 def get_default_cycler():
@@ -1791,18 +2358,18 @@ def get_default_cycler():
 
 
 def get_hexcolors_cycler():
-    """Return a color cycler for all of the available hexcolors.
+    """Return a color cycler for all of the available hex colors.
 
-    See ``pyvista.plotting.colors.hexcolors``.
+    See ``pyvista.plotting.colors.hex_colors``.
 
     Returns
     -------
     cycler.Cycler
-        A cycler object for color using all the available hexcolors from
-        ``pyvista.plotting.colors.hexcolors``.
+        A cycler object for color using all the available hex colors from
+        ``pyvista.plotting.colors.hexc_olors``.
 
     """
-    return cycler('color', hexcolors.keys())
+    return cycler('color', hex_colors.keys())
 
 
 def get_matplotlib_theme_cycler():
@@ -1822,11 +2389,11 @@ def color_scheme_to_cycler(scheme):
 
     Parameters
     ----------
-    scheme : str, int, or _vtk.vtkColorSeries
+    scheme : str | int | :vtk:`vtkColorSeries`
         Color scheme to be converted. If a string, it should correspond to a
         valid color scheme name (e.g., 'viridis'). If an integer, it should
         correspond to a valid color scheme ID. If an instance of
-        `_vtk.vtkColorSeries`, it should be a valid color series.
+        :vtk:`vtkColorSeries`, it should be a valid color series.
 
     Returns
     -------
@@ -1847,7 +2414,7 @@ def color_scheme_to_cycler(scheme):
             series.SetColorScheme(scheme)
         else:
             msg = f'Color scheme not understood: {scheme}'
-            raise ValueError(msg)
+            raise TypeError(msg)
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
@@ -1866,7 +2433,8 @@ def get_cycler(color_cycler):
         - One of the following string values:
             - ``'default'``: Use the default color cycler (matches matplotlib's default)
             - ``'matplotlib'``: Dynamically get matplotlib's current theme's color cycler.
-            - ``'all'``: Cycle through all available colors in ``pyvista.plotting.colors.hexcolors``
+            - ``'all'``: Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
         - A named color scheme from ``pyvista.plotting.colors.COLOR_SCHEMES``
 
     Returns
@@ -1883,23 +2451,24 @@ def get_cycler(color_cycler):
 
     """
     if color_cycler is None:
-        return None
+        cycler_ = None
     elif isinstance(color_cycler, str):
         if color_cycler == 'default':
-            return get_default_cycler()
+            cycler_ = get_default_cycler()
         elif color_cycler == 'matplotlib':
-            return get_matplotlib_theme_cycler()
+            cycler_ = get_matplotlib_theme_cycler()
         elif color_cycler == 'all':
-            return get_hexcolors_cycler()
+            cycler_ = get_hexcolors_cycler()
         elif color_cycler in COLOR_SCHEMES:
-            return color_scheme_to_cycler(color_cycler)
+            cycler_ = color_scheme_to_cycler(color_cycler)
         else:
             msg = f'color cycler of name `{color_cycler}` not found.'
             raise ValueError(msg)
     elif isinstance(color_cycler, (tuple, list)):
-        return cycler('color', color_cycler)
+        cycler_ = cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
-        return color_cycler
+        cycler_ = color_cycler
     else:
         msg = f'color cycler of type {type(color_cycler)} not supported.'
         raise TypeError(msg)
+    return cycler_

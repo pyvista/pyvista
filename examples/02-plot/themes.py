@@ -22,10 +22,10 @@ mesh = examples.download_st_helens().warp_by_scalar()
 
 
 def plot_example():
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.add_bounding_box()
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_bounding_box()
+    pl.show()
 
 
 # %%
@@ -45,8 +45,10 @@ plot_example()
 # PyVista also ships with a few plotting themes:
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
-# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
-# * ``'document'``: this is built for use in document style plotting and making publication quality figures.
+# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and
+#   color schemes.
+# * ``'document'``: this is built for use in document style plotting and making
+#   publication quality figures.
 
 # %%
 # Demo the ``'ParaView'`` theme.
@@ -73,12 +75,12 @@ plot_example()
 # %%
 # Note that you can also use color gradients for the background of the plotting
 # window.
-plotter = pv.Plotter()
-plotter.add_mesh(mesh)
-plotter.show_grid()
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+pl.show_grid()
 # Here we set the gradient
-plotter.set_background('royalblue', top='aliceblue')
-cpos = plotter.show()
+pl.set_background('royalblue', top='aliceblue')
+cpos = pl.show()
 
 
 # %%
@@ -165,7 +167,6 @@ cpos = pv.Sphere().plot(theme=my_theme)
 # Alternatively, set the theme of an instance of ``Plotter``.
 
 pl = pv.Plotter(theme=my_theme)
-# pl.theme = my_theme  # alternatively use the setter
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 

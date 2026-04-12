@@ -35,6 +35,7 @@ Reader Classes
     FacetReader
     FLUENTCFFReader
     FluentReader
+    FRDReader
     GambitReader
     GaussianCubeReader
     GESignaReader
@@ -65,6 +66,7 @@ Reader Classes
     SLCReader
     STLReader
     SegYReader
+    SeriesReader
     TIFFReader
     TecplotReader
     VTKDataSetReader
@@ -80,6 +82,42 @@ Reader Classes
     XMLStructuredGridReader
     XMLUnstructuredGridReader
     XdmfReader
+
+Custom Readers
+~~~~~~~~~~~~~~
+
+Third-party packages can register custom readers so that
+:func:`pyvista.read` handles additional file formats automatically.
+Registration can be done programmatically or via Python entry points
+for zero-config discovery at install time.
+
+.. autofunction:: pyvista.register_reader
+
+**Entry points**
+
+Packages can also register readers in ``pyproject.toml`` so they are
+discovered automatically when installed:
+
+.. code-block:: toml
+
+   [project.entry-points."pyvista.readers"]
+   ".myformat" = "my_package:read_my_format"
+
+**Remote URI support**
+
+When :func:`pyvista.read` is given a remote URI (``https://``,
+``s3://``, etc.) and a custom reader is registered for the file
+extension, the URI is passed directly to the reader.  If the reader
+raises :class:`~pyvista.LocalFileRequiredError`, PyVista downloads
+the file to a temporary local path and retries.  For built-in
+formats with no custom reader, the download happens automatically.
+This uses ``fsspec`` when available (install with
+``pip install pyvista[io]``), falling back to ``pooch`` for HTTP(S)
+URIs.
+
+.. autoclass:: pyvista.LocalFileRequiredError
+.. autofunction:: pyvista.has_scheme
+
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~

@@ -1,29 +1,103 @@
-"""Wrap vtkActor module."""
+"""Wrap :vtk:`vtkActor` module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 import numpy as np
 
-import pyvista
-from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import no_new_attr
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 
 from . import _vtk
+from . import _vtk_gl
 from ._property import Property
+from .opts import ShaderType
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from typing_extensions import Self
 
     from .mapper import _BaseMapper
+    from .opts import PointSpriteShape
+
+_POINT_SPRITE_SHADERS: dict[str, str] = {
+    'circle': (
+        '//VTK::Color::Impl\n'
+        'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        'float d = dot(p, p);\n'
+        'if (d > 1.0) {\n'
+        '  discard;\n'
+        '}\n'
+    ),
+    'triangle': (
+        '//VTK::Color::Impl\n'
+        'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        'float a = 0.5;\n'
+        'float b = 0.8660254;\n'
+        'vec2 v0 = vec2(0.0, a);\n'
+        'vec2 v1 = vec2(-b, -a);\n'
+        'vec2 v2 = vec2(b, -a);\n'
+        'float area = abs((v1.x - v0.x)*(v2.y - v0.y) - (v2.x - v0.x)*(v1.y - v0.y));\n'
+        'float a1 = abs((v1.x - p.x)*(v2.y - p.y) - (v2.x - p.x)*(v1.y - p.y)) / area;\n'
+        'float a2 = abs((v2.x - p.x)*(v0.y - p.y) - (v0.x - p.x)*(v2.y - p.y)) / area;\n'
+        'float a3 = abs((v0.x - p.x)*(v1.y - p.y) - (v1.x - p.x)*(v0.y - p.y)) / area;\n'
+        'if ((a1 + a2 + a3) > 1.01) {\n'
+        '  discard;\n'
+        '}\n'
+    ),
+    'hexagon': (
+        '//VTK::Color::Impl\n'
+        'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        'p = abs(p);\n'
+        'if (p.x > 1.0 || p.y > 1.0) {\n'
+        '  discard;\n'
+        '}\n'
+        'if (p.x + 0.577 * p.y > 1.0) {\n'
+        '  discard;\n'
+        '}\n'
+    ),
+    'diamond': (
+        '//VTK::Color::Impl\n'
+        'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        'if (abs(p.x) + abs(p.y) > 1.0) {\n'
+        '  discard;\n'
+        '}\n'
+    ),
+    'asterisk': (
+        '//VTK::Color::Impl\n'
+        'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        'float r = length(p);\n'
+        'if (r > 1.0) discard;\n'
+        'float theta = atan(p.y, p.x);\n'
+        'float N = 5.0;\n'
+        'float inner = 0.5;\n'
+        'float star_radius = mix(1.0, inner, abs(cos(N * theta)));\n'
+        'if (r > star_radius)\n'
+        '  discard;\n'
+    ),
+    'star': (
+        '//VTK::Color::Impl\n'
+        'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        'float r = length(p);\n'
+        'if (r > 1.0) discard;\n'
+        'float theta = atan(p.y, p.x);\n'
+        'theta = mod(theta + 6.2831853 + 1.5707963, 6.2831853);\n'
+        'float N = 5.0;\n'
+        'float inner = 0.4;\n'
+        'float radial = pow(0.5 * (1.0 + cos(N * theta)), 3.0);\n'
+        'float radius = mix(inner, 1.0, radial);\n'
+        'if (r > radius)\n'
+        '  discard;\n'
+    ),
+}
 
 
-@no_new_attr
-class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
-    """Wrap vtkActor.
+class Actor(Prop3D, _vtk.vtkActor):
+    """Wrap :vtk:`vtkActor`.
 
     This class represents the geometry & properties in a rendered
     scene. Normally, a :class:`pyvista.Actor` is constructed from
@@ -86,8 +160,6 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
-
     def __init__(self, mapper=None, prop=None, name=None) -> None:
         """Initialize actor."""
         super().__init__()
@@ -98,6 +170,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         else:
             self.prop = prop
         self._name = name
+        self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
@@ -222,6 +295,33 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         self.SetPickable(value)
 
     @property
+    def force_opaque(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set actor opacity behavior.
+
+        .. versionadded:: 0.48
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then force the
+        actor to be opaque.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.force_opaque
+        False
+        >>> actor.force_opaque = True
+        >>> actor.force_opaque
+        True
+
+        """
+        return bool(self.GetForceOpaque())
+
+    @force_opaque.setter
+    def force_opaque(self, value: bool) -> None:
+        self.SetForceOpaque(value)
+
+    @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor visibility.
 
@@ -241,11 +341,21 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> pl.bounds
-        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+        BoundsTuple(x_min =  139.06100463867188,
+                    x_max = 1654.9300537109375,
+                    y_min =   32.09429931640625,
+                    y_max = 1319.949951171875,
+                    z_min =  -17.741199493408203,
+                    z_max =  282.1300048828125)
 
         >>> actor.visibility = False
         >>> pl.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         """
         return bool(self.GetVisibility())
@@ -276,11 +386,21 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> pl.bounds
-        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+        BoundsTuple(x_min =  139.06100463867188,
+                    x_max = 1654.9300537109375,
+                    y_min =   32.09429931640625,
+                    y_max = 1319.949951171875,
+                    z_min =  -17.741199493408203,
+                    z_max =  282.1300048828125)
 
         >>> actor.use_bounds = False
         >>> pl.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         Although the actor's bounds are no longer used, the actor remains visible.
 
@@ -318,11 +438,12 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> actor.plot()
 
         """
-        pl = pyvista.Plotter()
-        pl.add_actor(self)  # type: ignore[arg-type]
+        pl = pv.Plotter()
+        pl.add_actor(self)
         pl.show(**kwargs)
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Create a copy of this actor.
 
         Parameters
@@ -390,7 +511,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> pyvista.Property | None:  # numpydoc ignore=RT01
+    def backface_prop(self) -> Property | None:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -435,5 +556,388 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
-    def backface_prop(self, value: pyvista.Property) -> None:
+    def backface_prop(self, value: Property) -> None:
         self.SetBackfaceProperty(value)
+
+    def add_shader_replacement(
+        self,
+        shader_type: ShaderType | str,
+        original: str,
+        replacement: str,
+        *,
+        replace_first: bool = True,
+        replace_all: bool = False,
+        _feature_name: str = '_user',
+    ) -> None:
+        r"""Add a GLSL shader replacement to this actor.
+
+        .. versionadded:: 0.48
+
+        This wraps VTK's shader replacement API, providing conflict detection
+        and tracking so that multiple independent shader features can coexist
+        safely on the same actor.
+
+        Parameters
+        ----------
+        shader_type : ShaderType | str
+            Type of shader to modify. Accepts a :class:`~pyvista.plotting.opts.ShaderType`
+            enum value or a string. One of ``'vertex'``, ``'fragment'``,
+            or ``'geometry'``.
+
+        original : str
+            The VTK shader tag to replace (e.g., ``'//VTK::Color::Impl'``).
+
+        replacement : str
+            The GLSL replacement code.
+
+        replace_first : bool, default: True
+            Whether the replacement is applied before VTK's standard
+            shader substitutions.
+
+        replace_all : bool, default: False
+            Whether to replace all occurrences of ``original``.
+
+        _feature_name : str, default: '_user'
+            Internal key used to track which feature owns this replacement.
+            End users should not need to change this. Built-in features
+            use dedicated keys like ``'mip'`` and ``'point_sprite'``.
+
+        Raises
+        ------
+        ValueError
+            If ``shader_type`` is invalid or if another feature already
+            targets the same shader tag.
+
+        Examples
+        --------
+        Add a custom fragment shader that discards pixels outside a circle.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, style='points', point_size=20)
+        >>> actor.add_shader_replacement(
+        ...     'fragment',
+        ...     '//VTK::Color::Impl',
+        ...     '//VTK::Color::Impl\n'
+        ...     'vec2 p = gl_PointCoord * 2.0 - 1.0;\n'
+        ...     'if (dot(p, p) > 1.0) discard;\n',
+        ... )
+
+        """
+        try:
+            shader_type = ShaderType(shader_type)
+        except ValueError:
+            valid = ', '.join(s.value for s in ShaderType)
+            msg = f'Invalid shader_type {shader_type!r}. Must be one of: {valid}'
+            raise ValueError(msg) from None
+
+        vtk_enum = getattr(_vtk_gl.vtkShader, shader_type.value.capitalize())
+        key = (shader_type, original, replace_first)
+        registry = self._shader_replacements
+
+        # Check for conflicts with other features
+        for other_feature, entries in registry.items():
+            if other_feature != _feature_name and key in entries:
+                msg = (
+                    f'Shader replacement conflict: feature {other_feature!r} '
+                    f'already targets ({shader_type!r}, {original!r}, '
+                    f'replace_first={replace_first}). Clear it first with '
+                    f'clear_shader_replacements(_feature_name={other_feature!r}).'
+                )
+                raise ValueError(msg)
+
+        # GetShaderProperty() returns vtkShaderProperty at the type-stub level,
+        # but the runtime object is vtkOpenGLShaderProperty which has these methods.
+        shader_prop = self.GetShaderProperty()
+
+        # If this feature already owns this slot, clear the old one first
+        if _feature_name in registry and key in registry[_feature_name]:
+            shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
+                vtk_enum,
+                original,
+                replace_first,
+            )
+            registry[_feature_name].remove(key)
+
+        # Add the replacement
+        shader_prop.AddShaderReplacement(  # type: ignore[attr-defined]
+            vtk_enum,
+            original,
+            replace_first,
+            replacement,
+            replace_all,
+        )
+
+        # Register it
+        registry.setdefault(_feature_name, []).append(key)
+
+    def clear_shader_replacements(self, *, _feature_name: str | None = None) -> None:
+        """Clear shader replacements from this actor.
+
+        .. versionadded:: 0.48
+
+        Parameters
+        ----------
+        _feature_name : str, optional
+            If specified, only clear replacements registered under this
+            feature name. If ``None``, clear all shader replacements.
+
+        Examples
+        --------
+        Clear all shader replacements from an actor.
+
+        >>> import pyvista as pv
+        >>> actor = pv.Plotter().add_mesh(pv.Sphere())
+        >>> actor.clear_shader_replacements()
+
+        """
+        registry = self._shader_replacements
+        shader_prop = self.GetShaderProperty()
+
+        if _feature_name is None:
+            shader_prop.ClearAllShaderReplacements()
+            registry.clear()
+        elif _feature_name in registry:
+            for shader_type_val, original, replace_first in registry[_feature_name]:
+                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_val.value.capitalize())
+                # vtkOpenGLShaderProperty at runtime; stubs only know vtkShaderProperty
+                shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
+                    vtk_enum,
+                    original,
+                    replace_first,
+                )
+            del registry[_feature_name]
+
+    def enable_maximum_intensity_projection(
+        self,
+        clim: Sequence[float] | None = None,
+    ) -> None:
+        """Enable maximum intensity projection.
+
+        .. versionadded:: 0.48
+
+        This resets the z screen coordinates so that vertices with higher
+        scalar values are rendered closer to the screen, regardless of their
+        actual 3D position. This is useful for dense point cloud visualization
+        where high-value data points should be visible even when occluded by
+        lower-value points.
+
+        Scalar values are normalized to the ``[-1, 0]`` range to stay within
+        the OpenGL clip space.
+
+        Parameters
+        ----------
+        clim : sequence[float], optional
+            Two-element sequence ``(min, max)`` specifying the scalar range
+            for normalization. If not provided, the range is computed from
+            the active scalars on the actor's dataset.
+
+        Raises
+        ------
+        RuntimeError
+            If the VTK version is older than 9.3.
+
+        ValueError
+            If no mapper, dataset, or active scalars are available and
+            ``clim`` is not provided.
+
+        Warnings
+        --------
+        Requires VTK >= 9.3. The vertex shader replacements used by
+        this method are not supported in older VTK versions.
+
+        Maximum Intensity Projection does not work correctly with
+        ``opacity < 1`` unless depth peeling is enabled. See
+        :func:`pyvista.Plotter.enable_depth_peeling`.
+
+        See Also
+        --------
+        :ref:`maximum_intensity_projection_example`
+
+        References
+        ----------
+        Cowan, E.J., 2014. 'X-ray Plunge Projection' - Understanding
+        Structural Geology from Grade Data. AusIMM Monograph 30: Mineral
+        Resource and Ore Reserve Estimation - The AusIMM Guide to Good
+        Practice, second edition, 207-220.
+
+        Examples
+        --------
+        Enable maximum intensity projection on a point cloud actor.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> rng = np.random.default_rng(0)
+        >>> cloud = pv.PolyData(rng.random((1000, 3)))
+        >>> cloud['values'] = cloud.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(cloud, scalars='values', style='points')
+        >>> actor.enable_maximum_intensity_projection()
+
+        """
+        if pv.vtk_version_info < (9, 3):
+            msg = 'Maximum intensity projection requires VTK >= 9.3.'
+            raise RuntimeError(msg)
+
+        if clim is not None:
+            min_val, max_val = float(clim[0]), float(clim[1])
+        else:
+            # The mapper property is typed as _BaseMapper (never None) but can
+            # be None at runtime when no mapper has been assigned.
+            mapper: _BaseMapper | None = self.mapper  # type: ignore[assignment,unused-ignore]
+            if mapper is None:
+                msg = 'Actor must have a mapper to enable MIP without explicit clim.'
+                raise ValueError(msg)
+            dataset = mapper.dataset
+            if dataset is None:
+                msg = 'Mapper must have a dataset to enable MIP without explicit clim.'
+                raise ValueError(msg)
+            scalars = dataset.active_scalars
+            if scalars is None:
+                msg = (
+                    'Dataset must have active scalars to enable MIP without '
+                    'explicit clim. Set scalars on your dataset or pass clim=(min, max).'
+                )
+                raise ValueError(msg)
+            min_val = float(np.nanmin(scalars))
+            max_val = float(np.nanmax(scalars))
+
+        if self.prop.opacity < 1.0:
+            warn_external(
+                'Maximum Intensity Projection does not work correctly with '
+                'opacity < 1.0 unless depth peeling is enabled. See '
+                'pyvista.Plotter.enable_depth_peeling().'
+            )
+
+        denom = max_val - min_val
+        if abs(denom) < 1e-12:
+            denom = 1.0
+
+        glsl_code = (
+            f'float _mip_norm = (colorTCoord[0] - {min_val}) / {denom};\n'
+            'gl_Position.z = -_mip_norm;\n'
+            '//VTK::LineWidthGLES30::Impl\n'
+        )
+
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::LineWidthGLES30::Impl',
+            glsl_code,
+            replace_first=True,
+            replace_all=False,
+            _feature_name='mip',
+        )
+
+    def disable_maximum_intensity_projection(self) -> None:
+        """Disable maximum intensity projection.
+
+        .. versionadded:: 0.48
+
+        Clears the vertex shader replacement that reorders z-coordinates
+        by scalar value, restoring normal depth-based rendering.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> rng = np.random.default_rng(0)
+        >>> cloud = pv.PolyData(rng.random((1000, 3)))
+        >>> cloud['values'] = cloud.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(cloud, scalars='values', style='points')
+        >>> actor.enable_maximum_intensity_projection()
+        >>> actor.disable_maximum_intensity_projection()
+
+        """
+        self.clear_shader_replacements(_feature_name='mip')
+
+    def set_point_sprite_shape(self, shape: PointSpriteShape | str) -> None:
+        """Set a custom point sprite shape via fragment shader.
+
+        .. versionadded:: 0.48
+
+        Replaces the default square point rendering with a custom shape
+        defined by a GLSL fragment shader. This uses the ``discard``
+        instruction to clip fragments outside the desired shape boundary.
+
+        Parameters
+        ----------
+        shape : PointSpriteShape | str
+            The sprite shape to use. Accepts a :class:`PointSpriteShape`
+            enum value or a string. Must be one of:
+
+            * ``'circle'`` - Circular disc
+            * ``'triangle'`` - Upward-pointing triangle
+            * ``'hexagon'`` - Regular hexagon
+            * ``'diamond'`` - Diamond (rotated square)
+            * ``'asterisk'`` - Five-pointed asterisk
+            * ``'star'`` - Five-pointed star
+
+        Raises
+        ------
+        ValueError
+            If ``shape`` is not one of the supported shapes.
+
+        Notes
+        -----
+        Point sprite shapes only produce visible results when
+        ``render_points_as_spheres=False`` and ``style='points'``.
+        When ``render_points_as_spheres=True``, VTK uses a different
+        rendering path that bypasses the fragment shader.
+
+        See Also
+        --------
+        :ref:`point_sprites_example`
+
+        Examples
+        --------
+        Render points as circles instead of squares.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(
+        ...     cloud,
+        ...     style='points',
+        ...     render_points_as_spheres=False,
+        ...     point_size=20,
+        ... )
+        >>> actor.set_point_sprite_shape('circle')
+
+        """
+        if shape not in _POINT_SPRITE_SHADERS:
+            valid = ', '.join(sorted(_POINT_SPRITE_SHADERS))
+            msg = f'Invalid point sprite shape {shape!r}. Must be one of: {valid}'
+            raise ValueError(msg)
+
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::Color::Impl',
+            _POINT_SPRITE_SHADERS[shape],
+            replace_first=True,
+            replace_all=False,
+            _feature_name='point_sprite',
+        )
+
+    def clear_point_sprite_shape(self) -> None:
+        """Clear the custom point sprite shape.
+
+        .. versionadded:: 0.48
+
+        Restores the default square point rendering by removing the
+        fragment shader replacement.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(cloud, style='points', point_size=20)
+        >>> actor.set_point_sprite_shape('circle')
+        >>> actor.clear_point_sprite_shape()
+
+        """
+        self.clear_shader_replacements(_feature_name='point_sprite')

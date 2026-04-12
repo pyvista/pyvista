@@ -33,10 +33,10 @@ b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
 # Preview how this line intersects this mesh
 line = pv.Line(a, b)
 
-p = pv.Plotter()
-p.add_mesh(mesh, style='wireframe', color='w')
-p.add_mesh(line, color='b')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, style='wireframe', color='w')
+pl.add_mesh(line, color='b')
+pl.show()
 
 # %%
 # Run the filter and produce a line plot
@@ -57,11 +57,11 @@ b = [mesh.center[0], mesh.bounds.y_max, mesh.bounds.z_max]
 # Preview how this line intersects this mesh
 line = pv.Line(a, b)
 
-p = pv.Plotter()
-p.add_mesh(mesh)
-p.add_mesh(line, color='white', line_width=10)
-p.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+pl.add_mesh(line, color='white', line_width=10)
+pl.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
+pl.show()
 
 # %%
 # Run the filter and produce a line plot

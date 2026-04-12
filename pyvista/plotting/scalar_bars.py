@@ -7,15 +7,17 @@ import weakref
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
 from .tools import parse_font_family
 
 
-class ScalarBars:
+class ScalarBars(_NoNewAttrMixin):
     """Plotter Scalar Bars.
 
     Parameters
@@ -46,15 +48,16 @@ class ScalarBars:
         lines.append('Scalar Bar Title     Interactive')
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
-            title = f'"{title}"'
-            lines.append(f'{title:20} {interactive!s:5}')
+            title_quotes = f'"{title}"'
+            lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
+    @_deprecate_positional_args(allowed=['actor'])
     def _remove_mapper_from_plotter(
         self,
         actor,
-        reset_camera: bool = False,
-        render: bool = False,
+        reset_camera: bool = False,  # noqa: FBT001, FBT002
+        render: bool = False,  # noqa: FBT001, FBT002
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -85,7 +88,8 @@ class ScalarBars:
                     self._plotter._scalar_bar_slots.add(slot)
             return
 
-    def remove_scalar_bar(self, title=None, render: bool = True):
+    @_deprecate_positional_args(allowed=['title'])
+    def remove_scalar_bar(self, title=None, render: bool = True):  # noqa: FBT001, FBT002
         """Remove a scalar bar.
 
         Parameters
@@ -161,18 +165,84 @@ class ScalarBars:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
-    def add_scalar_bar(
+    def update_title(
+        self,
+        old_title: str,
+        new_title: str,
+        *,
+        render: bool = False,
+    ) -> None:
+        """Update the title of an existing scalar bar.
+
+        .. versionadded:: 0.48.0
+
+        Parameters
+        ----------
+        old_title : str
+            Current title of the scalar bar to update.
+
+        new_title : str
+            New title for the scalar bar.
+
+        render : bool, default: False
+            Force a render after updating the title.
+
+        Raises
+        ------
+        KeyError
+            If no scalar bar with ``old_title`` exists.
+
+        ValueError
+            If a scalar bar with ``new_title`` already exists.
+
+        Examples
+        --------
+        Update the title of a scalar bar.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['Data'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, scalars='Data')
+        >>> pl.scalar_bars.update_title('Data', 'Elevation')
+        >>> pl.show()
+
+        """
+        if old_title not in self._scalar_bar_actors:
+            msg = f'Scalar bar with title "{old_title}" not found.'
+            raise KeyError(msg)
+        if old_title != new_title and new_title in self._scalar_bar_actors:
+            msg = f'Scalar bar with title "{new_title}" already exists.'
+            raise ValueError(msg)
+
+        if old_title != new_title:
+            self._scalar_bar_actors[new_title] = self._scalar_bar_actors.pop(old_title)
+            self._scalar_bar_ranges[new_title] = self._scalar_bar_ranges.pop(old_title)
+            self._scalar_bar_mappers[new_title] = self._scalar_bar_mappers.pop(old_title)
+            if old_title in self._scalar_bar_widgets:
+                self._scalar_bar_widgets[new_title] = self._scalar_bar_widgets.pop(old_title)
+            slot = self._plotter._scalar_bar_slot_lookup.pop(old_title, None)
+            if slot is not None:
+                self._plotter._scalar_bar_slot_lookup[new_title] = slot
+
+        self._scalar_bar_actors[new_title].SetTitle(new_title)
+
+        if render:
+            self._plotter.render()
+
+    @_deprecate_positional_args(allowed=['title'])
+    def add_scalar_bar(  # noqa: PLR0917
         self,
         title='',
         mapper=None,
         n_labels=5,
-        italic: bool = False,
-        bold: bool = False,
+        italic: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = False,  # noqa: FBT001, FBT002
         title_font_size=None,
         label_font_size=None,
         color=None,
         font_family=None,
-        shadow: bool = False,
+        shadow: bool = False,  # noqa: FBT001, FBT002
         width=None,
         height=None,
         position_x=None,
@@ -180,17 +250,17 @@ class ScalarBars:
         vertical=None,
         interactive=None,
         fmt=None,
-        use_opacity: bool = True,
-        outline: bool = False,
-        nan_annotation: bool = False,
+        use_opacity: bool = True,  # noqa: FBT001, FBT002
+        outline: bool = False,  # noqa: FBT001, FBT002
+        nan_annotation: bool = False,  # noqa: FBT001, FBT002
         below_label=None,
         above_label=None,
         background_color=None,
         n_colors=None,
-        fill: bool = False,
-        render: bool = False,
+        fill: bool = False,  # noqa: FBT001, FBT002
+        render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
-        unconstrained_font_size: bool = False,
+        unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -199,7 +269,7 @@ class ScalarBars:
         title : str, default: ""
             Title of the scalar bar.  Default is rendered as an empty title.
 
-        mapper : vtkMapper, optional
+        mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar.  Defaults to the last
             mapper created by the plotter.
 
@@ -323,7 +393,7 @@ class ScalarBars:
 
         Returns
         -------
-        vtk.vtkScalarBarActor
+        :vtk:`vtkScalarBarActor`
             Scalar bar actor.
 
         Notes
@@ -343,9 +413,9 @@ class ScalarBars:
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
-        >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
-        >>> _ = plotter.add_scalar_bar(
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
         ...     'Data',
         ...     interactive=True,
         ...     vertical=False,
@@ -354,7 +424,7 @@ class ScalarBars:
         ...     outline=True,
         ...     fmt='%10.5f',
         ... )
-        >>> plotter.show()
+        >>> pl.show()
 
         """
         if mapper is None:
@@ -362,7 +432,7 @@ class ScalarBars:
             raise ValueError(msg)
 
         if theme is None:
-            theme = pyvista.global_theme
+            theme = pv.global_theme
 
         if interactive is None:
             interactive = theme.interactive
@@ -441,7 +511,7 @@ class ScalarBars:
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = pyvista.LookupTable()
+            lut = pv.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0

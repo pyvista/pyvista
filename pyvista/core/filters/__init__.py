@@ -26,27 +26,49 @@ Examples
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
-import pyvista
+import pyvista as pv
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
-    from .. import _vtk_core as _vtk
+    from pyvista.core import _vtk_core as _vtk
 
 
-def _update_alg(alg, progress_bar: bool = False, message='') -> None:
+def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
+    # Get the status of the alg update using GetExecutive
+    # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
+    if pv.vtk_version_info >= (9, 6, 99):  # >= 9.7.0
+        to_be_updated: Any = alg
+    else:
+        try:
+            to_be_updated = alg.GetExecutive()
+        except AttributeError:
+            # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
+            to_be_updated = alg
+
+    # Do the update
     if progress_bar:
         with ProgressMonitor(alg, message=message):
-            alg.Update()
+            status = to_be_updated.Update()
     else:
-        alg.Update()
+        status = to_be_updated.Update()
+
+    if status is not None and status == 0:
+        # There was an error with the update. Re-run so we can catch it and
+        # raise it as a proper Python error.
+        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
+        # with VTK observers can be slow.
+        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
+            alg.Update()
 
 
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
+    *,
     iport=0,
     iconnection=0,
     oport=0,
@@ -54,16 +76,16 @@ def _get_output(
     active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = cast('pyvista.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
-    data = cast('pyvista.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
-    if not isinstance(data, pyvista.MultiBlock):
+    ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
+    data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
+    if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:
             data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
-    if isinstance(ido, pyvista.PointSet):
+    if isinstance(ido, pv.PointSet):
         return data.cast_to_pointset()
     return data
 
@@ -71,7 +93,8 @@ def _get_output(
 from .composite import CompositeFilters
 from .data_object import DataObjectFilters
 
-# Re-export submodules to maintain the same import paths before filters.py was split into submodules
+# Re-export submodules to maintain the same import paths
+# before filters.py was split into submodules
 from .data_set import DataSetFilters
 from .image_data import ImageDataFilters
 from .poly_data import PolyDataFilters

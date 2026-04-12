@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import pickle
 import re
+import textwrap
 from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
@@ -15,6 +16,8 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
+from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
+from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
@@ -27,9 +30,22 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
+def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
+    mesh_type = _CLASS_READER_RETURN_TYPE[type(reader)]
+    allowed_types = (mesh_type,) if isinstance(mesh_type, str) else mesh_type
+    actual_type = type(mesh).__name__
+    assert actual_type in allowed_types
+
+
+def test_reader_output_type_defined():
+    expected = set(CLASS_READERS.values())
+    actual = set(_CLASS_READER_RETURN_TYPE.keys())
+    assert actual == expected, 'Return type must be defined for every reader'
+
+
 def test_read_raises():
     with pytest.raises(
-        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+        ValueError, match=r'Only one of `file_format` and `force_ext` may be specified.'
     ):
         pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
 
@@ -52,7 +68,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
     ):
         pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
@@ -80,6 +96,7 @@ def test_xmlimagedatareader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.ImageData)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -93,6 +110,7 @@ def test_xmlrectilineargridreader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.RectilinearGrid)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -106,6 +124,7 @@ def test_xmlunstructuredgridreader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.UnstructuredGrid)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -119,6 +138,7 @@ def test_xmlpolydatareader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.PolyData)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -132,6 +152,7 @@ def test_xmlstructuredgridreader(tmpdir):
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
     new_mesh = reader.read()
+    assert_output_type(new_mesh, reader)
     assert isinstance(new_mesh, pv.StructuredGrid)
     assert new_mesh.n_points == mesh.n_points
     assert new_mesh.n_cells == mesh.n_cells
@@ -203,6 +224,7 @@ def test_ensightreader_arrays():
     filename = examples.download_backward_facing_step(load=False)
 
     reader = pv.get_reader(filename)
+    assert_output_type(reader.read(), reader)
     assert reader.path == filename
     assert reader.number_cell_arrays == 9
     assert reader.number_point_arrays == 0
@@ -281,7 +303,7 @@ def test_ensightreader_timepoints():
     mesh_3 = reader.read()
 
     # assert all the data is different
-    for m_1, m_3 in zip(mesh_1, mesh_3):
+    for m_1, m_3 in zip(mesh_1, mesh_3, strict=True):
         assert not all(m_1['DENS'] == m_3['DENS'])
 
     reader.set_active_time_point(0)
@@ -315,7 +337,16 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
-def test_dcmreader(tmpdir):
+def test_ensightreader_non_time_series_data():
+    filename = examples.download_file('simple_tetra/example.case')
+    examples.download_file('simple_tetra/example.geo')
+
+    reader = pv.get_reader(filename)
+    assert reader.number_time_points == 0
+    assert reader.time_values == []
+
+
+def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pv.get_reader(directory)
@@ -324,6 +355,7 @@ def test_dcmreader(tmpdir):
     assert reader.path == directory
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert isinstance(mesh, pv.ImageData)
     assert all([mesh.n_points, mesh.n_cells])
 
@@ -345,6 +377,7 @@ def test_plyreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -355,6 +388,7 @@ def test_objreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -365,6 +399,7 @@ def test_stlreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -375,6 +410,7 @@ def test_tecplotreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh[0].n_points, mesh[0].n_cells])
 
 
@@ -385,6 +421,7 @@ def test_vtkreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -395,6 +432,7 @@ def test_byureader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -405,6 +443,7 @@ def test_facetreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -418,6 +457,7 @@ def test_plot3dmetareader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     for m in mesh:
         assert all([m.n_points, m.n_cells])
 
@@ -503,6 +543,7 @@ def test_binarymarchingcubesreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
     read_mesh = pv.read(filename)
     assert mesh == read_mesh
@@ -543,7 +584,7 @@ def test_pvdreader():
     assert reader.active_time_value == 2.0
 
     mesh = reader.read()
-    assert isinstance(mesh, pv.MultiBlock)
+    assert_output_type(mesh, reader)
     assert len(mesh) == 1
     assert isinstance(mesh[0], pv.StructuredGrid)
 
@@ -598,7 +639,6 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -703,6 +743,7 @@ def test_openfoam_skip_zero_time():
 def test_openfoam_cell_to_point_default():
     reader = get_cavity_reader()
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert reader.cell_to_point_creation is True
     assert mesh[0].n_arrays == 4
 
@@ -720,14 +761,8 @@ def test_openfoam_cell_to_point_default():
 
 
 def test_openfoam_patch_arrays():
-    # vtk version 9.1.0 changed the way patch names are handled.
-    vtk_version = pv.vtk_version_info
-    if vtk_version >= (9, 1, 0):
-        patch_array_key = 'boundary'
-        reader_patch_prefix = 'patch/'
-    else:
-        patch_array_key = 'Patches'
-        reader_patch_prefix = ''
+    patch_array_key = 'boundary'
+    reader_patch_prefix = 'patch/'
 
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
@@ -782,11 +817,10 @@ def test_openfoam_case_type():
     assert reader.case_type == 'decomposed'
     reader.case_type = 'reconstructed'
     assert reader.case_type == 'reconstructed'
-    with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
+    with pytest.raises(ValueError, match=r"Unknown case type 'wrong_value'."):
         reader.case_type = 'wrong_value'
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
@@ -794,6 +828,7 @@ def test_read_cgns():
     assert 'CGNS' in str(reader)
     reader.show_progress()
     assert reader._progress_bar is True
+    assert_output_type(reader.read(), reader)
 
     assert reader.distribute_blocks in [True, False]  # don't insist on a VTK default
     reader.distribute_blocks = True
@@ -840,14 +875,19 @@ def test_read_cgns():
     assert reader.family_array_status('inflow') is True
 
 
-def test_bmpreader():
+def test_bmp_reader_writer(tmp_path):
     filename = examples.download_masonry_texture(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.BMPReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.bmp'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_demreader():
@@ -857,17 +897,27 @@ def test_demreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_jpegreader():
-    filename = examples.planets.download_mars_surface(load=False)
+def test_jpeg_reader_writer(tmp_path):
+    filename = examples.download_bird(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.JPEGReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.jpg'
+    mesh.save(new_filename)
+    assert pv.compare_images(filename, new_filename) < 5
+
+    new_filename = tmp_path / 'new.jpeg'
+    mesh.save(new_filename)
+    assert pv.compare_images(filename, new_filename) < 5
 
 
 def test_meta_image_reader():
@@ -877,17 +927,27 @@ def test_meta_image_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_nifti_reader():
+def test_nifti_reader_writer(tmp_path):
     filename = examples.download_brain_atlas_with_sides(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.NIFTIReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.nii'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
+
+    new_filename = tmp_path / 'new.nii.gz'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_nrrd_reader():
@@ -897,27 +957,38 @@ def test_nrrd_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_png_reader():
+def test_png_reader_writer(tmp_path):
     filename = examples.download_vtk_logo(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.PNGReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
+    new_filename = tmp_path / 'new.png'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
-def test_pnm_reader():
+
+def test_pnm_reader_writer(tmp_path):
     filename = examples.download_gourds_pnm(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.PNMReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.pnm'
+    mesh.save(new_filename)
+    assert pv.read(filename) == pv.read(new_filename)
 
 
 def test_slc_reader():
@@ -927,17 +998,35 @@ def test_slc_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_tiff_reader():
+def test_tiff_reader_writer(tmp_path):
     filename = examples.download_crater_imagery(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.TIFFReader)
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
+
+    new_filename = tmp_path / 'new.tif'
+    mesh.save(new_filename)
+    old = pv.read(filename)
+    new = pv.read(new_filename)
+    # We should be able to do `assert new == old` but the equality check is too strict since
+    # there is floating point error associated with the spacing, so use `np.allclose` instead
+    assert np.allclose(old.active_scalars, new.active_scalars)
+    assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
+
+    new_filename = tmp_path / 'new.tiff'
+    mesh.save(new_filename)
+    old = pv.read(filename)
+    new = pv.read(new_filename)
+    assert np.allclose(old.active_scalars, new.active_scalars)
+    assert np.allclose(old.index_to_physical_matrix, new.index_to_physical_matrix)
 
 
 def test_hdr_reader():
@@ -947,6 +1036,7 @@ def test_hdr_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -957,10 +1047,10 @@ def test_avsucd_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_hdf_reader():
     filename = examples.download_can_crushed_hdf(load=False)
     reader = pv.get_reader(filename)
@@ -968,6 +1058,7 @@ def test_hdf_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
     assert mesh.n_points == 6724
     assert 'VEL' in mesh.point_data
@@ -993,6 +1084,7 @@ def test_xdmf_reader():
     assert reader.cell_array_names == ['a']
 
     blocks = reader.read()
+    assert_output_type(blocks, reader)
     assert reader.active_time_value == 0.0
     assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
     reader.set_active_time_value(0.25)
@@ -1025,21 +1117,19 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
-)
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
     partitions = pv.PartitionedDataSet(
         [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))],
     )
     partitions.save(tmpfile.strpath)
+    reader = pv.get_reader(tmpfile)
     new_partitions = pv.read(tmpfile.strpath)
-    assert isinstance(new_partitions, pv.PartitionedDataSet)
+    assert_output_type(new_partitions, reader)
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
 @pytest.mark.needs_vtk_version(
@@ -1052,6 +1142,7 @@ def test_fluentcffreader():
     assert reader.path == filename
 
     blocks = reader.read()
+    assert_output_type(blocks, reader)
     assert blocks.n_blocks == 1
     assert isinstance(blocks[0], pv.UnstructuredGrid)
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
@@ -1064,12 +1155,10 @@ def test_gambitreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
     reader = pv.get_reader(filename)
@@ -1085,10 +1174,12 @@ def test_gaussian_cubes_reader():
 
     grid = reader.read(grid=True)
     assert isinstance(grid, pv.ImageData)
+    assert_output_type(grid, reader)
     assert all([grid.n_points, grid.n_cells])
 
     poly = reader.read(grid=False)
     assert isinstance(poly, pv.PolyData)
+    assert_output_type(poly, reader)
     assert all([poly.n_points, poly.n_cells])
 
 
@@ -1099,12 +1190,10 @@ def test_gesignareader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
     reader = pv.get_reader(filename)
@@ -1112,6 +1201,7 @@ def test_pdbreader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -1123,6 +1213,7 @@ def test_particle_reader():
 
     reader.endian = 'BigEndian'
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
     reader.endian = 'LittleEndian'
@@ -1138,6 +1229,7 @@ def test_prostar_reader():
     assert reader.path == filename
 
     mesh = reader.read()
+    assert_output_type(mesh, reader)
     assert all([mesh.n_points, mesh.n_cells])
 
 
@@ -1224,9 +1316,10 @@ def test_nek5000_reader():
 
     # test get_reader
     nek_reader = pv.get_reader(filename)
+    assert_output_type(nek_reader.read(), nek_reader)
 
     # test time routines
-    ## Check correct number of time points
+    # Check correct number of time points
     ntimes = 11
     dt = 0.01
     assert nek_reader.number_time_points == ntimes, 'Checks number of time points'
@@ -1234,7 +1327,7 @@ def test_nek5000_reader():
 
     assert nek_reader.time_values == [dt * i for i in range(ntimes)]
 
-    ## check setting and getting of time points and times
+    # check setting and getting of time points and times
     for i in range(ntimes):
         nek_reader.set_active_time_point(i)
         assert nek_reader.active_time_point == i, 'check time point set'
@@ -1285,7 +1378,7 @@ def test_nek5000_reader():
     with pytest.raises(AttributeError):
         nek_reader.disable_all_cell_arrays()
 
-    ## check enabling and disabling of point arrays
+    # check enabling and disabling of point arrays
     for name in nek_reader.point_array_names:
         # Should be enabled by default
         assert nek_reader.point_array_status(name)
@@ -1355,7 +1448,7 @@ def test_nek5000_reader():
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
 )
 @pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+def test_read_write_pickle(tmp_path, data_object, ext):
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
     new_data_object = pv.read(filepath)
@@ -1376,7 +1469,10 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.read_pickle({})
 
-    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    match = (
+        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
+        "Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 
@@ -1384,6 +1480,13 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
 def test_exodus_reader_ext():
     # test against mug and exodus to check different valid file
     # extensions: .e and .exo
+    reader = pv.ExodusIIReader
+    assert reader.extensions == (
+        '.e',
+        '.ex2',
+        '.exii',
+        '.exo',
+    )
 
     fname_e = examples.download_mug(load=False)
     fname_exo = examples.download_exodus(load=False)
@@ -1391,8 +1494,11 @@ def test_exodus_reader_ext():
     e_reader = pv.get_reader(fname_e)
     exo_reader = pv.get_reader(fname_exo)
 
-    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
-    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(e_reader, pv.ExodusIIReader)
+    assert isinstance(exo_reader, pv.ExodusIIReader)
+
+    assert_output_type(e_reader.read(), e_reader)
+    assert_output_type(exo_reader.read(), exo_reader)
 
 
 def test_exodus_reader_core():
@@ -1400,7 +1506,7 @@ def test_exodus_reader_core():
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
 
-    ## check enabling of displacements (To match functionality
+    # check enabling of displacements (To match functionality
     # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
@@ -1409,7 +1515,7 @@ def test_exodus_reader_core():
     e_reader.disable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 0
 
-    ## check number of cell and point arrays and their names
+    # check number of cell and point arrays and their names
     assert e_reader.number_point_arrays == 2
     assert e_reader.number_cell_arrays == 1
 
@@ -1417,7 +1523,7 @@ def test_exodus_reader_core():
 
     assert 'aux_elem' in e_reader.cell_array_names
 
-    ## check enabling and disabling of point arrays
+    # check enabling and disabling of point arrays
     for name in e_reader.point_array_names:
         # Should be enabled by default
         assert e_reader.point_array_status(name)
@@ -1428,7 +1534,7 @@ def test_exodus_reader_core():
         e_reader.enable_point_array(name)
         assert e_reader.point_array_status(name)
 
-    ## check enabling and disabling of cell arrays
+    # check enabling and disabling of cell arrays
     for name in e_reader.cell_array_names:
         # Should be enabled by default
         assert e_reader.cell_array_status(name)
@@ -1464,13 +1570,13 @@ def test_exodus_reader_core():
     ntimes = 21
     dt = 0.1
 
-    ## check correct number of time points
+    # check correct number of time points
     assert e_reader.number_time_points == ntimes, 'Checks number of time points'
     assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
 
     assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
 
-    ## check setting and getting of time points and times
+    # check setting and getting of time points and times
     for i in range(ntimes):
         e_reader.set_active_time_point(i)
         assert e_reader.reader.GetTimeStep() == i, 'check time point set'
@@ -1498,7 +1604,7 @@ def test_exodus_reader_core():
     with pytest.raises(ValueError, match=err_msg):
         e_reader.set_active_time_value(1.25)
 
-    ## check read with point and cell arrays present
+    # check read with point and cell arrays present
     multiblock = e_reader.read()
 
     unstruct = multiblock[0][0]
@@ -1593,3 +1699,98 @@ def test_exodus_blocks():
 
     number_method = e_reader.face_sets._construct_result_method('GetNumberOf', 's')
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
+
+
+def test_vtu_series_reader():
+    filename = examples.download_file('vtu_series/wavy.zip')
+    reader = pv.get_reader(filename[0])
+    assert filename[0].endswith('.vtu.series')
+    assert isinstance(reader, pv.SeriesReader)
+    assert isinstance(reader.reader, pv.core.utilities.reader._SeriesReader)
+
+    assert reader.path == filename[0]
+
+    assert reader.number_time_points == 15
+    assert reader.time_point_value(1) == 1.0
+    assert np.array_equal(reader.time_values, np.arange(0, 15, dtype=float))
+
+    assert reader.active_time_value == reader.time_values[0]
+
+    active_dataset = reader.active_dataset
+    assert active_dataset.time == 0.0
+    assert active_dataset.name == 'ts/mesh_0.vtu'
+
+    assert len(reader.datasets) == len(reader.time_values)
+
+    assert isinstance(reader.active_reader, pv.XMLUnstructuredGridReader)
+
+    reader.set_active_time_value(1.0)
+    assert reader.active_time_value == 1.0
+
+    reader.set_active_time_point(2)
+    assert reader.active_time_value == 2.0
+
+    mesh = reader.read()
+    assert isinstance(mesh, pv.UnstructuredGrid)
+
+
+def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                { "name" : "ts/mesh_0.vti", "time" : 0.0 },
+                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
+                { "name" : "ts/mesh_2.vti", "time" : 2.0 }
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(
+        ValueError, match=r'Dataset extension .vti does not match series file parent extension'
+    ):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_forbid_inconsistent_ext_among_children(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                { "name" : "ts/mesh_0.vtu", "time" : 0.0 },
+                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
+                { "name" : "ts/mesh_2.vtp", "time" : 2.0 }
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(ValueError, match='Datasets in series file have multiple extensions'):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
+
+
+def test_forbid_empty_series_file(tmp_path: Path):
+    expected = textwrap.dedent(
+        """\
+            {
+            "file-series-version" : "1.0",
+            "files" : [
+                ]
+            }
+       """
+    )
+
+    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
+        f.write(expected)
+
+    with pytest.raises(ValueError, match='No datasets found in series file'):
+        pv.get_reader(tmp_path / 'mesh.vtu.series')
