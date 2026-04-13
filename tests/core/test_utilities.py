@@ -15,6 +15,7 @@ import platform
 import re
 import shutil
 import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -44,6 +45,7 @@ from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
+from pyvista.core.utilities import misc
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
@@ -88,6 +90,22 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+HAS_RUNTIME_SMP_BACKEND_SELECTION = hasattr(_vtk, 'vtkSMPTools') and hasattr(
+    _vtk.vtkSMPTools, 'SetBackend'
+)
+
+
+@pytest.fixture
+def reset_smp_tools():
+    """Restore VTK's SMP backend state after a test that mutates it."""
+    if not HAS_RUNTIME_SMP_BACKEND_SELECTION:
+        yield
+        return
+    original_backend = _vtk.vtkSMPTools.GetBackend()
+    original_threads = _vtk.vtkSMPTools.GetEstimatedNumberOfThreads()
+    yield
+    _vtk.vtkSMPTools.SetBackend(original_backend)
+    _vtk.vtkSMPTools.Initialize(original_threads)
 
 
 @pytest.fixture
@@ -2638,6 +2656,91 @@ def test_allow_new_attributes():
     assert pv.allow_new_attributes() is True
     set_private()
     set_public()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_default_backend(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    pv.enable_smp_tools()
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() >= 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_sets_threads(reset_smp_tools):  # noqa: ARG001
+    pv.enable_smp_tools(n_threads=2)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'error_type', 'match'),
+    [
+        ({'backend': 'invalid'}, ValueError, 'Invalid SMP backend'),
+        ({'backend': 1}, TypeError, '`backend` must be a string.'),
+        ({'n_threads': 0}, ValueError, '`n_threads` must be greater than or equal to 1.'),
+        ({'n_threads': 1.5}, TypeError, '`n_threads` must be an integer.'),
+        ({'n_threads': True}, TypeError, '`n_threads` must be an integer.'),
+    ],
+)
+def test_enable_smp_tools_invalid_input(kwargs, error_type, match):
+    with pytest.raises(error_type, match=re.escape(match)):
+        pv.enable_smp_tools(**kwargs)
+
+
+def test_enable_smp_tools_unsupported_vtk_build(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace())
+
+    match = 'This VTK build does not support runtime SMP backend selection.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools()
+
+
+def test_enable_smp_tools_restores_state_on_unavailable_backend(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    state = {'backend': 'Sequential', 'threads': 3}
+
+    def get_backend() -> str:
+        return state['backend']
+
+    def get_estimated_number_of_threads() -> int:
+        return state['threads']
+
+    def initialize(n_threads: int = 0) -> None:
+        state['threads'] = n_threads or 8
+
+    def set_backend(backend: str) -> bool:
+        if backend == 'TBB':
+            state['backend'] = 'STDThread'
+            return False
+        state['backend'] = backend
+        return True
+
+    fake_smp_tools = SimpleNamespace(
+        GetBackend=get_backend,
+        GetEstimatedNumberOfThreads=get_estimated_number_of_threads,
+        Initialize=initialize,
+        SetBackend=set_backend,
+    )
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace(vtkSMPTools=fake_smp_tools))
+
+    match = 'The requested SMP backend `tbb` is not available in this VTK build.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools('tbb')
+
+    assert get_backend() == 'Sequential'
+    assert get_estimated_number_of_threads() == 3
 
 
 T = TypeVar('T')

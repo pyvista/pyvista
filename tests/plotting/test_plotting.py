@@ -38,6 +38,7 @@ from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
+from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -585,6 +586,72 @@ def test_lighting_subplots(sphere):
     assert not renderers[1].lights
 
     pl.show()
+
+
+def test_shared_mesh_different_scalars_subplots():
+    """Test that the same mesh can be plotted in subplots with different scalars.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
+    mesh = pv.Sphere()
+    mesh['data_a'] = mesh.points[:, 0]
+    mesh['data_b'] = mesh.points[:, 2]
+    mesh.set_active_scalars('data_a')
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    actor_a = pl.add_mesh(mesh, scalars='data_a')
+    pl.subplot(0, 1)
+    actor_b = pl.add_mesh(mesh, scalars='data_b')
+    pl.show()
+
+    # Verify the original mesh's active scalars were NOT modified
+    assert mesh.active_scalars_name == 'data_a'
+
+    # Each mapper should target a different array
+    assert actor_a.mapper.array_name == 'data_a'
+    assert actor_b.mapper.array_name == 'data_b'
+
+
+def test_shared_mesh_different_cell_scalars_subplots():
+    """Test shared mesh with different cell scalars in subplots."""
+    mesh = pv.Cube()
+    mesh.cell_data['cell_a'] = range(mesh.n_cells)
+    mesh.cell_data['cell_b'] = range(mesh.n_cells, 0, -1)
+    mesh.set_active_scalars('cell_a', preference='cell')
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(mesh, scalars='cell_a')
+    pl.subplot(0, 1)
+    pl.add_mesh(mesh, scalars='cell_b')
+    pl.show()
+
+    assert mesh.cell_data.active_scalars_name == 'cell_a'
+
+
+def test_shared_mesh_subplots_with_clim():
+    """Verify clim is respected per-subplot when sharing a mesh.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
+    grid = pv.Wavelet()
+    grid['RTData**2'] = grid['RTData'] ** 2
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    actor_a = pl.add_mesh(grid, scalars='RTData', clim=[0, 100])
+    pl.subplot(0, 1)
+    actor_b = pl.add_mesh(grid, scalars='RTData**2', clim=[0, 50000])
+    pl.show()
+
+    # Each mapper must target the correct array
+    assert actor_a.mapper.array_name == 'RTData'
+    assert actor_b.mapper.array_name == 'RTData**2'
+
+    # Each mapper must honour its own clim independently
+    assert actor_a.mapper.scalar_range == (0, 100)
+    assert actor_b.mapper.scalar_range == (0, 50000)
 
 
 def test_lighting_init_light_kit(sphere):
@@ -5441,3 +5508,215 @@ def test_actor_force_opaque(
     )
     pl.show()
     assert actor.force_opaque == force_opaque
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_render(shape, verify_image_cache_wrapper):
+    verify_image_cache_wrapper.high_variance_test = True
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0]],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='scalars',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.set_point_sprite_shape(shape)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_does_not_apply_to_surface(shape):
+    # Regression for #8459: a theme-level point_shape must not inject
+    # the point sprite fragment shader into actors that are rendered as
+    # surfaces. The shader relies on gl_PointCoord which is undefined
+    # for GL_TRIANGLES primitives, so leaving it installed corrupts the
+    # fragment output and the surfaces render as clipped triangles.
+    theme = pv.plotting.themes._TestingTheme()
+    theme.point_shape = shape
+    pl = pv.Plotter(theme=theme)
+    actor = pl.add_mesh(
+        pv.Wavelet(),
+        style='surface',
+        show_scalar_bar=False,
+    )
+    # The shape is persisted on the actor, but the shader replacement
+    # must NOT be installed while the representation is 'Surface'.
+    assert actor._point_sprite_shape == shape
+    assert not actor._point_sprite_applied
+    assert 'point_sprite' not in actor._shader_replacements
+    pl.show()
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
+    verify_image_cache_wrapper.high_variance_test = True
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0]],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='scalars',
+        style='surface',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape(shape)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # noqa: ARG001
+    # Regression: if the applied-state is tracked as a boolean, calling
+    # set_point_sprite_shape with a new shape while the previous shape
+    # is already applied short-circuits and leaves the old GLSL installed.
+    # Tracking the applied shape string lets transitions propagate.
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape('circle')
+    assert actor._point_sprite_applied == 'circle'
+
+    actor.set_point_sprite_shape('triangle')
+    assert actor._point_sprite_applied == 'triangle'
+
+    actor.set_point_sprite_shape('star')
+    assert actor._point_sprite_applied == 'star'
+
+    actor.clear_point_sprite_shape()
+    assert actor._point_sprite_applied is None
+    assert 'point_sprite' not in actor._shader_replacements
+
+
+def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):  # noqa: ARG001
+    # With a shape persisted on the actor, toggling the representation
+    # between Points and Surface must install / remove the shader via
+    # the property-level observer.
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape('circle')
+    assert actor._point_sprite_applied == 'circle'
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.prop.style = 'surface'
+    assert actor._point_sprite_applied is None
+    assert 'point_sprite' not in actor._shader_replacements
+    # The shape itself is still persisted so switching back re-installs.
+    assert actor._point_sprite_shape == 'circle'
+
+    actor.prop.style = 'points'
+    assert actor._point_sprite_applied == 'circle'
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_clear_point_sprite_shape_detaches_observer(no_images_to_verify):  # noqa: ARG001
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape('circle')
+    assert actor._point_sprite_observer is not None
+
+    actor.clear_point_sprite_shape()
+    assert actor._point_sprite_observer is None
+    assert actor._point_sprite_shape is None
+
+    # After clearing, toggling the representation must NOT re-install
+    # anything — the observer is gone and the shape was forgotten.
+    actor.prop.style = 'surface'
+    actor.prop.style = 'points'
+    assert actor._point_sprite_applied is None
+    assert 'point_sprite' not in actor._shader_replacements
+
+
+def test_set_point_sprite_shape_accepts_enum(no_images_to_verify):  # noqa: ARG001
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape(PointSpriteShape.TRIANGLE)
+    assert actor._point_sprite_shape == 'triangle'
+    assert actor._point_sprite_applied == 'triangle'
+
+
+@pytest.fixture
+def mip_test_points():
+    """Create overlapping points along Z for MIP testing.
+
+    Four points at the same XY, staggered along Z, viewed head-on.
+    The highest scalar value (1.0) is at the back. Without MIP the
+    front point (value 0.0) occludes everything. With MIP the back
+    point renders in front as a single bright yellow square/circle.
+    """
+    points = np.array(
+        [
+            [-0.02, 0.02, 0.0],
+            [0.01, 0.01, -1.0],
+            [-0.01, -0.01, -2.0],
+            [0.02, -0.02, -3.0],
+        ],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
+    return cloud
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_test_points):
+    verify_image_cache_wrapper.high_variance_test = True
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mip_test_points,
+        scalars='intensity',
+        style='points',
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    pl.enable_parallel_projection()
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.15
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_points):
+    verify_image_cache_wrapper.high_variance_test = True
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mip_test_points,
+        scalars='intensity',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    actor.set_point_sprite_shape('circle')
+    pl.enable_parallel_projection()
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.15
+    pl.show()
