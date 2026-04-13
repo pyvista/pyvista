@@ -3269,7 +3269,7 @@ class DataObjectFilters:
             clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
-    def clip_slab(
+    def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         thickness: float,
         normal: VectorLike[float] | _NormalsLiteral | None = None,
