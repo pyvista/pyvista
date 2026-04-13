@@ -200,7 +200,10 @@ class ScalarBars(_NoNewAttrMixin):
         theme=None,
         unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
     ):
-        """Create scalar bar using the ranges as set by the last input mesh.
+        """Create a scalar bar.
+
+        Uses the ranges as set by the last input mesh or, alternatively, the
+        ones set by ``clim``, ``mapper``, or ``lookup_table``.
 
         Parameters
         ----------
@@ -209,16 +212,23 @@ class ScalarBars(_NoNewAttrMixin):
 
         mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar. Defaults to the last mapper created
-            by the plotter if none of mapper, lookup_table, or cmap provided.
+            by the plotter if neither ``mapper``, ``lookup_table``, or
+            ``cmap`` is provided.
 
         lookup_table : :vtk:`vtkLookupTable`, optional
             Lookup table used for the scalar bar.
 
-        cmap : str | list | None, optional
+            .. versionadded:: 0.48.0
+
+        cmap : str | list, optional
             Colormap used for the scalar bar.
+
+            .. versionadded:: 0.48.0
 
         clim : sequence[float], optional
             Two item range for the scalar bar.
+
+            .. versionadded:: 0.48.0
 
         n_labels : int, default: 5
             Number of labels to use for the scalar bar.
@@ -345,13 +355,14 @@ class ScalarBars(_NoNewAttrMixin):
 
         Notes
         -----
-        Setting ``title_font_size``, or ``label_font_size`` disables
-        automatic font sizing for both the title and label.
+        Setting ``title_font_size``, or ``label_font_size`` disables automatic
+        font sizing for both the title and label.
 
-        The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used to set a custom
-        color map for the scalar bar; otherwise, the bar will default to the last mapper created
-        by the plotter, for example when a mesh with scalars is added by ``pl.add_mesh()``. See
-        Examples.
+        The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used
+        to set a custom color map for the scalar bar; otherwise, the bar will
+        default to the last mapper created by the plotter. For example when a
+        mesh with scalars is added by :func:`pyvista.Plotter.add_mesh`. See
+        examples.
 
         See Also
         --------
@@ -378,26 +389,34 @@ class ScalarBars(_NoNewAttrMixin):
         ... )
         >>> pl.show()
 
-        Add a custom scalar bar without (or before) plotting data using the ``cmap`` and ``clim`` parameters:
+        Add a custom scalar bar without (or before) plotting data using the
+        ``cmap`` and ``clim`` parameters:
+
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.add_scalar_bar('Height', cmap='viridis', clim=(-2, 2))
+        >>> _ = pl.add_scalar_bar('Height', cmap='viridis', clim=(-2, 2))
         >>> pl.show()
 
         """
         if theme is None:
             theme = pv.global_theme
 
-        if [mapper is not None, lookup_table is not None, cmap is not None].count(True) != 1:
-            msg = 'Exactly one of mapper, lookup_table, and cmap must not be ``None``.'
+        provided = {
+            'mapper': mapper is not None,
+            'lookup_table': lookup_table is not None,
+            'cmap': cmap is not None,
+        }
+        if sum(provided.values()) != 1:
+            msg = (
+                "Exactly one of 'mapper', 'lookup_table', or 'cmap' must be provided. "
+                f'Got: {", ".join(k for k, v in provided.items() if v) or "none"}.'
+            )
             raise ValueError(msg)
 
         if cmap is not None:
-            assert lookup_table is None
             lookup_table = pv.LookupTable(cmap=cmap, scalar_range=clim)
 
         if lookup_table is not None:
-            assert mapper is None
             mapper = pv.DataSetMapper(theme=theme)
             mapper.lookup_table = lookup_table
 
