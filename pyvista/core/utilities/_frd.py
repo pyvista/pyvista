@@ -316,6 +316,7 @@ class _FRDParser:
                     continue
 
                 if n_nodes > needed:
+                # Keep track of elements with too many points, but don't skip
                     invalid = _InvalidElement(
                         line_number=elem_line_number,
                         element_type=etype,
