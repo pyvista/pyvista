@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 from typing import get_args
+from unittest.mock import Mock
 
 import numpy as np
 from PIL import Image
@@ -34,6 +35,8 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import _vtk
+from pyvista.plotting._plotting import _resolve_scalars_field
+from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -4249,6 +4252,178 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
         show_scalar_bar=False,
     )
     pl.camera_position = 'yz'
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_resolve_scalars_field_raises_on_mismatch():
+    """Unit-test the shared ``_resolve_scalars_field`` helper's raise branch.
+
+    The ``add_mesh`` happy path never reaches this branch — the caller
+    pre-checks that ``shape[0] in (n_points, n_cells)`` before calling.
+    Exercise it directly so the error message stays covered.
+    """
+    sphere = pv.Sphere()
+    with pytest.raises(ValueError, match='Length of scalars array'):
+        _resolve_scalars_field(np.zeros(42, dtype=np.float32), sphere, 'point')
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize(
+    ('component', 'error_type', 'match'),
+    [
+        ('not-an-int', TypeError, 'component must be None or an integer'),
+        (-1, ValueError, 'nonnegative'),
+        (9, ValueError, 'less than the'),
+    ],
+)
+def test_reduce_component_scalars_invalid(component, error_type, match):
+    """Invalid ``component`` values raise from the shared reduction helper."""
+    scalars = np.zeros((10, 3), dtype=np.float32)
+    with pytest.raises(error_type, match=match):
+        reduce_component_scalars(scalars, 'vec', component)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_reduce_component_scalars_norm_path():
+    """``component=None`` reduces via ``np.linalg.norm`` and synthesizes
+    the ``-normed`` derived name."""
+    vec = np.array([[3.0, 4.0, 0.0], [0.0, 0.0, 5.0]], dtype=np.float32)
+    reduced, name = reduce_component_scalars(vec, 'u', None)
+    assert name == 'u-normed'
+    np.testing.assert_allclose(reduced, [5.0, 5.0])
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_reduce_component_scalars_component_int():
+    """Picking an integer ``component`` extracts the column and
+    synthesizes the ``-<component>`` derived name."""
+    vec = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
+    reduced, name = reduce_component_scalars(vec, 'u', 1)
+    assert name == 'u-1'
+    np.testing.assert_allclose(reduced, [2.0, 5.0])
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_resolve_scalars_field_returns_cell():
+    """Cell-length scalars resolve to ``'cell'`` without the caller
+    needing to pass ``preference='cell'``."""
+    sphere = pv.Sphere()
+    result = _resolve_scalars_field(np.zeros(sphere.n_cells, dtype=np.float32), sphere, 'point')
+    assert result == 'cell'
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_resolve_scalars_field_prefers_hint_when_ambiguous():
+    """When the array length matches both ``n_points`` and ``n_cells``
+    the helper falls back to the caller-provided ``preference``.
+
+    Real pyvista meshes rarely have ``n_points == n_cells``; use a
+    ``Mock`` to isolate the disambiguation branch.
+    """
+    mesh = Mock(n_points=10, n_cells=10)
+    scalars = np.zeros(10, dtype=np.float32)
+    assert _resolve_scalars_field(scalars, mesh, 'point') == 'point'
+    assert _resolve_scalars_field(scalars, mesh, 'cell') == 'cell'
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_add_mesh_raw_numpy_mismatched_length_raises():
+    """``add_mesh`` with raw numpy scalars of mismatched length raises clearly.
+
+    Covers the downstream ``raise_not_matching`` path from
+    ``mapper._configure_scalars_mode``. The length falls through
+    ``plotter.add_mesh``'s Block A (shape[0] doesn't match points/cells)
+    and is raveled by ``mapper.set_scalars`` to a 1D array whose size
+    still doesn't match, tripping the final validation.
+    """
+    sphere = pv.Sphere()
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Number of scalars'):
+        pl.add_mesh(sphere, scalars=np.zeros(42, dtype=np.float32))
+
+
+def test_add_mesh_multi_component_scalars_no_smooth_shading():
+    """2D scalars via name, without smooth shading, exercise the
+    reduction path inside :meth:`DataSetMapper.set_scalars`.
+
+    This is the in-mapper path that calls
+    :func:`reduce_component_scalars` — distinct from the hoisted path
+    used for smooth shading.
+    """
+    sphere = pv.Sphere()
+    sphere.point_data['vec'] = np.asarray(sphere.points, dtype=np.float32)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars='vec', component=2, show_scalar_bar=False)
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars():
+    """Raw numpy scalars with an upstream ``vtkAlgorithm`` + smooth shading.
+
+    Exercises Block C's tracker-based fallback in
+    :meth:`Plotter.add_mesh` — the only path where ``original_scalar_name``
+    remains ``None`` after Blocks A and B, so the re-resolution falls
+    back to ``SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME`` to remap
+    the scalars through the topology change introduced by
+    ``split_sharp_edges``.
+    """
+    # Cube has sharp 90° edges, so ``split_sharp_edges=True`` with the
+    # default feature angle duplicates vertices and changes n_points —
+    # that topology change is what triggers Block C's re-resolution.
+    cube = pv.Cube().triangulate()
+    source = algorithms.source_algorithm(lambda: cube, output_type=pv.PolyData)
+    raw_scalars = np.linspace(0.0, 1.0, cube.n_points, dtype=np.float32)
+
+    pl = pv.Plotter()
+    pl.add_mesh(
+        source,
+        scalars=raw_scalars,
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
+    )
+    pl.show()
+
+
+def test_add_mesh_raw_numpy_cell_scalars():
+    """Raw numpy cell-length scalars stamp on ``cell_data``.
+
+    Covers Block A's ``cell_data.set_array`` branch in
+    :meth:`Plotter.add_mesh`. Without this path the mapper would ravel
+    the array and silently mis-bind it to point data.
+    """
+    sphere = pv.Sphere()
+    cell_scalars = np.arange(sphere.n_cells, dtype=np.float32)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=cell_scalars, show_scalar_bar=False)
+    assert pv.DEFAULT_SCALARS_NAME in sphere.cell_data
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_multi_component_cell_scalars():
+    """2D cell-length scalars + ``component=`` + smooth shading.
+
+    Covers Block B's ``cell_data.set_array`` branch in
+    :meth:`Plotter.add_mesh` — the cell-scalar analogue of
+    :func:`test_add_mesh_smooth_shading_multi_component_scalars`.
+    """
+    sphere = pv.Sphere()
+    cell_vec = np.column_stack(
+        [
+            np.zeros(sphere.n_cells, dtype=np.float32),
+            np.linspace(-1.0, 1.0, sphere.n_cells, dtype=np.float32),
+            np.zeros(sphere.n_cells, dtype=np.float32),
+        ]
+    )
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        scalars=cell_vec,
+        component=1,
+        smooth_shading=True,
+        show_scalar_bar=False,
+    )
     pl.show()
 
 
