@@ -1121,7 +1121,7 @@ copies of the images are made as follows:
 #. If the comparison between the two images fails:
 
     - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
@@ -1129,15 +1129,15 @@ copies of the images are made as follows:
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
 
-To resolve failed tests, any images in ``from_build`` or ``from_cache``
+To resolve failed tests, any images in ``from_test`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
 if adding new docstring examples or plots, the test will initially fail,
-and the images in ``from_build`` may be added to the ``Doc Image Cache``.
+and the images in ``from_test`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
