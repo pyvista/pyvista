@@ -833,6 +833,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         --------
         threshold_percent
             Threshold a dataset by a percentage of its scalar range.
+        :meth:`~pyvista.DataSetFilters.remove_nan_cells`
+            Convenience wrapper to remove cells containing NaN values.
         :meth:`~pyvista.DataSetFilters.extract_values`
             Threshold-like filter for extracting specific values and ranges.
         :meth:`~pyvista.ImageDataFilters.image_threshold`
@@ -1084,6 +1086,120 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             continuous=continuous,
             preference=preference,
             method=method,
+            progress_bar=progress_bar,
+        )
+
+    @_deprecate_positional_args
+    def remove_nan_cells(  # type: ignore[misc]  # noqa: PLR0917
+        self: _DataSetType,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        component_mode: Literal['component', 'all', 'any'] = 'all',
+        component: int = 0,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> UnstructuredGrid:
+        """Remove cells whose scalar values are NaN.
+
+        A cell is considered NaN if any of its associated scalar values are
+        NaN. For point data, this means any cell containing a NaN point is
+        dropped; for cell data, cells whose value is NaN are dropped.
+
+        .. versionadded:: 0.48
+
+        .. note::
+            This filter is equivalent to calling
+            :meth:`~pyvista.DataSetFilters.threshold` with ``all_scalars=True``
+            and the default (auto-computed) value range, which uses
+            :func:`numpy.nanmin` and :func:`numpy.nanmax` to exclude NaN
+            values from the bounds. It is provided as a convenience because
+            ``threshold`` defaults to ``preference='cell'`` and
+            ``all_scalars=False``, which does not reliably remove NaN cells
+            from point data.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to check for NaN values. Defaults to the
+            currently active scalars.
+
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset. Must be either ``'point'``
+            or ``'cell'``.
+
+        component_mode : {'component', 'all', 'any'}, default: 'all'
+            The method to satisfy the criteria for multicomponent scalars.
+            ``'component'`` uses only the single component specified by
+            ``component``. ``'all'`` drops a cell if any component is NaN.
+            ``'any'`` keeps a cell as long as at least one component is
+            finite.
+
+        component : int, default: 0
+            When using ``component_mode='component'``, this sets which
+            component to check for NaN values.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset with NaN cells removed.
+
+        See Also
+        --------
+        threshold
+            Threshold a dataset by value. ``remove_nan_cells`` is a thin
+            wrapper around this filter.
+        :meth:`~pyvista.DataSetFilters.extract_cells`
+            Extract a subset of cells by index.
+        :meth:`~pyvista.DataSetFilters.extract_values`
+            Threshold-like filter for extracting specific values and ranges.
+
+        Examples
+        --------
+        Create a small grid with some NaN point values and remove the
+        affected cells.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(5, 5, 5))
+        >>> values = np.arange(grid.n_points, dtype=float)
+        >>> values[::7] = np.nan
+        >>> grid.point_data['values'] = values
+        >>> cleaned = grid.remove_nan_cells(scalars='values')
+        >>> cleaned.n_cells < grid.n_cells
+        True
+        >>> bool(np.any(np.isnan(cleaned.point_data['values'])))
+        False
+
+        See :ref:`using_filters_example` for an end-to-end filter pipeline
+        that begins with this filter.
+
+        """
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        arr = get_array(self, scalars_, preference=preference, err=False)
+        if arr is None:
+            msg = f'No array {scalars_!r} found to remove NaN cells from.'
+            raise ValueError(msg)
+        # Integer, boolean, and non-numeric arrays cannot contain NaN values.
+        if arr.dtype == bool or not np.issubdtype(arr.dtype, np.floating):
+            return self.cast_to_unstructured_grid()
+        if arr.size == 0 or bool(np.all(np.isnan(arr))):
+            # Entire array is NaN (or empty) — no cells survive. Avoid passing
+            # a (nan, nan) range into VTK's threshold filter.
+            return self.extract_cells(
+                np.array([], dtype=int),
+                pass_cell_ids=False,
+                pass_point_ids=False,
+            )
+        return DataSetFilters.threshold(
+            self,
+            scalars=scalars_,
+            preference=preference,
+            all_scalars=True,
+            component_mode=component_mode,
+            component=component,
             progress_bar=progress_bar,
         )
 
