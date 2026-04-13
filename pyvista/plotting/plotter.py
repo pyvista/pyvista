@@ -3983,9 +3983,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # and are raveled by ``mapper.set_scalars`` further down.
         if (
             algo is None
-            and scalars is not None
-            and original_scalar_name is None
             and isinstance(scalars, np.ndarray)
+            and original_scalar_name is None
             and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
         ):
             preference = _resolve_scalars_field(scalars, mesh, preference)

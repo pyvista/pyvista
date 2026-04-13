@@ -4264,9 +4264,12 @@ def test_add_mesh_smooth_shading_multi_component_scalars():
     and the render would silently fall back to no scalar mapping.
     """
     mesh = pv.Wavelet().cast_to_unstructured_grid()
-    # Use point coordinates as the vector field so component=1 picks out
-    # a clean y-axis gradient — easy to verify visually against the cache.
-    mesh.point_data['vec'] = mesh.points.astype(np.float32)
+    # Use point coordinates as the vector field so ``component=1`` picks a
+    # clean y-axis gradient.  ``np.asarray`` (not ``.astype``) is required
+    # to drop the ``pyvista_ndarray`` subclass — astype preserves it, and
+    # the resulting view-backed array is kept alive through the mapper's
+    # ``vtkWeakReference`` and trips ``check_gc`` on Python 3.14.
+    mesh.point_data['vec'] = np.asarray(mesh.points, dtype=np.float32)
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False)
