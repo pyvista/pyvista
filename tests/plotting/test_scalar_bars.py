@@ -41,7 +41,7 @@ def test_remove_fail(scalar_bars):
 
 
 def test_add_fail(scalar_bars):
-    with pytest.raises(ValueError, match='Mapper cannot be ``None``'):
+    with pytest.raises(ValueError, match="Exactly one of 'mapper'"):
         scalar_bars.add_scalar_bar('MOARDATA')
 
 
