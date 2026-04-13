@@ -62,6 +62,8 @@ from .utilities.writer import XMLStructuredGridWriter
 from .utilities.writer import XMLUnstructuredGridWriter
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from typing_extensions import Self
 
     from ._typing_core import ArrayLike
@@ -1611,6 +1613,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         texture: NumpyArray[np.uint8] | str | None = None,
         recompute_normals: bool = True,  # noqa: FBT001, FBT002
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Write a surface mesh to disk.
 
@@ -1659,6 +1662,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             indicates no compression.
 
             .. versionadded:: 0.47
+
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  When
+            the target extension dispatches to a built-in VTK writer or
+            to the pickle path, passing any extra keyword arguments
+            raises :class:`TypeError`.
+
+            .. versionadded:: 0.48
 
         Notes
         -----
@@ -1709,7 +1721,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if ftype in ['.stl', '.ply'] and recompute_normals:
             with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
-        super().save(filename, binary=binary, texture=texture, compression=compression)
+        super().save(
+            filename,
+            binary=binary,
+            texture=texture,
+            compression=compression,
+            **writer_kwargs,
+        )
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01
@@ -3473,6 +3491,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Save this VTK object to file.
 
@@ -3495,6 +3514,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             indicates no compression.
 
             .. versionadded:: 0.47
+
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  When
+            the target extension dispatches to a built-in VTK writer or
+            to the pickle path, passing any extra keyword arguments
+            raises :class:`TypeError`.
+
+            .. versionadded:: 0.48
 
         Notes
         -----
@@ -3521,7 +3549,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             msg = 'Cannot save texture of a pointset.'
             raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
-        grid.save(filename, binary=binary, compression=compression)
+        grid.save(filename, binary=binary, compression=compression, **writer_kwargs)
 
     @_deprecate_positional_args(allowed=['ind'])
     def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002

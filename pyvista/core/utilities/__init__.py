@@ -113,6 +113,7 @@ from .image_sources import ImageSinusoidSource as ImageSinusoidSource
 from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
 from .reader_registry import has_scheme as has_scheme
 from .reader_registry import register_reader as register_reader
+from .writer_registry import register_writer as register_writer
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource as CapsuleSource

@@ -394,6 +394,16 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
+def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
+    # Simulate meshio being unavailable so the fallback import fails.
+    monkeypatch.setitem(sys.modules, 'meshio', None)
+    monkeypatch.setitem(sys.modules, 'meshio._exceptions', None)
+    fname = tmp_path / 'dummy.nonexistent_ext_xyz'
+    fname.write_bytes(b'not a real mesh file')
+    with pytest.raises(OSError, match='not able to be automatically read'):
+        fileio.read(fname)
+
+
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
@@ -611,6 +621,8 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'jupyter-server-proxy':
         pytest.xfail('not installed with --test group')
+    elif package == 'pyvista-zstd':
+        pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
     assert package in REPORT
 
 
