@@ -2694,6 +2694,56 @@ def test_enable_smp_tools_unsupported_vtk_build(monkeypatch: pytest.MonkeyPatch)
         pv.enable_smp_tools()
 
 
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_state(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    msg = 'boom'
+    with pytest.raises(RuntimeError, match=msg), pv.enable_smp_tools(n_threads=2):
+        raise RuntimeError(msg)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+        with pv.enable_smp_tools(n_threads=4):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
 def test_enable_smp_tools_restores_state_on_unavailable_backend(
     monkeypatch: pytest.MonkeyPatch,
 ):
