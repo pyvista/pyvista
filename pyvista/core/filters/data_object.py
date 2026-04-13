@@ -3269,15 +3269,15 @@ class DataObjectFilters:
             clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
-    @_deprecate_positional_args(allowed=['thickness', 'normal'])
-    def clip_slab(  # type: ignore[misc]  # noqa: PLR0917
+    def clip_slab(
         self: _DataSetOrMultiBlockType,
         thickness: float,
         normal: VectorLike[float] | _NormalsLiteral | None = None,
+        *,
         origin: VectorLike[float] | None = None,
-        invert: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
-        crinkle: bool = False,  # noqa: FBT001, FBT002
+        invert: bool = False,
+        progress_bar: bool = False,
+        crinkle: bool = False,
         plane: PolyData | None = None,
     ):
         """Clip a dataset by a slab of finite thickness around a plane.
