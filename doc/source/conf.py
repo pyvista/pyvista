@@ -175,6 +175,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*InteractorStyleHandler'),
+    (r'py:.*', '.*WriterHandler'),
+    (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
@@ -230,6 +233,10 @@ nitpick_ignore_regex = [
     # PyVista Widget enums
     (r'py:.*', '.*PickerType'),
     (r'py:.*', '.*ElementType'),
+    #
+    # PyVista shader/plotting enums
+    (r'py:.*', '.*ShaderType'),
+    (r'py:.*', '.*PointSpriteShape'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
@@ -505,7 +512,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']

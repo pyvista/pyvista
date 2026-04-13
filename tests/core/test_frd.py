@@ -407,7 +407,7 @@ def test_frd_element_sizes(generic_element_frd):
     vtk_type = CCX_TO_VTK_TYPE[frd_enum]
 
     # Handle known VTK bug for PE15
-    if elem_name == 'PE15':
+    if elem_name == 'PE15' and pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
         msg = (
             'VTK bug with negative volume for quadratic wedge '
             'https://gitlab.kitware.com/vtk/vtk/-/issues/19639'

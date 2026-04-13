@@ -140,7 +140,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     # find and parse all docstrings; this will also remove any duplicates
     doctests = {
         dt.name: dt
-        for module_name, module in modules.items()
+        for module in modules.values()
         for dt in DocTestFinder(recurse=True).find(module, globs={})
     }
 

@@ -20,7 +20,7 @@ from pyvista.core.utilities.misc import abstract_class
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from vtk import vtkWriter
+    from vtkmodules.vtkIOCore import vtkWriter
 
     from pyvista import DataObject
     from pyvista import NumpyArray
