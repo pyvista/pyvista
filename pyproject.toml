@@ -48,7 +48,7 @@ jupyter = [
   'nest-asyncio2',
   'trame-client>=2.12.7',
   'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
-  'trame-vtk != 2.10.3, != 2.11.0, != 2.11.1, != 2.11.2, != 2.11.3, != 2.11.4, != 2.11.5', != 2.11.6,
+  'trame-vtk != 2.10.3, != 2.11.0, != 2.11.1, != 2.11.2, != 2.11.3, != 2.11.4, != 2.11.5, != 2.11.6',
   'trame-vtk>=2.5.8, <2.11.8', # Pin indefinitely to avoid breakages
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
