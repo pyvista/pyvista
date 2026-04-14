@@ -412,6 +412,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [macOS, Linux, windows, changes]
     if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
+    environment: ${{ github.event.pull_request.head.repo.fork && 'test-image-report' || 'test-image-report-internal' }}
     steps:
       - uses: actions/checkout@v6
         with:
