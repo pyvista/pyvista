@@ -6,7 +6,7 @@ export PYVISTA_OFF_SCREEN := True
 # You can set these variables from the command line.
 SPHINXOPTS    =
 DEFAULTS	  = -w sphinx_warnings.txt -W --keep-going
-SPHINXBUILD   = python -msphinx
+SPHINXBUILD   ?= uv run python -msphinx
 SPHINXPROJ    = pyvista
 SOURCEDIR     = source
 BUILDDIR      = _build
@@ -73,4 +73,4 @@ gen-external-examples:
 # Spin up a local http server to view the rendered documentation.
 # This is required for interactive examples to work.
 serve-html:
-	python -m http.server 11000 --directory "$(BUILDDIR)"/html
+	uv run python -m http.server 11000 --directory "$(BUILDDIR)"/html
