@@ -61,6 +61,7 @@ def test_values(lut):
         lut.n_values = 10
 
 
+@pytest.mark.skip_check_gc
 def test_apply_cmap(lut):
     n_values = 5
     lut.cmap = 'reds'

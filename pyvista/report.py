@@ -295,6 +295,7 @@ class Report(scooby.Report):
             'scipy',
             'tqdm',
             # io extras
+            'fsspec',
             'imageio',
             'meshio',
             # colormaps extras

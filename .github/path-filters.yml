@@ -1,0 +1,60 @@
+# Shared path filters for CI skip conditions
+# Used by dorny/paths-filter in docs.yml and testing-and-deployment.yml
+#
+# DENYLIST approach with predicate-quantifier: 'every'
+# A file triggers the filter only if it matches ALL patterns (i.e., is not excluded by any).
+# This means any new/unknown file triggers CI by default — the safe choice.
+#
+# To exclude a path, add a negation pattern: "!path/**"
+# Do NOT add positive patterns (like "**") — they break 'every' logic.
+
+tests:
+  # Directories that don't affect unit tests
+  - "!.github/**"
+  - "!doc/**"
+  - "!joss/**"
+  - "!logo/**"
+  - "!assets/**"
+  - "!docker/**"
+  - "!.devcontainer/**"
+  # Root files that don't affect unit tests
+  - "!README.rst"
+  - "!CONTRIBUTING.rst"
+  - "!AUTHORS.rst"
+  - "!CODE_OF_CONDUCT.md"
+  - "!SECURITY.md"
+  - "!FUNDING.yml"
+  - "!CITATION.cff"
+  - "!CITATION.rst"
+  - "!LICENSE"
+  - "!codecov.yml"
+  - "!lychee.toml"
+  - "!.pre-commit-config.yaml"
+  - "!.mailmap"
+  - "!.gitignore"
+  - "!.gitattributes"
+
+docs:
+  # Directories that don't affect documentation
+  - "!.github/**"
+  - "!tests/**"
+  - "!hooks/**"
+  - "!joss/**"
+  - "!logo/**"
+  - "!assets/**"
+  - "!docker/**"
+  - "!examples_trame/**"
+  - "!pyvista-no-vtk/**"
+  - "!.devcontainer/**"
+  # Root files that don't affect documentation
+  - "!README.rst"
+  - "!CODE_OF_CONDUCT.md"
+  - "!SECURITY.md"
+  - "!FUNDING.yml"
+  - "!codecov.yml"
+  - "!lychee.toml"
+  - "!Makefile"
+  - "!.pre-commit-config.yaml"
+  - "!.mailmap"
+  - "!.gitignore"
+  - "!.gitattributes"

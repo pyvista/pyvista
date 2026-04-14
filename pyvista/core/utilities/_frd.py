@@ -181,7 +181,7 @@ class _FRDParser:
         """Reorder node IDs from CalculiX to VTK conventions."""
         if etype == FRDElementType.HE20:
             return node_ids[:8] + node_ids[8:12] + node_ids[16:20] + node_ids[12:16]
-        if etype == FRDElementType.PE6:
+        if etype == FRDElementType.PE6 and pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
             return [node_ids[0], node_ids[2], node_ids[1], node_ids[3], node_ids[5], node_ids[4]]
         if etype == FRDElementType.PE15:
             return node_ids[:9] + node_ids[12:15] + node_ids[9:12]

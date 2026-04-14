@@ -38,12 +38,63 @@ permissions:
   id-token: none
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      tests: ${{ steps.filter.outputs.tests == 'true' || steps.self.outputs.changed == 'true' }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: .github/path-filters.yml
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        if: github.event_name == 'pull_request'
+        id: self
+        with:
+          filters: |
+            changed:
+              - ".github/workflows/testing-and-deployment.yml"
+
+  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # via workflow_run) can associate the build with its PR — workflow_run events
+  # do not include pull_request data for fork PRs.
+  pr-info:
+    name: Save PR info
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Save PR metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          mkdir -p pr-info
+          printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
+          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
+          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pr-info
+          path: pr-info/
+
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
 
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -51,11 +102,15 @@ jobs:
 
   # For self-hosted runners, we need to cache each runner separately
   cache-macOS-self-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
   cache-ubuntu-self-hosted:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -63,7 +118,8 @@ jobs:
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-macOS-self-hosted
+    needs: [cache-macOS-self-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -139,7 +195,8 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-ubuntu-self-hosted
+    needs: [cache-ubuntu-self-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     strategy:
       fail-fast: false
 
@@ -222,12 +279,13 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
       - name: Check package
         run: |
@@ -238,7 +296,7 @@ jobs:
   VTK-dev:
     # For PRs, only run this job if the 'vtk-dev-testing' label is applied
     if: |
-      (github.event_name != 'pull_request' && github.event_name != 'push') ||
+      (github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'merge_group') ||
       contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
@@ -308,7 +366,8 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-github-hosted
+    needs: [cache-github-hosted, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -370,6 +429,35 @@ jobs:
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  # The test image report Netlify deploy lives in test-image-report-deploy.yml,
+  # triggered via workflow_run, so fork PR CI is never blocked on deployment
+  # approval.
+
+  upload-coverage-:
+    name: Upload coverage reports
+    runs-on: ubuntu-22.04
+    needs: [Linux, changes]
+    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
+    steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage_reports-*
+          path: coverage*.xml
+
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # Publish to PyPI using trusted publishing
   release:

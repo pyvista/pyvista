@@ -18,6 +18,20 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core.utilities.reader_registry import _restore_registry_state
+from pyvista.core.utilities.reader_registry import _save_registry_state
+from pyvista.core.utilities.writer_registry import (
+    _restore_registry_state as _restore_writer_registry_state,
+)
+from pyvista.core.utilities.writer_registry import (
+    _save_registry_state as _save_writer_registry_state,
+)
+from pyvista.plotting.interactor_style_registry import (
+    _restore_registry_state as _restore_style_registry_state,
+)
+from pyvista.plotting.interactor_style_registry import (
+    _save_registry_state as _save_style_registry_state,
+)
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pv.OFF_SCREEN = True
@@ -113,7 +127,15 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
+    style_registry_state = _save_style_registry_state()
+    reader_registry_state = _save_registry_state()
+    writer_registry_state = _save_writer_registry_state()
+
     yield
+
+    _restore_style_registry_state(style_registry_state)
+    _restore_registry_state(reader_registry_state)
+    _restore_writer_registry_state(writer_registry_state)
 
     pv.vtk_snake_case('error')
     assert pv.vtk_snake_case() == 'error'
