@@ -220,6 +220,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [test, changes]
     if: always() && github.event_name == 'pull_request' && needs.changes.outputs.docs == 'true'
+    environment: ${{ github.event.pull_request.head.repo.fork && 'doc-image-report' || 'doc-image-report-internal' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -295,6 +296,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [doc, changes]
     if: (github.ref == 'refs/heads/main' || github.event_name == 'pull_request') && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true')
+    environment:
+      name: ${{ github.event_name != 'pull_request' && 'docs-main' || (github.event.pull_request.head.repo.fork && 'docs-preview' || 'docs-preview-internal') }}
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -344,6 +347,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
+    environment: docs-release
     steps:
       - uses: actions/download-artifact@v8
         with:
