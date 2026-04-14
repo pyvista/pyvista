@@ -332,12 +332,13 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
   windows:
     name: Windows Unit Testing
@@ -486,7 +487,10 @@ jobs:
   upload-coverage-:
     name: Upload coverage reports
     runs-on: ubuntu-22.04
-    needs: [Linux, changes]
+    needs: [Linux, VTK-dev, changes]
+    # `always()` ensures this still runs when VTK-dev is skipped because the
+    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its
+    # coverage artifacts get bundled into this single CodeCov upload.
     if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
     steps:
       # Needs to checkout only for codecov to match file names
