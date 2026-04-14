@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 from typing import cast
+import weakref
 
 import numpy as np
 
@@ -401,15 +402,15 @@ class _DataSetMapper(_BaseMapper):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._active_scalars_algo: ActiveScalarsAlgorithm | None = None
-        self._input_dataset: DataSet | None = None
+        self._input_dataset: weakref.ref[DataSet] | None = None
         if dataset is not None:
             self.dataset = dataset
 
     @property
     def dataset(self) -> DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        if self._input_dataset is not None:
-            return self._input_dataset
+        if self._input_dataset is not None and self._input_dataset() is not None:
+            return self._input_dataset()
         # Fall back to the VTK pipeline input when the mapper was wired up
         # with a vtkAlgorithm rather than a direct DataSet assignment.
         return cast('pv.DataSet | None', wrap(_mapper_get_data_set_input(self)))
@@ -422,7 +423,7 @@ class _DataSetMapper(_BaseMapper):
         if isinstance(obj, (_vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput)):
             self._input_dataset = None
         else:
-            self._input_dataset = obj
+            self._input_dataset = weakref.ref(obj)
         if self._active_scalars_algo is not None:
             # Reconnect pipeline: new input -> algo -> mapper
             set_algorithm_input(self._active_scalars_algo, obj)
@@ -515,8 +516,8 @@ class _DataSetMapper(_BaseMapper):
             input_conn = self.GetInputConnection(0, 0)
             if input_conn is not None:
                 self._active_scalars_algo.SetInputConnection(0, input_conn)
-            if self._input_dataset is not None:
-                set_algorithm_input(self._active_scalars_algo, self._input_dataset)
+            if self._input_dataset is not None and self._input_dataset() is not None:
+                set_algorithm_input(self._active_scalars_algo, self._input_dataset())
             self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
         else:
             self._active_scalars_algo.scalars_name = name
@@ -541,8 +542,8 @@ class _DataSetMapper(_BaseMapper):
             return
         algo = self._active_scalars_algo
         self._active_scalars_algo = None
-        if self._input_dataset is not None:
-            set_algorithm_input(self, self._input_dataset)
+        if self._input_dataset is not None and self._input_dataset() is not None:
+            set_algorithm_input(self, self._input_dataset())
         else:
             in_conn = algo.GetInputConnection(0, 0)
             if in_conn is not None:
