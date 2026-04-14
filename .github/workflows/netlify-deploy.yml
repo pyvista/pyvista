@@ -32,7 +32,10 @@ jobs:
   setup:
     name: Load PR info
     runs-on: ubuntu-22.04
-    if: github.event.workflow_run.conclusion == 'success'
+    # Run on success and failure so image-report jobs (which must run even when
+    # tests fail) can consume the PR info outputs. preview and release have
+    # their own stricter conclusion checks.
+    if: github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'
     outputs:
       pr_number: ${{ steps.parse.outputs.pr_number }}
       head_sha: ${{ steps.parse.outputs.head_sha }}
@@ -125,8 +128,12 @@ jobs:
     name: Doc Image Report
     runs-on: ubuntu-22.04
     needs: setup
+    # Run on both success and failure — the whole point of the image report is
+    # to show what failed. Build-stage failures that produced no test artifact
+    # are handled gracefully below via continue-on-error and the has_report
+    # check.
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.name == 'Build Documentation' &&
       github.event.workflow_run.event == 'pull_request'
     environment:
@@ -146,6 +153,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Download doc failed image artifacts
+        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           pattern: doc-failed-test-images
@@ -156,6 +164,7 @@ jobs:
       - name: Generate HTML report
         id: report
         run: |
+          mkdir -p all_doc_failed_images
           tox run -e image-report -- all_doc_failed_images _doc_image_report
           if [ -f _doc_image_report/index.html ]; then
             echo "has_report=true" >> "$GITHUB_OUTPUT"
@@ -208,8 +217,10 @@ jobs:
     name: Test Image Report
     runs-on: ubuntu-22.04
     needs: setup
+    # Run on both success and failure — the whole point of the image report is
+    # to show what failed.
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.name == 'Unit Testing and Deployment' &&
       github.event.workflow_run.event == 'pull_request'
     environment:
@@ -228,6 +239,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Download all failed image artifacts
+        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           pattern: failed_test_images-*
@@ -238,6 +250,7 @@ jobs:
       - name: Generate HTML report
         id: report
         run: |
+          mkdir -p all_failed_images
           tox run -e image-report -- all_failed_images _image_report
           if [ -f _image_report/index.html ]; then
             echo "has_report=true" >> "$GITHUB_OUTPUT"
