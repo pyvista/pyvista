@@ -415,15 +415,6 @@ class _DataSetMapper(_BaseMapper):
         # with a vtkAlgorithm rather than a direct DataSet assignment.
         return cast('pv.DataSet | None', wrap(_mapper_get_data_set_input(self)))
 
-    # Avoid ref cycles by using weakref
-    @property
-    def _input_dataset(self):
-        return None if self._input_dataset_ref is None else self._input_dataset_ref()
-
-    @_input_dataset.setter
-    def _input_dataset(self, dataset: DataSet | None):
-        self._input_dataset_ref = None if dataset is None else weakref.ref(dataset)
-
     @dataset.setter
     def dataset(
         self,
@@ -439,6 +430,15 @@ class _DataSetMapper(_BaseMapper):
             set_algorithm_input(self, self._active_scalars_algo)
         else:
             set_algorithm_input(self, obj)
+
+    # Avoid ref cycles by using weakref
+    @property
+    def _input_dataset(self):
+        return None if self._input_dataset_ref is None else self._input_dataset_ref()
+
+    @_input_dataset.setter
+    def _input_dataset(self, dataset: DataSet | None):
+        self._input_dataset_ref = None if dataset is None else weakref.ref(dataset)
 
     @property
     def array_name(self) -> str:  # numpydoc ignore=RT01
