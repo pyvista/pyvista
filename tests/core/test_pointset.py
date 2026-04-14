@@ -4,18 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
-
-# skip all tests if concrete pointset unavailable
-pytestmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
-)
+from pyvista.plotting import _vtk
 
 
 def test_pointset_basic():
@@ -30,7 +25,7 @@ def test_pointset_basic():
 
 
 def test_pointset_from_vtk():
-    vtk_pset = vtk.vtkPointSet()
+    vtk_pset = _vtk.vtkPointSet()
 
     np_points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
     points = pv.vtk_points(np_points, deep=False)
@@ -59,7 +54,7 @@ def test_pointset_from_vtk():
 
 
 def test_pointset_wrap():
-    vtk_pset = vtk.vtkPointSet()
+    vtk_pset = _vtk.vtkPointSet()
     np_points = np.array([[0.0, 0.0, 0.0]])
     points = pv.vtk_points(np_points, deep=False)
     vtk_pset.SetPoints(points)
@@ -88,7 +83,7 @@ def test_pointset(pointset):
 
 
 def test_save(tmpdir, pointset):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'{"tmp.xyz"}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'{"tmp.xyz"}'))
     pointset.save(filename)
     points = np.loadtxt(filename)
     assert np.allclose(points, pointset.points)
@@ -100,7 +95,7 @@ def test_cast_to_polydata(pointset, deep):
     key = 'key'
     pointset.point_data[key] = data
 
-    pdata = pointset.cast_to_polydata(deep)
+    pdata = pointset.cast_to_polydata(deep=deep)
     assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
@@ -130,8 +125,31 @@ def test_filters_return_pointset(sphere):
     assert isinstance(clipped, pv.PointSet)
 
 
+def test_pointset_clip_vtk_bug(sphere):
+    pointset = sphere.cast_to_pointset()
+    alg = _vtk.vtkTableBasedClipDataSet()
+    alg.SetClipFunction(pv.generate_plane((1, 0, 0), (0, 0, 0)))
+
+    # Filter works with PolyData
+    alg.SetInputData(sphere)
+    alg.Update()
+    out = pv.wrap(alg.GetOutput())
+    assert not out.is_empty
+
+    # Bug: filter returns empty mesh with PointSet
+    alg.SetInputData(pointset)
+    alg.Update()
+    out = pv.wrap(alg.GetOutput())
+    if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+        # A vtk bug was introduced in 9.4 https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        # Which has been fixed for vtk 9.5: https://gitlab.kitware.com/vtk/vtk/-/merge_requests/12040
+        assert out.is_empty
+    else:
+        assert not out.is_empty
+
+
 @pytest.mark.parametrize(
-    ("force_float", "expected_data_type"),
+    ('force_float', 'expected_data_type'),
     [(False, np.int64), (True, np.float32)],
 )
 def test_pointset_force_float(force_float, expected_data_type):
@@ -252,8 +270,8 @@ def test_threshold_percent(pointset):
 def test_explode(pointset):
     out = pointset.explode(1)
     assert isinstance(out, pv.PointSet)
-    ori_xlen = pointset.bounds[1] - pointset.bounds[0]
-    new_xlen = out.bounds[1] - out.bounds[0]
+    ori_xlen = pointset.bounds.x_max - pointset.bounds.x_min
+    new_xlen = out.bounds.x_max - out.bounds.x_min
     assert np.isclose(2 * ori_xlen, new_xlen)
 
 
@@ -313,10 +331,11 @@ def test_raise_unsupported(pointset):
         pointset.point_is_inside_cell()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.extract_surface()
+        pointset.extract_surface(algorithm=None)
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.extract_geometry()
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            pointset.extract_geometry()
 
 
 def test_rotate_x():
@@ -345,3 +364,63 @@ def test_rotate_vector():
     pset = pv.PointSet(np_points)
     pset.rotate_vector([1, 2, 1], 45, inplace=True)
     assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])
+
+
+def test_rotate():
+    np_points = np.array([1, 1, 1], dtype=float)
+    pset = pv.PointSet(np_points)
+    pset.rotate([[-1, 0, 0], [0, -1, 0], [0, 0, -1]], inplace=True)
+    assert np.allclose(pset.points, [-1, -1, -1])
+
+
+@pytest.mark.parametrize(
+    ('grid_class', 'dimensionality', 'dimensions'),
+    [
+        (pv.ExplicitStructuredGrid, 3, (2, 42, 142)),
+        (pv.StructuredGrid, 0, (1, 1, 1)),
+        (pv.StructuredGrid, 1, (1, 42, 1)),
+        (pv.StructuredGrid, 2, (42, 1, 142)),
+        (pv.StructuredGrid, 3, (2, 42, 142)),
+    ],
+)
+def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
+    if grid_class == pv.ExplicitStructuredGrid:
+        # ExplicitStructuredGrid only supports 3D
+        grid = pv.examples.load_explicit_structured(dimensions=dimensions)
+    elif grid_class == pv.StructuredGrid:
+        x, y, z = np.meshgrid(
+            np.arange(dimensions[0], dtype=np.float32),
+            np.arange(dimensions[1], dtype=np.float32),
+            np.arange(dimensions[2], dtype=np.float32),
+            indexing='ij',
+        )
+        grid = grid_class(x, y, z)
+
+    assert grid.dimensionality == dimensionality
+    assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+@pytest.mark.parametrize(
+    ('attr', 'mesh', 'expected'),
+    [
+        (
+            'polyhedron_faces',
+            examples.cells.Polyhedron(),
+            [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3],
+        ),
+        ('polyhedron_face_locations', examples.cells.Polyhedron(), [4, 0, 1, 2, 3]),
+        ('polyhedron_faces', pv.UnstructuredGrid(), []),
+        ('polyhedron_face_locations', pv.UnstructuredGrid(), []),
+    ],
+)
+def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
+    actual = getattr(mesh, attr)
+    assert isinstance(actual, np.ndarray)
+    assert actual.dtype == int
+    assert np.array_equal(actual, expected)
+
+    if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info <= (9, 5, 0):
+        # Deprecated in 9.4, removed in 9.6
+        with pytest.warns(DeprecationWarning, match=r'Call to deprecated method'):
+            # Test deprecation warning is emitted by VTK
+            getattr(mesh, attr.split('polyhedron_')[1])

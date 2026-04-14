@@ -1,4 +1,4 @@
-"""This module contains some convenience helper functions."""
+"""Convenience helper functions."""
 
 from __future__ import annotations
 
@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -57,10 +58,11 @@ def plot_arrows(cent, direction, **kwargs):
     >>> pv.plot_arrows(cent, direction)
 
     """
-    return pyvista.plot([cent, direction], **kwargs)
+    return pv.plot([cent, direction], **kwargs)
 
 
-def plot_compare_four(
+@_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
+def plot_compare_four(  # noqa: PLR0917
     data_a,
     data_b,
     data_c,
@@ -73,7 +75,7 @@ def plot_compare_four(
     outline=None,
     outline_color='k',
     labels=('A', 'B', 'C', 'D'),
-    link=True,
+    link: bool = True,  # noqa: FBT001, FBT002
     notebook=None,
 ):
     """Plot a 2 by 2 comparison of data objects.
@@ -114,6 +116,7 @@ def plot_compare_four(
     -------
     pyvista.Plotter
         The plotter object.
+
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]
@@ -127,7 +130,7 @@ def plot_compare_four(
 
     plotter_kwargs['notebook'] = notebook
 
-    pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
+    pl = pv.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):
@@ -148,7 +151,8 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:
+@_deprecate_positional_args(allowed=['view'])
+def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:  # noqa: FBT001, FBT002
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters
@@ -187,10 +191,11 @@ def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], Nu
         vec = np.array([-1, 0, 0])
         viewup = np.array([0, 1, 0])
     else:
-        raise ValueError(
-            f"Unexpected value for direction {view}\n"
-            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'",
+        msg = (
+            f'Unexpected value for direction {view}\n'
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
         )
+        raise ValueError(msg)
 
     if negative:
         vec *= -1

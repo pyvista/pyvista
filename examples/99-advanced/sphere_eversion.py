@@ -26,7 +26,6 @@ smooth; this was proved in the paper by Bednorz and Bednorz.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # define some parameters
@@ -39,7 +38,7 @@ alpha_final = 1  # arbitrary > 1
 eta_final = 2  # arbitrary > 1
 kappa = (n - 1) / (2 * n)
 
-###############################################################################
+# %%
 # Let's define the chain of mappings we'll need for implementing the eversion:
 
 
@@ -55,8 +54,9 @@ def sphere_to_cylinder(theta, phi):
     return h, phi
 
 
-def cylinder_to_wormhole(h, phi, t, p, q):
-    """Map from a cylinder to an open wormhole using Eq. (4).
+def cylinder_to_wormhole(h, phi, t, p, q):  # noqa: PLR0917
+    """
+    Map from a cylinder to an open wormhole using Eq. (4).
 
     Input h goes from -infinity to infinity, phi goes from -phi to phi.
     Output is an (x, y, z) point embedded in 3d space.
@@ -71,8 +71,9 @@ def cylinder_to_wormhole(h, phi, t, p, q):
     return x, y, z
 
 
-def close_wormhole(x0, y0, z0, eta, xi, alpha):
-    """Close the wormhole using Eqs. (7)-(8).
+def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
+    """
+    Close the wormhole using Eqs. (7)-(8).
 
     Input is an (x0, y0, z0) point embedded in 3d space.
     Output is an (x2, y2, z2) == (x'', y'', z'') point embedded in 3d space.
@@ -101,12 +102,16 @@ def close_wormhole(x0, y0, z0, eta, xi, alpha):
     denominator = alpha + beta * (x1**2 + y1**2)
     x2 = x1 * exponential / denominator
     y2 = y1 * exponential / denominator
-    z2 = numerator / denominator * exponential / gamma - (alpha - beta) / (alpha + beta) / gamma
+    z2 = (
+        numerator / denominator * exponential / gamma
+        - (alpha - beta) / (alpha + beta) / gamma
+    )
     return x2, y2, z2
 
 
-def unfold_sphere(theta, phi, t, q, eta, lamda):
-    """Unfold the sphere using Eqs. (12), (15), (10).
+def unfold_sphere(theta, phi, t, q, eta, lamda):  # noqa: PLR0917
+    """
+    Unfold the sphere using Eqs. (12), (15), (10).
 
     Input is a (theta, phi) point in spherical coordinates.
     Output is an (x, y, z) point embedded in 3d space.
@@ -133,7 +138,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa: E131
+            * np.sin(theta) / np.cos(theta)**(2 * n)
     )
     # fmt: on
 
@@ -145,7 +150,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
     return x2, y2, z2
 
 
-###############################################################################
+# %%
 # Now chain the functions by performing the process in Table 1 of the paper.
 # Start from the bottom for ``t = -1/Q``, keep stepping up, linearly changing
 # parameters that change from row to row, then at the top go from ``t = -1/Q``
@@ -166,16 +171,16 @@ opts = dict(
 )
 
 # use a small figure window to reduce the size of the GIF
-plotter = pv.Plotter(window_size=(300, 300))
-plotter.open_gif('sphere_eversion.gif')
+pl = pv.Plotter(window_size=(300, 300))
+pl.open_gif('sphere_eversion.gif')
 
 
 def save_frame(x, y, z):
-    """Helper to generate and store a frame of the eversion."""
-    plotter.clear()
-    plotter.enable_lightkit()
-    plotter.add_mesh(pv.StructuredGrid(x, y, z), **opts)
-    plotter.write_frame()
+    """Generate and store a frame of the eversion."""
+    pl.clear()
+    pl.enable_lightkit()
+    pl.add_mesh(pv.StructuredGrid(x, y, z), **opts)
+    pl.write_frame()
 
 
 # initial parameters, will be updated
@@ -196,7 +201,7 @@ x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(0, 1, n_steps)
 alphas = np.linspace(0, alpha_final, n_steps)
 etas = np.linspace(1, eta_final, n_steps)
-for xi, alpha, eta in zip(xis, alphas, etas):
+for xi, alpha, eta in zip(xis, alphas, etas, strict=True):
     x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
@@ -227,7 +232,7 @@ x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(1, 0, n_steps + 1)[1:]
 alphas = np.linspace(alpha_final, 0, n_steps + 1)[1:]
 etas = np.linspace(eta_final, 1, n_steps + 1)[1:]
-for xi, alpha in zip(xis, alphas):
+for xi, alpha in zip(xis, alphas, strict=True):
     x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
@@ -236,10 +241,10 @@ for lamda in np.linspace(1, 0, n_steps + 1)[1:]:
     x2, y2, z2 = unfold_sphere(theta, phi, t, q, eta, lamda)
     save_frame(x2, y2, z2)
 
-plotter.close()
+pl.close()
 
 
-###############################################################################
+# %%
 # Looking at the still image of the middle state with ``t = 0``, we see a nice
 # symmetric configuration where two "inside" and two "outside" lobes of the
 # sphere are visible.
@@ -257,6 +262,6 @@ alpha = alpha_final
 x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
 
-plotter = pv.Plotter(window_size=(512, 512))
-plotter.add_mesh(pv.StructuredGrid(x2, y2, z2), **opts)
-plotter.show()
+pl = pv.Plotter(window_size=(512, 512))
+pl.add_mesh(pv.StructuredGrid(x2, y2, z2), **opts)
+pl.show()

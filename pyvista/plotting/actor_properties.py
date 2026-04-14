@@ -1,24 +1,26 @@
-"""Module containing pyvista implementation of vtkProperty."""
+"""Module containing pyvista implementation of :vtk:`vtkProperty`."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+
 from .opts import InterpolationType
 from .opts import RepresentationType
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from . import _vtk
 
 
-class ActorProperties:
-    """Properties wrapper for ``vtkProperty``.
+class ActorProperties(_NoNewAttrMixin):
+    """Properties wrapper for :vtk:`vtkProperty`.
 
     Contains the surface properties of the object.
 
     Parameters
     ----------
-    properties : vtk.vtkProperty
+    properties : :vtk:`vtkProperty`
         VTK properties of the current object.
 
     Examples
@@ -50,7 +52,7 @@ class ActorProperties:
         return self.properties.GetColor()
 
     @color.setter
-    def color(self, color: tuple[float, float, float]):  # numpydoc ignore=GL08
+    def color(self, color: tuple[float, float, float]):
         self.properties.SetColor(color[0], color[1], color[2])
 
     @property
@@ -59,7 +61,7 @@ class ActorProperties:
         return self.properties.GetMetallic()
 
     @metallic.setter
-    def metallic(self, value: float):  # numpydoc ignore=GL08
+    def metallic(self, value: float):
         self.properties.SetMetallic(value)
 
     @property
@@ -68,7 +70,7 @@ class ActorProperties:
         return self.properties.GetRoughness()
 
     @roughness.setter
-    def roughness(self, value: float):  # numpydoc ignore=GL08
+    def roughness(self, value: float):
         self.properties.SetRoughness(value)
 
     @property
@@ -77,7 +79,7 @@ class ActorProperties:
         return self.properties.GetAnisotropy()
 
     @anisotropy.setter
-    def anisotropy(self, value: float):  # numpydoc ignore=GL08
+    def anisotropy(self, value: float):
         self.properties.SetAnisotropy(value)
 
     @property
@@ -86,7 +88,7 @@ class ActorProperties:
         return self.properties.GetAnisotropyRotation()
 
     @anisotropy_rotation.setter
-    def anisotropy_rotation(self, value: float):  # numpydoc ignore=GL08
+    def anisotropy_rotation(self, value: float):
         self.properties.SetAnisotropyRotation(value)
 
     @property
@@ -95,7 +97,7 @@ class ActorProperties:
         return self.properties.GetLighting()
 
     @lighting.setter
-    def lighting(self, flag: bool):  # numpydoc ignore=GL08
+    def lighting(self, flag: bool):
         self.properties.SetLighting(flag)
 
     @property
@@ -107,7 +109,7 @@ class ActorProperties:
         return InterpolationType.from_any(self.properties.GetInterpolation())
 
     @interpolation_model.setter
-    def interpolation_model(self, model: InterpolationType):  # numpydoc ignore=GL08
+    def interpolation_model(self, model: InterpolationType):
         self.properties.SetInterpolation(model.value)
 
     @property
@@ -116,7 +118,7 @@ class ActorProperties:
         return self.properties.GetBaseIOR()
 
     @index_of_refraction.setter
-    def index_of_refraction(self, value: float):  # numpydoc ignore=GL08
+    def index_of_refraction(self, value: float):
         self.properties.SetBaseIOR(value)
 
     @property
@@ -125,7 +127,7 @@ class ActorProperties:
         return self.properties.GetOpacity()
 
     @opacity.setter
-    def opacity(self, value: float):  # numpydoc ignore=GL08
+    def opacity(self, value: float):
         self.properties.SetOpacity(value)
 
     @property
@@ -134,7 +136,7 @@ class ActorProperties:
         return self.properties.GetShading()
 
     @shading.setter
-    def shading(self, is_active: bool):  # numpydoc ignore=GL08
+    def shading(self, is_active: bool):
         self.properties.SetShading(is_active)
 
     @property
@@ -146,5 +148,5 @@ class ActorProperties:
         return RepresentationType.from_any(self.properties.GetRepresentation())
 
     @representation.setter
-    def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
+    def representation(self, value: RepresentationType):
         self.properties.SetRepresentation(RepresentationType.from_any(value).value)

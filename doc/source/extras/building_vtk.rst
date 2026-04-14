@@ -27,7 +27,7 @@ Building VTK from source is fairly straightforward. Using the default build
 settings, build a Python wheel of VTK using ``ninja`` using the following
 script. This script uses system python3, but you can use any modern Python
 version. For some additional useful options, see the `conda-forge recipe
-<https://github.com/conda-forge/vtk-feedstock/blob/master/recipe/build.sh>`__.
+<https://github.com/conda-forge/vtk-feedstock/blob/main/recipe/build-base.sh>`__.
 Most of the ones below are designed to reduce the build time and resulting
 wheel size.
 
@@ -57,7 +57,7 @@ wheel size.
     git clone https://gitlab.kitware.com/vtk/vtk.git
     mkdir vtk/build
     cd vtk/build
-    git checkout v9.1.0  # optional to select a version, but recommended
+    git checkout v9.6.0  # optional to select a version, but recommended
 
     export PYBIN=/usr/bin/python3.10  # select your version of choice
     cmake -GNinja \
@@ -105,7 +105,7 @@ modifying the above ``cmake`` command with:
    git clone https://github.com/Kitware/VTK
    mkdir VTK/build
    cd VTK/build \
-   git checkout v9.1.0
+   git checkout v9.6.0
    cd /VTK/build
    cmake -GNinja \
      -DCMAKE_BUILD_TYPE=Release \
@@ -151,7 +151,7 @@ instead of ``xvfb``:
 
    git clone https://github.com/Kitware/VTK.git
    cd VTK
-   git checkout v9.1.0
+   git checkout v9.6.0
    mkdir build
    cd build
 
@@ -203,9 +203,6 @@ To do this, create a ``build_wheels.sh`` with the following contents in the
     # build based on python version from args
     PYTHON_VERSION="$1"
     case $PYTHON_VERSION in
-    3.8)
-      PYBIN="/opt/python/cp38-cp38/bin/python"
-      ;;
     3.9)
       PYBIN="/opt/python/cp39-cp39/bin/python"
       ;;
@@ -281,7 +278,7 @@ the ``quay.io/pypa/manylinux2014_aarch64`` image. Run the following:
 
 .. code-block:: bash
 
-    PYTHON_VERSION=3.8
+    PYTHON_VERSION=3.9
     rm -rf build
     docker run -e \
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_aarch64 \
@@ -299,9 +296,6 @@ Where ``build_wheels.sh`` is:
     # build based on python version from args
     PYTHON_VERSION="$1"
     case $PYTHON_VERSION in
-    3.8)
-      PYBIN="/opt/python/cp38-cp38/bin/python"
-      ;;
     3.9)
       PYBIN="/opt/python/cp39-cp39/bin/python"
       ;;
