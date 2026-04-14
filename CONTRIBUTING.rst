@@ -160,7 +160,7 @@ recommended entry points for day-to-day development:
 
 .. code-block:: bash
 
-    make sync       # install dev dependencies via uv and tox (+tox-uv)
+    make sync       # install dev dependencies via uv (includes tox + tox-uv)
     make lint       # run pre-commit on all files
     make typecheck  # run mypy via tox
     make test       # run the unit test suite with pytest

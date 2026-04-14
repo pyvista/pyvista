@@ -170,7 +170,13 @@ docs-test = [
   { include-group = 'pinned' },
 ]
 
-dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
+dev = [
+  'pre-commit',
+  'tox',
+  'tox-uv',
+  { include-group = 'test' },
+  { include-group = 'typing' },
+]
 
 [project.urls]
 'Bug Reports' = 'https://github.com/pyvista/pyvista/issues'

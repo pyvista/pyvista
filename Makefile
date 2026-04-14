@@ -30,7 +30,6 @@ docstyle:
 sync:
 	@echo "Installing dev dependencies"
 	@uv sync --group dev
-	@uv tool install tox --with tox-uv
 
 lint:
 	@echo "Running pre-commit"
@@ -38,7 +37,7 @@ lint:
 
 typecheck:
 	@echo "Running mypy"
-	@tox run -e mypy
+	@uv run tox run -e mypy
 
 # Extra pytest args can be passed via ARGS, e.g. `make test ARGS="-n 10 -k filters"`
 test:
