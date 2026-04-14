@@ -916,7 +916,15 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 
     offsets = _get_offset_array(cellarr)
     cell_size = offsets[1] - offsets[0]
-    return cells.reshape(-1, cell_size)
+    try:
+        return cells.reshape(-1, cell_size)
+    except ValueError:
+        sizes = sorted(np.unique(np.diff(offsets)).tolist())
+        msg = (
+            f'Cell array does not have regular cells. '
+            f'Multiple cell sizes detected with different number of points: {sizes}'
+        )
+        raise ValueError(msg)
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:

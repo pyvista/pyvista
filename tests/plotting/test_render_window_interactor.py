@@ -347,6 +347,7 @@ def test_enable_2d_style():
 
 def test_enable_interactors():
     mapping = {
+        'enable_interactor_style': InteractorStyleTrackballCamera,
         'enable_trackball_style': InteractorStyleTrackballCamera,
         'enable_custom_trackball_style': InteractorStyleTrackballCamera,
         'enable_2d_style': InteractorStyleTrackballCamera,
@@ -394,3 +395,62 @@ def test_setting_custom_style():
     pl = pv.Plotter()
     pl.iren.style = _vtk.vtkInteractorStyleJoystickActor()
     assert isinstance(pl.iren.style, _vtk.vtkInteractorStyleJoystickActor)
+
+
+def test_setting_style_by_string():
+    pl = pv.Plotter()
+    pl.iren.style = 'terrain_style'
+    assert isinstance(pl.iren.style, InteractorStyleTerrain)
+
+
+@pytest.mark.parametrize(
+    ('style_name', 'style_class'),
+    [
+        ('trackball_style', InteractorStyleTrackballCamera),
+        ('custom_trackball_style', InteractorStyleTrackballCamera),
+        ('2d_style', InteractorStyleTrackballCamera),
+        ('trackball_actor_style', InteractorStyleTrackballActor),
+        ('image_style', InteractorStyleImage),
+        ('joystick_style', InteractorStyleJoystickCamera),
+        ('joystick_actor_style', InteractorStyleJoystickActor),
+        ('zoom_style', InteractorStyleZoom),
+        ('terrain_style', InteractorStyleTerrain),
+        ('rubber_band_style', InteractorStyleRubberBandPick),
+        ('rubber_band_2d_style', InteractorStyleRubberBand2D),
+    ],
+)
+def test_enable_interactor_style_by_name(style_name, style_class):
+    pl = pv.Plotter()
+
+    pl.enable_interactor_style(style_name)
+
+    assert isinstance(pl.iren.style, style_class)
+
+
+def test_enable_interactor_style_invalid():
+    pl = pv.Plotter()
+
+    with pytest.raises(ValueError, match='Invalid interactor style'):
+        pl.enable_interactor_style('not_a_style')
+
+
+def test_plotter_uses_theme_interactor_style():
+    theme = pv.themes.Theme()
+    theme.interactor_style = 'terrain_style'
+
+    pl = pv.Plotter(theme=theme)
+
+    assert isinstance(pl.iren.style, InteractorStyleTerrain)
+
+
+def test_plotter_uses_registered_interactor_style_class():
+    class CustomInteractorStyle(_vtk.vtkInteractorStyleTrackballCamera):
+        pass
+
+    pv.register_interactor_style('custom_style', CustomInteractorStyle)
+    theme = pv.themes.Theme()
+    theme.interactor_style = 'custom_style'
+
+    pl = pv.Plotter(theme=theme)
+
+    assert isinstance(pl.iren.style, CustomInteractorStyle)

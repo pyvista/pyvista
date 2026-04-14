@@ -41,7 +41,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['imageio', 'meshio>=5.2']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
@@ -79,6 +79,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
+  'fsspec<2026.4.0',
   'hypothesis<6.151.10',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
@@ -94,9 +95,10 @@ test = [
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
-  'pytest-pyvista==0.3.2',
+  'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
+  'pyvista-zstd>=0.2.0,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -120,6 +122,7 @@ docs = [
   'colorcet==3.1.0',
   'colour-science==0.4.6',
   'enum-tools==0.13.0',
+  'fsspec==2026.3.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.3',
   'joblib==1.5.3',
@@ -134,6 +137,7 @@ docs = [
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
+  'pyvista-zstd==0.2.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.0; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
@@ -160,7 +164,7 @@ docs = [
 ]
 
 docs-test = [
-  'pytest-pyvista[vtksz]==0.3.2',
+  'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'trame-vtk==2.11.6',
   { include-group = 'pinned' },
@@ -185,6 +189,7 @@ include = ['pyvista', 'pyvista.*']
 
 [tool.setuptools.package-data]
 pyvista = ['py.typed']
+'pyvista.core.static' = ['*.css', '*.svg', 'mesh_icons/*.svg']
 'pyvista.examples' = [
   '2k_earth_daymap.jpg',
   'airplane.ply',
@@ -252,6 +257,7 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
+  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.', # https://numpy.org/devdocs/release/2.4.0-notes.html - triggered by VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
@@ -457,6 +463,9 @@ unfixable = ['F401', 'PLC0415']
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"vtk".msg = "Use targeted vtkmodules imports (e.g., from vtkmodules.vtkCommonDataModel import ...) to avoid pulling in the entire VTK package."
+
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
 '__init__.py' = ['PLC0414']
@@ -471,7 +480,7 @@ allow-dict-calls-with-keyword-arguments = true
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415']
+'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
 'examples/*' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019

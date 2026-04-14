@@ -233,6 +233,7 @@ create_grid, <function create_grid at 0x1641b3790>
 # cube_axes_actor, <module 'pyvista.plotting.cube_axes_actor' from 'pyvista/pyvista/plotting/cube_axes_actor.py'>
 cubemap, <function cubemap at 0x163f41430>
 cubemap_from_filenames, <function cubemap_from_filenames at 0x163f414c0>
+enable_smp_tools
 # dataobject, <module 'pyvista.core.dataobject' from 'pyvista/pyvista/core/dataobject.py'>
 # dataset, <module 'pyvista.core.dataset' from 'pyvista/pyvista/core/dataset.py'>
 # datasetattributes, <module 'pyvista.core.datasetattributes' from 'pyvista/pyvista/core/datasetattributes.py'>

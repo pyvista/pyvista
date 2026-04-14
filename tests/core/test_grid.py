@@ -439,7 +439,7 @@ def test_init_bad_filename():
 
 
 def test_save_bad_extension():
-    valid_ext = ['.vtu', '.vtk', '.pkl', '.pickle']
+    valid_ext = ['.vtu', '.vtk', '.pkl', '.pickle', '.pv', '.zvtk']
     if pv.vtk_version_info >= (9, 4):
         valid_ext.insert(2, '.vtkhdf')
 
