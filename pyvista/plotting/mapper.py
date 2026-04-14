@@ -526,7 +526,7 @@ class _DataSetMapper(_BaseMapper):
             if input_conn is not None:
                 self._active_scalars_algo.SetInputConnection(0, input_conn)
             if self._input_dataset is not None:
-                set_algorithm_input(self, self._input_dataset)
+                set_algorithm_input(self._active_scalars_algo, self._input_dataset)
             self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
         else:
             self._active_scalars_algo.scalars_name = name
