@@ -5065,8 +5065,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # check if mapper, lookup_table, or cmap exists; the three ways of
         # specifying the mapping. Only use saved mapper if none are specified.
-        # no real input validation here if arguments are provided, that happens
-        # in ScalarBars.add_Scalar_bar
+        # No input validation here; ScalarBars.add_scalar_bar will raise
+        # ValueError if more than one of mapper/lookup_table/cmap is provided.
         mapper = kwargs.get('mapper')
         lookup_table = kwargs.get('lookup_table')
         cmap = kwargs.get('cmap')

@@ -213,20 +213,24 @@ class ScalarBars(_NoNewAttrMixin):
         mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar. Defaults to the last mapper created
             by the plotter if neither ``mapper``, ``lookup_table``, or
-            ``cmap`` is provided.
+            ``cmap`` is provided. Raises ValueError if more than one of
+            ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
         lookup_table : :vtk:`vtkLookupTable`, optional
-            Lookup table used for the scalar bar.
+            Lookup table used for the scalar bar. Raises ValueError if more
+            than one of ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
             .. versionadded:: 0.48.0
 
         cmap : str | list, optional
-            Colormap used for the scalar bar.
+            Colormap used for the scalar bar. Raises ValueError if more than
+            one of ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
             .. versionadded:: 0.48.0
 
         clim : sequence[float], optional
-            Two item range for the scalar bar.
+            Two item range for the scalar bar. Only used if ``cmap`` is
+            specified.
 
             .. versionadded:: 0.48.0
 
@@ -360,9 +364,11 @@ class ScalarBars(_NoNewAttrMixin):
 
         The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used
         to set a custom color map for the scalar bar; otherwise, the bar will
-        default to the last mapper created by the plotter. For example when a
-        mesh with scalars is added by :func:`pyvista.Plotter.add_mesh`. See
-        examples.
+        default to the last mapper created by the plotter - for example, when
+        a mesh with scalars is added by :func:`pyvista.Plotter.add_mesh`. See
+        examples. Only one parameter can be used to set the color mapping, so
+        ValueError will be raised if more than one of ``mapper``,
+        ``lookup_table``, or ``cmap`` is provided.
 
         See Also
         --------
