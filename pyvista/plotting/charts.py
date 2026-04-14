@@ -1581,7 +1581,7 @@ class _Chart(DocSubs):
     @property
     @doc_subs
     def legend(self):
-        """Return the chart's legend. Fixes issue #7963.
+        """Return the chart's legend.
 
         >>> import pyvista as pv
         >>> import numpy as np
