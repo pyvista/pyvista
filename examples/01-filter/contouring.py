@@ -13,7 +13,6 @@ meshes can have 1D iso-lines of a scalar field extracted.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -55,7 +54,8 @@ pl.show()
 # %%
 # Banded Contours
 # +++++++++++++++
-# Create banded contours for surface meshes using :func:`~pyvista.PolyDataFilters.contour_banded`.
+# Create banded contours for surface meshes using
+# :func:`~pyvista.PolyDataFilters.contour_banded`.
 mesh = examples.load_random_hills()
 
 # %%

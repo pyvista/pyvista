@@ -12,6 +12,9 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import is_vtk_attribute
+from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -28,6 +31,8 @@ from .utilities.fileio import save_pickle
 from .utilities.helpers import wrap
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
+from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
+from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_exts
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -46,9 +51,26 @@ DEFAULT_VECTOR_KEY = '_vectors'
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+def _raise_unexpected_writer_kwargs(
+    writer_kwargs: dict[str, Any],
+    file_ext: str,
+    *,
+    target: str,
+) -> None:
+    """Raise :class:`TypeError` for extras that would be silently dropped."""
+    names = sorted(writer_kwargs)
+    msg = (
+        f'save() got unexpected keyword arguments {names} for '
+        f'{target} for extension {file_ext!r}. Extra keyword arguments '
+        f'are only forwarded to custom writers registered via '
+        f'pyvista.register_writer.'
+    )
+    raise TypeError(msg)
+
+
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
+class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -125,6 +147,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Save this vtk object to file.
 
@@ -170,6 +193,25 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
             .. versionadded:: 0.47
 
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  Use
+            these to expose format-specific options such as compression
+            level or thread count.  When the target extension dispatches
+            to a built-in VTK writer or to the pickle path, passing any
+            extra keyword arguments raises :class:`TypeError` — PyVista
+            never silently drops writer options.
+
+            .. versionadded:: 0.48
+
+        Raises
+        ------
+        TypeError
+            If ``**writer_kwargs`` are provided but the target extension
+            does not dispatch to a registered custom writer.
+        ValueError
+            If ``file_ext`` is not a supported extension.
+
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
@@ -188,29 +230,66 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         file_path = file_path.resolve()
         file_ext = get_ext(file_path)
 
-        if file_ext == '.vtkhdf' and binary is False:
-            msg = '.vtkhdf files can only be written in binary format.'
-            raise ValueError(msg)
-
         # Store complex and bitarray types as field data
         self._store_metadata()
 
-        # Save the object
+        # Dispatch order mirrors :func:`pyvista.read`: custom writers
+        # registered via :func:`pyvista.register_writer` win over
+        # built-in writers, so ``override=True`` actually replaces a
+        # built-in writer at save time.
         writer_exts = self._WRITERS.keys()
-        if file_ext in writer_exts:
+        if (custom_writer := _get_writer_ext_handler(file_ext)) is not None:
+            if not file_path.parent.exists():
+                msg = f'Parent directory does not exist: {file_path.parent}'
+                raise FileNotFoundError(msg)
+
+            custom_writer(self, str(file_path), **writer_kwargs)
+
+            if not file_path.exists():
+                msg = f'Custom writer failed to write file: {file_path}'
+                raise OSError(msg)
+
+        elif file_ext in writer_exts:
+            if writer_kwargs:
+                _raise_unexpected_writer_kwargs(
+                    writer_kwargs,
+                    file_ext,
+                    target='built-in VTK writer',
+                )
+            if file_ext == '.vtkhdf' and binary is False:
+                msg = '.vtkhdf files can only be written in binary format.'
+                raise ValueError(msg)
+
             # Save using the writer
             writer = self._WRITERS[file_ext](file_path, self)
             data_format = 'binary' if binary else 'ascii'
             writer._apply_kwargs_safely(
                 texture=texture, data_format=data_format, compression=compression
             )
+
+            if not file_path.parent.exists():
+                msg = f'Parent directory does not exist: {file_path.parent}'
+                raise FileNotFoundError(msg)
+
             writer.write()
+
+            if not file_path.exists():
+                msg = f'VTK writer failed to write file: {file_path}'
+                raise OSError(msg)
+
         elif file_ext in PICKLE_EXT:
+            if writer_kwargs:
+                _raise_unexpected_writer_kwargs(
+                    writer_kwargs,
+                    file_ext,
+                    target='pickle format',
+                )
             save_pickle(filename, self)
         else:
             msg = (
                 f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
-                f'Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
+                f'Must be one of: '
+                f'{list(writer_exts) + list(PICKLE_EXT) + _list_custom_writer_exts()}'
             )
             raise ValueError(msg)
 
@@ -405,7 +484,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista
             # (i.e. ignore any default vtk snake_case attributes)
-            if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
+            if hasattr(self, attr) and not is_vtk_attribute(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr), equal_nan=True):
                     return False
 
@@ -662,7 +741,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
-            elif isinstance(array, str) and repr(self._user_dict) != array:  # type: ignore[unreachable]
+            elif isinstance(array, str) and str(self._user_dict) != array:  # type: ignore[unreachable]
                 # Filters may update the field data block separately, e.g.
                 # when copying field data, so we need to capture the new
                 # string and re-init

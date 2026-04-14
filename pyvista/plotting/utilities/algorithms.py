@@ -9,6 +9,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -97,9 +98,7 @@ def set_algorithm_input(alg, inp, port=0):
         alg.SetInputDataObject(port, inp)
 
 
-class PreserveTypeAlgorithmBase(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
-):
+class PreserveTypeAlgorithmBase(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type.
 
     Parameters
@@ -203,8 +202,30 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
     def __init__(self, name: str, preference: PointLiteral | CellLiteral = 'point'):
         """Initialize algorithm."""
         super().__init__()
-        self.scalars_name = name
-        self.preference = preference
+        self._scalars_name = name
+        self._preference: PointLiteral | CellLiteral = preference
+
+    @property
+    def scalars_name(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the name of the active scalars array."""
+        return self._scalars_name
+
+    @scalars_name.setter
+    def scalars_name(self, name: str) -> None:
+        if name != self._scalars_name:
+            self._scalars_name = name
+            self.Modified()
+
+    @property
+    def preference(self) -> PointLiteral | CellLiteral:  # numpydoc ignore=RT01
+        """Return or set the preferred field association (``'point'`` or ``'cell'``)."""
+        return self._preference
+
+    @preference.setter
+    def preference(self, preference: PointLiteral | CellLiteral) -> None:
+        if preference != self._preference:
+            self._preference = preference
+            self.Modified()
 
     def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
@@ -225,12 +246,16 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
         """
         try:
-            inp = wrap(self.GetInputData(inInfo, 0, 0))
+            inp = self.GetInputData(inInfo, 0, 0)
             out = self.GetOutputData(outInfo, 0)
-            output = inp.copy()
-            if output.n_arrays:
-                output.set_active_scalars(self.scalars_name, preference=self.preference)
-            out.ShallowCopy(output)
+            out.ShallowCopy(inp)
+            # Set active scalars directly via VTK API on the output object.
+            # Using wrap(out) would create a new VTK object rather than
+            # wrapping the existing one, so changes would be lost.
+            if self.preference == 'cell':
+                out.GetCellData().SetActiveScalars(self.scalars_name)
+            else:
+                out.GetPointData().SetActiveScalars(self.scalars_name)
         except Exception:  # pragma: no cover
             traceback.print_exc()
             raise
@@ -238,7 +263,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
 
 class PointSetToPolyDataAlgorithm(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
+    _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase
 ):
     """Algorithm to cast PointSet to PolyData.
 
@@ -340,23 +365,28 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
         """
         try:
-            inp = wrap(self.GetInputData(inInfo, 0, 0))
+            inp = self.GetInputData(inInfo, 0, 0)
             out = self.GetOutputData(outInfo, 0)
-            output = inp.copy()
+            out.ShallowCopy(inp)
+            # AddArray does not modify active scalars (unlike PyVista's
+            # __setitem__), so no fixup is needed after insertion.
             if self.point_ids:
-                output.point_data['point_ids'] = np.arange(0, output.n_points, dtype=int)
+                n = out.GetNumberOfPoints()
+                arr = _vtk.numpy_to_vtk(np.arange(n, dtype=int))
+                arr.SetName('point_ids')
+                out.GetPointData().AddArray(arr)
             if self.cell_ids:
-                output.cell_data['cell_ids'] = np.arange(0, output.n_cells, dtype=int)
-            if output.active_scalars_name in ['point_ids', 'cell_ids']:
-                output.active_scalars_name = inp.active_scalars_name
-            out.ShallowCopy(output)
+                n = out.GetNumberOfCells()
+                arr = _vtk.numpy_to_vtk(np.arange(n, dtype=int))
+                arr.SetName('cell_ids')
+                out.GetCellData().AddArray(arr)
         except Exception:  # pragma: no cover
             traceback.print_exc()
             raise
         return 1
 
 
-class CrinkleAlgorithm(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
+class CrinkleAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
     def __init__(self):

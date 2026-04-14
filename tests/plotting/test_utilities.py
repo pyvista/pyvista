@@ -32,6 +32,7 @@ def test_start_xvfb():
         _test_start_xvfb()
 
 
+@pytest.mark.skip_windows('monkeypatching os.name conflicts with pathlib')
 def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture):
     monkeypatch.setattr(os, 'name', 'foo')
     with (

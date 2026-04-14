@@ -26,10 +26,9 @@ and passing them to PyVista for dynamic visualization.
 
 from __future__ import annotations
 
-import vtk
-
 import pyvista as pv
 from pyvista import examples
+import vtk
 
 # sphinx_gallery_start_ignore
 # widgets do not currently work in interactive examples

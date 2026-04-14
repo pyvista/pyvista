@@ -140,7 +140,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     # find and parse all docstrings; this will also remove any duplicates
     doctests = {
         dt.name: dt
-        for module_name, module in modules.items()
+        for module in modules.values()
         for dt in DocTestFinder(recurse=True).find(module, globs={})
     }
 
@@ -160,7 +160,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             ):
                 continue
             try:
-                exec(example.source, globs)
+                exec(example.source, globs)  # noqa: S102
             except Exception as exc:  # noqa: BLE001
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')

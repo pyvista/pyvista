@@ -11,7 +11,6 @@ Creating a :class:`pyvista.PolyData` (surface mesh) from vertices and faces.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -36,7 +35,7 @@ surf = pv.PolyData(vertices, faces)
 
 # plot each face with a different color
 surf.plot(
-    scalars=np.arange(3, dtype=float),
+    scalars=np.arange(3),
     cpos=[-1, 1, 0.5],
     show_scalar_bar=False,
     show_edges=True,

@@ -72,13 +72,17 @@ mesh.n_open_edges
 # %%
 # And we can extract those edges with the ``boundary_edges`` option of
 # :func:`pyvista.DataSetFilters.extract_feature_edges`:
-edges = mesh.extract_feature_edges(boundary_edges=True, feature_edges=False, manifold_edges=False)
+edges = mesh.extract_feature_edges(
+    boundary_edges=True, feature_edges=False, manifold_edges=False
+)
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, color=True)
 pl.add_mesh(edges, color='red', line_width=5)
 pl.camera_position = pv.CameraPosition(
-    position=(-0.2, -0.13, 0.12), focal_point=(-0.015, 0.10, -0.0), viewup=(0.28, 0.26, 0.9)
+    position=(-0.2, -0.13, 0.12),
+    focal_point=(-0.015, 0.10, -0.0),
+    viewup=(0.28, 0.26, 0.9),
 )
 pl.show()
 # %%

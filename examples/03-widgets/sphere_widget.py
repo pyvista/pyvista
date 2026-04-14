@@ -33,7 +33,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # Use a single sphere widget
 
 import numpy as np
-
 import pyvista as pv
 
 # Create a triangle surface
@@ -73,7 +72,6 @@ pl.show()
 # Use several sphere widgets at once
 
 import numpy as np
-
 import pyvista as pv
 
 # Create a triangle surface
@@ -114,9 +112,8 @@ pl.show()
 # a surface and interpolate between them with some boundary conditions
 
 import numpy as np
-from scipy.interpolate import griddata
-
 import pyvista as pv
+from scipy.interpolate import griddata
 
 
 def get_colors(n):
@@ -137,7 +134,9 @@ y = np.linspace(ymin, ymax, num=25)
 xx, yy, zz = np.meshgrid(x, y, [0])
 
 # Make sure boundary conditions exist
-boundaries = np.array([[xmin, ymin, 0], [xmin, ymax, 0], [xmax, ymin, 0], [xmax, ymax, 0]])
+boundaries = np.array(
+    [[xmin, ymin, 0], [xmin, ymax, 0], [xmax, ymin, 0], [xmax, ymax, 0]]
+)
 
 # Create the PyVista mesh to hold this grid
 surf = pv.StructuredGrid(xx, yy, zz)

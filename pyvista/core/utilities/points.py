@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
@@ -76,12 +76,11 @@ def vtk_points(  # noqa: PLR0917
             raise
 
     if force_float and not np.issubdtype(points_.dtype, np.floating):
-        warnings.warn(
+        warn_external(
             'Points is not a float type. This can cause issues when '
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
-            stacklevel=2,
         )
         points_ = points_.astype(np.float32)
 
@@ -91,7 +90,12 @@ def vtk_points(  # noqa: PLR0917
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        if vtk_object.GetSize() == points_.size:
+        size = (
+            vtk_object.GetSize()
+            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
+            else vtk_object.GetCapacity()
+        )
+        if size == points_.size:
             vtkpts = _vtk.vtkPoints()
             vtkpts.SetData(points_.VTKObject)
             return vtkpts
@@ -772,11 +776,11 @@ def principal_axes(
 
     Plot the mesh and highlight its points in black.
 
-    >>> p = pv.Plotter()
-    >>> _ = p.add_mesh(mesh)
-    >>> _ = p.add_points(mesh, color='black')
-    >>> _ = p.show_grid()
-    >>> p.show()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh)
+    >>> _ = pl.add_points(mesh, color='black')
+    >>> _ = pl.show_grid()
+    >>> pl.show()
 
     Compute its principal axes and return the standard deviations.
 

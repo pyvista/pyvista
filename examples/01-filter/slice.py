@@ -73,8 +73,8 @@ slices.plot(cmap=cmap)
 # Slice Along Line
 # ++++++++++++++++
 #
-# We can also slice a dataset along a :func:`pyvista.Spline` or
-# :func:`pyvista.Line` using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
+# We can also slice a dataset along a :func:`pyvista.Spline` or :func:`pyvista.Line`
+# using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
 #
 # First, define a line source through the dataset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while
@@ -181,10 +181,10 @@ pl.show()
 # %%
 # Slice ImageData With Indexing
 # +++++++++++++++++++++++++++++
-# Most slicing filters return :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
-# For :class:`~pyvista.ImageData` inputs, however, it's often desirable to return
-# :class:`~pyvista.ImageData`. The :meth:`~pyvista.ImageDataFilters.slice_index` filter supports
-# this use case.
+# Most slicing filters return :class:`~pyvista.PolyData` or
+# :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs, however,
+# it's often desirable to return :class:`~pyvista.ImageData`. The
+# :meth:`~pyvista.ImageDataFilters.slice_index` filter supports this use case.
 #
 # Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
 # :func:`~pyvista.examples.examples.load_frog_tissues`.
@@ -195,15 +195,17 @@ colored = sliced.color_labels()
 colored.plot(cpos='xy', zoom='tight', lighting=False)
 
 # %%
-# Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we define
-# indices to extract the frog's head.
+# Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we
+# define indices to extract the frog's head.
 
 sliced = mask.slice_index(i=[300, 500], j=[110, 350], k=[0, 100])
 surface = sliced.contour_labels()
 colored = surface.color_labels()
 
 cpos = pv.CameraPosition(
-    position=(520.0, 461.0, -402.0), focal_point=(372.0, 243.0, 52.0), viewup=(-0.73, -0.50, -0.47)
+    position=(520.0, 461.0, -402.0),
+    focal_point=(372.0, 243.0, 52.0),
+    viewup=(-0.73, -0.50, -0.47),
 )
 colored.plot(cpos=cpos)
 

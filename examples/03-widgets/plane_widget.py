@@ -113,7 +113,9 @@ pl.show()
 import vtk
 
 pl = pv.Plotter()
-pl.add_mesh_slice(vol, assign_to_axis='z', interaction_event=vtk.vtkCommand.InteractionEvent)
+pl.add_mesh_slice(
+    vol, assign_to_axis='z', interaction_event=vtk.vtkCommand.InteractionEvent
+)
 pl.show()
 
 # %%

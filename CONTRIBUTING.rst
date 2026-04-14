@@ -1,7 +1,7 @@
 Contributing
 ============
 
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg
    :target: CODE_OF_CONDUCT.md
 
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
@@ -134,6 +134,13 @@ repository. If you did not write the code yourself, it is your
 responsibility to ensure that the existing license is compatible and
 included in the contributed files or you can obtain permission from the
 original author to relicense the code.
+
+Generative AI
+-------------
+
+We follow the Python Developer's Guide on `Generative AI <https://devguide.python.org/getting-started/generative-ai/>`_.
+The resulting contribution is the responsibility of the contributor, and we value good code,
+concise accurate documentation, and avoiding unneeded code churn.
 
 --------------
 
@@ -325,10 +332,13 @@ Note the following:
   ``numpydoc``'s documentation where there are no empty lines between parameter
   docstrings.
 * This docstring also contains a returns section and an examples section.
-* The returns section does not include the parameter name if the function has
-  a single return value. Multiple return values (not shown) should have
-  descriptive parameter names for each returned value, in the same format as
-  the input parameters.
+* The returns section structure depends on the number of return values and types:
+    * for a single return value with a single return type, the parameter name
+      can be omitted (as shown above),
+    * for a single return value with multiple types (ie. ``str | int``), the parameter
+      must be specified (not shown),
+    * for multiple return values (not shown), descriptive parameter names for each returned value
+      must be specified in the same format as the input parameters.
 * The examples section references the "full example" in the gallery if it
   exists.
 
@@ -385,13 +395,13 @@ versions of backwards compatibility to give users the ability to update their
 software and scripts.
 
 Here's an example of a soft deprecation of a function. Note the usage of both
-the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
-directive.
+the ``PyVistaDeprecationWarning`` warning, the ``.. deprecated`` Sphinx
+directive and the ``warn_external`` helper function.
 
 .. code-block:: python
 
-    import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista._warn_external import warn_external  # available from 0.47
 
 
     def addition(a, b):
@@ -415,7 +425,7 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        warnings.warn(
+        warn_external(
             '`addition` has been deprecated. Use pyvista.add instead',
             PyVistaDeprecationWarning,
         )
@@ -1111,7 +1121,7 @@ copies of the images are made as follows:
 #. If the comparison between the two images fails:
 
     - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
@@ -1119,15 +1129,15 @@ copies of the images are made as follows:
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
 
-To resolve failed tests, any images in ``from_build`` or ``from_cache``
+To resolve failed tests, any images in ``from_test`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
 if adding new docstring examples or plots, the test will initially fail,
-and the images in ``from_build`` may be added to the ``Doc Image Cache``.
+and the images in ``from_test`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 

@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -157,10 +158,9 @@ def voxelize(  # noqa: PLR0917
 
     """
     # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warnings.warn(
+    warn_external(
         '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
         PyVistaDeprecationWarning,
-        stacklevel=2,
     )
     return _voxelize_legacy(
         mesh=mesh,
@@ -198,7 +198,9 @@ def _voxelize_legacy(
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_geometry()  # filter preserves topology
+    surface = mesh.extract_surface(
+        algorithm=None, pass_cellid=False, pass_pointid=False
+    )  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'
@@ -248,9 +250,11 @@ def _voxelize_legacy(
         del ugrid_norm, surface_norm
     else:
         # get part of the mesh within the mesh's bounding surface.
-        selection = ugrid.select_enclosed_points(
-            surface, tolerance=0.0, check_surface=check_surface
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=pv.PyVistaDeprecationWarning)
+            selection = ugrid.select_enclosed_points(
+                surface, tolerance=0.0, check_surface=check_surface
+            )
         mask = selection.point_data['SelectedPoints'].view(np.bool_)
         del selection
 
@@ -392,11 +396,10 @@ def voxelize_volume(  # noqa: PLR0917
 
     """
     # Deprecated on v0.46.0, estimated removal on v0.49.0
-    warnings.warn(
+    warn_external(
         '`pyvista.voxelize_volume` is deprecated. Use '
         '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
         PyVistaDeprecationWarning,
-        stacklevel=2,
     )
     mesh = wrap(mesh)
     if density is None:
@@ -410,7 +413,9 @@ def voxelize_volume(  # noqa: PLR0917
         raise TypeError(msg)
 
     # check and pre-process input mesh
-    surface = mesh.extract_geometry()  # filter preserves topology
+    surface = mesh.extract_surface(
+        algorithm=None, pass_cellid=False, pass_pointid=False
+    )  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
         msg = 'Input mesh must have faces for voxelization.'
@@ -630,7 +635,7 @@ def spherical_to_cartesian(r, phi, theta):
 
     Returns
     -------
-    numpy.ndarray, numpy.ndarray, numpy.ndarray
+    output : numpy.ndarray, numpy.ndarray, numpy.ndarray
         Cartesian coordinates.
 
     """
@@ -895,7 +900,7 @@ def sample_function(  # noqa: PLR0917
     for a full example using this function.
 
     """
-    # internal import to avoide circular dependency
+    # internal import to avoid circular dependency
     from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()

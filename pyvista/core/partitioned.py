@@ -6,11 +6,15 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import overload
 
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import vtk_version_info
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
+from .formatting_html import _children_section
+from .formatting_html import build_repr_html
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 from .utilities.writer import HDFWriter
@@ -46,9 +50,11 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
+    plot = pv._plot.plot
+
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {'.vtpd': XMLPartitionedDataSetWriter}
 
-    if _vtk.vtk_version_info >= (9, 4):
+    if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(self, *args, **kwargs):
@@ -144,33 +150,23 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
-        fmt = ''
-        fmt += "<table style='width: 100%;'>"
-        fmt += '<tr><th>Information</th><th>Partitions</th></tr>'
-        fmt += '<tr><td>'
-        fmt += '\n'
-        fmt += '<table>\n'
-        fmt += f'<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n'
-        row = '<tr><td>{}</td><td>{}</td></tr>\n'
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except TypeError:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
-        fmt += '</table>\n'
-        fmt += '\n'
-        fmt += '</td><td>'
-        fmt += '\n'
-        fmt += '<table>\n'
-        row = '<tr><th>{}</th><th>{}</th></tr>\n'
-        fmt += row.format('Index', 'Type')
-        for i in range(self.n_partitions):
-            data = self[i]
-            fmt += row.format(i, type(data).__name__)
-        fmt += '</table>\n'
-        fmt += '\n'
-        fmt += '</td></tr> </table>'
-        return fmt
+        sections: list[str] = []
+
+        # Partitions
+        children = [
+            (f'{i}', type(p).__name__ if (p := self[i]) is not None else 'None', '')
+            for i in range(self.n_partitions)
+        ]
+        if children:
+            sections.append(_children_section('Partitions', children))
+
+        return build_repr_html(
+            obj_type=type(self).__name__,
+            mesh_type='ImageData',
+            header_badges=[f'{self.n_partitions} partitions'],
+            sections=sections,
+            text_repr=repr(self),
+        )
 
     def __repr__(self) -> str:
         """Define an adequate representation."""

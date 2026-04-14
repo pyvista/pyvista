@@ -11,6 +11,7 @@ import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
@@ -499,7 +500,10 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
 
     # Get scale from diagonals and shear from off-diagonals
     S = np.diagonal(SK).copy()  # Copy since it's read only
-    K = (SK * (I3 == 0.0)) / S[:, np.newaxis] + I3
+
+    # Avoid division by zero for cases with rank < 3
+    inv_S = _reciprocal(S, tol=1e-12, value_if_division_by_zero=0.0)
+    K = (SK * (I3 == 0.0)) * inv_S[:, np.newaxis] + I3
 
     # Get reflection and ensure rotation is right-handed
     if np.linalg.det(RN) < 0:

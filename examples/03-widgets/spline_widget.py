@@ -20,7 +20,6 @@ path. To do this, we have added a convenient helper method which leverages the
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%

@@ -7,16 +7,117 @@ import pyvista as pv
 from pyvista.core import _vtk_core as _vtk
 
 
-def test_spline():
+@pytest.fixture
+def points():
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
     r = z**2 + 1
     x = r * np.sin(theta)
     y = r * np.cos(theta)
+    return np.column_stack((x, y, z))
 
-    points = np.column_stack((x, y, z))
-    spline = pv.Spline(points, 1000)
-    assert spline.n_points == 1000
+
+def test_spline_n_points(points):
+    spline = pv.Spline(points)
+    assert spline.n_points == points.shape[0]
+
+    n_points = 1000
+    spline = pv.Spline(points, n_points)
+    assert spline.n_points == n_points
+
+
+def test_spline_parametrize_by(points):
+    n_points = 1000
+    spline_by_length = pv.Spline(points, n_points, parametrize_by='length')
+    spline_by_index = pv.Spline(points, n_points, parametrize_by='index')
+    assert spline_by_length.n_points == n_points
+    assert spline_by_index.n_points == n_points
+
+    # Test that it produces different points
+    assert not np.allclose(spline_by_index.points, spline_by_length.points)
+
+
+def test_spline_closed(points):
+    n_points = 1000
+    spline = pv.Spline(points, n_points)
+    spline_closed = pv.Spline(points, n_points, closed=True)
+    assert not np.allclose(spline.bounds, spline_closed.bounds)
+
+
+@pytest.mark.parametrize(
+    ('boundary_constraint', 'boundary_value'),
+    [('finite_difference', None), ('clamped', 0.0), ('second', 0.0), ('scaled_second', 0.0)],
+)
+def test_boundary_constraints(points, boundary_constraint, boundary_value):
+    default_constraint = 'clamped'
+    default_value = 0.0
+    n_points = 1000
+    spline = pv.Spline(points, n_points)
+
+    # Test that different splines are produced
+    spline_boundary_left = pv.Spline(
+        points,
+        n_points,
+        boundary_constraints=(boundary_constraint, default_constraint),
+        boundary_values=(boundary_value, default_value),
+    )
+    spline_boundary_right = pv.Spline(
+        points,
+        n_points,
+        boundary_constraints=(default_constraint, boundary_constraint),
+        boundary_values=(default_value, boundary_value),
+    )
+
+    is_default = boundary_constraint == default_constraint
+    left_points = spline_boundary_left.points
+    right_points = spline_boundary_right.points
+    assert np.allclose(spline.points, left_points) == is_default
+    assert np.allclose(spline.points, right_points) == is_default
+    assert np.allclose(left_points, right_points) == is_default
+
+    if boundary_constraint == 'finite_difference':
+        with pytest.raises(ValueError, match='finite difference boundary value must be None'):
+            _ = pv.Spline(
+                points,
+                n_points,
+                boundary_constraints=(boundary_constraint, default_constraint),
+                boundary_values=(1.0, 0.0),
+            )
+    else:
+        spline_boundary_left_val = pv.Spline(
+            points,
+            n_points,
+            boundary_constraints=(boundary_constraint, default_constraint),
+            boundary_values=(1.0, 0.0),
+        )
+        spline_boundary_right_val = pv.Spline(
+            points,
+            n_points,
+            boundary_constraints=(default_constraint, boundary_constraint),
+            boundary_values=(0.0, 1.0),
+        )
+
+        assert not np.allclose(spline_boundary_left_val.points, left_points)
+        assert not np.allclose(spline_boundary_right_val.points, right_points)
+        assert not np.allclose(spline_boundary_left_val.points, spline_boundary_right_val.points)
+
+
+@pytest.mark.parametrize(
+    ('boundary_constraint', 'boundary_value'),
+    [('finite_difference', None), ('clamped', 0.0), ('second', 0.0), ('scaled_second', 0.0)],
+)
+def test_spline_boundary_single_input(points, boundary_constraint, boundary_value):
+    n_points = 1000
+    spline1 = pv.Spline(
+        points, n_points, boundary_constraints=boundary_constraint, boundary_values=boundary_value
+    )
+    spline2 = pv.Spline(
+        points,
+        n_points,
+        boundary_constraints=[boundary_constraint, boundary_constraint],
+        boundary_values=[boundary_value, boundary_value],
+    )
+    assert spline1 == spline2
 
 
 def test_kochanek_spline():

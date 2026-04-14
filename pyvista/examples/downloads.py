@@ -31,16 +31,15 @@ import shutil
 import sys
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 import pooch
-from pooch import Unzip
-from pooch.utils import get_logger
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
@@ -55,7 +54,7 @@ if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import MultiBlock
 # disable pooch verbose logging
-POOCH_LOGGER = get_logger()
+POOCH_LOGGER = pooch.get_logger()  # type: ignore[attr-defined]
 POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 
@@ -64,13 +63,13 @@ CACHE_VERSION = 3
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
 
 def _warn_invalid_dir_not_used(path, env_var):
     msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
-    warnings.warn(msg, stacklevel=2)
+    warn_external(msg)
 
 
 def _get_vtk_data_source() -> tuple[str, bool]:
@@ -121,7 +120,7 @@ def _warn_if_path_not_accessible(path: str | Path, msg: str):
     except (PermissionError, OSError):
         # Warn, don't raise just in case there's an environment issue.
         msg = f'Unable to access path: {path}\n{msg}'
-        warnings.warn(msg, stacklevel=2)
+        warn_external(msg)
 
 
 SOURCE, _FILE_CACHE = _get_vtk_data_source()
@@ -136,7 +135,7 @@ _warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
 # to the registry since we're not (at the moment) concerned about hashes.
-FETCHER = pooch.create(
+FETCHER = pooch.create(  # type: ignore[attr-defined]
     path=USER_DATA_PATH,
     base_url=SOURCE,
     registry={},
@@ -207,7 +206,7 @@ def download_file(filename):
 
     Returns
     -------
-    str | list
+    output : str | list
         A single path if the file is not an archive. A ``list`` of paths if the
         file is an archive.
 
@@ -232,7 +231,7 @@ def _download_file(filename):
     """Download a file using pooch."""
     return FETCHER.fetch(
         filename,
-        processor=Unzip() if filename.endswith('.zip') else None,
+        processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
     )
 
@@ -253,7 +252,7 @@ def _download_archive(filename, target_file=None):
 
     Returns
     -------
-    list | str
+    output : list | str
         List of files when ``target_file`` is ``None``. Otherwise, a single path.
 
     """
@@ -323,7 +322,7 @@ def _download_and_read(filename, *, texture=False, file_format=None, load=True):
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         Dataset or path to the file depending on the ``load`` parameter.
 
     """
@@ -351,7 +350,7 @@ def download_masonry_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -394,7 +393,7 @@ def download_usa_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -433,7 +432,7 @@ def download_puppy_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -471,7 +470,7 @@ def download_puppy(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -511,7 +510,7 @@ def download_usa(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -546,7 +545,7 @@ def download_st_helens(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -589,7 +588,7 @@ def download_bunny(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -633,7 +632,7 @@ def download_bunny_coarse(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -682,7 +681,7 @@ def download_cow(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -725,7 +724,7 @@ def download_cow_head(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -760,7 +759,7 @@ def download_faults(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -793,7 +792,7 @@ def download_tensors(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -826,7 +825,7 @@ def download_head(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -882,7 +881,7 @@ def download_head_2(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -923,7 +922,7 @@ def download_bolt_nut(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock or tuple
+    output : pyvista.MultiBlock or tuple
         DataSet or tuple of filenames depending on ``load``.
 
     Examples
@@ -982,7 +981,7 @@ def download_clown(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1015,7 +1014,7 @@ def download_topo_global(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1056,7 +1055,7 @@ def download_topo_land(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1096,7 +1095,7 @@ def download_coastlines(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1129,7 +1128,7 @@ def download_knee(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1173,7 +1172,7 @@ def download_knee_full(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1222,7 +1221,7 @@ def download_lidar(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1263,7 +1262,7 @@ def download_exodus(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1296,7 +1295,7 @@ def download_nefertiti(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1341,7 +1340,7 @@ def download_blood_vessels(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1389,7 +1388,7 @@ def download_iron_protein(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1422,7 +1421,7 @@ def download_tetrahedron(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1458,7 +1457,7 @@ def download_saddle_surface(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1496,7 +1495,7 @@ def download_sparse_points(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1550,7 +1549,7 @@ def download_foot_bones(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1566,6 +1565,10 @@ def download_foot_bones(load=True):  # noqa: FBT002
 
         :ref:`voxelize_example`
             Example using this dataset.
+
+        :ref:`compare_threshold_filters_example`
+            Example using this dataset.
+
 
     """
     return _download_dataset(_dataset_foot_bones, load=load)
@@ -1586,7 +1589,7 @@ def download_guitar(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1621,7 +1624,7 @@ def download_quadratic_pyramid(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1657,7 +1660,7 @@ def download_bird(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1692,7 +1695,7 @@ def download_bird_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1730,7 +1733,7 @@ def download_office(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.StructuredGrid | str
+    output : pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1766,7 +1769,7 @@ def download_horse_points(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1801,7 +1804,7 @@ def download_horse(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1839,7 +1842,7 @@ def download_cake_easy(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1874,7 +1877,7 @@ def download_cake_easy_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1912,7 +1915,7 @@ def download_rectilinear_grid(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.RectilinearGrid | str
+    output : pyvista.RectilinearGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1950,7 +1953,7 @@ def download_gourds(zoom=False, load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -1998,7 +2001,7 @@ def download_gourds_texture(zoom=False, load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.DataSet | str
+    output : pyvista.DataSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2043,7 +2046,7 @@ def download_gourds_pnm(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2080,7 +2083,7 @@ def download_unstructured_grid(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2113,7 +2116,7 @@ def download_letter_k(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2148,7 +2151,7 @@ def download_letter_a(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2186,7 +2189,7 @@ def download_poly_line(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2219,7 +2222,7 @@ def download_cad_model(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2255,7 +2258,7 @@ def download_frog(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2310,7 +2313,7 @@ def download_chest(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2349,7 +2352,7 @@ def download_brain_atlas_with_sides(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2387,7 +2390,7 @@ def download_prostate(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2423,7 +2426,7 @@ def download_filled_contours(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2459,7 +2462,7 @@ def download_doorman(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2521,7 +2524,7 @@ def download_mug(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2554,7 +2557,7 @@ def download_oblique_cone(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2587,7 +2590,7 @@ def download_emoji(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2622,7 +2625,7 @@ def download_emoji_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2657,7 +2660,7 @@ def download_teapot(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2695,7 +2698,7 @@ def download_brain(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2729,6 +2732,42 @@ def download_brain(load=True):  # noqa: FBT002
 _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 
 
+def download_frd(*, load=True):
+    """Download a sample CalculiX FRD file.
+
+    .. versionadded:: 0.48
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_frd()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Frd Dataset <frd_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`calculix_colormap_example`
+            Example of how to recreate the default ``cgx`` (CalculiX GraphiX) colormap.
+
+    """
+    return _download_dataset(_dataset_frd, load=load)
+
+
+_dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd')
+
+
 @_deprecate_positional_args
 def download_structured_grid(load=True):  # noqa: FBT002
     """Download structured grid dataset.
@@ -2741,7 +2780,7 @@ def download_structured_grid(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.StructuredGrid | str
+    output : pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2776,7 +2815,7 @@ def download_structured_grid_two(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.StructuredGrid | str
+    output : pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2811,7 +2850,7 @@ def download_trumpet(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2846,7 +2885,7 @@ def download_face(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2885,7 +2924,7 @@ def download_sky_box_nz(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2922,7 +2961,7 @@ def download_sky_box_nz_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2962,7 +3001,7 @@ def download_disc_quads(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2995,7 +3034,7 @@ def download_honolulu(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3033,7 +3072,7 @@ def download_motor(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3066,7 +3105,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3077,7 +3116,7 @@ def download_tri_quadratic_hexahedron(load=True):  # noqa: FBT002
 
     Show non-linear subdivision.
 
-    >>> surf = dataset.extract_surface(nonlinear_subdivision=5)
+    >>> surf = dataset.extract_surface(algorithm=None, nonlinear_subdivision=5)
     >>> surf.plot(smooth_shading=True)
 
     .. seealso::
@@ -3112,7 +3151,7 @@ def download_human(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3145,7 +3184,7 @@ def download_vtk(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3180,7 +3219,7 @@ def download_spider(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3213,7 +3252,7 @@ def download_carotid(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3242,6 +3281,7 @@ def download_carotid(load=True):  # noqa: FBT002
         * :ref:`gradients_example`
         * :ref:`streamlines_example`
         * :ref:`plane_widget_example`
+        * :ref:`compare_threshold_filters_example`
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -3270,7 +3310,7 @@ def download_blow(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3315,7 +3355,7 @@ def download_shark(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3362,7 +3402,7 @@ def download_great_white_shark(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3411,7 +3451,7 @@ def download_grey_nurse_shark(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3458,7 +3498,7 @@ def download_dragon(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3498,7 +3538,7 @@ def download_armadillo(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3539,7 +3579,7 @@ def download_gears(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3580,7 +3620,7 @@ def download_torso(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3620,7 +3660,7 @@ def download_kitchen(split=False, load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.StructuredGrid | str
+    output : pyvista.StructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3677,7 +3717,7 @@ def _kitchen_split_load_func(mesh):
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = pv.core.filters._get_output(alg)
+        result = _get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -3763,7 +3803,7 @@ def download_model_with_variance(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3799,7 +3839,7 @@ def download_thermal_probes(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3835,7 +3875,7 @@ def download_carburetor(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3868,7 +3908,7 @@ def download_turbine_blade(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3901,7 +3941,7 @@ def download_pine_roots(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3937,7 +3977,7 @@ def download_crater_topo(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -3978,7 +4018,7 @@ def download_crater_imagery(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4023,7 +4063,7 @@ def download_dolfin(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4061,7 +4101,7 @@ def download_damavand_volcano(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4122,7 +4162,7 @@ def download_delaunay_example(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4155,7 +4195,7 @@ def download_embryo(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4204,7 +4244,7 @@ def download_antarctica_velocity(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4245,7 +4285,7 @@ def download_room_surface_mesh(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4281,7 +4321,7 @@ def download_beach(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4314,7 +4354,7 @@ def download_rgba_texture(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4353,7 +4393,7 @@ def download_vtk_logo(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4631,7 +4671,7 @@ def download_backward_facing_step(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4667,7 +4707,7 @@ def download_gpr_data_array(load=True):  # noqa: FBT002
 
     Returns
     -------
-    numpy.ndarray | str
+    output : numpy.ndarray | str
         Array or filename depending on ``load``.
 
     Examples
@@ -4715,7 +4755,7 @@ def download_gpr_path(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4759,7 +4799,7 @@ def download_woman(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4800,7 +4840,7 @@ def download_lobster(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4835,7 +4875,7 @@ def download_face2(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4872,7 +4912,7 @@ def download_urn(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4913,7 +4953,7 @@ def download_pepper(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4948,7 +4988,7 @@ def download_drill(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -4998,7 +5038,7 @@ def download_action_figure(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5055,7 +5095,7 @@ def download_notch_stress(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5081,7 +5121,7 @@ def download_notch_stress(load=True):  # noqa: FBT002
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed.vtk')
 
 
 @_deprecate_positional_args
@@ -5096,7 +5136,7 @@ def download_notch_displacement(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5143,7 +5183,7 @@ def download_louis_louvre(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5190,7 +5230,7 @@ def download_cylinder_crossflow(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5237,7 +5277,7 @@ def download_naca(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5290,7 +5330,7 @@ def download_lshape(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5339,7 +5379,7 @@ def download_wavy(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5375,7 +5415,7 @@ def download_single_sphere_animation(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5435,7 +5475,7 @@ def download_dual_sphere_animation(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5498,7 +5538,7 @@ def download_cavity(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5543,7 +5583,7 @@ def download_openfoam_tubes(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5607,7 +5647,7 @@ def download_lucy(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5674,7 +5714,7 @@ def download_pump_bracket(load=True):  # noqa: FBT002
 
     Returns
     -------
-    UnstructuredGrid | str
+    output : UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -5745,7 +5785,7 @@ def download_electronics_cooling(load=True):  # noqa: FBT002
 
     Returns
     -------
-    tuple[PolyData, UnstructuredGrid] | list[str]
+    output : tuple[PolyData, UnstructuredGrid] | list[str]
         DataSets or filenames depending on ``load``.
 
     Examples
@@ -5843,7 +5883,7 @@ def download_can_crushed_hdf(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         Crushed can dataset or path depending on the value of ``load``.
 
     Examples
@@ -5886,7 +5926,7 @@ def download_can_crushed_vtu(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         Crushed can dataset or path depending on the value of ``load``.
 
     Examples
@@ -5927,7 +5967,7 @@ def download_cgns_structured(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         Structured, 12 block, 3-D constricting channel, with example use of
         Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
@@ -5970,7 +6010,7 @@ def download_tecplot_ascii(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         Multiblock format with only 1 data block, simple geometric shape.
         If ``load`` is ``False``, then the path of the example Tecplot file
         is returned.
@@ -6011,7 +6051,7 @@ def download_cgns_multi(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         Structured, 4 blocks, 2D (2 planes in third dimension) multielement
         airfoil, with cell centered solution. If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
@@ -6079,7 +6119,7 @@ def download_dicom_stack(
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or path depending on ``load``.
 
     References
@@ -6139,7 +6179,7 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.Texture | str
+    output : pyvista.Texture | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6191,7 +6231,7 @@ def download_cells_nd(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6232,7 +6272,7 @@ def download_moonlanding_image(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         ``DataSet`` or filename depending on ``load``.
 
     Examples
@@ -6273,7 +6313,7 @@ def download_angular_sector(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6313,7 +6353,7 @@ def download_mount_damavand(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6353,7 +6393,7 @@ def download_particles_lethe(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6397,7 +6437,7 @@ def download_gif_simple(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6450,7 +6490,7 @@ def download_cloud_dark_matter(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PointSet | str
+    output : pyvista.PointSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6516,7 +6556,7 @@ def download_cloud_dark_matter_dense(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PointSet | str
+    output : pyvista.PointSet | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6593,7 +6633,7 @@ def download_stars_cloud_hyg(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6654,7 +6694,7 @@ def download_fea_bracket(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6710,7 +6750,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6800,7 +6840,7 @@ def download_black_vase(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6877,7 +6917,7 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -6960,7 +7000,7 @@ def download_bird_bath(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7035,7 +7075,7 @@ def download_owl(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7115,7 +7155,7 @@ def download_plastic_vase(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7192,7 +7232,7 @@ def download_sea_vase(load=True, *, high_resolution=False):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7315,7 +7355,7 @@ def download_cad_model_case(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7378,7 +7418,7 @@ def download_aero_bracket(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7462,7 +7502,7 @@ def download_coil_magnetic_field(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData or str
+    output : pyvista.ImageData or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7554,7 +7594,7 @@ def download_meshio_xdmf(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    output : pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7596,7 +7636,7 @@ def download_victorian_goblet_face_illusion(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid or str
+    output : pyvista.UnstructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7643,7 +7683,7 @@ def download_reservoir(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ExplicitStructuredGrid or str
+    output : pyvista.ExplicitStructuredGrid or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7663,15 +7703,15 @@ def download_reservoir(load=True):  # noqa: FBT002
       N Arrays:   6
 
 
-    >>> plot = pv.Plotter()
-    >>> _ = plot.add_mesh(dataset, show_edges=True)
-    >>> camera = plot.camera
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(dataset, show_edges=True)
+    >>> camera = pl.camera
     >>> camera.position = (312452, 7474760, 3507)
     >>> camera.focal_point = (314388, 7481520, -2287)
     >>> camera.up = (0.09, 0.63, 0.77)
     >>> camera.distance = 9112
     >>> camera.clipping_range = (595, 19595)
-    >>> plot.show()
+    >>> pl.show()
 
     .. seealso::
 
@@ -7717,8 +7757,8 @@ def download_whole_body_ct_male(
     available from `zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
-    Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
-    Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
+    Jakob Wasserthal et al., TotalSegmentator: Robust Segmentation of 104 Anatomic
+    Structures in CT Images, Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
 
     The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
 
@@ -7773,7 +7813,7 @@ def download_whole_body_ct_male(
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    output : pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7915,7 +7955,7 @@ class _WholeBodyCTUtilities:
         # Add scalars to a new image
         label_map_image = pv.ImageData()
         label_map_image.copy_structure(cast('pv.ImageData', masks[0]))
-        label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
+        label_map_image['label_map'] = label_map_array
         return label_map_image
 
     @staticmethod
@@ -7968,8 +8008,8 @@ def download_whole_body_ct_female(
     available from `zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
-    Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
-    Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
+    Jakob Wasserthal et al., TotalSegmentator: Robust Segmentation of 104 Anatomic
+    Structures in CT Images, Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
 
     The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
 
@@ -8024,7 +8064,7 @@ def download_whole_body_ct_female(
 
     Returns
     -------
-    pyvista.MultiBlock or str
+    output : pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8148,7 +8188,7 @@ def download_room_cff(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock or tuple
+    output : pyvista.MultiBlock or tuple
         DataSet or tuple of filenames depending on ``load``.
 
     Examples
@@ -8189,7 +8229,7 @@ def download_m4_total_density(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8246,7 +8286,7 @@ def download_headsq(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8288,7 +8328,7 @@ def download_prism(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8323,7 +8363,7 @@ def download_t3_grid_0(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8358,7 +8398,7 @@ def download_caffeine(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8402,7 +8442,7 @@ def download_e07733s002i009(load=True):  # paragma: no cover  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8437,7 +8477,7 @@ def download_particles(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8477,7 +8517,7 @@ def download_prostar(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8519,7 +8559,7 @@ def download_3gqp(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8554,7 +8594,7 @@ def download_full_head(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8596,7 +8636,7 @@ def download_nek5000(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.UnstructuredGrid | str
+    output : pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8629,6 +8669,9 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 def download_biplane(load=True):  # noqa: FBT002
     """Download biplane dataset.
 
+    .. warning::
+        This dataset is known to cause segmentation faults on Windows.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8637,14 +8680,16 @@ def download_biplane(load=True):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.MultiBlock | str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
     --------
+    >>> import sys
     >>> from pyvista import examples
-    >>> dataset = examples.download_biplane()
-    >>> dataset.plot(cpos='zy', zoom=1.5)
+    >>> if sys.platform != 'win32':  # segfaults on Windows
+    ...     dataset = examples.download_biplane()
+    ...     dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
 
@@ -8671,7 +8716,7 @@ def download_yinyang(*, load=True):
 
     Returns
     -------
-    pyvista.ImageData | str
+    output : pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8701,3 +8746,47 @@ def download_yinyang(*, load=True):
 
 
 _dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
+
+
+def download_warping_spheres(*, load=True):
+    """Download warping spheres dataset.
+
+    .. versionadded:: 0.47.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    output : PartitionedDataSet | str
+        Data object or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the warping spheres and plot them.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> partitioned = examples.download_warping_spheres()
+    >>> cpos = pv.CameraPosition(
+    ...     position=(70.0, -70.0, 0.0),
+    ...     focal_point=(7.0, 7.0, 7.0),
+    ...     viewup=(0.0, 0.0, 1.0),
+    ... )
+    >>> partitioned.plot(cpos=cpos)
+
+    .. seealso::
+
+        :ref:`Warping Spheres Dataset <warping_spheres_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_warping_spheres, load=load)
+
+
+_dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
+    'warping_spheres/warping_spheres.vtkhdf'
+)

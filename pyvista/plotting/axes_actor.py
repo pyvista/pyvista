@@ -7,6 +7,7 @@ from enum import Enum
 
 import pyvista as pv
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -16,7 +17,7 @@ from .actor_properties import ActorProperties
 
 
 class AxesActor(
-    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor
+    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAxesActor
 ):
     """Axes actor wrapper for :vtk:`vtkAxesActor`.
 

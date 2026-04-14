@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from itertools import chain
 import os
 from pathlib import Path
 import shlex
@@ -10,7 +11,9 @@ import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import get_args
 
+import numpy as np
 import pytest
 from pytest_cases import case
 from pytest_cases import filters
@@ -23,6 +26,8 @@ from rich.console import Console
 import pyvista as pv
 from pyvista.__main__ import app
 from pyvista.__main__ import main
+from pyvista.core.filters.data_object import _LiteralMeshValidationFields
+from tests.core.test_dataobject_filters import _add_vtk_array
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -43,7 +48,20 @@ def patch_app_console(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
     monkeypatch.setattr(app, 'help_format', 'plaintext')
+
+
+@pytest.fixture
+def patch_app_console_color(monkeypatch: pytest.MonkeyPatch):
+    console = Console(
+        width=70,
+        highlight=True,
+        force_terminal=True,
+        color_system='standard',
+        legacy_windows=False,
+    )
+    monkeypatch.setattr(app, 'console', console)
     monkeypatch.setattr(app, 'error_console', console)
+    monkeypatch.setattr(app, 'help_format', 'plaintext')
 
 
 @pytest.mark.parametrize('args', [[], ''])
@@ -56,12 +74,13 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot one or more mesh files in an interactive window    │
-        │            that can be customized with various options.            │
-        │ report     Generate a PyVista software environment report.         │
-        │ --help -h  Display this message and exit.                          │
-        │ --version  Display application version.                            │
+        │ convert      Convert a mesh file to another format.                │
+        │ plot         Plot one or more mesh files in an interactive window  │
+        │              that can be customized with various options.          │
+        │ report       Generate a PyVista software environment report.       │
+        │ validate     Validate a mesh's array data, points, and cells.      │
+        │ --help (-h)  Display this message and exit.                        │
+        │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )
@@ -75,15 +94,17 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     Usage: pyvista COMMAND
 
     ╭─ Commands ─────────────────────────────────────────────────────────╮
-    │ convert    Convert a mesh file to another format.                  │
-    │ plot       Plot one or more mesh files in an interactive window    │
-    │            that can be customized with various options.            │
-    │ report     Generate a PyVista software environment report.         │
-    │ --help -h  Display this message and exit.                          │
-    │ --version  Display application version.                            │
+    │ convert      Convert a mesh file to another format.                │
+    │ plot         Plot one or more mesh files in an interactive window  │
+    │              that can be customized with various options.          │
+    │ report       Generate a PyVista software environment report.       │
+    │ validate     Validate a mesh's array data, points, and cells.      │
+    │ --help (-h)  Display this message and exit.                        │
+    │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
-    │ Unknown command "foo". Available commands: report, convert, plot.  │
+    │ Unknown command "foo". Available commands: report, convert, plot,  │
+    │ validate.                                                          │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -187,19 +208,53 @@ class CasesConvert:
 
 
 @pytest.fixture
-def tmp_ant_file(tmp_path):
-    """Return a temp path to the ant file for tests."""
-    src = Path(pv.examples.antfile)
-    dst = tmp_path / src.name
-    shutil.copy(src, dst)
-
-    # Change cwd to tmp_path temporarily
+def tmp_example_dir(tmp_path):
+    """Change cwd to tmp_path for the duration of the test."""
     old_cwd = Path.cwd()
+    os.chdir(tmp_path)
     try:
-        os.chdir(tmp_path)
-        yield dst
+        yield tmp_path
     finally:
         os.chdir(old_cwd)
+
+
+@pytest.fixture
+def tmp_ant_file(tmp_example_dir):
+    src = Path(pv.examples.antfile)
+    dst = tmp_example_dir / src.name
+    shutil.copy(src, dst)
+    return dst
+
+
+@pytest.fixture
+def tmp_cow_file_invalid(tmp_example_dir):
+    src = Path(pv.examples.download_cow(load=False))
+    # Need to save as vtk, not vtp, since XML reader doesn't like invalid arrays
+    dst = tmp_example_dir / Path(src.name).with_suffix('.vtk')
+
+    # Modify mesh
+    cow = pv.read(src).cast_to_unstructured_grid()
+    # Add invalid points
+    # Make sure we have a single invalid point (nan) and multiple invalid points (unused)
+    # since the messages differ for singular vs plural
+    cow.points = np.append(cow.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+
+    # Add invalid arrays, singular point array but multiple cell arrays
+    _add_vtk_array(cow, 'foo', range(cow.n_points + 1), association='point')
+    _add_vtk_array(cow, 'bar', range(cow.n_cells + 1), association='cell')
+    _add_vtk_array(cow, 'baz', range(cow.n_cells - 1), association='cell')
+
+    cow.save(dst)
+    return dst
+
+
+@pytest.fixture
+def tmp_ant_file_invalid_multiblock(tmp_ant_file):
+    out = tmp_ant_file.with_suffix('.vtm')
+    mesh = pv.read(tmp_ant_file)
+    mesh.points = np.append(mesh.points, [[np.nan, 0, 0], [0, 0, 0]], axis=0)
+    mesh.cast_to_multiblock().save(out)
+    return out
 
 
 @parametrize_with_cases('tokens, expected_file', cases=CasesConvert)
@@ -284,6 +339,379 @@ def test_convert_help(capsys: pytest.CaptureFixture):
   """
     )
     assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    main(f'validate {str(tmp_ant_file)!r}')
+    out = capsys.readouterr().out
+    expected = "PolyData mesh 'ant.ply' is valid!\n"
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type           : PolyData\n'
+        '    N Points       : 486\n'
+        '    N Cells        : 912\n'
+        '    Cell types     : {TRIANGLE}\n'
+        'Report summary:\n'
+        '    Is valid       : True\n'
+        '    Invalid fields : ()\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report message')
+    out = capsys.readouterr().out
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file)!r} --report fields')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type                     : PolyData\n'
+        '    N Points                 : 486\n'
+        '    N Cells                  : 912\n'
+        '    Cell types               : {TRIANGLE}\n'
+        'Report summary:\n'
+        '    Is valid                 : True\n'
+        '    Invalid fields           : ()\n'
+        'Invalid data arrays:\n'
+        '    Cell data wrong length   : []\n'
+        '    Point data wrong length  : []\n'
+        'Invalid point ids:\n'
+        '    Non-finite points        : []\n'
+        '    Unused points            : []\n'
+        'Invalid cell ids:\n'
+        '    Coincident points        : []\n'
+        '    Degenerate faces         : []\n'
+        '    Intersecting edges       : []\n'
+        '    Intersecting faces       : []\n'
+        '    Invalid point references : []\n'
+        '    Inverted faces           : []\n'
+        '    Negative size            : []\n'
+        '    Non-contiguous edges     : []\n'
+        '    Non-convex               : []\n'
+        '    Non-planar faces         : []\n'
+        '    Wrong number of points   : []\n'
+        '    Zero size                : []\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.needs_vtk_version(9, 6, 0, reason='planarity tol is new to 9.6')
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_tolerance(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    main(
+        f'validate {str(tmp_ant_file)!r} '
+        f'--tolerance 1e-4 '
+        f'--size-tolerance 1e-4 '
+        f'--planarity-tolerance 0.2'
+    )
+    out = capsys.readouterr().out
+    expected = (
+        "PolyData mesh 'ant.ply' is not valid:\n"
+        ' ▪ Mesh has 20 TRIANGLE cells with zero area. Invalid cell ids: [423, \n'
+        '424, 426, 427, 428, 513, ...]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_mesh(
+    tmp_cow_file_invalid: Path,
+    tmp_ant_file_invalid_multiblock: Path,
+    capsys: pytest.CaptureFixture,
+):
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "UnstructuredGrid mesh 'cow.vtk' is not valid:\n"
+        ' ▪ Mesh has 1 point array with incorrect length (length must be 2905).\n'
+        "Invalid array: 'foo' (2906)\n"
+        ' ▪ Mesh has 2 cell arrays with incorrect length (length must be 3263).\n'
+        "Invalid arrays: 'bar' (3264), 'baz' (3262)\n"
+        ' ▪ Mesh has 2 unused points not referenced by any cell. Invalid point \n'
+        'ids: [2903, 2904]\n'
+        ' ▪ Mesh has 1 non-finite point. Invalid point id: [2903]\n'
+        ' ▪ Mesh has 3 non-convex QUAD cells. Invalid cell ids: [1013, 1532, \n'
+        '3250]\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        "MultiBlock mesh 'ant.vtm' is not valid:\n"
+        " ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '   ▪ Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '   ▪ Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_ant_file_invalid_multiblock)!r} --report')
+    out = capsys.readouterr().out
+    expected = (
+        'Mesh Validation Report\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Mesh info:\n'
+        '    Type               : MultiBlock\n'
+        '    N Blocks           : 1\n'
+        'Report summary:\n'
+        '    Is valid           : False\n'
+        "    Invalid fields (2) : ('non_finite_points', 'unused_points')\n"
+        'Error message:\n'
+        "    MultiBlock mesh 'ant.vtm' is not valid:\n"
+        "     ▸ Block id 0 'Block-00' PolyData mesh is not valid:\n"
+        '       ▪ Mesh has 2 unused points not referenced by any cell. Invalid \n'
+        'point ids: [486, 487]\n'
+        '       ▪ Mesh has 1 non-finite point. Invalid point id: [486]\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console_color')
+def test_validate_color(tmp_cow_file_invalid: Path, capsys: pytest.CaptureFixture):
+    b = '\x1b[1m'  # bold
+    _ = '\x1b[0m'  # reset
+    m = '\x1b[35m'  # magenta
+    cb = '\x1b[1;36m'  # cyan bold
+    y = '\x1b[33m'  # yellow
+    g = '\x1b[32m'  # green
+    r = '\x1b[31m'  # red
+    rib = '\x1b[3;91m'  # red italic bright
+
+    main(f'validate {str(tmp_cow_file_invalid)!r}')
+    out = capsys.readouterr().out
+    expected = (
+        f"{m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f' ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}2905{_}{b}){_}.\n'
+        f"Invalid array: {g}'foo'{_} {b}({_}{cb}2906{_}{b}){_}\n"
+        f' ▪ Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be {cb}3263{_}{b}){_}.\n'
+        f"Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f' ▪ Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid point \nids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f' ▪ Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f' ▪ Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, {cb}1532{_}, \n{cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report message')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type               : {m}UnstructuredGrid{_}\n'
+        f'    N Points           : {cb}2905{_}\n'
+        f'    N Cells            : {cb}3263{_}\n'
+        f'    Cell types         : {b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid           : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}5{_}{b}){_} : '
+        f"{b}({_}{g}'cell_data_wrong_length'{_}, \n"
+        f"{g}'point_data_wrong_length'{_}, {g}'non_finite_points'{_}, "
+        f"{g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Error message:{_}\n'
+        f"    {m}UnstructuredGrid{_} mesh {g}'cow.vtk'{_} is not valid:\n"
+        f'     ▪ Mesh has {cb}1{_} point array with {r}incorrect length{_} '
+        f'{b}({_}length must be \n'
+        f"{cb}2905{_}{b}){_}. Invalid array: {g}'foo'{_} "
+        f'{b}({_}{cb}2906{_}{b}){_}\n'
+        f'     ▪ Mesh has {cb}2{_} cell arrays with {r}incorrect length{_} '
+        f'{b}({_}length must be \n'
+        f"{cb}3263{_}{b}){_}. Invalid arrays: {g}'bar'{_} "
+        f"{b}({_}{cb}3264{_}{b}){_}, {g}'baz'{_} "
+        f'{b}({_}{cb}3262{_}{b}){_}\n'
+        f'     ▪ Mesh has {cb}2{_} {r}unused point{_}{r}s{_} not referenced by any cell. '
+        f'Invalid \npoint ids: {b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'     ▪ Mesh has {cb}1{_} {r}non-finite point{_}. '
+        f'Invalid point id: {b}[{_}{cb}2903{_}{b}]{_}\n'
+        f'     ▪ Mesh has {cb}3{_} {r}non-convex{_} {y}QUAD{_} cells. '
+        f'Invalid cell ids: {b}[{_}{cb}1013{_}, \n'
+        f'{cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+    main(f'validate {str(tmp_cow_file_invalid)!r} --report fields')
+    out = capsys.readouterr().out
+
+    expected = (
+        f'{b}Mesh Validation Report{_}\n'
+        '━━━━━━━━━━━━━━━━━━━━━━\n'
+        f'{b}Mesh info:{_}\n'
+        f'    Type                        : {m}UnstructuredGrid{_}\n'
+        f'    N Points                    : {cb}2905{_}\n'
+        f'    N Cells                     : {cb}3263{_}\n'
+        f'    Cell types                  : '
+        f'{b}{{{_}{y}TRIANGLE{_}, {y}POLYGON{_}, {y}QUAD{_}{b}}}{_}\n'
+        f'{b}Report summary:{_}\n'
+        f'    Is valid                    : {rib}False{_}\n'
+        f'    Invalid fields {b}({_}{cb}5{_}{b}){_}          : '
+        f"{b}({_}{g}'cell_data_wrong_length'{_}, \n"
+        f"{g}'point_data_wrong_length'{_}, {g}'non_finite_points'{_}, "
+        f"{g}'unused_points'{_}, \n"
+        f"{g}'non_convex'{_}{b}){_}\n"
+        f'{b}Invalid data arrays:{_}\n'
+        f'    {r}Cell data wrong length{_} '
+        f'{b}({_}{cb}2{_}{b}){_}  : '
+        f"{b}[{_}{g}'bar'{_}, {g}'baz'{_}{b}]{_}\n"
+        f'    {r}Point data wrong length{_} '
+        f'{b}({_}{cb}1{_}{b}){_} : '
+        f"{b}[{_}{g}'foo'{_}{b}]{_}\n"
+        f'{b}Invalid point ids:{_}\n'
+        f'    {r}Non-finite points{_} '
+        f'{b}({_}{cb}1{_}{b}){_}       : '
+        f'{b}[{_}{cb}2903{_}{b}]{_}\n'
+        f'    {r}Unused points{_} '
+        f'{b}({_}{cb}2{_}{b}){_}           : '
+        f'{b}[{_}{cb}2903{_}, {cb}2904{_}{b}]{_}\n'
+        f'{b}Invalid cell ids:{_}\n'
+        f'    Coincident points           : {b}[{_}{b}]{_}\n'
+        f'    Degenerate faces            : {b}[{_}{b}]{_}\n'
+        f'    Intersecting edges          : {b}[{_}{b}]{_}\n'
+        f'    Intersecting faces          : {b}[{_}{b}]{_}\n'
+        f'    Invalid point references    : {b}[{_}{b}]{_}\n'
+        f'    Inverted faces              : {b}[{_}{b}]{_}\n'
+        f'    Negative size               : {b}[{_}{b}]{_}\n'
+        f'    Non-contiguous edges        : {b}[{_}{b}]{_}\n'
+        f'    {r}Non-convex{_} '
+        f'{b}({_}{cb}3{_}{b}){_}              : '
+        f'{b}[{_}{cb}1013{_}, {cb}1532{_}, {cb}3250{_}{b}]{_}\n'
+        f'    Non-planar faces            : {b}[{_}{b}]{_}\n'
+        f'    Wrong number of points      : {b}[{_}{b}]{_}\n'
+        f'    Zero size                   : {b}[{_}{b}]{_}\n'
+    )
+    assert out == expected
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    command = f'validate {str(tmp_ant_file)!r} --report foo'
+    with pytest.raises(SystemExit) as e:
+        main(command)
+    out = capsys.readouterr().out
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        "│ Invalid value for --report: expected one of 'fields', 'message' or │\n"
+        "│ no value. Got 'foo'.                                               │\n"
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in out
+    assert e.value.code == 1
+
+    with pytest.raises(SystemExit) as e:
+        main(command + ' bar')
+    out = capsys.readouterr().out
+    message = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for --report: accepts 0 or 1 arguments. Got 2.       │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert message in out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_help(capsys: pytest.CaptureFixture):
+    main('validate --help')
+    out = capsys.readouterr().out
+    usage = (
+        'Usage: pyvista validate MESH-PATH [FIELDS...] [--exclude FIELDS...]\n'
+        '\n'
+        "Validate a mesh's array data, points, and cells.\n"
+    )
+    assert usage in out, out
+
+    assert '│ * MESH-PATH --mesh-path  -' in out, out
+    assert 'Mesh to validate.' in out, out
+
+    assert '│ FIELDS --fields          -' in out, out
+    assert 'Field(s) to validate.' in out, out
+
+    assert '│ --exclude -e             -' in out, out
+    assert 'Field(s) to exclude' in out, out
+
+    assert '│ --tolerance              -' in out, out
+    assert 'Field(s) to exclude' in out, out
+
+    assert '│ --planarity-tolerance    -' in out, out
+    assert 'Allowed relative distance' in out, out
+
+    assert '│ --size-tolerance         -' in out, out
+    assert 'Value used for evaluating' in out, out
+
+    assert '│ --report                 -' in out, out
+    assert 'Show report.' in out, out
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(tmp_ant_file)!r} foo')
+
+    out = capsys.readouterr().out
+    expected = (
+        '╭─ Error ────────────────────────────────────────────────────────────╮\n'
+        '│ Invalid value for "FIELDS": unable to convert "foo" into           │\n'
+        '│ Literal[cell_data_wrong_length,                                    │\n'
+        '│ point_data_wrong_length]|Literal[non_finite_points,                │\n'
+        '│ unused_points]|Literal[coincident_points, degenerate_faces,        │\n'
+        '│ intersecting_edges, intersecting_faces, invalid_point_references,  │\n'
+        '│ inverted_faces, negative_size, non_contiguous_edges, non_convex,   │\n'
+        '│ non_planar_faces, wrong_number_of_points, zero_size]|Literal[data, │\n'
+        '│ points, cells]|Literal[memory_safe].                               │\n'
+        '╰────────────────────────────────────────────────────────────────────╯\n'
+    )
+    assert expected in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_validate_pyvista_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(f'validate {str(tmp_ant_file)!r} points -e cells')
+
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert '│ Failed to validate PolyData mesh read from path' in out, out
+    assert "│ Excluded field 'cells' must be a subset of the validation fields." in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.skip_windows  # file path issues
+@pytest.mark.parametrize(
+    'field', chain.from_iterable(get_args(arg) for arg in get_args(_LiteralMeshValidationFields))
+)
+def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
+    # Test that all fields specified in the annotations work
+    main(f'validate {tmp_ant_file!s} {field}')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
+
+    # Test that all fields are documented
+    main(f'validate {tmp_ant_file!s} --help')
+    out = capsys.readouterr().out
+    if f'• {field}:' not in out:
+        pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
+
+    # Discard captured output to clean up test output
+    capsys.readouterr()
 
 
 @pytest.fixture
@@ -802,12 +1230,13 @@ def test_help(capsys: pytest.CaptureFixture):
         Usage: pyvista COMMAND
 
         ╭─ Commands ─────────────────────────────────────────────────────────╮
-        │ convert    Convert a mesh file to another format.                  │
-        │ plot       Plot one or more mesh files in an interactive window    │
-        │            that can be customized with various options.            │
-        │ report     Generate a PyVista software environment report.         │
-        │ --help -h  Display this message and exit.                          │
-        │ --version  Display application version.                            │
+        │ convert      Convert a mesh file to another format.                │
+        │ plot         Plot one or more mesh files in an interactive window  │
+        │              that can be customized with various options.          │
+        │ report       Generate a PyVista software environment report.       │
+        │ validate     Validate a mesh's array data, points, and cells.      │
+        │ --help (-h)  Display this message and exit.                        │
+        │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
         """
     )

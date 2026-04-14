@@ -12,7 +12,6 @@ Create an explicit structured grid from NumPy arrays using
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 ni, nj, nk = 4, 5, 6

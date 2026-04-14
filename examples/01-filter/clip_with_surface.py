@@ -26,7 +26,9 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-surface = pv.Cone(direction=(0, 0, -1), height=3.0, radius=1, resolution=50, capping=False)
+surface = pv.Cone(
+    direction=(0, 0, -1), height=3.0, radius=1, resolution=50, capping=False
+)
 
 # Make a gridded dataset
 n = 51

@@ -38,50 +38,55 @@ permissions:
   id-token: none
 
 jobs:
-  cache-vtk-data:
-    name: Cache vtk-data Repo
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # need both self-hosted and github hosted to ensure cache is local to runners
-          - runner-labels: "ubuntu-22.04-self-hosted"
-          - runner-labels: "ubuntu-22.04"
-
-    runs-on: ${{ matrix.runner-labels }}
-    outputs:
-      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
+  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # via workflow_run) can associate the build with its PR — workflow_run events
+  # do not include pull_request data for fork PRs.
+  pr-info:
+    name: Save PR info
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
-      - name: Get vtk-data commit
-        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
-
-      - name: Test if the example data cache exists
-        id: restore-cache-vtk-data
-        uses: actions/cache/restore@v4
+      - name: Save PR metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          mkdir -p pr-info
+          printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
+          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
+          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
+      - uses: actions/upload-artifact@v7
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
-          lookup-only: true
+          name: pr-info
+          path: pr-info/
 
-      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
-        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        uses: actions/checkout@v5
-        with:
-          repository: pyvista/vtk-data
-          path: ${{ env.CACHE_FOLDER_NAME }}
+  # Cache vtk-data for each runner separately
+  # Runner labels should match the actual runners used by the different jobs in this file
 
-      - name: Create the example data cache
-        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        id: save-cache-vtk-data
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
-          enableCrossOsArchive: true
+  # GitHub-hosted runners can re-use the cache across OS's.
+  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
+  cache-github-hosted:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
+
+  # For self-hosted runners, we need to cache each runner separately
+  cache-macOS-self-hosted:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "macos-15-self-hosted"
+  cache-ubuntu-self-hosted:
+    name: Cache vtk-data
+    uses: ./.github/workflows/cache-vtk-data.yml
+    with:
+      runs-on: "ubuntu-22.04-self-hosted"
 
   macOS:
     name: ${{ matrix.name }}
-    needs: cache-vtk-data
+    needs: cache-macOS-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -99,10 +104,13 @@ jobs:
           - name: MacOS Unit Testing (3.13)
             python-version: "3.13"
             runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.14)
+            python-version: "3.14"
+            runner-labels: "macos-15-self-hosted"
 
     runs-on: ${{ matrix.runner-labels }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -120,11 +128,11 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-      - name: Restore example data cache
-        uses: actions/cache/restore@v4
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
@@ -139,14 +147,14 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
@@ -154,7 +162,7 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: cache-vtk-data
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
 
@@ -179,6 +187,10 @@ jobs:
             numpy-version: "latest"
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
+            vtk-version: "9.5.2"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.14"
             vtk-version: "latest"
             numpy-version: "nightly"
             runner-labels: "ubuntu-22.04-self-hosted"
@@ -187,7 +199,7 @@ jobs:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
       PARALLEL: "-n4" # flag for pytest-xdist
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -202,41 +214,48 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Cache example data
-        uses: actions/cache/restore@v4
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
+        env:
+          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-core
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
+        env:
+          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-plotting
+        run: xvfb-run tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
-        name: "Upload coverage to CodeCov"
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
       - name: Check package
         run: |
@@ -247,19 +266,19 @@ jobs:
   VTK-dev:
     # For PRs, only run this job if the 'vtk-dev-testing' label is applied
     if: |
-      (github.event_name != 'pull_request' && github.event_name != 'push') ||
+      (github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'merge_group') ||
       contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
       contents: read
     runs-on: ubuntu-22.04-self-hosted
-    needs: cache-vtk-data
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.13"]
+        python-version: ["3.14"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -275,39 +294,41 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Cache example data
-        uses: actions/cache/restore@v4
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-ubuntu-self-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
+        run: tox run -e py${{ matrix.python-version }}-cov-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-cov-plotting-vtk_dev
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
-        name: "Upload coverage to CodeCov"
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -315,16 +336,16 @@ jobs:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: cache-vtk-data
+    needs: cache-github-hosted
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -334,21 +355,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Cache example data
-        uses: actions/cache/restore@v4
+      - name: Restore vtk-data cache
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
           timeout_minutes: 12
           max_attempts: 3
@@ -356,7 +377,7 @@ jobs:
           command: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
-        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         if: ${{ !cancelled() }}
         with:
           timeout_minutes: 30
@@ -366,17 +387,46 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  # The test image report Netlify deploy lives in test-image-report-deploy.yml,
+  # triggered via workflow_run, so fork PR CI is never blocked on deployment
+  # approval.
+
+  upload-coverage-:
+    name: Upload coverage reports
+    runs-on: ubuntu-22.04
+    needs: Linux
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage_reports-*
+          path: coverage*.xml
+
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # Publish to PyPI using trusted publishing
   release:
@@ -390,7 +440,7 @@ jobs:
     permissions:
       id-token: write # this permission is mandatory for trusted publishing
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -405,5 +455,5 @@ jobs:
           python -m build
 
       - name: Upload to PyPi
-        if: matrix.python-version == '3.13' && startsWith(github.ref, 'refs/tags/v')
-        uses: pypa/gh-action-pypi-publish@ab69e431e9c9f48a3310be0a56527c679f56e04d
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b

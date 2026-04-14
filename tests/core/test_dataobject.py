@@ -5,6 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -13,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.fileio import save_pickle
+from pyvista.core.utilities.writer import BaseWriter
 
 
 def test_eq_wrong_type(sphere):
@@ -273,11 +275,17 @@ def test_user_dict_values(ant, value):
     with pytest.raises(TypeError, match='not JSON serializable'):
         ant.user_dict['key'] = np.array(value)
 
-    retrieved_value = json.loads(repr(ant.user_dict))['key']
+    retrieved_value = json.loads(str(ant.user_dict))['key']
 
     # Round brackets '()' are saved as square brackets '[]' in JSON
     expected_value = list(value) if isinstance(value, tuple) else value
     assert retrieved_value == expected_value
+
+
+def test_user_dict_repr(ant):
+    ant.user_dict['foo'] = 'bar'
+    user_dict = ant.user_dict
+    assert repr(user_dict) == str(user_dict)
 
 
 @pytest.mark.parametrize(
@@ -296,9 +304,9 @@ def test_user_dict_write_read(tmp_path, data_object, ext):
     dict_data = dict(foo='bar')
     data_object.user_dict = dict_data
 
-    dict_field_repr = repr(data_object.user_dict)
+    dict_field_str = str(data_object.user_dict)
     field_data_repr = repr(data_object.field_data)
-    assert dict_field_repr in field_data_repr
+    assert dict_field_str in field_data_repr
 
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
@@ -307,9 +315,9 @@ def test_user_dict_write_read(tmp_path, data_object, ext):
 
     assert data_object_read.user_dict == dict_data
 
-    dict_field_repr = repr(data_object.user_dict)
+    dict_field_str = str(data_object.user_dict)
     field_data_repr = repr(data_object.field_data)
-    assert dict_field_repr in field_data_repr
+    assert dict_field_str in field_data_repr
 
 
 def test_user_dict_persists_with_merge_filter():
@@ -510,3 +518,38 @@ def test_cast_to_multiblock(multiblock_all):
     for block in [*multiblock_all, partitioned, multiblock, pointset]:
         multi = block.cast_to_multiblock()
         assert isinstance(multi, pv.MultiBlock)
+
+
+def test_set_center(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    for mesh in [multi, *multi.recursive_iterator(skip_none=True)]:
+        original_length = mesh.length
+        new_center = (1.0, 2.0, 3.0)
+        mesh.center = new_center
+        actual_center = mesh.center
+        assert np.allclose(actual_center, new_center), type(mesh)
+        actual_length = mesh.length
+        assert np.isclose(actual_length, original_length)
+
+
+def test_raise_error_when_output_directory_is_missing(tmp_path):
+    cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
+
+    non_existent_dir = tmp_path / 'not_existing_directory'
+    with pytest.raises(FileNotFoundError):
+        cylinder.save(non_existent_dir / 'cylinder.vtk')
+
+    with pytest.raises(FileNotFoundError):
+        cylinder.cast_to_unstructured_grid().save(non_existent_dir / 'cylinder.vtu')
+
+
+def test_raise_error_when_writing_is_failed(tmp_path):
+    cylinder = pv.Cylinder(center=(0, 0, 0), direction=(0, 0, 1))
+
+    with mock.patch.object(
+        BaseWriter,
+        'write',
+        return_value=None,
+    ):
+        with pytest.raises(OSError, match='VTK writer failed to write file'):
+            cylinder.save(tmp_path / 'cylinder.vtk')

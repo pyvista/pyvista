@@ -10,9 +10,6 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
-import sys
-from typing import NamedTuple
-import warnings
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
 from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper as VTKObjectWrapper
@@ -205,6 +202,7 @@ from vtkmodules.vtkCommonDataModel import vtkCell as vtkCell
 from vtkmodules.vtkCommonDataModel import vtkCellArray as vtkCellArray
 from vtkmodules.vtkCommonDataModel import vtkCellLocator as vtkCellLocator
 from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator as vtkCellTreeLocator
+from vtkmodules.vtkCommonDataModel import vtkCellTypes as vtkCellTypes
 from vtkmodules.vtkCommonDataModel import vtkColor3ub as vtkColor3ub
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet as vtkCompositeDataSet
 from vtkmodules.vtkCommonDataModel import vtkConvexPointSet as vtkConvexPointSet
@@ -219,6 +217,7 @@ from vtkmodules.vtkCommonDataModel import vtkGenericCell as vtkGenericCell
 from vtkmodules.vtkCommonDataModel import vtkHexagonalPrism as vtkHexagonalPrism
 from vtkmodules.vtkCommonDataModel import vtkHexahedron as vtkHexahedron
 from vtkmodules.vtkCommonDataModel import vtkImageData as vtkImageData
+from vtkmodules.vtkCommonDataModel import vtkImplicitBoolean as vtkImplicitBoolean
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction as vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform as vtkIterativeClosestPointTransform,
@@ -226,6 +225,7 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.vtkCommonDataModel import vtkLagrangeCurve as vtkLagrangeCurve
 from vtkmodules.vtkCommonDataModel import vtkLagrangeHexahedron as vtkLagrangeHexahedron
 from vtkmodules.vtkCommonDataModel import vtkLagrangeQuadrilateral as vtkLagrangeQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkLagrangeTetra as vtkLagrangeTetra
 from vtkmodules.vtkCommonDataModel import vtkLagrangeTriangle as vtkLagrangeTriangle
 from vtkmodules.vtkCommonDataModel import vtkLagrangeWedge as vtkLagrangeWedge
 from vtkmodules.vtkCommonDataModel import vtkLine as vtkLine
@@ -345,6 +345,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkBooleanOperationPolyDataFilter as vtkBooleanOperationPolyDataFilter,
 )
 from vtkmodules.vtkFiltersGeneral import vtkBoxClipDataSet as vtkBoxClipDataSet
+from vtkmodules.vtkFiltersGeneral import vtkCellValidator as vtkCellValidator
 from vtkmodules.vtkFiltersGeneral import vtkClipClosedSurface as vtkClipClosedSurface
 from vtkmodules.vtkFiltersGeneral import vtkContourTriangulator as vtkContourTriangulator
 from vtkmodules.vtkFiltersGeneral import vtkCursor3D as vtkCursor3D
@@ -412,6 +413,7 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
+from vtkmodules.vtkFiltersSources import vtkCellTypeSource as vtkCellTypeSource
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
@@ -492,13 +494,20 @@ except ImportError:  # pragma: no cover
     class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
         """Empty placeholder."""
 
-        def __init__(self):  # pragma: no cover
+        def __init__(self) -> None:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Chart backgrounds require the vtkPythonContext2D module'
             raise VTKVersionError(msg)
 
+
+try:  # Module changed in VTK 9.3.0
+    from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
+except ImportError:
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractCells as vtkExtractCells,
+    )
 
 with contextlib.suppress(ImportError):
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
@@ -529,168 +538,17 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
     from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 
+try:  # Introduced VTK 9.6.0
+    from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities as vtkCellTypeUtilities
+except ImportError:
+    from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
+        vtkCellTypes as vtkCellTypeUtilities,  # noqa: F401
+    )
 
-class VersionInfo(NamedTuple):
-    """Version information as a named tuple."""
+with contextlib.suppress(ImportError):  # Introduced VTK 9.7.0
+    from vtkmodules.vtkImagingCore import (  # type: ignore[attr-defined]
+        vtkImageBinaryThreshold as vtkImageBinaryThreshold,
+    )
 
-    major: int
-    minor: int
-    micro: int
-
-    def __str__(self):
-        return str((self.major, self.minor, self.micro))
-
-    @staticmethod
-    def _format(version: tuple[int, int, int]):
-        return '.'.join(map(str, version))
-
-
-def _get_vtk_version():
-    """Return the vtk version as a namedtuple.
-
-    Returns
-    -------
-    VersionInfo
-        Version information as a named tuple.
-
-    """
-    try:
-        ver = vtkVersion()
-        major = ver.GetVTKMajorVersion()
-        minor = ver.GetVTKMinorVersion()
-        micro = ver.GetVTKBuildVersion()
-    except AttributeError:  # pragma: no cover
-        msg = (
-            f'Unable to detect VTK version. '
-            f'Defaulting to {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)}'
-        )
-        warnings.warn(msg, stacklevel=2)
-        major, minor, micro = _MIN_SUPPORTED_VTK_VERSION
-    return VersionInfo(major, minor, micro)
-
-
-class VTKVersionInfo(VersionInfo):
-    def _check_min_supported(self, other: tuple[int, int, int]) -> None:
-        if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = (
-                f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
-                f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
-            )
-            raise VTKVersionError(msg)
-
-    def __lt__(self, other):
-        self._check_min_supported(other)
-        return super().__lt__(other)
-
-    def __le__(self, other):
-        self._check_min_supported(other)
-        return super().__le__(other)
-
-    def __gt__(self, other):
-        self._check_min_supported(other)
-        return super().__gt__(other)
-
-    def __ge__(self, other):
-        self._check_min_supported(other)
-        return super().__ge__(other)
-
-
-vtk_version_info = VTKVersionInfo(*_get_vtk_version())
-_MIN_SUPPORTED_VTK_VERSION = (9, 2, 2)
-
-
-class vtkPyVistaOverride:  # noqa: N801
-    """Base class to automatically override VTK classes with PyVista classes."""
-
-    def __init_subclass__(cls, **kwargs):
-        if vtk_version_info >= (9, 4):
-            # Check for VTK base classes and call the override method
-            for base in cls.__bases__:
-                if (
-                    hasattr(base, '__module__')
-                    and base.__module__.startswith('vtkmodules.')
-                    and hasattr(base, 'override')
-                ):
-                    # For now, just remove any overrides for these classes
-                    # There are clear issues with the current implementation
-                    # of overriding these classes upstream and until they are
-                    # resolved, we will entirely remove the overrides.
-                    # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
-                    # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
-                    base.override(None)
-                    break
-
-        return cls
-
-
-class DisableVtkSnakeCase:
-    """Base class to raise error if using VTK's `snake_case` API."""
-
-    @staticmethod
-    def check_attribute(target, attr):
-        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
-        if vtk_version_info >= (9, 4) and sys.meta_path is not None:
-            # Raise error if accessing attributes from VTK's pythonic snake_case API
-
-            import pyvista as pv  # noqa: PLC0415
-
-            state = pv._VTK_SNAKE_CASE_STATE
-            if state != 'allow':
-                if (
-                    attr not in ['__class__', '__init__']
-                    and attr[0].islower()
-                    and is_vtk_attribute(target, attr)
-                ):
-                    msg = (
-                        f'The attribute {attr!r} is defined by VTK and is not part of the '
-                        f'PyVista API'
-                    )
-                    if state == 'error':
-                        raise pv.PyVistaAttributeError(msg)
-                    else:
-                        warnings.warn(msg, RuntimeWarning, stacklevel=2)
-
-    def __getattribute__(self, item):
-        DisableVtkSnakeCase.check_attribute(self, item)
-        return object.__getattribute__(self, item)
-
-
-def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
-    """Return True if the attribute is defined by a vtk class.
-
-    Parameters
-    ----------
-    obj : object
-        Class or instance to check.
-
-    attr : str
-        Name of the attribute to check.
-
-    """
-
-    def _find_defining_class(cls, attr):
-        """Find the class that defines a given attribute."""
-        for base in cls.__mro__:
-            if attr in base.__dict__:
-                return base
-        return None
-
-    cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
-    return cls is not None and cls.__module__.startswith('vtkmodules')
-
-
-class VTKObjectWrapperCheckSnakeCase(VTKObjectWrapper):
-    """Superclass for classes that wrap VTK objects with Python objects.
-
-    This class overrides __getattr__ to disable the VTK snake case API.
-    """
-
-    def __getattr__(self, name: str):
-        """Forward unknown attribute requests to VTKArray's __getattr__."""
-        if self.VTKObject is not None:
-            # Check if forwarding snake_case attributes
-            DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
-            return getattr(self.VTKObject, name)
-        raise AttributeError
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkCommonCore import vtkSMPTools as vtkSMPTools

@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import re
+import threading
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -477,7 +478,7 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
 
     assert 'Normals' in mesh.point_data
 
-    expected_mesh = hexbeam.extract_surface().compute_normals(
+    expected_mesh = hexbeam.extract_surface(algorithm=None).compute_normals(
         cell_normals=False,
         split_vertices=True,
     )
@@ -914,3 +915,31 @@ def test_import_obj_with_filename_mtl():
     pl = pv.Plotter()
     pl.import_obj(filename, filename_mtl=filename.with_suffix('.mtl'))
     assert pl.actors
+
+
+def test_off_screen_background_thread_rendering():
+    """Off-screen plotters must work on background threads.
+
+    On macOS, vtkCocoaRenderWindow creates an NSWindow by default which
+    requires the main thread. `SetConnectContextToNSView(False)` creates
+    a standalone CGL context instead. On Linux (EGL), background thread
+    rendering works out of the box.
+    """
+    errors = []
+
+    def render_on_thread():
+        try:
+            pl = pv.Plotter(off_screen=True, window_size=(200, 200))
+            pl.add_mesh(pv.Sphere(), color='red')
+            img = pl.screenshot()
+            assert img is not None
+            assert img.shape[0] > 0
+            pl.close()
+        except Exception as e:  # noqa: BLE001
+            errors.append(e)
+
+    t = threading.Thread(target=render_on_thread)
+    t.start()
+    t.join(timeout=10)
+
+    assert not errors, f'Background thread rendering failed: {errors[0]}'

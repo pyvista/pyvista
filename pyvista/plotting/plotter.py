@@ -11,13 +11,13 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
+import ctypes
 from functools import wraps
 import io
 from itertools import cycle
 import logging
 import os
 from pathlib import Path
-import platform
 import sys
 import textwrap
 from threading import Thread
@@ -34,6 +34,7 @@ import scooby
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -68,6 +69,7 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _BaseMapper
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
@@ -130,14 +132,16 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
-    from pyvista.plotting.mapper import _BaseMapper
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
 
+    from .opts import PointSpriteShape
+
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
+FPS_1_OVER_60 = 1 / 60
 
 if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -199,13 +203,12 @@ def _warn_xserver() -> None:  # pragma: no cover
         if uses_egl():
             return
 
-        warnings.warn(
+        warn_external(
             '\n'
             'This system does not appear to be running an xserver.\n'
             'PyVista will likely segfault when rendering.\n\n'
             'Alternatively, an offscreen version using OSMesa libraries '
             'and ``vtk`` is available as of VTK 9.5.\n',
-            stacklevel=2,
         )
 
 
@@ -317,6 +320,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
+        self.ren_win: _vtk.vtkRenderWindow | None = None
 
         self._theme = Theme()
         if theme is None:
@@ -444,7 +448,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        :vtk:`vtkRenderWindow` | None
+        output : :vtk:`vtkRenderWindow` | None
             Render window if the plotter is not closed.
 
         Notes
@@ -452,8 +456,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         Subclass must set ``ren_win`` on initialization.
 
         """
-        if not hasattr(self, 'ren_win'):
-            return None
         return self.ren_win
 
     @property
@@ -504,7 +506,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             'and will removed in a future version of PyVista. '
             'Set the theme when initializing the plotter instance instead.'
         )
-        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=2)
+        warn_external(msg, PyVistaDeprecationWarning)
 
         if not isinstance(theme, pv.plotting.themes.Theme):
             msg = (  # type: ignore[unreachable]
@@ -753,7 +755,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        str | Path
+        output : str | Path
             The exported filename.
 
         """
@@ -874,22 +876,22 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 continue
                             dataset = mapper.dataset
                             if not isinstance(dataset, pv.PolyData):
-                                warnings.warn(
+                                warn_external(
                                     'Plotter contains non-PolyData datasets. These have been '
                                     'overwritten with PolyData surfaces and are internally '
                                     'copies of the original datasets.',
-                                    stacklevel=2,
                                 )
 
                                 try:
-                                    dataset = dataset.extract_surface()
+                                    dataset = dataset.extract_surface(
+                                        algorithm=None, pass_pointid=False, pass_cellid=False
+                                    )
                                     mapper.SetInputData(dataset)
                                 except (AttributeError, ValueError, TypeError):  # pragma: no cover
-                                    warnings.warn(
+                                    warn_external(
                                         'During gLTF export, failed to convert some '
                                         'datasets to PolyData. Exported scene will not have '
                                         'all datasets.',
-                                        stacklevel=2,
                                     )
 
                             if 'Normals' in dataset.point_data:
@@ -900,8 +902,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except Exception:  # noqa: BLE001  # pragma: no cover
-                            pass
+                        except Exception as e:  # noqa: BLE001  # pragma: no cover
+                            log.debug('Failed to rename array during gLTF export: %s', e)
 
         exporter = vtkGLTFExporter()
         exporter.SetRenderWindow(self.render_window)
@@ -1083,7 +1085,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        tuple[int] | tuple[int, int]
+        output : tuple[int] | tuple[int, int]
             Shape of the plotter.
 
         Examples
@@ -2030,9 +2032,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             return
         # If render window is not current
         if self.render_window is None:
-            warnings.warn(
-                'Attempting to set window_size on an unavailable render widow.', stacklevel=2
-            )
+            warn_external('Attempting to set window_size on an unavailable render widow.')
             yield self
             return
         size_before = self.window_size
@@ -2398,8 +2398,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             self.left_button_down,
         )
         self.add_key_event('b', b_left_down_callback)  # type: ignore[arg-type]
-        self.add_key_event('v', lambda: self.isometric_view_interactive())  # type: ignore[arg-type]
-        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type]
+        self.add_key_event('v', lambda: self.isometric_view_interactive())  # type: ignore[arg-type]  # noqa: PLW0108
+        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type]  # noqa: PLW0108
         self.add_key_event('Up', lambda: self.zoom_camera(1.05))  # type: ignore[arg-type]
         self.add_key_event('Down', lambda: self.zoom_camera(0.95))  # type: ignore[arg-type]
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))  # type: ignore[arg-type]
@@ -2435,6 +2435,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def enable_trackball_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self._get_iren_not_none().enable_trackball_style()
+
+    @wraps(RenderWindowInteractor.enable_interactor_style)
+    def enable_interactor_style(
+        self, style: str | None = None
+    ) -> None:  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_interactor_style."""
+        self._get_iren_not_none().enable_interactor_style(style)
 
     @wraps(RenderWindowInteractor.enable_custom_trackball_style)
     def enable_custom_trackball_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -2658,6 +2665,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         copy_mesh: bool = False,  # noqa: FBT001, FBT002
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
+        force_opaque: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> tuple[Actor, CompositePolyDataMapper]:
         """Add a composite dataset to the plotter.
@@ -2936,6 +2944,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
                 available, `edge_opacity` is set to 1.
 
+        force_opaque : bool, default: False
+            Whether to force the returned actor to be opaque. Can be useful for web visualization
+            with ``culling = "front"`` and ``opacity`` smaller than 1.
+            See https://github.com/Kitware/trame-vtk/issues/105 for more details.
+
+            .. versionadded:: 0.48
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -2982,6 +2997,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             show_scalar_bar,
             feature_angle,
             render_points_as_spheres,
+            _point_shape,
             smooth_shading,
             clim,
             cmap,
@@ -3003,6 +3019,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             split_sharp_edges=split_sharp_edges,
             show_scalar_bar=show_scalar_bar,
             render_points_as_spheres=render_points_as_spheres,
+            point_shape=None,
             smooth_shading=smooth_shading,
             pbr=pbr,
             clim=clim,
@@ -3037,6 +3054,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         actor, _ = self.add_actor(mapper, render=False)
         actor = cast('Actor', actor)
+        actor.force_opaque = force_opaque
 
         prop = Property(
             self._theme,
@@ -3049,7 +3067,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=self.renderer.next_color if color is None or color is True else color,
+            color=self.renderer.next_color if color is None or color is True else color,  # type: ignore[comparison-overlap]
             style=style,
             edge_color=edge_color,
             render_points_as_spheres=render_points_as_spheres,
@@ -3168,6 +3186,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         name: str | None = None,
         texture: Texture | NumpyArray[float] | None = None,
         render_points_as_spheres: bool | None = None,  # noqa: FBT001
+        point_shape: PointSpriteShape | str | None = None,
         render_lines_as_tubes: bool | None = None,  # noqa: FBT001
         smooth_shading: bool | None = None,  # noqa: FBT001
         split_sharp_edges: bool | None = None,  # noqa: FBT001
@@ -3200,6 +3219,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
         remove_existing_actor: bool | None = None,  # noqa: FBT001
+        force_opaque: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3365,6 +3385,17 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         render_points_as_spheres : bool, optional
             Render points as spheres rather than dots.
+
+        point_shape : PointSpriteShape | str, optional
+            Render points as a custom sprite shape instead of squares.
+            Accepts a :class:`pyvista.plotting.opts.PointSpriteShape`
+            enum value or a string. Must be one of ``'circle'``,
+            ``'triangle'``, ``'hexagon'``, ``'diamond'``, ``'asterisk'``,
+            or ``'star'``. Requires ``style='points'``. If
+            ``render_points_as_spheres`` is ``True`` (explicitly or via
+            theme), it will be automatically disabled with a warning.
+
+            .. versionadded:: 0.48
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -3559,6 +3590,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             when adding multiple named actors, particularly during initial scene setup
             where no actors exist yet.
 
+        force_opaque : bool, default: False
+            Whether to force the returned actor to be opaque. Can be useful for web visualization
+            with ``culling = "front"`` and ``opacity`` smaller than 1.
+            See https://github.com/Kitware/trame-vtk/issues/105 for more details.
+
+            .. versionadded:: 0.48
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3665,6 +3703,67 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ... )
 
         """
+        if (
+            pv.vtk_version_info == (9, 6, 0)
+            and isinstance(mesh, pv.UnstructuredGrid)
+            and (ghost_name := _vtk.vtkDataSetAttributes.GhostArrayName()) in mesh.cell_data.keys()
+        ):
+            # Ghost cells are not rendered properly in VTK 9.6.0 https://gitlab.kitware.com/vtk/vtk/-/issues/19922
+            # As a workaround, extract non-hidden cells
+            hidden_cells = mesh.cell_data[ghost_name] == _vtk.vtkDataSetAttributes.HIDDENCELL
+            if np.any(hidden_cells):
+                not_hidden = mesh.extract_cells(
+                    ~hidden_cells, pass_cell_ids=False, pass_point_ids=False
+                )
+                with contextlib.suppress(KeyError):
+                    del not_hidden.cell_data[ghost_name]
+
+                # Simulate the non-visible bounds by adding points at the corners
+                xmin, xmax, ymin, ymax, zmin, zmax = mesh.bounds
+                points = np.array(
+                    [
+                        [xmin, ymin, zmin],
+                        [xmax, ymin, zmin],
+                        [xmin, ymax, zmin],
+                        [xmax, ymax, zmin],
+                        [xmin, ymin, zmax],
+                        [xmax, ymin, zmax],
+                        [xmin, ymax, zmax],
+                        [xmax, ymax, zmax],
+                    ],
+                    dtype=float,
+                )
+
+                # Create degenerate triangles at each point
+                n_points = points.shape[0]
+                cells = np.empty(n_points * 4, dtype=np.int64)
+                celltypes = np.full(n_points, pv.CellType.TRIANGLE, dtype=np.uint8)
+                for i in range(n_points):
+                    off = 4 * i
+                    cells[off] = 3
+                    cells[off + 1] = i
+                    cells[off + 2] = i
+                    cells[off + 3] = i
+
+                corners_grid = pv.UnstructuredGrid(cells, celltypes, points)
+
+                # Ensure we have data for the new points so we can merge the meshes
+                # and keep the original mesh arrays
+                for array in mesh.point_data.keys():
+                    corners_grid.point_data[array] = mesh.point_data[array][0]
+                for array in mesh.cell_data.keys():
+                    corners_grid.cell_data[array] = mesh.cell_data[array][0]
+
+                # Combine meshes
+                not_hidden = not_hidden + corners_grid
+                association, name = mesh.active_scalars_info
+                try:
+                    not_hidden.set_active_scalars(name, preference=association)
+                except KeyError:
+                    not_hidden.set_active_scalars(None, preference=association)
+                mesh = not_hidden
+                copy_mesh = False
+
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':
@@ -3674,11 +3773,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mapper = mapper
 
         if render_lines_as_tubes and show_edges:
-            warnings.warn(
+            warn_external(
                 '`show_edges=True` not supported when `render_lines_as_tubes=True`. '
                 'Ignoring `show_edges`.',
                 UserWarning,
-                stacklevel=2,
             )
             show_edges = False
 
@@ -3700,8 +3798,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 mesh, algo = algorithm_to_mesh_handler(algo)
             else:
                 mesh = mesh.cast_to_polydata(deep=False)
-        elif isinstance(mesh, pv.MultiBlock):  # type: ignore[unreachable]
-            if algo is not None:  # type: ignore[unreachable]
+        elif isinstance(mesh, (pv.MultiBlock, pv.PartitionedDataSet)):  # type: ignore[unreachable]
+            if not isinstance(mesh, pv.MultiBlock):  # type: ignore[unreachable]
+                mesh = mesh.cast_to_multiblock()
+            if algo is not None:
                 msg = (
                     'Algorithms with `MultiBlock` output type are not supported by '
                     '`add_mesh` at this time.'
@@ -3755,6 +3855,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
                 remove_existing_actor=remove_existing_actor,
+                force_opaque=force_opaque,
                 **kwargs,
             )
             return actor
@@ -3772,6 +3873,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             show_scalar_bar,
             feature_angle,
             render_points_as_spheres,
+            point_shape,
             smooth_shading,
             clim,
             cmap,
@@ -3793,6 +3895,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             split_sharp_edges=split_sharp_edges,
             show_scalar_bar=show_scalar_bar,
             render_points_as_spheres=render_points_as_spheres,
+            point_shape=point_shape,
             smooth_shading=smooth_shading,
             pbr=pbr,
             clim=clim,
@@ -3866,11 +3969,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 # each pipeline request
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
-            # Otherwise, make sure the mesh object's scalars are set
-            elif field == FieldAssociation.POINT:
-                mesh.point_data.active_scalars_name = original_scalar_name
-            elif field == FieldAssociation.CELL:
-                mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -3910,6 +4008,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         actor = Actor(mapper=mapper)
         actor.user_matrix = user_matrix
+        actor.force_opaque = force_opaque
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -3987,7 +4086,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=self.renderer.next_color if color is None or color is True else color,
+            color=self.renderer.next_color if color is None or color is True else color,  # type: ignore[comparison-overlap]
             style=style if style != 'points_gaussian' else 'points',
             edge_color=edge_color,
             render_lines_as_tubes=render_lines_as_tubes,
@@ -4007,12 +4106,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             if not render_points_as_spheres and not mapper.emissive and prop.opacity >= 1.0:
                 prop.opacity = 0.9999  # otherwise, weird triangles
 
-        if render_points_as_spheres:
-            if style == 'points_gaussian':
+        if render_points_as_spheres is not None:
+            if render_points_as_spheres and style == 'points_gaussian':
                 mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
+
+        if point_shape is not None:
+            actor.set_point_sprite_shape(point_shape)
 
         if backface_params is not None:
             if isinstance(backface_params, Property):
@@ -4092,7 +4194,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         if isinstance(self.mesh, pv.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
-            geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_geometry()
+            geom: str | PolyData = pv.wrap(self.mesh._glyph_geom[0]).extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 
@@ -4465,7 +4569,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
             volume = volume.cell_data_to_point_data()
-        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))
+        assert isinstance(volume, (pv.DataSet, pv.MultiBlock))  # noqa: S101
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
@@ -4593,7 +4697,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 raise ValueError(msg)
             if opacity != 'linear':
                 opacity = 'linear'
-                warnings.warn('Ignoring custom opacity due to RGBA scalars.', stacklevel=2)
+                warn_external('Ignoring custom opacity due to RGBA scalars.')
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -5033,11 +5137,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         """
         # Deprecated on 0.43.0, estimated removal on v0.46.0
-        warnings.warn(
+        warn_external(
             'This method is deprecated and will be removed in a future version of '
             'PyVista. Directly modify the scalars of a mesh in-place instead.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
         if mesh is None:
@@ -5086,17 +5189,19 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
-        if hasattr(self, 'ren_win'):
-            apple_silicon = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-            if not apple_silicon:  # pragma: no cover
-                # Up to vtk==9.5.0, render windows aren't closed on MacOS,
-                # so the resources are not freed making this unnecessary. Also,
-                # we need this disabled so we can use NSAutoreleasePool in unit
-                # testing.
-                # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
-                self.ren_win.Finalize()
-
-            del self.ren_win
+        if self.ren_win is not None:
+            self.ren_win.Finalize()
+            if (
+                sys.platform == 'darwin'
+                and self.iren is not None
+                and self.iren.interactor is not None
+            ):
+                # Flush pending Cocoa events so the macOS window server
+                # actually dismisses the window. Without this, the NSWindow
+                # is removed from NSApp.windows() but the window server
+                # still draws it as a frozen "zombie" window.
+                self.iren.interactor.ProcessEvents()
+            self.ren_win = None
 
     def close(self) -> None:
         """Close the render window."""
@@ -5242,7 +5347,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Returns
         -------
-        CornerAnnotation | Text
+        output : CornerAnnotation | Text
             Text actor added to plot.
 
         Examples
@@ -5475,7 +5580,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Return a depth image representing current render window.
 
         .. versionchanged:: 0.47
-            The last image depth is no longer autoatically stored. You must
+            The last image depth is no longer automatically stored. You must
             enable ``store_image_depth=True`` within :meth:`Plotter.show` to
             obtain the image depth after the :class:`pyvista.Plotter` has been
             closed.
@@ -5668,7 +5773,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def add_point_labels(  # noqa: PLR0917
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
-        labels: list[str | int] | str,
+        labels: Sequence[str | int] | str,
         italic: bool = False,  # noqa: FBT001, FBT002
         bold: bool = True,  # noqa: FBT001, FBT002
         font_size: int | None = None,
@@ -6025,16 +6130,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-            fmt = '%.6e' if pv.vtk_version_info < (9, 5, 99) else '{:.6e}'  # type: ignore[unreachable]
+            fmt = '%.6e' if pv.vtk_version_info < (9, 6, 0) else '{:.6e}'  # type: ignore[unreachable]
         if isinstance(points, np.ndarray):
             scalars = labels
         elif is_pyvista_dataset(points):
             scalars = points.point_data[labels]  # type: ignore[assignment, index]
         phrase = f'{preamble} {fmt}'
 
-        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-        if pv.vtk_version_info < (9, 5, 99):
+        if pv.vtk_version_info < (9, 6, 0):  # pragma: no branch
             labels = [phrase % val for val in scalars]
         else:
             labels = [phrase.format(val) for val in scalars]
@@ -6359,11 +6462,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 if self.last_image is not None:
                     # Save last image
                     if scale is not None:
-                        warnings.warn(
+                        warn_external(
                             'This plotter is closed and cannot be scaled. '
                             'Using the last saved image. '
                             'Try using the `image_scale` property directly.',
-                            stacklevel=2,
                         )
                     return self._save_image(self.last_image, filename, return_img)
                 # Plotter hasn't been rendered or was improperly closed
@@ -6628,7 +6730,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
                 # ignore any mappers whose inputs are not datasets
                 if _mapper_has_data_set_input(mapper):
-                    datasets.append(wrap(_mapper_get_data_set_input(mapper)))
+                    if isinstance(mapper, _BaseMapper) and mapper.dataset is not None:
+                        datasets.append(mapper.dataset)
+                    else:
+                        datasets.append(wrap(_mapper_get_data_set_input(mapper)))
 
         return datasets
 
@@ -6989,6 +7094,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         if self.off_screen:
             self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]
+            # On macOS, vtkCocoaRenderWindow creates an NSWindow even for
+            # off-screen rendering, which shows a dock icon and requires
+            # the main thread.  Disconnecting from NSView creates a
+            # standalone CGL context instead — no dock icon, no
+            # main-thread requirement, and enables background-thread rendering.
+            if hasattr(self.render_window, 'SetConnectContextToNSView'):
+                self.render_window.SetConnectContextToNSView(False)  # type: ignore[union-attr]
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
@@ -7002,7 +7114,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.render_window)
         self.reset_key_events()
-        self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
+        self._get_iren_not_none().enable_interactor_style()
         self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an
@@ -7051,7 +7163,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
         cpos: CameraPositionOptions | None = None,
-        jupyter_backend: JupyterBackendOptions | None = None,
+        jupyter_backend: JupyterBackendOptions | str | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
         before_close_callback: Callable[[Plotter], None] | None = None,
@@ -7236,7 +7348,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if interactive_update and auto_close is None:
             auto_close = False
         elif interactive_update and auto_close:
-            warnings.warn(
+            warn_external(
                 textwrap.dedent(
                     """
                     The plotter will close immediately automatically since ``auto_close=True``.
@@ -7244,7 +7356,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     interact with the plotter interactively.
                     """,
                 ).strip(),
-                stacklevel=2,
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
@@ -7272,9 +7383,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         # handle plotter notebook
         if jupyter_backend and not self.notebook:
-            warnings.warn(
-                'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.',
-                stacklevel=2,
+            warn_external(
+                'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.'
             )
 
         jupyter_disp = None
@@ -7284,7 +7394,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
-            if jupyter_backend.lower() != 'none':
+            if jupyter_backend is None or jupyter_backend.lower() != 'none':
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
         self.render()
@@ -7308,17 +7418,40 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                 self.last_vtksz = self.export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
-        if interactive and not self.off_screen:
+        if interactive and not self.off_screen:  # pragma: no cover
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
-                    # Resolves #1260
-                    if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()  # type: ignore[union-attr]
-                    self.iren.start()  # type: ignore[union-attr]
+                    # Workaround for Windows interactor unresponsiveness after focus changes.
+                    # See: https://github.com/pyvista/pyvista/issues/8383
+                    if os.name == 'nt':
+                        vtk_iren = self.iren.interactor  # type: ignore[union-attr]
+                        while True:
+                            tstart_frame = time.time()
+                            vtk_iren.ProcessEvents()
+                            if vtk_iren.GetDone():
+                                break
+                            self.render_window.Render()
 
-                if pv.vtk_version_info < (9, 2, 3):  # pragma: no cover
+                            # target an update rate of 60 FPS
+                            telap = time.time() - tstart_frame
+                            sleep_ms = int((FPS_1_OVER_60 - telap) * 1000)
+                            if sleep_ms > 0:
+                                # instead of time.sleep use MsgWaitForMultipleObjects
+                                # to pump window messages to avoid the window appearing
+                                # unresponsive
+                                ctypes.windll.user32.MsgWaitForMultipleObjects(  # type: ignore[attr-defined]
+                                    0,
+                                    None,
+                                    False,
+                                    sleep_ms,
+                                    0x04FF,  # QS_ALLINPUT
+                                )
+                    else:
+                        self.iren.start()  # type: ignore[union-attr]
+
+                if pv.vtk_version_info < (9, 2, 3):
                     self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
@@ -7332,23 +7465,26 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         # Ignore if using a Jupyter display
-        _is_current = self.render_window.IsCurrent()
-        if jupyter_disp is None and not _is_current:
+        _ren_win = self.render_window
+        _is_current = _ren_win is not None and _ren_win.IsCurrent()  # type: ignore[redundant-expr]
+        if _ren_win is None:
+            # Render window was already cleaned up (e.g. plotter.close()
+            # called from a key event callback). Nothing left to do.
+            pass  # pragma: no cover
+        elif jupyter_disp is None and not _is_current:
             self._clear_ren_win()  # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
-            if not auto_close:
-                warnings.warn(
+            if not auto_close:  # pragma: no cover
+                warn_external(
                     '`auto_close` ignored: by clicking the exit button, '
                     'you have destroyed the render window and we have to '
                     'close it out.',
-                    stacklevel=2,
                 )
             self.close()
             if screenshot:
-                warnings.warn(
+                warn_external(
                     'A screenshot is unable to be taken as the render window is not current or '
                     'rendering is suppressed.',
-                    stacklevel=2,
                 )
         if _is_current:
             if pv.ON_SCREENSHOT:
@@ -7433,7 +7569,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        CornerAnnotation | Text
+        output : CornerAnnotation | Text
             Text actor added to plot.
 
         Examples

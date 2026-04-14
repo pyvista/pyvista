@@ -20,13 +20,19 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
-from pyvista.core._vtk_core import _MIN_SUPPORTED_VTK_VERSION
-from pyvista.core._vtk_core import VersionInfo
-from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
+from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
+from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
+from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
 from pyvista.core.utilities.observers import send_errors_to_logging
+from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
+from pyvista.core.utilities.reader_registry import register_reader as register_reader
+from pyvista.core.utilities.writer_registry import register_writer as register_writer
 from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
+from pyvista.jupyter import register_jupyter_backend as register_jupyter_backend
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report
@@ -78,8 +84,6 @@ DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
 
-_VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
-
 # Allow setting new private -- but not public -- attributes by default
 _ALLOW_NEW_ATTRIBUTES_MODE: Literal['private', True, False] = 'private'
 
@@ -109,6 +113,11 @@ def __getattr__(name):
     """
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
+
+    if name == 'hexcolors':
+        from pyvista.plotting.colors import _get_deprecated_hexcolors  # noqa: PLC0415
+
+        return _get_deprecated_hexcolors()
 
     allow = {
         'demos',

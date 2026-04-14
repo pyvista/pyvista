@@ -5,13 +5,14 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
@@ -54,7 +55,7 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
 
 
 class CubeAxesActor(
-    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor
+    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkCubeAxesActor
 ):
     """Wrap :vtk:`vtkCubeAxesActor`.
 
@@ -197,8 +198,7 @@ class CubeAxesActor(
         self._y_label_visibility = y_label_visibility
         self._z_label_visibility = z_label_visibility
 
-        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-        default_fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'
+        default_fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
         if x_label_format is None:
             x_label_format = pv.global_theme.font.fmt
             if x_label_format is None:
@@ -342,7 +342,7 @@ class CubeAxesActor(
                     f'Accepts now a sequence of (x,y) offsets. '
                     f'Setting the x offset to {(x := 0.0)}'
                 )
-                warnings.warn(msg, UserWarning, stacklevel=2)
+                warn_external(msg, UserWarning)
                 self.SetTitleOffset([x, offset])
             else:
                 self.SetTitleOffset(offset)
@@ -353,7 +353,7 @@ class CubeAxesActor(
                 f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
                 f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
             )
-            warnings.warn(msg, UserWarning, stacklevel=2)
+            warn_external(msg, UserWarning)
             self.SetTitleOffset(y)  # type: ignore[arg-type]
             return
 

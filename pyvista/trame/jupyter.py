@@ -8,12 +8,13 @@ import os
 from typing import TYPE_CHECKING
 from typing import Concatenate
 from typing import Literal
-import warnings
 
 from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
+
+from pyvista._warn_external import warn_external
 
 try:
     from ipywidgets.widgets import HTML
@@ -77,7 +78,7 @@ class TrameJupyterServerDownError(RuntimeError):
         """Call the base class constructor with the custom message."""
         # Be incredibly verbose on how users should launch trame server
         # Both warn so it appears at top
-        warnings.warn(JUPYTER_SERVER_DOWN_MESSAGE, stacklevel=2)  # pragma: no cover
+        warn_external(JUPYTER_SERVER_DOWN_MESSAGE)  # pragma: no cover
         # and Error
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
@@ -103,6 +104,7 @@ class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
             'src': src,
             'class': 'pyvista',
             'style': f'width: {width}; height: {height}; {border}',
+            'scrolling': 'no',
         }
 
         iframe_attrs_str = ' '.join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
@@ -240,7 +242,7 @@ def build_url(
         if server_proxy_prefix is None:
             server_proxy_prefix = pv.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
-        prefix = server_proxy_prefix if server_proxy_prefix else ''
+        prefix = server_proxy_prefix or ''  # pragma: no cover
         src = f'{prefix}{_server.port}/index.html{params}'
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'
@@ -280,7 +282,7 @@ def initialize(
 
 def show_trame(
     plotter: Plotter,
-    mode: JupyterBackendOptions | None = None,
+    mode: JupyterBackendOptions | str | None = None,
     name: str | None = None,
     server_proxy_enabled: bool | None = None,
     server_proxy_prefix: str | None = None,
@@ -372,7 +374,7 @@ def show_trame(
 
     Returns
     -------
-    ipywidgets.widgets.HTML or handler result
+    output : ipywidgets.widgets.HTML or handler result
         Returns a HTML IFrame widget or the result of the passed handler.
 
     """
@@ -380,7 +382,7 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if plotter._window_size_unset:
-        dw, dh = '99%', '600px'
+        dw, dh = '100%', '600px'
     else:
         width, height = plotter.window_size
         dw = f'{width}px'

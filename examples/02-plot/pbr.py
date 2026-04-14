@@ -47,7 +47,9 @@ pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=
 
 # Define a nice camera perspective
 cpos = pv.CameraPosition(
-    position=(-313.40, 66.09, 1000.61), focal_point=(0.0, 0.0, 0.0), viewup=(0.018, 0.99, -0.06)
+    position=(-313.40, 66.09, 1000.61),
+    focal_point=(0.0, 0.0, 0.0),
+    viewup=(0.018, 0.99, -0.06),
 )
 
 pl.show(cpos=cpos)
@@ -98,7 +100,9 @@ pl.add_light(light)
 
 # plot with a good camera position
 pl.camera_position = pv.CameraPosition(
-    position=(9.51, 13.92, 15.81), focal_point=(-2.836, -0.93, 10.2), viewup=(-0.22, -0.18, 0.959)
+    position=(9.51, 13.92, 15.81),
+    focal_point=(-2.836, -0.93, 10.2),
+    viewup=(-0.22, -0.18, 0.959),
 )
 cpos = pl.show()
 # %%

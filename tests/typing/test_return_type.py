@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 import inspect
 from typing import TYPE_CHECKING
 
@@ -7,7 +8,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista import _vtk
+from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
@@ -28,6 +29,8 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
             except TypeError:
                 pass  # not a class
             else:
+                if issubclass(module_attr, enum.Enum):
+                    continue
                 if hasattr(module_attr, attr):
                     class_types.append(module_attr)
 
@@ -82,7 +85,7 @@ def get_property_return_type(prop: property):
 
 
 def test_bounds_tuple(class_with_bounds):
-    if _vtk.is_vtk_attribute(class_with_bounds, 'bounds'):
+    if is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
 
     # Define kwargs as required for some cases.
@@ -106,7 +109,7 @@ def test_bounds_tuple(class_with_bounds):
 
 
 def test_bounds_size(class_with_bounds):
-    if _vtk.is_vtk_attribute(class_with_bounds, 'bounds'):
+    if is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
     elif class_with_bounds.__name__.endswith('Source'):
         pytest.skip('Source objects use bounds as setters.')
@@ -132,7 +135,7 @@ def test_bounds_size(class_with_bounds):
 
 
 def test_center_tuple(class_with_center):
-    if _vtk.is_vtk_attribute(class_with_center, 'center'):
+    if is_vtk_attribute(class_with_center, 'center'):
         pytest.skip('center is defined by vtk, not pyvista.')
 
     # Define kwargs as required for some cases.

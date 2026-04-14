@@ -144,7 +144,7 @@ def image_from_window(  # noqa: PLR0917
 
     Returns
     -------
-    ndarray | :vtk:`vtkImageData`
+    output : ndarray | :vtk:`vtkImageData`
         The image as an array or as a VTK object depending on the ``as_vtk`` parameter.
 
     """

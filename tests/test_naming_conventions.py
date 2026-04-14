@@ -22,6 +22,8 @@ COMMON_GREP_ARGS = [
     '--exclude-dir=vtk-data',
 ]
 
+LEADING_SPACE_OR_DOCTEST = r'[[:space:]]*(?:>>> |\.{3} )?'
+
 
 @pytest.fixture(scope='session')
 def tests_root(request):
@@ -54,7 +56,7 @@ def test_no_bare_vtk_imports_in_tests(tests_root):
 @pytest.mark.skip_windows('Needs grep')
 def test_no_bare_pyvista_imports_in_project():
     # Search for `import pyvista`
-    pattern = r'^[[:space:]]*import[[:space:]]+pyvista[[:space:]]*$'
+    pattern = rf'^{LEADING_SPACE_OR_DOCTEST}import[[:space:]]+pyvista[[:space:]]*$'
     result = _run_grep(COMMON_GREP_ARGS, pattern, PROJECT_ROOT)
     assert result.returncode != 0, (
         "Found bare 'import pyvista' imports, "
@@ -66,12 +68,9 @@ def test_no_bare_pyvista_imports_in_project():
 @pytest.mark.skip_windows('Needs grep')
 def test_no_forbidden_plotter_names_in_project():
     # Search `name = pv.Plotter(` with forbidden name
-    forbidden_names = ['plotter', 'p', 'plot']
+    forbidden_names = ['plotter', 'p', 'plot', 'plt']
     names = '|'.join(forbidden_names)
-    pattern = (
-        rf'^[[:space:]]*({names})[[:space:]]*='
-        rf'[[:space:]]*pv\.Plotter\('
-    )
+    pattern = rf'^{LEADING_SPACE_OR_DOCTEST}({names})[[:space:]]*=[[:space:]]*pv\.Plotter\('
     result = _run_grep(COMMON_GREP_ARGS, pattern, PROJECT_ROOT)
     assert result.returncode != 0, (
         f"Found forbidden Plotter variable names (use 'pl' instead):\n\n{result.stdout}"

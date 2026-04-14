@@ -129,6 +129,7 @@ extensions = [
 autodoc_type_aliases = {
     'CameraPositionOptions': 'pyvista.CameraPositionOptions',
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
+    'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
@@ -174,11 +175,15 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*InteractorStyleHandler'),
+    (r'py:.*', '.*WriterHandler'),
+    (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
     (r'py:.*', '.*ShapeLike'),
     (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*MeshValidationFields'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
     (r'py:.*', '.*_PolyDataType'),
@@ -229,6 +234,10 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PickerType'),
     (r'py:.*', '.*ElementType'),
     #
+    # PyVista shader/plotting enums
+    (r'py:.*', '.*ShaderType'),
+    (r'py:.*', '.*PointSpriteShape'),
+    #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
     #
@@ -243,9 +252,11 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', '.*colors.Colormap'),
     (r'py:.*', 'colors.ListedColormap'),
+    (r'py:.*', '.*MeshValidationReport'),
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'pyvista.SeriesDataSet'),
     (r'py:.*', 'ScalarBarArgs'),
     (r'py:.*', 'SilhouetteArgs'),
     (r'py:.*', 'BackfaceArgs'),
@@ -259,6 +270,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*JupyterBackendOptions'),
     (r'py:.*', '_InterpolationOptions'),
     (r'py:.*', 'PlottableType'),
+    (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -289,6 +301,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
     (r'py:.*', 'Rotation'),
+    (r'py:.*', '.*VtkEvent'),
     (r'py:.*', 'vtk.*'),
     (r'py:.*', '_vtk.*'),
     (r'py:.*', 'VTK'),
@@ -394,6 +407,20 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
+def _filter_sphinx_gallery_warnings():
+    import warnings
+
+    # Ignore specific warnings
+    warnings.filterwarnings(
+        'ignore',
+        message='Call to deprecated method GetData',  # emitted by trame-vtk
+        category=DeprecationWarning,
+    )
+
+    # Treat all remaining warnings as errors
+    warnings.simplefilter('error', append=True)
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
@@ -402,6 +429,7 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
+        _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
         # clear all mpl figures, force non-interactive backend, and reset defaults
@@ -484,7 +512,7 @@ def _str_examples(self):
         out += self._str_indent(self['Examples'])
         out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'pyvista-plot::' not in examples_str:
         out = []
         out += self._str_header('Examples')
         out += ['.. pyvista-plot::', '']

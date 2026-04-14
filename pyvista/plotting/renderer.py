@@ -7,11 +7,11 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+from html import escape
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -19,8 +19,14 @@ import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.formatting_html import _copy_btn
+from pyvista.core.formatting_html import _load_css
+from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -133,6 +139,7 @@ def make_legend_face(face) -> PolyData:
 
     def normalize(poly):
         norm_poly = poly.copy()  # Avoid mutating input
+        norm_poly.clear_data()
 
         # Center data
         norm_poly.points -= np.array(norm_poly.center)
@@ -268,6 +275,39 @@ class CameraPosition(_NoNewAttrMixin):
             f'               viewup={self._viewup})'
         )
 
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+
+        def _fmt_vec(vec: tuple[float, ...]) -> str:
+            return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
+
+        pos = _fmt_vec(self._position)
+        foc = _fmt_vec(self._focal_point)
+        vup = _fmt_vec(self._viewup)
+
+        css = _load_css()
+        copy_all = _copy_btn(repr(self.to_list()))
+        meta = _metadata_html(
+            [
+                ('position', [('', pos)], pos),
+                ('focal_point', [('', foc)], foc),
+                ('viewup', [('', vup)], vup),
+            ]
+        )
+        text_fallback = escape(repr(self))
+
+        return (
+            f'<div><style>{css}</style>'
+            f"<pre class='pv-text-repr-fallback'>{text_fallback}</pre>"
+            "<div class='pv-wrap' style='display:none'>"
+            "<div class='pv-header'>"
+            "<div class='pv-header-text'>"
+            f"<div class='pv-obj-type'>CameraPosition{copy_all}</div>"
+            '</div></div>'
+            f'{meta}'
+            '</div></div>'
+        )
+
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
@@ -308,9 +348,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = value
 
 
-class Renderer(
-    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer
-):
+class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -742,10 +780,9 @@ class Renderer(
             if uses_egl():  # pragma: no cover
                 # only display the warning when not building documentation
                 if not pv.BUILDING_GALLERY:
-                    warnings.warn(
+                    warn_external(
                         'VTK compiled with OSMesa/EGL does not properly support '
                         'FXAA anti-aliasing and SSAA will be used instead.',
-                        stacklevel=2,
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -1254,7 +1291,7 @@ class Renderer(
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
         box=None,
-        box_args=None,
+        box_args=None,  # noqa: ARG002
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1297,12 +1334,17 @@ class Renderer(
             See :func:`pyvista.create_axes_orientation_box` for details.
 
             .. deprecated:: 0.43.0
-                The is deprecated. Use `add_box_axes` method instead.
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
             :func:`pyvista.create_axes_orientation_box`.
+
+            .. deprecated:: 0.43.0
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
@@ -1365,41 +1407,23 @@ class Renderer(
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
-        if box is None:
-            box = self._theme.axes.box
+
         if box:
-            warnings.warn(
-                '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
-            )
-            if box_args is None:
-                box_args = {}
-            self.axes_actor = create_axes_orientation_box(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **box_args,
-            )
-        else:
-            self.axes_actor = create_axes_marker(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **kwargs,
-            )
+            msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+            raise DeprecationError(msg)
+
+        self.axes_actor = create_axes_marker(
+            label_color=color,
+            line_width=line_width,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            labels_off=labels_off,
+            **kwargs,
+        )
         axes_widget = self.add_orientation_widget(
             self.axes_actor,
             interactive=interactive,
@@ -1755,7 +1779,7 @@ class Renderer(
         fmt=None,
         minor_ticks=False,  # noqa: FBT002
         padding=0.0,
-        use_3d_text=True,  # noqa: FBT002
+        use_3d_text: bool | None = None,  # noqa: FBT001
         render=None,
         **kwargs,
     ):
@@ -1883,8 +1907,18 @@ class Renderer(
             cushion the datasets in the scene from the axes
             annotations. Defaults no padding.
 
-        use_3d_text : bool, default: True
-            Use :vtk:`vtkTextActor3D` for titles and labels.
+        use_3d_text : bool
+            Use :vtk:`vtkTextActor3D` for titles and labels. Defaults to ``False`` for
+            VTK 9.6 and later, and ``True`` for older versions of VTK.
+
+            .. versionchanged:: 0.47
+                The default value of this flag is now dependent on the version of VTK used.
+                Previously, the default was always ``True``.
+
+            .. warning::
+                Setting ``use_3d_text=True`` is not recommended with VTK 9.6.0 or later since
+                the 3D labels may not render at all in some cases. This is a known VTK bug:
+                https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -1963,6 +1997,10 @@ class Renderer(
         """
         self.remove_bounds_axes()
 
+        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
+        if use_3d_text is None:
+            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
+            use_3d_text = vtk_less_than_96
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -1970,29 +2008,22 @@ class Renderer(
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
-            fmt = '%.1f' if pv.vtk_version_info < (9, 5, 99) else '{0:.1f}'  # fallback
+            fmt = '%.1f' if vtk_less_than_96 else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
-            warnings.warn(
-                '`xlabel` is deprecated. Use `xtitle` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`xlabel` is deprecated. Use `xtitle` instead.', PyVistaDeprecationWarning
             )
         if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
-            warnings.warn(
-                '`ylabel` is deprecated. Use `ytitle` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`ylabel` is deprecated. Use `ytitle` instead.', PyVistaDeprecationWarning
             )
         if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
-            warnings.warn(
-                '`zlabel` is deprecated. Use `ztitle` instead.',
-                PyVistaDeprecationWarning,
-                stacklevel=2,
+            warn_external(
+                '`zlabel` is deprecated. Use `ztitle` instead.', PyVistaDeprecationWarning
             )
         assert_empty_kwargs(**kwargs)
 
@@ -2151,21 +2182,24 @@ class Renderer(
         default_font_size = 12
         scaled_font_size = 50
 
-        font_size_factor = (
-            scaled_font_size / default_font_size if pv.vtk_version_info > (9, 5, 99) else 1.0
-        )
         for prop in props:
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
             prop.SetBold(bold)
 
-            # this merely makes the font sharper
             if use_3d_text:
+                # this merely makes the font sharper
                 prop.SetFontSize(scaled_font_size)
+            else:
+                prop.SetFontSize(font_size)
 
-        cube_axes_actor.SetScreenSize(
-            font_size / default_font_size / font_size_factor * default_screen_size
-        )
+        if use_3d_text:
+            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
+            cube_axes_actor.SetScreenSize(
+                font_size / default_font_size / font_size_factor * default_screen_size
+            )
+        elif vtk_less_than_96:
+            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
@@ -4182,9 +4216,8 @@ class Renderer(
                     face_ = args.pop('face', None)
 
                     if args:
-                        warnings.warn(
-                            f'Some of the arguments given to legend are not used.\n{args}',
-                            stacklevel=2,
+                        warn_external(
+                            f'Some of the arguments given to legend are not used.\n{args}'
                         )
                 elif isinstance(args, str):
                     # Only passing label
@@ -4570,7 +4603,7 @@ class Renderer(
             if pv.vtk_version_info >= (9, 4):
                 legend_scale.SetLabelModeToCoordinates()
             else:
-                legend_scale.SetLabelModeToXYCoordinates()
+                legend_scale.SetLabelModeToXYCoordinates()  # type: ignore[attr-defined]
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)

@@ -32,7 +32,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -48,7 +48,7 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-1-${{ hashFiles('*') }}
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: debug_images

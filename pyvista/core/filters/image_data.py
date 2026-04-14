@@ -16,9 +16,11 @@ import numpy as np
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
@@ -27,6 +29,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
@@ -1098,10 +1101,9 @@ class ImageDataFilters(DataSetFilters):
         >>> iclosed.plot()
 
         """
-        warnings.warn(
+        warn_external(
             'image_dilate_erode is deprecated. Use dilate, erode, open, or close instead.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
         alg = _vtk.vtkImageDilateErode3D()
@@ -1764,8 +1766,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
     @_deprecate_positional_args(allowed=['threshold'])
-    def image_threshold(  # noqa: PLR0917
-        self,
+    def image_threshold(  # type: ignore[misc] # noqa: PLR0917
+        self: ImageData,
         threshold,
         in_value=1.0,
         out_value=0.0,
@@ -1842,54 +1844,110 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            field, scalars = self.active_scalars_info
         else:
-            field = self.get_array_association(scalars, preference=preference)  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference=preference)
 
         # For some systems integer scalars won't threshold
-        # correctly. Cast to float to be robust.
-        cast_dtype = np.issubdtype(
-            array_dtype := self.active_scalars.dtype,  # type: ignore[attr-defined]
-            int,
-        ) and array_dtype != np.dtype(np.uint8)
+        # correctly. Cast to float to be robust. See https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
+        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[union-attr]
         if cast_dtype:
-            self[scalars] = self[scalars].astype(float, casting='safe')  # type: ignore[index]
+            alg_input = self.copy(deep=False)
+            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')
+        else:
+            alg_input = self
 
-        alg = _vtk.vtkImageThreshold()
-        alg.SetInputDataObject(self)
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
-        )  # args: (idx, port, connection, field, name)
-        # set the threshold(s) and mode
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
             msg = f'Threshold must have one or two values, got {size}.'
             raise ValueError(msg)
-        if size == 2:
-            alg.ThresholdBetween(threshold_val[0], threshold_val[1])
-        else:
-            alg.ThresholdByUpper(threshold_val[0])
-        # set the replacement values / modes
-        if in_value is not None:
-            alg.SetReplaceIn(True)
-            alg.SetInValue(np.array(in_value).astype(array_dtype))  # type: ignore[arg-type]
-        else:
-            alg.SetReplaceIn(False)
-        if out_value is not None:
-            alg.SetReplaceOut(True)
-            alg.SetOutValue(np.array(out_value).astype(array_dtype))  # type: ignore[arg-type]
-        else:
-            alg.SetReplaceOut(False)
-        # run the algorithm
-        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
-        output = _get_output(alg)
+
+        def _image_threshold(
+            *,
+            threshold_val,
+            in_value,
+            out_value,
+            scalars,
+            field,
+            progress_bar: bool,
+        ):
+            """Threshold using vtkImageThreshold."""
+            alg = _vtk.vtkImageThreshold()
+            alg.SetInputDataObject(alg_input)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+
+            if threshold_val.size == 2:
+                alg.ThresholdBetween(threshold_val[0], threshold_val[1])
+            else:
+                alg.ThresholdByUpper(threshold_val[0])
+            # set the replacement values / modes
+            if in_value is not None:
+                alg.SetReplaceIn(True)
+                alg.SetInValue(in_value)
+            else:
+                alg.SetReplaceIn(False)
+            if out_value is not None:
+                alg.SetReplaceOut(True)
+                alg.SetOutValue(out_value)
+            else:
+                alg.SetReplaceOut(False)
+
+            _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
+            return _get_output(alg)
+
+        def _binary_image_threshold(
+            *,
+            threshold_val,
+            in_value,
+            out_value,
+            scalars,
+            field,
+            progress_bar: bool,
+        ):
+            """Threshold using vtkImageBinaryThreshold."""
+            alg = _vtk.vtkImageBinaryThreshold()
+            alg.SetInputDataObject(alg_input)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+
+            if threshold_val.size == 2:
+                alg.SetThresholdFunction(_vtk.vtkImageBinaryThreshold.THRESHOLD_BETWEEN)
+                alg.SetLowerThreshold(threshold_val[0])
+                alg.SetUpperThreshold(threshold_val[1])
+            else:
+                alg.SetThresholdFunction(_vtk.vtkImageBinaryThreshold.THRESHOLD_UPPER)
+                alg.SetLowerThreshold(threshold_val[0])
+
+            if in_value is not None:
+                alg.ReplaceInOn()
+                alg.SetInValue(in_value)
+            else:
+                alg.ReplaceInOff()
+
+            if out_value is not None:
+                alg.ReplaceOutOn()
+                alg.SetOutValue(out_value)
+            else:
+                alg.ReplaceOutOff()
+
+            _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
+            return _get_output(alg)
+
+        threshold_filter = (
+            _binary_image_threshold
+            if pv.vtk_version_info >= (9, 6, 99)  # >= (9, 7, 0)
+            else _image_threshold
+        )
+        output = threshold_filter(
+            threshold_val=threshold_val,
+            in_value=in_value,
+            out_value=out_value,
+            scalars=scalars,
+            field=field,
+            progress_bar=progress_bar,
+        )
+
         if cast_dtype:
-            self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
@@ -2369,14 +2427,13 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
-        warnings.warn(
+        warn_external(
             'This filter produces unexpected results and is deprecated. '
             'Use `contour_labels` instead.'
             '\nRefer to the documentation for `contour_labeled` for details on how to '
             'transition to the new filter.'
             '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
             PyVistaDeprecationWarning,
-            stacklevel=2,
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
@@ -2697,8 +2754,8 @@ class ImageDataFilters(DataSetFilters):
 
         References
         ----------
-        S. Frisken, “SurfaceNets for Multi-Label Segmentations with Preservation of
-        Sharp Boundaries”, J. Computer Graphics Techniques, 2022. Available online:
+        S. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation of
+        Sharp Boundaries, J. Computer Graphics Techniques, 2022. Available online:
         http://jcgt.org/published/0011/01/03/
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
@@ -2999,14 +3056,13 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError(msg)
 
         if orient_faces is None:
-            orient_faces = bool(pv.vtk_version_info < (9, 5, 99))
+            orient_faces = bool(pv.vtk_version_info < (9, 6, 0))
         else:
-            warnings.warn(
+            warn_external(
                 'Use of `orient_faces` is deprecated and should not be used. It will be removed '
                 'in a future version. With VTK 9.6 or later, the faces always have correct '
                 'orientation by default.',
                 PyVistaDeprecationWarning,
-                stacklevel=2,
             )
 
         _validation.check_contains(
@@ -3816,21 +3872,16 @@ class ImageDataFilters(DataSetFilters):
         # Deprecated on v0.45.0, estimated removal on v0.48.0
         if pad_singleton_dims is not None:
             if pad_singleton_dims:
-                warnings.warn(
+                msg = (
                     'Use of `pad_singleton_dims=True` is deprecated. '
-                    'Use `dimensionality="3D"` instead',
-                    PyVistaDeprecationWarning,
-                    stacklevel=2,
+                    'Use `dimensionality="3D"` instead'
                 )
-                dimensionality = '3D'
             else:
-                warnings.warn(
+                msg = (
                     'Use of `pad_singleton_dims=False` is deprecated. '
-                    'Use `dimensionality="preserve"` instead',
-                    PyVistaDeprecationWarning,
-                    stacklevel=2,
+                    'Use `dimensionality="preserve"` instead'
                 )
-                dimensionality = 'preserve'
+            raise DeprecationError(msg)
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]
@@ -3922,7 +3973,14 @@ class ImageDataFilters(DataSetFilters):
 
             def _update_and_get_output():
                 _update_alg(alg, progress_bar=progress_bar, message='Padding image')
-                return _get_output(alg)
+                # This filter is known to return empty arrays which emits a warning when
+                # the output is wrapped. These invalid arrays are removed later.
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        'ignore',
+                        category=pv.InvalidMeshWarning,
+                    )
+                    return _get_output(alg)
 
             # Set scalars since the filter only operates on the active scalars
             self.set_active_scalars(scalars_, preference='point')  # type: ignore[attr-defined]
@@ -3964,6 +4022,9 @@ class ImageDataFilters(DataSetFilters):
 
         # Restore active scalars
         self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+
+        # Make sure buggy scalars have been fixed
+        _warn_if_invalid_data(output)
         return output
 
     def label_connectivity(
@@ -4685,16 +4746,16 @@ class ImageDataFilters(DataSetFilters):
         Plot the two images together as wireframe to visualize them. The original is in
         red, and the resampled image is in black.
 
-        >>> plt = pv.Plotter()
-        >>> _ = plt.add_mesh(
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
         ...     image_as_cells, style='wireframe', color='red', line_width=10
         ... )
-        >>> _ = plt.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     upsampled_as_cells, style='wireframe', color='black', line_width=2
         ... )
-        >>> plt.view_xy()
-        >>> plt.camera.tight()
-        >>> plt.show()
+        >>> pl.view_xy()
+        >>> pl.camera.tight()
+        >>> pl.show()
 
         Disable ``extend_border`` to force the input and output bounds of the points
         to be the same instead.
@@ -4776,7 +4837,7 @@ class ImageDataFilters(DataSetFilters):
 
         Use a reference image to control the resampling instead. Here we load two
         images with different dimensions:
-        :func:`~pyvista.examples.downloads.download_puppy` and
+        :func:`~pyvista.examples.downloads.download_bird` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
         >>> bird = examples.download_bird()
@@ -4808,17 +4869,17 @@ class ImageDataFilters(DataSetFilters):
         Compare the downsampled image to the original and zoom in to show detail.
 
         >>> def compare_images_plotter(image1, image2):
-        ...     plt = pv.Plotter(shape=(1, 2))
-        ...     _ = plt.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
-        ...     plt.subplot(0, 1)
-        ...     _ = plt.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
-        ...     plt.link_views()
-        ...     plt.view_xy()
-        ...     plt.camera.zoom(3.0)
-        ...     return plt
+        ...     pl = pv.Plotter(shape=(1, 2))
+        ...     _ = pl.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
+        ...     pl.subplot(0, 1)
+        ...     _ = pl.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
+        ...     pl.link_views()
+        ...     pl.view_xy()
+        ...     pl.camera.zoom(3.0)
+        ...     return pl
 
-        >>> plt = compare_images_plotter(gourds, downsampled)
-        >>> plt.show()
+        >>> pl = compare_images_plotter(gourds, downsampled)
+        >>> pl.show()
 
         Note that downsampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
@@ -4827,8 +4888,8 @@ class ImageDataFilters(DataSetFilters):
 
         Compare down-sampling with aliasing (left) to without aliasing (right).
 
-        >>> plt = compare_images_plotter(downsampled, downsampled2)
-        >>> plt.show()
+        >>> pl = compare_images_plotter(downsampled, downsampled2)
+        >>> pl.show()
 
         Load an MRI of a knee and downsample it.
 
@@ -4841,27 +4902,27 @@ class ImageDataFilters(DataSetFilters):
         >>> knee = knee.crop(normalized_bounds=[0.2, 0.8, 0.2, 0.8, 0.0, 1.0])
         >>> vmin = knee.active_scalars.min()
         >>> vmax = knee.active_scalars.max()
-        >>> plt = image_plotter(knee, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(knee, clim=[vmin, vmax])
+        >>> pl.show()
 
         Upsample it with B-spline interpolation. The interpolation is very smooth.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
-        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> pl.show()
 
         Use the ``'wrap'`` border mode. Note how points at the border are brighter than previously,
         since the bright pixels from the opposite edge are now included in the interpolation.
 
         >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
-        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> pl.show()
 
         Compare B-spline interpolation to ``'hamming'``.
 
         >>> upsampled = knee.resample(2.0, 'hamming')
-        >>> plt = image_plotter(upsampled, clim=[vmin, vmax])
-        >>> plt.show()
+        >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
+        >>> pl.show()
 
         """
 
@@ -5218,7 +5279,7 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.ImageData or pyvista.MultiBlock
+        output : pyvista.ImageData | pyvista.MultiBlock
             Image with selected values or a composite of meshes with selected
             values, depending on ``split``.
 

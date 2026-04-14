@@ -115,13 +115,13 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
 
     Returns
     -------
-    pyvista.PolyData or dict[str, pyvista.PolyData]
+    output : pyvista.PolyData or dict[str, pyvista.PolyData]
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pv.PolyData() if merge else {}  # type: ignore[var-annotated]
+    mesh_letters = pv.PolyData() if merge else {}
 
     # spacing between letters
     space_factor = 0.9
@@ -134,7 +134,7 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
         if merge:
             mesh_letters += mesh_letter
         else:
-            mesh_letters[letter] = mesh_letter
+            mesh_letters[letter] = mesh_letter  # type: ignore[index]
 
     return mesh_letters
 
@@ -217,7 +217,7 @@ def plot_logo(  # noqa: PLR0917
 
     Returns
     -------
-    Plotter or camera position
+    output : Plotter or camera position
         Returns the plotter instance if ``just_return_plotter`` is ``True``,
         otherwise returns the camera position if ``screenshot`` is specified,
         otherwise shows the plot.
@@ -247,7 +247,7 @@ def plot_logo(  # noqa: PLR0917
     v_grid = _voxelize_legacy(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
-    v_grid_atom_surf = v_grid_atom.extract_surface()
+    v_grid_atom_surf = v_grid_atom.extract_surface(algorithm=None)
     faces = v_grid_atom_surf.faces.reshape(-1, 5).copy()
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
@@ -263,7 +263,7 @@ def plot_logo(  # noqa: PLR0917
     i_grid = _voxelize_legacy(mesh_letters['i'], density=0.1)
 
     pl.add_mesh(
-        i_grid.extract_surface(),
+        i_grid.extract_surface(algorithm=None),
         style='points',
         color='r',
         render_points_as_spheres=True,
