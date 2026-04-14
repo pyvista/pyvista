@@ -450,17 +450,17 @@ class ScalarBars(_NoNewAttrMixin):
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
-            clim = list(self._scalar_bar_ranges[title])
+            _clim = list(self._scalar_bar_ranges[title])
             newrng = mapper.scalar_range
             oldmappers = self._scalar_bar_mappers[title]
             # get max for range and reset everything
-            clim[0] = min(newrng[0], clim[0])
-            clim[1] = max(newrng[1], clim[1])
+            _clim[0] = min(newrng[0], _clim[0])
+            _clim[1] = max(newrng[1], _clim[1])
             for mh in oldmappers:
-                mh.scalar_range = clim[0], clim[1]
-            mapper.scalar_range = clim[0], clim[1]
+                mh.scalar_range = _clim[0], _clim[1]
+            mapper.scalar_range = _clim[0], _clim[1]
             self._scalar_bar_mappers[title].append(mapper)
-            self._scalar_bar_ranges[title] = clim
+            self._scalar_bar_ranges[title] = _clim
             self._scalar_bar_actors[title].SetLookupTable(mapper.lookup_table)
             # Color bar already present and ready to be used so returning
             return None
