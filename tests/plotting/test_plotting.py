@@ -4353,7 +4353,7 @@ def test_add_mesh_multi_component_scalars_no_smooth_shading():
     used for smooth shading.
     """
     sphere = pv.Sphere()
-    sphere.point_data['vec'] = np.asarray(sphere.points, dtype=np.float32)
+    sphere.point_data['vec'] = np.array(sphere.points, dtype=np.float32)
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalars='vec', component=2, show_scalar_bar=False)
     pl.show()
@@ -4441,11 +4441,11 @@ def test_add_mesh_smooth_shading_multi_component_scalars():
     """
     mesh = pv.Wavelet().cast_to_unstructured_grid()
     # Use point coordinates as the vector field so ``component=1`` picks a
-    # clean y-axis gradient.  ``np.asarray`` (not ``.astype``) is required
-    # to drop the ``pyvista_ndarray`` subclass — astype preserves it, and
-    # the resulting view-backed array is kept alive through the mapper's
-    # ``vtkWeakReference`` and trips ``check_gc`` on Python 3.14.
-    mesh.point_data['vec'] = np.asarray(mesh.points, dtype=np.float32)
+    # clean y-axis gradient.  ``np.array`` (forces a copy) is required to
+    # detach from the ``Points`` ``vtkFloatArray`` buffer — both ``astype``
+    # and ``asarray`` keep a view-backed reference that survives teardown
+    # and trips ``check_gc`` on Python 3.14.
+    mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
 
     pl = pv.Plotter()
     pl.add_mesh(mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False)
