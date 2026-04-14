@@ -1,0 +1,128 @@
+name: Deploy Test Image Report
+
+# Separate deploy workflow for the test image report, triggered via
+# workflow_run so fork PR CI in "Unit Testing and Deployment" is never blocked
+# waiting on deployment approval. See docs-deploy.yml for the same pattern
+# applied to the docs deploys.
+
+on: # zizmor: ignore[dangerous-triggers]
+  # workflow_run is needed here. It runs in base-repo context so the
+  # child has access to Netlify secrets for fork PRs. GitHub loads this file
+  # from main regardless of fork modifications, and no fork code is ever
+  # checked out or executed (see the checkout comments in each job). Do not
+  # add a checkout of github.event.workflow_run.head_sha to this workflow.
+  workflow_run:
+    workflows: ["Unit Testing and Deployment"]
+    types: [completed]
+
+# Deploys and commit statuses use PYVISTA_BOT_TOKEN, not GITHUB_TOKEN, so the
+# workflow token only needs read access (plus actions: read to download
+# artifacts from the triggering workflow run).
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  setup:
+    name: Load PR info
+    runs-on: ubuntu-22.04
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'skipped'
+    outputs:
+      pr_number: ${{ steps.parse.outputs.pr_number }}
+      head_sha: ${{ steps.parse.outputs.head_sha }}
+      is_fork: ${{ steps.parse.outputs.is_fork }}
+    steps:
+      - name: Download PR info artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: pr-info
+          path: pr-info
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Parse PR info
+        id: parse
+        run: |
+          echo "pr_number=$(cat pr-info/pr_number.txt)" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(cat pr-info/head_sha.txt)" >> "$GITHUB_OUTPUT"
+          echo "is_fork=$(cat pr-info/is_fork.txt)" >> "$GITHUB_OUTPUT"
+
+  image-report:
+    name: Test Image Report
+    runs-on: ubuntu-22.04
+    needs: setup
+    environment:
+      name: ${{ needs.setup.outputs.is_fork == 'true' && 'test-image-report' || 'test-image-report-internal' }}
+    steps:
+      # Check out base repo (main). Never check out the PR head.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Download all failed image artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: failed_test_images-*
+          path: all_failed_images
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Generate HTML report
+        id: report
+        run: |
+          tox run -e image-report -- all_failed_images _image_report
+          if [ -f _image_report/index.html ]; then
+            echo "has_report=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Netlify
+        if: steps.report.outputs.has_report == 'true'
+        id: netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: _image_report
+          production-deploy: false
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Test image report for PR #${{ needs.setup.outputs.pr_number }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: test-image-report
+          github-deployment-description: "Test image comparison report"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_IMAGE_REPORT_SITE_ID }}
+        timeout-minutes: 5
+
+      - name: Create commit status with report link
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+          HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context="Deploy / Test Image Report" \
+            -f description="Image comparison report is ready" \
+            -f target_url="$DEPLOY_URL"
+
+      - name: Add report link to job summary
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
