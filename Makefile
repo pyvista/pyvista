@@ -22,7 +22,9 @@ coverage-docs:
 	@make -C doc html SPHINXOPTS="-Q" -b coverage
 	@cat doc/_build/coverage/python.txt
 
-# Install vale first: `uv tool install vale`
+# Vale is pinned to match CI (.github/workflows/style-docstring.yml).
+# Install with: `uv tool install vale@2.29.5`
+# Newer vale versions currently fail on the pyvista vocab config.
 docstyle:
 	@echo "Running vale"
 	@vale --config doc/.vale.ini doc pyvista examples
