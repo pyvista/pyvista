@@ -1,0 +1,333 @@
+name: Deploy
+
+# Unified deploy workflow for all Netlify deploys produced by either
+# "Build Documentation" or "Unit Testing and Deployment". Triggered via
+# workflow_run so fork PR CI is never blocked waiting on deployment approval:
+# the parent workflows always run freely, and deploys wait for approval in
+# their own run which can sit pending indefinitely without affecting the PR's
+# required status checks.
+#
+# workflow_run runs in the context of the default branch and has access to
+# secrets, even when the parent run was triggered by a fork PR. GitHub loads
+# this workflow file from main, so fork modifications to it are ignored.
+
+on: # zizmor: ignore[dangerous-triggers]
+  # workflow_run is needed here. It runs in base-repo context so the child has
+  # access to Netlify secrets for fork PRs. GitHub loads this file from main
+  # regardless of fork modifications, and no fork code is ever checked out or
+  # executed (see the checkout comments in each job). Do not add a checkout of
+  # github.event.workflow_run.head_sha to this workflow.
+  workflow_run:
+    workflows: ["Build Documentation", "Unit Testing and Deployment"]
+    types: [completed]
+
+# Deploys and commit statuses use PYVISTA_BOT_TOKEN, not GITHUB_TOKEN, so the
+# workflow token only needs read access (plus actions: read to download
+# artifacts from the triggering workflow run).
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  setup:
+    name: Load PR info
+    runs-on: ubuntu-22.04
+    # Run on success and failure so image-report jobs (which must run even when
+    # tests fail) can consume the PR info outputs. preview and release have
+    # their own stricter conclusion checks.
+    if: github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'
+    outputs:
+      pr_number: ${{ steps.parse.outputs.pr_number }}
+      head_sha: ${{ steps.parse.outputs.head_sha }}
+      is_fork: ${{ steps.parse.outputs.is_fork }}
+    steps:
+      - name: Download PR info artifact
+        if: github.event.workflow_run.event == 'pull_request'
+        uses: actions/download-artifact@v8
+        with:
+          name: pr-info
+          path: pr-info
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Parse PR info
+        id: parse
+        env:
+          FALLBACK_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ -f pr-info/pr_number.txt ]; then
+            echo "pr_number=$(cat pr-info/pr_number.txt)" >> "$GITHUB_OUTPUT"
+            echo "head_sha=$(cat pr-info/head_sha.txt)" >> "$GITHUB_OUTPUT"
+            echo "is_fork=$(cat pr-info/is_fork.txt)" >> "$GITHUB_OUTPUT"
+          else
+            echo "pr_number=" >> "$GITHUB_OUTPUT"
+            echo "head_sha=$FALLBACK_SHA" >> "$GITHUB_OUTPUT"
+            echo "is_fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  preview:
+    name: Preview Development Documentation
+    runs-on: ubuntu-22.04
+    needs: setup
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.name == 'Build Documentation' &&
+      (github.event.workflow_run.event == 'pull_request' ||
+       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
+    environment:
+      name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
+    steps:
+      - name: Download docs-build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: docs-build
+          path: .
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Preview HTML documentation
+        id: netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: .
+          production-deploy: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: docs-preview
+          github-deployment-description: "Documentation preview"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }} # DEV site
+        timeout-minutes: 10
+
+      - name: Create commit status with preview link
+        if: github.event.workflow_run.event == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+          HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context="Deploy / Docs Preview" \
+            -f description="Documentation preview is ready" \
+            -f target_url="$DEPLOY_URL"
+
+      - name: Add preview link to job summary
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Documentation Preview" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+
+  doc-image-report:
+    name: Doc Image Report
+    runs-on: ubuntu-22.04
+    needs: setup
+    # Run on both success and failure — the whole point of the image report is
+    # to show what failed. Build-stage failures that produced no test artifact
+    # are handled gracefully below via continue-on-error and the has_report
+    # check.
+    if: >-
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
+      github.event.workflow_run.name == 'Build Documentation' &&
+      github.event.workflow_run.event == 'pull_request'
+    environment:
+      name: ${{ needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys' }}
+    steps:
+      # Check out base repo (main). Never check out the PR head — the whole
+      # point of workflow_run is that fork code is never executed here.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Download doc failed image artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: doc-failed-test-images
+          path: all_doc_failed_images
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Generate HTML report
+        id: report
+        run: |
+          mkdir -p all_doc_failed_images
+          tox run -e image-report -- all_doc_failed_images _doc_image_report
+          if [ -f _doc_image_report/index.html ]; then
+            echo "has_report=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Netlify
+        if: steps.report.outputs.has_report == 'true'
+        id: netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: _doc_image_report
+          production-deploy: false
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Doc image report for PR #${{ needs.setup.outputs.pr_number }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: doc-image-report
+          github-deployment-description: "Doc image comparison report"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOC_IMAGE_REPORT_SITE_ID }}
+        timeout-minutes: 5
+
+      - name: Create commit status with report link
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+          HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context="Deploy / Doc Image Report" \
+            -f description="Doc image comparison report is ready" \
+            -f target_url="$DEPLOY_URL"
+
+      - name: Add report link to job summary
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Doc Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+
+  test-image-report:
+    name: Test Image Report
+    runs-on: ubuntu-22.04
+    needs: setup
+    # Run on both success and failure — the whole point of the image report is
+    # to show what failed.
+    if: >-
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
+      github.event.workflow_run.name == 'Unit Testing and Deployment' &&
+      github.event.workflow_run.event == 'pull_request'
+    environment:
+      name: ${{ needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys' }}
+    steps:
+      # Check out base repo (main). Never check out the PR head.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Download all failed image artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: failed_test_images-*
+          path: all_failed_images
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Generate HTML report
+        id: report
+        run: |
+          mkdir -p all_failed_images
+          tox run -e image-report -- all_failed_images _image_report
+          if [ -f _image_report/index.html ]; then
+            echo "has_report=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Netlify
+        if: steps.report.outputs.has_report == 'true'
+        id: netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: _image_report
+          production-deploy: false
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Test image report for PR #${{ needs.setup.outputs.pr_number }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          enable-commit-status: false
+          github-deployment-environment: test-image-report
+          github-deployment-description: "Test image comparison report"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_IMAGE_REPORT_SITE_ID }}
+        timeout-minutes: 5
+
+      - name: Create commit status with report link
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+          HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context="Deploy / Test Image Report" \
+            -f description="Image comparison report is ready" \
+            -f target_url="$DEPLOY_URL"
+
+      - name: Add report link to job summary
+        if: steps.report.outputs.has_report == 'true'
+        env:
+          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
+        run: |
+          echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+
+  release:
+    name: Publish Release Documentation
+    runs-on: ubuntu-22.04
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.name == 'Build Documentation' &&
+      github.event.workflow_run.event == 'push' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+    environment: docs-release
+    steps:
+      - name: Download docs-build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: docs-build
+          path: .
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Deploy Release Documentation
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: .
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          overwrites-pull-request-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STABLE_SITE_ID }} # STABLE site
+        timeout-minutes: 10
