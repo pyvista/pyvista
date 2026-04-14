@@ -205,7 +205,7 @@ def test_interactive_plot_moves(tmp_path: Path):
     old_cwd = Path.cwd()
     os.chdir(html_dir)
 
-    server = ThreadingHTTPServer(('127.0.0.1', 8000), SimpleHTTPRequestHandler)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), SimpleHTTPRequestHandler)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
