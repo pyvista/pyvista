@@ -12,17 +12,18 @@ from __future__ import annotations
 
 import numpy as np
 import pyvista as pv
+from pyvista import examples
 
 # %%
-# Generate a sample cloud and a query point
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The query point does not need to be part of the cloud.
+# Load a cosmological point cloud
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# :func:`~pyvista.examples.downloads.download_cloud_dark_matter` returns a
+# sampled N-body simulation. Any point in the dataset makes a good query seed.
 
-rng = np.random.default_rng(seed=5)
-cloud = pv.PolyData(rng.normal(size=(350, 3)) * (1.0, 0.7, 0.4))
-query = np.array([0.25, -0.1, 0.0])
+cloud = examples.download_cloud_dark_matter()
+query = cloud.points[cloud.n_points // 2]
 
-neighbor_ids = cloud.find_closest_point(query, n=20)
+neighbor_ids = cloud.find_closest_point(query, n=40)
 neighbors = pv.PolyData(cloud.points[neighbor_ids])
 
 segments = np.vstack([np.vstack((query, point)) for point in neighbors.points])
@@ -32,9 +33,9 @@ pl = pv.Plotter()
 pl.add_points(
     cloud,
     color='lightgray',
-    point_size=10,
+    point_size=2,
     render_points_as_spheres=True,
-    opacity=0.35,
+    opacity=0.25,
 )
 pl.add_points(
     neighbors,

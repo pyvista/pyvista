@@ -12,20 +12,22 @@ from __future__ import annotations
 
 import numpy as np
 import pyvista as pv
+from pyvista import examples
 
 # %%
 # Create two related point clouds
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Start from one cloud and perturb it so that every source point has a nearby
-# counterpart in the target cloud.
+# Start from a scanned horse point cloud and displace a subsampled copy so that
+# every source point has a nearby counterpart in the target cloud.
 
+full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=4)
-source = pv.PolyData(rng.normal(size=(120, 3)) * (1.2, 0.8, 0.4))
+sample_ids = rng.choice(full_cloud.n_points, size=1500, replace=False)
+source = pv.PolyData(full_cloud.points[sample_ids])
 
-target_points = source.points * (1.0, 1.15, 0.85)
-target_points += (0.6, -0.2, 0.1)
-target_points += rng.normal(scale=0.05, size=target_points.shape)
-target = pv.PolyData(target_points)
+offset = np.array([source.length * 0.05, 0.0, 0.0])
+warp = rng.normal(scale=source.length * 0.01, size=source.points.shape)
+target = pv.PolyData(source.points + offset + warp)
 
 
 # %%
@@ -38,9 +40,9 @@ closest_ids = np.array([target.find_closest_point(point) for point in source.poi
 closest_points = target.points[closest_ids]
 source['distance'] = np.linalg.norm(source.points - closest_points, axis=1)
 
-sample_ids = np.linspace(0, source.n_points - 1, 12, dtype=int)
+connector_ids = np.linspace(0, source.n_points - 1, 20, dtype=int)
 segments = np.vstack(
-    [np.vstack((source.points[i], closest_points[i])) for i in sample_ids],
+    [np.vstack((source.points[i], closest_points[i])) for i in connector_ids],
 )
 connectors = pv.line_segments_from_points(segments)
 

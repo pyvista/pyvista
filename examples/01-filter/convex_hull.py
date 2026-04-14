@@ -12,17 +12,19 @@ from __future__ import annotations
 
 import numpy as np
 import pyvista as pv
+from pyvista import examples
 
 # %%
-# Generate a scattered point cloud
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Use an anisotropic cloud so the resulting hull is easy to inspect.
+# Load a real point cloud
+# ~~~~~~~~~~~~~~~~~~~~~~~
+# The :func:`~pyvista.examples.downloads.download_horse_points` dataset is a
+# dense scan of a horse statue. Subsample it so the hull geometry is easy to
+# inspect.
 
+full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=2)
-points = rng.normal(size=(120, 3)) * (1.8, 0.7, 0.4)
-points += rng.normal(scale=0.08, size=points.shape)
-
-cloud = pv.PolyData(points)
+sample_ids = rng.choice(full_cloud.n_points, size=4000, replace=False)
+cloud = pv.PolyData(full_cloud.points[sample_ids])
 cloud
 
 
@@ -32,16 +34,16 @@ cloud
 # A Delaunay tetrahedralization followed by surface extraction gives the outer
 # wrap of the point cloud.
 
-hull = cloud.delaunay_3d(alpha=1000).extract_surface(algorithm=None)
+hull = cloud.delaunay_3d(alpha=cloud.length).extract_surface(algorithm=None)
 
 pl = pv.Plotter()
 pl.add_points(
     cloud,
     color='black',
-    point_size=12,
+    point_size=6,
     render_points_as_spheres=True,
 )
-pl.add_mesh(hull, color='royalblue', opacity=0.35, show_edges=True)
+pl.add_mesh(hull, color='royalblue', opacity=0.4, show_edges=True)
 pl.show()
 
 

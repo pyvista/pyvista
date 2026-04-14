@@ -10,23 +10,18 @@ Compare a standard planar clip, which leaves an open boundary, with
 
 from __future__ import annotations
 
-import numpy as np
 import pyvista as pv
+from pyvista import examples
 
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Create a closed surface to inspect
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Start from a sphere and displace its points with Perlin noise to create a more
-# organic watertight surface.
+# Load a closed surface to inspect
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The :func:`~pyvista.examples.downloads.download_lucy` scan is a watertight,
+# manifold PolyData surface that is well suited to closed-surface clipping.
 
-surface = pv.Sphere(theta_resolution=90, phi_resolution=90).triangulate()
-noise = pv.perlin_noise(1.0, (2, 1, 3), (0, 0, 0))
-surface['noise'] = np.array([noise.EvaluateFunction(point) for point in surface.points])
-surface.points = (
-    surface.points + surface.point_normals * (surface['noise'] * 0.18)[:, None]
-)
+surface = examples.download_lucy().triangulate()
 surface
 
 
@@ -36,9 +31,12 @@ surface
 # The same plane will be used for both the open clip and the closed-surface
 # clip.
 
-plane_origin = (0.1, 0.0, 0.0)
+plane_origin = surface.center
 plane_normal = (1, 1, 0.3)
-plane = pv.Plane(center=plane_origin, direction=plane_normal, i_size=3.5, j_size=3.5)
+plane_size = surface.length * 1.2
+plane = pv.Plane(
+    center=plane_origin, direction=plane_normal, i_size=plane_size, j_size=plane_size
+)
 
 pl = pv.Plotter()
 pl.add_mesh(surface, color='wheat', smooth_shading=True)
@@ -53,7 +51,7 @@ pl.show()
 # new faces to keep the result watertight.
 
 open_clip = surface.clip(normal=plane_normal, origin=plane_origin)
-closed_clip = surface.clip_closed_surface(plane=plane)
+closed_clip = surface.clip_closed_surface(normal=plane_normal, origin=plane_origin)
 
 open_boundary = open_clip.extract_feature_edges(
     boundary_edges=True,

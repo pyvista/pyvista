@@ -11,16 +11,17 @@ Create an open boundary with a planar clip and seal it with
 from __future__ import annotations
 
 import pyvista as pv
+from pyvista import examples
 
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
 # Start from an open surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Clip a sphere to create a clean circular hole.
+# The :func:`~pyvista.examples.downloads.download_face` scan is an open mesh
+# with naturally occurring holes along its boundary.
 
-surface = pv.Sphere(theta_resolution=60, phi_resolution=60).triangulate()
-open_mesh = surface.clip('z', origin=(0, 0, 0.2))
+open_mesh = examples.download_face().triangulate()
 open_mesh
 
 
@@ -43,11 +44,11 @@ pl.show()
 
 
 # %%
-# Fill the hole
-# ~~~~~~~~~~~~~
+# Fill the holes
+# ~~~~~~~~~~~~~~
 # The hole size should be larger than the opening we want to patch.
 
-repaired = open_mesh.fill_holes(1000)
+repaired = open_mesh.fill_holes(open_mesh.length)
 
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)

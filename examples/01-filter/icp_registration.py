@@ -12,16 +12,17 @@ from __future__ import annotations
 
 import numpy as np
 import pyvista as pv
+from pyvista import examples
 
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Create a reference surface
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Start with a simple asymmetric surface so the registration problem is
-# self-contained and does not depend on any downloaded assets.
+# Load a reference surface
+# ~~~~~~~~~~~~~~~~~~~~~~~~
+# Use the :func:`~pyvista.examples.downloads.download_action_figure` scan as a
+# real-world asymmetric reference mesh.
 
-target = pv.Text3D('PV', depth=0.3).triangulate()
+target = examples.download_action_figure()
 target
 
 
@@ -31,7 +32,8 @@ target
 # The transformed copy plays the role of the incoming scan that we would like to
 # register back onto the reference surface.
 
-transform = pv.Transform().rotate_x(25).rotate_z(-35).translate((1.5, -0.3, 0.7))
+offset = np.array(target.length) * 0.4
+transform = pv.Transform().rotate_x(25).rotate_z(-35).translate((offset, -offset, offset))
 source = target.transform(transform, inplace=False)
 
 pl = pv.Plotter()

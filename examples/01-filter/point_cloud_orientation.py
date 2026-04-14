@@ -12,21 +12,22 @@ from __future__ import annotations
 
 import numpy as np
 import pyvista as pv
+from pyvista import examples
 
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Generate a tilted point cloud
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Build an elongated Gaussian point cloud and then rotate it away from the
-# world axes.
+# Load and tilt a real point cloud
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Start from the :func:`~pyvista.examples.downloads.download_horse_points` scan
+# and rotate a subsampled copy away from the world axes so the orientation
+# analysis has something to recover.
 
+full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=4)
-points = rng.normal(size=(600, 3)) * (2.6, 0.9, 0.3)
-
-cloud = pv.PolyData(points)
-transform = pv.Transform().rotate_vector((1, 1, 0), 33).rotate_y(18).translate((3, -1, 2))
-cloud = cloud.transform(transform, inplace=False)
+sample_ids = rng.choice(full_cloud.n_points, size=3000, replace=False)
+transform = pv.Transform().rotate_vector((1, 1, 0), 33).rotate_y(18)
+cloud = pv.PolyData(full_cloud.points[sample_ids]).transform(transform, inplace=False)
 cloud
 
 
@@ -56,9 +57,9 @@ pl = pv.Plotter()
 pl.add_points(
     cloud,
     color='black',
-    point_size=12,
+    point_size=4,
     render_points_as_spheres=True,
-    opacity=0.35,
+    opacity=0.4,
 )
 pl.add_mesh(plane, color='orange', opacity=0.25)
 pl.add_mesh(arrow, color='tomato')
@@ -83,18 +84,18 @@ pl.subplot(0, 0)
 pl.add_points(
     cloud,
     color='black',
-    point_size=12,
+    point_size=4,
     render_points_as_spheres=True,
-    opacity=0.35,
+    opacity=0.4,
 )
 pl.add_mesh(axis_aligned_box, color='tomato', line_width=4)
 pl.subplot(0, 1)
 pl.add_points(
     cloud,
     color='black',
-    point_size=12,
+    point_size=4,
     render_points_as_spheres=True,
-    opacity=0.35,
+    opacity=0.4,
 )
 pl.add_mesh(oriented_box, color='seagreen', line_width=4)
 pl.link_views()
