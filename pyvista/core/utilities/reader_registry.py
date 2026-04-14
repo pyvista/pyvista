@@ -3,21 +3,37 @@
 from __future__ import annotations
 
 import atexit
+from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 import pathlib
 import shutil
 import tempfile
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Protocol
+from typing import TypedDict
 from typing import overload
 
 import pooch
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.reader import CLASS_READERS
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pyvista.core.dataset import DataSet
+
+    class ReaderHandler(Protocol):
+        """Callable that reads *path* and returns a :class:`pyvista.DataSet`."""
+
+        def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
+            """Read *path* and return the resulting dataset."""
+
+
+class _RegistryState(TypedDict):
+    ext: dict[str, ReaderHandler]
+    entry_points_loaded: bool
 
 
 class LocalFileRequiredError(Exception):
@@ -40,7 +56,7 @@ class LocalFileRequiredError(Exception):
     """
 
 
-_custom_ext_readers: dict[str, Callable[..., DataSet]] = {}
+_custom_ext_readers: dict[str, ReaderHandler] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 
@@ -55,17 +71,20 @@ def _cleanup_temp_files() -> None:
 atexit.register(_cleanup_temp_files)
 
 
-def _save_registry_state() -> dict[str, dict[str, Callable[..., DataSet]]]:
+def _save_registry_state() -> _RegistryState:
     """Snapshot the current registry state for later restoration."""
     return {
         'ext': _custom_ext_readers.copy(),
+        'entry_points_loaded': _entry_points_loaded,
     }
 
 
-def _restore_registry_state(state: dict[str, dict[str, Callable[..., DataSet]]]) -> None:
+def _restore_registry_state(state: _RegistryState) -> None:
     """Restore registry state from a snapshot."""
+    global _entry_points_loaded  # noqa: PLW0603
     _custom_ext_readers.clear()
     _custom_ext_readers.update(state['ext'])
+    _entry_points_loaded = state['entry_points_loaded']
 
 
 def has_scheme(value: str) -> bool:
@@ -151,13 +170,13 @@ def register_reader(
     handler: None = None,
     *,
     override: bool = False,
-) -> Callable[[Callable[..., DataSet]], Callable[..., DataSet]]: ...
+) -> Callable[[ReaderHandler], ReaderHandler]: ...
 
 
 @overload
 def register_reader(
     key: str,
-    handler: Callable[..., DataSet],
+    handler: ReaderHandler,
     *,
     override: bool = False,
 ) -> None: ...
@@ -165,10 +184,10 @@ def register_reader(
 
 def register_reader(
     key: str,
-    handler: Callable[..., DataSet] | None = None,
+    handler: ReaderHandler | None = None,
     *,
     override: bool = False,
-) -> Callable[[Callable[..., DataSet]], Callable[..., DataSet]] | None:
+) -> Callable[[ReaderHandler], ReaderHandler] | None:
     """Register a custom reader for a file extension.
 
     Can be used as a plain call or as a decorator.
@@ -179,13 +198,17 @@ def register_reader(
     ----------
     key : str
         A file extension (e.g. ``'.myformat'``).
+
     handler : callable, optional
         A callable with signature ``handler(path: str, **kwargs)`` that
         returns a :class:`pyvista.DataSet`.  When omitted the function
         acts as a decorator and returns the decorated callable unchanged.
+
     override : bool, default: False
         If ``True``, allow overriding a built-in VTK reader for this
-        extension.
+        extension.  When ``False`` (the default), registering a handler
+        for an extension that collides with a built-in reader raises
+        :class:`ValueError`.
 
     Returns
     -------
@@ -198,6 +221,11 @@ def register_reader(
     ValueError
         If ``key`` collides with a built-in VTK reader and *override*
         is ``False``.
+
+    See Also
+    --------
+    pyvista.register_writer
+        Sibling API for registering custom writers.
 
     Examples
     --------
@@ -215,7 +243,7 @@ def register_reader(
     """
     if handler is None:
         # Decorator form: @pv.register_reader('.ext')
-        def _decorator(fn: Callable[..., DataSet]) -> Callable[..., DataSet]:
+        def _decorator(fn: ReaderHandler) -> ReaderHandler:
             _register(key, fn, override=override)
             return fn
 
@@ -227,7 +255,7 @@ def register_reader(
 
 def _register(
     key: str,
-    handler: Callable[..., DataSet],
+    handler: ReaderHandler,
     *,
     override: bool = False,
 ) -> None:
@@ -235,21 +263,17 @@ def _register(
     key = key.lower()
     if not key.startswith('.'):
         key = f'.{key}'
-    if not override:
-        # Circular import: reader_registry -> reader -> fileio -> reader_registry
-        from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
-
-        if key in CLASS_READERS:
-            msg = (
-                f'Cannot register custom reader for "{key}": '
-                f'collides with built-in VTK reader. '
-                f'Use override=True to replace it.'
-            )
-            raise ValueError(msg)
+    if not override and key in CLASS_READERS:
+        msg = (
+            f'Cannot register custom reader for "{key}": '
+            f'collides with built-in VTK reader. '
+            f'Use override=True to replace it.'
+        )
+        raise ValueError(msg)
     _custom_ext_readers[key] = handler
 
 
-def _get_ext_handler(ext: str) -> Callable[..., DataSet] | None:
+def _get_ext_handler(ext: str) -> ReaderHandler | None:
     """Look up a custom extension handler, discovering entry points lazily."""
     handler = _custom_ext_readers.get(ext)
     if handler is not None:
@@ -264,33 +288,43 @@ def _ensure_entry_points() -> None:
     if _entry_points_loaded:
         return
     _entry_points_loaded = True
-    eps = entry_points(group='pyvista.readers')
 
-    # Group entry points by key to detect conflicts
-    seen: dict[str, list[str]] = {}
-    for ep in eps:
+    # Group entry points by normalized key so we can detect duplicate
+    # providers *and* guarantee a deterministic winner (the first one).
+    eps_by_key: dict[str, list[EntryPoint]] = {}
+    for ep in entry_points(group='pyvista.readers'):
         key = ep.name.lower()
         if not key.startswith('.'):
             key = f'.{key}'
-        seen.setdefault(key, []).append(ep.value)
+        eps_by_key.setdefault(key, []).append(ep)
 
-    for ep in eps:
-        key = ep.name.lower()
-        if not key.startswith('.'):
-            key = f'.{key}'
-
+    for key, eps in eps_by_key.items():
         if key in _custom_ext_readers:
             continue
+        winner = eps[0]
         try:
-            _custom_ext_readers[key] = ep.load()
-        except Exception:  # noqa: BLE001, S112
-            continue
-
-        # Warn if multiple entry points claim the same key
-        if len(seen.get(key, [])) > 1:
-            providers = ', '.join(seen[key])
-            msg = (
-                f'Multiple pyvista.readers entry points registered for '
-                f'"{key}": {providers}. Using {ep.value}.'
+            # ep.load() runs third-party import machinery — it can raise
+            # literally anything. Convert to a warning so one broken plugin
+            # cannot take down every pyvista.read call.
+            _custom_ext_readers[key] = winner.load()
+        except Exception as err:  # noqa: BLE001
+            warn_external(
+                f'Failed to load pyvista.readers entry point "{winner.value}" for "{key}": {err}'
             )
-            warn_external(msg)
+            continue
+        if len(eps) > 1:
+            providers = ', '.join(ep.value for ep in eps)
+            warn_external(
+                f'Multiple pyvista.readers entry points registered for '
+                f'"{key}": {providers}. Using {winner.value}.'
+            )
+
+
+def _list_custom_exts() -> list[str]:
+    """Return the list of extensions with registered custom readers.
+
+    Triggers lazy entry-point discovery so that extensions contributed
+    by installed packages appear in listings of supported formats.
+    """
+    _ensure_entry_points()
+    return list(_custom_ext_readers.keys())
