@@ -3269,6 +3269,137 @@ class DataObjectFilters:
             clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
+    def clip_slab(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        thickness: float,
+        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        *,
+        origin: VectorLike[float] | None = None,
+        invert: bool = False,
+        progress_bar: bool = False,
+        crinkle: bool = False,
+        plane: PolyData | None = None,
+    ):
+        """Clip a dataset by a slab of finite thickness around a plane.
+
+        The slab is the volumetric region bounded by two parallel planes offset
+        symmetrically by ``thickness / 2`` on each side of ``origin`` along
+        ``normal``. This is sometimes called a "thick slice" because it yields
+        a volumetric subset of the input rather than a 2D cross-section like
+        :meth:`slice`.
+
+        .. versionadded:: 0.48
+
+        Parameters
+        ----------
+        thickness : float
+            Total slab thickness measured perpendicular to ``normal``. Must be
+            strictly positive. Half of ``thickness`` is applied on each side
+            of ``origin``.
+
+        normal : VectorLike[float] | str, optional
+            Length-3 vector defining the slab's normal direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc. The ``'x'``
+            direction is used by default.
+
+        origin : VectorLike[float], optional
+            The center ``(x, y, z)`` coordinate of the slab. The default is
+            the center of the dataset.
+
+        invert : bool, default: False
+            If ``False`` (the default), the slab interior is kept. If
+            ``True``, the slab interior is removed and everything outside the
+            two bounding planes is returned.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        crinkle : bool, default: False
+            Crinkle the clip by extracting the entire cells along the slab
+            boundaries. This adds the ``"cell_ids"`` array to the ``cell_data``
+            attribute that tracks the original cell IDs of the input dataset.
+
+        plane : PolyData, optional
+            :func:`~pyvista.Plane` mesh to use for defining the slab orientation.
+            Use this as an alternative to setting ``origin`` and ``normal``.
+            The mean of the plane's normal vectors is used for the ``normal``
+            parameter and the mean of the plane's points is used for the
+            ``origin`` parameter.
+
+        Returns
+        -------
+        pyvista.DataSet | pyvista.MultiBlock
+            Clipped dataset. Output mesh type matches the input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
+
+        Raises
+        ------
+        ValueError
+            If ``thickness`` is not strictly positive, or if ``normal`` is a
+            zero vector.
+
+        See Also
+        --------
+        clip
+        clip_box
+        slice
+
+        Examples
+        --------
+        Extract a thick slab through the center of a sphere along the
+        ``z``-axis.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> slab = sphere.clip_slab(thickness=0.2, normal='z')
+        >>> slab.plot(show_edges=True)
+
+        """
+        if thickness <= 0:
+            msg = f'`thickness` must be strictly positive, got {thickness}.'
+            raise ValueError(msg)
+
+        origin_, normal_ = _validate_plane_origin_and_normal(
+            self, origin, normal, plane, default_normal='x'
+        )
+        norm = float(np.linalg.norm(normal_))
+        if norm == 0.0:
+            msg = '`normal` must be a non-zero vector.'
+            raise ValueError(msg)
+        unit_normal = normal_ / norm
+        half = thickness / 2.0
+
+        upper = _vtk.vtkPlane()
+        upper.SetOrigin(*(origin_ + unit_normal * half))
+        upper.SetNormal(*unit_normal)
+
+        lower = _vtk.vtkPlane()
+        lower.SetOrigin(*(origin_ - unit_normal * half))
+        lower.SetNormal(*(-unit_normal))
+
+        slab = _vtk.vtkImplicitBoolean()
+        # vtkImplicitBoolean follows "f < 0 inside" convention and Intersection
+        # takes max(f_a, f_b). max(f_upper, f_lower) is <= 0 only inside the
+        # slab and > 0 anywhere outside it, so clipping with InsideOut=True
+        # (i.e. invert=True to _clip_with_function) keeps the slab interior.
+        slab.SetOperationTypeToIntersection()
+        slab.AddFunction(upper)
+        slab.AddFunction(lower)
+
+        result = self._clip_with_function(
+            slab,
+            invert=not invert,
+            progress_bar=progress_bar,
+            crinkle=crinkle,
+        )
+
+        input_bounds = self.bounds
+        result = _cast_output_to_match_input_type(result, self)
+        return _remove_unused_points_post_clip(result, input_bounds)
+
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3399,6 +3530,7 @@ class DataObjectFilters:
         slice_orthogonal
         slice_along_axis
         slice_along_line
+        clip_slab
         :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples

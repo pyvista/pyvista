@@ -221,15 +221,35 @@ def has_module(module_name: str) -> bool:
     return module_spec is not None
 
 
+class _SMPToolsContext:
+    """Context manager that restores VTK SMP backend state on exit."""
+
+    def __init__(self, original_backend: str, original_threads: int) -> None:
+        self._original_backend = original_backend
+        self._original_threads = original_threads
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        _vtk.vtkSMPTools.SetBackend(self._original_backend)
+        _vtk.vtkSMPTools.Initialize(self._original_threads)
+
+
 def enable_smp_tools(
     backend: _SMPBackendOptions = 'stdthread',
     n_threads: int | None = None,
-) -> None:
+) -> _SMPToolsContext:
     """Enable a VTK SMP backend for filters that support shared-memory parallelism.
 
     VTK's Python wheels currently default to the sequential SMP backend. This
     helper switches to a parallel backend and optionally configures the maximum
     number of threads used by VTK filters that rely on :vtk:`vtkSMPTools`.
+
+    The backend is applied immediately, so calling this function by itself
+    enables the chosen backend for the rest of the process. The return value is
+    also a context manager, so using it with a ``with`` statement will restore
+    the previous backend and thread count on exit.
 
     Parameters
     ----------
@@ -248,6 +268,13 @@ def enable_smp_tools(
         default maximum thread count and honors the ``VTK_SMP_MAX_THREADS``
         environment variable when it is set.
 
+    Returns
+    -------
+    _SMPToolsContext
+        A context manager that restores the previous SMP backend and thread
+        count when exited. The return value may be discarded when the change
+        should apply for the remainder of the process.
+
     Raises
     ------
     TypeError
@@ -262,7 +289,8 @@ def enable_smp_tools(
 
     Examples
     --------
-    Enable the wheel-supported ``stdthread`` backend.
+    Enable the wheel-supported ``stdthread`` backend for the rest of the
+    process.
 
     >>> import pyvista as pv
     >>> pv.enable_smp_tools()  # doctest:+SKIP
@@ -273,6 +301,12 @@ def enable_smp_tools(
     >>> pv.enable_smp_tools(n_threads=8)  # doctest:+SKIP
     >>> grid = examples.download_fea_bracket()  # doctest:+SKIP
     >>> _ = grid.contour(5, scalars='Equivalent Stress')  # doctest:+SKIP
+
+    Scope the backend change to a ``with`` block. The previous backend and
+    thread count are restored on exit, even if an exception is raised.
+
+    >>> with pv.enable_smp_tools(n_threads=8):  # doctest:+SKIP
+    ...     _ = grid.contour(5, scalars='Equivalent Stress')
 
     """
     if not isinstance(backend, str):
@@ -315,6 +349,8 @@ def enable_smp_tools(
         _vtk.vtkSMPTools.Initialize()
     else:
         _vtk.vtkSMPTools.Initialize(n_threads_)
+
+    return _SMPToolsContext(original_backend, original_threads)
 
 
 def try_callback(func, *args) -> None:  # noqa: ANN001
