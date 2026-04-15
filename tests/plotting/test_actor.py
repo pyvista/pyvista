@@ -137,6 +137,23 @@ def test_actor_copy_deep(prop3d, prop_attr, actor, volume, include_mapper):
         assert copied.mapper is None
 
 
+def test_actor_copy_deep_preserves_scalars_pipeline(sphere):
+    """Deep-copying an actor must keep the mapper's scalars pipeline live."""
+    sphere['data'] = sphere.points[:, 2]
+
+    actor = pv.Plotter().add_mesh(sphere, scalars='data')
+    assert actor.mapper._active_scalars_algo is not None
+
+    copied = actor.copy()
+    assert copied is not actor
+    assert copied.mapper is not actor.mapper
+
+    copied.mapper.update()
+    out = pv.wrap(copied.mapper.GetInputDataObject(0, 0))
+    assert out.active_scalars_name == 'data'
+    assert np.array_equal(copied.mapper._mapped_scalars, sphere['data'])
+
+
 @pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
 def test_actor_copy_shallow(prop3d, actor, volume):
     obj = actor if prop3d is pv.Actor else volume
