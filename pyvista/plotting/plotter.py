@@ -7486,7 +7486,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                     'A screenshot is unable to be taken as the render window is not current or '
                     'rendering is suppressed.',
                 )
-        if _is_current:
+        if _is_current and self._rendered:
             if pv.ON_SCREENSHOT:
                 filename = uuid.uuid4().hex
                 self.last_image = self.screenshot(filename, return_img=True)
