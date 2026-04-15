@@ -5,6 +5,7 @@ Create Dimension Line
 Create a 2d dimension line along 2d structured mesh.
 
 """
+
 from __future__ import annotations
 
 import numpy as np
