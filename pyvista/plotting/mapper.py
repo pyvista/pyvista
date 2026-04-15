@@ -584,6 +584,8 @@ class _DataSetMapper(_BaseMapper):
         array = np.asarray(scalars)
         if array.size == 0:
             return
+        if np.issubdtype(array.dtype, np.complexfloating):
+            array = array.real
         if array.dtype == np.bool_:
             clim = (0.0, 1.0)
         elif np.issubdtype(array.dtype, np.number):

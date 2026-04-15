@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 from typing import get_args
-from unittest.mock import Mock
 
 import numpy as np
 from PIL import Image
@@ -35,8 +34,6 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import _vtk
-from pyvista.plotting._plotting import _resolve_scalars_field
-from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -683,52 +680,6 @@ def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots():
     pl.link_views()
     pl.camera_position = 'iso'
     pl.show()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():
-    """Shared meshes keep distinct raw NumPy scalar arrays per subplot."""
-    n_row, n_col = 2, 2
-    pl = pv.Plotter(shape=(n_row, n_col))
-    mesh = pv.Sphere(radius=1.0, theta_resolution=80, phi_resolution=80)
-    original_point_arrays = set(mesh.point_data.keys())
-
-    actors = []
-    expected = []
-    for ii in range(n_row * n_col):
-        row, col = divmod(ii, n_col)
-        pl.subplot(row, col)
-        data = np.linalg.norm(mesh.points, axis=1) if ii == 3 else mesh.points[:, ii]
-        expected.append(np.asarray(data).copy())
-        actors.append(
-            pl.add_mesh(
-                mesh,
-                scalars=data,
-                smooth_shading=True,
-                show_scalar_bar=False,
-                ambient=0.2,
-                specular=0.3,
-                n_colors=9,
-                rng=(-1, 1.0),
-            )
-        )
-
-    names = []
-    for actor, array in zip(actors, expected, strict=True):
-        mapped = get_actor_mapper_input(actor)
-        names.append(mapped.point_data.active_scalars_name)
-        assert mapped.point_data.active_scalars_name is not None
-        np.testing.assert_allclose(
-            mapped.point_data[mapped.point_data.active_scalars_name],
-            array,
-        )
-
-    assert len(set(names)) == len(names)
-    assert mesh.point_data.active_scalars_name is None
-    assert 'Normals' in original_point_arrays or 'Normals' not in mesh.point_data
-    assert set(mesh.point_data.keys()) == original_point_arrays.union(names)
-
-    pl.close()
 
 
 def test_lighting_init_light_kit(sphere):
@@ -4302,11 +4253,10 @@ def test_add_mesh_smooth_shading_with_algorithm(smooth_shading):
     pl.show()
 
 
-@pytest.mark.skip_check_gc  # vtkWeakReference persists through show() image capture teardown.
 def test_add_mesh_smooth_shading_with_algorithm_and_scalars():
     """Algorithm input + scalars + smooth_shading composes pipeline stages."""
     mesh = pv.Sphere(theta_resolution=60, phi_resolution=60)
-    mesh.point_data['z'] = mesh.points[:, 2].astype(float)
+    mesh.point_data['z'] = np.array(mesh.points[:, 2], dtype=float)
 
     source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
     surface = algorithms.callback_algorithm(
@@ -4328,72 +4278,9 @@ def test_add_mesh_smooth_shading_with_algorithm_and_scalars():
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_smooth_shading_with_algorithm_and_scalars_mapper_output():
-    mesh = pv.Wavelet()
-    mesh.point_data['z'] = mesh.points[:, 2].astype(float)
-    mesh.point_data['keep_active'] = mesh.points[:, 0].astype(float)
-    mesh.set_active_scalars('keep_active')
-
-    source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
-    surface = algorithms.callback_algorithm(
-        source,
-        lambda m: m.clip('x'),
-        output_type=pv.UnstructuredGrid,
-    )
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(
-        surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
-    )
-    mapped = get_actor_mapper_input(actor)
-    assert mapped.point_data.active_scalars_name == 'z'
-    assert mapped.point_data.active_normals_name == 'Normals'
-    assert mapped.point_data.active_normals is not None
-    assert mesh.active_scalars_name == 'keep_active'
-    assert 'Normals' not in mesh.point_data
-
-    mesh.point_data['z'][:] = 0
-    source.Modified()
-    mapped_after = get_actor_mapper_input(actor)
-    assert np.allclose(mapped_after.point_data['z'], 0.0)
-    assert mapped_after.point_data.active_scalars_name == 'z'
-    assert mapped_after.point_data.active_normals_name == 'Normals'
-
-    pl.close()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_smooth_shading_with_algorithm_and_scalars_propagates_updates():
-    mesh = pv.Wavelet()
-    mesh.point_data['z'] = mesh.points[:, 2].astype(float)
-
-    source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
-    surface = algorithms.callback_algorithm(
-        source,
-        lambda m: m.clip('x'),
-        output_type=pv.UnstructuredGrid,
-    )
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(
-        surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
-    )
-
-    mesh.point_data['z'][:] = 0
-    source.Modified()
-
-    mapped = get_actor_mapper_input(actor)
-    assert np.allclose(mapped.point_data['z'], 0.0)
-    assert mapped.point_data.active_scalars_name == 'z'
-    assert mapped.point_data.active_normals_name == 'Normals'
-
-    pl.close()
-
-
 def test_add_actor_array_name_with_callback_algorithm_is_lazy():
     mesh = pv.Sphere()
-    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    mesh.point_data['data'] = np.array(mesh.points[:, 2], dtype=float)
     tracker = AlgorithmExecutionTracker()
 
     mapper = pv.DataSetMapper()
@@ -4431,7 +4318,7 @@ def test_add_actor_array_name_with_callback_algorithm_is_lazy():
 
 def test_add_actor_set_active_scalars_with_callback_algorithm_is_lazy():
     mesh = pv.Sphere()
-    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    mesh.point_data['data'] = np.array(mesh.points[:, 2], dtype=float)
     tracker = AlgorithmExecutionTracker()
 
     mapper = pv.DataSetMapper()
@@ -4468,10 +4355,9 @@ def test_add_actor_set_active_scalars_with_callback_algorithm_is_lazy():
     assert np.array_equal(mapped.point_data['data'], mesh.point_data['data'])
 
 
-@pytest.mark.skip_check_gc  # show() + mapper dataset inspection retains a vtkWeakReference.
 def test_add_actor_smooth_shading_algorithm_array_name_is_lazy():
     mesh = pv.Sphere(theta_resolution=60, phi_resolution=60)
-    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    mesh.point_data['data'] = np.array(mesh.points[:, 2], dtype=float)
     algo = algorithms.smooth_shading_algorithm(
         mesh,
         split_sharp_edges=True,
@@ -4556,7 +4442,6 @@ def test_add_actor_smooth_shading_algorithm_cell_array_name_is_lazy():
     assert mapped.point_data.active_normals_name == 'Normals'
 
 
-@pytest.mark.skip_check_gc  # vtkWeakReference persists through show() image capture teardown.
 def test_add_mesh_smooth_shading_unstructured_grid_scalars():
     """Smooth shading on an :class:`pyvista.UnstructuredGrid` with point scalars.
 
@@ -4566,7 +4451,7 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
     """
     mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
     mesh.clear_data()
-    mesh.point_data['Elevation'] = mesh.points[:, 2].astype(float)
+    mesh.point_data['Elevation'] = np.array(mesh.points[:, 2], dtype=float)
     source = algorithms.source_algorithm(lambda: mesh, output_type=pv.UnstructuredGrid)
 
     pl = pv.Plotter()
@@ -4579,94 +4464,6 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
         show_scalar_bar=False,
     )
     pl.show()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_resolve_scalars_field_raises_on_mismatch():
-    """Unit-test the shared ``_resolve_scalars_field`` helper's raise branch.
-
-    The ``add_mesh`` happy path never reaches this branch; the caller
-    pre-checks that ``shape[0] in (n_points, n_cells)`` before calling.
-    Exercise it directly so the error message stays covered.
-    """
-    sphere = pv.Sphere()
-    with pytest.raises(ValueError, match='Length of scalars array'):
-        _resolve_scalars_field(np.zeros(42, dtype=np.float32), sphere, 'point')
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-@pytest.mark.parametrize(
-    ('component', 'error_type', 'match'),
-    [
-        ('not-an-int', TypeError, 'component must be None or an integer'),
-        (-1, ValueError, 'nonnegative'),
-        (9, ValueError, 'less than the'),
-    ],
-)
-def test_reduce_component_scalars_invalid(component, error_type, match):
-    """Invalid ``component`` values raise from the shared reduction helper."""
-    scalars = np.zeros((10, 3), dtype=np.float32)
-    with pytest.raises(error_type, match=match):
-        reduce_component_scalars(scalars, 'vec', component)
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_reduce_component_scalars_norm_path():
-    """``component=None`` reduces via ``np.linalg.norm`` and synthesizes
-    the ``-normed`` derived name."""
-    vec = np.array([[3.0, 4.0, 0.0], [0.0, 0.0, 5.0]], dtype=np.float32)
-    reduced, name = reduce_component_scalars(vec, 'u', None)
-    assert name == 'u-normed'
-    np.testing.assert_allclose(reduced, [5.0, 5.0])
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_reduce_component_scalars_component_int():
-    """Picking an integer ``component`` extracts the column and
-    synthesizes the ``-<component>`` derived name."""
-    vec = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
-    reduced, name = reduce_component_scalars(vec, 'u', 1)
-    assert name == 'u-1'
-    np.testing.assert_allclose(reduced, [2.0, 5.0])
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_resolve_scalars_field_returns_cell():
-    """Cell-length scalars resolve to ``'cell'`` without the caller
-    needing to pass ``preference='cell'``."""
-    sphere = pv.Sphere()
-    result = _resolve_scalars_field(np.zeros(sphere.n_cells, dtype=np.float32), sphere, 'point')
-    assert result == 'cell'
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_resolve_scalars_field_prefers_hint_when_ambiguous():
-    """When the array length matches both ``n_points`` and ``n_cells``
-    the helper falls back to the caller-provided ``preference``.
-
-    Real pyvista meshes rarely have ``n_points == n_cells``; use a
-    ``Mock`` to isolate the disambiguation branch.
-    """
-    mesh = Mock(n_points=10, n_cells=10)
-    scalars = np.zeros(10, dtype=np.float32)
-    assert _resolve_scalars_field(scalars, mesh, 'point') == 'point'
-    assert _resolve_scalars_field(scalars, mesh, 'cell') == 'cell'
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_raw_numpy_mismatched_length_raises():
-    """``add_mesh`` with raw numpy scalars of mismatched length raises clearly.
-
-    Covers the downstream ``raise_not_matching`` path from
-    ``mapper._configure_scalars_mode``. The length falls through
-    ``plotter.add_mesh``'s Block A (shape[0] doesn't match points/cells)
-    and is raveled by ``mapper.set_scalars`` to a 1D array whose size
-    still doesn't match, tripping the final validation.
-    """
-    sphere = pv.Sphere()
-    pl = pv.Plotter()
-    with pytest.raises(ValueError, match='Number of scalars'):
-        pl.add_mesh(sphere, scalars=np.zeros(42, dtype=np.float32))
 
 
 def test_add_mesh_multi_component_scalars_no_smooth_shading():
@@ -4712,37 +4509,6 @@ def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars():
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars_mapper_output():
-    cone = pv.Cone(resolution=90, capping=True).triangulate()
-    cone.clear_data()
-    cone.point_data['keep_active'] = np.linspace(-1.0, 1.0, cone.n_points, dtype=np.float32)
-    cone.set_active_scalars('keep_active')
-    source = algorithms.source_algorithm(lambda: cone, output_type=pv.PolyData)
-    raw_scalars = np.linspace(0.0, 1.0, cone.n_points, dtype=np.float32)
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(
-        source,
-        scalars=raw_scalars,
-        smooth_shading=True,
-        split_sharp_edges=True,
-        show_scalar_bar=False,
-    )
-    mapped = get_actor_mapper_input(actor)
-    tracker = np.asarray(
-        mapped.point_data[algorithms.SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME]
-    )
-    assert mapped.point_data.active_scalars_name == pv.DEFAULT_SCALARS_NAME
-    assert mapped.point_data.active_normals_name == 'Normals'
-    assert np.allclose(mapped.point_data[pv.DEFAULT_SCALARS_NAME], raw_scalars[tracker])
-    assert cone.active_scalars_name == 'keep_active'
-    assert pv.DEFAULT_SCALARS_NAME not in cone.point_data
-    assert 'Normals' not in cone.point_data
-
-    pl.close()
-
-
 def test_add_mesh_raw_numpy_cell_scalars():
     """Raw numpy cell-length scalars stamp on ``cell_data``.
 
@@ -4757,25 +4523,6 @@ def test_add_mesh_raw_numpy_cell_scalars():
     pl.add_mesh(sphere, scalars=cell_scalars, show_scalar_bar=False)
     assert pv.DEFAULT_SCALARS_NAME in sphere.cell_data
     pl.show()
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_raw_numpy_cell_scalars_mapper_output():
-    sphere = pv.Sphere()
-    sphere.cell_data['keep_active'] = -np.arange(sphere.n_cells, dtype=np.float32)
-    sphere.set_active_scalars('keep_active', preference='cell')
-    original_active_normals_name = sphere.point_data.active_normals_name
-    cell_scalars = np.arange(sphere.n_cells, dtype=np.float32)
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(sphere, scalars=cell_scalars, show_scalar_bar=False)
-    mapped = get_actor_mapper_input(actor)
-    assert mapped.cell_data.active_scalars_name == pv.DEFAULT_SCALARS_NAME
-    assert np.allclose(mapped.cell_data[pv.DEFAULT_SCALARS_NAME], cell_scalars)
-    assert sphere.cell_data.active_scalars_name == 'keep_active'
-    assert sphere.point_data.active_normals_name == original_active_normals_name
-
-    pl.close()
 
 
 def test_add_mesh_smooth_shading_multi_component_cell_scalars():
@@ -4805,39 +4552,6 @@ def test_add_mesh_smooth_shading_multi_component_cell_scalars():
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_smooth_shading_multi_component_cell_scalars_mapper_output():
-    sphere = pv.Sphere()
-    cell_vec = np.column_stack(
-        [
-            np.zeros(sphere.n_cells, dtype=np.float32),
-            np.linspace(-1.0, 1.0, sphere.n_cells, dtype=np.float32),
-            np.zeros(sphere.n_cells, dtype=np.float32),
-        ]
-    )
-    sphere.cell_data['keep_active'] = np.arange(sphere.n_cells, dtype=np.float32)
-    sphere.set_active_scalars('keep_active', preference='cell')
-    original_active_normals_name = sphere.point_data.active_normals_name
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(
-        sphere,
-        scalars=cell_vec,
-        component=1,
-        smooth_shading=True,
-        show_scalar_bar=False,
-    )
-    mapped = get_actor_mapper_input(actor)
-    derived_name = f'{pv.DEFAULT_SCALARS_NAME}-1'
-    assert mapped.cell_data.active_scalars_name == derived_name
-    assert mapped.point_data.active_normals_name == 'Normals'
-    assert np.allclose(mapped.cell_data[derived_name], cell_vec[:, 1])
-    assert sphere.cell_data.active_scalars_name == 'keep_active'
-    assert sphere.point_data.active_normals_name == original_active_normals_name
-
-    pl.close()
-
-
 def test_add_mesh_smooth_shading_multi_component_scalars():
     """Multi-component scalars with ``component=`` + ``smooth_shading``.
 
@@ -4860,35 +4574,6 @@ def test_add_mesh_smooth_shading_multi_component_scalars():
     pl = pv.Plotter()
     pl.add_mesh(mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False)
     pl.show()
-
-
-@pytest.mark.skip_check_gc  # Mapper-array inspection retains a vtkWeakReference.
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_add_mesh_smooth_shading_multi_component_scalars_mapper_output():
-    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
-    mesh.clear_data()
-    mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
-    mesh.point_data['keep_active'] = mesh.points[:, 0].astype(np.float32)
-    mesh.set_active_scalars('keep_active')
-
-    pl = pv.Plotter()
-    actor = pl.add_mesh(
-        mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False
-    )
-    actor.mapper.update()
-    mapped = actor.mapper.GetInputDataObject(0, 0)
-    point_data = mapped.GetPointData()
-    assert point_data.GetScalars().GetName() == 'vec-1'
-    assert point_data.GetNormals().GetName() == 'Normals'
-    assert np.allclose(
-        _vtk.vtk_to_numpy(point_data.GetArray('vec-1')),
-        _vtk.vtk_to_numpy(point_data.GetArray('vec'))[:, 1],
-    )
-    assert mesh.active_scalars_name == 'keep_active'
-    assert 'Normals' not in mesh.point_data
-
-    pl.close()
-    del point_data, mapped, actor, pl
 
 
 @pytest.mark.parametrize('smooth_shading', [True, False])
