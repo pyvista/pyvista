@@ -281,6 +281,153 @@ def test_clip_box_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_clip_slab_axis_aligned():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0))
+    assert slab.n_cells > 0
+    assert slab.bounds.z_min == pytest.approx(-0.2, abs=1e-6)
+    assert slab.bounds.z_max == pytest.approx(0.2, abs=1e-6)
+    # Untouched axes should span the original bounds
+    assert slab.bounds.x_min == pytest.approx(mesh.bounds.x_min)
+    assert slab.bounds.x_max == pytest.approx(mesh.bounds.x_max)
+
+
+def test_clip_slab_default_origin_is_mesh_center():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='x')
+    cx = mesh.center[0]
+    assert slab.bounds.x_min == pytest.approx(cx - 0.2, abs=1e-6)
+    assert slab.bounds.x_max == pytest.approx(cx + 0.2, abs=1e-6)
+
+
+def test_clip_slab_string_normal():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    pos = mesh.clip_slab(thickness=0.4, normal='y', origin=(0, 0, 0))
+    neg = mesh.clip_slab(thickness=0.4, normal='-y', origin=(0, 0, 0))
+    assert pos.n_cells == neg.n_cells
+    assert np.allclose(pos.bounds, neg.bounds)
+
+
+def test_clip_slab_invert():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0))
+    outside = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0), invert=True)
+    assert slab.n_cells > 0
+    assert outside.n_cells > 0
+    # Tolerance is loose enough to absorb VTK 9.2 floating-point ordering
+    # differences in cell-center computation.
+    tol = 1e-6
+    slab_z = slab.cell_centers().points[:, 2]
+    assert slab_z.min() >= -0.2 - tol
+    assert slab_z.max() <= 0.2 + tol
+    out_z = outside.cell_centers().points[:, 2]
+    assert not np.any((out_z > -0.2 + tol) & (out_z < 0.2 - tol))
+
+
+def test_clip_slab_oblique_normal():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    normal = np.array([1.0, 1.0, 1.0])
+    unit = normal / np.linalg.norm(normal)
+    slab = mesh.clip_slab(thickness=0.3, normal=normal, origin=(0, 0, 0))
+    assert slab.n_cells > 0
+    # Compute signed distance to the reference plane without matmul to avoid
+    # spurious `divide by zero` warnings in certain BLAS builds when operating
+    # on pyvista_ndarray views.
+    points = np.asarray(slab.points)
+    projections = (points * unit).sum(axis=1)
+    assert projections.min() >= -0.15 - 1e-6
+    assert projections.max() <= 0.15 + 1e-6
+
+
+def test_clip_slab_plane_argument():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    plane = pv.Plane(center=(0, 0, 0), direction=(0, 0, 1))
+    slab = mesh.clip_slab(thickness=0.4, plane=plane)
+    assert slab.bounds.z_min == pytest.approx(-0.2, abs=1e-6)
+    assert slab.bounds.z_max == pytest.approx(0.2, abs=1e-6)
+
+
+def test_clip_slab_polydata_preserves_type():
+    sphere = pv.Sphere()
+    slab = sphere.clip_slab(thickness=0.2, normal='y')
+    assert isinstance(slab, pv.PolyData)
+    assert slab.n_cells > 0
+
+
+def test_clip_slab_composite(multiblock_all):
+    output = multiblock_all.clip_slab(thickness=5.0, normal='x', progress_bar=True)
+    assert isinstance(output, pv.MultiBlock)
+    assert output.n_blocks == multiblock_all.n_blocks
+
+
+def test_clip_slab_crinkle():
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    slab = mesh.clip_slab(thickness=0.4, normal='z', origin=(0, 0, 0), crinkle=True)
+    assert 'cell_ids' in slab.cell_data
+
+
+@pytest.mark.parametrize('thickness', [0.0, -1.0])
+def test_clip_slab_invalid_thickness(thickness):
+    mesh = pv.Sphere()
+    with pytest.raises(ValueError, match='strictly positive'):
+        mesh.clip_slab(thickness=thickness, normal='x')
+
+
+def test_clip_slab_zero_normal():
+    mesh = pv.Sphere()
+    with pytest.raises(ValueError, match='non-zero'):
+        mesh.clip_slab(thickness=0.2, normal=(0.0, 0.0, 0.0))
+
+
+def _two_clip_reference(mesh, normal, origin, thickness):
+    """Reference implementation: two chained clips with opposing normals."""
+    unit = np.asarray(normal, dtype=float)
+    unit = unit / np.linalg.norm(unit)
+    origin = np.asarray(origin, dtype=float)
+    half = thickness / 2.0
+    return mesh.clip(normal=unit, origin=origin + unit * half).clip(
+        normal=-unit, origin=origin - unit * half
+    )
+
+
+@pytest.mark.parametrize(
+    ('normal', 'thickness'),
+    [
+        ((0.0, 0.0, 1.0), 0.4),
+        ((1.0, 1.0, 1.0), 0.3),
+        ((2.0, -1.0, 0.5), 0.25),
+    ],
+)
+def test_clip_slab_matches_two_clip_workaround(normal, thickness):
+    """``clip_slab`` must match the historical two-clip chain geometrically.
+
+    Only geometric equivalence (same region, same volume, same bounds) is
+    asserted — not topological equivalence. The single-pass
+    ``vtkImplicitBoolean`` clipper and the two-pass chain produce different
+    cell decompositions on some VTK versions (notably 9.2), but both are valid
+    discretizations of the same slab region.
+    """
+    mesh = pv.ImageData(dimensions=(21, 21, 21), spacing=(0.1, 0.1, 0.1), origin=(-1, -1, -1))
+    origin = (0.0, 0.0, 0.0)
+    new = mesh.clip_slab(thickness=thickness, normal=normal, origin=origin)
+    old = _two_clip_reference(mesh, normal, origin, thickness)
+    assert new.n_cells > 0
+    assert old.n_cells > 0
+    assert np.allclose(new.bounds, old.bounds, atol=1e-6)
+    assert new.volume == pytest.approx(old.volume, rel=1e-6)
+
+
+def test_clip_slab_matches_two_clip_workaround_polydata():
+    """``clip_slab`` on surface data must match the two-clip chain geometrically."""
+    mesh = pv.Sphere()
+    new = mesh.clip_slab(thickness=0.2, normal='y', origin=(0, 0, 0))
+    old = _two_clip_reference(mesh, (0, 1, 0), (0, 0, 0), 0.2)
+    assert new.n_cells > 0
+    assert old.n_cells > 0
+    assert np.allclose(new.bounds, old.bounds, atol=1e-6)
+    assert new.area == pytest.approx(old.area, rel=1e-6)
+
+
 def test_slice_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
@@ -429,6 +576,15 @@ def test_compute_cell_sizes(datasets):
     grid = pv.ImageData(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
+
+
+def test_compute_cell_sizes_multiblock_vertex_count():
+    multi = pv.MultiBlock([pv.PolyData()])
+    result = multi.compute_cell_sizes(vertex_count=True)[0]
+    assert 'Length' in result.array_names
+    assert 'Area' in result.array_names
+    assert 'Volume' in result.array_names
+    assert 'VertexCount' in result.array_names
 
 
 def test_compute_cell_sizes_composite(multiblock_all):
@@ -1706,6 +1862,50 @@ def test_validate_mesh_raises(sphere_with_invalid_arrays):
         sphere_with_invalid_arrays.validate_mesh(action='error')
 
 
+@pytest.mark.needs_vtk_version(less_than=(9, 6, 0))
+def test_validate_mesh_planarity_tolerance():
+    match = 'Planarity tolerance requires VTK 9.6 or later.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        pv.UnstructuredGrid().validate_mesh(planarity_tolerance=0.2)
+
+
+@pytest.mark.needs_vtk_version(9, 6, 0)
+def test_validate_mesh_planarity_tolerance_polyhedron():
+    # Build a hex-shaped polyhedron whose top face is non-planar (one vertex
+    # pushed up out of the plane). With a strict planarity tolerance the
+    # mesh is flagged invalid; with a loose tolerance it is accepted.
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 2.0],  # pushed up out of the top face plane
+        [0.0, 1.0, 1.0],
+    ]
+    faces = [
+        [4, 0, 1, 2, 3],  # bottom
+        [4, 4, 5, 6, 7],  # top (non-planar)
+        [4, 0, 1, 5, 4],
+        [4, 1, 2, 6, 5],
+        [4, 2, 3, 7, 6],
+        [4, 3, 0, 4, 7],
+    ]
+    polyhedron_connectivity = [len(faces), *[item for face in faces for item in face]]
+    cells = [len(polyhedron_connectivity), *polyhedron_connectivity]
+    mesh = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
+
+    # Strict tolerance flags non-planarity
+    report_strict = mesh.validate_mesh(planarity_tolerance=0.001)
+    assert not report_strict.is_valid
+    assert 'non-planar' in str(report_strict.message).lower()
+
+    # Loose tolerance accepts the mesh's planarity (no NON_PLANAR_FACES status)
+    report_loose = mesh.validate_mesh(planarity_tolerance=10.0)
+    assert 'non-planar' not in str(report_loose.message or '').lower()
+
+
 @pytest.fixture
 def invalid_random_polydata():
     n = 20
@@ -2235,6 +2435,24 @@ def test_validate_mesh_degenerate_cells():
     for mesh in [invalid_mesh, append_mixed_cells(invalid_mesh)]:
         with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
             mesh.validate_mesh(action='error')
+
+    # POLY_VERTEX with no points
+    invalid_mesh = pv.UnstructuredGrid([0], [pv.CellType.POLY_VERTEX], [])
+    match = 'Mesh has 1 POLY_VERTEX cell with zero size. Invalid cell id: [0]'
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        invalid_mesh.validate_mesh(action='error')
+
+    # Test valid voxel with tiny volume does not generate false positive
+    mesh = pv.ImageData(dimensions=(2, 2, 2), spacing=(0.0001, 0.0002, 0.0003))
+    assert np.isclose(mesh.volume, 6e-12)
+    assert mesh.validate_mesh().is_valid
+
+    # Force invalid with manual tolerance
+    match = 'Mesh has 1 VOXEL cell with zero volume. Invalid cell id: [0]'
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        mesh.validate_mesh(size_tolerance=1e-8, action='error')
+    with pytest.raises(pv.InvalidMeshError, match=re.escape(match)):
+        mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
 
 
 def test_validate_mesh_invalid_point_references():

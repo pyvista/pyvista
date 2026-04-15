@@ -9,6 +9,7 @@ from typing import NamedTuple
 from typing import cast
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import vtk_version_info
 
 _Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
@@ -105,6 +106,7 @@ _CELL_TYPE_INFO = dict(
     # Linear cells
     EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
+        example='Empty',
         doc="""Used as a place-holder during processing.""",
     ),
     VERTEX=_CellTypeTuple(
@@ -707,6 +709,7 @@ class CellType(IntEnum):
     _n_points: int
     _n_edges: int
     _n_faces: int
+    _example: str | None
 
     def __new__(  # noqa: PYI034
         cls: type[CellType],
@@ -763,16 +766,26 @@ class CellType(IntEnum):
         """
         self = int.__new__(cls, value)
         self._value_ = value
+        self._example = _example
         self.__doc__ = ''
 
         # Get the vtk class associated with this cell type. For simplicity, skip abstract types
         # even though some actually do have a corresponding class. Among other things, skipping
         # abstract types helps avoid the need to work around this VTK bug: https://gitlab.kitware.com/vtk/vtk/-/issues/19988
         _vtk_class_name = _vtk.vtkCellTypeUtilities.GetClassNameFromTypeId(value)
+        if vtk_version_info < (9, 6, 0):
+            # Fix bug with older VTK where higher order Triangle/Quadrilateral are swapped
+            _vtk_class_name = {
+                'vtkBezierTriangle': 'vtkBezierQuadrilateral',
+                'vtkBezierQuadrilateral': 'vtkBezierTriangle',
+                'vtkLagrangeTriangle': 'vtkLagrangeQuadrilateral',
+                'vtkLagrangeQuadrilateral': 'vtkLagrangeTriangle',
+            }.get(_vtk_class_name, _vtk_class_name)
         self._vtk_class = (
             None
             if _vtk_class_name.startswith(('vtkParametric', 'vtkHigherOrder'))  # Abstract
             or _vtk_class_name in ('vtkLagrangePyramid', 'vtkBezierPyramid')  # Missing vtk class
+            or _vtk_class_name == 'UnknownClass'  # Abstract/missing classes in vtk 9.7.0
             else getattr(_vtk, _vtk_class_name)
         )
 
@@ -832,7 +845,7 @@ class CellType(IntEnum):
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(_badges, _doc)
-                if _example is None
+                if (_example is None or _example == 'Empty')
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
                     _example, _example, PLACEHOLDER, _badges, _doc
                 )

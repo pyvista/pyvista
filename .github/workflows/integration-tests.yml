@@ -7,10 +7,10 @@ on: # zizmor: ignore[cache-poisoning]
   schedule:
     - cron: "0 4 * * *"
   push:
-    tags:
-      - "*"
     branches:
       - main
+      # To resolve integration test issues, use this branch name pattern
+      - "maint/integration*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,6 +36,10 @@ permissions:
 
 jobs:
   Integration:
+    # For PRs, only run when the 'integration-testing' label is applied
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'integration-testing')
     name: ${{matrix.project}}
     strategy:
       fail-fast: false
@@ -54,7 +58,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+      - uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
         if: ${{matrix.project == 'pyvistaqt' || matrix.project == 'geovista'}}
         with:
           qt: ${{matrix.project == 'pyvistaqt'}}
@@ -69,14 +73,58 @@ jobs:
 
       - name: Run tests (no xvfb)
         if: ${{matrix.project != 'geovista'}}
-        run: tox run -e integration-${{matrix.project}}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          command: tox run -e integration-${{matrix.project}}
 
       - name: Run tests (geovista)
         if: ${{matrix.project == 'geovista'}}
-        run: xvfb-run -a tox run -e integration-${{matrix.project}}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          command: xvfb-run -a tox run -e integration-${{matrix.project}}
 
       - uses: actions/cache@v5
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
         with:
           key: ${{ env.TESTING_VERSION }}
           path: ~/mne_data
+
+  alert-on-failure:
+    needs: Integration
+    if: >-
+      failure() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Report integration test failure
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REF: ${{ github.ref }}
+        run: |
+          body=$(cat <<EOF
+          ### Integration Test Failure
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Run:** ${RUN_URL}
+          **Ref:** \`${REF}\`
+          EOF
+          )
+
+          # Check for an existing open issue
+          existing=$(gh issue list --label "integration-test-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Integration test failure" --label "integration-test-failure" --body "$body"
+          fi

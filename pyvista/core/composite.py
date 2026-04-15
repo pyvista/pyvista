@@ -37,6 +37,9 @@ from .dataobject import DataObject
 from .dataset import DataSet
 from .filters.composite import CompositeFilters
 from .filters.composite import _format_nested_index
+from .formatting_html import _children_section
+from .formatting_html import _fmt_memory
+from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -2166,38 +2169,57 @@ class MultiBlock(
 
     def _repr_html_(self: MultiBlock) -> str:
         """Define a pretty representation for Jupyter notebooks."""
-        fmt = ''
-        fmt += "<table style='width: 100%;'>"
-        fmt += '<tr><th>Information</th><th>Blocks</th></tr>'
-        fmt += '<tr><td>'
-        fmt += '\n'
-        fmt += '<table>\n'
-        fmt += f'<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n'
-        row = '<tr><td>{}</td><td>{}</td></tr>\n'
+        sections: list[str] = []
 
-        # now make a call on the object to get its attributes as a list of len 2 tuples
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except TypeError:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
+        # Bounds metadata
+        bds = self.bounds
+        fmt = pv.FLOAT_FORMAT
+        meta: list[tuple[str, list[tuple[str, str]], str]] = [
+            (
+                'Bounds',
+                [
+                    ('X', f'[{fmt.format(bds.x_min)}, {fmt.format(bds.x_max)}]'),
+                    ('Y', f'[{fmt.format(bds.y_min)}, {fmt.format(bds.y_max)}]'),
+                    ('Z', f'[{fmt.format(bds.z_min)}, {fmt.format(bds.z_max)}]'),
+                ],
+                repr(tuple(bds)),
+            ),
+        ]
 
-        fmt += '</table>\n'
-        fmt += '\n'
-        fmt += '</td><td>'
-        fmt += '\n'
-        fmt += '<table>\n'
-        row = '<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n'
-        fmt += row.format('Index', 'Name', 'Type')
-
+        # Children
+        children: list[tuple[str, str, str]] = []
         for i in range(self.n_blocks):
-            data = self[i]
-            fmt += row.format(i, self.get_block_name(i), type(data).__name__)
+            block = self[i]
+            name = self.get_block_name(i) or f'Block {i}'
+            if block is None:
+                children.append((name, 'None', ''))
+                continue
+            ctype = type(block).__name__
+            if isinstance(block, MultiBlock):
+                detail = f'{block.n_blocks} blocks \u00b7 {_fmt_memory(block.actual_memory_size)}'
+            elif hasattr(block, 'n_points') and hasattr(block, 'n_cells'):
+                detail = (
+                    f'{block.n_points:,} pts \u00b7 '
+                    f'{block.n_cells:,} cells \u00b7 '
+                    f'{_fmt_memory(block.actual_memory_size)}'
+                )
+            else:
+                detail = ''
+            children.append((name, ctype, detail))
+        if children:
+            sections.append(_children_section('Blocks', children))
 
-        fmt += '</table>\n'
-        fmt += '\n'
-        fmt += '</td></tr> </table>'
-        return fmt
+        return build_repr_html(
+            obj_type=type(self).__name__,
+            mesh_type='MultiBlock',
+            header_badges=[
+                f'{self.n_blocks} blocks',
+                _fmt_memory(self.actual_memory_size),
+            ],
+            metadata=meta,
+            sections=sections,
+            text_repr=repr(self),
+        )
 
     def __repr__(self: MultiBlock) -> str:
         """Define an adequate representation."""
