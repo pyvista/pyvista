@@ -23,7 +23,8 @@ permissions:
 jobs:
   build-and-publish:
     name: Build ${{ matrix.target }} image
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     # For pull requests, run on branches named `docker*` or when the
     # `docker` label is applied. Never runs on forked PRs (needs secrets).
     if: github.event_name == 'push' ||

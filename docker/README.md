@@ -24,8 +24,8 @@ if you need to authenticate.
 
 Both images are produced from a single multi-stage
 [`Dockerfile`](./Dockerfile). The wheel is built inside Docker, so there are
-no pre-build steps — just clone and run `docker build` from the repository
-root:
+no pre-build steps. Clone the repo and run `docker build` from the
+repository root:
 
 ```bash
 git clone https://github.com/pyvista/pyvista

@@ -39,7 +39,7 @@ RUN python -m build --wheel --outdir /build/dist
 
 
 # ---------------------------------------------------------------------------
-# Stage 2: slim runtime — PyVista only, no Jupyter, off-screen by default.
+# Stage 2: slim runtime. PyVista only, no Jupyter, off-screen by default.
 # ---------------------------------------------------------------------------
 FROM python:${PY_VERSION}-slim AS slim
 
@@ -75,12 +75,14 @@ WORKDIR /work
 
 
 # ---------------------------------------------------------------------------
-# Stage 3: jupyter runtime — PyVista with Jupyter/Trame extras, built on the
+# Stage 3: jupyter runtime. PyVista with Jupyter/Trame extras, built on the
 # upstream jupyter/base-notebook image. The optional dependency groups come
 # directly from pyproject.toml so there is a single source of truth.
 #
-# The jupyter base image is published for a fixed Python version; keep
-# ${PY_VERSION} and the tag here in sync (default 3.13 -> python-3.13).
+# The jupyter base image only publishes a single current Python tag at
+# quay.io/jupyter/base-notebook, so this stage is pinned to python-3.13
+# regardless of the PY_VERSION build arg (which still applies to the
+# builder and slim stages).
 # ---------------------------------------------------------------------------
 FROM quay.io/jupyter/base-notebook:python-3.13 AS jupyter
 

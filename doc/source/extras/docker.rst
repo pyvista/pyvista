@@ -64,71 +64,35 @@ argument:
   docker build --build-arg PY_VERSION=3.12 \
     -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
 
-If you wish to have off-screen GPU support when rendering in JupyterLab,
-see the notes about building with EGL at :ref:`building_vtk`, and install
-your customized VTK wheel on top of the ``jupyter`` target. For example,
-create a small downstream ``Dockerfile``:
-
-.. code-block:: docker
-
-  FROM my-pyvista-jupyter
-  COPY vtk-*.whl /tmp/
-  RUN pip install /tmp/vtk-*.whl
-
-Additionally, you must install GPU drivers on the docker image of the
-same version running on the host machine. For example, if you are
-running on Azure Kubernetes Service and the GPU nodes on the
-kubernetes cluster are running ``450.51.06``, you must install the same
-version on your image. Since you will be using the underlying kernel
-module, there's no reason to build it on the container (and trying
-will only result in an error).
-
-.. code-block:: docker
-
-  COPY NVIDIA-Linux-x86_64-450.51.06.run nvidia_drivers.run
-  RUN sudo apt-get install kmod libglvnd-dev pkg-config -yq
-  RUN ./NVIDIA-Linux-x86_64-450.51.06.run -s --no-kernel-module
-
-To verify that you're rendering on a GPU, first check the output of
-``nvidia-smi``. You should get something like:
+GPU Rendering with the NVIDIA Container Runtime
+-----------------------------------------------
+Both published images ship with ``libegl1`` and set
+``NVIDIA_VISIBLE_DEVICES=all`` plus
+``NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute``. VTK 9.5+ picks
+the ``vtkEGLRenderWindow`` automatically, so rendering uses the host's
+NVIDIA driver when the container is started with the NVIDIA container
+runtime:
 
 .. code-block:: bash
 
-  $ nvidia-smi
-  Sun Nov  8 05:48:46 2020
-  +-----------------------------------------------------------------------------+
-  | NVIDIA-SMI 450.51.06    Driver Version: 450.51.06    CUDA Version: 11.0     |
-  |-------------------------------+----------------------+----------------------+
-  | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-  | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-  |                               |                      |               MIG M. |
-  |===============================+======================+======================|
-  |   0  Tesla K80           Off  | 00000001:00:00.0 Off |                    0 |
-  | N/A   34C    P8    32W / 149W |   1297MiB / 11441MiB |      0%      Default |
-  |                               |                      |                  N/A |
-  +-------------------------------+----------------------+----------------------+
+  docker run --rm --gpus all -p 8888:8888 ghcr.io/pyvista/pyvista:latest
 
-Note the driver version (which is actually the kernel driver version),
-and verify it matches the version you installed on your docker image.
+The only host-side requirement is the `NVIDIA Container Toolkit
+<https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html>`_.
+No in-container driver install, no kernel modules, no version matching
+against the host driver. On CPU-only hosts (no ``--gpus``) the same
+image transparently falls back to Mesa's ``llvmpipe`` software renderer
+via EGL.
 
-Finally, check that your render window is using NVIDIA by running
-``ReportCapabilities``:
+To verify you are rendering on a GPU, inspect
+``pv.Report()`` from inside the container:
 
 .. code-block:: python
 
-  >>> import pyvista as pv
-  >>> pl = pv.Plotter()
-  >>> print(pl.render_window.ReportCapabilities())
+    import pyvista as pv
 
-  OpenGL vendor string:  NVIDIA Corporation
-  OpenGL renderer string:  Tesla K80/PCIe/SSE2
-  OpenGL version string:  4.6.0 NVIDIA 450.51.06
-  OpenGL extensions:
-    GL_AMD_multi_draw_indirect
-    GL_AMD_seamless_cubemap_per_texture
-    GL_ARB_arrays_of_arrays
-    GL_ARB_base_instance
-    GL_ARB_bindless_texture
+    print(pv.Report())
 
-If you get ``display id not set``, then your environment is likely not
-set up correctly.
+The ``GPU Vendor`` and ``GPU Renderer`` fields should report the NVIDIA
+driver and the GPU model. ``Render Window`` should read
+``vtkEGLRenderWindow``.
