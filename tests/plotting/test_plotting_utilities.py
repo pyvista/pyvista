@@ -21,10 +21,13 @@ HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 @pytest.mark.skip_plotting
 def test_gpuinfo(monkeypatch):
     gpuinfo = GPUInfo()
-    _repr = gpuinfo.__repr__()
+    _repr = repr(gpuinfo)
+    _str = str(gpuinfo)
     _repr_html = gpuinfo._repr_html_()
     assert isinstance(_repr, str)
-    assert len(_repr) > 1
+    assert _repr.startswith('<GPUInfo object at ')
+    assert isinstance(_str, str)
+    assert len(_str) > 1
     assert isinstance(_repr_html, str)
     assert len(_repr_html) > 1
 
