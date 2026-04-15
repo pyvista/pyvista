@@ -37,7 +37,7 @@ Create your own Docker Container with PyVista
 ---------------------------------------------
 Both the ``latest`` and ``latest-slim`` images are produced from a single
 multi-stage Dockerfile at ``docker/Dockerfile``. The PyVista wheel is built
-*inside* the Docker build, so no pre-build steps are required — clone the
+*inside* the Docker build, so no pre-build steps are required. Clone the
 repository and run ``docker build`` from the project root:
 
 .. code-block:: bash
@@ -53,7 +53,7 @@ repository and run ``docker build`` from the project root:
 
 The ``jupyter`` target installs the ``jupyter``, ``colormaps``, and ``io``
 optional dependency groups directly from ``pyproject.toml``, so the package
-set always matches the project's pins — there is no separate
+set always matches the project's pins. There is no separate
 ``requirements.txt`` to keep in sync.
 
 Override the Python version (must match a supported VTK wheel) via a build
@@ -67,7 +67,7 @@ argument:
 If you wish to have off-screen GPU support when rendering in JupyterLab,
 see the notes about building with EGL at :ref:`building_vtk`, and install
 your customized VTK wheel on top of the ``jupyter`` target. For example,
-create a small downstream Dockerfile:
+create a small downstream ``Dockerfile``:
 
 .. code-block:: docker
 
