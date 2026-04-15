@@ -14,6 +14,7 @@ import warnings
 from atsphinx.mini18n import get_template_dir
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
+from sphinx import addnodes
 
 if TYPE_CHECKING:
     from sphinx.application import Sphinx
@@ -789,7 +790,7 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
 
 
 def fix_celltype_dimension_map(app, doctree, docname):  # noqa: ARG001, D103
-    for desc in doctree.findall(nodes.desc):
+    for desc in doctree.findall(addnodes.desc):
         if desc.get('domain') != 'py':
             continue
 
