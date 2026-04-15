@@ -18,7 +18,6 @@ post processed according to this `README.md
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -129,7 +128,13 @@ lines = air.streamlines_from_source(points, max_length=2.0)
 # Plot
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
-pl.add_mesh(lines, line_width=2, scalars='T', cmap='reds', scalar_bar_args={'title': 'Temperature'})
+pl.add_mesh(
+    lines,
+    line_width=2,
+    scalars='T',
+    cmap='reds',
+    scalar_bar_args={'title': 'Temperature'},
+)
 pl.add_mesh(
     structure,
     scalars='T',

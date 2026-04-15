@@ -12,7 +12,6 @@ This example shows how to create meshes in different ways.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -51,7 +50,8 @@ mesh.get_cell(0).type
 # mesh that has an i-j-k ordering that allows for simplified
 # cell connectivity.
 #
-# The points are generated as a regular grid in spherical coordinates using  :func:`pyvista.spherical_to_cartesian`.
+# The points are generated as a regular grid in spherical coordinates using
+# :func:`pyvista.spherical_to_cartesian`.
 # Here, we will used the convention that ``theta`` is the
 # azimuthal angle, similar to longitude on the globe.  ``phi`` is the
 # polar angle, similar to latitude on the globe.
@@ -113,8 +113,8 @@ pl.show()
 # This example shows how a more complicated mesh can be defined.
 #
 # In contrast to the example above, this example generates a mesh
-# that does not have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE` cells
-# will be used at the poles.  First, regenerate the structured data.
+# that does not have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE`
+# cells will be used at the poles. First, regenerate the structured data.
 
 radius = 0.5
 ntheta = 9
@@ -135,8 +135,8 @@ phi = phi[1:-1]
 nphi -= 2
 
 # %%
-# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for points in the ``(N, 3)``
-# format required by PyVista.  Note that this method results in
+# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for
+# points in the ``(N, 3)`` format required by PyVista.  Note that this method results in
 # the theta variable changing the fastest.
 
 r_, phi_, theta_ = np.meshgrid([radius], phi, theta, indexing='ij')
@@ -226,13 +226,23 @@ faces.extend([3, 0, ntheta, 1])
 for j in range(nphi - 1):
     for i in range(1, ntheta):
         faces.extend(
-            [4, j * ntheta + i, j * ntheta + i + 1, i + (j + 1) * ntheta + 1, i + (j + 1) * ntheta]
+            [
+                4,
+                j * ntheta + i,
+                j * ntheta + i + 1,
+                i + (j + 1) * ntheta + 1,
+                i + (j + 1) * ntheta,
+            ]
         )
 
-    faces.extend([4, (j + 1) * ntheta, j * ntheta + 1, (j + 1) * ntheta + 1, (j + 2) * ntheta])
+    faces.extend(
+        [4, (j + 1) * ntheta, j * ntheta + 1, (j + 1) * ntheta + 1, (j + 2) * ntheta]
+    )
 
 for i in range(1, ntheta):
-    faces.extend([3, nphi * ntheta + 1, (nphi - 1) * ntheta + i, (nphi - 1) * ntheta + i + 1])
+    faces.extend(
+        [3, nphi * ntheta + 1, (nphi - 1) * ntheta + i, (nphi - 1) * ntheta + i + 1]
+    )
 
 faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 
@@ -243,8 +253,8 @@ faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 mesh = pv.PolyData(points, faces=faces)
 
 # %%
-# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like :func:`pyvista.Sphere`.
-# To demonstrate this, there are no boundaries on the mesh
+# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like
+# :func:`pyvista.Sphere`. To demonstrate this, there are no boundaries on the mesh
 # as indicated by no points/cells being extracted.
 
 boundaries = mesh.extract_feature_edges(

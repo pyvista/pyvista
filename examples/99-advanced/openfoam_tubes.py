@@ -14,7 +14,6 @@ This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -37,7 +36,9 @@ air = block[0]
 y_slice = air.slice('y')
 
 pl = pv.Plotter()
-pl.add_mesh(y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'})
+pl.add_mesh(
+    y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'}
+)
 pl.add_mesh(air, color='w', opacity=0.25)
 pl.enable_anti_aliasing()
 pl.show()

@@ -107,7 +107,9 @@ pl.show()
 # You can also extrude lines. Observe that the output from extruded lines is
 # still a :class:`pyvista.PolyData`.
 
-plane = pv.Plane(center=(0, 0, 1), i_size=2, j_size=0.2, direction=[1, 1, 1], j_resolution=1)
+plane = pv.Plane(
+    center=(0, 0, 1), i_size=2, j_size=0.2, direction=[1, 1, 1], j_resolution=1
+)
 line = pv.Line()
 extruded_line = line.extrude_trim((0, 0, 1), plane)
 extruded_line

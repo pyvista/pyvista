@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
@@ -185,13 +185,15 @@ def test_transforms():
 
     assert light.transform_matrix is None
     light.transform_matrix = trans_array
-    assert isinstance(light.transform_matrix, vtk.vtkMatrix4x4)
+    assert isinstance(light.transform_matrix, _vtk.vtkMatrix4x4)
     array = pv.array_from_vtkmatrix(light.transform_matrix)
     assert np.array_equal(array, trans_array)
     light.transform_matrix = trans_matrix
     matrix = light.transform_matrix
     assert all(
-        matrix.GetElement(i, j) == trans_matrix.GetElement(i, j) for i in range(4) for j in range(4)
+        matrix.GetElement(i, j) == trans_matrix.GetElement(i, j)
+        for i in range(4)
+        for j in range(4)
     )
 
     linear_trans = trans_array[:-1, :-1]
@@ -296,15 +298,14 @@ def test_type_invalid():
 
 
 def test_from_vtk():
-    vtk_light = vtk.vtkLight()
+    vtk_light = _vtk.vtkLight()
 
     # set the vtk light
     for _, value, vtkname in configuration:
         vtk_setter = getattr(vtk_light, vtkname)
-        if isinstance(value, np.ndarray):
-            # we can't pass the array to vtkLight directly
-            value = pv.vtkmatrix_from_array(value)
-        vtk_setter(value)
+        # we can't pass the array to vtkLight directly
+        input_value = pv.vtkmatrix_from_array(value) if isinstance(value, np.ndarray) else value
+        vtk_setter(input_value)
     light = pv.Light.from_vtk(vtk_light)
     for pvname, value, _ in configuration:
         if isinstance(value, np.ndarray):
@@ -317,12 +318,12 @@ def test_from_vtk():
     with pytest.raises(TypeError):
         pv.Light.from_vtk('invalid')
     with pytest.raises(TypeError):
-        pv.Light('invalid')
+        pv.Light(position='invalid')
 
 
 def test_add_vtk_light():
     pl = pv.Plotter(lighting=None)
-    pl.add_light(vtk.vtkLight())
+    pl.add_light(_vtk.vtkLight())
     assert len(pl.renderer.lights) == 1
 
 

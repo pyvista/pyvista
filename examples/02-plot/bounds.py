@@ -20,10 +20,10 @@ from pyvista import examples
 # ~~~~~~~~~~~~~~~
 # In this plot we show the bounds for all axes by setting ``location='all'``.
 
-plotter = pv.Plotter()
-plotter.add_mesh(pv.Sphere(), smooth_shading=True)
-plotter.show_bounds(location='all')
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(pv.Sphere(), smooth_shading=True)
+pl.show_bounds(location='all')
+pl.show()
 
 
 # %%
@@ -36,10 +36,10 @@ plotter.show()
 
 gears = examples.download_gears()
 
-plotter = pv.Plotter()
-plotter.add_mesh(gears, smooth_shading=True, split_sharp_edges=True)
-plotter.show_bounds(axes_ranges=[0, 5, 0, 5, 0, 2], show_zlabels=False)
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(gears, smooth_shading=True, split_sharp_edges=True)
+pl.show_bounds(axes_ranges=[0, 5, 0, 5, 0, 2], show_zlabels=False)
+pl.show()
 
 print(f'Actual dataset bounds: {gears.bounds}')
 
@@ -56,22 +56,19 @@ split_gears = gears.split_bodies()
 central_gear = split_gears.pop(1)
 central_gear.translate([0, 60, 60], inplace=True)
 
-# also, grab the size of the central gear
-bnds = central_gear.bounds
-x_size = bnds.x_max - bnds.x_min
-y_size = bnds.y_max - bnds.y_min
-z_size = bnds.z_max - bnds.z_min
+# also, grab the size of the central gear's bounds
+x_size, y_size, z_size = central_gear.bounds_size
 
-plotter = pv.Plotter()
-plotter.add_mesh(split_gears, smooth_shading=True, split_sharp_edges=True)
-plotter.add_mesh(central_gear, smooth_shading=True, split_sharp_edges=True)
-plotter.show_grid(
+pl = pv.Plotter()
+pl.add_mesh(split_gears, smooth_shading=True, split_sharp_edges=True)
+pl.add_mesh(central_gear, smooth_shading=True, split_sharp_edges=True)
+pl.show_grid(
     mesh=central_gear,
     axes_ranges=[0, x_size, 0, y_size, 0, z_size],
     show_xaxis=False,
     bold=True,
     grid=False,
 )
-plotter.show()
+pl.show()
 # %%
 # .. tags:: plot

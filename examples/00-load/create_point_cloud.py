@@ -12,7 +12,6 @@ scalar arrays for those points.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -125,12 +124,12 @@ arrows = point_cloud.glyph(
 )
 
 # Display the arrows
-plotter = pv.Plotter()
-plotter.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
-plotter.add_mesh(arrows, color='lightblue')
-# plotter.add_point_labels([point_cloud.center,], ['Center',],
+pl = pv.Plotter()
+pl.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
+pl.add_mesh(arrows, color='lightblue')
+# pl.add_point_labels([point_cloud.center,], ['Center',],
 #                          point_color='yellow', point_size=20)
-plotter.show_grid()
-plotter.show()
+pl.show_grid()
+pl.show()
 # %%
 # .. tags:: load

@@ -9,7 +9,7 @@ Positional lights in PyVista have customizable beam shapes, see the
 the sense that they are unidirectional lights with a finite position,
 so they can be visualized using a cone.
 
-This is exactly the purpose of a ``vtk.vtkLightActor``, the
+This is exactly the purpose of a :vtk:`vtkLightActor`, the
 functionality of which can be enabled for spotlights:
 """
 
@@ -17,16 +17,15 @@ functionality of which can be enabled for spotlights:
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
 cow = examples.download_cow()
 cow.rotate_x(90, inplace=True)
-plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
-plotter.add_mesh(cow, color='white')
+pl = pv.Plotter(lighting='none', window_size=(1000, 1000))
+pl.add_mesh(cow, color='white')
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)
-plotter.add_mesh(floor, color='green')
+pl.add_mesh(floor, color='green')
 
 UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
 UFO.positional = True
@@ -34,22 +33,24 @@ UFO.cone_angle = 40
 UFO.exponent = 10
 UFO.intensity = 3
 UFO.show_actor()
-plotter.add_light(UFO)
+pl.add_light(UFO)
 
 # enable shadows to better demonstrate lighting
-plotter.enable_shadows()
+pl.enable_shadows()
 
-plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
-plotter.show()
+pl.camera_position = pv.CameraPosition(
+    position=(28, 30, 22), focal_point=(0.77, 0, -0.44), viewup=(0, 0, 1)
+)
+pl.show()
 
 
 # %%
 # Light actors can be very useful when designing complex scenes where
 # spotlights are involved in lighting.
 
-plotter = pv.Plotter(lighting='none')
+pl = pv.Plotter(lighting='none')
 plane = pv.Plane(i_size=4, j_size=4)
-plotter.add_mesh(plane, color='white')
+pl.add_mesh(plane, color='white')
 
 rot120 = np.array([[-0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, -0.5, 0], [0, 0, 1]])
 
@@ -63,9 +64,9 @@ for color in colors:
     light.positional = True
     light.cone_angle = 15
     light.show_actor()
-    plotter.add_light(light)
+    pl.add_light(light)
 
-plotter.show()
+pl.show()
 
 
 # %%
@@ -76,10 +77,10 @@ plotter.show()
 # example's cone angle and omitting the manual camera positioning exemplifies
 # the problem:
 
-plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(cow, color='white')
+pl = pv.Plotter(lighting='none')
+pl.add_mesh(cow, color='white')
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)
-plotter.add_mesh(floor, color='green')
+pl.add_mesh(floor, color='green')
 
 UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
 UFO.positional = True
@@ -87,8 +88,8 @@ UFO.cone_angle = 89
 UFO.exponent = 10
 UFO.intensity = 3
 UFO.show_actor()
-plotter.add_light(UFO)
+pl.add_light(UFO)
 
-plotter.show()
+pl.show()
 # %%
 # .. tags:: lights

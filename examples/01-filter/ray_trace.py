@@ -27,11 +27,13 @@ ray = pv.Line(start, stop)
 intersection = pv.PolyData(points)
 
 # Render the result
-p = pv.Plotter()
-p.add_mesh(sphere, show_edges=True, opacity=0.5, color='w', lighting=False, label='Test Mesh')
-p.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
-p.add_mesh(intersection, color='maroon', point_size=25, label='Intersection Points')
-p.add_legend()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(
+    sphere, show_edges=True, opacity=0.5, color='w', lighting=False, label='Test Mesh'
+)
+pl.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
+pl.add_mesh(intersection, color='maroon', point_size=25, label='Intersection Points')
+pl.add_legend()
+pl.show()
 # %%
 # .. tags:: filter

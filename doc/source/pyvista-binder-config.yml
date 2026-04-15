@@ -3,4 +3,4 @@ default_context:
   github_account: "pyvista"
   description: "Quick examples demonstrating what PyVista can do! Simply launch this Binder project and test drive PyVista"
   author_name: "PyVista Developers"
-  year: "2025"
+  year: "2026"

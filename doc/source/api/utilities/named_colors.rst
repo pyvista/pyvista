@@ -19,7 +19,7 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 .. note::
 
     Many colors have multiple names which refer to the same color (``'gray'`` and ``'grey'``,
-    for example). These alternate names are listed where applicable. Underscores, spaces,
+    for example). These alternate names are listed where applicable. Upper-case letters, and underscores, spaces,
     and hyphens between words are also acceptable inputs. See :attr:`Color.name <pyvista.Color.name>`
     for examples.
 
@@ -27,9 +27,9 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 
     Some color names are not internally consistent. For example,
 
-    - ``'darkgray'`` is lighter than ``'gray'``,
-    - ``'lightpink'`` is darker than ``'pink'``, and
-    - ``'cadmiumyellow'`` is classified as an ``Orange`` color.
+    - ``'dark_gray'`` is lighter than ``'gray'``,
+    - ``'light_pink'`` is darker than ``'pink'``, and
+    - ``'cadmium_yellow'`` is classified as an ``Orange`` color.
 
 .. seealso::
 

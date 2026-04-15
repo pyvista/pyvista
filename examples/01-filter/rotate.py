@@ -21,17 +21,20 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Define camera and axes
-# ++++++++++++++++++++++
+# Define camera position and axes
+# +++++++++++++++++++++++++++++++
 #
-# Define camera and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
+# Define camera position and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
 
 mesh = examples.download_cow()
 mesh.points /= 1.5  # scale the mesh
 
-camera = pv.Camera()
-camera.position = (30.0, 30.0, 30.0)
-camera.focal_point = (5.0, 5.0, 5.0)
+cpos = [
+    (30.0, 30.0, 30.0),  # position
+    (5.0, 5.0, 5.0),  # focal point
+    (0.0, 1.0, 0.0),  # view up
+]
+
 
 axes = pv.Axes(show_actor=True, actor_scale=2.0, line_width=5)
 axes.origin = (3.0, 3.0, 3.0)
@@ -42,14 +45,13 @@ axes.origin = (3.0, 3.0, 3.0)
 #
 # Plot original mesh. Add axes actor to Plotter.
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
-p.add_text('Mesh', font_size=24)
-p.add_actor(axes.actor)
-p.camera = camera
-p.add_mesh(mesh)
+pl.add_text('Mesh', font_size=24)
+pl.add_actor(axes.actor)
+pl.add_mesh(mesh)
 
-p.show()
+pl.show(cpos=cpos)
 
 # %%
 # Rotation about the x axis
@@ -58,17 +60,16 @@ p.show()
 # Plot the mesh rotated about the x axis every 60 degrees.
 # Add the axes actor to the Plotter and set the axes origin to the point of rotation.
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
-p.add_text('X-Axis Rotation', font_size=24)
-p.add_actor(axes.actor)
-p.camera = camera
+pl.add_text('X-Axis Rotation', font_size=24)
+pl.add_actor(axes.actor)
 
 for i in range(6):
     rot = mesh.rotate_x(60 * i, point=axes.origin, inplace=False)
-    p.add_mesh(rot)
+    pl.add_mesh(rot)
 
-p.show()
+pl.show(cpos=cpos)
 
 # %%
 # Rotation about the y axis
@@ -77,17 +78,16 @@ p.show()
 # Plot the mesh rotated about the y axis every 60 degrees.
 # Add the axes actor to the Plotter and set the axes origin to the point of rotation.
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
-p.add_text('Y-Axis Rotation', font_size=24)
-p.camera = camera
-p.add_actor(axes.actor)
+pl.add_text('Y-Axis Rotation', font_size=24)
+pl.add_actor(axes.actor)
 
 for i in range(6):
     rot = mesh.rotate_y(60 * i, point=axes.origin, inplace=False)
-    p.add_mesh(rot)
+    pl.add_mesh(rot)
 
-p.show()
+pl.show(cpos=cpos)
 
 # %%
 # Rotation about the z axis
@@ -96,17 +96,16 @@ p.show()
 # Plot the mesh rotated about the z axis every 60 degrees.
 # Add axes actor to the Plotter and set the axes origin to the point of rotation.
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
-p.add_text('Z-Axis Rotation', font_size=24)
-p.camera = camera
-p.add_actor(axes.actor)
+pl.add_text('Z-Axis Rotation', font_size=24)
+pl.add_actor(axes.actor)
 
 for i in range(6):
     rot = mesh.rotate_z(60 * i, point=axes.origin, inplace=False)
-    p.add_mesh(rot)
+    pl.add_mesh(rot)
 
-p.show()
+pl.show(cpos=cpos)
 
 # %%
 # Rotation about a custom vector
@@ -115,16 +114,15 @@ p.show()
 # Plot the mesh rotated about a custom vector every 60 degrees.
 # Add the axes actor to the Plotter and set axes origin to the point of rotation.
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
-p.add_text('Custom Vector Rotation', font_size=24)
-p.camera = camera
-p.add_actor(axes.actor)
+pl.add_text('Custom Vector Rotation', font_size=24)
+pl.add_actor(axes.actor)
 for i in range(6):
     rot = mesh.copy()
     rot.rotate_vector(vector=(1, 1, 1), angle=60 * i, point=axes.origin)
-    p.add_mesh(rot)
+    pl.add_mesh(rot)
 
-p.show()
+pl.show(cpos=cpos)
 # %%
 # .. tags:: filter

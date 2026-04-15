@@ -30,10 +30,10 @@ data_to_probe = examples.load_uniform()
 
 # %%
 # Plot the two datasets
-p = pv.Plotter()
-p.add_mesh(mesh, color=True)
-p.add_mesh(data_to_probe, opacity=0.5)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, color=True)
+pl.add_mesh(data_to_probe, opacity=0.5)
+pl.show()
 
 # %%
 # Run the algorithm and plot the result
@@ -54,19 +54,19 @@ result = mesh.sample(data_to_probe)
 
 # %%
 threshold = lambda m: m.threshold(75.0, scalars='SLCImage')
-cpos = [
-    (468.9075585873713, -152.8280322856109, 152.13046602188035),
-    (121.65121514580106, 140.29327609542105, 112.28137570357188),
-    (-0.10881224951051659, 0.006229357618166009, 0.9940428006178236),
-]
+cpos = pv.CameraPosition(
+    position=(468.9075585873713, -152.8280322856109, 152.13046602188035),
+    focal_point=(121.65121514580106, 140.29327609542105, 112.28137570357188),
+    viewup=(-0.10881224951051659, 0.006229357618166009, 0.9940428006178236),
+)
 dargs = dict(clim=[0, 200], cmap='rainbow')
 
-p = pv.Plotter(shape=(1, 2))
-p.add_mesh(threshold(data_to_probe), **dargs)
-p.subplot(0, 1)
-p.add_mesh(threshold(result), **dargs)
-p.link_views()
-p.view_isometric()
-p.show(cpos=cpos)
+pl = pv.Plotter(shape=(1, 2))
+pl.add_mesh(threshold(data_to_probe), **dargs)
+pl.subplot(0, 1)
+pl.add_mesh(threshold(result), **dargs)
+pl.link_views()
+pl.view_isometric()
+pl.show(cpos=cpos)
 # %%
 # .. tags:: filter

@@ -10,10 +10,10 @@ values with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 
 from __future__ import annotations
 
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -107,9 +107,9 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # must have Colorcet installed in your Python environment:
 # ``pip install colorcet``
 
-p = pv.Plotter(shape=(2, 2), border=False)
-p.subplot(0, 0)
-p.add_mesh(
+pl = pv.Plotter(shape=(2, 2), border=False)
+pl.subplot(0, 0)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='fire',
@@ -117,8 +117,8 @@ p.add_mesh(
     scalar_bar_args={'title': 'Colorcet Fire'},
 )
 
-p.subplot(0, 1)
-p.add_mesh(
+pl.subplot(0, 1)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='fire',
@@ -126,8 +126,8 @@ p.add_mesh(
     scalar_bar_args={'title': 'Colorcet Fire (No Lighting)'},
 )
 
-p.subplot(1, 0)
-p.add_mesh(
+pl.subplot(1, 0)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='hot',
@@ -135,8 +135,8 @@ p.add_mesh(
     scalar_bar_args={'title': 'Matplotlib Hot'},
 )
 
-p.subplot(1, 1)
-p.add_mesh(
+pl.subplot(1, 1)
+pl.add_mesh(
     mesh,
     scalars='Elevation',
     cmap='hot',
@@ -144,6 +144,58 @@ p.add_mesh(
     scalar_bar_args={'title': 'Matplotlib Hot (No Lighting)'},
 )
 
-p.show()
+pl.show()
+
+# %%
+# .. _calculix_colormap_example:
+#
+# Recreating Native Solver Colormaps (CalculiX)
+# +++++++++++++++++++++++++++++++++++++++++++++
+# Sometimes you want to process results in PyVista but keep the visual
+# style identical to the solver's native post-processing tool.
+# Below is an example of how to recreate the default ``cgx`` (CalculiX GraphiX)
+# colormap using Matplotlib's :class:`matplotlib.colors.LinearSegmentedColormap`.
+# It may be particular useful when visualizing ``.frd`` files with
+# :class:`~pyvista.FRDReader`.
+#
+# This specific colormap uses exact RGB nodes at specific scalar fractions
+# (0.0, 0.1, 0.3, 0.5, 0.8, 0.9, 1.0) to create its distinct color bands.
+
+# Define the exact RGB nodes from the cgx source code
+cgx_nodes = [
+    (0.0, (0.50, 0.0, 1.0)),  # Purple
+    (0.1, (0.00, 0.0, 0.8)),  # Dark Blue
+    (0.3, (0.00, 1.0, 0.4)),  # Greenish Blue
+    (0.5, (0.00, 0.5, 0.0)),  # Dark Green
+    (0.8, (1.00, 1.0, 0.0)),  # Yellow
+    (0.9, (1.00, 0.5, 0.0)),  # Orange
+    (1.0, (0.75, 0.0, 0.0)),  # Dark Red
+]
+
+# Create the colormap
+cgx_cmap = LinearSegmentedColormap.from_list('cgx', cgx_nodes)
+
+# %%
+# Download a sample mesh to demonstrate the colormap
+mesh = examples.download_notch_stress()
+
+# %%
+# Plot the mesh using the custom cgx colormap
+cpos = pv.CameraPosition(
+    position=(0.1249, -0.1242, 0.1698),
+    focal_point=(0.1965, 0.0467, -0.0036),
+    viewup=(0.2512, 0.6356, 0.7299),
+)
+
+pl = pv.Plotter()
+pl.add_mesh(
+    mesh,
+    cmap=cgx_cmap,
+    n_colors=21,
+    show_edges=True,
+)
+pl.camera_position = cpos
+pl.show()
+
 # %%
 # .. tags:: plot

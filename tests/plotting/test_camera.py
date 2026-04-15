@@ -11,7 +11,11 @@ import pyvista as pv
 configuration = [
     ('position', (1, 1, 1), 'SetPosition'),
     ('focal_point', (2, 2, 2), 'SetFocalPoint'),
-    ('model_transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetModelTransformMatrix'),
+    (
+        'model_transform_matrix',
+        np.arange(4 * 4).reshape(4, 4),
+        'SetModelTransformMatrix',
+    ),
     ('thickness', 1, 'SetThickness'),
     ('parallel_scale', 2, 'SetParallelScale'),
     ('up', (0, 0, 1), 'SetViewUp'),
@@ -66,7 +70,7 @@ def paraview_pvcc():
           <Domain name="bool" id="6395.CameraParallelProjection.bool"/>
         </Property>
       </Proxy>
-    </PVCameraConfiguration>"""
+    </PVCameraConfiguration>"""  # noqa: E501
     position = [10.519087611966333, 40.74973775632195, -20.24019652397463]
     focal = [15.335762892470676, -26.960151717473682, 17.860905595181094]
     view_up = [0.2191945908188539, -0.4665856879512876, -0.8568847805596613]
@@ -74,7 +78,15 @@ def paraview_pvcc():
     parallel_scale = 20.147235678333413
     projection = False
 
-    return io.StringIO(tmp), position, focal, view_up, view_angle, parallel_scale, projection
+    return (
+        io.StringIO(tmp),
+        position,
+        focal,
+        view_up,
+        view_angle,
+        parallel_scale,
+        projection,
+    )
 
 
 def test_invalid_init():

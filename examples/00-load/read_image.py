@@ -17,11 +17,11 @@ from pyvista import examples
 # data objects (this example) as well as supports texture mapping of images
 # onto datasets (see :ref:`texture_example`).
 #
-# Download a JPEG image of a puppy and load it to :class:`pyvista.ImageData`.
+# Download a JPEG image of a bird and load it to :class:`pyvista.ImageData`.
 # This could similarly be implemented with any image file by using the
 # :func:`pyvista.read` function and passing the path to the image file.
 
-image = examples.download_puppy()
+image = examples.download_bird()
 # or...
 # image = pv.read('my_image.jpg')
 

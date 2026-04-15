@@ -20,7 +20,11 @@ from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 
-cpos = [(575848.0, 5128459.0, 22289.0), (562835.0, 5114981.5, 2294.5), (-0.5, -0.5, 0.7)]
+cpos = pv.CameraPosition(
+    position=(575848.0, 5128459.0, 22289.0),
+    focal_point=(562835.0, 5114981.5, 2294.5),
+    viewup=(-0.5, -0.5, 0.7),
+)
 
 # %%
 # First, lets take a look at the mesh with default lighting conditions
@@ -38,20 +42,20 @@ mesh.plot(lighting=False, cpos=cpos, show_scalar_bar=False)
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-p = pv.Plotter(shape=(1, 2), window_size=[1500, 500])
+pl = pv.Plotter(shape=(1, 2), window_size=[1500, 500])
 
-p.subplot(0, 0)
-p.add_mesh(mesh, show_scalar_bar=False)
-p.add_text('No Specular')
+pl.subplot(0, 0)
+pl.add_mesh(mesh, show_scalar_bar=False)
+pl.add_text('No Specular')
 
-p.subplot(0, 1)
+pl.subplot(0, 1)
 s = 1.0
-p.add_mesh(mesh, specular=s, show_scalar_bar=False)
-p.add_text(f'Specular of {s}')
+pl.add_mesh(mesh, specular=s, show_scalar_bar=False)
+pl.add_text(f'Specular of {s}')
 
-p.link_views()
-p.view_isometric()
-p.show(cpos=cpos)
+pl.link_views()
+pl.view_isometric()
+pl.show(cpos=cpos)
 
 # %%
 # Just specular

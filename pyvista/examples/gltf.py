@@ -6,7 +6,7 @@ import pooch
 
 from .downloads import USER_DATA_PATH
 
-GLTF_FETCHER = pooch.create(
+GLTF_FETCHER = pooch.create(  # type: ignore[attr-defined]
     path=USER_DATA_PATH,
     base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
     registry={

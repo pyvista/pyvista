@@ -4,17 +4,18 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 
 def _download_dataset_texture(
-    loader: _SingleFileDownloadableDatasetLoader, load: bool, texture: bool
+    loader: _SingleFileDownloadableDatasetLoader, *, load: bool, texture: bool
 ):
     dataset = _download_dataset(loader, load=load)
     if texture:
-        from pyvista.plotting.texture import Texture
+        from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
         return Texture(dataset)  # type: ignore[abstract]
     return dataset
@@ -45,14 +46,15 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
-    sphere = pyvista.StructuredGrid(x, y, z)
+    sphere = pv.StructuredGrid(x, y, z)
     texture_coords = np.empty((sphere.n_points, 2))
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
-    sphere.active_texture_coordinates = texture_coords  # type: ignore[assignment]
-    return sphere.extract_surface(pass_pointid=False, pass_cellid=False)
+    sphere.active_texture_coordinates = texture_coords
+    return sphere.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
 
 
+@_deprecate_positional_args
 def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the Sun as a textured sphere.
 
@@ -97,6 +99,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     )
 
 
+@_deprecate_positional_args
 def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the Moon as a textured sphere.
 
@@ -141,6 +144,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     )
 
 
+@_deprecate_positional_args
 def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Mercury as a textured sphere.
 
@@ -185,6 +189,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     )
 
 
+@_deprecate_positional_args
 def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Venus as a textured sphere.
 
@@ -229,6 +234,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     )
 
 
+@_deprecate_positional_args
 def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Earth as a textured sphere.
 
@@ -273,6 +279,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     )
 
 
+@_deprecate_positional_args
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Mars as a textured Sphere.
 
@@ -317,6 +324,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     )
 
 
+@_deprecate_positional_args
 def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Jupiter as a textured sphere.
 
@@ -361,6 +369,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     )
 
 
+@_deprecate_positional_args
 def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Saturn as a textured sphere.
 
@@ -411,6 +420,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     )
 
 
+@_deprecate_positional_args
 def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     """Load the planet Saturn's rings.
 
@@ -456,15 +466,16 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
             Example plot of the solar system.
 
     """
-    disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
+    disc = pv.Disc(inner=inner, outer=outer, c_res=c_res)
     texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     texture_coordinates[:, 0] = (radius - inner) / (outer - inner)
     texture_coordinates[:, 1] = 0.0
-    disc.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+    disc.active_texture_coordinates = texture_coordinates
     return disc
 
 
+@_deprecate_positional_args
 def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Uranus as a textured sphere.
 
@@ -509,6 +520,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     )
 
 
+@_deprecate_positional_args
 def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the planet Neptune as a textured sphere.
 
@@ -553,6 +565,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     )
 
 
+@_deprecate_positional_args
 def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
     """Load the dwarf planet Pluto as a textured sphere.
 
@@ -597,7 +610,8 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     )
 
 
-def download_sun_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_sun_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the Sun.
 
     Textures obtained from `Solar Textures
@@ -613,7 +627,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -643,7 +657,8 @@ _dataset_sun_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_moon_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_moon_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the Earth's Moon.
 
     Textures obtained from `Solar Textures
@@ -659,7 +674,7 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -689,7 +704,8 @@ _dataset_moon_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_mercury_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_mercury_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of planet Mercury.
 
     Textures obtained from `Solar Textures
@@ -705,7 +721,7 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -735,7 +751,12 @@ _dataset_mercury_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_venus_surface(
+    atmosphere=True,  # noqa: FBT002
+    texture=False,  # noqa: FBT002
+    load=True,  # noqa: FBT002
+):  # pragma: no cover
     """Download the surface or atmosphere of Planet Venus.
 
     Textures obtained from `Solar Textures
@@ -754,7 +775,7 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -791,7 +812,8 @@ __dataset_venus_surface_no_atmosphere = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_mars_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_mars_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the planet Mars.
 
     Textures obtained from `Solar Textures
@@ -807,7 +829,7 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -837,7 +859,8 @@ _dataset_mars_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_jupiter_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the planet Jupiter.
 
     Textures obtained from `Solar Textures
@@ -853,7 +876,7 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -883,7 +906,8 @@ _dataset_jupiter_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_saturn_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_saturn_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the surface of the planet Saturn.
 
     Textures obtained from `Solar Textures
@@ -899,7 +923,7 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -935,7 +959,8 @@ _dataset_saturn_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_saturn_rings(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_saturn_rings(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the texture of Saturn's rings.
 
     Textures obtained from `Solar Textures
@@ -951,7 +976,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.ImageData | pyvista.Texture | str
+    output : pyvista.ImageData | pyvista.Texture | str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples
@@ -986,7 +1011,8 @@ _dataset_saturn_rings = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_uranus_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_uranus_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download and the texture of the surface of planet Uranus.
 
     Textures obtained from `Solar Textures
@@ -1002,7 +1028,7 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1032,7 +1058,8 @@ _dataset_uranus_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_neptune_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_neptune_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the texture of the surface of planet Neptune.
 
     Textures obtained from `Solar Textures
@@ -1048,7 +1075,7 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1078,7 +1105,8 @@ _dataset_neptune_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_pluto_surface(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_pluto_surface(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the texture of the surface of the dwarf planet Pluto.
 
     Textures obtained from `Solar Textures
@@ -1094,7 +1122,7 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1124,7 +1152,8 @@ _dataset_pluto_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_stars_sky_background(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the night sky stars texture.
 
     Textures obtained from `tamaskis/planet3D-MATLAB
@@ -1140,7 +1169,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1179,7 +1208,8 @@ _dataset_stars_sky_background = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_milkyway_sky_background(texture=False, load=True):  # pragma: no cover
+@_deprecate_positional_args
+def download_milkyway_sky_background(texture=False, load=True):  # pragma: no cover  # noqa: FBT002
     """Download the sky texture of the Milky Way galaxy.
 
     Textures obtained from `tamaskis/planet3D-MATLAB
@@ -1195,7 +1225,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
 
     Returns
     -------
-    pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 

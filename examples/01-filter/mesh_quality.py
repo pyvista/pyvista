@@ -40,7 +40,7 @@ qual = mesh.cell_quality(measures)
 # for adding each mesh to each subplot.
 
 
-def add_mesh(plotter, mesh, scalars=None, cmap='bwr', show_edges=True):
+def add_mesh(plotter, mesh, *, scalars=None, cmap='bwr', show_edges=True):
     # Create a copy to avoid reusing the same mesh in different plots
     copied = mesh.copy(deep=False)
     plotter.add_mesh(copied, scalars=scalars, cmap=cmap, show_edges=show_edges)
@@ -91,7 +91,9 @@ qual.plot(
 # Use :meth:`~pyvista.DataSetFilters.extract_values` to extract the "poor" quality
 # cells outside the acceptable range.
 
-unacceptable = qual.extract_values(scalars='shape', ranges=info.acceptable_range, invert=True)
+unacceptable = qual.extract_values(
+    scalars='shape', ranges=info.acceptable_range, invert=True
+)
 
 # %%
 # Plot the unacceptable cells along with the original mesh as wireframe for context.

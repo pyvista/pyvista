@@ -17,7 +17,6 @@ This example uses :meth:`~pyvista.Plotter.open_movie` and
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 filename = 'sphere-shrinking.mp4'
@@ -27,19 +26,19 @@ rng = np.random.default_rng(seed=0)
 mesh = pv.Sphere()
 mesh.cell_data['data'] = rng.random(mesh.n_cells)
 
-plotter = pv.Plotter()
+pl = pv.Plotter()
 # Open a movie file
-plotter.open_movie(filename)
+pl.open_movie(filename)
 
 # Add initial mesh
-plotter.add_mesh(mesh, scalars='data', clim=[0, 1])
+pl.add_mesh(mesh, scalars='data', clim=[0, 1])
 # Add outline for shrinking reference
-plotter.add_mesh(mesh.outline_corners())
+pl.add_mesh(mesh.outline_corners())
 
-plotter.show(auto_close=False)  # only necessary for an off-screen movie
+pl.show(auto_close=False)  # only necessary for an off-screen movie
 
 # Run through each frame
-plotter.write_frame()  # write initial data
+pl.write_frame()  # write initial data
 
 # Update scalars on each frame
 for i in range(100):
@@ -47,10 +46,10 @@ for i in range(100):
     mesh.points = random_points * 0.01 + mesh.points * 0.99
     mesh.points -= mesh.points.mean(0)
     mesh.cell_data['data'] = rng.random(mesh.n_cells)
-    plotter.add_text(f'Iteration: {i}', name='time-label')
-    plotter.write_frame()  # Write this frame
+    pl.add_text(f'Iteration: {i}', name='time-label')
+    pl.write_frame()  # Write this frame
 
 # Be sure to close the plotter when finished
-plotter.close()
+pl.close()
 # %%
 # .. tags:: plot
