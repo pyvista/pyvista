@@ -223,6 +223,12 @@ def test_celltype_dimension_map():
         assert member in dimension_map[member.dimension]
 
 
+def test_celltype_dimension_map_not_mutable():
+    mapping = CellType.dimension_map
+    mapping[42] = 'foo'
+    assert 42 not in CellType.dimension_map.keys()
+
+
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
