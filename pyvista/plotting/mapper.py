@@ -479,10 +479,10 @@ class _DataSetMapper(_BaseMapper):
         Setter behavior depends on whether the array can be resolved on
         an upstream dataset without running the pipeline:
 
-        * If :attr:`_scalar_source_dataset` exposes an array with the
-          given name, route through :meth:`set_active_scalars` so a
-          spliced :class:`ActiveScalarsAlgorithm` activates the array on
-          each ``RequestData`` (and :meth:`_maybe_set_default_scalar_range`
+        * If ``_scalar_source_dataset`` exposes an array with the
+          given name, route through ``set_active_scalars`` so a
+          spliced ``ActiveScalarsAlgorithm`` activates the array on
+          each ``RequestData`` (and ``_maybe_set_default_scalar_range``
           picks a default ``clim``).
         * Otherwise fall back to the raw VTK ``SetArrayName``. This path
           is hit when the mapper is wired to a pipeline whose output

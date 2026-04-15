@@ -3337,7 +3337,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
             When a raw numpy array is passed, it is attached to
             ``mesh`` under a generated name (typically
-            :data:`pyvista.DEFAULT_SCALARS_NAME` or
+            ``pyvista.DEFAULT_SCALARS_NAME`` or
             ``Data-<n>`` if that name is taken). This makes the
             array visible to downstream pipeline stages (for example
             smooth-shading surface extraction) and lets callers
