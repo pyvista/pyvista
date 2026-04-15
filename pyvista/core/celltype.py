@@ -8,6 +8,7 @@ from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
+from typing import get_args
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -37,11 +38,11 @@ class _classproperty(property):  # noqa: N801
 
 
 _Dimension = Literal[0, 1, 2, 3]
-_DIMENSION_MAP: dict[_Dimension, set[CellType] | frozenset[CellType]] = {}
+_DIMENSION_MAP: dict[_Dimension, frozenset[CellType]] = {}
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _GRID_TEMPLATE_NO_IMAGE = """
-.. grid:: 1
+.. grid:: 1x
     :margin: 1
 
     .. grid-item::
@@ -1263,7 +1264,7 @@ class CellType(IntEnum):
         """
         if not _DIMENSION_MAP:
             # Populate dict on first access
-            for dimension in [0, 1, 2, 3]:
+            for dimension in get_args(_Dimension):
                 _DIMENSION_MAP[dimension] = frozenset(
                     celltype for celltype in CellType if celltype.dimension == dimension
                 )
