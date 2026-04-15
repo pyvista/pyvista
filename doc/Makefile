@@ -12,11 +12,15 @@ SOURCEDIR     = source
 BUILDDIR      = _build
 
 
+.PHONY: all help Makefile test clean clean-dataset-gallery clean-external-examples clean-autosummary clean-except-examples phtml update-intersphinx gen-dataset-gallery gen-external-examples serve-html ci-build ci-test
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(DEFAULTS) $(O)
 
-.PHONY: help Makefile
+# `all` and `test` are POSIX conventions aliased to the CI-parity targets.
+all: ci-build
+test: ci-test
 
 clean-dataset-gallery:
 	rm -rf "$(SOURCEDIR)/api/examples/dataset-gallery"

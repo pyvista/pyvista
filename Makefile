@@ -2,6 +2,16 @@
 
 .DEFAULT_GOAL := test
 
+.PHONY: all clean coverage coverage-xml coverage-html coverage-docs docstyle sync-deps lint typecheck test test-core test-plotting doctest docs docs-test integration
+
+# `all` is a POSIX convention; alias it to the default test target.
+all: test
+
+# Remove build / coverage artifacts from the repo root.
+clean:
+	@echo "Cleaning build and coverage artifacts"
+	@rm -rf build dist .tox .pytest_cache htmlcov coverage*.xml coverage*.html .coverage
+
 # Directories to run style checks against
 CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
@@ -82,10 +92,6 @@ docs-test:
 # Specify project via PROJECT, e.g. `make integration PROJECT=trame`.
 # Supported projects: trame, geovista, mne, pyvistaqt
 integration:
-	@if [ -z "$(PROJECT)" ]; then \
-		echo "Error: PROJECT is required. Example: make integration PROJECT=trame"; \
-		echo "Supported projects: trame, geovista, mne, pyvistaqt"; \
-		exit 1; \
-	fi
+	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt)"; exit 1; }
 	@echo "Running integration-$(PROJECT) tests (matches CI)"
 	@uv run tox -e integration-$(PROJECT) -- $(ARGS)
