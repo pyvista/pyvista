@@ -592,7 +592,7 @@ html_theme_options = {
         {
             'name': 'PyPI',
             'url': 'https://pypi.org/project/pyvista',
-            'icon': 'fa-custom fa-pypi',
+            'icon': 'fa-brands fa-python',
         },
     ],
 }
