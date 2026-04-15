@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 from typing import cast
+import weakref
 
 import numpy as np
 
@@ -401,7 +402,7 @@ class _DataSetMapper(_BaseMapper):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._active_scalars_algo: ActiveScalarsAlgorithm | None = None
-        self._input_dataset: DataSet | None = None
+        self._input_dataset_ref: weakref.ref[DataSet] | None = None
         if dataset is not None:
             self.dataset = dataset
 
@@ -429,6 +430,15 @@ class _DataSetMapper(_BaseMapper):
             set_algorithm_input(self, self._active_scalars_algo)
         else:
             set_algorithm_input(self, obj)
+
+    # Avoid ref cycles by using weakref
+    @property
+    def _input_dataset(self):
+        return None if self._input_dataset_ref is None else self._input_dataset_ref()
+
+    @_input_dataset.setter
+    def _input_dataset(self, dataset: DataSet | None):
+        self._input_dataset_ref = None if dataset is None else weakref.ref(dataset)
 
     @property
     def array_name(self) -> str:  # numpydoc ignore=RT01

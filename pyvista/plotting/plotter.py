@@ -137,6 +137,8 @@ if TYPE_CHECKING:
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
 
+    from .opts import PointSpriteShape
+
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 FPS_1_OVER_60 = 1 / 60
@@ -2995,6 +2997,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             show_scalar_bar,
             feature_angle,
             render_points_as_spheres,
+            _point_shape,
             smooth_shading,
             clim,
             cmap,
@@ -3016,6 +3019,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             split_sharp_edges=split_sharp_edges,
             show_scalar_bar=show_scalar_bar,
             render_points_as_spheres=render_points_as_spheres,
+            point_shape=None,
             smooth_shading=smooth_shading,
             pbr=pbr,
             clim=clim,
@@ -3182,6 +3186,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         name: str | None = None,
         texture: Texture | NumpyArray[float] | None = None,
         render_points_as_spheres: bool | None = None,  # noqa: FBT001
+        point_shape: PointSpriteShape | str | None = None,
         render_lines_as_tubes: bool | None = None,  # noqa: FBT001
         smooth_shading: bool | None = None,  # noqa: FBT001
         split_sharp_edges: bool | None = None,  # noqa: FBT001
@@ -3380,6 +3385,17 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         render_points_as_spheres : bool, optional
             Render points as spheres rather than dots.
+
+        point_shape : PointSpriteShape | str, optional
+            Render points as a custom sprite shape instead of squares.
+            Accepts a :class:`pyvista.plotting.opts.PointSpriteShape`
+            enum value or a string. Must be one of ``'circle'``,
+            ``'triangle'``, ``'hexagon'``, ``'diamond'``, ``'asterisk'``,
+            or ``'star'``. Requires ``style='points'``. If
+            ``render_points_as_spheres`` is ``True`` (explicitly or via
+            theme), it will be automatically disabled with a warning.
+
+            .. versionadded:: 0.48
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control
@@ -3857,6 +3873,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             show_scalar_bar,
             feature_angle,
             render_points_as_spheres,
+            point_shape,
             smooth_shading,
             clim,
             cmap,
@@ -3878,6 +3895,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             split_sharp_edges=split_sharp_edges,
             show_scalar_bar=show_scalar_bar,
             render_points_as_spheres=render_points_as_spheres,
+            point_shape=point_shape,
             smooth_shading=smooth_shading,
             pbr=pbr,
             clim=clim,
@@ -4088,12 +4106,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             if not render_points_as_spheres and not mapper.emissive and prop.opacity >= 1.0:
                 prop.opacity = 0.9999  # otherwise, weird triangles
 
-        if render_points_as_spheres:
-            if style == 'points_gaussian':
+        if render_points_as_spheres is not None:
+            if render_points_as_spheres and style == 'points_gaussian':
                 mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
+
+        if point_shape is not None:
+            actor.set_point_sprite_shape(point_shape)
 
         if backface_params is not None:
             if isinstance(backface_params, Property):

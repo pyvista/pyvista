@@ -217,6 +217,7 @@ from vtkmodules.vtkCommonDataModel import vtkGenericCell as vtkGenericCell
 from vtkmodules.vtkCommonDataModel import vtkHexagonalPrism as vtkHexagonalPrism
 from vtkmodules.vtkCommonDataModel import vtkHexahedron as vtkHexahedron
 from vtkmodules.vtkCommonDataModel import vtkImageData as vtkImageData
+from vtkmodules.vtkCommonDataModel import vtkImplicitBoolean as vtkImplicitBoolean
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction as vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform as vtkIterativeClosestPointTransform,
@@ -548,3 +549,6 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.7.0
     from vtkmodules.vtkImagingCore import (  # type: ignore[attr-defined]
         vtkImageBinaryThreshold as vtkImageBinaryThreshold,
     )
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkCommonCore import vtkSMPTools as vtkSMPTools

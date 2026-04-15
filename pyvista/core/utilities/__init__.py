@@ -113,6 +113,7 @@ from .image_sources import ImageSinusoidSource as ImageSinusoidSource
 from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
 from .reader_registry import has_scheme as has_scheme
 from .reader_registry import register_reader as register_reader
+from .writer_registry import register_writer as register_writer
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource as CapsuleSource
@@ -128,6 +129,7 @@ from .misc import abstract_class as abstract_class
 from .misc import assert_empty_kwargs as assert_empty_kwargs
 from .misc import check_valid_vector as check_valid_vector
 from .misc import conditional_decorator as conditional_decorator
+from .misc import enable_smp_tools as enable_smp_tools
 from .misc import has_module as has_module
 from .misc import set_new_attribute as set_new_attribute
 from .misc import threaded as threaded
