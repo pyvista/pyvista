@@ -205,35 +205,26 @@ PyVista on the notebook hosting service MyBinder_.
 .. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _MyBinder: https://mybinder.org
 
-To get started, the Docker container will need to have ``libgl1-mesa-dev`` and
-``xvfb`` installed through ``apt-get``. For MyBinder, include the following in
-a file called ``apt.txt``::
+The Docker container only needs VTK's runtime GL libraries. For MyBinder,
+include the following in a file called ``apt.txt``::
 
-    libgl1-mesa-dev
-    xvfb
+    libopengl0
+    libgl1
+    libegl1
+    libxrender1
 
-Then, you need to configure the headless display, for MyBinder, create a file
-called ``start`` and include the following set up script that will run every
-time your Docker container is launched:
+That is the complete system-library set: ``libegl1`` enables EGL so VTK
+picks up GPU acceleration automatically when the container is run with the
+NVIDIA container runtime, and falls back to Mesa's ``llvmpipe`` software
+renderer on CPU-only hosts. As of VTK 9.5, headless off-screen rendering
+works out of the box with the stock PyPI ``vtk`` wheel, so no ``Xvfb`` or
+``DISPLAY`` setup is required.
 
-.. code-block:: bash
-
-    #!/bin/bash
-    set -x
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    which Xvfb
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-    set +x
-    exec "$@"
-
-
-All you have to do next is include PyVista in your Python requirements and you
-can get to visualizing your data. If you need more help than this on setting up
-PyVista for these types of services, hop on Discussions page and chat with the developers
-or take a look at `this repository`_ that is currently using PyVista on
-MyBinder.
+Include PyVista in your Python requirements and ``pv.Plotter(off_screen=True)``
+will render. If you need more help than this on setting up PyVista for
+these types of services, hop on the Discussions page and chat with the
+developers or take a look at `this repository`_ that is currently using
+PyVista on MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 
@@ -244,39 +235,29 @@ Docker case. As an example, here are the complete steps to use PyVista on AWS
 EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``).
 Other servers would work similarly.
 
-After logging into the remote server, install Miniconda and related packages:
+After logging into the remote server, install VTK's runtime GL libraries
+and set up Python:
 
 .. code-block:: bash
 
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    bash miniconda.sh -b -p miniconda
-    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.10
-    conda activate vtk_env
-    conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista trame
+    sudo apt update && sudo apt install -y \
+        libopengl0 libgl1 libegl1 libxrender1
+    python -m venv vtk_env
+    source vtk_env/bin/activate
+    pip install jupyter 'pyvista[jupyter]'
 
-    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
-    # https://stackoverflow.com/q/32389599
-    # https://askubuntu.com/q/629692
-    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
-
-Then, configure the headless display:
-
-.. code-block:: bash
-
-    sudo apt-get install xvfb
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
+With ``libegl1`` installed, VTK 9.5+ renders off-screen via EGL out of the
+box, so no ``Xvfb`` or ``DISPLAY`` configuration is required. Set
+``PYVISTA_OFF_SCREEN=true`` in your shell (or pass ``off_screen=True``
+when constructing a ``Plotter``) and ``pv.Plotter(off_screen=True)`` will
+just work.
 
 Reconnect to the server with port-forwarding, and start Jupyter:
 
 .. code-block:: bash
 
     ssh -i "your-ssh-key" your-user-name@your-server-ip -L 8888:localhost:8888
-    conda activate vtk_env
+    source vtk_env/bin/activate
     jupyter lab --NotebookApp.token='' --no-browser --port=8888
 
 Visit ``localhost:8888`` in the web browser.
@@ -287,41 +268,21 @@ Similar to the example of the remote server above, the windows subsystem for Lin
 not provide an x-server for visualization. Instead, the fastest way to get up and
 running on WSL is through `JupyterLab <https://jupyter.org/>`_.
 
-First, make sure you have installed the correct environment through Miniconda and
-related packages:
+First, install VTK's runtime GL libraries and set up Python:
 
 .. code-block:: bash
 
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    bash miniconda.sh -b -p miniconda
-    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.10
-    conda activate vtk_env
-    conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista[jupyter] trame
-
-    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
-    # https://stackoverflow.com/q/32389599
-    # https://askubuntu.com/q/629692
-    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+    sudo apt update && sudo apt install -y \
+        libopengl0 libgl1 libegl1 libxrender1
+    python -m venv vtk_env
+    source vtk_env/bin/activate
+    pip install jupyter 'pyvista[jupyter]'
 
 VTK Link to Jupyter
 ^^^^^^^^^^^^^^^^^^^
-There are two ways to get vtk rendering 3D objects in JupyterLab. First you
-can follow the example above for remote servers, skipping over the ``ssh``
-instructions.
-
-Configure the headless display:
-
-.. code-block:: bash
-
-    sudo apt-get install xvfb
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-
-Start Jupyter:
+As of VTK 9.5, headless off-screen rendering works out of the box with
+the stock PyPI ``vtk`` wheel when ``libegl1`` is installed. No ``Xvfb``
+or ``DISPLAY`` configuration is needed. Start Jupyter:
 
 .. code-block:: bash
 

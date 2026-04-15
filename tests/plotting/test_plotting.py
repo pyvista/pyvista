@@ -1380,6 +1380,20 @@ def test_add_north_arrow():
     pl.show()
 
 
+@pytest.mark.parametrize('negative', [True, False])
+def test_add_north_arrow_top_bottom_colors(negative):
+    pl = pv.Plotter()
+    pl.add_north_arrow_widget(
+        viewport=(0, 0, 0.5, 0.5),
+        color='royalblue',
+        top_color='lightsteelblue',
+        bottom_color='midnightblue',
+    )
+    pl.add_mesh(pv.Arrow(direction=(0, 1, 0)))
+    pl.view_xy(negative=negative)
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot(tmpdir):
     pl = pv.Plotter()
