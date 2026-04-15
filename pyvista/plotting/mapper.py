@@ -436,7 +436,12 @@ class _DataSetMapper(_BaseMapper):
             set_algorithm_input(self, obj)
         self._maybe_set_default_scalar_range()
 
-    @_BaseMapper.scalar_range.setter
+    @property
+    def scalar_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
+        """Return or set the scalar range."""
+        return self.GetScalarRange()
+
+    @scalar_range.setter
     def scalar_range(self, clim) -> None:
         self._set_scalar_range(clim, use_default=False)
 
@@ -458,8 +463,10 @@ class _DataSetMapper(_BaseMapper):
     def array_name(self, name: str) -> None:
         dataset = self._scalar_source_dataset
         if dataset is not None:
-            preference = 'cell' if self.scalar_map_mode == 'cell' else 'point'
-            association = get_array_association(dataset, name, preference=preference)
+            if self.scalar_map_mode == 'cell':
+                association = get_array_association(dataset, name, preference='cell')
+            else:
+                association = get_array_association(dataset, name, preference='point')
             if association == FieldAssociation.POINT:
                 self.set_active_scalars(name, preference='point')
                 return
@@ -480,11 +487,14 @@ class _DataSetMapper(_BaseMapper):
         if dataset is not None and dataset.n_arrays > 0:
             return dataset
 
-        input_algorithm = self.GetInputAlgorithm()
-        if input_algorithm is not None and input_algorithm.GetNumberOfInputPorts() > 0:
+        input_connection = cast('_vtk.vtkAlgorithmOutput | None', self.GetInputConnection(0, 0))
+        if input_connection is not None:
+            input_algorithm = input_connection.GetProducer()
+            if input_algorithm.GetNumberOfInputPorts() == 0:
+                return dataset
             source = input_algorithm.GetInputDataObject(0, 0)
             if isinstance(source, _vtk.vtkDataSet):
-                return cast('DataSet', wrap(source))
+                return wrap(source)
 
         return dataset
 
@@ -542,11 +552,7 @@ class _DataSetMapper(_BaseMapper):
 
     def _set_scalar_range(self, clim, *, use_default: bool) -> None:
         """Set the scalar range and track whether it is user-defined."""
-        setter = _BaseMapper.scalar_range.fset
-        if setter is None:  # pragma: no cover
-            msg = 'Scalar range setter is unavailable.'
-            raise RuntimeError(msg)
-        setter(self, clim)
+        self.SetScalarRange(*clim)
         self.lookup_table.scalar_range = clim
         self._use_default_scalar_range = use_default
 
