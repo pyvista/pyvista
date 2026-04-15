@@ -4205,6 +4205,34 @@ def _get_actor_mapper_input(actor):
     return pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
 
 
+class _AlgorithmExecutionTracker:
+    def __init__(self) -> None:
+        self.executed = False
+
+    def __call__(self, mesh: pv.DataSet) -> pv.DataSet:
+        self.executed = True
+        return mesh
+
+
+def _assert_mapper_pipeline_not_executed(
+    mapper: pv.DataSetMapper,
+    tracker: _AlgorithmExecutionTracker | None = None,
+    *,
+    scalar_map_mode: str | None = None,
+    scalar_range: tuple[float, float] | None = None,
+) -> None:
+    if tracker is not None:
+        assert tracker.executed is False
+    if scalar_map_mode is not None:
+        assert mapper.scalar_map_mode == scalar_map_mode
+    if scalar_range is not None:
+        assert mapper.scalar_range == pytest.approx(scalar_range)
+    assert mapper.dataset is not None
+    assert mapper.dataset.n_arrays == 0
+    assert mapper.dataset.point_data.active_scalars_name is None
+    assert mapper.dataset.cell_data.active_scalars_name is None
+
+
 @pytest.mark.parametrize('smooth_shading', [True, False])
 def test_add_mesh_smooth_shading_with_algorithm(smooth_shading):
     """Smooth shading works when the input is a vtkAlgorithm."""
@@ -4214,16 +4242,17 @@ def test_add_mesh_smooth_shading_with_algorithm(smooth_shading):
     pl.show()
 
 
+@pytest.mark.skip_check_gc  # vtkWeakReference persists through show() image capture teardown.
 def test_add_mesh_smooth_shading_with_algorithm_and_scalars():
     """Algorithm input + scalars + smooth_shading composes pipeline stages."""
-    mesh = pv.Wavelet()
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60)
     mesh.point_data['z'] = mesh.points[:, 2].astype(float)
 
     source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
     surface = algorithms.callback_algorithm(
         source,
-        lambda m: m.clip('x'),
-        output_type=pv.UnstructuredGrid,
+        lambda m: m.triangulate(),
+        output_type=pv.PolyData,
     )
 
     pl = pv.Plotter()
@@ -4302,14 +4331,183 @@ def test_add_mesh_smooth_shading_with_algorithm_and_scalars_propagates_updates()
     pl.close()
 
 
-def test_add_mesh_smooth_shading_unstructured_grid_scalars():
-    """Smooth shading on a tet-mesh UnstructuredGrid with point scalars.
+def test_add_actor_array_name_with_callback_algorithm_is_lazy():
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    tracker = _AlgorithmExecutionTracker()
 
-    Exercises the full pipeline: extract surface from a volume tet mesh,
-    compute normals with split sharp edges, and render with scalar coloring.
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algorithms.callback_algorithm(mesh, tracker)
+    mapper.array_name = 'data'
+    actor = pv.Actor(mapper=mapper)
+    expected_range = (
+        float(np.min(mesh.point_data['data'])),
+        float(np.max(mesh.point_data['data'])),
+    )
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl.show()
+    mapped = _get_actor_mapper_input(actor)
+
+    assert tracker.executed is True
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert np.array_equal(mapped.point_data['data'], mesh.point_data['data'])
+
+
+def test_add_actor_set_active_scalars_with_callback_algorithm_is_lazy():
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    tracker = _AlgorithmExecutionTracker()
+
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algorithms.callback_algorithm(mesh, tracker)
+    mapper.set_active_scalars('data', preference='point')
+    actor = pv.Actor(mapper=mapper)
+    expected_range = (
+        float(np.min(mesh.point_data['data'])),
+        float(np.max(mesh.point_data['data'])),
+    )
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl.show()
+    mapped = _get_actor_mapper_input(actor)
+
+    assert tracker.executed is True
+    assert actor.mapper.array_name == 'data'
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert np.array_equal(mapped.point_data['data'], mesh.point_data['data'])
+
+
+@pytest.mark.skip_check_gc  # show() + mapper dataset inspection retains a vtkWeakReference.
+def test_add_actor_smooth_shading_algorithm_array_name_is_lazy():
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60)
+    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    algo = algorithms.smooth_shading_algorithm(
+        mesh,
+        split_sharp_edges=True,
+        feature_angle=30.0,
+    )
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algo
+    mapper.array_name = 'data'
+    actor = pv.Actor(mapper=mapper)
+    actor.prop.interpolation = 'phong'
+    expected_range = (
+        float(np.min(mesh.point_data['data'])),
+        float(np.max(mesh.point_data['data'])),
+    )
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl.show()
+    mapped = _get_actor_mapper_input(actor)
+
+    algo_output = pv.wrap(algo.GetOutputDataObject(0))
+    assert algo_output.n_arrays > 0
+    assert 'data' in algo_output.point_data
+    assert algo_output.point_data.active_normals_name == 'Normals'
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert mapped.point_data.active_normals_name == 'Normals'
+
+
+def test_add_actor_smooth_shading_algorithm_cell_array_name_is_lazy():
+    mesh = pv.Sphere(theta_resolution=30, phi_resolution=30)
+    mesh.cell_data['data'] = np.arange(mesh.n_cells, dtype=float)
+    algo = algorithms.smooth_shading_algorithm(
+        mesh,
+        split_sharp_edges=True,
+        feature_angle=30.0,
+    )
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algo
+    mapper.array_name = 'data'
+    actor = pv.Actor(mapper=mapper)
+    actor.prop.interpolation = 'phong'
+    expected_range = (float(np.min(mesh.cell_data['data'])), float(np.max(mesh.cell_data['data'])))
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='cell',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='cell',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl.show()
+    mapped = _get_actor_mapper_input(actor)
+
+    algo_output = pv.wrap(algo.GetOutputDataObject(0))
+    assert algo_output.n_arrays > 0
+    assert 'data' in algo_output.cell_data
+    assert algo_output.point_data.active_normals_name == 'Normals'
+    assert mapped.cell_data.active_scalars_name == 'data'
+    assert mapped.point_data.active_normals_name == 'Normals'
+
+
+@pytest.mark.skip_check_gc  # vtkWeakReference persists through show() image capture teardown.
+def test_add_mesh_smooth_shading_unstructured_grid_scalars():
+    """Smooth shading on an :class:`pyvista.UnstructuredGrid` with point scalars.
+
+    Exercises the full pipeline from unstructured-grid input through surface
+    extraction, normal generation, and scalar coloring on a curved mesh that
+    visibly changes under smooth shading.
     """
-    mesh = examples.download_letter_a().rotate_y(90)
-    source = algorithms.source_algorithm(mesh.elevation, output_type=pv.UnstructuredGrid)
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
+    mesh.clear_data()
+    mesh.point_data['Elevation'] = mesh.points[:, 2].astype(float)
+    source = algorithms.source_algorithm(lambda: mesh, output_type=pv.UnstructuredGrid)
 
     pl = pv.Plotter()
     pl.add_mesh(
@@ -4320,7 +4518,6 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
         feature_angle=30.0,
         show_scalar_bar=False,
     )
-    pl.camera_position = 'yz'
     pl.show()
 
 
@@ -4437,12 +4634,12 @@ def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars():
     the scalars through the topology change introduced by
     ``split_sharp_edges``.
     """
-    # Cube has sharp 90° edges, so ``split_sharp_edges=True`` with the
-    # default feature angle duplicates vertices and changes n_points —
-    # that topology change is what triggers Block C's re-resolution.
-    cube = pv.Cube().triangulate()
-    source = algorithms.source_algorithm(lambda: cube, output_type=pv.PolyData)
-    raw_scalars = np.linspace(0.0, 1.0, cube.n_points, dtype=np.float32)
+    # A cone combines a curved sidewall with a sharp base edge, so
+    # ``split_sharp_edges=True`` both changes the rendered appearance and
+    # duplicates vertices to trigger Block C's re-resolution.
+    cone = pv.Cone(resolution=90, capping=True).triangulate()
+    source = algorithms.source_algorithm(lambda: cone, output_type=pv.PolyData)
+    raw_scalars = np.linspace(0.0, 1.0, cone.n_points, dtype=np.float32)
 
     pl = pv.Plotter()
     pl.add_mesh(
@@ -4457,12 +4654,12 @@ def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars():
 
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars_mapper_output():
-    cube = pv.Cube().triangulate()
-    cube.clear_data()
-    cube.point_data['keep_active'] = np.linspace(-1.0, 1.0, cube.n_points, dtype=np.float32)
-    cube.set_active_scalars('keep_active')
-    source = algorithms.source_algorithm(lambda: cube, output_type=pv.PolyData)
-    raw_scalars = np.linspace(0.0, 1.0, cube.n_points, dtype=np.float32)
+    cone = pv.Cone(resolution=90, capping=True).triangulate()
+    cone.clear_data()
+    cone.point_data['keep_active'] = np.linspace(-1.0, 1.0, cone.n_points, dtype=np.float32)
+    cone.set_active_scalars('keep_active')
+    source = algorithms.source_algorithm(lambda: cone, output_type=pv.PolyData)
+    raw_scalars = np.linspace(0.0, 1.0, cone.n_points, dtype=np.float32)
 
     pl = pv.Plotter()
     actor = pl.add_mesh(
@@ -4479,9 +4676,9 @@ def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars_mapper_output():
     assert mapped.point_data.active_scalars_name == pv.DEFAULT_SCALARS_NAME
     assert mapped.point_data.active_normals_name == 'Normals'
     assert np.allclose(mapped.point_data[pv.DEFAULT_SCALARS_NAME], raw_scalars[tracker])
-    assert cube.active_scalars_name == 'keep_active'
-    assert pv.DEFAULT_SCALARS_NAME not in cube.point_data
-    assert 'Normals' not in cube.point_data
+    assert cone.active_scalars_name == 'keep_active'
+    assert pv.DEFAULT_SCALARS_NAME not in cone.point_data
+    assert 'Normals' not in cone.point_data
 
     pl.close()
 
@@ -4590,7 +4787,8 @@ def test_add_mesh_smooth_shading_multi_component_scalars():
     so the spliced ``ActiveScalarsAlgorithm`` would fail to activate it
     and the render would silently fall back to no scalar mapping.
     """
-    mesh = pv.Wavelet().cast_to_unstructured_grid()
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
+    mesh.clear_data()
     # Use point coordinates as the vector field so ``component=1`` picks a
     # clean y-axis gradient.  ``np.array`` (forces a copy) is required to
     # detach from the ``Points`` ``vtkFloatArray`` buffer — both ``astype``
@@ -4599,14 +4797,14 @@ def test_add_mesh_smooth_shading_multi_component_scalars():
     mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
     pl = pv.Plotter()
     pl.add_mesh(mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False)
-    pl.camera_position = 'xy'
     pl.show()
 
 
 @pytest.mark.skip_check_gc  # Mapper-array inspection retains a vtkWeakReference.
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_add_mesh_smooth_shading_multi_component_scalars_mapper_output():
-    mesh = pv.Wavelet().cast_to_unstructured_grid()
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
+    mesh.clear_data()
     mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
     mesh.point_data['keep_active'] = mesh.points[:, 0].astype(np.float32)
     mesh.set_active_scalars('keep_active')

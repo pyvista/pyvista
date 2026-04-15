@@ -165,6 +165,39 @@ def test_mapper_array_name_setter_updates_pipeline(sphere):
     assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
 
 
+def test_mapper_array_name_initializes_point_scalars_pipeline(sphere):
+    """Setting ``array_name`` directly must activate point scalars."""
+    sphere['keep_active'] = sphere.points[:, 0]
+    sphere['data'] = sphere.points[:, 2]
+    sphere.set_active_scalars('keep_active')
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.array_name = 'data'
+
+    assert mapper._active_scalars_algo is not None
+    assert mapper._active_scalars_algo.preference == 'point'
+    assert mapper.array_name == 'data'
+    assert np.array_equal(mapper._mapped_scalars, sphere['data'])
+    assert sphere.active_scalars_name == 'keep_active'
+
+
+def test_mapper_array_name_initializes_cell_scalars_pipeline():
+    """Setting ``array_name`` directly must activate cell scalars."""
+    mesh = pv.Cube()
+    mesh.point_data['keep_active'] = mesh.points[:, 0]
+    mesh.cell_data['cell_data'] = np.arange(mesh.n_cells, dtype=float)
+    mesh.set_active_scalars('keep_active')
+
+    mapper = DataSetMapper(dataset=mesh)
+    mapper.array_name = 'cell_data'
+
+    assert mapper._active_scalars_algo is not None
+    assert mapper._active_scalars_algo.preference == 'cell'
+    assert mapper.array_name == 'cell_data'
+    assert np.array_equal(mapper._mapped_scalars, mesh.cell_data['cell_data'])
+    assert mesh.active_scalars_name == 'keep_active'
+
+
 def test_mapper_copy_preserves_scalars_config(sphere):
     """copy() must reproduce the active-scalars pipeline."""
     sphere['data_a'] = sphere.points[:, 0]
