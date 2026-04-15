@@ -1,0 +1,92 @@
+# syntax=docker/dockerfile:1.7
+#
+# Multi-stage Dockerfile for PyVista.
+#
+# Targets:
+#   - slim    : Minimal Python image with PyVista installed (off-screen).
+#   - jupyter : JupyterLab image with PyVista + Trame for interactive
+#               in-notebook rendering.
+#
+# Build from the repository root:
+#
+#   docker build -f docker/Dockerfile --target slim    -t pyvista:slim    .
+#   docker build -f docker/Dockerfile --target jupyter -t pyvista:jupyter .
+#
+# Override the Python version (must match a supported VTK wheel):
+#
+#   docker build --build-arg PY_VERSION=3.12 \
+#     -f docker/Dockerfile --target jupyter -t pyvista:jupyter .
+
+ARG PY_VERSION=3.13
+
+
+# ---------------------------------------------------------------------------
+# Stage 1: build the PyVista wheel from the source tree in the build context.
+# Produces /build/dist/pyvista-*.whl, which the runtime stages install. This
+# keeps build tooling out of the final images and avoids any pre-build step
+# outside of Docker.
+# ---------------------------------------------------------------------------
+FROM python:${PY_VERSION}-slim AS builder
+
+WORKDIR /build
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip build
+
+COPY . /build
+
+RUN python -m build --wheel --outdir /build/dist
+
+
+# ---------------------------------------------------------------------------
+# Stage 2: slim runtime — PyVista only, no Jupyter, off-screen by default.
+# ---------------------------------------------------------------------------
+FROM python:${PY_VERSION}-slim AS slim
+
+LABEL org.opencontainers.image.title="PyVista (slim)"
+LABEL org.opencontainers.image.description="Minimal PyVista runtime image for off-screen rendering."
+LABEL org.opencontainers.image.source="https://github.com/pyvista/pyvista"
+LABEL org.opencontainers.image.licenses="MIT"
+
+ENV PYVISTA_OFF_SCREEN=true \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+COPY --from=builder /build/dist/pyvista-*.whl /tmp/
+
+RUN pip install /tmp/pyvista-*.whl \
+ && rm /tmp/pyvista-*.whl
+
+WORKDIR /work
+
+
+# ---------------------------------------------------------------------------
+# Stage 3: jupyter runtime — PyVista with Jupyter/Trame extras, built on the
+# upstream jupyter/base-notebook image. The optional dependency groups come
+# directly from pyproject.toml so there is a single source of truth.
+#
+# The jupyter base image is published for a fixed Python version; keep
+# ${PY_VERSION} and the tag here in sync (default 3.13 -> python-3.13).
+# ---------------------------------------------------------------------------
+FROM quay.io/jupyter/base-notebook:python-3.13 AS jupyter
+
+LABEL org.opencontainers.image.title="PyVista (jupyter)"
+LABEL org.opencontainers.image.description="PyVista with JupyterLab and Trame for interactive rendering."
+LABEL org.opencontainers.image.source="https://github.com/pyvista/pyvista"
+LABEL org.opencontainers.image.licenses="MIT"
+
+ENV JUPYTER_ENABLE_LAB=yes \
+    PYVISTA_TRAME_SERVER_PROXY_PREFIX=/proxy/ \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+USER root
+COPY --from=builder /build/dist/pyvista-*.whl /tmp/
+
+RUN pip install "$(ls /tmp/pyvista-*.whl)[jupyter,colormaps,io]" \
+ && rm /tmp/pyvista-*.whl
+
+USER ${NB_UID}
+WORKDIR ${HOME}
+
+EXPOSE 8888

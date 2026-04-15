@@ -1,5 +1,3 @@
-!
-
 PyVista within a Docker Container
 =================================
 You can use ``pyvista`` from within a docker container with
@@ -37,27 +35,45 @@ start playing around with pyvista in jupyterlab. For example:
 
 Create your own Docker Container with PyVista
 ---------------------------------------------
-Clone PyVista and cd into this directory to create your own customized docker image.
+Both the ``latest`` and ``latest-slim`` images are produced from a single
+multi-stage Dockerfile at ``docker/Dockerfile``. The PyVista wheel is built
+*inside* the Docker build, so no pre-build steps are required — clone the
+repository and run ``docker build`` from the project root:
 
 .. code-block:: bash
 
   git clone https://github.com/pyvista/pyvista
-  cd pyvista/docker
-  IMAGE=my-pyvista-jupyterlab:v0.1.0
-  docker build -t $IMAGE .
-  docker push $IMAGE
+  cd pyvista
 
-If you wish to have off-screen GPU support when rending on jupyterlab,
-see the notes about building with EGL at :ref:`building_vtk`,
-or use the custom, pre-built wheels at
-`Release 0.27.0 <https://github.com/pyvista/pyvista/releases/tag/0.27.0>`_.
-Install that customized vtk wheel onto your docker image by modifying
-the docker image at ``pyvista/docker/jupyter.Dockerfile`` with:
+  # JupyterLab image (equivalent to ghcr.io/pyvista/pyvista:latest)
+  docker build -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
+
+  # Slim off-screen image (equivalent to ghcr.io/pyvista/pyvista:latest-slim)
+  docker build -f docker/Dockerfile --target slim -t my-pyvista-slim .
+
+The ``jupyter`` target installs the ``jupyter``, ``colormaps``, and ``io``
+optional dependency groups directly from ``pyproject.toml``, so the package
+set always matches the project's pins — there is no separate
+``requirements.txt`` to keep in sync.
+
+Override the Python version (must match a supported VTK wheel) via a build
+argument:
+
+.. code-block:: bash
+
+  docker build --build-arg PY_VERSION=3.12 \
+    -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
+
+If you wish to have off-screen GPU support when rendering in JupyterLab,
+see the notes about building with EGL at :ref:`building_vtk`, and install
+your customized VTK wheel on top of the ``jupyter`` target. For example,
+create a small downstream Dockerfile:
 
 .. code-block:: docker
 
-  COPY vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl /tmp/
-  RUN pip install /tmp/vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl
+  FROM my-pyvista-jupyter
+  COPY vtk-*.whl /tmp/
+  RUN pip install /tmp/vtk-*.whl
 
 Additionally, you must install GPU drivers on the docker image of the
 same version running on the host machine. For example, if you are

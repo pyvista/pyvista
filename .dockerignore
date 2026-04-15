@@ -1,8 +1,42 @@
+# Build artifacts / caches
+# Claude / local scratch
+# Docs and examples
+# Editor / env
+# Keep the Docker build context small. Anything not strictly required to
+# Notebooks and local scratch
+# Tests and coverage
+# VCS / CI
+# build the pyvista wheel (see docker/Dockerfile, builder stage) should be
+# excluded here.
 *.egg-info
+*.ipynb
 *.pyc
+.claude
+.coverage
+.coverage.*
 .git
+.gitattributes
+.github
+.gitignore
 .hypothesis
+.idea
 .ipynb_checkpoints
+.mypy_cache
+.pre-commit-config.yaml
 .pytest_cache
+.python-version
+.ruff_cache
+.tox
+.venv
+.vscode
+__pycache__/
 build/
+coverage.xml
+dist/
+doc/
+examples/
+examples_trame/
 htmlcov
+tests/
+uv.lock
+venv
