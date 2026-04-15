@@ -80,10 +80,24 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.target }}
           cache-to: type=gha,mode=max,scope=${{ matrix.target }}
 
-      - name: Smoke test (pv.Report)
+      # Exercise server-side off-screen rendering so we catch missing GL /
+      # EGL runtime libraries instead of shipping an image that can import
+      # pyvista but cannot actually render.
+      - name: Smoke test (render + GPUInfo)
         run: |
-          docker run --rm pyvista-ci:${{ matrix.target }} \
-            python -c "import pyvista as pv; print(pv.Report()); assert pv.Sphere().n_points > 0"
+          docker run --rm pyvista-ci:${{ matrix.target }} python -c "
+          import numpy as np
+          import pyvista as pv
+          print(pv.Report())
+          print('GPU info:')
+          print(pv.GPUInfo())
+          pl = pv.Plotter(off_screen=True)
+          pl.add_mesh(pv.Sphere(), color='red')
+          img = pl.screenshot(return_img=True)
+          assert img is not None and img.size > 0, 'empty screenshot'
+          assert np.any(img), 'screenshot is all zeros'
+          print('screenshot ok:', img.shape, 'non-zero px:', int(np.count_nonzero(img)))
+          "
 
       # Second build is a cache hit from the step above; this pushes the
       # already-validated image to the registry under the real tags.

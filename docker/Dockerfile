@@ -50,7 +50,21 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 ENV PYVISTA_OFF_SCREEN=true \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
+
+# Runtime libraries VTK dlopens for off-screen rendering. libegl1 enables
+# EGL so the image uses GPU acceleration when run with the NVIDIA container
+# runtime, and falls back to Mesa llvmpipe software rendering on CPU-only
+# hosts via the libgl1/GLX path.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libopengl0 \
+      libgl1 \
+      libegl1 \
+      libxrender1 \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/dist/pyvista-*.whl /tmp/
 
@@ -78,9 +92,25 @@ LABEL org.opencontainers.image.licenses="MIT"
 ENV JUPYTER_ENABLE_LAB=yes \
     PYVISTA_TRAME_SERVER_PROXY_PREFIX=/proxy/ \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
 
 USER root
+
+# Runtime libraries VTK dlopens for off-screen rendering. libegl1 enables
+# EGL so the image uses GPU acceleration when run with the NVIDIA container
+# runtime, and falls back to Mesa llvmpipe software rendering on CPU-only
+# hosts via the libgl1/GLX path. The upstream jupyter image does not ship
+# these.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libopengl0 \
+      libgl1 \
+      libegl1 \
+      libxrender1 \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /build/dist/pyvista-*.whl /tmp/
 
 RUN pip install "$(ls /tmp/pyvista-*.whl)[jupyter,colormaps,io]" \
