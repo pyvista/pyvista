@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import IntEnum
 import textwrap
+from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
@@ -11,7 +12,32 @@ from typing import cast
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._vtk_utilities import vtk_version_info
 
+
+class _classproperty(property):  # noqa: N801
+    """Read-only class property decorator.
+
+    Use this decaorator as an alternative to chaining `@classmethod`
+    and `@property` which is deprecated.
+
+    See:
+    - https://docs.python.org/library/functions.html#classmethod
+    - https://stackoverflow.com/a/13624858
+
+    Examples
+    --------
+    >>> from pyvista.core.utilities.misc import _classproperty
+    >>> class Foo:
+    ...     @_classproperty
+    ...     def bar(cls): ...
+
+    """
+
+    def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
+        return self.fget(owner_cls)  # type: ignore[misc]
+
+
 _Dimension = Literal[0, 1, 2, 3]
+_DIMENSION_MAP: dict[_Dimension, set[CellType] | frozenset[CellType]] = {}
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _GRID_TEMPLATE_NO_IMAGE = """
@@ -891,7 +917,7 @@ class CellType(IntEnum):
         See Also
         --------
         pyvista.Cell.dimension
-        with_dimension
+        dimension_map
 
         Examples
         --------
@@ -1114,27 +1140,19 @@ class CellType(IntEnum):
             raise ValueError(msg)
         return n_faces
 
-    @classmethod
-    def with_dimension(cls, dimension: _Dimension) -> frozenset[CellType]:
-        """Return the set of all cell types with the given topological dimension.
+    @_classproperty
+    def dimension_map(cls) -> dict[Literal[0, 1, 2, 3], frozenset[CellType]]:  # noqa: N805
+        """Return a mapping with sets for all cell types grouped by topological dimension.
 
-        The groupings are derived from each member's :attr:`dimension`, which in
-        turn comes from :vtk:`vtkCellTypeUtilities.GetDimension`. This avoids
-        maintaining hard-coded lists of 0D/1D/2D/3D cell types and stays in sync
-        with VTK automatically as new cell types are added.
+        The groupings are derived from each member's :attr:`dimension`.
 
         .. versionadded:: 0.48
 
-        Parameters
-        ----------
-        dimension : int
-            Topological dimension. Must be ``0``, ``1``, ``2``, or ``3``.
-
         Returns
         -------
-        frozenset[CellType]
-            All :class:`CellType` members whose :attr:`dimension` equals
-            ``dimension``.
+        dict
+            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and the respective
+            :class:`CellType` members as values.
 
         See Also
         --------
@@ -1149,7 +1167,7 @@ class CellType(IntEnum):
         are in the 2D grouping.
 
         >>> import pyvista as pv
-        >>> two_d = pv.CellType.with_dimension(2)
+        >>> two_d = pv.CellType.dimension_map[2]
         >>> pv.CellType.TRIANGLE in two_d
         True
         >>> pv.CellType.TRIANGLE_STRIP in two_d
@@ -1159,14 +1177,99 @@ class CellType(IntEnum):
         :attr:`~pyvista.DataSet.distinct_cell_types`.
 
         >>> mesh = pv.Sphere()
-        >>> mesh.distinct_cell_types <= pv.CellType.with_dimension(2)
+        >>> mesh.distinct_cell_types <= pv.CellType.dimension_map[2]
         True
 
+        Show all 0D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[0])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.EMPTY_CELL: 0>,
+         <CellType.VERTEX: 1>,
+         <CellType.POLY_VERTEX: 2>]
+
+        Show all 1D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[1])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.LINE: 3>,
+         <CellType.POLY_LINE: 4>,
+         <CellType.QUADRATIC_EDGE: 21>,
+         <CellType.CUBIC_LINE: 35>,
+         <CellType.LAGRANGE_CURVE: 68>,
+         <CellType.BEZIER_CURVE: 75>]
+
+        Show all 2D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[2])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TRIANGLE: 5>,
+         <CellType.TRIANGLE_STRIP: 6>,
+         <CellType.POLYGON: 7>,
+         <CellType.PIXEL: 8>,
+         <CellType.QUAD: 9>,
+         <CellType.QUADRATIC_TRIANGLE: 22>,
+         <CellType.QUADRATIC_QUAD: 23>,
+         <CellType.BIQUADRATIC_QUAD: 28>,
+         <CellType.QUADRATIC_LINEAR_QUAD: 30>,
+         <CellType.BIQUADRATIC_TRIANGLE: 34>,
+         <CellType.QUADRATIC_POLYGON: 36>,
+         <CellType.HIGHER_ORDER_TRIANGLE: 61>,
+         <CellType.HIGHER_ORDER_QUAD: 62>,
+         <CellType.LAGRANGE_TRIANGLE: 69>,
+         <CellType.LAGRANGE_QUADRILATERAL: 70>,
+         <CellType.BEZIER_TRIANGLE: 76>,
+         <CellType.BEZIER_QUADRILATERAL: 77>]
+
+        Show all 3D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[3])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TETRA: 10>,
+         <CellType.VOXEL: 11>,
+         <CellType.HEXAHEDRON: 12>,
+         <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>,
+         <CellType.PENTAGONAL_PRISM: 15>,
+         <CellType.HEXAGONAL_PRISM: 16>,
+         <CellType.QUADRATIC_TETRA: 24>,
+         <CellType.QUADRATIC_HEXAHEDRON: 25>,
+         <CellType.QUADRATIC_WEDGE: 26>,
+         <CellType.QUADRATIC_PYRAMID: 27>,
+         <CellType.TRIQUADRATIC_HEXAHEDRON: 29>,
+         <CellType.QUADRATIC_LINEAR_WEDGE: 31>,
+         <CellType.BIQUADRATIC_QUADRATIC_WEDGE: 32>,
+         <CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON: 33>,
+         <CellType.TRIQUADRATIC_PYRAMID: 37>,
+         <CellType.CONVEX_POINT_SET: 41>,
+         <CellType.POLYHEDRON: 42>,
+         <CellType.PARAMETRIC_CURVE: 51>,
+         <CellType.PARAMETRIC_SURFACE: 52>,
+         <CellType.PARAMETRIC_TRI_SURFACE: 53>,
+         <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
+         <CellType.PARAMETRIC_TETRA_REGION: 55>,
+         <CellType.PARAMETRIC_HEX_REGION: 56>,
+         <CellType.HIGHER_ORDER_EDGE: 60>,
+         <CellType.HIGHER_ORDER_POLYGON: 63>,
+         <CellType.HIGHER_ORDER_TETRAHEDRON: 64>,
+         <CellType.HIGHER_ORDER_WEDGE: 65>,
+         <CellType.HIGHER_ORDER_PYRAMID: 66>,
+         <CellType.HIGHER_ORDER_HEXAHEDRON: 67>,
+         <CellType.LAGRANGE_TETRAHEDRON: 71>,
+         <CellType.LAGRANGE_HEXAHEDRON: 72>,
+         <CellType.LAGRANGE_WEDGE: 73>,
+         <CellType.LAGRANGE_PYRAMID: 74>,
+         <CellType.BEZIER_TETRAHEDRON: 78>,
+         <CellType.BEZIER_HEXAHEDRON: 79>,
+         <CellType.BEZIER_WEDGE: 80>,
+         <CellType.BEZIER_PYRAMID: 81>]
+
         """
-        if dimension not in (0, 1, 2, 3):
-            msg = f'`dimension` must be 0, 1, 2, or 3, got {dimension!r}.'
-            raise ValueError(msg)
-        return frozenset(member for member in cls if member.dimension == dimension)
+        if not _DIMENSION_MAP:
+            # Populate dict on first access
+            for dimension in [0, 1, 2, 3]:
+                _DIMENSION_MAP[dimension] = frozenset(
+                    celltype for celltype in CellType if celltype.dimension == dimension
+                )
+
+        # Return copy to avoid users mutating it
+        return dict(_DIMENSION_MAP)
 
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
     VERTEX = _CELL_TYPE_INFO['VERTEX']
