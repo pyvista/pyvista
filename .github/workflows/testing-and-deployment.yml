@@ -163,6 +163,8 @@ jobs:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
     needs: cache-ubuntu-self-hosted
+    # numpy nightly is allowed to fail without failing the overall workflow
+    continue-on-error: ${{ matrix.numpy-version == 'nightly' }}
     strategy:
       fail-fast: false
 
