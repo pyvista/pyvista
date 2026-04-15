@@ -296,7 +296,7 @@ class BaseReader(_FileIOBase):
             read dataset and emit a :class:`~pyvista.InvalidMeshWarning` on a
             mismatch. When ``False``, skip the check entirely. When ``None``
             (the default), honor
-            :attr:`pyvista.global_config.validate_on_wrap`.
+            :attr:`pyvista.core.config.Config.validate_on_wrap`.
 
             .. versionadded:: 0.48
 

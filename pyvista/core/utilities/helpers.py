@@ -201,7 +201,7 @@ def wrap(  # noqa: PLR0911
         point or cell count, and emit a :class:`~pyvista.InvalidMeshWarning`
         on any mismatch. When ``False``, skip the check entirely. When
         ``None`` (the default), honor
-        :attr:`pyvista.global_config.validate_on_wrap` (which itself
+        :attr:`pyvista.core.config.Config.validate_on_wrap` (which itself
         defaults to ``True``).
 
         Pass ``validate=False`` in hot loops where the caller already trusts

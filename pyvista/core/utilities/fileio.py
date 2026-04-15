@@ -272,7 +272,7 @@ def read(  # noqa: PLR0911, PLR0917
     validate : bool, optional
         Forwarded to :func:`pyvista.wrap` as the ``validate`` keyword when
         using a ``vtk`` reader. When ``None`` (the default), honors
-        :attr:`pyvista.global_config.validate_on_wrap`. Pass ``False`` to
+        :attr:`pyvista.core.config.Config.validate_on_wrap`. Pass ``False`` to
         skip the cheap array-length sanity check on very large trusted
         files. Has no effect for ``meshio`` or pickle code paths.
 
