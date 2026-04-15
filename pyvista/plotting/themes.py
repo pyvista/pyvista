@@ -1471,7 +1471,7 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service and not prefix.startswith('http'):  # pragma: no cover
+        if service and not prefix.startswith('http'):
             self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/')).rstrip('/') + '/'
             self._server_proxy_enabled = True
         else:
