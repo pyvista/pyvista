@@ -15,7 +15,8 @@ import pyvista as pv
 # %%
 # Define a benzene ring
 # ~~~~~~~~~~~~~~~~~~~~~
-# Use simple planar coordinates to place carbon and hydrogen atoms.
+# Place six carbons evenly around a circle with a hydrogen pointing
+# radially outward from each one.
 
 angles = np.linspace(0, 2 * np.pi, 6, endpoint=False)
 carbons = np.column_stack((np.cos(angles), np.sin(angles), np.zeros(6)))
@@ -50,7 +51,8 @@ hydrogen_bonds = pv.merge(
 # %%
 # Render the molecule
 # ~~~~~~~~~~~~~~~~~~~
-# This ball-and-stick style uses different radii and colors for atoms and bonds.
+# Atoms are rendered as spheres and bonds as cylinders, each with their
+# own radius and color.
 
 pl = pv.Plotter()
 pl.add_mesh(carbon_bonds, color='slategray')

@@ -15,11 +15,10 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a real point cloud
-# ~~~~~~~~~~~~~~~~~~~~~~~
+# Load a point cloud
+# ~~~~~~~~~~~~~~~~~~
 # The :func:`~pyvista.examples.downloads.download_horse_points` dataset is a
-# dense scan of a horse statue. Subsample it so the hull geometry is easy to
-# inspect.
+# dense scan of a horse statue. Subsample it to keep the hull geometry light.
 
 full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=2)
@@ -31,8 +30,8 @@ cloud
 # %%
 # Extract the outer hull
 # ~~~~~~~~~~~~~~~~~~~~~~
-# A Delaunay tetrahedralization followed by surface extraction gives the outer
-# wrap of the point cloud.
+# A Delaunay tetrahedralization followed by surface extraction returns the
+# outer surface of the cloud.
 
 hull = cloud.delaunay_3d(alpha=cloud.length).extract_surface(algorithm=None)
 
@@ -50,7 +49,7 @@ pl.show()
 # %%
 # Inspect the wrapped surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The result is a closed surface that encloses the full point set.
+# The result is a closed surface enclosing every input point.
 
 hull
 # %%

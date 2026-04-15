@@ -18,7 +18,8 @@ from pyvista import examples
 # Load a cosmological point cloud
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # :func:`~pyvista.examples.downloads.download_cloud_dark_matter` returns a
-# sampled N-body simulation. Any point in the dataset makes a good query seed.
+# sampled N-body simulation. Pick a point near the middle of the cloud as
+# the query seed.
 
 cloud = examples.download_cloud_dark_matter()
 query = cloud.points[cloud.n_points // 2]
@@ -56,7 +57,7 @@ pl.show()
 # %%
 # Inspect the neighbor indices
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The returned indices can be used to extract or analyze the local subset.
+# The returned indices index back into the original point array.
 
 neighbor_ids
 # %%

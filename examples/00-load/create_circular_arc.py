@@ -37,7 +37,7 @@ pl.show()
 # %%
 # Create an arc from a normal and angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This version is handy when the arc belongs to a known plane.
+# Use this form when you already know the plane the arc lies in.
 
 arc_from_normal = pv.CircularArcFromNormal(
     center=(0, 0, 0),

@@ -14,7 +14,7 @@ import pyvista as pv
 # %%
 # Create an extruded text mesh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The text is standard PolyData, so it can be transformed and plotted like any
+# The text is standard PolyData and can be transformed and plotted like any
 # other surface.
 
 text = pv.Text3D('PyVista', depth=0.3)
@@ -24,8 +24,7 @@ text
 # %%
 # Compare flat and extruded text
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Setting ``depth=0`` creates a flat version while a positive depth extrudes the
-# glyphs into 3D.
+# ``depth=0`` produces flat glyphs; a positive depth extrudes them into 3D.
 
 flat = pv.Text3D('PyVista', depth=0)
 extruded = pv.Text3D('PyVista', depth=0.4)

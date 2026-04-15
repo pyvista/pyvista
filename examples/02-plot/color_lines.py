@@ -15,7 +15,8 @@ import pyvista as pv
 # %%
 # Build a small family of curves
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Each curve gets its own scalar value so the lines can be colored as a group.
+# Each curve carries a single ``line_id`` cell scalar so the merged dataset
+# can be colored line-by-line.
 
 lines = []
 for index, phase in enumerate(np.linspace(0, np.pi, 4)):
@@ -38,7 +39,7 @@ curves
 # %%
 # Tube and color the lines
 # ~~~~~~~~~~~~~~~~~~~~~~~~
-# Coloring by `line_id` gives each line its own consistent color.
+# Coloring by ``line_id`` gives each line a single uniform color.
 
 pl = pv.Plotter()
 pl.add_mesh(

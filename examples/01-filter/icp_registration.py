@@ -19,8 +19,8 @@ from pyvista import examples
 # %%
 # Load a reference surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~
-# Use the :func:`~pyvista.examples.downloads.download_action_figure` scan as a
-# real-world asymmetric reference mesh.
+# The :func:`~pyvista.examples.downloads.download_action_figure` scan is an
+# asymmetric reference mesh.
 
 target = examples.download_action_figure()
 target
@@ -29,8 +29,8 @@ target
 # %%
 # Transform a copy away from the reference
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The transformed copy plays the role of the incoming scan that we would like to
-# register back onto the reference surface.
+# The transformed copy stands in for an incoming scan that needs to be
+# registered back onto the reference.
 
 offset = np.array(target.length) * 0.4
 transform = pv.Transform().rotate_x(25).rotate_z(-35).translate((offset, -offset, offset))
@@ -45,8 +45,8 @@ pl.show()
 # %%
 # Recover the rigid transform
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Use :func:`pyvista.DataSetFilters.align` to register the transformed copy back
-# to the reference mesh.
+# :func:`pyvista.DataSetFilters.align` runs ICP and returns both the aligned
+# mesh and the recovered transform matrix.
 
 aligned, matrix = source.align(target, return_matrix=True)
 
@@ -67,8 +67,7 @@ pl.show()
 # %%
 # Inspect the recovered transform
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The returned matrix maps the transformed surface back toward the reference
-# surface.
+# The returned matrix maps the transformed copy back onto the reference.
 
 np.round(matrix, 3)
 
@@ -76,7 +75,7 @@ np.round(matrix, 3)
 # %%
 # Measure the residual distances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# A successful registration leaves only a small point-to-surface residual.
+# A successful registration leaves a small point-to-surface residual.
 
 aligned['distance_to_target'].mean(), aligned['distance_to_target'].max()
 # %%

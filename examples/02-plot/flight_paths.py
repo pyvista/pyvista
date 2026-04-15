@@ -34,7 +34,7 @@ def latlon_to_xyz(latitude: float, longitude: float, radius: float = 1.0) -> np.
 # %%
 # Define city locations and routes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The routes are lifted slightly above the globe to make them easier to see.
+# The routes are lifted slightly above the globe to keep them visible.
 
 cities = {
     'New York': latlon_to_xyz(40.7128, -74.0060, radius=1.02),
@@ -64,8 +64,8 @@ for start, stop in routes:
 # %%
 # Render the route map
 # ~~~~~~~~~~~~~~~~~~~~
-# Great-circle-style arcs give the routes a more globe-like look than straight
-# line segments.
+# Great-circle arcs follow the curvature of the sphere instead of cutting
+# straight through it.
 
 earth = pv.Sphere(theta_resolution=90, phi_resolution=90)
 route_mesh = pv.merge(arcs)

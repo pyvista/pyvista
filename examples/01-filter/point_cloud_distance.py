@@ -17,8 +17,8 @@ from pyvista import examples
 # %%
 # Create two related point clouds
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Start from a scanned horse point cloud and displace a subsampled copy so that
-# every source point has a nearby counterpart in the target cloud.
+# Start from a scanned horse point cloud, subsample it, then displace a
+# perturbed copy so each source point has a nearby counterpart in the target.
 
 full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=4)
@@ -33,7 +33,7 @@ target = pv.PolyData(source.points + offset + warp)
 # %%
 # Compute nearest-neighbor distances
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Use the target cloud as a nearest-neighbor lookup and color the source by the
+# Query the target cloud for each source point and color the source by the
 # resulting distances.
 
 closest_ids = np.array([target.find_closest_point(point) for point in source.points])
@@ -68,7 +68,7 @@ pl.show()
 # %%
 # Inspect the distance range
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The cloud is close to the target, but not identical to it.
+# The clouds are close but not identical.
 
 source['distance'].min(), source['distance'].max()
 # %%

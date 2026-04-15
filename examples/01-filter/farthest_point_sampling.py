@@ -4,13 +4,12 @@
 Farthest Point Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Subsample a point cloud so that the kept points are spread as evenly as
-possible across the input geometry.
+Subsample a point cloud so the kept points stay spaced apart instead of
+clumping in dense regions.
 
-Farthest point sampling (FPS) starts from a seed point and repeatedly picks
-the point that is farthest from the current sample set. The result is a
-near-uniform covering of the cloud — much more representative than a uniform
-random draw, which over-samples dense regions and under-samples sparse ones.
+Farthest point sampling (FPS) starts from a random seed and repeatedly picks
+the point that is farthest from the current sample set. Compared to a
+uniform random draw, it gives a much more even covering of the input cloud.
 
 References
 ----------
@@ -20,6 +19,7 @@ Y. Eldar et al., "The farthest point strategy for progressive image sampling,"
 
 """
 
+# sphinx_gallery_thumbnail_number = 1
 from __future__ import annotations
 
 import numpy as np
@@ -30,50 +30,51 @@ from pyvista import examples
 # Load a point cloud
 # ~~~~~~~~~~~~~~~~~~
 # :func:`~pyvista.examples.downloads.download_horse_points` returns a scanned
-# horse with non-uniform point density — a good stress test for any
-# subsampling strategy.
+# horse with uneven point density.
 
 cloud = examples.download_horse_points()
 cloud
+
 
 # %%
 # Implement farthest point sampling
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each iteration tracks the distance from every input point to its closest
-# already-sampled neighbor and picks the point with the largest such distance
-# as the next sample.
+# already-sampled neighbor and picks the point with the largest such
+# distance as the next sample.
 
 rng = np.random.default_rng(seed=0)
 
 
-def farthest_point_sampling(points, k):
-    sampled = np.empty(k, dtype=int)
+def farthest_point_sampling(points, n_samples):
+    """Return indices of ``n_samples`` farthest-spaced points."""
+    sampled = np.empty(n_samples, dtype=int)
     sampled[0] = rng.integers(points.shape[0])
     distances = np.full(points.shape[0], np.inf)
-    for i in range(1, k):
+    for i in range(1, n_samples):
         last = points[sampled[i - 1]]
         distances = np.minimum(distances, np.linalg.norm(points - last, axis=1))
         sampled[i] = np.argmax(distances)
     return sampled
 
 
-k = 400
-fps_ids = farthest_point_sampling(cloud.points, k)
+n_samples = 400
+fps_ids = farthest_point_sampling(cloud.points, n_samples)
+random_ids = rng.choice(cloud.n_points, size=n_samples, replace=False)
+
 fps_cloud = pv.PolyData(cloud.points[fps_ids])
+random_cloud = pv.PolyData(cloud.points[random_ids])
+
 
 # %%
 # Compare with a uniform random draw
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Drawing the same number of points uniformly at random produces visibly
-# clumpy coverage, while the FPS sample lays the points down on an
-# approximately uniform lattice over the surface.
-
-random_ids = rng.choice(cloud.n_points, size=k, replace=False)
-random_cloud = pv.PolyData(cloud.points[random_ids])
+# The random subsample (left, red) leaves visible gaps and clumps. The
+# farthest-point subsample (right, blue) lays the points down in a more
+# uniform pattern over the surface.
 
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
-pl.add_text('Random subsample', font_size=12)
 pl.add_points(
     cloud,
     color='lightgray',
@@ -89,7 +90,6 @@ pl.add_points(
 )
 
 pl.subplot(0, 1)
-pl.add_text('Farthest point sampling', font_size=12)
 pl.add_points(
     cloud,
     color='lightgray',
@@ -110,24 +110,17 @@ pl.show()
 # %%
 # Quantify the coverage gap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
-# A simple proxy for "how evenly does each subsample cover the original
-# cloud" is the maximum nearest-neighbor distance from any input point to its
-# closest sampled neighbor. Lower is better — and FPS wins by construction.
+# For each input point, find the distance to its closest sample and report
+# the worst case. Lower is better.
 
-
-def max_coverage_distance(samples):
-    sampled_polydata = pv.PolyData(samples)
-    closest = np.array(
-        [sampled_polydata.find_closest_point(p) for p in cloud.points],
-    )
-    return float(np.linalg.norm(cloud.points - samples[closest], axis=1).max())
-
-
-(
-    max_coverage_distance(cloud.points[random_ids]),
-    max_coverage_distance(
-        cloud.points[fps_ids],
-    ),
+random_max_gap = max(
+    np.linalg.norm(p - random_cloud.points[random_cloud.find_closest_point(p)])
+    for p in cloud.points
 )
+fps_max_gap = max(
+    np.linalg.norm(p - fps_cloud.points[fps_cloud.find_closest_point(p)])
+    for p in cloud.points
+)
+random_max_gap, fps_max_gap
 # %%
 # .. tags:: filter

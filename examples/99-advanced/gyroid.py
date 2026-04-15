@@ -15,7 +15,8 @@ import pyvista as pv
 # %%
 # Sample the implicit field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
-# The gyroid is the zero level set of a smooth trigonometric field.
+# The gyroid is the zero level set of
+# ``sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x)``.
 
 n = 50
 x, y, z = np.mgrid[
@@ -35,7 +36,7 @@ grid
 # %%
 # Extract the zero isosurface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The resulting surface weaves through the full periodic cell.
+# The contour weaves through the periodic sample volume.
 
 surface = grid.contour([0.0], scalars='gyroid')
 

@@ -34,7 +34,7 @@ line
 # %%
 # Plot the line as a tube
 # ~~~~~~~~~~~~~~~~~~~~~~~
-# Tubing makes it easier to follow the path through 3D space.
+# Tubing the polyline gives it visible thickness in 3D.
 
 pl = pv.Plotter()
 pl.add_mesh(line.tube(radius=0.08), scalars='height', cmap='viridis')

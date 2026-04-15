@@ -15,7 +15,7 @@ import pyvista as pv
 # %%
 # Integrate the Lorenz system
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Use a simple forward-Euler scheme to generate the chaotic trajectory.
+# A forward-Euler scheme is enough to trace the chaotic trajectory.
 
 sigma = 10.0
 rho = 28.0
@@ -41,7 +41,7 @@ trajectory['z'] = points[:, 2]
 # %%
 # Render the attractor
 # ~~~~~~~~~~~~~~~~~~~~
-# Tube the trajectory to make the geometry easier to read in 3D.
+# Tube the polyline so the trajectory has visible thickness in 3D.
 
 pl = pv.Plotter()
 pl.add_mesh(trajectory.tube(radius=0.12), scalars='z', cmap='plasma')
@@ -51,7 +51,7 @@ pl.show()
 # %%
 # Inspect the path length
 # ~~~~~~~~~~~~~~~~~~~~~~~
-# Even a simple integration quickly produces a long path through phase space.
+# The integrated trajectory accumulates several hundred units of arc length.
 
 trajectory.length
 # %%

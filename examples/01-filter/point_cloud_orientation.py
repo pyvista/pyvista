@@ -4,8 +4,8 @@
 Analyze the Orientation of a Point Cloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Fit geometric primitives and an oriented bounding box to a noisy point cloud
-using PyVista's principal-axis tools.
+Fit a line, plane, and oriented bounding box to a tilted point cloud with
+PyVista's principal-axis utilities.
 """
 
 from __future__ import annotations
@@ -17,11 +17,11 @@ from pyvista import examples
 # sphinx_gallery_thumbnail_number = 2
 
 # %%
-# Load and tilt a real point cloud
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Start from the :func:`~pyvista.examples.downloads.download_horse_points` scan
-# and rotate a subsampled copy away from the world axes so the orientation
-# analysis has something to recover.
+# Load and tilt a point cloud
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Subsample the :func:`~pyvista.examples.downloads.download_horse_points`
+# scan and rotate the copy off the world axes so the recovered orientation
+# is non-trivial.
 
 full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=4)
@@ -34,8 +34,8 @@ cloud
 # %%
 # Fit a line and a plane
 # ~~~~~~~~~~~~~~~~~~~~~~
-# The line follows the dominant axis of the cloud while the plane spans the two
-# strongest principal directions.
+# The fitted line follows the cloud's dominant axis; the fitted plane spans
+# the two strongest principal directions.
 
 line, length, direction = pv.fit_line_to_points(
     cloud.points,
@@ -69,8 +69,8 @@ pl.show()
 # %%
 # Compare axis-aligned and oriented boxes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The axis-aligned box ignores the tilt of the data, while the oriented box
-# follows the cloud's principal directions.
+# The axis-aligned box ignores the tilt; the oriented box snaps to the
+# cloud's principal directions.
 
 axis_aligned_box = cloud.bounding_box('outline', as_composite=False)
 oriented_box = cloud.oriented_bounding_box(
@@ -105,7 +105,7 @@ pl.show()
 # %%
 # Quantify the dominant directions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The principal-axis standard deviations show how strongly the cloud is stretched
+# Normalized principal-axis standard deviations report the relative spread
 # along each fitted axis.
 
 _, std = pv.principal_axes(cloud.points, return_std=True)

@@ -20,8 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # %%
 # Define nodes and weighted edges
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# A small network is enough to show how PyVista can render graph-like data as
-# geometry.
+# Six labeled nodes connected by seven weighted edges.
 
 labels = ['A', 'B', 'C', 'D', 'E', 'F']
 points = np.array(
@@ -45,7 +44,7 @@ graph.cell_data['weight'] = weights
 # %%
 # Render the network
 # ~~~~~~~~~~~~~~~~~~
-# Edges are colored by weight while the node labels stay anchored in 3D.
+# Edges are colored by weight; node labels stay anchored to their points.
 
 pl = pv.Plotter()
 pl.add_mesh(
