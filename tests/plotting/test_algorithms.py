@@ -298,11 +298,19 @@ def test_active_scalars_algo_does_not_mutate_input(sphere_with_scalars):
     """The original mesh's active scalars must not change when the algo runs."""
     sphere_with_scalars.point_data['x'] = sphere_with_scalars.points[:, 0]
     sphere_with_scalars.set_active_scalars('x')
+    original_active_normals_name = sphere_with_scalars.point_data.active_normals_name
+    original_normals = np.asarray(sphere_with_scalars.point_data.active_normals).copy()
 
     algo = active_scalars_algorithm(sphere_with_scalars, 'z', preference='point')
     algo.Update()
+    out = pv.wrap(algo.GetOutputDataObject(0))
 
+    assert out.point_data.active_scalars_name == 'z'
+    assert np.allclose(out.point_data['z'], sphere_with_scalars.point_data['z'])
+    assert out.point_data.active_normals_name == original_active_normals_name
+    assert np.allclose(out.point_data.active_normals, original_normals)
     assert sphere_with_scalars.active_scalars_name == 'x'
+    assert sphere_with_scalars.point_data.active_normals_name == original_active_normals_name
 
 
 def test_add_ids_preserves_active_scalars(sphere_with_scalars):
@@ -544,6 +552,9 @@ def test_smooth_shading_algo_does_not_mutate_input():
     sphere = pv.Sphere()
     sphere.point_data['z'] = sphere.points[:, 2]
     original_array_names = set(sphere.point_data.keys())
+    original_active_scalars_name = sphere.active_scalars_name
+    original_active_normals_name = sphere.point_data.active_normals_name
+    original_normals = np.asarray(sphere.point_data.active_normals).copy()
 
     _run_smooth_shading(sphere, split_sharp_edges=True, feature_angle=10.0)
 
@@ -551,6 +562,29 @@ def test_smooth_shading_algo_does_not_mutate_input():
     assert set(sphere.point_data.keys()) == original_array_names
     assert 'pyvistaOriginalPointIds' not in sphere.point_data
     assert ORIGINAL_POINT_IDS_NAME not in sphere.point_data
+    assert sphere.active_scalars_name == original_active_scalars_name
+    assert sphere.point_data.active_normals_name == original_active_normals_name
+    assert np.allclose(sphere.point_data.active_normals, original_normals)
+
+
+def test_smooth_shading_algo_adds_output_normals_without_mutating_input_state():
+    mesh = pv.Cube().triangulate()
+    mesh.clear_data()
+    mesh.point_data['keep_active'] = np.arange(mesh.n_points, dtype=float)
+    mesh.set_active_scalars('keep_active')
+    assert mesh.point_data.active_normals is None
+
+    out, _ = _run_smooth_shading(mesh, split_sharp_edges=True, feature_angle=10.0)
+
+    assert out.point_data.active_scalars_name == 'keep_active'
+    assert out.point_data.active_normals_name == 'Normals'
+    assert out.point_data.active_normals is not None
+    tracker = np.asarray(out.point_data[ORIGINAL_POINT_IDS_NAME])
+    assert np.allclose(out.point_data['keep_active'], mesh.point_data['keep_active'][tracker])
+
+    assert 'Normals' not in mesh.point_data
+    assert mesh.point_data.active_normals is None
+    assert mesh.active_scalars_name == 'keep_active'
 
 
 def test_smooth_shading_algo_propagates_changes_on_modified():

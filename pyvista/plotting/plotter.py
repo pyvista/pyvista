@@ -88,6 +88,7 @@ from .themes import Theme
 from .utilities.algorithms import SmoothShadingAlgorithm
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
+from .utilities.algorithms import callback_algorithm
 from .utilities.algorithms import decimation_algorithm
 from .utilities.algorithms import extract_surface_algorithm
 from .utilities.algorithms import pointset_to_polydata_algorithm
@@ -4050,6 +4051,30 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                         mesh.point_data[SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME]
                     )
                     scalars = np.asarray(scalars)[tracker]
+
+            # Raw numpy scalars with an upstream algorithm do not exist on the
+            # pipeline output by name. Re-attach them so the later
+            # ActiveScalarsAlgorithm can activate the mapper's live input, not
+            # just the mapper's cached dataset snapshot.
+            if (
+                algo is not None
+                and original_scalar_name is None
+                and isinstance(scalars, np.ndarray)
+                and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
+            ):
+                preference = _resolve_scalars_field(scalars, mesh, preference)
+
+                def _attach_plot_scalars(dataset: DataSet) -> DataSet:
+                    output = dataset.copy(deep=False)
+                    if preference == 'point':
+                        output.point_data.set_array(scalars, scalars_name, deep_copy=False)
+                    else:
+                        output.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+                    return output
+
+                algo = callback_algorithm(algo, _attach_plot_scalars, output_type=type(mesh))
+                mesh, algo = algorithm_to_mesh_handler(algo)
+                original_scalar_name = scalars_name
 
         if rgb:
             show_scalar_bar = False
