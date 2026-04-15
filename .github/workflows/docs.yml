@@ -20,32 +20,6 @@ permissions:
   id-token: none
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      docs: ${{ steps.filter.outputs.docs == 'true' || steps.self.outputs.changed == 'true' }}
-    steps:
-      - uses: actions/checkout@v6
-        if: github.event_name == 'pull_request'
-        with:
-          persist-credentials: false
-          sparse-checkout: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: filter
-        with:
-          predicate-quantifier: "every"
-          filters: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: self
-        with:
-          filters: |
-            changed:
-              - ".github/workflows/docs.yml"
-
   # Save PR metadata as an artifact so the separate deploy workflow (triggered
   # via workflow_run) can associate the build with its PR — workflow_run events
   # do not include pull_request data for fork PRs.
@@ -70,8 +44,6 @@ jobs:
           path: pr-info/
 
   cache-vtk-data:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -81,8 +53,7 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
-    needs: [cache-vtk-data, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
+    needs: cache-vtk-data
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
@@ -198,8 +169,8 @@ jobs:
   test:
     name: Test Documentation
     runs-on: ubuntu-22.04
-    needs: [doc, changes]
-    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true') }}
+    needs: doc
+    if: ${{ !cancelled() }}
     env:
       TOX_COLORED: "yes"
     steps:
