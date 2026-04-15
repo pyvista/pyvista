@@ -657,6 +657,78 @@ def test_shared_mesh_subplots_with_clim():
     assert actor_b.mapper.scalar_range == (0, 50000)
 
 
+def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots():
+    """Shared meshes render distinct raw NumPy scalar fields per subplot."""
+    n_row, n_col = 2, 2
+    pl = pv.Plotter(shape=(n_row, n_col))
+    mesh = pv.Sphere(radius=1.0, theta_resolution=80, phi_resolution=80)
+
+    for ii in range(n_row * n_col):
+        row, col = divmod(ii, n_col)
+        pl.subplot(row, col)
+        data = np.linalg.norm(mesh.points, axis=1) if ii == 3 else mesh.points[:, ii]
+        pl.add_mesh(
+            mesh,
+            scalars=data,
+            smooth_shading=True,
+            show_scalar_bar=False,
+            ambient=0.2,
+            specular=0.3,
+            n_colors=9,
+            rng=(-1, 1.0),
+        )
+
+    pl.link_views()
+    pl.camera_position = 'iso'
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():
+    """Shared meshes keep distinct raw NumPy scalar arrays per subplot."""
+    n_row, n_col = 2, 2
+    pl = pv.Plotter(shape=(n_row, n_col))
+    mesh = pv.Sphere(radius=1.0, theta_resolution=80, phi_resolution=80)
+    original_point_arrays = set(mesh.point_data.keys())
+
+    actors = []
+    expected = []
+    for ii in range(n_row * n_col):
+        row, col = divmod(ii, n_col)
+        pl.subplot(row, col)
+        data = np.linalg.norm(mesh.points, axis=1) if ii == 3 else mesh.points[:, ii]
+        expected.append(np.asarray(data).copy())
+        actors.append(
+            pl.add_mesh(
+                mesh,
+                scalars=data,
+                smooth_shading=True,
+                show_scalar_bar=False,
+                ambient=0.2,
+                specular=0.3,
+                n_colors=9,
+                rng=(-1, 1.0),
+            )
+        )
+
+    names = []
+    for actor, array in zip(actors, expected, strict=True):
+        mapped = _get_actor_mapper_input(actor)
+        names.append(mapped.point_data.active_scalars_name)
+        assert mapped.point_data.active_scalars_name is not None
+        np.testing.assert_allclose(
+            mapped.point_data[mapped.point_data.active_scalars_name],
+            array,
+        )
+
+    assert len(set(names)) == len(names)
+    assert mesh.point_data.active_scalars_name is None
+    assert 'Normals' in original_point_arrays or 'Normals' not in mesh.point_data
+    assert set(mesh.point_data.keys()) == original_point_arrays.union(names)
+
+    pl.close()
+
+
 def test_lighting_init_light_kit(sphere):
     pl = pv.Plotter(lighting='light kit')
     pl.add_mesh(sphere)

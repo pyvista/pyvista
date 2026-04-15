@@ -175,6 +175,27 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
+def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
+    """Return a unique generated scalars name for a mesh."""
+    if (
+        base_name not in mesh.point_data
+        and base_name not in mesh.cell_data
+        and base_name not in mesh.field_data
+    ):
+        return base_name
+
+    index = 1
+    while True:
+        name = f'{base_name}-{index}'
+        if (
+            name not in mesh.point_data
+            and name not in mesh.cell_data
+            and name not in mesh.field_data
+        ):
+            return name
+        index += 1
+
+
 def _warn_xserver() -> None:  # pragma: no cover
     """Check if plotting is supported and persist this state.
 
@@ -3988,6 +4009,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             and original_scalar_name is None
             and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
         ):
+            scalars_name = _get_generated_scalars_name(mesh, scalars_name)
             preference = _resolve_scalars_field(scalars, mesh, preference)
             if preference == 'point':
                 mesh.point_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -4010,6 +4032,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 and not rgb
                 and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
             ):
+                scalars_name = _get_generated_scalars_name(mesh, scalars_name)
                 preference = _resolve_scalars_field(scalars, mesh, preference)
                 scalars, scalars_name = reduce_component_scalars(scalars, scalars_name, component)
                 if preference == 'point':
