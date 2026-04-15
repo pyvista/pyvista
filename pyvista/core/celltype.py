@@ -42,7 +42,7 @@ _DIMENSION_MAP: dict[_Dimension, frozenset[CellType]] = {}
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _GRID_TEMPLATE_NO_IMAGE = """
-.. grid:: 1x
+.. grid:: 1
     :margin: 1
 
     .. grid-item::
