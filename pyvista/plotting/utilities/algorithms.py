@@ -222,7 +222,7 @@ class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgori
         _request : :vtk:`vtkInformation`
             The request object.
         _inInfo : :vtk:`vtkInformationVector`
-            Information about the input data (unused — no input ports).
+            Information about the input data. Unused; this algorithm has no input ports.
         outInfo : :vtk:`vtkInformationVector`
             Information about the output data.
 
@@ -444,8 +444,8 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
     The output carries a ``vtkOriginalPointIds`` point-data array that maps
     each output point back to its index in the original input mesh. Callers
     that need to remap input-length arrays onto the (potentially longer)
-    output topology — for example, raw numpy scalars passed to ``add_mesh``
-    — can do so via this tracker.
+    output topology (for example raw numpy scalars passed to ``add_mesh``)
+    can do so via this tracker.
 
     Parameters
     ----------
@@ -462,6 +462,7 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
 
     ORIGINAL_POINT_IDS_NAME = 'vtkOriginalPointIds'
 
+    @_deprecate_positional_args
     def __init__(
         self,
         split_sharp_edges: bool = False,  # noqa: FBT001, FBT002
@@ -563,20 +564,19 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
                     out.ShallowCopy(surface)
                     return 1
 
-            try:
-                result = surface.compute_normals(
-                    cell_normals=False,
-                    split_vertices=self._split_sharp_edges,
-                    feature_angle=self._feature_angle,
-                )
-            except TypeError as exc:
-                if 'Normals cannot be computed' in repr(exc):
-                    # No renderable 2D cells (point cloud, lines, etc.).
-                    # Pass the surface through so downstream stages still
-                    # see a valid polydata.
-                    out.ShallowCopy(surface)
-                    return 1
-                raise
+            # ``compute_normals`` raises TypeError when the surface has no
+            # polygonal cells (point clouds, lines). Pre-check and pass the
+            # surface through so downstream stages still see a valid
+            # polydata, without coupling to the upstream error message.
+            if surface.n_verts + surface.n_lines == surface.n_cells:
+                out.ShallowCopy(surface)
+                return 1
+
+            result = surface.compute_normals(
+                cell_normals=False,
+                split_vertices=self._split_sharp_edges,
+                feature_angle=self._feature_angle,
+            )
 
             # ``compute_normals(split_vertices=True)`` leaves behind a
             # ``pyvistaOriginalPointIds`` helper array that mirrors our own
@@ -779,14 +779,15 @@ def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT00
     return alg
 
 
+@_deprecate_positional_args(allowed=['generator'])
 def source_algorithm(
     generator: Callable[[], DataSet],
     output_type: str | type = pv.UnstructuredGrid,
-):
+) -> SourceAlgorithm:
     """Create a source algorithm that generates data from a callable.
 
-    Unlike filter algorithms, a source has no input port — it produces
-    data from scratch via *generator*.
+    A source has no input port. It produces data from scratch via
+    *generator*.
 
     Parameters
     ----------
@@ -806,11 +807,12 @@ def source_algorithm(
     return SourceAlgorithm(generator=generator, output_type=output_type)
 
 
+@_deprecate_positional_args(allowed=['inp', 'callback'])
 def callback_algorithm(
     inp,
     callback: Callable[[DataSet], DataSet],
     output_type: str | type | None = None,
-):
+) -> CallbackFilterAlgorithm:
     """Add a filter that delegates to a user-supplied callable.
 
     Parameters
@@ -872,21 +874,29 @@ def extract_surface_algorithm(  # noqa: PLR0917
     return surf_filter
 
 
-def active_scalars_algorithm(inp, name, preference='point'):
+@_deprecate_positional_args(allowed=['inp', 'name'])
+def active_scalars_algorithm(
+    inp,
+    name: str,
+    preference: PointLiteral | CellLiteral = 'point',
+) -> ActiveScalarsAlgorithm:
     """Add a filter that sets the active scalars.
 
     Parameters
     ----------
-    inp : pyvista.Common
-        Input data to be filtered.
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+        Input data or algorithm.
+
     name : str
         Name of the scalars to set as active.
+
     preference : str, default: 'point'
-        Preference for the scalars to be set as active. Options are 'point', 'cell', or 'field'.
+        Either ``'point'`` or ``'cell'``. Determines the field
+        association when the same array name exists on both.
 
     Returns
     -------
-    :vtk:`vtkAlgorithm`
+    ActiveScalarsAlgorithm
         Active scalars filter applied to the input data.
 
     """
@@ -903,7 +913,7 @@ def smooth_shading_algorithm(
     inp,
     split_sharp_edges: bool = False,  # noqa: FBT001, FBT002
     feature_angle: float = 30.0,
-):
+) -> SmoothShadingAlgorithm:
     """Add a filter that computes point normals for smooth shading.
 
     Parameters
@@ -932,7 +942,7 @@ def smooth_shading_algorithm(
     return alg
 
 
-def pointset_to_polydata_algorithm(inp):
+def pointset_to_polydata_algorithm(inp) -> PointSetToPolyDataAlgorithm:
     """Add a filter that casts PointSet to PolyData.
 
     Parameters

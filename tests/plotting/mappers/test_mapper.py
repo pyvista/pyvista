@@ -267,7 +267,7 @@ def test_mapped_scalars_fallback_without_algo(sphere):
     sphere.set_active_scalars('data')
 
     mapper = DataSetMapper(dataset=sphere)
-    # No set_scalars call — _active_scalars_algo remains None
+    # No set_scalars call: _active_scalars_algo remains None
     assert mapper._mapped_scalars is not None
     assert np.array_equal(mapper._mapped_scalars, sphere['data'])
     # Also verify the None-dataset edge case
@@ -302,7 +302,7 @@ def test_set_active_scalars_in_place_update(sphere):
     assert algo is not None
 
     mapper.set_active_scalars('data_b', preference='point')
-    # The same algorithm instance must be reused — not a new pipeline
+    # The same algorithm instance must be reused, not a new pipeline
     assert mapper._active_scalars_algo is algo
     assert algo.scalars_name == 'data_b'
     assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
@@ -319,7 +319,7 @@ def test_set_active_scalars_cell_preference():
 
     assert mapper._active_scalars_algo.preference == 'cell'
     assert np.array_equal(mapper._mapped_scalars, cell_array)
-    # Verify the array is *not* on point data — exercises the cell branch
+    # Verify the array is *not* on point data. Exercises the cell branch.
     assert 'c' not in mesh.point_data
 
 
@@ -355,7 +355,7 @@ def test_clear_active_scalars_after_algorithm_input():
 
     When the mapper was originally fed by a vtkAlgorithm (not a dataset),
     detaching the active-scalars algo must reconnect the mapper to that
-    upstream algorithm — not leave it dangling.
+    upstream algorithm, not leave it dangling.
     """
     source = _vtk.vtkSphereSource()
     source.SetRadius(2.0)

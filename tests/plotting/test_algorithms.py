@@ -278,7 +278,7 @@ def test_decimation(sphere_with_scalars):
 def test_active_scalars_algo_modified_propagates(sphere_with_scalars):
     """Re-running after Modified() must reflect the new array name.
 
-    Targets the rewritten ``RequestData`` — the Modified() pathway is what
+    Targets the rewritten ``RequestData``. The Modified() pathway is what
     lets ``DataSetMapper.set_active_scalars`` swap arrays in place without
     re-splicing the pipeline.
     """
@@ -425,7 +425,7 @@ def test_smooth_shading_algo_tracker_chains_through_split():
     # Each split copy of a vertex must sit at the same spatial location as
     # the original (splitting only duplicates, doesn't move).
     assert np.allclose(out.points, cube.points[tracker])
-    # And split vertices really did get duplicated — at least one original
+    # And split vertices really did get duplicated: at least one original
     # index appears more than once in the tracker.
     _, counts = np.unique(tracker, return_counts=True)
     assert (counts > 1).any()
@@ -457,7 +457,7 @@ def test_smooth_shading_algo_texture_coords_survive_split():
     assert 'Texture Coordinates' in out.point_data
     assert out.point_data.active_normals is not None
     assert out.point_data['Texture Coordinates'].shape[1] == 2
-    # Verify values via the tracker — each output point's texture coordinates
+    # Verify values via the tracker: each output point's texture coordinates
     # must match the input's at the tracked original index.
     tracker = np.asarray(out.point_data[ORIGINAL_POINT_IDS_NAME])
     original_tcoords = np.asarray(globe.point_data['Texture Coordinates'])

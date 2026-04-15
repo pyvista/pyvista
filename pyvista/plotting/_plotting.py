@@ -31,9 +31,32 @@ def _resolve_scalars_field(
     """Decide whether raw numpy ``scalars`` attach to points or cells.
 
     Matches by length. When both dimensions coincide (``n_points ==
-    n_cells``), falls back to ``preference``. Raises ``ValueError`` when
-    the array length matches neither — callers previously would silently
-    drop the array and fail cryptically downstream.
+    n_cells``), falls back to ``preference``.
+
+    Parameters
+    ----------
+    scalars : numpy.ndarray
+        Array whose first axis length determines the association.
+
+    mesh : pyvista.DataSet
+        Mesh to match against.
+
+    preference : str
+        ``'point'`` or ``'cell'``. Used to break ties when the array
+        length matches both dimensions.
+
+    Returns
+    -------
+    str
+        Either ``'point'`` or ``'cell'``.
+
+    Raises
+    ------
+    ValueError
+        If the array length matches neither ``n_points`` nor
+        ``n_cells``. Without this check the array would silently be
+        dropped and fail cryptically downstream.
+
     """
     matches_points = scalars.shape[0] == mesh.n_points
     matches_cells = scalars.shape[0] == mesh.n_cells
@@ -82,6 +105,14 @@ def reduce_component_scalars(
     derived_name : str
         Synthesized name carrying the reduction semantics.
 
+    Raises
+    ------
+    TypeError
+        If ``component`` is neither ``None`` nor an integer.
+
+    ValueError
+        If ``component`` is outside ``[0, scalars.shape[1])``.
+
     """
     if component is None:
         return np.linalg.norm(scalars, axis=1), f'{scalars_name}-normed'
@@ -97,6 +128,194 @@ def reduce_component_scalars(
         )
         raise ValueError(msg)
     return np.array(scalars[:, component_index]), f'{scalars_name}-{component_index}'
+
+
+def _stamp_raw_numpy_scalars(  # noqa: PLR0917
+    mesh: DataSet,
+    scalars: NumpyArray[float],
+    scalars_name: str,
+    preference: PointLiteral | CellLiteral,
+) -> tuple[str, PointLiteral | CellLiteral]:
+    """Attach a raw numpy scalars array to ``mesh`` under a unique name.
+
+    Called from :meth:`Plotter.add_mesh` when the user passes a raw
+    numpy array rather than a named array. Stamping the array on the
+    mesh lets downstream pipeline stages (e.g. smooth-shading surface
+    extraction) carry it forward, and lets callers later mutate the
+    array via ``mesh[name] = ...`` to drive re-renders.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Mesh to mutate.
+
+    scalars : numpy.ndarray
+        Raw numpy array whose first axis matches ``n_points`` or
+        ``n_cells``.
+
+    scalars_name : str
+        Base name to use. A unique suffix is added if the name is
+        already in use.
+
+    preference : str
+        Disambiguator when the array length matches both dimensions.
+
+    Returns
+    -------
+    scalars_name : str
+        The name actually used (possibly suffixed for uniqueness).
+
+    preference : str
+        The resolved field association, ``'point'`` or ``'cell'``.
+
+    """
+    scalars_name = _get_generated_scalars_name(mesh, scalars_name)
+    preference = _resolve_scalars_field(scalars, mesh, preference)
+    if preference == 'point':
+        mesh.point_data.set_array(scalars, scalars_name, deep_copy=False)
+    else:
+        mesh.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+    return scalars_name, preference
+
+
+def _reduce_multicomponent_scalars_on_mesh(  # noqa: PLR0917
+    mesh: DataSet,
+    scalars: NumpyArray[float],
+    scalars_name: str,
+    component: int | None,
+    preference: PointLiteral | CellLiteral,
+) -> tuple[NumpyArray[float], str, PointLiteral | CellLiteral]:
+    """Reduce 2D scalars to 1D and stamp the derived array on ``mesh``.
+
+    Smooth-shading pre-processing cannot defer this reduction to
+    :meth:`DataSetMapper.set_scalars`: each ``SmoothShadingAlgorithm``
+    ``RequestData`` ``ShallowCopy`` overwrites the mapper's cached
+    dataset, wiping any derived array the mapper stamped there. Doing
+    the reduction on the user's mesh *before* the pipeline runs means
+    the derived array survives surface extraction via the normal data
+    propagation path.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Mesh to mutate.
+
+    scalars : numpy.ndarray
+        2D scalar array.
+
+    scalars_name : str
+        Base name for the derived array.
+
+    component : int | None
+        Component index or ``None`` for magnitude.
+
+    preference : str
+        Disambiguator when the array length matches both dimensions.
+
+    Returns
+    -------
+    scalars : numpy.ndarray
+        1D derived array.
+
+    scalars_name : str
+        Synthesized derived name (``{base}-normed`` or ``{base}-{i}``,
+        possibly further suffixed for uniqueness).
+
+    preference : str
+        Resolved field association.
+
+    """
+    preference = _resolve_scalars_field(scalars, mesh, preference)
+    # Reduce first so the derived suffix (``-normed`` or ``-<i>``) is
+    # applied to the user-provided base name before any uniqueness check.
+    # Otherwise ``vec`` -> ``vec-1`` (uniquify collision with existing
+    # ``vec``) -> ``vec-1-1`` (reduction), which is ugly and surprising.
+    scalars, scalars_name = reduce_component_scalars(scalars, scalars_name, component)
+    scalars_name = _get_generated_scalars_name(mesh, scalars_name)
+    if preference == 'point':
+        mesh.point_data.set_array(scalars, scalars_name, deep_copy=False)
+    else:
+        mesh.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+    return scalars, scalars_name, preference
+
+
+def _remap_scalars_through_topology_change(  # noqa: PLR0917
+    mesh: DataSet,
+    scalars: NumpyArray[float],
+    original_scalar_name: str | None,
+    preference: PointLiteral | CellLiteral,
+    input_n_points: int,
+) -> NumpyArray[float]:
+    """Re-resolve ``scalars`` after smooth shading changes topology.
+
+    Surface extraction and/or sharp-edge splitting may drop cells or
+    duplicate vertices. This helper picks up the re-indexed values
+    from the post-pipeline mesh so they line up with the data the
+    mapper will consume.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Post-pipeline mesh.
+
+    scalars : numpy.ndarray
+        Pre-pipeline scalars array.
+
+    original_scalar_name : str | None
+        If set, the array is resolved by name on ``mesh``.  When
+        ``None`` (raw numpy + upstream vtkAlgorithm input), the
+        ``vtkOriginalPointIds`` tracker is used to remap point-length
+        scalars.
+
+    preference : str
+        Field association for name lookup.
+
+    input_n_points : int
+        Number of points in the pre-pipeline mesh, used to detect
+        point-length scalars for tracker-based remap.
+
+    Returns
+    -------
+    numpy.ndarray
+        Scalars sized to the post-pipeline mesh. The input is returned
+        unchanged if no remap is possible.
+
+    """
+    # Local import to avoid a top-level circular import: algorithms imports
+    # from core, core imports from plotting indirectly for Actor types.
+    from .utilities.algorithms import SmoothShadingAlgorithm  # noqa: PLC0415
+
+    if original_scalar_name is not None:
+        resolved = get_array(mesh, original_scalar_name, preference=preference, err=False)
+        if resolved is not None:
+            return resolved
+        return scalars
+
+    tracker_name = SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME
+    if tracker_name in mesh.point_data and scalars.shape[0] == input_n_points:
+        tracker = np.asarray(mesh.point_data[tracker_name])
+        return np.asarray(scalars)[tracker]
+    return scalars
+
+
+def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
+    """Return a unique generated scalars name for a mesh.
+
+    Picks ``base_name`` if free on ``point_data``, ``cell_data``, and
+    ``field_data``; otherwise appends a numeric suffix.
+    """
+    import itertools  # noqa: PLC0415
+
+    def _is_free(name: str) -> bool:
+        return (
+            name not in mesh.point_data
+            and name not in mesh.cell_data
+            and name not in mesh.field_data
+        )
+
+    if _is_free(base_name):
+        return base_name
+    return next(f'{base_name}-{i}' for i in itertools.count(1) if _is_free(f'{base_name}-{i}'))
 
 
 @_deprecate_positional_args

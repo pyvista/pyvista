@@ -392,6 +392,20 @@ class _DataSetMapper(_BaseMapper):
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
+    Notes
+    -----
+    Auto scalar-range state machine. The private attribute
+    ``_use_default_scalar_range`` tracks whether the scalar range is
+    still derived from the mapped array (``True``) or has been pinned by
+    the caller (``False``). It starts ``True``. Setting ``scalar_range``
+    directly, or calling :meth:`set_scalars` with an explicit ``clim``,
+    flips it to ``False`` via :meth:`_set_scalar_range`. While ``True``,
+    the range auto-refreshes from the mapped array in
+    :meth:`_maybe_set_default_scalar_range`, which is called from
+    :meth:`set_active_scalars` and the ``dataset`` setter. Once
+    ``False``, auto-refresh is suppressed so user-supplied ``clim``
+    values are preserved.
+
     """
 
     _cmap = None
@@ -404,6 +418,10 @@ class _DataSetMapper(_BaseMapper):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._use_default_scalar_range = True
+        # _BaseMapper creates a bare LookupTable() which does not honor the
+        # theme cmap. Apply it here so auto-range paths (set_active_scalars
+        # -> _maybe_set_default_scalar_range) see the theme colors before
+        # any set_scalars call.
         self.lookup_table.apply_cmap(self._theme.cmap, self.lookup_table.n_values)
         self._active_scalars_algo: ActiveScalarsAlgorithm | None = None
         self._input_dataset_ref: weakref.ref[DataSet] | None = None
@@ -456,7 +474,24 @@ class _DataSetMapper(_BaseMapper):
 
     @property
     def array_name(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the array name or number and component to color by."""
+        """Return or set the array name or number and component to color by.
+
+        Setter behavior depends on whether the array can be resolved on
+        an upstream dataset without running the pipeline:
+
+        * If :attr:`_scalar_source_dataset` exposes an array with the
+          given name, route through :meth:`set_active_scalars` so a
+          spliced :class:`ActiveScalarsAlgorithm` activates the array on
+          each ``RequestData`` (and :meth:`_maybe_set_default_scalar_range`
+          picks a default ``clim``).
+        * Otherwise fall back to the raw VTK ``SetArrayName``. This path
+          is hit when the mapper is wired to a pipeline whose output
+          topology/arrays only materialize after ``Update()``, for
+          example a ``SmoothShadingAlgorithm`` producing post-surface
+          scalars. In that case an existing active-scalars algorithm
+          (if any) is updated in place; otherwise name resolution
+          happens on the first render.
+        """
         return self.GetArrayName()
 
     @array_name.setter
@@ -482,7 +517,17 @@ class _DataSetMapper(_BaseMapper):
 
     @property
     def _scalar_source_dataset(self) -> DataSet | None:
-        """Return a dataset suitable for resolving mapped scalar arrays."""
+        """Return a dataset suitable for resolving mapped scalar arrays.
+
+        Used by ``array_name`` and ``set_active_scalars`` to find an array
+        by name without forcing a pipeline update. Walks at most one stage
+        upstream: if the mapper's cached dataset is empty, peek at the
+        direct producer's port-0 input. For longer pipelines (e.g.
+        ``source -> callback -> active_scalars -> mapper``) this returns
+        the last stage's input, not the original source. That is enough
+        to resolve array names because each stage's ``RequestData``
+        forwards arrays via ``ShallowCopy``.
+        """
         dataset = self.dataset
         if dataset is not None and dataset.n_arrays > 0:
             return dataset

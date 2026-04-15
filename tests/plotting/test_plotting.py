@@ -47,6 +47,8 @@ from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
+from tests.plotting.conftest import AlgorithmExecutionTracker
+from tests.plotting.conftest import get_actor_mapper_input
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -713,7 +715,7 @@ def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():
 
     names = []
     for actor, array in zip(actors, expected, strict=True):
-        mapped = _get_actor_mapper_input(actor)
+        mapped = get_actor_mapper_input(actor)
         names.append(mapped.point_data.active_scalars_name)
         assert mapped.point_data.active_scalars_name is not None
         np.testing.assert_allclose(
@@ -4272,23 +4274,9 @@ def test_add_ids_algorithm():
     assert 'cell_ids' in result.cell_data
 
 
-def _get_actor_mapper_input(actor):
-    actor.mapper.update()
-    return pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
-
-
-class _AlgorithmExecutionTracker:
-    def __init__(self) -> None:
-        self.executed = False
-
-    def __call__(self, mesh: pv.DataSet) -> pv.DataSet:
-        self.executed = True
-        return mesh
-
-
 def _assert_mapper_pipeline_not_executed(
     mapper: pv.DataSetMapper,
-    tracker: _AlgorithmExecutionTracker | None = None,
+    tracker: AlgorithmExecutionTracker | None = None,
     *,
     scalar_map_mode: str | None = None,
     scalar_range: tuple[float, float] | None = None,
@@ -4358,7 +4346,7 @@ def test_add_mesh_smooth_shading_with_algorithm_and_scalars_mapper_output():
     actor = pl.add_mesh(
         surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
     )
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
     assert mapped.point_data.active_scalars_name == 'z'
     assert mapped.point_data.active_normals_name == 'Normals'
     assert mapped.point_data.active_normals is not None
@@ -4367,7 +4355,7 @@ def test_add_mesh_smooth_shading_with_algorithm_and_scalars_mapper_output():
 
     mesh.point_data['z'][:] = 0
     source.Modified()
-    mapped_after = _get_actor_mapper_input(actor)
+    mapped_after = get_actor_mapper_input(actor)
     assert np.allclose(mapped_after.point_data['z'], 0.0)
     assert mapped_after.point_data.active_scalars_name == 'z'
     assert mapped_after.point_data.active_normals_name == 'Normals'
@@ -4395,7 +4383,7 @@ def test_add_mesh_smooth_shading_with_algorithm_and_scalars_propagates_updates()
     mesh.point_data['z'][:] = 0
     source.Modified()
 
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
     assert np.allclose(mapped.point_data['z'], 0.0)
     assert mapped.point_data.active_scalars_name == 'z'
     assert mapped.point_data.active_normals_name == 'Normals'
@@ -4406,7 +4394,7 @@ def test_add_mesh_smooth_shading_with_algorithm_and_scalars_propagates_updates()
 def test_add_actor_array_name_with_callback_algorithm_is_lazy():
     mesh = pv.Sphere()
     mesh.point_data['data'] = mesh.points[:, 2].astype(float)
-    tracker = _AlgorithmExecutionTracker()
+    tracker = AlgorithmExecutionTracker()
 
     mapper = pv.DataSetMapper()
     mapper.dataset = algorithms.callback_algorithm(mesh, tracker)
@@ -4434,7 +4422,7 @@ def test_add_actor_array_name_with_callback_algorithm_is_lazy():
     )
 
     pl.show()
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
 
     assert tracker.executed is True
     assert mapped.point_data.active_scalars_name == 'data'
@@ -4444,7 +4432,7 @@ def test_add_actor_array_name_with_callback_algorithm_is_lazy():
 def test_add_actor_set_active_scalars_with_callback_algorithm_is_lazy():
     mesh = pv.Sphere()
     mesh.point_data['data'] = mesh.points[:, 2].astype(float)
-    tracker = _AlgorithmExecutionTracker()
+    tracker = AlgorithmExecutionTracker()
 
     mapper = pv.DataSetMapper()
     mapper.dataset = algorithms.callback_algorithm(mesh, tracker)
@@ -4472,7 +4460,7 @@ def test_add_actor_set_active_scalars_with_callback_algorithm_is_lazy():
     )
 
     pl.show()
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
 
     assert tracker.executed is True
     assert actor.mapper.array_name == 'data'
@@ -4516,7 +4504,7 @@ def test_add_actor_smooth_shading_algorithm_array_name_is_lazy():
     assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
 
     pl.show()
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
 
     algo_output = pv.wrap(algo.GetOutputDataObject(0))
     assert algo_output.n_arrays > 0
@@ -4558,7 +4546,7 @@ def test_add_actor_smooth_shading_algorithm_cell_array_name_is_lazy():
     assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
 
     pl.show()
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
 
     algo_output = pv.wrap(algo.GetOutputDataObject(0))
     assert algo_output.n_arrays > 0
@@ -4597,7 +4585,7 @@ def test_add_mesh_smooth_shading_unstructured_grid_scalars():
 def test_resolve_scalars_field_raises_on_mismatch():
     """Unit-test the shared ``_resolve_scalars_field`` helper's raise branch.
 
-    The ``add_mesh`` happy path never reaches this branch — the caller
+    The ``add_mesh`` happy path never reaches this branch; the caller
     pre-checks that ``shape[0] in (n_points, n_cells)`` before calling.
     Exercise it directly so the error message stays covered.
     """
@@ -4686,8 +4674,8 @@ def test_add_mesh_multi_component_scalars_no_smooth_shading():
     reduction path inside :meth:`DataSetMapper.set_scalars`.
 
     This is the in-mapper path that calls
-    :func:`reduce_component_scalars` — distinct from the hoisted path
-    used for smooth shading.
+    :func:`reduce_component_scalars`, distinct from the hoisted path
+    used for smooth shading (``_reduce_multicomponent_scalars_on_mesh``).
     """
     sphere = pv.Sphere()
     sphere.point_data['vec'] = np.array(sphere.points, dtype=np.float32)
@@ -4699,16 +4687,16 @@ def test_add_mesh_multi_component_scalars_no_smooth_shading():
 def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars():
     """Raw numpy scalars with an upstream ``vtkAlgorithm`` + smooth shading.
 
-    Exercises Block C's tracker-based fallback in
-    :meth:`Plotter.add_mesh` — the only path where ``original_scalar_name``
-    remains ``None`` after Blocks A and B, so the re-resolution falls
-    back to ``SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME`` to remap
-    the scalars through the topology change introduced by
-    ``split_sharp_edges``.
+    Exercises the ``_remap_scalars_through_topology_change`` tracker
+    fallback in :meth:`Plotter.add_mesh`. That helper's fallback path
+    is the only one where ``original_scalar_name`` remains ``None``,
+    so the re-resolution uses
+    ``SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME`` to remap the
+    scalars through the topology change from ``split_sharp_edges``.
     """
     # A cone combines a curved sidewall with a sharp base edge, so
     # ``split_sharp_edges=True`` both changes the rendered appearance and
-    # duplicates vertices to trigger Block C's re-resolution.
+    # duplicates vertices to trigger the tracker-based re-resolution.
     cone = pv.Cone(resolution=90, capping=True).triangulate()
     source = algorithms.source_algorithm(lambda: cone, output_type=pv.PolyData)
     raw_scalars = np.linspace(0.0, 1.0, cone.n_points, dtype=np.float32)
@@ -4741,7 +4729,7 @@ def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars_mapper_output():
         split_sharp_edges=True,
         show_scalar_bar=False,
     )
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
     tracker = np.asarray(
         mapped.point_data[algorithms.SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME]
     )
@@ -4758,9 +4746,10 @@ def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars_mapper_output():
 def test_add_mesh_raw_numpy_cell_scalars():
     """Raw numpy cell-length scalars stamp on ``cell_data``.
 
-    Covers Block A's ``cell_data.set_array`` branch in
-    :meth:`Plotter.add_mesh`. Without this path the mapper would ravel
-    the array and silently mis-bind it to point data.
+    Covers the ``cell_data.set_array`` branch of
+    ``_stamp_raw_numpy_scalars`` in :meth:`Plotter.add_mesh`. Without
+    this path the mapper would ravel the array and silently mis-bind
+    it to point data.
     """
     sphere = pv.Sphere()
     cell_scalars = np.arange(sphere.n_cells, dtype=np.float32)
@@ -4780,7 +4769,7 @@ def test_add_mesh_raw_numpy_cell_scalars_mapper_output():
 
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, scalars=cell_scalars, show_scalar_bar=False)
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
     assert mapped.cell_data.active_scalars_name == pv.DEFAULT_SCALARS_NAME
     assert np.allclose(mapped.cell_data[pv.DEFAULT_SCALARS_NAME], cell_scalars)
     assert sphere.cell_data.active_scalars_name == 'keep_active'
@@ -4792,8 +4781,9 @@ def test_add_mesh_raw_numpy_cell_scalars_mapper_output():
 def test_add_mesh_smooth_shading_multi_component_cell_scalars():
     """2D cell-length scalars + ``component=`` + smooth shading.
 
-    Covers Block B's ``cell_data.set_array`` branch in
-    :meth:`Plotter.add_mesh` — the cell-scalar analogue of
+    Covers the ``cell_data.set_array`` branch of
+    ``_reduce_multicomponent_scalars_on_mesh`` in
+    :meth:`Plotter.add_mesh`. Cell-scalar analogue of
     :func:`test_add_mesh_smooth_shading_multi_component_scalars`.
     """
     sphere = pv.Sphere()
@@ -4837,7 +4827,7 @@ def test_add_mesh_smooth_shading_multi_component_cell_scalars_mapper_output():
         smooth_shading=True,
         show_scalar_bar=False,
     )
-    mapped = _get_actor_mapper_input(actor)
+    mapped = get_actor_mapper_input(actor)
     derived_name = f'{pv.DEFAULT_SCALARS_NAME}-1'
     assert mapped.cell_data.active_scalars_name == derived_name
     assert mapped.point_data.active_normals_name == 'Normals'
@@ -4863,7 +4853,7 @@ def test_add_mesh_smooth_shading_multi_component_scalars():
     mesh.clear_data()
     # Use point coordinates as the vector field so ``component=1`` picks a
     # clean y-axis gradient.  ``np.array`` (forces a copy) is required to
-    # detach from the ``Points`` ``vtkFloatArray`` buffer — both ``astype``
+    # detach from the ``Points`` ``vtkFloatArray`` buffer. Both ``astype``
     # and ``asarray`` keep a view-backed reference that survives teardown
     # and trips ``check_gc`` on Python 3.14.
     mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
@@ -4909,7 +4899,7 @@ def test_add_mesh_numpy_scalars_mutation_propagates(smooth_shading):
     the array must be stamped onto the user's mesh under the generated
     name (``DEFAULT_SCALARS_NAME``). The user can then later replace it
     via ``mesh[name] = ...`` and the renderer must reflect the change on
-    the next ``render()`` — including when smooth shading inserts an
+    the next ``render()``, including when smooth shading inserts an
     upstream pipeline stage.
     """
     sphere = pv.Sphere()

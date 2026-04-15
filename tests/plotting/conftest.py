@@ -154,6 +154,32 @@ def make_two_char_img(text):
     return pv.Texture(pl.screenshot()).to_image()
 
 
+def get_actor_mapper_input(actor):
+    """Return a detached deep copy of the mapper's current pipeline input.
+
+    The deep copy detaches the returned dataset from the live VTK
+    pipeline so ``check_gc`` teardown doesn't race with test assertions
+    that inspect its arrays.
+    """
+    actor.mapper.update()
+    return pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
+
+
+class AlgorithmExecutionTracker:
+    """Callable filter body that records whether it was invoked.
+
+    Used to assert that mapper configuration is lazy, i.e. does not
+    force the pipeline to run before ``show()`` or ``render()``.
+    """
+
+    def __init__(self) -> None:
+        self.executed = False
+
+    def __call__(self, mesh: pv.DataSet) -> pv.DataSet:
+        self.executed = True
+        return mesh
+
+
 @pytest.fixture
 def cubemap():
     """Sample texture as a cubemap."""
