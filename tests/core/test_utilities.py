@@ -394,6 +394,16 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
+def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
+    # Simulate meshio being unavailable so the fallback import fails.
+    monkeypatch.setitem(sys.modules, 'meshio', None)
+    monkeypatch.setitem(sys.modules, 'meshio._exceptions', None)
+    fname = tmp_path / 'dummy.nonexistent_ext_xyz'
+    fname.write_bytes(b'not a real mesh file')
+    with pytest.raises(OSError, match='not able to be automatically read'):
+        fileio.read(fname)
+
+
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
@@ -611,6 +621,8 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'jupyter-server-proxy':
         pytest.xfail('not installed with --test group')
+    elif package == 'pyvista-zstd':
+        pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
     assert package in REPORT
 
 
@@ -2692,6 +2704,56 @@ def test_enable_smp_tools_unsupported_vtk_build(monkeypatch: pytest.MonkeyPatch)
     match = 'This VTK build does not support runtime SMP backend selection.'
     with pytest.raises(RuntimeError, match=re.escape(match)):
         pv.enable_smp_tools()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_state(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    msg = 'boom'
+    with pytest.raises(RuntimeError, match=msg), pv.enable_smp_tools(n_threads=2):
+        raise RuntimeError(msg)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+        with pv.enable_smp_tools(n_threads=4):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
 
 
 def test_enable_smp_tools_restores_state_on_unavailable_backend(
