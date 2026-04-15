@@ -796,7 +796,11 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         item = self.reader.GetTimeSets().GetItem(self.active_time_set)
         if item is None:
             return 0
-        return item.GetSize()
+        return (
+            item.GetSize()
+            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
+            else item.GetCapacity()
+        )
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
@@ -3565,6 +3569,7 @@ class FRDReader(BaseReader, TimeReader):
 
     For datasets containing 6-component tensors (e.g. STRESS or STRAIN), this reader automatically
     pre-computes and appends the following derived scalar arrays to the output mesh:
+
     - ``<NAME>_Mises``: equivalent von Mises magnitude.
     - ``<NAME>_sgMises``: signed von Mises magnitude.
     - ``<NAME>_PS1``, ``_PS2``, ``_PS3``: principal components.

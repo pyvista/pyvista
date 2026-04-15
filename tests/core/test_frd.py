@@ -6,9 +6,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.celltype import _CELL_TYPES_1D
-from pyvista.core.celltype import _CELL_TYPES_2D
-from pyvista.core.celltype import _CELL_TYPES_3D
 from pyvista.core.utilities._frd import CCX_TO_VTK_TYPE
 from pyvista.core.utilities._frd import FRDElementType
 
@@ -410,7 +407,7 @@ def test_frd_element_sizes(generic_element_frd):
     vtk_type = CCX_TO_VTK_TYPE[frd_enum]
 
     # Handle known VTK bug for PE15
-    if elem_name == 'PE15':
+    if elem_name == 'PE15' and pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
         msg = (
             'VTK bug with negative volume for quadratic wedge '
             'https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
@@ -421,17 +418,17 @@ def test_frd_element_sizes(generic_element_frd):
     sizes = mesh.compute_cell_sizes().cell_data
 
     # 4. Check the dimension dynamically and make the appropriate assertion
-    if vtk_type in _CELL_TYPES_1D:
+    if vtk_type.dimension == 1:
         val = sizes['Length'][0]
         assert val > 0.0, (
             f'Element {elem_name} generated non-positive length ({val}). Bad node ordering!'
         )
-    elif vtk_type in _CELL_TYPES_2D:
+    elif vtk_type.dimension == 2:
         val = sizes['Area'][0]
         assert val > 0.0, (
             f'Element {elem_name} generated non-positive area ({val}). Bad node ordering!'
         )
-    elif vtk_type in _CELL_TYPES_3D:
+    elif vtk_type.dimension == 3:
         val = sizes['Volume'][0]
         assert val > 0.0, (
             f'Element {elem_name} generated non-positive volume ({val}). Bad node ordering!'

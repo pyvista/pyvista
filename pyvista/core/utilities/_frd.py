@@ -14,7 +14,6 @@ from typing import Any
 import numpy as np
 
 import pyvista as pv
-from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 from pyvista.core.celltype import CellType
 
 if TYPE_CHECKING:
@@ -74,11 +73,6 @@ CCX_TO_VTK_TYPE: dict[FRDElementType, CellType] = {
     FRDElementType.BE2: CellType.LINE,
     FRDElementType.BE3: CellType.QUADRATIC_EDGE,
 }
-
-NODES_PER_ELEM: dict[FRDElementType, int] = {
-    elem: _CELL_TYPE_TO_NUM_POINTS[np.uint8(CCX_TO_VTK_TYPE[elem])] for elem in CCX_TO_VTK_TYPE
-}
-
 
 # Results hierarchy: step_time -> result_name -> node_id -> values
 NodeResultData = dict[int, list[float]]
@@ -182,7 +176,7 @@ class _FRDParser:
         """Reorder node IDs from CalculiX to VTK conventions."""
         if etype == FRDElementType.HE20:
             return node_ids[:8] + node_ids[8:12] + node_ids[16:20] + node_ids[12:16]
-        if etype == FRDElementType.PE6:
+        if etype == FRDElementType.PE6 and pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
             return [node_ids[0], node_ids[2], node_ids[1], node_ids[3], node_ids[5], node_ids[4]]
         if etype == FRDElementType.PE15:
             return node_ids[:9] + node_ids[12:15] + node_ids[9:12]
@@ -248,8 +242,8 @@ class _FRDParser:
                     etype = None
                     continue
 
-                needed = NODES_PER_ELEM[etype]
                 vtk_type = CCX_TO_VTK_TYPE[etype]
+                needed = vtk_type.n_points
                 node_ids = []
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:

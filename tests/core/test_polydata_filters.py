@@ -159,6 +159,10 @@ def test_triangulate_contours():
     for cell in filled.cell:
         assert cell.type == pv.CellType.TRIANGLE
 
+    poly.lines = None
+    with pytest.raises(RuntimeError, match='input PolyData to have lines'):
+        poly.triangulate_contours()
+
 
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()
