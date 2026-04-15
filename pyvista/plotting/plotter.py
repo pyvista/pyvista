@@ -4063,13 +4063,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
             ):
                 preference = _resolve_scalars_field(scalars, mesh, preference)
+                plot_scalars = scalars
 
                 def _attach_plot_scalars(dataset: DataSet) -> DataSet:
                     output = dataset.copy(deep=False)
                     if preference == 'point':
-                        output.point_data.set_array(scalars, scalars_name, deep_copy=False)
+                        output.point_data.set_array(plot_scalars, scalars_name, deep_copy=False)
                     else:
-                        output.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+                        output.cell_data.set_array(plot_scalars, scalars_name, deep_copy=False)
                     return output
 
                 algo = callback_algorithm(algo, _attach_plot_scalars, output_type=type(mesh))

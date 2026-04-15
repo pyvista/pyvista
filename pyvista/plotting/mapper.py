@@ -527,7 +527,7 @@ class _DataSetMapper(_BaseMapper):
             # modifications propagate on re-render. If no connection exists
             # yet (for example on a freshly copied mapper), fall back to the
             # cached dataset input instead of wiring a null VTK connection.
-            input_conn = self.GetInputConnection(0, 0)
+            input_conn = cast('_vtk.vtkAlgorithmOutput | None', self.GetInputConnection(0, 0))
             if input_conn is not None:
                 self._active_scalars_algo.SetInputConnection(0, input_conn)
             elif self._input_dataset is not None:
