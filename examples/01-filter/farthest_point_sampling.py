@@ -17,6 +17,7 @@ References
 Y. Eldar et al., "The farthest point strategy for progressive image sampling,"
 *Proc. 12th IAPR Int. Conf. on Pattern Recognition*, Vol. 2, 1994, pp. 93-97,
 :doi:`10.1109/ICPR.1994.577129`.
+
 """
 
 from __future__ import annotations
@@ -122,8 +123,11 @@ def max_coverage_distance(samples):
     return float(np.linalg.norm(cloud.points - samples[closest], axis=1).max())
 
 
-max_coverage_distance(cloud.points[random_ids]), max_coverage_distance(
-    cloud.points[fps_ids],
+(
+    max_coverage_distance(cloud.points[random_ids]),
+    max_coverage_distance(
+        cloud.points[fps_ids],
+    ),
 )
 # %%
 # .. tags:: filter
