@@ -1,11 +1,13 @@
 """
+.. _vector_component_example:
+
 Plot Vector Component
 ~~~~~~~~~~~~~~~~~~~~~
 
 Plot a single component of a vector as a scalar array.
 
 We can plot individual components of multi-component arrays with the
-``component`` argument  of the ``add_mesh`` method.
+``component`` argument  of the :meth:`~pyvista.Plotter.add_mesh` method.
 """
 
 from __future__ import annotations

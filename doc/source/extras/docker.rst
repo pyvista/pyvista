@@ -100,8 +100,8 @@ Finally, check that your render window is using NVIDIA by running
 
 .. code-block:: python
 
-  >>> import pyvista
-  >>> pl = pyvista.Plotter()
+  >>> import pyvista as pv
+  >>> pl = pv.Plotter()
   >>> print(pl.render_window.ReportCapabilities())
 
   OpenGL vendor string:  NVIDIA Corporation

@@ -17,7 +17,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
@@ -58,7 +57,7 @@ def insert_string_array(hexbeam_point_attributes):
 
 @pytest.mark.parametrize('i', [1, None, object(), True])
 def test_setitem_raises(i):
-    with pytest.raises(TypeError, match='Only strings are valid keys for DataSetAttributes.'):
+    with pytest.raises(TypeError, match=r'Only strings are valid keys for DataSetAttributes.'):
         pv.Sphere().point_data[i] = 1
 
 
@@ -344,14 +343,14 @@ def test_add_should_contain_exact_array(insert_arange_narray):
 
 
 def test_getters_should_return_same_result(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     result_a = dsa.get_array('sample_array')
     result_b = dsa['sample_array']
     assert np.array_equal(result_a, result_b)
 
 
 def test_contains_should_contain_when_added(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     assert 'sample_array' in dsa
 
 
@@ -400,19 +399,19 @@ def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
 
 
 def test_should_remove_array(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     dsa.remove('sample_array')
     assert 'sample_array' not in dsa
 
 
 def test_should_del_array(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     del dsa['sample_array']
     assert 'sample_array' not in dsa
 
 
 def test_should_pop_array(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     dsa.pop('sample_array')
     assert 'sample_array' not in dsa
 
@@ -436,7 +435,7 @@ def test_pop_should_return_string_array(insert_string_array):
 
 
 def test_should_pop_array_invalid(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     key = 'invalid_key'
     assert key not in dsa
     default = 20
@@ -482,39 +481,39 @@ def test_length_should_increment_on_set_array(hexbeam_point_attributes):
 
 
 def test_length_should_decrement_on_remove(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.remove('sample_array')
     assert len(dsa) == initial_len - 1
 
 
 def test_length_should_decrement_on_pop(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.pop('sample_array')
     assert len(dsa) == initial_len - 1
 
 
 def test_length_should_be_0_on_clear(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     assert len(dsa) != 0
     dsa.clear()
     assert len(dsa) == 0
 
 
 def test_keys_should_be_strings(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     for name in dsa.keys():
         assert isinstance(name, str)
 
 
 def test_key_should_exist(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     assert 'sample_array' in dsa.keys()
 
 
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
+    dsa, _sample_array = insert_arange_narray
     for arr in dsa.values():
         assert type(arr) is pv.pyvista_ndarray
 
@@ -555,6 +554,7 @@ def test_preserve_field_data_after_extract_cells(hexbeam, arr):
     # https://github.com/pyvista/pyvista/pull/934
     hexbeam.field_data['foo'] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
+
     assert 'foo' in extracted.field_data
 
 
@@ -578,8 +578,11 @@ def test_normals_get(plane):
 
 def test_normals_set():
     plane = pv.Plane(i_resolution=1, j_resolution=1)
-    plane.point_data.normals = plane.point_normals
-    assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
+    plane.clear_data()
+    assert plane.active_normals is None
+    new_normals = np.zeros((plane.n_points, 3))
+    plane.point_data.active_normals = new_normals
+    assert np.array_equal(plane.point_data.active_normals, new_normals)
 
     with pytest.raises(ValueError, match='must be a 2-dim'):
         plane.point_data.active_normals = [1]
@@ -662,7 +665,7 @@ def test_active_texture_coordinates_name(plane):
 @pytest.mark.skip_windows("windows doesn't support np.complex256")
 @pytest.mark.skip_mac('Test fails on Apple silicon (M1/M2)', processor='arm')
 def test_complex_raises(plane):
-    with pytest.raises(ValueError, match='Only numpy.complex64'):
+    with pytest.raises(ValueError, match=r'Only numpy.complex64'):
         plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
 
 
@@ -676,7 +679,9 @@ def test_complex(plane, dtype_str):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
     real_type = np.float32 if dtype == np.complex64 else np.float64
-    data = np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    data = (
+        np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    )
     plane.point_data[name] = data
     assert np.array_equal(plane.point_data[name], data)
 
@@ -689,34 +694,6 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
-
-
-def test_active_t_coords_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-
-
-def test_active_t_coords_name_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('copy', [True, False])

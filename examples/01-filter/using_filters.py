@@ -1,5 +1,5 @@
 """
-.. _common_filter_example:
+.. _using_filters_example:
 
 Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~
@@ -20,12 +20,13 @@ from pyvista import examples
 #
 # * ``slice``: creates a single slice through the input dataset on a user defined plane
 # * ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal slices
-# * ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along a specified axis
+# * ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along a
+#   specified axis
 # * ``threshold``: Thresholds a dataset by a single value or range of values
 # * ``threshold_percent``: Threshold by percentages of the scalar range
 # * ``clip``: Clips the dataset by a user defined plane
 # * ``outline_corners``: Outlines the corners of the data extent
-# * ``extract_geometry``: Extract surface geometry
+# * ``extract_surface``: Extract surface geometry
 #
 # To use these filters, call the method of your choice directly on your data
 # object:
@@ -48,11 +49,11 @@ outline = dataset.outline()
 # We can now plot this filtered dataset along side an outline of the original
 # dataset
 
-p = pv.Plotter()
-p.add_mesh(outline, color='k')
-p.add_mesh(threshed)
-p.camera_position = [-2, 5, 3]
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(outline, color='k')
+pl.add_mesh(threshed)
+pl.camera_position = [-2, 5, 3]
+pl.show()
 
 
 # %%
@@ -60,31 +61,31 @@ p.show()
 
 contours = dataset.contour()
 slices = dataset.slice_orthogonal()
-glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere())
+glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
 
-p = pv.Plotter(shape=(2, 2))
+pl = pv.Plotter(shape=(2, 2))
 # Show the threshold
-p.add_mesh(outline, color='k')
-p.add_mesh(threshed, show_scalar_bar=False)
-p.camera_position = [-2, 5, 3]
+pl.add_mesh(outline, color='k')
+pl.add_mesh(threshed, show_scalar_bar=False)
+pl.camera_position = [-2, 5, 3]
 # Show the contour
-p.subplot(0, 1)
-p.add_mesh(outline, color='k')
-p.add_mesh(contours, show_scalar_bar=False)
-p.camera_position = [-2, 5, 3]
+pl.subplot(0, 1)
+pl.add_mesh(outline, color='k')
+pl.add_mesh(contours, show_scalar_bar=False)
+pl.camera_position = [-2, 5, 3]
 # Show the slices
-p.subplot(1, 0)
-p.add_mesh(outline, color='k')
-p.add_mesh(slices, show_scalar_bar=False)
-p.camera_position = [-2, 5, 3]
+pl.subplot(1, 0)
+pl.add_mesh(outline, color='k')
+pl.add_mesh(slices, show_scalar_bar=False)
+pl.camera_position = [-2, 5, 3]
 # Show the glyphs
-p.subplot(1, 1)
-p.add_mesh(outline, color='k')
-p.add_mesh(glyphs, show_scalar_bar=False)
-p.camera_position = [-2, 5, 3]
+pl.subplot(1, 1)
+pl.add_mesh(outline, color='k')
+pl.add_mesh(glyphs, show_scalar_bar=False)
+pl.camera_position = [-2, 5, 3]
 
-p.link_views()
-p.show()
+pl.link_views()
+pl.show()
 
 # %%
 # Filter Pipeline
@@ -95,22 +96,23 @@ p.show()
 # filtering pipeline through a chain; attaching each filter to the last filter.
 # In the following example, several filters are chained together:
 #
-# 1. First, and empty ``threshold`` filter to clean out any ``NaN`` values.
+# 1. First, use :func:`~pyvista.DataSetFilters.remove_nan_cells` to drop any
+#    cells whose scalar values are ``NaN``.
 # 2. Use an ``elevation`` filter to generate scalar values corresponding to height.
 # 3. Use the ``clip`` filter to cut the dataset in half.
 # 4. Create three slices along each axial plane using the ``slice_orthogonal`` filter.
 
 # Apply a filtering chain
-result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
+result = dataset.remove_nan_cells().elevation().clip(normal='z').slice_orthogonal()
 
 # %%
 # And to view this filtered data, simply call the ``plot`` method
 # (``result.plot()``) or create a rendering scene:
 
-p = pv.Plotter()
-p.add_mesh(outline, color='k')
-p.add_mesh(result, scalars='Elevation')
-p.view_isometric()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(outline, color='k')
+pl.add_mesh(result, scalars='Elevation')
+pl.view_isometric()
+pl.show()
 # %%
 # .. tags:: filter

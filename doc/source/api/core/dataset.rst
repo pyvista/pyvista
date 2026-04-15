@@ -4,7 +4,7 @@ Data Sets
 =========
 Datasets are any spatially referenced information and usually consist of
 geometrical representations of a surface or volume in 3D space.
-In VTK, this superclass is represented by the `vtk.vtkDataSet`_ abstract class.
+In VTK, this superclass is represented by the :vtk:`vtkDataSet` abstract class.
 
 In VTK, datasets consist of geometry, topology, and attributes to which PyVista
 provides direct access:
@@ -27,7 +27,7 @@ Dataset API Reference
 ---------------------
 The :class:`pyvista.DataSet` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista. This
-base class is analogous to VTK's `vtk.vtkDataSet`_ class.
+base class is analogous to VTK's :vtk:`vtkDataSet` class.
 
 The :class:`pyvista.DataSetAttributes` class contains the methods to access
 arrays associated with cells, points, and the DataSet in general (fields).
@@ -40,5 +40,3 @@ arrays associated with cells, points, and the DataSet in general (fields).
    pyvista.core.dataset.ActiveArrayInfo
    pyvista.core.dataset.ActiveArrayInfoTuple
    pyvista.core.utilities.arrays.FieldAssociation
-
-.. _vtk.vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html

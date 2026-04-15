@@ -23,7 +23,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -37,10 +36,10 @@ clim = [arr.min(), arr.max()]
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(furniture, name='furniture', color=True)
-p.add_mesh(mesh.outline(), color='black')
-p.add_axes()
+pl = pv.Plotter()
+pl.add_mesh(furniture, name='furniture', color=True)
+pl.add_mesh(mesh.outline(), color='black')
+pl.add_axes()
 
 
 def simulate(pointa, pointb):
@@ -51,11 +50,17 @@ def simulate(pointa, pointb):
         pointb=pointb,
         integration_direction='forward',
     )
-    p.add_mesh(streamlines, name='streamlines', line_width=5, render_lines_as_tubes=True, clim=clim)
+    pl.add_mesh(
+        streamlines,
+        name='streamlines',
+        line_width=5,
+        render_lines_as_tubes=True,
+        clim=clim,
+    )
 
 
-p.add_line_widget(callback=simulate, use_vertices=True)
-p.show()
+pl.add_line_widget(callback=simulate, use_vertices=True)
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this

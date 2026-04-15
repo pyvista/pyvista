@@ -1,4 +1,6 @@
 """
+.. _read_dolfin_example:
+
 Read FEniCS/Dolfin Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

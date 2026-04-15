@@ -1,5 +1,5 @@
 """
-.. _boolean_example:
+.. _boolean_operations_example:
 
 Boolean Operations
 ~~~~~~~~~~~~~~~~~~

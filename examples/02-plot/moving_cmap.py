@@ -5,13 +5,14 @@ Create a GIF Movie of a Static Object with a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generate a gif movie of a Hopf torus with a moving colormap,
 by updating the scalars.
+This example uses :meth:`~pyvista.Plotter.open_gif` and
+:meth:`~pyvista.Plotter.write_frame` to create the gif.
 
 """
 
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 
@@ -19,7 +20,9 @@ import pyvista as pv
 def scurve(t):
     alpha = np.pi / 2 - (np.pi / 2 - 0.44) * np.cos(3 * t)
     beta = t + 0.44 * np.sin(6 * t)
-    return np.array([np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)])
+    return np.array(
+        [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta), np.cos(alpha)]
+    )
 
 
 # Hopf fiber
@@ -50,7 +53,7 @@ angle_v = np.linspace(0, np.pi, 200)
 u, v = np.meshgrid(angle_u, angle_v)
 x, y, z = hopf_torus(u, v)
 grid = pv.StructuredGrid(x, y, z)
-mesh = grid.extract_geometry().clean(tolerance=1e-6)
+mesh = grid.extract_surface(algorithm=None).clean(tolerance=1e-6)
 
 # Distances normalized to [0, 2*pi]
 dists = np.linalg.norm(mesh.points, axis=1)

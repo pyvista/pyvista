@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import TypeAlias
 from typing import cast
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -15,19 +18,22 @@ from pyvista.plotting import _vtk
 if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting import Plotter
+
+    ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
 
-def remove_alpha(img):
-    """Remove the alpha channel from a ``vtk.vtkImageData``.
+def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
+    """Remove the alpha channel from a :vtk:`vtkImageData`.
 
     Parameters
     ----------
-    img : vtk.vtkImageData
+    img : :vtk:`vtkImageData`
         The input image data with an alpha channel.
 
     Returns
     -------
-    pyvista.ImageData
+    ImageData
         The output image data with the alpha channel removed.
 
     """
@@ -35,7 +41,8 @@ def remove_alpha(img):
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
     ec.Update()
-    return pyvista.wrap(ec.GetOutput())
+    vtk_image: _vtk.vtkImageData = ec.GetOutput()
+    return pv.wrap(vtk_image)
 
 
 def wrap_image_array(arr):
@@ -72,18 +79,18 @@ def wrap_image_array(arr):
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
-    wrap_img = pyvista.wrap(img)
+    wrap_img = pv.wrap(img)
     wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
 
 def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]:
-    """Run a ``vtkWindowToImageFilter`` and get output as array.
+    """Run a :vtk:`vtkWindowToImageFilter` and get output as array.
 
     Parameters
     ----------
-    imfilter : _vtk.vtkWindowToImageFilter
-        The ``vtkWindowToImageFilter`` instance to be processed.
+    imfilter : :vtk:`vtkWindowToImageFilter`
+        The :vtk:`vtkWindowToImageFilter` instance to be processed.
 
     Notes
     -----
@@ -110,12 +117,18 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     return img_array.reshape(tgt_size)[::-1]
 
 
-def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):
+@_deprecate_positional_args(allowed=['render_window'])
+def image_from_window(  # noqa: PLR0917
+    render_window,
+    as_vtk: bool = False,  # noqa: FBT001, FBT002
+    ignore_alpha: bool = False,  # noqa: FBT001, FBT002
+    scale=1,
+):
     """Extract the image from the render window as an array.
 
     Parameters
     ----------
-    render_window : vtk.vtkRenderWindow
+    render_window : :vtk:`vtkRenderWindow`
         The render window to extract the image from.
 
     as_vtk : bool, default: False
@@ -131,7 +144,7 @@ def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = 
 
     Returns
     -------
-    ndarray | vtk.vtkImageData
+    output : ndarray | :vtk:`vtkImageData`
         The image as an array or as a VTK object depending on the ``as_vtk`` parameter.
 
     """
@@ -158,18 +171,24 @@ def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = 
     return data
 
 
-def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
+@_deprecate_positional_args(allowed=['im1', 'im2'])
+def compare_images(  # noqa: PLR0917
+    im1: ImageCompareType,
+    im2: ImageCompareType,
+    threshold: int = 1,
+    use_vtk: bool = True,  # noqa: FBT001, FBT002
+) -> float:
     """Compare two different images of the same size.
 
     Parameters
     ----------
-    im1 : str | numpy.ndarray | vtkRenderWindow | vtkImageData
-        Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``.
+    im1 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
+        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        a render window, or :vtk:`vtkImageData`.
 
-    im2 : str | numpy.ndarray | vtkRenderWindow | vtkImageData
-        Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``.
+    im2 : str | pathlib.Path | numpy.ndarray | pyvista.Plotter | :vtk:`vtkImageData`
+        Path, :class:`pyvista.Plotter`, numpy array representing the output of
+        a render window, or :vtk:`vtkImageData`.
 
     threshold : int, default: 1
         Threshold tolerance for pixel differences.  This should be
@@ -181,7 +200,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
         image using numpy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
         of pixels.  This is faster than using
-        ``vtk.vtkImageDifference`` but potentially less accurate.
+        :vtk:`vtkImageDifference` but potentially less accurate.
 
     Returns
     -------
@@ -208,18 +227,26 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData
-    from pyvista import Plotter
-    from pyvista import read
-    from pyvista import wrap
+    from pyvista import ImageData  # noqa: PLC0415
+    from pyvista import Plotter  # noqa: PLC0415
+    from pyvista import read  # noqa: PLC0415
+    from pyvista import wrap  # noqa: PLC0415
 
-    def to_img(img):
-        if isinstance(img, ImageData):  # pragma: no cover
+    def to_img(img: ImageCompareType) -> ImageData:
+        if isinstance(img, ImageData):
             return img
-        elif isinstance(img, _vtk.vtkImageData):
+        elif isinstance(img, _vtk.vtkImageData):  # pragma: no cover
             return wrap(img)
-        elif isinstance(img, str):
-            return read(img)
+        elif isinstance(img, (str, Path)):
+            dataset = read(img)
+            if not isinstance(dataset, ImageData):
+                msg = (
+                    f'The file {img} may not be an image. PyVista read it in as a '
+                    f'{type(dataset)!r}.'
+                )
+                raise TypeError(msg)
+
+            return dataset
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
         elif isinstance(img, Plotter):
@@ -229,31 +256,39 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
             if img.render_window is None:
                 msg = 'Unable to extract image from Plotter as it has already been closed.'
                 raise RuntimeError(msg)
-            return image_from_window(img.render_window, True, ignore_alpha=True)
+            return image_from_window(img.render_window, as_vtk=True, ignore_alpha=True)
         else:
             msg = (
                 f'Unsupported data type {type(img)}.  Should be '
-                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
+                'either a np.ndarray, pyvista.Plotter, or vtk.vtkImageData'
             )
             raise TypeError(msg)
 
-    im1 = remove_alpha(to_img(im1))
-    im2 = remove_alpha(to_img(im2))
+    im1_proc = remove_alpha(to_img(im1))
+    im2_proc = remove_alpha(to_img(im2))
 
-    if im1.GetDimensions() != im2.GetDimensions():
+    if im1_proc.dimensions != im2_proc.dimensions:
         msg = 'Input images are not the same size.'
         raise RuntimeError(msg)
 
     if use_vtk:
         img_diff = _vtk.vtkImageDifference()
         img_diff.SetThreshold(threshold)
-        img_diff.SetInputData(im1)
-        img_diff.SetImageData(im2)
+        img_diff.SetInputData(im1_proc)
+        img_diff.SetImageData(im2_proc)
         img_diff.AllowShiftOff()  # vastly increases compute time when enabled
         # img_diff.AveragingOff()  # increases compute time
         img_diff.Update()
         return img_diff.GetThresholdedError()
 
+    # unlikely but possible
+    if im1_proc.active_scalars is None:  # pragma: no cover
+        msg = 'Missing active scalars in first image'
+        raise RuntimeError(msg)
+    if im2_proc.active_scalars is None:  # pragma: no cover
+        msg = 'Missing active scalars in second image'
+        raise RuntimeError(msg)
+
     # otherwise, simply compute the mean pixel difference
-    diff = np.abs(im1.point_data[0] - im2.point_data[0])
-    return np.sum(diff) / im1.point_data[0].shape[0]
+    diff = np.abs(im1_proc.active_scalars - im2_proc.active_scalars)
+    return float(np.sum(diff) / im1_proc.active_scalars.shape[0])

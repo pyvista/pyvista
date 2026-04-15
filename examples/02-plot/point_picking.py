@@ -24,10 +24,10 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 #
 sphere = pv.Sphere()
 
-p = pv.Plotter()
-p.add_mesh(sphere, pickable=True)
-p.enable_point_picking()
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(sphere, pickable=True)
+pl.enable_point_picking()
+pl.show()
 
 # %%
 # Ignore the 3D window
@@ -37,10 +37,10 @@ p.show()
 # selected. It is possible instead pick only points on the mesh.
 sphere = pv.Sphere()
 
-p = pv.Plotter()
-p.add_mesh(sphere, pickable=True)
-p.enable_point_picking(pickable_window=False)  # Make the 3D window unpickable
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(sphere, pickable=True)
+pl.enable_point_picking(pickable_window=False)  # Make the 3D window unpickable
+pl.show()
 
 # %%
 # Modify which actors are pickable
@@ -50,14 +50,14 @@ p.show()
 sphere = pv.Sphere()
 cube = pv.Cube().translate([10, 10, 0])
 
-p = pv.Plotter()
-sphere_actor = p.add_mesh(sphere, pickable=True)  # initially pickable
-cube_actor = p.add_mesh(cube, pickable=False)  # initially unpickable
-p.enable_point_picking(pickable_window=False)
+pl = pv.Plotter()
+sphere_actor = pl.add_mesh(sphere, pickable=True)  # initially pickable
+cube_actor = pl.add_mesh(cube, pickable=False)  # initially unpickable
+pl.enable_point_picking(pickable_window=False)
 
-p.pickable_actors = [sphere_actor, cube_actor]  # now both are pickable
-p.view_xy()
-p.show()
+pl.pickable_actors = [sphere_actor, cube_actor]  # now both are pickable
+pl.view_xy()
+pl.show()
 
 # %%
 # Pick using the left-mouse button
@@ -65,9 +65,9 @@ p.show()
 #
 sphere = pv.Sphere()
 
-p = pv.Plotter()
-p.add_mesh(sphere, pickable=True)
-p.enable_point_picking(left_clicking=True)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(sphere, pickable=True)
+pl.enable_point_picking(left_clicking=True)
+pl.show()
 # %%
 # .. tags:: plot

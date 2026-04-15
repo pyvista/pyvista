@@ -6,10 +6,9 @@ import gc
 import weakref
 
 import numpy as np
-import vtk
 
 import pyvista as pv
-from pyvista.core._vtk_core import vtk_to_numpy
+from pyvista.core import _vtk_core as _vtk
 
 
 def test_pyvistandarray_assign(sphere):
@@ -74,20 +73,20 @@ def test_vtk_points_slice():
     n = 10
     orig_points = np.array(mesh.points[:n])
     pts = pv.vtk_points(mesh.points[:n], deep=False)
-    assert isinstance(pts, vtk.vtkPoints)
+    assert isinstance(pts, _vtk.vtkPoints)
 
     del mesh
     gc.collect()
-    assert np.allclose(vtk_to_numpy(pts.GetData()), orig_points)
+    assert np.allclose(_vtk.vtk_to_numpy(pts.GetData()), orig_points)
 
 
 def test_vtk_points():
     mesh = pv.Sphere()
     orig_points = np.array(mesh.points)
     pts = pv.vtk_points(mesh.points, deep=False)
-    assert isinstance(pts, vtk.vtkPoints)
-    assert np.shares_memory(mesh.points, vtk_to_numpy(pts.GetData()))
+    assert isinstance(pts, _vtk.vtkPoints)
+    assert np.shares_memory(mesh.points, _vtk.vtk_to_numpy(pts.GetData()))
 
     del mesh
     gc.collect()
-    assert np.allclose(vtk_to_numpy(pts.GetData()), orig_points)
+    assert np.allclose(_vtk.vtk_to_numpy(pts.GetData()), orig_points)

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-python -m pip install -e .[dev] --no-cache-dir
+python -m pip install -e . --group dev --no-cache-dir
 pre-commit install --install-hooks
 
-pip uninstall vtk -y
-pip install --extra-index-url https://wheels.vtk.org vtk-osmesa
+# Ensure vtk 9.5 is installed for best offscreen rendering support
+python -m pip install 'vtk>=9.5'

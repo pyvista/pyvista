@@ -37,7 +37,7 @@ actor = pl.add_mesh(mesh, color='seagreen')
 
 
 @state.change('color')
-def color(color='seagreen', **kwargs):
+def color(color='seagreen', **kwargs):  # noqa: ARG001
     actor.prop.color = color
     ctrl.view_update()
 

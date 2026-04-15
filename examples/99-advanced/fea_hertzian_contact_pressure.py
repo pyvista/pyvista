@@ -1,5 +1,5 @@
 """
-.. _hertzian_contact_example:
+.. _fea_hertzian_contact_pressure_example:
 
 Visualize Hertzian Contact Stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 

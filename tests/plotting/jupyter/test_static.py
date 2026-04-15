@@ -30,13 +30,21 @@ def test_validate_jupyter_backend_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(jupyter, 'importlib')
     m.util.find_spec.return_value = False
-    with pytest.raises(ImportError, match='Install IPython to display with pyvista in a notebook.'):
+    with pytest.raises(
+        ImportError, match=r'Install IPython to display with pyvista in a notebook.'
+    ):
         _validate_jupyter_backend('foo')
 
 
-@pytest.mark.parametrize('backend', [None, 'none'])
-def test_set_jupyter_backend_none(backend):
-    pv.set_jupyter_backend(backend)
+def test_set_jupyter_backend_none():
+    pv.set_jupyter_backend('none')
+    assert pv.global_theme.jupyter_backend == 'none'
+
+
+def test_set_jupyter_backend_none_resets_to_auto():
+    pv.set_jupyter_backend('static')
+    assert pv.global_theme.jupyter_backend == 'static'
+    pv.set_jupyter_backend(None)
     assert pv.global_theme.jupyter_backend is None
 
 

@@ -1,4 +1,6 @@
 """
+.. _project_points_tessellate_example:
+
 Project points to a plane and Tessellate
 ----------------------------------------
 
@@ -14,7 +16,6 @@ function that projects points to a plane.
 from __future__ import annotations
 
 import numpy as np
-
 import pyvista as pv
 
 # %%

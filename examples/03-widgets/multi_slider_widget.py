@@ -1,9 +1,11 @@
 """
+.. _multi_slider_widget_example:
+
 Multiple Slider Widgets
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Use a class based callback to track multiple slider widgets for updating a
-single mesh.
+Use :func:`~pyvista.Plotter.add_slider_widget` and a class-based callback
+to track multiple slider widgets for updating a single mesh.
 
 In this example we simply change a few parameters for the
 :func:`pyvista.Sphere` method, but this could easily be applied to any
@@ -48,9 +50,9 @@ engine = MyCustomRoutine(starting_mesh)
 
 # %%
 
-p = pv.Plotter()
-p.add_mesh(starting_mesh, show_edges=True)
-p.add_slider_widget(
+pl = pv.Plotter()
+pl.add_mesh(starting_mesh, show_edges=True)
+pl.add_slider_widget(
     callback=lambda value: engine('phi_resolution', int(value)),
     rng=[3, 60],
     value=30,
@@ -59,7 +61,7 @@ p.add_slider_widget(
     pointb=(0.31, 0.1),
     style='modern',
 )
-p.add_slider_widget(
+pl.add_slider_widget(
     callback=lambda value: engine('theta_resolution', int(value)),
     rng=[3, 60],
     value=30,
@@ -68,7 +70,7 @@ p.add_slider_widget(
     pointb=(0.64, 0.1),
     style='modern',
 )
-p.add_slider_widget(
+pl.add_slider_widget(
     callback=lambda value: engine('radius', value),
     rng=[0.1, 1.5],
     value=0.5,
@@ -77,6 +79,6 @@ p.add_slider_widget(
     pointb=(0.98, 0.1),
     style='modern',
 )
-p.show()
+pl.show()
 # %%
 # .. tags:: widgets

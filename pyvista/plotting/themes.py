@@ -40,15 +40,17 @@ import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-import warnings
 
 import pyvista  # noqa: TC001
+from pyvista._warn_external import warn_external
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
+from .interactor_style_registry import _validate_interactor_style
 from .opts import InterpolationType
+from .opts import PointSpriteShape
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -57,6 +59,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -67,7 +70,7 @@ def _set_plot_theme_from_env() -> None:
             set_plot_theme(theme.lower())
         except ValueError:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
-            warnings.warn(
+            warn_external(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
             )
@@ -106,8 +109,16 @@ def set_plot_theme(theme):
     Parameters
     ----------
     theme : str
-        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
-        or ``'paraview'``.
+        The theme name.  Available predefined theme names include:
+
+        - ``'dark'``,
+        - ``'default'``,
+        - ``'document'``,
+        - ``'document_build'``,
+        - ``'document_pro'``,
+        - ``'paraview'``,
+        - ``'testing'`` and
+        - ``'vtk'``.
 
     Examples
     --------
@@ -129,7 +140,7 @@ def set_plot_theme(theme):
     >>> pv.set_plot_theme('paraview')
 
     """
-    import pyvista
+    import pyvista  # noqa: PLC0415
 
     if isinstance(theme, str):
         theme = theme.lower()
@@ -142,7 +153,9 @@ def set_plot_theme(theme):
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
-        msg = f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        msg = (
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        )
         raise TypeError(msg)
 
 
@@ -151,8 +164,8 @@ class _ForceSlots(type):
     """Metaclass to force classes and subclasses to have __slots__."""
 
     @classmethod
-    def __prepare__(metaclass, name, bases, **kwargs):
-        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
+    def __prepare__(cls, name, bases, **kwargs):  # type: ignore[override]
+        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
         super_prepared['__slots__'] = ()
         return super_prepared
 
@@ -187,11 +200,13 @@ class _ThemeConfig(metaclass=_ForceSlots):
         dict_ = {}
         for key in self._all__slots__():
             value = getattr(self, key)
-            key = key[1:]
+            key_ = key[1:]
+            if key_ == 'plot_cell':  # private config values
+                continue
             if hasattr(value, 'to_dict'):
-                dict_[key] = value.to_dict()
+                dict_[key_] = value.to_dict()
             else:
-                dict_[key] = value
+                dict_[key_] = value
         return dict_
 
     def __eq__(self, other) -> bool:
@@ -207,6 +222,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 return False
 
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __getitem__(self, key):
         """Get a value via a key.
@@ -567,7 +584,14 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color', '_decimate', '_enabled', '_feature_angle', '_line_width', '_opacity']
+    __slots__ = [
+        '_color',
+        '_decimate',
+        '_enabled',
+        '_feature_angle',
+        '_line_width',
+        '_opacity',
+    ]
 
     def __init__(self):
         self._color = Color('black')
@@ -799,7 +823,7 @@ class _AxesConfig(_ThemeConfig):
     Color(name='tomato', hex='#ff6347ff', opacity=255)
 
     >>> pv.global_theme.axes.y_color
-    Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+    Color(name='sea_green', hex='#2e8b57ff', opacity=255)
 
     >>> pv.global_theme.axes.z_color
     Color(name='blue', hex='#0000ffff', opacity=255)
@@ -818,7 +842,8 @@ class _AxesConfig(_ThemeConfig):
 
     >>> pv.global_theme.axes.show = True
 
-    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
+    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+    as the orientation widget.
 
     >>> pv.global_theme.axes.box = True
 
@@ -881,7 +906,7 @@ class _AxesConfig(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.y_color
-        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+        Color(name='sea_green', hex='#2e8b57ff', opacity=255)
 
         Change the default color.
 
@@ -982,9 +1007,9 @@ class _Font(_ThemeConfig):
 
     >>> pv.global_theme.font.color = 'grey'
 
-    Set the string formatter used to format numerical data to '%.6e'
+    Set the string formatter used to format numerical data to '{:.6e}'
 
-    >>> pv.global_theme.font.fmt = '%.6e'
+    >>> pv.global_theme.font.fmt = '{:.6e}'
 
     """
 
@@ -1119,10 +1144,10 @@ class _Font(_ThemeConfig):
 
         Examples
         --------
-        Set the string formatter used to format numerical data to '%.6e'.
+        Set the string formatter used to format numerical data to '{:.6e}'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
         return self._fmt  # type: ignore[return-value]
@@ -1354,9 +1379,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'  # type: ignore[assignment]
+        self._classic.slider_color = 'gray'
         self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'  # type: ignore[assignment]
+        self._classic.tube_color = 'white'
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1365,9 +1390,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (110, 113, 117)  # type: ignore[assignment]
+        self._modern.slider_color = (110, 113, 117)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (178, 179, 181)  # type: ignore[assignment]
+        self._modern.tube_color = (178, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -1447,7 +1472,7 @@ class _TrameConfig(_ThemeConfig):
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
         if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))  # noqa: PTH118
+            self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/')).rstrip('/') + '/'
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1534,7 +1559,7 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):
         if enabled and self.jupyter_extension_enabled:
-            warnings.warn('Enabling server_proxy will disable jupyter_extension')
+            warn_external('Enabling server_proxy will disable jupyter_extension')
             self._jupyter_extension_enabled = False
 
         self._server_proxy_enabled = bool(enabled)
@@ -1555,8 +1580,8 @@ class _TrameConfig(_ThemeConfig):
 
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):
-        warnings.warn(
-            'The jupyter_extension_available flag is read only and is automatically detected.',
+        warn_external(
+            'The jupyter_extension_available flag is read only and is automatically detected.'
         )
 
     @property
@@ -1571,7 +1596,7 @@ class _TrameConfig(_ThemeConfig):
             raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
-            warnings.warn('Enabling jupyter_extension will disable server_proxy')
+            warn_external('Enabling jupyter_extension will disable server_proxy')
             self._server_proxy_enabled = False
 
         self._jupyter_extension_enabled = bool(enabled)
@@ -1693,6 +1718,18 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = value
 
 
+class _PlotCellConfig(_ThemeConfig):
+    """Internal config for plotting cells."""
+
+    __slots__ = ['_font_size', '_line_width', '_normals_scale', '_point_size']
+
+    def __init__(self):
+        self._line_width = 5
+        self._point_size = 30
+        self._font_size = 20
+        self._normals_scale = 0.1
+
+
 class Theme(_ThemeConfig):
     """Base VTK theme.
 
@@ -1744,6 +1781,7 @@ class Theme(_ThemeConfig):
         '_hidden_line_removal',
         '_image_scale',
         '_interactive',
+        '_interactor_style',
         '_interpolate_before_map',
         '_jupyter_backend',
         '_lighting',
@@ -1757,6 +1795,8 @@ class Theme(_ThemeConfig):
         '_notebook',
         '_opacity',
         '_outline_color',
+        '_plot_cell',
+        '_point_shape',
         '_point_size',
         '_render_lines_as_tubes',
         '_render_points_as_spheres',
@@ -1788,7 +1828,7 @@ class Theme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._image_scale = 1
         self._font = _Font()
-        self._cmap = 'viridis'
+        self._cmap: ColormapOptions = 'viridis'
         self._color = Color('white')
         self._color_cycler = None
         self._nan_color = Color('darkgray')
@@ -1818,8 +1858,10 @@ class Theme(_ThemeConfig):
         self._show_vertices = False
         self._lighting = True
         self._interactive = False
+        self._interactor_style = 'trackball_style'
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
+        self._point_shape = None
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
@@ -1831,18 +1873,18 @@ class Theme(_ThemeConfig):
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', '8'))
         except ValueError:  # pragma: no cover
             self._multi_samples = 8
 
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')
+        self._jupyter_backend: str | None = os.environ.get('PYVISTA_JUPYTER_BACKEND')
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
-        self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
+        self._volume_mapper = 'smart'
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
@@ -1860,6 +1902,8 @@ class Theme(_ThemeConfig):
         self._logo_file = None
 
         self._resample_environment_texture: bool | float = False
+
+        self._plot_cell = _PlotCellConfig()
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -1899,7 +1943,7 @@ class Theme(_ThemeConfig):
         will be interpolated across the topology of the dataset which is
         more accurate.
 
-        See also :ref:`interpolate_before_mapping_example`.
+        See also :ref:`interpolate_before_map_example`.
 
         Examples
         --------
@@ -1915,27 +1959,27 @@ class Theme(_ThemeConfig):
 
         >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
-        >>> p = pv.Plotter(shape=(1, 2))
-        >>> _ = p.add_mesh(
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
         ...     **dargs,
         ... )
-        >>> p.subplot(0, 1)
-        >>> _ = p.add_mesh(
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
         ...     **dargs,
         ... )
-        >>> p.link_views()
-        >>> p.camera_position = [
-        ...     (-1.67, -5.10, 2.06),
-        ...     (0.0, 0.0, 0.0),
-        ...     (0.00, 0.37, 0.93),
-        ... ]
-        >>> p.show()  # doctest: +SKIP
+        >>> pl.link_views()
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(-1.67, -5.10, 2.06),
+        ...     focal_point=(0.0, 0.0, 0.0),
+        ...     viewup=(0.00, 0.37, 0.93),
+        ... )
+        >>> pl.show()  # doctest: +SKIP
 
         """
         return self._interpolate_before_map
@@ -2060,7 +2104,9 @@ class Theme(_ThemeConfig):
         self._background = Color(new_background)
 
     @property
-    def jupyter_backend(self) -> str:  # numpydoc ignore=RT01
+    def jupyter_backend(
+        self,
+    ) -> str | None:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
         Jupyter backend to use when plotting.  Must be one of the
@@ -2104,14 +2150,18 @@ class Theme(_ThemeConfig):
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
 
+        >>> pv.set_jupyter_backend('none')  # doctest:+SKIP
+
+        Reset to auto-detect the best available backend.
+
         >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
         """
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: str):
-        from pyvista.jupyter import _validate_jupyter_backend
+    def jupyter_backend(self, backend: str | None):
+        from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
@@ -2297,9 +2347,9 @@ class Theme(_ThemeConfig):
 
         >>> pv.global_theme.font.color = 'grey'
 
-        String formatter used to format numerical data to '%.6e'.
+        String formatter used to format numerical data to '{:.6e}'.
 
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
         return self._font
@@ -2312,12 +2362,11 @@ class Theme(_ThemeConfig):
         self._font = config
 
     @property
-    def cmap(self):  # numpydoc ignore=RT01
+    def cmap(self) -> ColormapOptions:  # numpydoc ignore=RT01
         """Return or set the default colormap of pyvista.
 
-        See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``.  If ``colorcet`` or ``cmocean`` are
-        installed, their colormaps can be specified by name.
+        See :ref:`named_colormaps` for supported colormaps.
+        Only applicable when displaying ``scalars``.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three
@@ -2334,11 +2383,8 @@ class Theme(_ThemeConfig):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, cmap):
-        out = get_cmap_safe(cmap)  # for validation
-        if out is None:
-            msg = f'Invalid color map {cmap}'
-            raise ValueError(msg)
+    def cmap(self, cmap: ColormapOptions):
+        get_cmap_safe(cmap)  # for validation
         self._cmap = cmap
 
     @property
@@ -2382,7 +2428,8 @@ class Theme(_ThemeConfig):
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler.
 
@@ -2688,6 +2735,47 @@ class Theme(_ThemeConfig):
         self._render_points_as_spheres = bool(render_points_as_spheres)
 
     @property
+    def point_shape(self) -> str | None:  # numpydoc ignore=RT01
+        """Return or set the default point sprite shape.
+
+        .. versionadded:: 0.48
+
+        When set, points are rendered as the specified shape instead of
+        squares. This automatically disables ``render_points_as_spheres``.
+
+        Accepts a :class:`~pyvista.plotting.opts.PointSpriteShape` enum
+        value or a string. Must be one of ``'circle'``, ``'triangle'``,
+        ``'hexagon'``, ``'diamond'``, ``'asterisk'``, ``'star'``, or
+        ``None``.
+
+        Examples
+        --------
+        Render all points as circles by default globally.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.point_shape = 'circle'
+
+        Or use the enum.
+
+        >>> from pyvista.plotting.opts import PointSpriteShape
+        >>> pv.global_theme.point_shape = PointSpriteShape.CIRCLE
+
+        """
+        return self._point_shape
+
+    @point_shape.setter
+    def point_shape(self, point_shape: PointSpriteShape | str | None):
+        if point_shape is not None:
+            try:
+                point_shape = PointSpriteShape(point_shape)
+            except ValueError:
+                valid = ', '.join(s.value for s in PointSpriteShape)
+                msg = f'Invalid point_shape {point_shape!r}. Must be one of: {valid}'
+                raise ValueError(msg) from None
+            point_shape = point_shape.value
+        self._point_shape = point_shape
+
+    @property
     def render_lines_as_tubes(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the default ``render_lines_as_tubes`` parameter.
 
@@ -2833,10 +2921,10 @@ class Theme(_ThemeConfig):
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
 
-        * ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
-        * ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
-        * ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
-        * ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
+        * ``'fixed_point'`` : :vtk:`vtkFixedPointVolumeRayCastMapper`
+        * ``'gpu'`` : :vtk:`vtkGPUVolumeRayCastMapper`
+        * ``'open_gl'`` : :vtk:`vtkOpenGLGPUVolumeRayCastMapper`
+        * ``'smart'`` : :vtk:`vtkSmartVolumeMapper`
 
         Examples
         --------
@@ -2952,7 +3040,8 @@ class Theme(_ThemeConfig):
 
         >>> pv.global_theme.axes.show = True
 
-        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
+        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+        as the orientation widget.
 
         >>> pv.global_theme.axes.box = True
 
@@ -2967,7 +3056,9 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
+    def before_close_callback(
+        self,
+    ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback  # type: ignore[return-value]
 
@@ -3040,6 +3131,7 @@ class Theme(_ThemeConfig):
             'Show edges': 'show_edges',
             'Lighting': 'lighting',
             'Interactive': 'interactive',
+            'Interactor style': 'interactor_style',
             'Render points as spheres': 'render_points_as_spheres',
             'Transparent Background': 'transparent_background',
             'Title': 'title',
@@ -3072,6 +3164,43 @@ class Theme(_ThemeConfig):
     @name.setter
     def name(self, name: str):
         self._name = name
+
+    @property
+    def interactor_style(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the default interactor style.
+
+        The value must be the name of a built-in or registered
+        interactor style. Built-in styles use names that mirror the
+        public ``enable_*_style`` methods, such as
+        ``'terrain_style'``.
+
+        Returns
+        -------
+        str
+            The default interactor style name.
+
+        Examples
+        --------
+        Set the default interactor style to terrain.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.interactor_style = 'terrain_style'
+
+        Register and use a custom interactor style.
+
+        >>> def custom_style(interactor): ...
+        >>> pv.register_interactor_style(
+        ...     'custom_style', custom_style
+        ... )  # doctest: +SKIP
+        >>> pv.global_theme.interactor_style = 'custom_style'  # doctest: +SKIP
+
+        """
+        return self._interactor_style
+
+    @interactor_style.setter
+    def interactor_style(self, interactor_style: str) -> None:
+        """Set the default interactor style."""
+        self._interactor_style = _validate_interactor_style(interactor_style)
 
     def load_theme(self, theme: str | Theme) -> None:
         """Overwrite the current theme with a theme.
@@ -3211,7 +3340,8 @@ class Theme(_ThemeConfig):
     def resample_environment_texture(self) -> bool | float:  # numpydoc ignore=RT01
         """Set or return resampling environment texture.
 
-        Resample the environment texture when using :meth:`~pyvista.Plotter.set_environment_texture`.
+        Resample the environment texture when using
+        :meth:`~pyvista.Plotter.set_environment_texture`.
         Set this to a float to set the sampling rate explicitly or set
         to ``True`` to downsample the texture to 1/16th of its original
         resolution.
@@ -3307,16 +3437,16 @@ class DarkTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'dark'
-        self.background = 'black'  # type: ignore[assignment]
+        self.background = 'black'
         self.cmap = 'viridis'
-        self.font.color = 'white'  # type: ignore[assignment]
+        self.font.color = 'white'
         self.show_edges = False
-        self.color = 'lightblue'  # type: ignore[assignment]
-        self.outline_color = 'white'  # type: ignore[assignment]
-        self.edge_color = 'white'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
-        self.axes.z_color = 'blue'  # type: ignore[assignment]
+        self.color = 'lightblue'
+        self.outline_color = 'white'
+        self.edge_color = 'white'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class ParaViewTheme(Theme):
@@ -3340,18 +3470,18 @@ class ParaViewTheme(Theme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = 'paraview'  # type: ignore[assignment]
+        self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16
-        self.font.color = 'white'  # type: ignore[assignment]
+        self.font.color = 'white'
         self.show_edges = False
-        self.color = 'white'  # type: ignore[assignment]
-        self.outline_color = 'white'  # type: ignore[assignment]
-        self.edge_color = 'black'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'gold'  # type: ignore[assignment]
-        self.axes.z_color = 'green'  # type: ignore[assignment]
+        self.color = 'white'
+        self.outline_color = 'white'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'gold'
+        self.axes.z_color = 'green'
 
 
 class DocumentTheme(Theme):
@@ -3385,19 +3515,19 @@ class DocumentTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'document'
-        self.background = 'white'  # type: ignore[assignment]
+        self.background = 'white'
         self.cmap = 'viridis'
         self.font.size = 18
         self.font.title_size = 18
         self.font.label_size = 18
-        self.font.color = 'black'  # type: ignore[assignment]
+        self.font.color = 'black'
         self.show_edges = False
-        self.color = 'lightblue'  # type: ignore[assignment]
-        self.outline_color = 'black'  # type: ignore[assignment]
-        self.edge_color = 'black'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
-        self.axes.z_color = 'blue'  # type: ignore[assignment]
+        self.color = 'lightblue'
+        self.outline_color = 'black'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class DocumentProTheme(DocumentTheme):
@@ -3439,6 +3569,11 @@ class _DocumentBuildTheme(DocumentTheme):
         self.return_cpos = False
         self.resample_environment_texture = True
 
+        self._plot_cell._line_width = 10
+        self._plot_cell._point_size = 80
+        self._plot_cell._font_size = 50
+        self._plot_cell._normals_scale = 0.25
+
 
 class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
@@ -3464,8 +3599,13 @@ class _TestingTheme(Theme):
         self.return_cpos = False
         self.resample_environment_texture = True
 
+        self._plot_cell._line_width = 8
+        self._plot_cell._point_size = 50
+        self._plot_cell._font_size = 30
+        self._plot_cell._normals_scale = 0.2
 
-class _NATIVE_THEMES(Enum):
+
+class _NATIVE_THEMES(Enum):  # noqa: N801
     """Global built-in themes available to PyVista."""
 
     paraview = ParaViewTheme
