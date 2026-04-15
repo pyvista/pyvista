@@ -1,5 +1,7 @@
 # Simple makefile to simplify repetitive build env management tasks under posix
 
+.DEFAULT_GOAL := test
+
 # Directories to run style checks against
 CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
@@ -29,7 +31,7 @@ docstyle:
 	@echo "Running vale"
 	@vale --config doc/.vale.ini doc pyvista examples
 
-sync:
+sync-deps:
 	@echo "Installing dev dependencies"
 	@uv sync --group dev
 
@@ -39,9 +41,51 @@ lint:
 
 typecheck:
 	@echo "Running mypy"
-	@uv run tox run -e mypy
+	@uv run tox -e mypy
 
+# Run tests via tox so local runs match CI exactly. Filter/flag definitions
+# live in tox.ini so they are maintained in one place.
 # Extra pytest args can be passed via ARGS, e.g. `make test ARGS="-n 10 -k filters"`
 test:
-	@echo "Running tests"
-	@uv run pytest -vv tests/ $(ARGS)
+	@echo "Running full test suite (matches CI flags)"
+	@uv run tox -e test -- $(ARGS)
+
+# Core tests only (matches CI `pyX.Y-core` env).
+test-core:
+	@echo "Running core tests (matches CI)"
+	@uv run tox -e test-core -- $(ARGS)
+
+# Plotting tests only (matches CI `pyX.Y-plotting` env).
+test-plotting:
+	@echo "Running plotting tests (matches CI)"
+	@uv run tox -e test-plotting -- $(ARGS)
+
+# Run all docstring tests (matches CI `tox -f doctest`).
+# Executes both doctest-modules and doctest-local tox envs.
+doctest:
+	@echo "Running docstring tests (matches CI)"
+	@uv run tox -f doctest -- $(ARGS)
+
+# Build the full documentation (matches CI `tox -e docs-build`).
+# Runs pre-gen steps (make_tables, make_external_gallery) and sphinx.
+docs:
+	@echo "Building documentation (matches CI)"
+	@uv run tox -e docs-build -- $(ARGS)
+
+# Test the built documentation (matches CI `tox -e docs-test`).
+# Requires `make docs` to have been run first.
+docs-test:
+	@echo "Testing built documentation (matches CI)"
+	@uv run tox -e docs-test -- $(ARGS)
+
+# Run an integration test env (matches CI `tox -e integration-<project>`).
+# Specify project via PROJECT, e.g. `make integration PROJECT=trame`.
+# Supported projects: trame, geovista, mne, pyvistaqt
+integration:
+	@if [ -z "$(PROJECT)" ]; then \
+		echo "Error: PROJECT is required. Example: make integration PROJECT=trame"; \
+		echo "Supported projects: trame, geovista, mne, pyvistaqt"; \
+		exit 1; \
+	fi
+	@echo "Running integration-$(PROJECT) tests (matches CI)"
+	@uv run tox -e integration-$(PROJECT) -- $(ARGS)

@@ -55,7 +55,7 @@ gen-dataset-gallery:
 	@if [ ! -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
 		echo "Dataset gallery directory not found, running make_table.py..."; \
 		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery"; \
-		cd "$(SOURCEDIR)" && python make_tables.py; \
+		cd "$(SOURCEDIR)" && uv run python make_tables.py; \
 	else \
 		echo "Dataset gallery directory already exists, skipping generation."; \
 		echo "Run clean-dataset-gallery to clear the gallery."; \
@@ -64,7 +64,7 @@ gen-dataset-gallery:
 gen-external-examples:
 	@if [ ! -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
 		echo "external_examples.rst not found, running make_external_examples.py..."; \
-		cd "$(SOURCEDIR)" && python make_external_gallery.py; \
+		cd "$(SOURCEDIR)" && uv run python make_external_gallery.py; \
 	else \
 		echo "The file external_examples.rst already exists, skipping generation."; \
 		echo "Run clean-external-examples to clear the file."; \
@@ -74,3 +74,17 @@ gen-external-examples:
 # This is required for interactive examples to work.
 serve-html:
 	uv run python -m http.server 11000 --directory "$(BUILDDIR)"/html
+
+# Full CI-parity documentation build via tox. Delegates to the `docs-build`
+# tox env defined in ../tox.ini, which handles the gen steps and runs
+# sphinx with the exact same flags as CI. Equivalent to `make docs` from
+# the repo root.
+ci-build:
+	@echo "Building documentation via tox (matches CI)"
+	@cd .. && uv run tox -e docs-build -- $(ARGS)
+
+# Test the built documentation via tox (matches CI `tox -e docs-test`).
+# Requires a prior successful `make ci-build` (or `make docs` at the root).
+ci-test:
+	@echo "Testing built documentation via tox (matches CI)"
+	@cd .. && uv run tox -e docs-test -- $(ARGS)
