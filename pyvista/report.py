@@ -176,15 +176,15 @@ class GPUInfo:
 
     def __repr__(self):
         """Representation method."""
+        return f'<{type(self).__name__} object at {hex(id(self))}>'
+
+    def __str__(self):
+        """Return a human-readable string representation."""
         content = '\n'
         for k, v in self.get_info():
             content += f'{k:>18} : {v}\n'
         content += '\n'
         return content
-
-    def __str__(self):
-        """Return string representation of GPUInfo."""
-        return f'GPUInfo(vendor={self.vendor}, renderer={self.renderer}, version={self.version})'
 
 
 @_deprecate_positional_args
