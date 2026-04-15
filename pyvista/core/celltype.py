@@ -17,20 +17,7 @@ from pyvista.core._vtk_utilities import vtk_version_info
 class _classproperty(property):  # noqa: N801
     """Read-only class property decorator.
 
-    Use this decaorator as an alternative to chaining `@classmethod`
-    and `@property` which is deprecated.
-
-    See:
-    - https://docs.python.org/library/functions.html#classmethod
-    - https://stackoverflow.com/a/13624858
-
-    Examples
-    --------
-    >>> from pyvista.core.utilities.misc import _classproperty
-    >>> class Foo:
-    ...     @_classproperty
-    ...     def bar(cls): ...
-
+    Copied directly from ``core.utilities.misc`` to avoid circular import.
     """
 
     def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
@@ -1152,8 +1139,8 @@ class CellType(IntEnum):
         Returns
         -------
         dict
-            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and the respective
-            :class:`CellType` members as values.
+            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            values with the respective :class:`CellType` members.
 
         See Also
         --------
