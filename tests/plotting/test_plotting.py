@@ -1408,6 +1408,20 @@ def test_add_north_arrow():
     pl.show()
 
 
+@pytest.mark.parametrize('negative', [True, False])
+def test_add_north_arrow_top_bottom_colors(negative):
+    pl = pv.Plotter()
+    pl.add_north_arrow_widget(
+        viewport=(0, 0, 0.5, 0.5),
+        color='royalblue',
+        top_color='lightsteelblue',
+        bottom_color='midnightblue',
+    )
+    pl.add_mesh(pv.Arrow(direction=(0, 1, 0)))
+    pl.view_xy(negative=negative)
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot(tmpdir):
     pl = pv.Plotter()
@@ -2118,7 +2132,6 @@ def test_volume_rendering_from_plotter(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkWeakReference not gc'd on Python 3.14 vtk dev wheels")
 def test_volume_rendering_rectilinear(uniform):
     grid = uniform.cast_to_rectilinear_grid()
 
@@ -3842,7 +3855,7 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14 vtk dev wheels")
+@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14")
 def test_plotter_volume_lookup_table(uniform):
     uniform.set_active_scalars('Spatial Point Data')
 
