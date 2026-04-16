@@ -988,7 +988,7 @@ def download_clown(load=True):  # noqa: FBT002
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_clown()
-    >>> dataset.plot()
+    >>> dataset.plot(color=True)
 
     .. seealso::
 
