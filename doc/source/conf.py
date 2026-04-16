@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING
 import warnings
 
 from atsphinx.mini18n import get_template_dir
-from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
-from sphinx import addnodes
 
 if TYPE_CHECKING:
     from sphinx.application import Sphinx
@@ -789,23 +787,6 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
     app.add_directive('image', PlaceHolderImage)
 
 
-def fix_celltype_dimension_map(app, doctree, docname):  # noqa: ARG001, D103
-    for desc in doctree.findall(addnodes.desc):
-        if desc.get('domain') != 'py':
-            continue
-
-        names = desc.get('names', [])
-        if not names:
-            continue
-
-        if not names[0].endswith('CellType.dimension_map'):
-            continue
-
-        for field in desc.findall(nodes.field):
-            if field[0].astext() == 'value':
-                field.parent.remove(field)
-
-
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
@@ -813,8 +794,6 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
-    # Also patch CellType.dimension_map so the class property renders correctly
-    app.connect('doctree-resolved', fix_celltype_dimension_map)
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
