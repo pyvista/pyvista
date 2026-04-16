@@ -613,14 +613,7 @@ _CELL_TYPE_INFO = dict(
 
 
 class _CellTypeMeta(EnumMeta):
-    """Metaclass to enable class property definitions for CellType.
-
-    Defining a class property by chaining ``@classmethod`` and ``@property`` is deprecated.
-    PyVista has a workaround ``@_classproperty`` in ``core.utilities.misc``, but this also
-    doesn't work for a public API since ``__doc__`` cannot be retrieved. Instead, defining
-    properties on the metaclass preserves both normal usage _and_ correct documentation.
-
-    """
+    """Metaclass to enable class property definitions for CellType."""
 
     _dimension_map: ClassVar[dict[_Dimension, frozenset[CellType]]] = {}
     _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
