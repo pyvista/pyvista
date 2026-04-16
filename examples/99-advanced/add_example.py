@@ -86,8 +86,6 @@ typically set up your imports.
 # block, output will be generated and printed to the screen according to its
 # ``__repr__`` method.  Otherwise, you can use ``print()`` to output text.
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

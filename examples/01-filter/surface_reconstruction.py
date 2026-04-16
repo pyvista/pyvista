@@ -10,8 +10,6 @@ tends to perform much better than :func:`pyvista.DataSetFilters.delaunay_3d`.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

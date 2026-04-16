@@ -3,3 +3,11 @@ extend = "../pyproject.toml"
 
 # But use a different line length.
 line-length = 90
+
+[lint.isort]
+# Examples don't need `from __future__ import annotations` (Python >=3.10),
+# and it clutters the rendered sphinx-gallery output.
+required-imports = []
+
+[lint.flake8-tidy-imports.banned-api]
+"__future__.annotations" = { msg = "Not needed on Python >=3.10; omitted from examples for cleaner sphinx-gallery output." }
