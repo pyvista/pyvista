@@ -163,6 +163,8 @@ jobs:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
     needs: cache-ubuntu-self-hosted
+    # numpy nightly is allowed to fail without failing the overall workflow
+    continue-on-error: ${{ matrix.numpy-version == 'nightly' }}
     strategy:
       fail-fast: false
 
@@ -225,16 +227,12 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        # numpy nightly failures are informational only and must not fail the check
-        continue-on-error: ${{ matrix.numpy-version == 'nightly' }}
         env:
           TOX_ENV: ${{ env.TOX_FACTOR }}-cov-core
         run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        # numpy nightly failures are informational only and must not fail the check
-        continue-on-error: ${{ matrix.numpy-version == 'nightly' }}
         env:
           TOX_ENV: ${{ env.TOX_FACTOR }}-cov-plotting
         run: xvfb-run tox run -e "$TOX_ENV"
