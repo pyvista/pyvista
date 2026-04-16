@@ -16,6 +16,7 @@ from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
+from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
@@ -23,6 +24,7 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk
+from ._plotting import reduce_component_scalars
 from .colors import Color
 from .colors import get_cmap_safe
 from .lookup_table import LookupTable
@@ -390,6 +392,20 @@ class _DataSetMapper(_BaseMapper):
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
+    Notes
+    -----
+    Auto scalar-range state machine. The private attribute
+    ``_use_default_scalar_range`` tracks whether the scalar range is
+    still derived from the mapped array (``True``) or has been pinned by
+    the caller (``False``). It starts ``True``. Setting ``scalar_range``
+    directly, or calling :meth:`set_scalars` with an explicit ``clim``,
+    flips it to ``False`` via :meth:`_set_scalar_range`. While ``True``,
+    the range auto-refreshes from the mapped array in
+    :meth:`_maybe_set_default_scalar_range`, which is called from
+    :meth:`set_active_scalars` and the ``dataset`` setter. Once
+    ``False``, auto-refresh is suppressed so user-supplied ``clim``
+    values are preserved.
+
     """
 
     _cmap = None
@@ -401,6 +417,12 @@ class _DataSetMapper(_BaseMapper):
     ) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
+        self._use_default_scalar_range = True
+        # _BaseMapper creates a bare LookupTable() which does not honor the
+        # theme cmap. Apply it here so auto-range paths (set_active_scalars
+        # -> _maybe_set_default_scalar_range) see the theme colors before
+        # any set_scalars call.
+        self.lookup_table.apply_cmap(self._theme.cmap, self.lookup_table.n_values)
         self._active_scalars_algo: ActiveScalarsAlgorithm | None = None
         self._input_dataset_ref: weakref.ref[DataSet] | None = None
         if dataset is not None:
@@ -430,6 +452,16 @@ class _DataSetMapper(_BaseMapper):
             set_algorithm_input(self, self._active_scalars_algo)
         else:
             set_algorithm_input(self, obj)
+        self._maybe_set_default_scalar_range()
+
+    @property
+    def scalar_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
+        """Return or set the scalar range."""
+        return self.GetScalarRange()
+
+    @scalar_range.setter
+    def scalar_range(self, clim) -> None:
+        self._set_scalar_range(clim, use_default=False)
 
     # Avoid ref cycles by using weakref
     @property
@@ -442,16 +474,74 @@ class _DataSetMapper(_BaseMapper):
 
     @property
     def array_name(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the array name or number and component to color by."""
+        """Return or set the array name or number and component to color by.
+
+        Setter behavior depends on whether the array can be resolved on
+        an upstream dataset without running the pipeline:
+
+        * If ``_scalar_source_dataset`` exposes an array with the
+          given name, route through ``set_active_scalars`` so a
+          spliced ``ActiveScalarsAlgorithm`` activates the array on
+          each ``RequestData`` (and ``_maybe_set_default_scalar_range``
+          picks a default ``clim``).
+        * Otherwise fall back to the raw VTK ``SetArrayName``. This path
+          is hit when the mapper is wired to a pipeline whose output
+          topology/arrays only materialize after ``Update()``, for
+          example a ``SmoothShadingAlgorithm`` producing post-surface
+          scalars. In that case an existing active-scalars algorithm
+          (if any) is updated in place; otherwise name resolution
+          happens on the first render.
+        """
         return self.GetArrayName()
 
     @array_name.setter
     def array_name(self, name: str) -> None:
+        dataset = self._scalar_source_dataset
+        if dataset is not None:
+            if self.scalar_map_mode == 'cell':
+                association = get_array_association(dataset, name, preference='cell')
+            else:
+                association = get_array_association(dataset, name, preference='point')
+            if association == FieldAssociation.POINT:
+                self.set_active_scalars(name, preference='point')
+                return
+            if association == FieldAssociation.CELL:
+                self.set_active_scalars(name, preference='cell')
+                return
+
         self.SetArrayName(name)
         if self._active_scalars_algo is not None:
             # The algorithm's setter calls Modified() on change, so the
             # next render re-runs the pipeline against the new array.
             self._active_scalars_algo.scalars_name = name
+
+    @property
+    def _scalar_source_dataset(self) -> DataSet | None:
+        """Return a dataset suitable for resolving mapped scalar arrays.
+
+        Used by ``array_name`` and ``set_active_scalars`` to find an array
+        by name without forcing a pipeline update. Walks at most one stage
+        upstream: if the mapper's cached dataset is empty, peek at the
+        direct producer's port-0 input. For longer pipelines (e.g.
+        ``source -> callback -> active_scalars -> mapper``) this returns
+        the last stage's input, not the original source. That is enough
+        to resolve array names because each stage's ``RequestData``
+        forwards arrays via ``ShallowCopy``.
+        """
+        dataset = self.dataset
+        if dataset is not None and dataset.n_arrays > 0:
+            return dataset
+
+        input_connection = cast('_vtk.vtkAlgorithmOutput | None', self.GetInputConnection(0, 0))
+        if input_connection is not None:
+            input_algorithm = input_connection.GetProducer()
+            if input_algorithm.GetNumberOfInputPorts() == 0:
+                return dataset
+            source = input_algorithm.GetInputDataObject(0, 0)
+            if isinstance(source, _vtk.vtkDataSet):
+                return wrap(source)
+
+        return dataset
 
     @property
     def _mapped_scalars(self) -> pv.pyvista_ndarray | None:
@@ -469,6 +559,49 @@ class _DataSetMapper(_BaseMapper):
                 return self.dataset.cell_data[name]
             return self.dataset.point_data[name]
         return self.dataset.active_scalars
+
+    def _maybe_set_default_scalar_range(self, dataset: DataSet | None = None) -> None:
+        """Set the scalar range from mapped scalars while defaults are active."""
+        if not self._use_default_scalar_range:
+            return
+
+        try:
+            scalars = self._mapped_scalars
+        except KeyError:
+            scalars = None
+        if scalars is None and self._active_scalars_algo is not None:
+            dataset = dataset or self._scalar_source_dataset
+            if dataset is None:
+                return
+            name = self._active_scalars_algo.scalars_name
+            if self._active_scalars_algo.preference == 'cell' and name in dataset.cell_data:
+                scalars = dataset.cell_data[name]
+            elif self._active_scalars_algo.preference == 'point' and name in dataset.point_data:
+                scalars = dataset.point_data[name]
+        if scalars is None:
+            return
+
+        array = np.asarray(scalars)
+        if array.size == 0:
+            return
+        if np.issubdtype(array.dtype, np.complexfloating):
+            array = array.real
+        if array.dtype == np.bool_:
+            clim = (0.0, 1.0)
+        elif np.issubdtype(array.dtype, np.number):
+            if np.isnan(array).all():
+                return
+            clim = (float(np.nanmin(array)), float(np.nanmax(array)))
+        else:
+            return
+
+        self._set_scalar_range(clim, use_default=True)
+
+    def _set_scalar_range(self, clim, *, use_default: bool) -> None:
+        """Set the scalar range and track whether it is user-defined."""
+        self.SetScalarRange(*clim)
+        self.lookup_table.scalar_range = clim
+        self._use_default_scalar_range = use_default
 
     def as_rgba(self) -> None:
         """Convert the active scalars to RGBA.
@@ -519,13 +652,18 @@ class _DataSetMapper(_BaseMapper):
         set_scalars
 
         """
+        source_dataset = self._scalar_source_dataset
         if self._active_scalars_algo is None:
             self._active_scalars_algo = ActiveScalarsAlgorithm(name=name, preference=preference)
             # Splice the algo between the mapper and its current input.
-            input_conn = self.GetInputConnection(0, 0)
+            # Prefer the existing pipeline connection so upstream
+            # modifications propagate on re-render. If no connection exists
+            # yet (for example on a freshly copied mapper), fall back to the
+            # cached dataset input instead of wiring a null VTK connection.
+            input_conn = cast('_vtk.vtkAlgorithmOutput | None', self.GetInputConnection(0, 0))
             if input_conn is not None:
                 self._active_scalars_algo.SetInputConnection(0, input_conn)
-            if self._input_dataset is not None:
+            elif self._input_dataset is not None:
                 set_algorithm_input(self._active_scalars_algo, self._input_dataset)
             self.SetInputConnection(0, self._active_scalars_algo.GetOutputPort())
         else:
@@ -534,6 +672,8 @@ class _DataSetMapper(_BaseMapper):
         # Also point the mapper at the array directly. SetInputConnection
         # above clears the VTK-level array name, so this must come last.
         self.SetArrayName(name)
+        self.scalar_map_mode = preference
+        self._maybe_set_default_scalar_range(source_dataset)
 
     def clear_active_scalars(self) -> None:
         """Detach the active scalars algorithm, if any.
@@ -573,6 +713,7 @@ class _DataSetMapper(_BaseMapper):
         """
         new_mapper = cast('_DataSetMapper', super().copy())
         new_mapper._input_dataset = self._input_dataset
+        new_mapper._use_default_scalar_range = self._use_default_scalar_range
         if self._active_scalars_algo is not None:
             new_mapper.set_active_scalars(
                 self._active_scalars_algo.scalars_name,
@@ -809,21 +950,7 @@ class _DataSetMapper(_BaseMapper):
                 scalars.shape[0] == self.dataset.n_points  # type: ignore[union-attr]
                 or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
-                if not isinstance(component, (int, type(None))):
-                    msg = 'component must be either None or an integer'
-                    raise TypeError(msg)
-                if component is None:
-                    scalars = np.linalg.norm(scalars.copy(), axis=1)
-                    scalars_name = f'{scalars_name}-normed'
-                elif component < scalars.shape[1] and component >= 0:
-                    scalars = np.array(scalars[:, component]).copy()
-                    scalars_name = f'{scalars_name}-{component}'
-                else:
-                    msg = (
-                        'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
-                    )
-                    raise ValueError(msg)
+                scalars, scalars_name = reduce_component_scalars(scalars, scalars_name, component)
             else:
                 scalars = scalars.ravel()
 
@@ -831,6 +958,7 @@ class _DataSetMapper(_BaseMapper):
             scalars = scalars.astype(np.float64)
 
         # Set scalars range
+        use_default_scalar_range = clim is None
         if clim is None:
             clim = [np.nanmin(scalars), np.nanmax(scalars)]
         elif isinstance(clim, (int, float)):
@@ -840,11 +968,11 @@ class _DataSetMapper(_BaseMapper):
             clim = [sys.float_info.min, clim[1]]
 
         if np.any(clim) and not rgb:
-            self.scalar_range = clim[0], clim[1]
+            self._set_scalar_range((clim[0], clim[1]), use_default=use_default_scalar_range)
 
         if isinstance(cmap, pv.LookupTable):
             self.lookup_table = cmap
-            self.scalar_range = self.lookup_table.scalar_range
+            self._set_scalar_range(self.lookup_table.scalar_range, use_default=False)
         else:
             self.lookup_table.scalar_range = self.scalar_range
             # Set default map

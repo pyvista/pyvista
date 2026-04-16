@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from unittest.mock import Mock
 
 import numpy as np
 from PIL import Image
@@ -10,6 +11,8 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting._plotting import _resolve_scalars_field
+from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 from pyvista.report import _get_render_window_class
@@ -179,3 +182,84 @@ def test_gif_reader(gif_file):
         assert np.allclose(grid[data_name], new_grid[data_name])
 
     img.close()
+
+
+def test_resolve_scalars_field_raises_on_mismatch():
+    """Unit-test the shared ``_resolve_scalars_field`` helper's raise branch.
+
+    The ``add_mesh`` happy path never reaches this branch; the caller
+    pre-checks that ``shape[0] in (n_points, n_cells)`` before calling.
+    Exercise it directly so the error message stays covered.
+    """
+    sphere = pv.Sphere()
+    with pytest.raises(ValueError, match='Length of scalars array'):
+        _resolve_scalars_field(np.zeros(42, dtype=np.float32), sphere, 'point')
+
+
+@pytest.mark.parametrize(
+    ('component', 'error_type', 'match'),
+    [
+        ('not-an-int', TypeError, 'component must be None or an integer'),
+        (-1, ValueError, 'nonnegative'),
+        (9, ValueError, 'less than the'),
+    ],
+)
+def test_reduce_component_scalars_invalid(component, error_type, match):
+    """Invalid ``component`` values raise from the shared reduction helper."""
+    scalars = np.zeros((10, 3), dtype=np.float32)
+    with pytest.raises(error_type, match=match):
+        reduce_component_scalars(scalars, 'vec', component)
+
+
+def test_reduce_component_scalars_norm_path():
+    """``component=None`` reduces via ``np.linalg.norm`` and synthesizes
+    the ``-normed`` derived name."""
+    vec = np.array([[3.0, 4.0, 0.0], [0.0, 0.0, 5.0]], dtype=np.float32)
+    reduced, name = reduce_component_scalars(vec, 'u', None)
+    assert name == 'u-normed'
+    np.testing.assert_allclose(reduced, [5.0, 5.0])
+
+
+def test_reduce_component_scalars_component_int():
+    """Picking an integer ``component`` extracts the column and
+    synthesizes the ``-<component>`` derived name."""
+    vec = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
+    reduced, name = reduce_component_scalars(vec, 'u', 1)
+    assert name == 'u-1'
+    np.testing.assert_allclose(reduced, [2.0, 5.0])
+
+
+def test_resolve_scalars_field_returns_cell():
+    """Cell-length scalars resolve to ``'cell'`` without the caller
+    needing to pass ``preference='cell'``."""
+    sphere = pv.Sphere()
+    result = _resolve_scalars_field(np.zeros(sphere.n_cells, dtype=np.float32), sphere, 'point')
+    assert result == 'cell'
+
+
+def test_resolve_scalars_field_prefers_hint_when_ambiguous():
+    """When the array length matches both ``n_points`` and ``n_cells``
+    the helper falls back to the caller-provided ``preference``.
+
+    Real pyvista meshes rarely have ``n_points == n_cells``; use a
+    ``Mock`` to isolate the disambiguation branch.
+    """
+    mesh = Mock(n_points=10, n_cells=10)
+    scalars = np.zeros(10, dtype=np.float32)
+    assert _resolve_scalars_field(scalars, mesh, 'point') == 'point'
+    assert _resolve_scalars_field(scalars, mesh, 'cell') == 'cell'
+
+
+def test_add_mesh_raw_numpy_mismatched_length_raises():
+    """``add_mesh`` with raw numpy scalars of mismatched length raises clearly.
+
+    Covers the downstream ``raise_not_matching`` path from
+    ``mapper._configure_scalars_mode``. The length falls through
+    ``plotter.add_mesh``'s Block A (shape[0] doesn't match points/cells)
+    and is raveled by ``mapper.set_scalars`` to a 1D array whose size
+    still doesn't match, tripping the final validation.
+    """
+    sphere = pv.Sphere()
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='Number of scalars'):
+        pl.add_mesh(sphere, scalars=np.zeros(42, dtype=np.float32))

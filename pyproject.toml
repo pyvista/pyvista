@@ -480,7 +480,7 @@ allow-dict-calls-with-keyword-arguments = true
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019

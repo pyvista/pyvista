@@ -125,6 +125,10 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['text'] = 'text'
     elif pyvista_class is pv.plotting.utilities.algorithms.ActiveScalarsAlgorithm:
         kwargs['name'] = 'name'
+    elif pyvista_class is pv.plotting.utilities.algorithms.CallbackFilterAlgorithm:
+        kwargs['callback'] = lambda ds: ds
+    elif pyvista_class is pv.plotting.utilities.algorithms.SourceAlgorithm:
+        kwargs['generator'] = pv.Sphere
     elif pyvista_class is pv.charts.Charts:
         kwargs['renderer'] = pv.Renderer(pv.Plotter())
     elif pyvista_class is pv.charts.AreaPlot:
