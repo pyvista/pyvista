@@ -60,10 +60,10 @@ dists = 2 * np.pi * (dists - dists.min()) / (dists.max() - dists.min())
 mesh['distances'] = np.sin(dists)
 
 # Make the movie
-pltr = pv.Plotter(window_size=[512, 512])
-pltr.set_focus([0, 0, 0])
-pltr.set_position([40, 0, 0])
-pltr.add_mesh(
+pl = pv.Plotter(window_size=[512, 512])
+pl.set_focus([0, 0, 0])
+pl.set_position([40, 0, 0])
+pl.add_mesh(
     mesh,
     scalars='distances',
     smooth_shading=True,
@@ -71,12 +71,12 @@ pltr.add_mesh(
     cmap='nipy_spectral',
     show_scalar_bar=False,
 )
-pltr.open_gif('Hopf_torus.gif')
+pl.open_gif('Hopf_torus.gif')
 
 for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
     mesh['distances'] = np.sin(dists - t)
-    pltr.write_frame()
+    pl.write_frame()
 
-pltr.show()
+pl.show()
 # %%
 # .. tags:: plot

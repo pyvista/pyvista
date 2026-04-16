@@ -13,6 +13,7 @@
    :toctree:
 
    CellType.dimension
+   CellType.dimension_map
    CellType.is_linear
    CellType.is_composite
    CellType.n_points
