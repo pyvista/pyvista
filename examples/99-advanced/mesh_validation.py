@@ -9,8 +9,6 @@ by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 """
 
 # sphinx_gallery_thumbnail_number = 5
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista.examples import plot_cell
 

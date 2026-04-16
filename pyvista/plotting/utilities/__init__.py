@@ -5,6 +5,7 @@ from __future__ import annotations
 from .algorithms import active_scalars_algorithm as active_scalars_algorithm
 from .algorithms import add_ids_algorithm as add_ids_algorithm
 from .algorithms import algorithm_to_mesh_handler as algorithm_to_mesh_handler
+from .algorithms import callback_algorithm as callback_algorithm
 from .algorithms import cell_data_to_point_data_algorithm as cell_data_to_point_data_algorithm
 from .algorithms import crinkle_algorithm as crinkle_algorithm
 from .algorithms import decimation_algorithm as decimation_algorithm
@@ -13,6 +14,8 @@ from .algorithms import outline_algorithm as outline_algorithm
 from .algorithms import point_data_to_cell_data_algorithm as point_data_to_cell_data_algorithm
 from .algorithms import pointset_to_polydata_algorithm as pointset_to_polydata_algorithm
 from .algorithms import set_algorithm_input as set_algorithm_input
+from .algorithms import smooth_shading_algorithm as smooth_shading_algorithm
+from .algorithms import source_algorithm as source_algorithm
 from .algorithms import triangulate_algorithm as triangulate_algorithm
 from .cubemap import cubemap as cubemap
 from .cubemap import cubemap_from_filenames as cubemap_from_filenames

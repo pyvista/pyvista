@@ -192,6 +192,10 @@ jobs:
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.14"
             vtk-version: "latest"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.14"
+            vtk-version: "latest"
             numpy-version: "nightly"
             runner-labels: "ubuntu-22.04-self-hosted"
 
