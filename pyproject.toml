@@ -90,7 +90,6 @@ test = [
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
-  'playwright<1.59.0',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
@@ -115,6 +114,8 @@ test = [
   'typing-extensions<4.16.0',
   { include-group = 'pinned' },
 ]
+
+test-playwright = ['playwright<1.59.0', { include-group = 'test' }]
 
 docs = [
   'atsphinx-mini18n==0.5.1',
@@ -272,6 +273,7 @@ log_cli_level = "INFO"
 markers = [
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
+  'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',

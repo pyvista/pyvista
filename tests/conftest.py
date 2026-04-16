@@ -319,6 +319,12 @@ def image(texture):
 
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
+    parser.addoption(
+        '--playwright',
+        action='store_true',
+        default=False,
+        help='run Playwright-based tests',
+    )
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
@@ -526,6 +532,10 @@ def pytest_runtest_setup(item: pytest.Item):
     test_downloads = item.config.getoption(flag := '--test_downloads')
     if item.get_closest_marker('needs_download') and not test_downloads:
         pytest.skip(f'Downloads not enabled with {flag}')
+
+    playwright = item.config.getoption(flag := '--playwright')
+    if item.get_closest_marker('needs_playwright') and not playwright:
+        pytest.skip(f'Playwright test not enabled with {flag}')
 
 
 def pytest_report_header(config):  # noqa: ARG001

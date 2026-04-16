@@ -183,6 +183,7 @@ def test_parallel(tmp_path: Path) -> None:
     assert len(list(html_dir.glob('**/*.png'))) == 27
 
 
+@pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
     source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / '_build'
