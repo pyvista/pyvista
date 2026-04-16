@@ -68,7 +68,7 @@ def test_no_bare_pyvista_imports_in_project():
 @pytest.mark.skip_windows('Needs grep')
 def test_no_forbidden_plotter_names_in_project():
     # Search `name = pv.Plotter(` with forbidden name
-    forbidden_names = ['plotter', 'p', 'plot', 'plt']
+    forbidden_names = ['plotter', 'p', 'plot', 'plt', 'pltr']
     names = '|'.join(forbidden_names)
     pattern = rf'^{LEADING_SPACE_OR_DOCTEST}({names})[[:space:]]*=[[:space:]]*pv\.Plotter\('
     result = _run_grep(COMMON_GREP_ARGS, pattern, PROJECT_ROOT)
