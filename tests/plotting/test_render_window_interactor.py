@@ -213,7 +213,7 @@ def test_track_click_position():
 @pytest.mark.skipif(
     type(_vtk.vtkRenderWindowInteractor()).__name__ == 'vtkXRenderWindowInteractor'
     and type(_vtk.vtkRenderWindow()).__name__ != 'vtkXOpenGLRenderWindow',
-    reason='vtkXRenderWindowInteractor.ProcessEvents() segfaults without an X-backed render window.',
+    reason='vtkXRenderWindowInteractor.ProcessEvents() segfaults without an X-backed render window',
 )
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
