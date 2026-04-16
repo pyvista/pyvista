@@ -215,7 +215,8 @@ def test_interactive_plot_moves(tmp_path: Path):
             browser = p.chromium.launch()
             page = browser.new_page()
 
-            page.goto('http://127.0.0.1:8000/some_plots.html')
+            host, port = server.server_address
+            page.goto(f'http://{host}:{port}/some_plots.html')
             page.wait_for_timeout(1000)
 
             # Navigate to interactive scene tab
