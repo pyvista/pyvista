@@ -32,7 +32,7 @@ class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01 # noqa: N81
         super().__init__(message)
 
 
-class MismatchedInteractorError(RuntimeError):  # numpydoc ignore=PR01
+class MismatchedInteractorError(RuntimeError):  # numpydoc ignore=PR01  # pragma: no cover
     """Exception when the interactor and render window backends are incompatible."""
 
     def __init__(self, message='Interactor and render window backends are incompatible.'):

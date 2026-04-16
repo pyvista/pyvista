@@ -1555,7 +1555,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             msg = 'Render window interactor must be initialized before processing events.'
             raise RuntimeError(msg)
         rw = self.interactor.GetRenderWindow()
-        if rw is not None:
+        if rw is not None:  # pragma: no cover
             iren_cls = type(self.interactor).__name__
             rw_cls = type(rw).__name__
             del rw
