@@ -225,8 +225,9 @@ def test_celltype_dimension_map():
 
 def test_celltype_dimension_map_not_mutable():
     mapping = CellType.dimension_map
-    mapping[42] = 'foo'
-    assert 42 not in CellType.dimension_map.keys()
+    match = "'mappingproxy' object does not support item assignment"
+    with pytest.raises(TypeError, match=match):
+        mapping[42] = 'foo'
 
 
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
