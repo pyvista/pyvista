@@ -257,7 +257,7 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
-  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.', # https://numpy.org/devdocs/release/2.4.0-notes.html - triggered by VTK's C++ code
+  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2\.\d+\.', # https://github.com/pyvista/pyvista/issues/8484 - triggered by pyvista_ndarray.view() and VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
