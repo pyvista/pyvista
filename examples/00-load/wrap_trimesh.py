@@ -16,8 +16,6 @@ of more than one module.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 import trimesh

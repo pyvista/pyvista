@@ -17,8 +17,6 @@ Show the edges of all geometries within a mesh using the
 # the ``show_edges`` keyword argument to ``True`` when plotting a dataset.
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
