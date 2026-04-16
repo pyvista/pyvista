@@ -10,4 +10,4 @@ line-length = 90
 required-imports = []
 
 [lint.flake8-tidy-imports.banned-api]
-"__future__.annotations" = { msg = "Not needed on Python >=3.10; omitted from examples for cleaner sphinx-gallery output." }
+"__future__.annotations" = { msg = "Future annotations are omitted from examples for cleaner sphinx-gallery output." }
