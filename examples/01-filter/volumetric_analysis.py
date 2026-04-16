@@ -9,8 +9,6 @@ Calculate mass properties such as the volume or area of datasets
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
 import numpy as np
 from pyvista import examples
 

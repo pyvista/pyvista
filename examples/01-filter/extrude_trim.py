@@ -8,8 +8,6 @@ Extrude a :class:`pyvista.PolyData` with a :func:`pyvista.Plane` using
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

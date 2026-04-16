@@ -1471,8 +1471,12 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/')).rstrip('/') + '/'
+        if service and not prefix.startswith('http'):
+            # JupyterHub service prefixes are URL paths, not filesystem paths,
+            # so use PurePosixPath to force forward-slash joining on Windows.
+            self._server_proxy_prefix = (
+                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+            )
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix

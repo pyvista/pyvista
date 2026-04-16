@@ -41,7 +41,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
@@ -99,7 +99,7 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
-  'pyvista-zstd>=0.2.0,<0.3.0',
+  'pyvista-zstd>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -138,7 +138,7 @@ docs = [
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-zstd==0.2.0',
+  'pyvista-zstd==0.2.2',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.0; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
@@ -481,7 +481,7 @@ allow-dict-calls-with-keyword-arguments = true
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019

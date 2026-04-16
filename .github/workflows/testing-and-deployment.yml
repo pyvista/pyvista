@@ -38,31 +38,28 @@ permissions:
   id-token: none
 
 jobs:
-  changes:
+  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # via workflow_run) can associate the build with its PR — workflow_run events
+  # do not include pull_request data for fork PRs.
+  pr-info:
+    name: Save PR info
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      tests: ${{ steps.filter.outputs.tests == 'true' || steps.self.outputs.changed == 'true' }}
+    if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v6
-        if: github.event_name == 'pull_request'
+      - name: Save PR metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          mkdir -p pr-info
+          printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
+          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
+          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
+      - uses: actions/upload-artifact@v7
         with:
-          persist-credentials: false
-          sparse-checkout: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: filter
-        with:
-          predicate-quantifier: "every"
-          filters: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: self
-        with:
-          filters: |
-            changed:
-              - ".github/workflows/testing-and-deployment.yml"
+          name: pr-info
+          path: pr-info/
 
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
@@ -70,8 +67,6 @@ jobs:
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -79,15 +74,11 @@ jobs:
 
   # For self-hosted runners, we need to cache each runner separately
   cache-macOS-self-hosted:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
       runs-on: "macos-15-self-hosted"
   cache-ubuntu-self-hosted:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -95,8 +86,7 @@ jobs:
 
   macOS:
     name: ${{ matrix.name }}
-    needs: [cache-macOS-self-hosted, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
+    needs: cache-macOS-self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -172,8 +162,7 @@ jobs:
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
-    needs: [cache-ubuntu-self-hosted, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
+    needs: cache-ubuntu-self-hosted
     strategy:
       fail-fast: false
 
@@ -199,6 +188,10 @@ jobs:
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.13"
             vtk-version: "9.5.2"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.14"
+            vtk-version: "latest"
             numpy-version: "latest"
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.14"
@@ -236,11 +229,15 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
+        env:
+          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-core
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
+        env:
+          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-plotting
+        run: xvfb-run tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -332,19 +329,19 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
   windows:
     name: Windows Unit Testing
     runs-on: windows-latest
     timeout-minutes: 60
-    needs: [cache-github-hosted, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.tests == 'true'
+    needs: cache-github-hosted
     env:
       CI_WINDOWS: true
       PARALLEL: "-n2" # flag for pytest-xdist
@@ -407,86 +404,18 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-  image-report:
-    name: Test Image Report
-    runs-on: ubuntu-22.04
-    needs: [macOS, Linux, windows, changes]
-    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      - name: Download all failed image artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: failed_test_images-*
-          path: all_failed_images
-
-      - name: Generate HTML report
-        id: report
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          BRANCH: ${{ github.head_ref }}
-        run: |
-          tox run -e image-report -- all_failed_images _image_report
-          if [ -f _image_report/index.html ]; then
-            echo "has_report=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_report=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Deploy to Netlify
-        if: steps.report.outputs.has_report == 'true'
-        id: netlify
-        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
-        with:
-          publish-dir: _image_report
-          production-deploy: false
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          deploy-message: "Test image report for PR #${{ github.event.pull_request.number }}"
-          enable-pull-request-comment: false
-          enable-commit-comment: false
-          enable-commit-status: false
-          github-deployment-environment: test-image-report
-          github-deployment-description: "Test image comparison report"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_IMAGE_REPORT_SITE_ID }}
-        timeout-minutes: 5
-
-      - name: Create commit status with report link
-        if: steps.report.outputs.has_report == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
-        run: |
-          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
-            -f state=success \
-            -f context="Deploy / Test Image Report" \
-            -f description="Image comparison report is ready" \
-            -f target_url="$DEPLOY_URL"
-
-      - name: Add report link to job summary
-        if: steps.report.outputs.has_report == 'true'
-        env:
-          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
-        run: |
-          echo "### Test Image Report" >> $GITHUB_STEP_SUMMARY
-          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+  # The test image report Netlify deploy lives in test-image-report-deploy.yml,
+  # triggered via workflow_run, so fork PR CI is never blocked on deployment
+  # approval.
 
   upload-coverage-:
     name: Upload coverage reports
     runs-on: ubuntu-22.04
-    needs: [Linux, changes]
-    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.tests == 'true'
+    needs: [Linux, VTK-dev]
+    # `always()` ensures this still runs when VTK-dev is skipped because the
+    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its
+    # coverage artifacts get bundled into this single CodeCov upload.
+    if: always() && github.event_name == 'pull_request'
     steps:
       # Needs to checkout only for codecov to match file names
       - uses: actions/checkout@v6

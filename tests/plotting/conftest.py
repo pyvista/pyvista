@@ -34,6 +34,20 @@ def pytest_runtest_setup(item):
         pytest.skip('Test requires system to support plotting')
 
 
+@pytest.fixture(autouse=True)
+def _clean_trame_env(monkeypatch):
+    # Isolate trame/jupyter-hub env vars so tests don't inherit developer
+    # machine state (e.g. PYVISTA_TRAME_SERVER_PROXY_PREFIX set by a tailnet
+    # proxy). Tests that need these set should call monkeypatch.setenv.
+    for var in (
+        'PYVISTA_TRAME_SERVER_PROXY_PREFIX',
+        'JUPYTERHUB_SERVICE_PREFIX',
+        'TRAME_JUPYTER_WWW',
+        'PYVISTA_TRAME_JUPYTER_MODE',
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
 if APPLE_SILICON:
 
     @pytest.fixture(autouse=True)

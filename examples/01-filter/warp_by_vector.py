@@ -10,8 +10,6 @@ filter to a sphere mesh that has 3D displacement vectors defined at each node.
 
 # %%
 # We first compare the unwarped sphere to the warped sphere.
-from __future__ import annotations
-
 from itertools import product
 
 import pyvista as pv

@@ -7,8 +7,6 @@ Legends and glyphs
 Using custom legends and glyphs within PyVista.
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
