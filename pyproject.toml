@@ -444,6 +444,7 @@ ignore = [
   'F403', # 'from module import *' used; unable to detect undefined names
   'ISC001', # May cause conflicts when used with the formatter
   'N806',
+  'N817', # CamelCase imported as acronym (e.g. ElementTree as ET)
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
