@@ -444,6 +444,7 @@ ignore = [
   'F403', # 'from module import *' used; unable to detect undefined names
   'ISC001', # May cause conflicts when used with the formatter
   'N806',
+  'N817', # CamelCase imported as acronym (e.g. ElementTree as ET)
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
@@ -462,6 +463,9 @@ unfixable = ['F401', 'PLC0415']
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
+
+[tool.ruff.lint.flake8-import-conventions.aliases]
+pyvista = "pv"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "vtk".msg = "Use targeted vtkmodules imports (e.g., from vtkmodules.vtkCommonDataModel import ...) to avoid pulling in the entire VTK package."
@@ -570,7 +574,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/text.py' = ['ANN']
 'pyvista/plotting/texture.py' = ['ANN']
-'pyvista/plotting/themes.py' = ['ANN']
+'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
 'pyvista/plotting/tools.py' = ['ANN']
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
