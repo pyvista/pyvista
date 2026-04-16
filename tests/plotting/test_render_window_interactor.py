@@ -10,6 +10,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.plotting.errors import MismatchedInteractorError
 from pyvista.plotting.render_window_interactor import InteractorStyleImage
 from pyvista.plotting.render_window_interactor import InteractorStyleJoystickActor
 from pyvista.plotting.render_window_interactor import InteractorStyleJoystickCamera
@@ -209,6 +210,14 @@ def test_track_click_position():
     type(_vtk.vtkRenderWindowInteractor()).__name__
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
+)
+@pytest.mark.skip_check_gc
+@pytest.mark.xfail(
+    raises=MismatchedInteractorError,
+    reason=(
+        'vtkXRenderWindowInteractor.ProcessEvents() requires an X-backed render window. '
+        'On headless Linux with EGL, process_events() raises instead of segfaulting.'
+    ),
 )
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,

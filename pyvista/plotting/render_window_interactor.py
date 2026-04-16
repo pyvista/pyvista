@@ -24,6 +24,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
+from .errors import MismatchedInteractorError
 from .interactor_style_registry import _get_interactor_style_handler
 from .interactor_style_registry import _validate_interactor_style
 from .opts import PickerType
@@ -1553,6 +1554,19 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if not self.initialized:
             msg = 'Render window interactor must be initialized before processing events.'
             raise RuntimeError(msg)
+        rw = self.interactor.GetRenderWindow()
+        if rw is not None:
+            iren_cls = type(self.interactor).__name__
+            rw_cls = type(rw).__name__
+            del rw
+            if iren_cls == 'vtkXRenderWindowInteractor' and rw_cls != 'vtkXOpenGLRenderWindow':
+                msg = (
+                    f'Cannot process events: {iren_cls} requires an X-backed render window '
+                    f'but got {rw_cls}. This typically happens on headless Linux where VTK '
+                    f'falls back to EGL for rendering but the interactor still expects X. '
+                    f'Use vtkGenericRenderWindowInteractor for headless/EGL contexts.'
+                )
+                raise MismatchedInteractorError(msg)
         self.interactor.ProcessEvents()
 
     @property
