@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-from http.server import SimpleHTTPRequestHandler
-from http.server import ThreadingHTTPServer
 import os
 from pathlib import Path
-import subprocess
 from subprocess import PIPE
 from subprocess import Popen
 import sys
-from threading import Thread
 
-from playwright.sync_api import sync_playwright
 import pytest
 
 from pyvista.plotting import system_supports_plotting
@@ -185,6 +180,13 @@ def test_parallel(tmp_path: Path) -> None:
 
 @pytest.mark.needs_playwright
 def test_interactive_plot_moves(tmp_path: Path):
+    from http.server import SimpleHTTPRequestHandler
+    from http.server import ThreadingHTTPServer
+    import subprocess
+    from threading import Thread
+
+    from playwright.sync_api import sync_playwright
+
     source_dir = Path(__file__).parent / 'tinypages'
     html_dir = tmp_path / '_build'
 
