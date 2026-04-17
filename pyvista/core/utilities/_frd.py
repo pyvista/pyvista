@@ -135,7 +135,7 @@ class _FRDData:
     _has_unsupported_element: list[_InvalidElement] = field(default_factory=list)
 
     # Format detection
-    is_long_format: bool = False
+    _is_long_format: bool = False
     _format_detected: bool = False
 
 
