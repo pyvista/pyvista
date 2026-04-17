@@ -969,9 +969,9 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
     Notes
     -----
-    This class is intended for use as a dict with a small number of keys and
-    relatively small values, e.g. for storing metadata. It should not be
-    used to store frequently accessed array data with hundreds of entries.
+    This class is intended for metadata storage. Values are JSON-serialized
+    on every mutation, so it should not be used in place of a regular field
+    data array when storing bulk array data with many entries.
 
     """
 
