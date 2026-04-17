@@ -11,8 +11,6 @@ This example uses :meth:`~pyvista.Plotter.open_gif` and
 
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

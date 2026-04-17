@@ -10,8 +10,6 @@ using :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

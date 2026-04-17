@@ -9,8 +9,6 @@ This example shows how to add custom tools using the
 `jupyter_kwargs` option with :meth:`~pyvista.Plotter.show`.
 """
 
-from __future__ import annotations
-
 import asyncio
 
 import pyvista as pv

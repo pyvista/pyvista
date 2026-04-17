@@ -176,6 +176,10 @@ class GPUInfo:
 
     def __repr__(self):
         """Representation method."""
+        return f'<{type(self).__name__} object at {hex(id(self))}>'
+
+    def __str__(self):
+        """Return a human-readable string representation."""
         content = '\n'
         for k, v in self.get_info():
             content += f'{k:>18} : {v}\n'
