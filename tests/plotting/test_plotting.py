@@ -778,18 +778,38 @@ def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
     pl.show()
 
 
+# Axis strings dispatch to view_x/view_y/view_z; everything else (plane
+# strings, 'iso') is grouped as "plane" and tested with the sphere fixture.
+# Split derived from the renderer map so new entries are picked up
+# automatically.
+AXIS_CPOS_STRINGS = tuple(
+    k for k in pv.Renderer.CAMERA_STR_ATTR_MAP if k.lstrip('+-') in {'x', 'y', 'z'}
+)
+PLANE_CPOS_STRINGS = tuple(
+    k for k in pv.Renderer.CAMERA_STR_ATTR_MAP if k not in AXIS_CPOS_STRINGS
+)
+
 cpos_param = [
     [(2.0, 5.0, 13.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
     [-1, 2, -5],  # trigger view vector
     [1.0, 2.0, 3.0],
+    *PLANE_CPOS_STRINGS,
 ]
-cpos_param.extend(pv.plotting.renderer.Renderer.CAMERA_STR_ATTR_MAP)
 
 
 @pytest.mark.parametrize('cpos', cpos_param)
 def test_set_camera_position(cpos, sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
+    pl.camera_position = cpos
+    pl.show()
+
+
+@pytest.mark.parametrize('cpos', AXIS_CPOS_STRINGS)
+def test_set_camera_position_axis(cpos):
+    # Labeled orientation cube — each axis view renders a distinct face,
+    # so a dispatch regression (e.g. '+x' routed to '+y') fails visibly.
+    pl = pv.demos.orientation_plotter()
     pl.camera_position = cpos
     pl.show()
 
