@@ -49,9 +49,10 @@ lint:
 	@echo "Running pre-commit"
 	@uv run pre-commit run --all-files
 
+# Extra tox args can be passed via ARGS, e.g. `make typecheck ARGS="--notest"`
 typecheck:
 	@echo "Running mypy"
-	@uv run tox -e mypy
+	@uv run tox -e mypy $(ARGS)
 
 # Run tests via tox so local runs match CI exactly. Filter/flag definitions
 # live in tox.ini so they are maintained in one place.
