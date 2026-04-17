@@ -190,27 +190,33 @@ class _FRDParser:
     @staticmethod
     def _parse_nodes(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
+        nodal_vals = str(CGXRecord.NODAL_VALUES.value)
+        
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
                 return
-            if not s.startswith('-1'):
+            if not s.startswith(nodal_vals):
                 continue
 
-            idx = line.find('-1')
-            if idx == -1:  # pragma: no cover
+            idx = line.find(nodal_vals)
+            if idx == -1:
                 continue
 
             # _fix_scientific handles negative coordinates glued to ID (if any)
             # split() is completely immune to varying space widths in both tests and real files
-            data_str = _FRDParser._fix_scientific(line[idx + 2 :].rstrip('\n\r'))
+            data_str = _FRDParser._fix_scientific(line[idx + len(nodal_vals) :].rstrip('\n\r'))
             parts = data_str.split()
 
+            # A valid node definition contains at least 4 components: Node ID, X, Y, Z
             if len(parts) >= 4:
                 try:
                     nid = int(parts[0])
                     frd_data.nodes[nid] = [float(parts[1]), float(parts[2]), float(parts[3])]
                 except ValueError:
+                    # Ignore lines where coordinate parsing fails.
+                    # This prevents crashes on formatting errors or unstructured
+                    # text blocks mistakenly prefixed with the nodal value flag.
                     pass
 
     @staticmethod
@@ -245,11 +251,11 @@ class _FRDParser:
             if s.startswith(elem_def):
                 elem_line_number = file_stream.line_number
 
-                # Key: remove "-1" before split so that a glued ID does not break the parser
-                idx = line.find('-1')
-                if idx == -1:  # pragma: no cover
+                # Key: remove the prefix before split so that a glued ID does not break the parser
+                idx = line.find(elem_def)
+                if idx == -1:
                     continue
-                data_str = line[idx + 2 :]
+                data_str = line[idx + len(elem_def) :]
                 parts = data_str.split()
 
                 try:
@@ -272,40 +278,27 @@ class _FRDParser:
                 node_ids = []
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
-                idx = line.find('-2')
-                if idx == -1:  # pragma: no cover
+                idx = line.find(elem_faces)
+                if idx == -1:
                     continue
-                data_str = line[idx + 2 :].rstrip('\n\r')
+                data_str = line[idx + len(elem_faces) :].rstrip('\n\r')
 
                 if not frd_data._format_detected:
-                    frd_data.is_long_format = len(data_str.rstrip()) > 50
+                    frd_data._is_long_format = len(data_str.rstrip()) > 50
                     frd_data._format_detected = True
 
-                width = 10 if frd_data.is_long_format else 5
+                width = 10 if frd_data._is_long_format else 5
 
-                new_nodes = []
-                is_fixed = True
-
-                # Hybrid check: try fixed-width chunking first for standard CalculiX files
-                for i in range(0, len(data_str), width):
-                    chunk = data_str[i : i + width]
-                    clean_chunk = chunk.strip()
-                    if not clean_chunk:
-                        continue
-                    # If there's an internal space, it's a test mock file, not a fixed-width string
-                    if ' ' in clean_chunk:
-                        is_fixed = False
-                        break
-                    try:
-                        new_nodes.append(int(clean_chunk))
-                    except ValueError:
-                        is_fixed = False
-                        break
-
-                if is_fixed and new_nodes:
+                # Use regular fixed-width indexing to parse nodes (CalculiX standard).
+                # This correctly splits glued identifiers (e.g., '1234567890' -> '12345', '67890')
+                # and strictly preserves whitespace constraints without relying on split().
+                try:
+                    chunks = [data_str[i : i + width] for i in range(0, len(data_str), width)]
+                    new_nodes = [int(c) for c in chunks if c.strip()]
                     node_ids.extend(new_nodes)
-                else:
-                    # Fallback to space-separated values for PyVista's mock test suite files
+                except ValueError:
+                    # Fallback for unstructured PyVista mock test files 
+                    # where standard fixed-width indexing naturally fails.
                     for p in data_str.split():
                         with contextlib.suppress(ValueError):
                             node_ids.append(int(p))
@@ -356,7 +349,7 @@ class _FRDParser:
                 return
 
     @staticmethod
-    def _parse_result_data(  # noqa: PLR0917
+    def _parse_result_data(
         first_line: str, file_stream: Any, name: str, step_bucket: StepBucket
     ) -> None:
         data: dict[int, list[float]] = {}
@@ -367,11 +360,11 @@ class _FRDParser:
             s = line_str.strip()
             if not s.startswith(nodal_vals):
                 return
-            idx = line_str.find('-1')
-            if idx == -1:  # pragma: no cover
+            idx = line_str.find(nodal_vals)
+            if idx == -1:
                 return
 
-            data_str = _FRDParser._fix_scientific(line_str[idx + 2 :].rstrip('\n\r'))
+            data_str = _FRDParser._fix_scientific(line_str[idx + len(nodal_vals) :].rstrip('\n\r'))
             parts = data_str.split()
 
             if len(parts) >= 2:
