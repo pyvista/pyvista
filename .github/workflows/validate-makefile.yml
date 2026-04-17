@@ -42,6 +42,13 @@ jobs:
         with:
           enable-cache: true
 
+      # `make test ARGS="--collect-only"` below imports the plotting test
+      # modules, which instantiate a Plotter at import time to probe for
+      # OpenGL backends. Without a headless display those imports segfault,
+      # so set one up before the tox envs run.
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+
       # `make sync-deps` is not a "dry-run" — we need the dev group installed
       # so the subsequent `uv run` invocations resolve without re-bootstrapping.
       # Running it here also exercises the target itself.
