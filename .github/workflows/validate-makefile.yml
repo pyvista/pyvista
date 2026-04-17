@@ -21,7 +21,8 @@ concurrency:
 
 permissions:
   id-token: none
-
+env:
+  TOX_COLORED: "yes"
 jobs:
   validate:
     name: Dry-run make targets
