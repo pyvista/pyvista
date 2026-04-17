@@ -2714,6 +2714,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     text_color='white',
         ...     font_size=40,
         ...     point_size=10,
+        ...     always_visible=True,
         ... )
         >>>
         >>> # Add the first point label
