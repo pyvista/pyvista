@@ -317,6 +317,12 @@ def image(texture):
     return texture.to_image()
 
 
+@pytest.fixture(autouse=True)
+def _apply_pyvista_warning_filters():
+    # Need to re-apply warnings applied during __init__ since the precedence is modified by pytest
+    pv._filter_warnings()
+
+
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 

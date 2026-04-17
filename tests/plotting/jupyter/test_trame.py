@@ -39,20 +39,6 @@ pytestmark = [
     pytest.mark.skipif(not has_trame, reason='Requires trame'),
     pytest.mark.skip_plotting,
     pytest.mark.skip_check_gc,
-    pytest.mark.filterwarnings(
-        r'ignore:It is recommended to use web\.AppKey instances for '
-        r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
-    ),
-    pytest.mark.filterwarnings(
-        r'ignore:Call to deprecated method GetData\. '
-        r'\(Use ExportLegacyFormat, or GetOffsetsArray/GetConnectivityArray instead\.\)'
-        ':DeprecationWarning:trame_vtk'
-    ),
-    pytest.mark.filterwarnings(
-        r'ignore:Call to deprecated method GetSize\. '
-        r'\(Use GetCapacity\(\) instead\)'
-        r':DeprecationWarning:trame_vtk'
-    ),
 ]
 
 
