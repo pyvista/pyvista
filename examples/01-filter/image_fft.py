@@ -57,7 +57,9 @@ fft_image.point_data
 # %%
 # Plot the FFT of the image
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
-# Plot the absolute value of the FFT of the image.
+# Plot the absolute value of the FFT of the image. This is a visualization of
+# the **frequency spectrum**, not a spatial image — each pixel represents the
+# amplitude of a frequency component, not a location in the moon landing photo.
 #
 # Note that we are effectively viewing the "frequency" of the data in this
 # image, where the four corners contain the low frequency content of the image,
@@ -68,7 +70,7 @@ fft_image.plot(
     cpos='xy',
     theme=grey_theme,
     log_scale=True,
-    text='Moon Landing Image FFT',
+    text='Moon Landing Image FFT Spectrum',
     copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
@@ -77,7 +79,8 @@ fft_image.plot(
 # Remove the noise from the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
-# First, let's reshape by the size of the image.
+# This is still done in the frequency domain — we are modifying the spectrum,
+# not the spatial image. First, let's reshape by the size of the image.
 #
 # Next, perform a low pass filter by removing the middle 80% of the content of
 # the image. Note that the high frequency content is in the middle of the array.
@@ -95,12 +98,18 @@ data = fft_image['PNGImage'].reshape(height, width)  # note: axes flipped
 data[int(height * ratio_to_keep) : -int(height * ratio_to_keep)] = 0
 data[:, int(width * ratio_to_keep) : -int(width * ratio_to_keep)] = 0
 
+# Set an explicit clim with a positive lower bound; zeroed pixels would
+# otherwise break ``log_scale`` (``log10(0) = -inf``) and render as black.
+abs_data = np.abs(data)
+clim = [abs_data[abs_data > 0].min(), abs_data.max()]
+
 fft_image.plot(
-    scalars=np.abs(data),
+    scalars=abs_data,
     cpos='xy',
     theme=grey_theme,
     log_scale=True,
-    text='Moon Landing Image FFT with Noise Removed',
+    clim=clim,
+    text='Filtered FFT Spectrum (High Frequencies Zeroed)',
     copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
@@ -108,11 +117,16 @@ fft_image.plot(
 # %%
 # Convert to the spatial domain using reverse FFT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Finally, convert the image data back to the "spatial" domain and plot it.
+# Finally, convert the filtered spectrum back to the spatial domain using the
+# inverse FFT. This is the actual denoised image.
 
 
 rfft = fft_image.rfft()
 rfft['PNGImage'] = np.real(rfft['PNGImage'])
-rfft.plot(cpos='xy', theme=grey_theme, text='Processed Moon Landing Image')
+rfft.plot(
+    cpos='xy',
+    theme=grey_theme,
+    text='Denoised Moon Landing Image (Inverse FFT)',
+)
 # %%
 # .. tags:: filter

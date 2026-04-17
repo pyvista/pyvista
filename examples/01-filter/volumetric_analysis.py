@@ -86,7 +86,7 @@ largest = threshed.connectivity('largest', scalar_range=scalar_range)
 large_volume = largest.volume
 
 # Display it
-largest.plot(show_grid=True, cpos=[-2, 5, 3])
+largest.plot(show_grid=True, cpos=[-2, 5, 3], color=True)
 
 
 # %%

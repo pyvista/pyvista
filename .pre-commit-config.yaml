@@ -79,6 +79,16 @@ repos:
         files: ^pyvista/
         types: [file, python]
         exclude: pyvista/_warn_external.py
+      - id: no-bare-import-pyvista
+        name: "No bare 'import pyvista' (use 'import pyvista as pv')"
+        language: pygrep
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+pyvista\s*$'
+        types_or: [rst, markdown]
+      - id: no-forbidden-plotter-names
+        name: "No forbidden Plotter variable names (use 'pl')"
+        language: pygrep
+        entry: '^\s*(?:>>>|\.\.\.)?\s*(?:plotter|p|plot|plt|pltr)\s*=\s*pv\.Plotter\('
+        types_or: [python, rst, markdown]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.10

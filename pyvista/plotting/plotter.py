@@ -53,7 +53,9 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from . import _vtk
 from ._plotting import _common_arg_parser
-from ._plotting import prepare_smooth_shading
+from ._plotting import _reduce_multicomponent_scalars_on_mesh
+from ._plotting import _remap_scalars_through_topology_change
+from ._plotting import _stamp_raw_numpy_scalars
 from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
@@ -86,10 +88,12 @@ from .texture import numpy_to_texture
 from .themes import Theme
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
+from .utilities.algorithms import callback_algorithm
 from .utilities.algorithms import decimation_algorithm
 from .utilities.algorithms import extract_surface_algorithm
 from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
+from .utilities.algorithms import smooth_shading_algorithm
 from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
 from .utilities.regression import image_from_window
@@ -169,6 +173,65 @@ def close_all() -> bool:
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
+
+
+def _attach_raw_scalars_via_callback(  # noqa: PLR0917
+    algo: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
+    mesh: DataSet,
+    scalars: NumpyArray[float],
+    scalars_name: str,
+    preference: PointLiteral | CellLiteral,
+) -> tuple[_vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput, DataSet]:
+    """Splice a callback stage that attaches raw numpy scalars to the pipeline.
+
+    Used by :meth:`Plotter.add_mesh` when smooth shading is enabled on an
+    upstream :vtk:`vtkAlgorithm` input and the user passed a raw numpy
+    array. The scalars cannot be resolved by name on the pipeline output,
+    so we wrap ``algo`` in a :class:`CallbackFilterAlgorithm` that
+    shallow-copies each output and stamps the array on it.
+
+    Parameters
+    ----------
+    algo : :vtk:`vtkAlgorithm`
+        Upstream algorithm whose output should gain the scalars array.
+
+    mesh : pyvista.DataSet
+        Current pipeline-output mesh (used to preserve the output type).
+
+    scalars : numpy.ndarray
+        Array to attach. Captured by the callback closure.
+
+    scalars_name : str
+        Name under which to attach the array.
+
+    preference : str
+        Either ``'point'`` or ``'cell'``.
+
+    Returns
+    -------
+    algo : :vtk:`vtkAlgorithm`
+        The new wrapping algorithm.
+
+    mesh : pyvista.DataSet
+        The resolved pipeline-output mesh after wrapping.
+
+    """
+
+    def _attach(dataset: DataSet) -> DataSet:
+        output = dataset.copy(deep=False)
+        if preference == 'point':
+            output.point_data.set_array(scalars, scalars_name, deep_copy=False)
+        else:
+            output.cell_data.set_array(scalars, scalars_name, deep_copy=False)
+        return output
+
+    wrapped = callback_algorithm(algo, _attach, output_type=type(mesh))
+    resolved_mesh, resolved_algo = algorithm_to_mesh_handler(wrapped)
+    # ``algorithm_to_mesh_handler`` may return ``None`` for the algo slot
+    # when its input is a plain dataset; here we just wrapped a live algo,
+    # so this branch is unreachable.
+    assert resolved_algo is not None  # noqa: S101
+    return resolved_algo, resolved_mesh
 
 
 def _warn_xserver() -> None:  # pragma: no cover
@@ -3272,6 +3335,16 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
+            When a raw numpy array is passed, it is attached to
+            ``mesh`` under a generated name (typically
+            ``pyvista.DEFAULT_SCALARS_NAME`` or
+            ``Data-<n>`` if that name is taken). This makes the
+            array visible to downstream pipeline stages (for example
+            smooth-shading surface extraction) and lets callers
+            later mutate it via ``mesh[name] = ...`` to update the
+            render. Mutation is scoped to raw-numpy inputs only.
+            Passing ``scalars=<str>`` never modifies the mesh.
+
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
@@ -3970,19 +4043,73 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
 
-        # Compute surface normals if using smooth shading
+        # Raw numpy scalars against a concrete mesh: stamp on the mesh so
+        # pipeline stages (e.g. smooth shading) carry the array forward.
+        # See ``_stamp_raw_numpy_scalars``. Skipped for 2D non-rgb arrays,
+        # which are reduced to 1D by the smooth-shading block or by
+        # ``mapper.set_scalars`` before being attached, to avoid leaving a
+        # stale raw multi-component array on the mesh alongside the reduced
+        # derivative.
+        if (
+            algo is None
+            and isinstance(scalars, np.ndarray)
+            and original_scalar_name is None
+            and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
+            and (scalars.ndim == 1 or rgb)
+        ):
+            scalars_name, preference = _stamp_raw_numpy_scalars(
+                mesh, scalars, scalars_name, preference
+            )
+            original_scalar_name = scalars_name
+
         if smooth_shading:
-            if algo is not None:
-                msg = 'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
-                raise TypeError(msg)
-            mesh, scalars = prepare_smooth_shading(
-                mesh=mesh,
-                scalars=scalars,
-                texture=texture,
+            # Reduce 2D scalars ahead of the pipeline. The derived array
+            # must exist on the mesh before smooth shading so subsequent
+            # pipeline stages carry it forward. See docstring.
+            if (
+                isinstance(scalars, np.ndarray)
+                and scalars.ndim == 2
+                and not rgb
+                and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
+            ):
+                scalars, scalars_name, preference = _reduce_multicomponent_scalars_on_mesh(
+                    mesh, scalars, scalars_name, component, preference
+                )
+                original_scalar_name = scalars_name
+                component = None
+                mapper.array_name = scalars_name
+
+            input_n_points = mesh.n_points
+            input_n_cells = mesh.n_cells
+            algo = smooth_shading_algorithm(
+                algo or mesh,
                 split_sharp_edges=split_sharp_edges,
                 feature_angle=feature_angle,
-                preference=preference,
             )
+            mesh, algo = algorithm_to_mesh_handler(algo)
+
+            if scalars is not None and (
+                mesh.n_points != input_n_points or mesh.n_cells != input_n_cells
+            ):
+                scalars = _remap_scalars_through_topology_change(
+                    mesh, scalars, original_scalar_name, preference, input_n_points
+                )
+
+            # Raw numpy scalars with an upstream algorithm do not exist on the
+            # pipeline output by name. Splice a callback stage that attaches
+            # them to a shallow copy so the downstream ActiveScalarsAlgorithm
+            # can activate the mapper's live input, not just the cached
+            # snapshot.
+            if (
+                algo is not None
+                and original_scalar_name is None
+                and isinstance(scalars, np.ndarray)
+                and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
+            ):
+                algo, mesh = _attach_raw_scalars_via_callback(
+                    algo, mesh, scalars, scalars_name, preference
+                )
+                original_scalar_name = scalars_name
 
         if rgb:
             show_scalar_bar = False
