@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
+import importlib.util
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -291,6 +292,13 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 f'Must be one of: '
                 f'{list(writer_exts) + list(PICKLE_EXT) + _list_custom_writer_exts()}'
             )
+            if file_ext == '.pv' and not importlib.util.find_spec(
+                'pyvista-zstd'
+            ):  # pragma: no cover
+                msg += (
+                    ".\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
+                    'It can be installed with `pyvista[io]`.'
+                )
             raise ValueError(msg)
 
     def _store_metadata(self: Self) -> None:
