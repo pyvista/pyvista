@@ -646,8 +646,8 @@ The top-level ``Makefile`` also wraps the most common invocations — see
 
         .. code-block:: bash
 
-            make sync # install dev dependencies via uv
-            make test # run the full test suite (equivalent to `pytest tests/`)
+            make sync-deps # install dev dependencies via uv
+            make test      # run the full test suite (equivalent to `tox -e test`)
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
