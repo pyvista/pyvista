@@ -34,6 +34,20 @@ def pytest_runtest_setup(item):
         pytest.skip('Test requires system to support plotting')
 
 
+@pytest.fixture(autouse=True)
+def _clean_trame_env(monkeypatch):
+    # Isolate trame/jupyter-hub env vars so tests don't inherit developer
+    # machine state (e.g. PYVISTA_TRAME_SERVER_PROXY_PREFIX set by a tailnet
+    # proxy). Tests that need these set should call monkeypatch.setenv.
+    for var in (
+        'PYVISTA_TRAME_SERVER_PROXY_PREFIX',
+        'JUPYTERHUB_SERVICE_PREFIX',
+        'TRAME_JUPYTER_WWW',
+        'PYVISTA_TRAME_JUPYTER_MODE',
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
 if APPLE_SILICON:
 
     @pytest.fixture(autouse=True)
@@ -152,6 +166,32 @@ def make_two_char_img(text):
     pl.background_color = 'k'
     pl.camera.zoom = 'tight'
     return pv.Texture(pl.screenshot()).to_image()
+
+
+def get_actor_mapper_input(actor):
+    """Return a detached deep copy of the mapper's current pipeline input.
+
+    The deep copy detaches the returned dataset from the live VTK
+    pipeline so ``check_gc`` teardown doesn't race with test assertions
+    that inspect its arrays.
+    """
+    actor.mapper.update()
+    return pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
+
+
+class AlgorithmExecutionTracker:
+    """Callable filter body that records whether it was invoked.
+
+    Used to assert that mapper configuration is lazy, i.e. does not
+    force the pipeline to run before ``show()`` or ``render()``.
+    """
+
+    def __init__(self) -> None:
+        self.executed = False
+
+    def __call__(self, mesh: pv.DataSet) -> pv.DataSet:
+        self.executed = True
+        return mesh
 
 
 @pytest.fixture

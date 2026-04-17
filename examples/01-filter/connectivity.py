@@ -18,8 +18,6 @@ This example highlights some applications of the
 # This section is similar to `this VTK example <https://kitware.github.io/vtk-examples/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

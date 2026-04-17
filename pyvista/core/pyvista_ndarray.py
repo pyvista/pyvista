@@ -80,11 +80,14 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
             raise TypeError(msg)
 
         obj.association = association
-        obj.dataset = _vtk.vtkWeakReference()
-        if isinstance(dataset, _vtk.VTKObjectWrapper):
-            obj.dataset.Set(dataset.VTKObject)
+        if dataset is None:
+            obj.dataset = None
         else:
-            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
+            obj.dataset = _vtk.vtkWeakReference()
+            if isinstance(dataset, _vtk.VTKObjectWrapper):
+                obj.dataset.Set(dataset.VTKObject)
+            else:
+                obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
         return obj
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:

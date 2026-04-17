@@ -15,8 +15,6 @@ and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 
