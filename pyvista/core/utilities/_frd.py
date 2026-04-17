@@ -191,7 +191,7 @@ class _FRDParser:
     def _parse_nodes(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         nodal_vals = str(CGXRecord.NODAL_VALUES.value)
-
+        
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
@@ -200,8 +200,6 @@ class _FRDParser:
                 continue
 
             idx = line.find(nodal_vals)
-            if idx == -1:
-                continue
 
             # _fix_scientific handles negative coordinates glued to ID (if any)
             # split() is completely immune to varying space widths in both tests and real files
@@ -253,8 +251,6 @@ class _FRDParser:
 
                 # Key: remove the prefix before split so that a glued ID does not break the parser
                 idx = line.find(elem_def)
-                if idx == -1:
-                    continue
                 data_str = line[idx + len(elem_def) :]
                 parts = data_str.split()
 
@@ -279,8 +275,6 @@ class _FRDParser:
 
             elif s.startswith(elem_faces) and etype is not None and vtk_type is not None:
                 idx = line.find(elem_faces)
-                if idx == -1:
-                    continue
                 data_str = line[idx + len(elem_faces) :].rstrip('\n\r')
 
                 if not frd_data._format_detected:
@@ -297,7 +291,7 @@ class _FRDParser:
                     new_nodes = [int(c) for c in chunks if c.strip()]
                     node_ids.extend(new_nodes)
                 except ValueError:
-                    # Fallback for unstructured PyVista mock test files
+                    # Fallback for unstructured PyVista mock test files 
                     # where standard fixed-width indexing naturally fails.
                     for p in data_str.split():
                         with contextlib.suppress(ValueError):
@@ -349,7 +343,7 @@ class _FRDParser:
                 return
 
     @staticmethod
-    def _parse_result_data(
+    def _parse_result_data(  # noqa: PLR0917
         first_line: str, file_stream: Any, name: str, step_bucket: StepBucket
     ) -> None:
         data: dict[int, list[float]] = {}
@@ -361,8 +355,6 @@ class _FRDParser:
             if not s.startswith(nodal_vals):
                 return
             idx = line_str.find(nodal_vals)
-            if idx == -1:
-                return
 
             data_str = _FRDParser._fix_scientific(line_str[idx + len(nodal_vals) :].rstrip('\n\r'))
             parts = data_str.split()
