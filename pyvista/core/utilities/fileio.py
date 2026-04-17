@@ -371,6 +371,11 @@ def read(  # noqa: PLR0911, PLR0917
             return read_meshio(filename)
         except ReadError:
             msg = 'This file was not able to be automatically read by pyvista.'
+            if ext == '.pv':  # pragma: no cover
+                msg += (
+                    "\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
+                    'It can be installed with `pyvista[io]`.'
+                )
             raise OSError(msg)
     else:
         observer = Observer()
