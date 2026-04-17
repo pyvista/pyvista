@@ -99,6 +99,12 @@ def flaky_test(
     return wrapper
 
 
+@pytest.fixture(autouse=True)
+def _apply_pyvista_warning_filters():
+    # Need to re-apply warnings applied during __init__ since the precedence is modified by pytest
+    pv._filter_warnings()
+
+
 @pytest.fixture
 def global_variables_reset():
     tmp_screenshots = pv.ON_SCREENSHOT
@@ -315,12 +321,6 @@ def texture():
 @pytest.fixture
 def image(texture):
     return texture.to_image()
-
-
-@pytest.fixture(autouse=True)
-def _apply_pyvista_warning_filters():
-    # Need to re-apply warnings applied during __init__ since the precedence is modified by pytest
-    pv._filter_warnings()
 
 
 def pytest_addoption(parser):
