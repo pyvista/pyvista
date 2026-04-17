@@ -373,7 +373,9 @@ def test_contains_empty_string_preserves_keys_rename_side_effect(hexbeam):
     # The ``''`` lookup must run keys() and rename the anonymous array.
     assert '' not in pd
     last = pd.VTKObject.GetAbstractArray(pd.VTKObject.GetNumberOfArrays() - 1)
-    assert last.GetName() and last.GetName().startswith('Unnamed_')
+    name = last.GetName()
+    assert name
+    assert name.startswith('Unnamed_')
 
 
 def test_set_array_catch(hexbeam):
