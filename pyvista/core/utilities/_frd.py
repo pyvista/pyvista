@@ -191,7 +191,7 @@ class _FRDParser:
     def _parse_nodes(file_stream: Any, frd_data: _FRDData) -> None:
         end_block = str(CGXRecord.END_OF_BLOCK.value)
         nodal_vals = str(CGXRecord.NODAL_VALUES.value)
-        
+
         for line in file_stream:
             s = line.strip()
             if s.startswith(end_block):
@@ -297,7 +297,7 @@ class _FRDParser:
                     new_nodes = [int(c) for c in chunks if c.strip()]
                     node_ids.extend(new_nodes)
                 except ValueError:
-                    # Fallback for unstructured PyVista mock test files 
+                    # Fallback for unstructured PyVista mock test files
                     # where standard fixed-width indexing naturally fails.
                     for p in data_str.split():
                         with contextlib.suppress(ValueError):
