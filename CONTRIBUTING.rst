@@ -156,23 +156,42 @@ Quick Development Commands
 
 For convenience, the most common developer tasks are wrapped as ``make``
 targets in the repository's top-level ``Makefile``. These are the
-recommended entry points for day-to-day development:
+recommended entry points for day-to-day development.
+
+Most targets delegate to ``uv``, so ``uv`` must be installed on your
+system first (see https://docs.astral.sh/uv/getting-started/installation/).
+``make`` itself must also be available on your ``PATH``; on Windows it
+can be installed via package managers like ``scoop`` or ``chocolatey``.
 
 .. code-block:: bash
 
-    make sync       # install dev dependencies via uv (includes tox + tox-uv)
-    make lint       # run pre-commit on all files
-    make typecheck  # run mypy via tox
-    make test       # run the unit test suite with pytest
+    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
+    make lint           # run pre-commit on all files
+    make typecheck      # run mypy via tox
+    make test           # run the full test suite via tox (matches CI flags)
+    make test-core      # run the core test suite via tox (matches CI)
+    make test-plotting  # run the plotting test suite via tox (matches CI)
+    make doctest        # run all docstring tests via tox (matches CI)
+    make docs           # build the full documentation via tox (matches CI)
+    make docs-test      # test the built documentation via tox (matches CI)
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt
+
+``make test``, ``make test-core``, and ``make test-plotting`` all
+invoke tox environments defined in ``tox.ini`` so they run with the
+exact same pytest filters and flags as the corresponding CI jobs. The
+filter definitions live in ``tox.ini`` so they only need to be
+maintained in one place.
+
+Running ``make`` with no target is equivalent to ``make test``.
 
 Additional arguments can be forwarded to ``pytest`` via the ``ARGS``
 variable, for example:
 
 .. code-block:: bash
 
-    make test ARGS="-n 10"          # run tests in parallel with 10 workers
-    make test ARGS="-k filters"     # only run tests matching "filters"
-    make test ARGS="-n auto -x"     # auto parallelism, stop on first failure
+    make test ARGS="-n 10"               # run tests in parallel with 10 workers
+    make test ARGS="-k filters"          # only run tests matching "filters"
+    make test-core ARGS="-n auto -x"     # core tests, auto parallelism, stop on first failure
 
 These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
 and ``pytest``. If you need more control (e.g., running against a
