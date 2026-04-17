@@ -1186,30 +1186,23 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
         .. code-block:: bash
 
-            pytest tests/doc/tst_doc_build.py::test_static_images
+            pytest --doc_mode
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
-            tox run -e docs-test -- -k test_static_images
+            tox run -e docs-test
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make test ARGS="tests/doc/tst_doc_build.py::test_static_images"
+            make docs-test
 
-
-The tests must be executed explicitly with this command. The name of the test
-file is prefixed with ``tst``, and not ``test`` specifically to avoid being
-automatically executed by ``pytest`` (``pytest`` collects all tests prefixed
-with ``test`` by default.) This is done since the tests require building the
-documentation, and are not a primary form of testing.
-
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
 
 #. Collected from the ``Build Image Directory``.
@@ -1300,23 +1293,25 @@ To test that interactive plots do not exceed this limit, run:
 
         .. code-block:: bash
 
-            pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+            pytest --doc_mode
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
-            tox run -e docs-test -- -k test_interactive_plot_file_size
+            tox run -e docs-test
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make test ARGS="tests/doc/tst_doc_build.py::test_interactive_plot_file_size"
+            make docs-test
 
+
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
+with the limit being specified by ``max_vtksz_file_size`` in the ``pyproject.toml`` file.
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
