@@ -2431,6 +2431,63 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    def zero(  # type: ignore[misc]
+        self: _MeshType_co,
+        *,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ) -> _MeshType_co:
+        """Center the dataset at the origin.
+
+        Translates the dataset so that its bounding box center is at
+        ``(0, 0, 0)``. Equivalent to ``mesh.translate(-np.array(mesh.center))``
+        and works for all dataset types, including those with implicit
+        geometry such as :class:`~pyvista.ImageData` and
+        :class:`~pyvista.RectilinearGrid`.
+
+        .. note::
+            See also the notes at :func:`transform` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        output : DataSet | MultiBlock
+            Dataset centered at the origin. Return type matches input.
+
+        See Also
+        --------
+        translate
+            Translate the dataset by an arbitrary vector.
+        pyvista.DataSet.center
+            Bounding box center of the dataset (also settable).
+
+        Examples
+        --------
+        Center an off-origin sphere at the origin.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(center=(2, 1, 2))
+        >>> centered = mesh.zero()
+        >>> centered.center
+        (0.0, 0.0, 0.0)
+
+        """
+        return self.translate(
+            np.negative(self.center),
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
     @_deprecate_positional_args(allowed=['xyz'])
     def scale(  # noqa: PLR0917
         self: _MeshType_co,

@@ -1288,6 +1288,39 @@ def test_translate_should_translate_grid(hexbeam, axis_amounts):
     assert np.allclose(grid_copy.points, grid_points)
 
 
+def test_zero_should_center_dataset_at_origin(hexbeam):
+    offset = np.array([3.0, -2.0, 5.0])
+    moved = hexbeam.translate(offset, inplace=False)
+    assert not np.allclose(moved.center, (0.0, 0.0, 0.0))
+
+    centered = moved.zero()
+    assert np.allclose(centered.center, (0.0, 0.0, 0.0))
+    assert np.allclose(moved.center, hexbeam.center + offset)
+
+    moved.zero(inplace=True)
+    assert np.allclose(moved.center, (0.0, 0.0, 0.0))
+
+
+def test_zero_should_work_for_image_and_rectilinear():
+    image = pv.ImageData(dimensions=(5, 5, 5), origin=(10.0, 20.0, 30.0))
+    centered_image = image.zero()
+    assert np.allclose(centered_image.center, (0.0, 0.0, 0.0))
+
+    rect = pv.RectilinearGrid(
+        np.array([10.0, 11.0, 12.0]),
+        np.array([20.0, 21.0, 22.0]),
+        np.array([30.0, 31.0, 32.0]),
+    )
+    centered_rect = rect.zero()
+    assert np.allclose(centered_rect.center, (0.0, 0.0, 0.0))
+
+
+def test_zero_should_work_for_multiblock():
+    blocks = pv.MultiBlock([pv.Sphere(center=(2, 0, 0)), pv.Cube(center=(0, 2, 0)), pv.Cone()])
+    centered = blocks.zero()
+    assert np.allclose(centered.center, (0.0, 0.0, 0.0))
+
+
 @settings(
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     max_examples=HYPOTHESIS_MAX_EXAMPLES,
