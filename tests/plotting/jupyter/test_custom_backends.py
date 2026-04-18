@@ -150,7 +150,7 @@ def test_handle_plotter_static_fallback_lists_available_backends():
             'pyvista.jupyter.notebook.show_static_image',
             return_value='static_img',
         ) as mock_static,
-        pytest.warns(UserWarning, match='Available backends: "static", "none"'),
+        pytest.warns(UserWarning, match='Available backends: "static", "wasm", "none"'),
     ):
         result = handle_plotter(plotter, backend='trame')
 

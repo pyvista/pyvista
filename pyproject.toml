@@ -25,10 +25,16 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
-  'vtk!=9.4.0',
-  'vtk!=9.4.1',
-  'vtk<9.7.0',
-  'vtk>=9.2.2',
+  # VTK Python package is not available in WASM/WebAssembly environments.
+  # The platform markers exclude VTK from being installed when:
+  #   - platform_machine == 'wasm32' (WASM32 architecture)
+  #   - OR sys_platform == 'emscripten' (Emscripten/browser platform)
+  # In these environments, pyvista-wasm provides VTK.wasm (WebAssembly port of VTK C++)
+  # instead of the regular VTK Python package.
+  'vtk!=9.4.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk!=9.4.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk<9.7.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk>=9.2.2; platform_machine != "wasm32" and sys_platform != "emscripten"',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -39,7 +45,7 @@ readme = 'README.rst'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter]']
+all = ['pyvista[colormaps,io,jupyter,wasm]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.2']
 jupyter = [
@@ -53,6 +59,11 @@ jupyter = [
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
 ]
+# WASM/Pyodide support for browser-based Python environments (JupyterLite, Pyodide, Stlite)
+# Note: In WASM environments, the regular VTK package is not used; instead VTK.wasm
+# is provided via pyvista-wasm. Install with: pip install "pyvista[wasm]"
+# Note: pyvista-wasm requires Python>=3.12
+wasm = ['pyvista-wasm>=0.3.0; python_version >= "3.12"']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
@@ -95,6 +106,7 @@ test = [
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
+  'pytest-pyodide<0.30.0',
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
@@ -260,6 +272,7 @@ filterwarnings = [
   'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2\.\d+\.', # https://github.com/pyvista/pyvista/issues/8484 - triggered by pyvista_ndarray.view() and VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
+  'ignore:The \(path.*\) argument is deprecated.*:pytest.PytestRemovedIn9Warning', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local → pathlib.Path)
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
@@ -272,6 +285,7 @@ markers = [
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
+  'pyodide: mark test as requiring Pyodide environment to run (pytest-pyodide)',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',

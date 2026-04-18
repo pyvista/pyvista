@@ -616,8 +616,13 @@ REPORT = str(pv.Report(gpu=False))
 
 @pytest.mark.parametrize('package', get_distribution_dependencies('pyvista'))
 def test_report_dependencies(package):
-    if package == 'pyvista[colormaps,io,jupyter]':
+    if package in (
+        'pyvista[colormaps,io,jupyter]',
+        'pyvista[colormaps,io,jupyter,wasm]',
+    ):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
+    elif package == 'pyvista-wasm':
+        pytest.xfail('not installed with --test group')
     elif package == 'vtk!':
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'jupyter-server-proxy':

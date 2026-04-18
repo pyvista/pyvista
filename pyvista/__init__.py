@@ -95,6 +95,7 @@ if TYPE_CHECKING:
     from pyvista import ext as ext
     from pyvista import trame as trame
     from pyvista import utilities as utilities
+    from pyvista import wasm as wasm
     from pyvista.plotting import *
 
 
@@ -125,6 +126,7 @@ def __getattr__(name):
         'ext',
         'trame',
         'utilities',
+        'wasm',
     }
     if name in allow:
         return importlib.import_module(f'pyvista.{name}')
