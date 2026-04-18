@@ -21,9 +21,10 @@ on: # zizmor: ignore[dangerous-triggers]
     workflows: ["Build Documentation", "Unit Testing and Deployment"]
     types: [completed]
 
-# Deploys and commit statuses use PYVISTA_BOT_TOKEN, not GITHUB_TOKEN, so the
-# workflow token only needs read access (plus actions: read to download
-# artifacts from the triggering workflow run).
+# Deploys and commit statuses use a GitHub App installation token (see the
+# per-job "Get app installation token" steps), not GITHUB_TOKEN, so the
+# workflow-level token only needs read access (plus actions: read to
+# download artifacts from the triggering workflow run).
 permissions:
   actions: read
   contents: read
@@ -77,6 +78,19 @@ jobs:
     environment:
       name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
     steps:
+      - name: Get app installation token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        with:
+          app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
+          private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
+          owner: pyvista
+          repositories: pyvista
+          # nwtgck/actions-netlify creates a GitHub Deployment; the subsequent
+          # step posts a commit status.
+          permission-deployments: write
+          permission-statuses: write
+
       - name: Download docs-build artifact
         uses: actions/download-artifact@v8
         with:
@@ -91,7 +105,7 @@ jobs:
         with:
           publish-dir: .
           production-deploy: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: false
           enable-commit-comment: false
@@ -106,7 +120,7 @@ jobs:
       - name: Create commit status with preview link
         if: github.event.workflow_run.event == 'pull_request'
         env:
-          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
           HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
           REPO: ${{ github.repository }}
@@ -139,6 +153,17 @@ jobs:
     environment:
       name: ${{ needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys' }}
     steps:
+      - name: Get app installation token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        with:
+          app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
+          private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
+          owner: pyvista
+          repositories: pyvista
+          permission-deployments: write
+          permission-statuses: write
+
       # Check out base repo (main). Never check out the PR head — the whole
       # point of workflow_run is that fork code is never executed here.
       - uses: actions/checkout@v6
@@ -179,7 +204,7 @@ jobs:
         with:
           publish-dir: _doc_image_report
           production-deploy: false
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           deploy-message: "Doc image report for PR #${{ needs.setup.outputs.pr_number }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
@@ -194,7 +219,7 @@ jobs:
       - name: Create commit status with report link
         if: steps.report.outputs.has_report == 'true'
         env:
-          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
           HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
           REPO: ${{ github.repository }}
@@ -226,6 +251,17 @@ jobs:
     environment:
       name: ${{ needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys' }}
     steps:
+      - name: Get app installation token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        with:
+          app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
+          private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
+          owner: pyvista
+          repositories: pyvista
+          permission-deployments: write
+          permission-statuses: write
+
       # Check out base repo (main). Never check out the PR head.
       - uses: actions/checkout@v6
         with:
@@ -265,7 +301,7 @@ jobs:
         with:
           publish-dir: _image_report
           production-deploy: false
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           deploy-message: "Test image report for PR #${{ needs.setup.outputs.pr_number }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
@@ -280,7 +316,7 @@ jobs:
       - name: Create commit status with report link
         if: steps.report.outputs.has_report == 'true'
         env:
-          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
           HEAD_SHA: ${{ needs.setup.outputs.head_sha }}
           REPO: ${{ github.repository }}
