@@ -140,7 +140,7 @@ docs = [
   'pytest-sphinx==0.7.1',
   'pyvista-zstd==0.2.2',
   'ruamel-yaml<0.20.0',
-  'scipy==1.16.0; python_version >= "3.11"',
+  'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
