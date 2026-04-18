@@ -135,6 +135,7 @@ convert_string_array, <function convert_string_array at 0x7f72f5e055e0>
 create_grid, <function create_grid at 0x7f72f5d21160>
 cubemap, <function cubemap at 0x7f72f5e07ca0>
 cubemap_from_filenames, <function cubemap_from_filenames at 0x7f72f5e07d30>
+enable_smp_tools
 errors, <module 'pyvista.utilities.errors' from 'pyvista/utilities/errors.py'>
 features, <module 'pyvista.utilities.features' from 'pyvista/utilities/features.py'>
 field_array, <function field_array at 0x7f72f5e058b0>

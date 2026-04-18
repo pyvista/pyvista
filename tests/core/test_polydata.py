@@ -1006,8 +1006,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
     sphere.clip(
         origin=[0, 0, 0],
@@ -1016,8 +1015,7 @@ def test_clip_plane(sphere):
         invert=False,
         progress_bar=True,
     )
-    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
-    assert np.all(clipped_sphere.points[faces, 2] <= 0)
+    assert np.all(clipped_sphere.points[:, 2] <= 0)
 
 
 def test_extract_largest(sphere):
@@ -1453,6 +1451,28 @@ def test_regular_faces_mutable():
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3
     assert np.array_equal(mesh.faces, [3, 0, 1, 3])
+
+
+@pytest.mark.needs_vtk_version((9, 5, 0), reason='Merge order changed')
+def test_regular_faces_raises():
+    tri = pv.examples.cells.Triangle().extract_surface(algorithm=None)
+    quad = pv.examples.cells.Quadrilateral().extract_surface(algorithm=None)
+
+    mesh = tri + quad
+    match = (
+        'Cell array does not have regular cells. '
+        'Multiple cell sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+    mesh = tri + quad + quad + quad
+    match = (
+        'Mesh does not have regular faces. '
+        'Multiple face sizes detected with different number of points: [3, 4]'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
 
 
 def _assert_irregular_faces_equal(faces, expected):

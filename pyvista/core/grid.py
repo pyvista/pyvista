@@ -51,7 +51,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
-    from .filters.data_object import _MeshValidationOptions
+    from .filters.data_object import _NestedMeshValidationFields
 
 
 @abstract_class
@@ -135,7 +135,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         Whether to deep copy a :vtk:`vtkRectilinearGrid` object.
         Default is ``False``.  Keyword only.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -177,7 +177,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         *args,
         check_duplicates: bool = False,
         deep: bool = False,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -564,7 +564,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.45
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -646,7 +646,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
         *,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""
         super().__init__()

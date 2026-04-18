@@ -15,6 +15,7 @@ import platform
 import re
 import shutil
 import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -44,12 +45,14 @@ from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import line_segments_from_points
+from pyvista.core.utilities import misc
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -88,6 +91,22 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+HAS_RUNTIME_SMP_BACKEND_SELECTION = hasattr(_vtk, 'vtkSMPTools') and hasattr(
+    _vtk.vtkSMPTools, 'SetBackend'
+)
+
+
+@pytest.fixture
+def reset_smp_tools():
+    """Restore VTK's SMP backend state after a test that mutates it."""
+    if not HAS_RUNTIME_SMP_BACKEND_SELECTION:
+        yield
+        return
+    original_backend = _vtk.vtkSMPTools.GetBackend()
+    original_threads = _vtk.vtkSMPTools.GetEstimatedNumberOfThreads()
+    yield
+    _vtk.vtkSMPTools.SetBackend(original_backend)
+    _vtk.vtkSMPTools.Initialize(original_threads)
 
 
 @pytest.fixture
@@ -376,6 +395,16 @@ def test_read_force_ext_wrong_extension(tmpdir):
         fileio.read(fname, force_ext='.not_supported')
 
 
+def test_read_unsupported_extension_without_meshio(tmp_path, monkeypatch):
+    # Simulate meshio being unavailable so the fallback import fails.
+    monkeypatch.setitem(sys.modules, 'meshio', None)
+    monkeypatch.setitem(sys.modules, 'meshio._exceptions', None)
+    fname = tmp_path / 'dummy.nonexistent_ext_xyz'
+    fname.write_bytes(b'not a real mesh file')
+    with pytest.raises(OSError, match='not able to be automatically read'):
+        fileio.read(fname)
+
+
 @mock.patch('pyvista.core.utilities.fileio.read_exodus')
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
@@ -593,6 +622,8 @@ def test_report_dependencies(package):
         pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
     elif package == 'jupyter-server-proxy':
         pytest.xfail('not installed with --test group')
+    elif package == 'pyvista-zstd':
+        pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
     assert package in REPORT
 
 
@@ -1127,7 +1158,11 @@ def test_copy_implicit_vtk_array(plane):
     # Use the connectivity filter to generate an implicit vtkDataArray
     conn = plane.connectivity()
     vtk_object = conn['RegionId'].VTKObject
-    if pv.vtk_version_info >= (9, 4):
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        from vtkmodules.numpy_interface.vtk_implicit_array import VTKImplicitArray
+
+        assert isinstance(vtk_object, VTKImplicitArray)
+    elif pv.vtk_version_info >= (9, 4):
         # The VTK array appears to be abstract but is not
         assert type(vtk_object) is _vtk.vtkDataArray
     else:
@@ -1137,7 +1172,11 @@ def test_copy_implicit_vtk_array(plane):
     plane['test'] = conn['RegionId']
 
     new_vtk_object = plane['test'].VTKObject
-    if pv.vtk_version_info >= (9, 4):
+    if pv.vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        from vtkmodules.numpy_interface.vtk_aos_array import VTKAOSArray
+
+        assert isinstance(new_vtk_object, VTKAOSArray)
+    elif pv.vtk_version_info >= (9, 4):
         # The VTK array type has changed and is now a concrete subclass
         assert type(new_vtk_object) is _vtk.vtkTypeInt64Array
     else:
@@ -1498,6 +1537,29 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
         setattr(b, ham, eggs)
 
 
+def test_no_new_attr_mixin_side_effects():
+    class Parent(_NoNewAttrMixin):
+        getter_call_count = 0
+
+        @property
+        def foo(self):
+            self.getter_call_count += 1
+
+        @foo.setter
+        def foo(self, val): ...
+
+    class Child(Parent): ...
+
+    # Test that setting attributes on lasses does not trigger a call to the getter
+    obj = Parent()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
+
+    obj = Child()
+    obj.foo = 42
+    assert obj.getter_call_count == 0
+
+
 def test_set_new_attribute(no_new_attributes_mixin_subclass):
     a, _ = no_new_attributes_mixin_subclass
     ham = 'ham'
@@ -1550,6 +1612,64 @@ def test_serial_dict_init():
     serial_dict = _SerializedDictArray(json_dict)
     assert serial_dict['ham'] == 'eggs'
     assert str(serial_dict) == '{"ham": "eggs"}'
+
+
+def test_convert_string_array_roundtrip():
+    """numpy string array <-> vtkStringArray must round-trip without truncation."""
+    arr = np.array(['alpha', 'beta', 'gamma', 'delta-with-much-more-text'])
+    vtk_arr = convert_string_array(arr)
+    assert vtk_arr.GetNumberOfValues() == arr.size
+    assert vtk_arr.GetValue(0) == 'alpha'
+    assert vtk_arr.GetValue(3) == 'delta-with-much-more-text'
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == arr.shape
+    # Width must auto-size to longest value, not get truncated to 1 char.
+    assert out[3] == 'delta-with-much-more-text'
+    assert np.array_equal(out, arr)
+
+
+def test_convert_string_array_scalar_string():
+    """A bare Python str round-trips back to a 0-d numpy array of the original."""
+    vtk_arr = convert_string_array('hello')
+    assert vtk_arr.GetNumberOfValues() == 1
+    assert vtk_arr.GetValue(0) == 'hello'
+    out = convert_string_array(vtk_arr)
+    assert out.ndim == 0
+    assert str(out) == 'hello'
+
+
+def test_convert_string_array_rejects_non_ascii():
+    with pytest.raises(ValueError, match='non-ASCII'):
+        convert_string_array(np.array(['hello', 'wörld']))
+
+
+def test_convert_string_array_with_name():
+    vtk_arr = convert_string_array(np.array(['a', 'b']), name='my_array')
+    assert vtk_arr.GetName() == 'my_array'
+
+
+def test_serial_dict_uses_single_value_storage():
+    """The setter stores the JSON string as a single vtkStringArray value
+    instead of one value per character (the historical encoding).
+    """
+    serial = _SerializedDictArray({'foo': 'bar', 'n': 42})
+    # New format: 1 value, not len(json_string).
+    assert serial.GetNumberOfValues() == 1
+    assert serial.GetValue(0) == '{"foo": "bar", "n": 42}'
+
+
+def test_serial_dict_reads_legacy_char_per_value_format():
+    """Files written with the old char-per-value format must still
+    deserialize correctly. The getter joins all values.
+    """
+    legacy = _SerializedDictArray()
+    # Wipe and manually re-encode the JSON char-by-char (the old behavior).
+    legacy.SetNumberOfValues(0)
+    for ch in '{"hello": "world"}':
+        legacy.InsertNextValue(ch)
+    # The getter joins all values so the read still produces the right string.
+    assert legacy._string == '{"hello": "world"}'
 
 
 def test_serial_dict_as_dict(serial_dict_with_foobar):
@@ -2595,6 +2715,141 @@ def test_allow_new_attributes():
     assert pv.allow_new_attributes() is True
     set_private()
     set_public()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_default_backend(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    pv.enable_smp_tools()
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() >= 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_sets_threads(reset_smp_tools):  # noqa: ARG001
+    pv.enable_smp_tools(n_threads=2)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'error_type', 'match'),
+    [
+        ({'backend': 'invalid'}, ValueError, 'Invalid SMP backend'),
+        ({'backend': 1}, TypeError, '`backend` must be a string.'),
+        ({'n_threads': 0}, ValueError, '`n_threads` must be greater than or equal to 1.'),
+        ({'n_threads': 1.5}, TypeError, '`n_threads` must be an integer.'),
+        ({'n_threads': True}, TypeError, '`n_threads` must be an integer.'),
+    ],
+)
+def test_enable_smp_tools_invalid_input(kwargs, error_type, match):
+    with pytest.raises(error_type, match=re.escape(match)):
+        pv.enable_smp_tools(**kwargs)
+
+
+def test_enable_smp_tools_unsupported_vtk_build(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace())
+
+    match = 'This VTK build does not support runtime SMP backend selection.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools()
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_state(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetBackend() == 'STDThread'
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_restores_on_exception(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    msg = 'boom'
+    with pytest.raises(RuntimeError, match=msg), pv.enable_smp_tools(n_threads=2):
+        raise RuntimeError(msg)
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+@pytest.mark.skipif(
+    not HAS_RUNTIME_SMP_BACKEND_SELECTION,
+    reason='Requires runtime SMP backend selection support in VTK.',
+)
+def test_enable_smp_tools_context_manager_nested(reset_smp_tools):  # noqa: ARG001
+    _vtk.vtkSMPTools.SetBackend('Sequential')
+    _vtk.vtkSMPTools.Initialize(1)
+
+    with pv.enable_smp_tools(n_threads=2):
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+        with pv.enable_smp_tools(n_threads=4):
+            assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 4
+        assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 2
+
+    assert _vtk.vtkSMPTools.GetBackend() == 'Sequential'
+    assert _vtk.vtkSMPTools.GetEstimatedNumberOfThreads() == 1
+
+
+def test_enable_smp_tools_restores_state_on_unavailable_backend(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    state = {'backend': 'Sequential', 'threads': 3}
+
+    def get_backend() -> str:
+        return state['backend']
+
+    def get_estimated_number_of_threads() -> int:
+        return state['threads']
+
+    def initialize(n_threads: int = 0) -> None:
+        state['threads'] = n_threads or 8
+
+    def set_backend(backend: str) -> bool:
+        if backend == 'TBB':
+            state['backend'] = 'STDThread'
+            return False
+        state['backend'] = backend
+        return True
+
+    fake_smp_tools = SimpleNamespace(
+        GetBackend=get_backend,
+        GetEstimatedNumberOfThreads=get_estimated_number_of_threads,
+        Initialize=initialize,
+        SetBackend=set_backend,
+    )
+    monkeypatch.setattr(misc, '_vtk', SimpleNamespace(vtkSMPTools=fake_smp_tools))
+
+    match = 'The requested SMP backend `tbb` is not available in this VTK build.'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        pv.enable_smp_tools('tbb')
+
+    assert get_backend() == 'Sequential'
+    assert get_estimated_number_of_threads() == 3
 
 
 T = TypeVar('T')

@@ -9,8 +9,6 @@ This example shows how you can use :func:`enable_depth_of_field
 
 """
 
-from __future__ import annotations
-
 # sphinx_gallery_start_ignore
 # depth field modification does not seem to work in interactive mode
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True

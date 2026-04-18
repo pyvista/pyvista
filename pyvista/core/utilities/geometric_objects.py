@@ -957,6 +957,12 @@ def SolidSphereGeneric(  # noqa: PLR0917
             )
             celltypes.append(pv.CellType.PYRAMID)
 
+    def _reorder_wedge(points: list[int]) -> list[int]:
+        """Swap points 1,2 and 4,5 for wedge cells."""
+        points[1], points[2] = points[2], points[1]
+        points[4], points[5] = points[5], points[4]
+        return points
+
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
@@ -964,17 +970,20 @@ def SolidSphereGeneric(  # noqa: PLR0917
         for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
             axis0 = ir + 1 if include_origin else ir
             axis1 = ir + 2 if include_origin else ir + 1
+
+            raw_points = [
+                axis0,
+                _index(ir, 0, itheta),
+                _index(ir, 0, itheta + 1),
+                axis1,
+                _index(ir + 1, 0, itheta),
+                _index(ir + 1, 0, itheta + 1),
+            ]
+            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+                raw_points = _reorder_wedge(raw_points)
+
             cells.append(6)
-            cells.extend(
-                [
-                    axis0,
-                    _index(ir, 0, itheta + 1),
-                    _index(ir, 0, itheta),
-                    axis1,
-                    _index(ir + 1, 0, itheta + 1),
-                    _index(ir + 1, 0, itheta),
-                ],
-            )
+            cells.extend(raw_points)
             celltypes.append(pv.CellType.WEDGE)
 
     # now go downwards
@@ -982,17 +991,20 @@ def SolidSphereGeneric(  # noqa: PLR0917
         for ir, itheta in product(range(nr - 1), range(ntheta - 1)):
             axis0 = npoints_on_pos_axis + ir
             axis1 = npoints_on_pos_axis + ir + 1
+
+            raw_points = [
+                axis0,
+                _index(ir, nphi - 1, itheta + 1),
+                _index(ir, nphi - 1, itheta),
+                axis1,
+                _index(ir + 1, nphi - 1, itheta + 1),
+                _index(ir + 1, nphi - 1, itheta),
+            ]
+            if pv.vtk_version_info < (9, 6, 99):  # < (9,7,0)
+                raw_points = _reorder_wedge(raw_points)
+
             cells.append(6)
-            cells.extend(
-                [
-                    axis0,
-                    _index(ir, nphi - 1, itheta),
-                    _index(ir, nphi - 1, itheta + 1),
-                    axis1,
-                    _index(ir + 1, nphi - 1, itheta),
-                    _index(ir + 1, nphi - 1, itheta + 1),
-                ],
-            )
+            cells.extend(raw_points)
             celltypes.append(pv.CellType.WEDGE)
 
     # Form Hexahedra

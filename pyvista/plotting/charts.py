@@ -25,8 +25,8 @@ from . import _vtk
 from .colors import COLOR_SCHEMES
 from .colors import SCHEME_NAMES
 from .colors import Color
-from .colors import color_synonyms
-from .colors import hexcolors
+from .colors import _formatted_color_synonyms
+from .colors import _formatted_hex_colors
 
 if TYPE_CHECKING:
     from ._typing import Chart
@@ -488,12 +488,44 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     @property
     def pen(self) -> Pen:  # numpydoc ignore=RT01
-        """Pen used to draw the axis."""
+        """Pen used to draw the axis.
+
+        Examples
+        --------
+        Create a 2D chart and change the x-axis color to red with a width of 5.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.pen.color = 'r'
+           >>> chart.x_axis.pen.width = 5
+           >>> chart.show()
+
+        """
         return self._pen
 
     @property
     def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
-        """Pen used to draw the grid lines."""
+        """Pen used to draw the grid lines.
+
+        Examples
+        --------
+        Create a 2D chart and change the x-axis grid lines to a dashed style.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.grid_pen.color = (0.5, 0.5, 0.5)
+           >>> chart.x_axis.grid_pen.style = '--'
+           >>> chart.show()
+
+        """
         return self._grid_pen
 
     @property
@@ -1545,6 +1577,27 @@ class _Chart(DocSubs):
     @title.setter
     def title(self, val) -> None:
         self.SetTitle(val)  # type: ignore[attr-defined]
+
+    @property
+    @doc_subs
+    def legend(self):  # numpydoc ignore=RT01
+        """Return the chart's legend.
+
+        Examples
+        --------
+        Create a {chart_name} with custom labels and access its legend.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> {chart_set_labels}
+           >>> legend = chart.legend
+           >>> chart.show()
+
+        """
+        return self.GetLegend()  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -3292,7 +3345,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         # to be able to find the largest match first (e.g. find 'darkred' and '--' first instead
         # of 'red' and '-')
         colors = sorted(
-            itertools.chain(hexcolors.keys(), color_synonyms.keys()),
+            itertools.chain(_formatted_hex_colors.keys(), _formatted_color_synonyms.keys()),
             key=len,
             reverse=True,
         )
@@ -4670,6 +4723,23 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         # See #1999 and #2031.
         if pv.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
+
+    @property
+    def legend(self):  # numpydoc ignore=RT01
+        """Access the legend of the underlying matplotlib axes.
+
+        Notes
+        -----
+        Unlike :class:`Chart2D`, :class:`ChartBox`, and :class:`ChartPie`,
+        the legend of a matplotlib-backed chart must be configured through
+        the matplotlib API on :attr:`figure`.
+
+        """
+        msg = (
+            'ChartMPL does not expose a VTK legend; configure the legend '
+            'through the underlying matplotlib figure instead (see `figure`).'
+        )
+        raise NotImplementedError(msg)
 
     @property
     def figure(self):  # numpydoc ignore=RT01

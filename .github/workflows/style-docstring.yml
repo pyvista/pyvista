@@ -1,7 +1,7 @@
 # check spelling, codestyle
 name: Style and Docstring Check
 
-on: [pull_request, workflow_dispatch]
+on: [pull_request, merge_group, workflow_dispatch]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -48,7 +48,7 @@ jobs:
 
       - name: Setup headless display on Windows
         if: runner.os == 'Windows'
-        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
 
       - name: Restore vtk-data cache
         uses: actions/cache/restore@v5
@@ -85,7 +85,7 @@ jobs:
       # vale --config doc/.vale.ini doc pyvista examples
       # GHA SHA is pinned to a reviewdog branch commit
       - name: "Run Vale"
-        uses: errata-ai/vale-action@dcded780f1ff68e2558e802a165a484a4a3e2fb8
+        uses: errata-ai/vale-action@0135b9fe2b3107365569cc3142b9a1c85221ea2f
         with:
           files: '["doc", "pyvista", "examples"]'
           vale_flags: "--config=doc/.vale.ini"

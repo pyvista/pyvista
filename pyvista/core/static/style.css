@@ -1,0 +1,416 @@
+/* PyVista HTML repr stylesheet.
+ * Uses pv- prefix to avoid conflicts with other libraries.
+ */
+
+:root {
+  --pv-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --pv-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --pv-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --pv-border-color: var(--jp-border-color2, #e0e0e0);
+  --pv-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --pv-background-color-row-even: var(--jp-layout-color1, #f5f5f5);
+  --pv-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+  --pv-badge-active: #1b5e20;
+  --pv-badge-normals: #0d47a1;
+  --pv-badge-vectors: #00695c;
+  --pv-badge-tcoords: #4527a0;
+}
+
+body[data-jp-theme-light="false"] {
+  --pv-font-color0: var(--jp-content-font-color0, rgba(255, 255, 255, 1));
+  --pv-font-color2: var(--jp-content-font-color2, rgba(255, 255, 255, 0.54));
+  --pv-font-color3: var(--jp-content-font-color3, rgba(255, 255, 255, 0.38));
+  --pv-border-color: var(--jp-border-color2, #424242);
+  --pv-disabled-color: var(--jp-layout-color3, #616161);
+  --pv-background-color-row-even: var(--jp-layout-color1, #1a1a1a);
+  --pv-background-color-row-odd: var(--jp-layout-color2, #252525);
+  --pv-badge-active: #66bb6a;
+  --pv-badge-normals: #64b5f6;
+  --pv-badge-vectors: #4db6ac;
+  --pv-badge-tcoords: #b39ddb;
+}
+
+html[theme="dark"],
+html[data-theme="dark"],
+body[data-theme="dark"],
+body.vscode-dark {
+  --pv-font-color0: rgba(255, 255, 255, 1);
+  --pv-font-color2: rgba(255, 255, 255, 0.54);
+  --pv-font-color3: rgba(255, 255, 255, 0.38);
+  --pv-border-color: #424242;
+  --pv-disabled-color: #616161;
+  --pv-background-color-row-even: #1a1a1a;
+  --pv-background-color-row-odd: #252525;
+  --pv-badge-active: #66bb6a;
+  --pv-badge-normals: #64b5f6;
+  --pv-badge-vectors: #4db6ac;
+  --pv-badge-tcoords: #b39ddb;
+}
+
+.pv-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+  line-height: 1.6;
+  padding-bottom: 4px;
+  font-family: var(--jp-ui-font-family, sans-serif);
+  font-size: var(--jp-ui-font-size1, 13px);
+  color: var(--pv-font-color0);
+}
+
+.pv-text-repr-fallback {
+  display: none;
+}
+
+/* Header */
+.pv-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom: solid 1px var(--pv-border-color);
+  margin-bottom: 4px;
+}
+
+.pv-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pv-obj-type {
+  font-weight: 600;
+  color: var(--pv-font-color0);
+}
+
+.pv-header-badge {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  color: var(--pv-font-color2);
+  border: 1px solid var(--pv-border-color);
+  white-space: nowrap;
+}
+
+/* Metadata (always-visible key-value rows) */
+.pv-metadata {
+  margin: 4px 0 6px 0;
+  font-size: 0.92em;
+  line-height: 1.5;
+}
+
+.pv-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 14px;
+  padding: 1px 0;
+}
+
+.pv-meta-row-label {
+  color: var(--pv-font-color2);
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.pv-meta-entry {
+  white-space: nowrap;
+}
+
+/* Copy-to-clipboard button */
+.pv-copy-btn {
+  display: inline-block;
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 0.85em;
+  padding: 0 3px;
+  vertical-align: middle;
+  transition: opacity 0.15s;
+  user-select: none;
+  border: none;
+  background: none;
+  color: var(--pv-font-color3);
+}
+
+.pv-copy-btn:hover {
+  opacity: 1;
+  color: var(--pv-font-color0);
+}
+
+.pv-meta-label {
+  color: var(--pv-font-color3);
+  font-weight: 400;
+  padding-right: 2px;
+}
+
+/* Sections grid */
+.pv-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto auto 1fr 20px 20px;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  list-style: none;
+}
+
+.pv-section-item {
+  display: contents;
+}
+
+/* Hidden checkbox for expand/collapse */
+.pv-section-item > input {
+  display: block;
+  opacity: 0;
+  height: 0;
+  margin: 0;
+}
+
+.pv-section-item > input + label {
+  color: var(--pv-disabled-color);
+}
+
+.pv-section-item > input:enabled + label {
+  cursor: pointer;
+  color: var(--pv-font-color2);
+}
+
+.pv-section-item > input:enabled + label:hover {
+  color: var(--pv-font-color0);
+}
+
+/* Section summary (left column label) */
+.pv-section-summary {
+  grid-column: 1;
+  color: var(--pv-font-color2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pv-section-summary > span {
+  display: inline-block;
+  padding-left: 0.3em;
+}
+
+.pv-section-summary-in:disabled + label {
+  color: var(--pv-font-color2);
+}
+
+/* Expand/collapse arrows */
+.pv-section-summary-in + label:before {
+  display: inline-block;
+  content: "\25b6";
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.pv-section-summary-in:disabled + label:before {
+  color: var(--pv-disabled-color);
+}
+
+.pv-section-summary-in:checked + label:before {
+  content: "\25bc";
+}
+
+.pv-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.pv-section-summary,
+.pv-section-inline-details {
+  padding-top: 4px;
+}
+
+.pv-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.pv-section-details {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  margin-bottom: 5px;
+}
+
+.pv-section-summary-in ~ .pv-section-details {
+  display: none;
+}
+
+.pv-section-summary-in:checked ~ .pv-section-inline-details {
+  display: none;
+}
+
+.pv-section-summary-in:checked ~ .pv-section-details {
+  display: block;
+}
+
+.pv-section-summary-in:checked ~ .pv-section-details:has(.pv-var-list) {
+  display: contents;
+}
+
+/* Variable (array) list */
+.pv-var-list,
+.pv-var-item {
+  display: contents;
+}
+
+.pv-var-item > div,
+.pv-var-item label,
+.pv-var-item > .pv-var-name span {
+  background-color: var(--pv-background-color-row-even);
+  border-color: var(--pv-background-color-row-odd);
+  margin-bottom: 0;
+  padding-top: 2px;
+}
+
+.pv-var-list > li:nth-child(odd) > div,
+.pv-var-list > li:nth-child(odd) > label,
+.pv-var-list > li:nth-child(odd) > .pv-var-name span {
+  background-color: var(--pv-background-color-row-odd);
+  border-color: var(--pv-background-color-row-even);
+}
+
+.pv-var-name {
+  grid-column: 1;
+}
+
+.pv-var-dims {
+  grid-column: 2;
+}
+
+.pv-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--pv-font-color2);
+}
+
+.pv-var-range {
+  grid-column: 4;
+  color: var(--pv-font-color3);
+  font-size: 0.92em;
+}
+
+.pv-var-badges {
+  grid-column: 5;
+  padding-left: 8px;
+}
+
+.pv-var-name,
+.pv-var-dims,
+.pv-var-dtype,
+.pv-var-range {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.pv-var-name:hover,
+.pv-var-dims:hover,
+.pv-var-dtype:hover,
+.pv-var-range:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.pv-var-name span {
+  padding-left: 25px !important;
+}
+
+.pv-var-name-active span {
+  font-weight: 600;
+}
+
+/* Badges */
+.pv-badge {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.pv-badge-active {
+  color: var(--pv-badge-active);
+  border: 1px solid var(--pv-badge-active);
+}
+
+.pv-badge-normals {
+  color: var(--pv-badge-normals);
+  border: 1px solid var(--pv-badge-normals);
+}
+
+.pv-badge-vectors {
+  color: var(--pv-badge-vectors);
+  border: 1px solid var(--pv-badge-vectors);
+}
+
+.pv-badge-tcoords {
+  color: var(--pv-badge-tcoords);
+  border: 1px solid var(--pv-badge-tcoords);
+}
+
+/* Logo and Icons */
+.pv-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pv-logo svg {
+  width: 28px;
+  height: 28px;
+}
+
+.pv-brand-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pv-brand-logo svg {
+  height: 20px;
+  width: auto;
+}
+
+/* Children list (MultiBlock / PartitionedDataSet) */
+.pv-children-list {
+  padding-left: 25px !important;
+  list-style: none;
+}
+
+.pv-children-list li {
+  padding: 1px 0;
+}
+
+.pv-child-name {
+  font-weight: 500;
+}
+
+.pv-child-type {
+  color: var(--pv-font-color2);
+  font-style: italic;
+}
+
+.pv-child-type:before {
+  content: "\00b7";
+  padding: 0 6px;
+  font-style: normal;
+}
+
+.pv-child-detail {
+  color: var(--pv-font-color3);
+  font-size: 0.9em;
+}
+
+.pv-child-detail:not(:empty):before {
+  content: "\00b7";
+  padding: 0 6px;
+}

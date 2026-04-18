@@ -1676,3 +1676,21 @@ def test_has_nonlinear_cells():
 
     assert not pv.UnstructuredGrid().has_nonlinear_cells
     assert not pv.ImageData(dimensions=(2, 2, 2)).has_nonlinear_cells
+
+
+def test_bounding_sphere():
+    radius = 1.5
+    center = 1, 2, 3
+    mesh = pv.Sphere(radius=radius, center=center)
+    r, c = mesh.bounding_sphere
+    assert isinstance(r, float)
+    assert isinstance(c, tuple)
+    assert all(type(x) is float for x in c)
+
+    assert np.isclose(r, radius)
+    assert np.allclose(c, center)
+
+    mesh = pv.UnstructuredGrid()
+    r, c = mesh.bounding_sphere
+    assert np.isnan(r)
+    assert all(np.isnan(x) for x in c)

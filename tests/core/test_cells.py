@@ -9,10 +9,6 @@ import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.celltype import _CELL_TYPES_0D
-from pyvista.core.celltype import _CELL_TYPES_1D
-from pyvista.core.celltype import _CELL_TYPES_2D
-from pyvista.core.celltype import _CELL_TYPES_3D
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -190,6 +186,48 @@ def test_cell_is_linear(cell):
 @pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims, strict=True), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
+
+
+def test_celltype_dimension_map():
+    dimension_map = CellType.dimension_map
+    dimensions = list(dimension_map.keys())
+    assert dimensions == [0, 1, 2, 3]
+
+    for grouping in dimension_map.values():
+        assert isinstance(grouping, frozenset)
+        assert all(isinstance(m, CellType) for m in grouping)
+
+    assert CellType.VERTEX in dimension_map[0]
+    assert CellType.POLY_VERTEX in dimension_map[0]
+    assert CellType.LINE in dimension_map[1]
+    assert CellType.POLY_LINE in dimension_map[1]
+    assert CellType.TRIANGLE in dimension_map[2]
+    assert CellType.QUAD in dimension_map[2]
+    assert CellType.POLYGON in dimension_map[2]
+    assert CellType.PIXEL in dimension_map[2]
+    assert CellType.TRIANGLE_STRIP in dimension_map[2]
+    assert CellType.TETRA in dimension_map[3]
+    assert CellType.HEXAHEDRON in dimension_map[3]
+    assert CellType.VOXEL in dimension_map[3]
+    assert CellType.POLYHEDRON in dimension_map[3]
+
+    for i in (0, 1, 2, 3):
+        for j in (0, 1, 2, 3):
+            if i != j:
+                assert dimension_map[i].isdisjoint(dimension_map[j])
+
+    union = dimension_map[0] | dimension_map[1] | dimension_map[2] | dimension_map[3]
+    assert union == set(CellType)
+
+    for member in CellType:
+        assert member in dimension_map[member.dimension]
+
+
+def test_celltype_dimension_map_not_mutable():
+    mapping = CellType.dimension_map
+    match = "'mappingproxy' object does not support item assignment"
+    with pytest.raises(TypeError, match=match):
+        mapping[42] = 'foo'
 
 
 @pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
@@ -528,19 +566,3 @@ def test_deep_deprecated(deep: bool):
     if pv._version.version_info[:2] > (0, 48):
         msg = 'Remove `deep` constructor kwarg'
         raise RuntimeError(msg)
-
-
-def test_cell_type_dimensions():
-    get_dimension = (
-        _vtk.vtkCellTypeUtilities.GetDimension
-        if pv.vtk_version_info >= (9, 6, 0)
-        else _vtk.vtkCellTypes.GetDimension
-    )
-    for cell_type in _CELL_TYPES_0D:
-        assert get_dimension(cell_type) == 0
-    for cell_type in _CELL_TYPES_1D:
-        assert get_dimension(cell_type) == 1
-    for cell_type in _CELL_TYPES_2D:
-        assert get_dimension(cell_type) == 2
-    for cell_type in _CELL_TYPES_3D:
-        assert get_dimension(cell_type) == 3

@@ -479,6 +479,12 @@ def test_chart_common(pl, chart_f, request):
     chart.legend_visible = False
     assert not chart.legend_visible
 
+    if isinstance(chart, pv.ChartMPL):
+        with pytest.raises(NotImplementedError, match='ChartMPL does not expose a VTK legend'):
+            _ = chart.legend
+    else:
+        assert chart.legend is chart.GetLegend()
+
 
 @pytest.mark.parametrize(
     'plot_f',
@@ -801,7 +807,11 @@ def test_chart_2d(pl, chart_2d):
 
     # Test parse_format
     hex_colors = ['#fa09b6', '0xa53a8d', '#b02239f0', '0xcee6927f']
-    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ''])
+    colors = itertools.chain(
+        pv.plotting.colors._formatted_hex_colors,
+        pv.plotting.colors._formatted_color_synonyms,
+        [*hex_colors, ''],
+    )
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:

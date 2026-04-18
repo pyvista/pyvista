@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 import inspect
 from typing import TYPE_CHECKING
 
@@ -28,6 +29,8 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
             except TypeError:
                 pass  # not a class
             else:
+                if issubclass(module_attr, enum.Enum):
+                    continue
                 if hasattr(module_attr, attr):
                     class_types.append(module_attr)
 

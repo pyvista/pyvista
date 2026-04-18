@@ -23,12 +23,14 @@ from pyvista.typing.mypy_plugin import promote_type
 from . import _validation
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
-from .celltype import _CELL_TYPE_INFO
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .formatting_html import _data_array_section
+from .formatting_html import _fmt_memory
+from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -1603,52 +1605,139 @@ class DataSet(DataSetFilters, DataObject):
         It includes header details and information about all arrays.
 
         """
-        fmt = ''
-        if self.n_arrays > 0:
-            fmt += "<table style='width: 100%;'>"
-            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
-            fmt += '<tr><td>'
-        # Get the header info
-        fmt += self.head(display=False, html=True)
-        # Fill out arrays
-        if self.n_arrays > 0:
-            fmt += '</td><td>'
-            fmt += '\n'
-            fmt += "<table style='width: 100%;'>\n"
-            titles = ['Name', 'Field', 'Type', 'N Comp', 'Min', 'Max']
-            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
-            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
-            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
+        sections: list[str] = []
 
-            def format_array(
-                name: str,
-                arr: str | pyvista_ndarray,
-                field: Literal['Points', 'Cells', 'Fields'],
-            ) -> str:
-                """Format array information for printing (internal helper)."""
-                if isinstance(arr, str):
-                    # Convert string scalar into a numpy array. Otherwise, get_data_range
-                    # will treat the string as an array name, not an array value.
-                    arr = pv.pyvista_ndarray(arr)  # type: ignore[arg-type]
-                dl, dh = self.get_data_range(arr)
-                dl = pv.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pv.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
-                if name == self.active_scalars_info.name:
-                    name = f'<b>{name}</b>'
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                return row.format(name, field, arr.dtype, ncomp, dl, dh)
+        # Metadata rows (always-visible)
+        meta: list[tuple[str, list[tuple[str, str]], str]] = []
 
-            for key, arr in self.point_data.items():
-                fmt += format_array(key, arr, 'Points')
-            for key, arr in self.cell_data.items():
-                fmt += format_array(key, arr, 'Cells')
-            for key, arr in self.field_data.items():
-                fmt += format_array(key, arr, 'Fields')
+        # Bounds
+        bds = self.bounds
+        fmt = pv.FLOAT_FORMAT
+        meta.append(
+            (
+                'Bounds',
+                [
+                    ('X', f'[{fmt.format(bds.x_min)}, {fmt.format(bds.x_max)}]'),
+                    ('Y', f'[{fmt.format(bds.y_min)}, {fmt.format(bds.y_max)}]'),
+                    ('Z', f'[{fmt.format(bds.z_min)}, {fmt.format(bds.z_max)}]'),
+                ],
+                repr(tuple(bds)),
+            )
+        )
 
-            fmt += '</table>\n'
-            fmt += '\n'
-            fmt += '</td></tr> </table>'
-        return fmt
+        # PolyData cell-type breakdown
+        if isinstance(self, pv.PolyData):
+            poly_items: list[tuple[str, str]] = []
+            if self.n_faces_strict:
+                poly_items.append(('faces', f'{self.n_faces_strict:,}'))
+            if self.n_lines:
+                poly_items.append(('lines', f'{self.n_lines:,}'))
+            if self.n_strips:
+                poly_items.append(('strips', f'{self.n_strips:,}'))
+            if self.n_verts:
+                poly_items.append(('verts', f'{self.n_verts:,}'))
+            if poly_items:
+                meta.append(('Cells', poly_items, ''))
+
+        # Grid-specific properties
+        if hasattr(self, 'dimensions'):
+            dims = self.dimensions
+            grid_items: list[tuple[str, str]] = [
+                ('dims', f'{dims[0]} x {dims[1]} x {dims[2]}'),
+            ]
+            if hasattr(self, 'spacing'):
+                sp = self.spacing
+                grid_items.append(
+                    ('spacing', f'({fmt.format(sp[0])}, {fmt.format(sp[1])}, {fmt.format(sp[2])})')
+                )
+            meta.append(('Grid', grid_items, ''))
+
+        # Collect active array names per association
+        pt_scalars = self.active_scalars_info
+        active_pt_scalars = (
+            pt_scalars.name if pt_scalars.association == FieldAssociation.POINT else None
+        )
+        active_cell_scalars = (
+            pt_scalars.name if pt_scalars.association == FieldAssociation.CELL else None
+        )
+        active_vectors = self.active_vectors_name
+        pt_normals = self.point_data.active_normals_name if self.point_data else None
+        cell_normals = self.cell_data.active_normals_name if self.cell_data else None
+        pt_tcoords = self.point_data.active_texture_coordinates_name if self.point_data else None
+
+        def _array_info(
+            attrs: DataSetAttributes,
+            *,
+            show_shape: bool = False,
+            show_range: bool = False,
+        ) -> list[tuple[str, int, str, str, str]]:
+            fmt = pv.FLOAT_FORMAT
+            result: list[tuple[str, int, str, str, str]] = []
+            for name, arr in attrs.items():
+                # Field data can contain str values at runtime despite
+                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
+                # Wrap str so .shape / .dtype are available.
+                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
+                ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
+                shape = str(tuple(coerced.shape)) if show_shape else ''
+                range_str = ''
+                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
+                    lo = fmt.format(np.nanmin(coerced))
+                    hi = fmt.format(np.nanmax(coerced))
+                    range_str = f'[{lo}, {hi}]'
+                result.append((name, ncomp, str(coerced.dtype), shape, range_str))
+            return result
+
+        vec_assoc = self.active_vectors_info.association
+        pt_vectors = active_vectors if vec_assoc == FieldAssociation.POINT else None
+        cell_vectors = active_vectors if vec_assoc == FieldAssociation.CELL else None
+
+        # Point Data
+        if self.point_data:
+            sections.append(
+                _data_array_section(
+                    'Point Data',
+                    _array_info(self.point_data, show_range=True),
+                    active_scalars=active_pt_scalars,
+                    active_vectors=pt_vectors,
+                    active_normals=pt_normals,
+                    active_tcoords=pt_tcoords,
+                )
+            )
+
+        # Cell Data
+        if self.cell_data:
+            sections.append(
+                _data_array_section(
+                    'Cell Data',
+                    _array_info(self.cell_data, show_range=True),
+                    active_scalars=active_cell_scalars,
+                    active_vectors=cell_vectors,
+                    active_normals=cell_normals,
+                )
+            )
+
+        # Field Data — show full shape since arrays are arbitrary length
+        if self.field_data:
+            sections.append(
+                _data_array_section(
+                    'Field Data',
+                    _array_info(self.field_data, show_shape=True),
+                )
+            )
+
+        return build_repr_html(
+            obj_type=type(self).__name__,
+            mesh_type=type(self).__name__,
+            header_badges=[
+                f'{self.n_points:,} points',
+                f'{self.n_cells:,} cells',
+                _fmt_memory(self.actual_memory_size),
+            ],
+            metadata=meta,
+            sections=sections,
+            text_repr=self.head(display=False, html=False),
+        )
 
     def __repr__(self: Self) -> str:
         """Return the object representation."""
@@ -2625,6 +2714,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     text_color='white',
         ...     font_size=40,
         ...     point_size=10,
+        ...     always_visible=True,
         ... )
         >>>
         >>> # Add the first point label
@@ -3238,9 +3328,7 @@ class DataSet(DataSetFilters, DataObject):
         elif isinstance(self, pv.UnstructuredGrid):
             distinct_dimensions = set()
             for cell_type in self.distinct_cell_types:
-                cell_class = _CELL_TYPE_INFO[cell_type.name].cell_class
-                if cell_class is not None:
-                    distinct_dimensions.add(cell_class().GetCellDimension())
+                distinct_dimensions.add(cell_type.dimension)
             return distinct_dimensions  # type: ignore[return-value]
         msg = f'Unexpected mesh type {type(self)}'
         raise RuntimeError(msg)
@@ -3353,9 +3441,51 @@ class DataSet(DataSetFilters, DataObject):
         """
         if not isinstance(self, pv.UnstructuredGrid):
             return False
-        is_linear = (
-            _vtk.vtkCellTypeUtilities.IsLinear
-            if pv.vtk_version_info >= (9, 6, 0)
-            else _vtk.vtkCellTypes.IsLinear
-        )
-        return not all(is_linear(celltype) for celltype in self.distinct_cell_types)
+        return not all(celltype.is_linear for celltype in self.distinct_cell_types)
+
+    @property
+    def bounding_sphere(self) -> tuple[float, tuple[float, float, float]]:
+        """Compute the radius and center of a bounding sphere.
+
+        The sphere is exact for meshes with 4 points or less, and is otherwise approximated
+        using Ritter's algorithm. Returns NaN values if there are no points.
+
+        Uses :vtk:`vtkCell.ComputeBoundingSphere` internally for the computation.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        float, tuple
+            Sphere radius as a float and center as a tuple of floats.
+
+        Examples
+        --------
+        Get the bounding sphere geometry of a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> radius, center = mesh.bounding_sphere
+
+        Create a sphere and plot it along with the original mesh.
+
+        >>> sphere = pv.Icosphere(radius=radius, center=center)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(sphere, style='wireframe', color='black')
+        >>> pl.view_xy()
+        >>> pl.camera.zoom(1.5)
+        >>> pl.show()
+
+        """
+        # Create grid with a single POLY_VERTEX cell containing all the points
+        n_points = self.n_points
+        cells = np.hstack([[n_points], np.arange(n_points)])
+        celltypes = np.array([pv.CellType.POLY_VERTEX], dtype=np.uint8)
+        grid = pv.UnstructuredGrid(cells, celltypes, self.points)
+
+        # Compute radius and center of the cell
+        center = [0.0, 0.0, 0.0]
+        r2 = grid.GetCell(0).ComputeBoundingSphere(center)
+        return float(r2**0.5), (center[0], center[1], center[2])

@@ -34,14 +34,10 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .filters import DataObjectFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
-from .filters.data_object import _MeshValidationOptions
-from .filters.data_object import _MeshValidationReport
-from .filters.data_object import _MeshValidator
 from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
@@ -66,6 +62,8 @@ from .utilities.writer import XMLStructuredGridWriter
 from .utilities.writer import XMLUnstructuredGridWriter
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from typing_extensions import Self
 
     from ._typing_core import ArrayLike
@@ -74,7 +72,7 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
-
+    from .filters.data_object import _NestedMeshValidationFields
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -303,7 +301,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -334,7 +332,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         deep: bool = False,  # noqa: FBT001, FBT002
         force_float: bool = True,  # noqa: FBT001, FBT002
         *,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the pointset."""
         super().__init__()
@@ -555,23 +553,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    @wraps(DataObjectFilters.validate_mesh)
-    def validate_mesh(  # type: ignore[override]  # numpydoc ignore=RT01
-        self: Self,
-        validation_fields: _MeshValidationOptions | None = None,
-        *args,
-        **kwargs,
-    ) -> _MeshValidationReport[Self]:
-        """Wrap validate_mesh with cell-related fields removed."""
-        if validation_fields is None:
-            fields: list[_MeshValidator._AllValidationOptions] = [
-                *_MeshValidator._allowed_data_fields,
-                *_MeshValidator._allowed_point_fields,
-            ]
-            fields.remove('unused_points')
-            return DataSet.validate_mesh(self, fields, *args, **kwargs)
-        return DataSet.validate_mesh(self, validation_fields, *args, **kwargs)
-
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
@@ -695,7 +676,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_verts : int, optional
         Deprecated. Not used.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -840,7 +821,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
         *,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -1175,11 +1156,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         --------
         pyvista.PolyData.faces
 
-        Notes
-        -----
-        This property does not validate that the mesh's faces are all
-        actually the same size. If they're not, this property may either
-        raise a `ValueError` or silently return an incorrect array.
+        Raises
+        ------
+        ValueError
+            If the mesh's faces are irregular.
 
         Examples
         --------
@@ -1195,7 +1175,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                [4, 5, 8, 7]])
 
         """
-        return _get_regular_cells(self.GetPolys())
+        regular_faces = _get_regular_cells(self.GetPolys())
+        if len(regular_faces) != self.GetNumberOfPolys():
+            offsets = _get_offset_array(self.GetPolys())
+            sizes = sorted(np.unique(np.diff(offsets)).tolist())
+            msg = (
+                f'Mesh does not have regular faces. '
+                f'Multiple face sizes detected with different number of points: {sizes}'
+            )
+            raise ValueError(msg)
+        return regular_faces
 
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]) -> None:  # numpydoc ignore=PR01
@@ -1624,6 +1613,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         texture: NumpyArray[np.uint8] | str | None = None,
         recompute_normals: bool = True,  # noqa: FBT001, FBT002
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Write a surface mesh to disk.
 
@@ -1672,6 +1662,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             indicates no compression.
 
             .. versionadded:: 0.47
+
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  When
+            the target extension dispatches to a built-in VTK writer or
+            to the pickle path, passing any extra keyword arguments
+            raises :class:`TypeError`.
+
+            .. versionadded:: 0.48
 
         Notes
         -----
@@ -1722,7 +1721,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if ftype in ['.stl', '.ply'] and recompute_normals:
             with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
-        super().save(filename, binary=binary, texture=texture, compression=compression)
+        super().save(
+            filename,
+            binary=binary,
+            texture=texture,
+            compression=compression,
+            **writer_kwargs,
+        )
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01
@@ -1978,7 +1983,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -2031,7 +2036,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(
-        self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False, **kwargs
+        self,
+        *args,
+        deep: bool = False,
+        validate: bool | _NestedMeshValidationFields = False,
+        **kwargs,
     ) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
@@ -2538,21 +2547,28 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             vtk_offset = self.GetCellLocationsArray()
             lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
-        # fixing bug with display of quad cells
+        # fixing bug with display of quad cells.
+        # Cache the cell_connectivity array once as each access wraps the
+        # underlying vtkCellArray's connectivity buffer with vtk_to_numpy,
+        # so reading it 4-7 times in the loop redundantly allocates wrappers.
+        if np.any(quad_quad_mask) or np.any(quad_tri_mask):
+            cell_offsets = lgrid.offset
+            cell_conn = lgrid.cell_connectivity
+
         if np.any(quad_quad_mask):
-            quad_offset = lgrid.offset[:-1][quad_quad_mask]
-            base_point = lgrid.cell_connectivity[quad_offset]
-            lgrid.cell_connectivity[quad_offset + 4] = base_point
-            lgrid.cell_connectivity[quad_offset + 5] = base_point
-            lgrid.cell_connectivity[quad_offset + 6] = base_point
-            lgrid.cell_connectivity[quad_offset + 7] = base_point
+            quad_offset = cell_offsets[:-1][quad_quad_mask]
+            base_point = cell_conn[quad_offset]
+            cell_conn[quad_offset + 4] = base_point
+            cell_conn[quad_offset + 5] = base_point
+            cell_conn[quad_offset + 6] = base_point
+            cell_conn[quad_offset + 7] = base_point
 
         if np.any(quad_tri_mask):
-            tri_offset = lgrid.offset[:-1][quad_tri_mask]
-            base_point = lgrid.cell_connectivity[tri_offset]
-            lgrid.cell_connectivity[tri_offset + 3] = base_point
-            lgrid.cell_connectivity[tri_offset + 4] = base_point
-            lgrid.cell_connectivity[tri_offset + 5] = base_point
+            tri_offset = cell_offsets[:-1][quad_tri_mask]
+            base_point = cell_conn[tri_offset]
+            cell_conn[tri_offset + 3] = base_point
+            cell_conn[tri_offset + 4] = base_point
+            cell_conn[tri_offset + 5] = base_point
 
         return lgrid
 
@@ -2728,7 +2744,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Whether to deep copy a StructuredGrid object.
         Default is ``False``.  Keyword only.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -2794,7 +2810,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         z=None,
         *args,
         deep: bool = False,
-        validate: bool | _MeshValidationOptions = False,
+        validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:
         """Initialize the structured grid."""
@@ -3151,7 +3167,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
 
-    validate : bool | str | sequence[str], default: False
+    validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
         initialization. Set this to ``True`` to validate all fields, or specify any
         combination of fields allowed by ``validate_mesh``.
@@ -3200,7 +3216,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         '.vtk': UnstructuredGridWriter,
     }
 
-    def __init__(self, *args, deep: bool = False, validate: bool | _MeshValidationOptions = False):
+    def __init__(
+        self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False
+    ):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
@@ -3480,6 +3498,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
     ) -> None:
         """Save this VTK object to file.
 
@@ -3502,6 +3521,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             indicates no compression.
 
             .. versionadded:: 0.47
+
+        **writer_kwargs : dict, optional
+            Additional keyword arguments forwarded verbatim to a custom
+            writer registered via :func:`pyvista.register_writer`.  When
+            the target extension dispatches to a built-in VTK writer or
+            to the pickle path, passing any extra keyword arguments
+            raises :class:`TypeError`.
+
+            .. versionadded:: 0.48
 
         Notes
         -----
@@ -3528,7 +3556,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             msg = 'Cannot save texture of a pointset.'
             raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
-        grid.save(filename, binary=binary, compression=compression)
+        grid.save(filename, binary=binary, compression=compression, **writer_kwargs)
 
     @_deprecate_positional_args(allowed=['ind'])
     def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002

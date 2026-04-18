@@ -217,6 +217,7 @@ from vtkmodules.vtkCommonDataModel import vtkGenericCell as vtkGenericCell
 from vtkmodules.vtkCommonDataModel import vtkHexagonalPrism as vtkHexagonalPrism
 from vtkmodules.vtkCommonDataModel import vtkHexahedron as vtkHexahedron
 from vtkmodules.vtkCommonDataModel import vtkImageData as vtkImageData
+from vtkmodules.vtkCommonDataModel import vtkImplicitBoolean as vtkImplicitBoolean
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction as vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform as vtkIterativeClosestPointTransform,
@@ -224,6 +225,7 @@ from vtkmodules.vtkCommonDataModel import (
 from vtkmodules.vtkCommonDataModel import vtkLagrangeCurve as vtkLagrangeCurve
 from vtkmodules.vtkCommonDataModel import vtkLagrangeHexahedron as vtkLagrangeHexahedron
 from vtkmodules.vtkCommonDataModel import vtkLagrangeQuadrilateral as vtkLagrangeQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkLagrangeTetra as vtkLagrangeTetra
 from vtkmodules.vtkCommonDataModel import vtkLagrangeTriangle as vtkLagrangeTriangle
 from vtkmodules.vtkCommonDataModel import vtkLagrangeWedge as vtkLagrangeWedge
 from vtkmodules.vtkCommonDataModel import vtkLine as vtkLine
@@ -411,6 +413,7 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
+from vtkmodules.vtkFiltersSources import vtkCellTypeSource as vtkCellTypeSource
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
@@ -499,6 +502,13 @@ except ImportError:  # pragma: no cover
             raise VTKVersionError(msg)
 
 
+try:  # Module changed in VTK 9.3.0
+    from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
+except ImportError:
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractCells as vtkExtractCells,
+    )
+
 with contextlib.suppress(ImportError):
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
     from vtkmodules.vtkFiltersParallelDIY2 import (
@@ -528,5 +538,17 @@ with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
 with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
     from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 
-with contextlib.suppress(ImportError):  # Introduced VTK 9.6.0
+try:  # Introduced VTK 9.6.0
     from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities as vtkCellTypeUtilities
+except ImportError:
+    from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment]
+        vtkCellTypes as vtkCellTypeUtilities,  # noqa: F401
+    )
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.7.0
+    from vtkmodules.vtkImagingCore import (  # type: ignore[attr-defined]
+        vtkImageBinaryThreshold as vtkImageBinaryThreshold,
+    )
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkCommonCore import vtkSMPTools as vtkSMPTools

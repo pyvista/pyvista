@@ -38,6 +38,29 @@ permissions:
   id-token: none
 
 jobs:
+  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # via workflow_run) can associate the build with its PR — workflow_run events
+  # do not include pull_request data for fork PRs.
+  pr-info:
+    name: Save PR info
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Save PR metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          mkdir -p pr-info
+          printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
+          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
+          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pr-info
+          path: pr-info/
+
   # Cache vtk-data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
 
@@ -124,14 +147,14 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
@@ -169,6 +192,10 @@ jobs:
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.14"
             vtk-version: "latest"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.14"
+            vtk-version: "latest"
             numpy-version: "nightly"
             runner-labels: "ubuntu-22.04-self-hosted"
 
@@ -202,32 +229,37 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
+        env:
+          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-core
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
+        env:
+          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-plotting
+        run: xvfb-run tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
       - name: Check package
         run: |
@@ -238,7 +270,7 @@ jobs:
   VTK-dev:
     # For PRs, only run this job if the 'vtk-dev-testing' label is applied
     if: |
-      (github.event_name != 'pull_request' && github.event_name != 'push') ||
+      (github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'merge_group') ||
       contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
@@ -285,24 +317,25 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
   windows:
     name: Windows Unit Testing
@@ -335,13 +368,13 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
+        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
           timeout_minutes: 12
           max_attempts: 3
@@ -349,7 +382,7 @@ jobs:
           command: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
-        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         if: ${{ !cancelled() }}
         with:
           timeout_minutes: 30
@@ -359,17 +392,53 @@ jobs:
 
       - name: Upload Images for Failed Tests
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
+
+  # The test image report Netlify deploy lives in test-image-report-deploy.yml,
+  # triggered via workflow_run, so fork PR CI is never blocked on deployment
+  # approval.
+
+  upload-coverage-:
+    name: Upload coverage reports
+    runs-on: ubuntu-22.04
+    needs: [Linux, VTK-dev]
+    # `always()` ensures this still runs when VTK-dev is skipped because the
+    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its
+    # coverage artifacts get bundled into this single CodeCov upload.
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      # id-token: write authorizes OIDC token minting so codecov-action can
+      # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
+      id-token: write
+      contents: read
+    steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage_reports-*
+          path: coverage*.xml
+
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          fail_ci_if_error: true
+          use_oidc: true
 
   # Publish to PyPI using trusted publishing
   release:
@@ -399,4 +468,4 @@ jobs:
 
       - name: Upload to PyPi
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: pypa/gh-action-pypi-publish@03f86fee9ac21f854951f5c6e2a02c2a1324aec7
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b

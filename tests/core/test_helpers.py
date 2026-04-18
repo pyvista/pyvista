@@ -34,7 +34,7 @@ def test_wrap_pyvista_ndarray(sphere):
 def test_wrap_raises():
     with pytest.raises(
         NotImplementedError,
-        match=r'NumPy array could not be wrapped pyvista.',
+        match=r'NumPy array could not be wrapped.',
     ):
         pv.wrap(np.zeros((42, 42, 42, 42)))
 

@@ -237,7 +237,7 @@ Made with `contrib rocks`_.
 Contributing
 ============
 
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg
    :target: CODE_OF_CONDUCT.md
 
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
@@ -262,13 +262,6 @@ their ideas. To learn more about contributing to PyVista, please see the
 
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
-
-Star History
-============
-
-.. image:: https://api.star-history.com/svg?repos=pyvista/pyvista&type=Date
-   :alt: Star History Chart
-   :target: https://star-history.com/#pyvista/pyvista&Date
 
 Citing PyVista
 ==============
