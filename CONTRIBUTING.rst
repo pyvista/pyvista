@@ -151,6 +151,55 @@ This section provides a guide to how we conduct development in the
 PyVista repository. Please follow the practices outlined here when
 contributing directly to this repository.
 
+Quick Development Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, the most common developer tasks are wrapped as ``make``
+targets in the repository's top-level ``Makefile``. These are the
+recommended entry points for day-to-day development.
+
+Most targets delegate to ``uv``, so ``uv`` must be installed on your
+system first (see https://docs.astral.sh/uv/getting-started/installation/).
+``make`` itself must also be available on your ``PATH``; on Windows it
+can be installed via package managers like ``scoop`` or ``chocolatey``.
+
+.. code-block:: bash
+
+    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
+    make lint           # run pre-commit on all files
+    make typecheck      # run mypy via tox
+    make test           # run the full test suite via tox (matches CI flags)
+    make test-core      # run the core test suite via tox (matches CI)
+    make test-plotting  # run the plotting test suite via tox (matches CI)
+    make doctest        # run all docstring tests via tox (matches CI)
+    make docs           # build the full documentation via tox (matches CI)
+    make docs-test      # test the built documentation via tox (matches CI)
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt
+
+``make test``, ``make test-core``, and ``make test-plotting`` all
+invoke tox environments defined in ``tox.ini`` so they run with the
+exact same pytest filters and flags as the corresponding CI jobs. The
+filter definitions live in ``tox.ini`` so they only need to be
+maintained in one place.
+
+Running ``make`` with no target is equivalent to ``make test``.
+
+Additional arguments can be forwarded to ``pytest`` via the ``ARGS``
+variable, for example:
+
+.. code-block:: bash
+
+    make test ARGS="-n 10"               # run tests in parallel with 10 workers
+    make test ARGS="-k filters"          # only run tests matching "filters"
+    make test-core ARGS="-n auto -x"     # core tests, auto parallelism, stop on first failure
+
+These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
+and ``pytest``. If you need more control (e.g., running against a
+specific ``vtk`` or ``numpy`` version, or building documentation), see
+the `Unit Testing`_, `Style Checking`_, and `Building the
+Documentation`_ sections below, which document the underlying tools
+directly.
+
 Guidelines
 ~~~~~~~~~~
 
@@ -517,6 +566,8 @@ Unit Testing
 ~~~~~~~~~~~~
 Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
 or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
+The top-level ``Makefile`` also wraps the most common invocations — see
+`Quick Development Commands`_.
 
 .. tab-set::
     :sync-group: category
@@ -590,6 +641,14 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
 
             For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make sync-deps # install dev dependencies via uv
+            make test      # run the full test suite (equivalent to `tox -e test`)
+
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
 leverage multiple processes. Example usage:
@@ -610,6 +669,13 @@ leverage multiple processes. Example usage:
         .. code-block:: bash
 
             tox run -e py3.11 -- -n <NUMCORE>
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="-n <NUMCORE>"
 
 Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
 such that:
@@ -639,6 +705,14 @@ such that:
 
                 tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
                 tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make coverage # pytest -v --cov pyvista
+            make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
@@ -743,6 +817,10 @@ To ensure your code meets minimum code styling standards, run::
   pip install pre-commit
   pre-commit run --all-files
 
+Alternatively, the top-level ``Makefile`` wraps this invocation::
+
+  make lint
+
 If you have issues related to ``setuptools`` when installing ``pre-commit``, see
 `pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
 for a potential resolution.
@@ -820,6 +898,13 @@ example:
 
             tox run -e py3.11 -- tests/plotting --reset_image_cache
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/plotting --reset_image_cache"
+
 Running ``--reset_image_cache`` creates a new image for each test in
 ``tests/plotting/test_plotting.py`` and is not recommended except for
 testing or for potentially a major or minor release. You can use
@@ -878,6 +963,13 @@ For example, the following writes all images generated by ``pytest`` to
         .. code-block:: bash
 
             tox run -e py3.11 -- tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/plotting/ -k volume --generated_image_dir debug_images"
 
 See `pytest-pyvista`_ for more details.
 
@@ -961,6 +1053,13 @@ The tests can be executed with:
         .. code-block:: bash
 
             tox run -e py3.11 -- tests/core/typing
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/core/typing"
 
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
@@ -1096,6 +1195,13 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
             tox run -e docs-test
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make docs-test
+
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
 
@@ -1195,6 +1301,13 @@ To test that interactive plots do not exceed this limit, run:
         .. code-block:: bash
 
             tox run -e docs-test
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make docs-test
 
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
