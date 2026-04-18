@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
+import importlib.util
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -291,6 +292,13 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
                 f'Must be one of: '
                 f'{list(writer_exts) + list(PICKLE_EXT) + _list_custom_writer_exts()}'
             )
+            if file_ext == '.pv' and not importlib.util.find_spec(
+                'pyvista-zstd'
+            ):  # pragma: no cover
+                msg += (
+                    ".\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
+                    'It can be installed with `pyvista[io]`.'
+                )
             raise ValueError(msg)
 
     def _store_metadata(self: Self) -> None:
@@ -632,11 +640,10 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
 
         .. note::
 
-            The user dict is a convenience property and is intended for metadata storage.
-            It has an inefficient dictionary implementation and should only be used to
-            store a small number of infrequently-accessed keys with relatively small
-            values. It should not be used to store frequently accessed array data
-            with many entries (a regular field data array should be used instead).
+            The user dict is a convenience property intended for metadata storage.
+            Values are JSON-serialized on every mutation, so it is not a substitute
+            for a regular field data array when storing bulk array data with many
+            entries (use a regular field data array for that instead).
 
         .. warning::
 
