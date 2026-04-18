@@ -11,7 +11,10 @@ from trame.widgets.vtk import VtkRemoteLocalView
 from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
-CLOSED_PLOTTER_ERROR = 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
+CLOSED_PLOTTER_ERROR = (
+    'The render window for this plotter has been destroyed. '
+    'Do not call `show()` for the plotter before passing to trame.'
+)
 
 
 def get_server(*args, **kwargs):  # numpydoc ignore=RT01
@@ -42,7 +45,7 @@ class _BasePyVistaView:
         """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
-        self._plotter_render_callback = lambda *args: self.update()  # type: ignore[attr-defined]
+        self._plotter_render_callback = lambda *_: self.update()  # type: ignore[attr-defined]
 
     def pyvista_initialize(self):
         if self._plotter().render_window is None:  # type: ignore[union-attr]
@@ -201,7 +204,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):  # type: ignore[misc]
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],  # type: ignore[union-attr]
+            [ren.axes_widget for ren in self._plotter().renderers if ren.axes_widget is not None],  # type: ignore[union-attr]
         )
 
     def update_image(self, *args, **kwargs):  # pragma: no cover
@@ -275,5 +278,5 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):  # type: ign
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],  # type: ignore[union-attr]
+            [ren.axes_widget for ren in self._plotter().renderers if ren.axes_widget is not None],  # type: ignore[union-attr]
         )

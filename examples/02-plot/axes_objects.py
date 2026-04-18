@@ -12,14 +12,12 @@ to use them with related plotting methods.
 
 # sphinx_gallery_thumbnail_number = 7
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
 # %%
 # Cube Axes
-# ~~~~~~~~~
+# =========
 # Show axes bounds as a cube with :class:`~pyvista.CubeAxesActor`.
 
 mesh = examples.download_bunny_coarse()
@@ -60,7 +58,7 @@ pl.show()
 
 # %%
 # Arrow Axes
-# ~~~~~~~~~~
+# ==========
 # Arrow-style axes include :class:`~pyvista.AxesActor`, :class:`~pyvista.AxesAssembly`,
 # and :class:`~pyvista.AxesAssemblySymmetric`.
 #
@@ -121,7 +119,7 @@ pl.show()
 
 # %%
 # Axes Widgets
-# ~~~~~~~~~~~~
+# ============
 # Any actor can also be used as an axes orientation widget.
 # Here, we demonstrate using four separate axes widgets:
 #
@@ -165,6 +163,17 @@ axes = pv.AxesAssemblySymmetric(label_size=25)
 pl.add_orientation_widget(axes, viewport=viewport)
 
 pl.show()
-#
+
+# %%
+# Camera Orientation Widget
+# -------------------------
+# There is also a specialized camera widget which can added to a plot with
+# :class:`~pyvista.Plotter.add_camera_orientation_widget`.
+
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+pl.add_camera_orientation_widget()
+pl.show()
+
 # %%
 # .. tags:: plot

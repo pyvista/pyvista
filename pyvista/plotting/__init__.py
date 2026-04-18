@@ -7,6 +7,7 @@ from pyvista._plot import plot as plot
 
 from . import _vtk as _vtk
 from ._property import Property as Property
+from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart
 from ._typing import ColorLike as ColorLike
 from .actor import Actor as Actor
@@ -24,17 +25,20 @@ from .charts import ChartMPL as ChartMPL
 from .charts import ChartPie as ChartPie
 from .colors import PARAVIEW_BACKGROUND as PARAVIEW_BACKGROUND
 from .colors import Color as Color
+from .colors import __getattr__  # noqa: F401
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
-from .colors import hexcolors as hexcolors
+from .colors import hex_colors as hex_colors
 from .composite_mapper import BlockAttributes as BlockAttributes
 from .composite_mapper import CompositeAttributes as CompositeAttributes
 from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
 from .cube_axes_actor import CubeAxesActor as CubeAxesActor
 from .errors import InvalidCameraError as InvalidCameraError
 from .errors import RenderWindowUnavailable as RenderWindowUnavailable
+from .follower import Follower as Follower
 from .helpers import plot_arrows as plot_arrows
 from .helpers import plot_compare_four as plot_compare_four
+from .interactor_style_registry import register_interactor_style as register_interactor_style
 from .lights import Light as Light
 from .lookup_table import LookupTable as LookupTable
 from .mapper import DataSetMapper as DataSetMapper
@@ -44,6 +48,8 @@ from .mapper import OpenGLGPUVolumeRayCastMapper as OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper as PointGaussianMapper
 from .mapper import SmartVolumeMapper as SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolumeRayCastMapper
+from .opts import PointSpriteShape as PointSpriteShape
+from .opts import ShaderType as ShaderType
 from .picking import PickingHelper as PickingHelper
 from .plotter import _ALL_PLOTTERS as _ALL_PLOTTERS
 from .plotter import BasePlotter as BasePlotter
@@ -92,7 +98,7 @@ class QtDeprecationError(Exception):  # numpydoc ignore=PR01
     See https://github.com/pyvista/pyvistaqt
 """
 
-    def __init__(self, feature_name):
+    def __init__(self, feature_name: str) -> None:
         """Empty init."""
         Exception.__init__(self, self.message.format(*[feature_name] * 4))
 
@@ -100,7 +106,7 @@ class QtDeprecationError(Exception):  # numpydoc ignore=PR01
 class BackgroundPlotter:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""  # noqa: D404
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
         """Empty init."""
         msg = 'BackgroundPlotter'
         raise QtDeprecationError(msg)
@@ -109,7 +115,7 @@ class BackgroundPlotter:  # numpydoc ignore=PR01
 class QtInteractor:  # numpydoc ignore=PR01
     """This class has been moved to pyvistaqt."""  # noqa: D404
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
         """Empty init."""
         msg = 'QtInteractor'
         raise QtDeprecationError(msg)

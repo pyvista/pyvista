@@ -8,8 +8,6 @@ Create a surface from a set of points through a Delaunay triangulation.
 This example uses :func:`pyvista.PolyDataFilters.delaunay_2d`.
 """
 
-from __future__ import annotations
-
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
@@ -96,9 +94,9 @@ polygon.faces = np.insert(ids, 0, len(ids))
 
 surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
 
-p = pv.Plotter()
-p.add_mesh(surf, show_edges=True)
-p.add_mesh(polygon, color='red', opacity=0.5)
-p.show(cpos='xy')
+pl = pv.Plotter()
+pl.add_mesh(surf, show_edges=True)
+pl.add_mesh(polygon, color='red', opacity=0.5)
+pl.show(cpos='xy')
 # %%
 # .. tags:: load

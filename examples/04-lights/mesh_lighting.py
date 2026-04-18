@@ -15,8 +15,6 @@ mesh:
 """
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -25,10 +23,10 @@ horse.rotate_z(-120, inplace=True)
 horse.points = (horse.points - horse.center) * 100
 shifted = horse.translate((0, 10, 0), inplace=False)
 
-plotter = pv.Plotter()
-plotter.add_mesh(horse, color='brown')
-plotter.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(horse, color='brown')
+pl.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
+pl.show()
 
 
 # %%

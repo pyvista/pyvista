@@ -23,9 +23,9 @@ state.trame__title = 'PyVistaLocalView'
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter(off_screen=True)
-actor = plotter.add_mesh(mesh)
-plotter.set_background('lightgrey')
+pl = pv.Plotter(off_screen=True)
+actor = pl.add_mesh(mesh)
+pl.set_background('lightgrey')
 
 
 # -----------------------------------------------------------------------------
@@ -44,7 +44,7 @@ with SinglePageLayout(server) as layout:
             fluid=True,
             classes='pa-0 fill-height',
         ):
-            view = PyVistaLocalView(plotter)
+            view = PyVistaLocalView(pl)
             ctrl.view_update = view.update
             ctrl.view_reset_camera = view.reset_camera
 

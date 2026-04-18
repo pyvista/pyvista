@@ -26,12 +26,12 @@ state.trame__title = 'PyVista UI Template'
 
 mesh = examples.load_random_hills()
 
-plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap='viridis')
+pl = pv.Plotter()
+actor = pl.add_mesh(mesh, cmap='viridis')
 
 
 @state.change('cmap')
-def update_cmap(cmap='viridis', **kwargs):
+def update_cmap(cmap='viridis', **kwargs):  # noqa: ARG001
     actor.mapper.lookup_table.cmap = cmap
     ctrl.view_update()
 
@@ -59,7 +59,7 @@ with SinglePageLayout(server) as layout:
 
     with layout.content:
         # Use PyVista UI template for Plotters
-        view = plotter_ui(plotter)
+        view = plotter_ui(pl)
         ctrl.view_update = view.update
 
     # hide footer

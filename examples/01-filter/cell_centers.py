@@ -10,8 +10,6 @@ Here we use :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>`.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 3
@@ -21,11 +19,11 @@ from pyvista import examples
 # First let's fetch the centers of a mesh with 2D geometries (a surface)
 mesh = examples.download_teapot()
 
-cpos = [
-    (6.192871661244108, 5.687542355343226, -4.95345468836544),
-    (0.48853358141600634, 1.2019347531215714, 0.1656178278582367),
-    (-0.40642070472687936, 0.8621356761976646, 0.30256286387543047),
-]
+cpos = pv.CameraPosition(
+    position=(6.192871661244108, 5.687542355343226, -4.95345468836544),
+    focal_point=(0.48853358141600634, 1.2019347531215714, 0.1656178278582367),
+    viewup=(-0.40642070472687936, 0.8621356761976646, 0.30256286387543047),
+)
 
 centers = mesh.cell_centers()
 
@@ -40,11 +38,11 @@ pl.show(cpos=cpos)
 
 grid = examples.download_letter_a()
 
-cpos = [
-    (2.704583323659036, 0.7822568412034183, 1.7251126717482546),
-    (3.543391913452799, 0.31117673768140197, 0.16407006760146028),
-    (0.1481171795711516, 0.96599698246102, -0.2119224645762945),
-]
+cpos = pv.CameraPosition(
+    position=(2.704583323659036, 0.7822568412034183, 1.7251126717482546),
+    focal_point=(3.543391913452799, 0.31117673768140197, 0.16407006760146028),
+    viewup=(0.1481171795711516, 0.96599698246102, -0.2119224645762945),
+)
 
 
 centers = grid.cell_centers()

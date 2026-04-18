@@ -6,20 +6,33 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import overload
 
+import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import vtk_version_info
+
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
+from .formatting_html import _children_section
+from .formatting_html import build_repr_html
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
+from .utilities.writer import HDFWriter
+from .utilities.writer import XMLPartitionedDataSetWriter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import ClassVar
+
+    from typing_extensions import Self
 
     from .dataset import DataSet
+    from .utilities.arrays import FieldAssociation
+    from .utilities.writer import BaseWriter
 
 
 class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
-    """Wrapper for the ``vtkPartitionedDataSet`` class.
+    """Wrapper for the :vtk:`vtkPartitionedDataSet` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
 
@@ -37,8 +50,12 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
-    if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}  # type: ignore[dict-item]
+    plot = pv._plot.plot
+
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {'.vtpd': XMLPartitionedDataSetWriter}
+
+    if vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = HDFWriter
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
@@ -75,7 +92,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def __getitem__(self, index):
         """Get a partition by its index."""
         if isinstance(index, slice):
-            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])  # type: ignore[abstract]
+            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
                 msg = f'index ({index}) out of range for this dataset.'
@@ -99,7 +116,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     ):
         """Set a partition with a VTK data object."""
         if isinstance(index, slice):
-            for i, d in zip(range(self.n_partitions)[index], data):
+            for i, d in zip(range(self.n_partitions)[index], data, strict=True):
                 self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
@@ -121,7 +138,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             self[i + 1] = self[i]
         self[index] = dataset
 
-    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01
+    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01  # noqa: ARG002
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
@@ -133,33 +150,23 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
-        fmt = ''
-        fmt += "<table style='width: 100%;'>"
-        fmt += '<tr><th>Information</th><th>Partitions</th></tr>'
-        fmt += '<tr><td>'
-        fmt += '\n'
-        fmt += '<table>\n'
-        fmt += f'<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n'
-        row = '<tr><td>{}</td><td>{}</td></tr>\n'
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
-        fmt += '</table>\n'
-        fmt += '\n'
-        fmt += '</td><td>'
-        fmt += '\n'
-        fmt += '<table>\n'
-        row = '<tr><th>{}</th><th>{}</th></tr>\n'
-        fmt += row.format('Index', 'Type')
-        for i in range(self.n_partitions):
-            data = self[i]
-            fmt += row.format(i, type(data).__name__)
-        fmt += '</table>\n'
-        fmt += '\n'
-        fmt += '</td></tr> </table>'
-        return fmt
+        sections: list[str] = []
+
+        # Partitions
+        children = [
+            (f'{i}', type(p).__name__ if (p := self[i]) is not None else 'None', '')
+            for i in range(self.n_partitions)
+        ]
+        if children:
+            sections.append(_children_section('Partitions', children))
+
+        return build_repr_html(
+            obj_type=type(self).__name__,
+            mesh_type='ImageData',
+            header_badges=[f'{self.n_partitions} partitions'],
+            sections=sections,
+            text_repr=repr(self),
+        )
 
     def __repr__(self) -> str:
         """Define an adequate representation."""
@@ -169,7 +176,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 
@@ -184,7 +191,8 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    def copy(self, deep: bool = True):
+    @_deprecate_positional_args
+    def copy(self, deep: bool = True):  # noqa: FBT001, FBT002
         """Return a copy of the PartitionedDataSet.
 
         Parameters
@@ -238,6 +246,26 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self.SetNumberOfPartitions(n)
         self.Modified()
 
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if there are no partitions.
+
+        .. versionadded:: 0.46
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.PartitionedDataSet()
+        >>> mesh.is_empty
+        True
+
+        >>> mesh.append(pv.Sphere())
+        >>> mesh.is_empty
+        False
+
+        """
+        return self.n_partitions == 0
+
     def append(self, dataset) -> None:
         """Add a data set to the next partition index.
 
@@ -250,3 +278,9 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         index = self.n_partitions
         self.n_partitions += 1
         self[index] = dataset
+
+    def get_data_range(  # numpydoc ignore=RT01
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
+        """Get the non-NaN min and max of a named array."""
+        return DataObject.get_data_range(self, name=name, preference=preference)

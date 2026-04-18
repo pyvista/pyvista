@@ -45,7 +45,8 @@ cases = [
         use_plugin=False,
         promote_type=float,
         arg_type=float,
-        expected_output='py:9: error: Argument 1 to "foo" has incompatible type "DuckType"; expected "float"  [arg-type]',
+        expected_output='py:9: error: Argument 1 to "foo" has incompatible type "DuckType"; '
+        'expected "float"  [arg-type]',
     ),
     dict(  # Same as above, but use the plugin.
         use_plugin=True, promote_type=float, arg_type=float, expected_output=''
@@ -57,13 +58,15 @@ cases = [
         use_plugin=True,
         promote_type=float,
         arg_type=int,
-        expected_output='py:9: error: Argument 1 to "foo" has incompatible type "DuckType"; expected "int"  [arg-type]',
+        expected_output='py:9: error: Argument 1 to "foo" has incompatible type "DuckType"; '
+        'expected "int"  [arg-type]',
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    ('use_plugin', 'promote_type', 'arg_type', 'expected_output'), [case.values() for case in cases]
+    ('use_plugin', 'promote_type', 'arg_type', 'expected_output'),
+    [case.values() for case in cases],
 )
 def test_promote_type_static(use_plugin, promote_type, arg_type, expected_output, tmp_path):
     code = f"""
@@ -105,6 +108,6 @@ def _run_mypy_code(code, use_plugin, tmp_path):
 
         # Only run mypy on the code block and plugin module files
         args.extend([tmp_file, MYPY_PLUGIN_MODULE])
-        return subprocess.run(args, capture_output=True)
+        return subprocess.run(args, capture_output=True, check=False)
     finally:
         os.chdir(cwd)

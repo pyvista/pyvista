@@ -4,24 +4,32 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Sequence
+from functools import wraps
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import TypedDict
+from typing import get_args
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import BoundsTuple
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._validation.validate import _validate_color_sequence
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.misc import _NameMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _reciprocal
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.transformations import decomposition
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -35,6 +43,8 @@ if TYPE_CHECKING:
     import sys
 
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._typing import ColorLike
@@ -44,6 +54,8 @@ if TYPE_CHECKING:
     else:
         from typing_extensions import Unpack
 
+ScaleModeOptions = Literal['default', 'anti_distortion']
+
 
 class _AxesPropTuple(NamedTuple):
     x_shaft: float | str | ColorLike
@@ -52,16 +64,6 @@ class _AxesPropTuple(NamedTuple):
     x_tip: float | str | ColorLike
     y_tip: float | str | ColorLike
     z_tip: float | str | ColorLike
-
-
-class _AxesGeometryKwargs(TypedDict):
-    shaft_type: AxesGeometrySource.GeometryTypes | DataSet
-    shaft_radius: float
-    shaft_length: float | VectorLike[float]
-    tip_type: AxesGeometrySource.GeometryTypes | DataSet
-    tip_radius: float
-    tip_length: float | VectorLike[float]
-    symmetric_bounds: bool
 
 
 class _OrthogonalPlanesKwargs(TypedDict):
@@ -76,7 +78,14 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
+@abstract_class
+class _XYZAssembly(
+    _NoNewAttrMixin,
+    DisableVtkSnakeCase,
+    _Prop3DMixin,
+    _NameMixin,
+    _vtk.vtkPropAssembly,
+):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -106,7 +115,9 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
 
         def _make_xyz_tuple(xyz):
             def _get_tuple(actor_or_actors):
-                return actor_or_actors if isinstance(actor_or_actors, tuple) else (actor_or_actors,)
+                return (
+                    actor_or_actors if isinstance(actor_or_actors, tuple) else (actor_or_actors,)
+                )
 
             actor_tuples = [_get_tuple(actors) for actors in xyz]
             return _XYZTuple(*actor_tuples)
@@ -137,7 +148,10 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
             self.y_label = self.DEFAULT_LABELS.y if y_label is None else y_label
             self.z_label = self.DEFAULT_LABELS.z if z_label is None else z_label
         else:
-            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+            msg = (
+                "Cannot initialize '{}' and 'labels' properties together. "
+                'Specify one or the other, not both.'
+            )
             if x_label is not None:
                 raise ValueError(msg.format('x_label'))
             if y_label is not None:
@@ -150,18 +164,18 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
+        self.position = position
+        self.orientation = orientation
         self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
+        self.origin = origin
+        self.user_matrix = user_matrix
 
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
     @property
     def parts(self):
         collection = self.GetParts()
-        return tuple([collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())])
+        return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 
     @property
     def _label_actor_iterator(self) -> Iterator[Label]:
@@ -175,7 +189,7 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
             if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
                 part.user_matrix, new_matrix
             ):
-                part.user_matrix = new_matrix  # type: ignore[method-assign]
+                part.user_matrix = new_matrix
 
     def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         return BoundsTuple(*self.GetBounds())
@@ -301,6 +315,65 @@ class AxesAssembly(_XYZAssembly):
 
     Parameters
     ----------
+    shaft_type : str | DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    shaft_radius : float | VectorLike[float], default: 0.025
+        Radius of the axes shafts.
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+    tip_type : str | DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    tip_radius : float | VectorLike[float], default: 0.1
+        Radius of the axes tips.
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+    symmetric_bounds : bool, default: False
+        Make the bounds of the axes symmetric. This is mainly for using the axes with
+        :func:`~pyvista.Renderer.add_orientation_widget` to ensure the axes rotate correctly
+        about the origin.
+
+    scale_mode : 'default', 'anti_distortion', default: 'default'
+        Mode used when scaling the axes.
+
+        - ``'default'``: Apply standard geometric scaling using ``'scale'`` factors. The full
+          assembly is scaled as a single object. If non-uniform scaling is used, the axes may
+          appear distorted.
+        - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
+          do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
+          be scaled to appear uniform.
+
+        .. versionadded:: 0.47
+
     x_label : str, default: 'X'
         Text label for the x-axis. Alternatively, set the label with :attr:`labels`.
 
@@ -361,9 +434,6 @@ class AxesAssembly(_XYZAssembly):
 
         .. versionadded:: 0.45
 
-    **kwargs
-        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
-
     See Also
     --------
     AxesAssemblySymmetric
@@ -373,63 +443,96 @@ class AxesAssembly(_XYZAssembly):
 
     Examples
     --------
-    Add axes to a plot.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> axes = pv.AxesAssembly()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Add axes to a plot.
 
-    Customize the axes colors. Set each axis to a single color, or set the colors of
-    each shaft and tip separately with two colors.
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes.x_color = ['cyan', 'blue']
-    >>> axes.y_color = ['magenta', 'red']
-    >>> axes.z_color = 'yellow'
+        Customize the axes colors. Set each axis to a single color, or set the colors of
+        each shaft and tip separately with two colors.
 
-    Customize the label color too.
+        >>> axes.x_color = ['cyan', 'blue']
+        >>> axes.y_color = ['magenta', 'red']
+        >>> axes.z_color = 'yellow'
 
-    >>> axes.label_color = 'brown'
+        Customize the label color too.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        >>> axes.label_color = 'brown'
 
-    Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
-    modify the lengths.
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes = pv.AxesAssembly(
-    ...     shaft_type='pyramid',
-    ...     tip_type='hemisphere',
-    ...     tip_length=0.1,
-    ...     shaft_length=(0.5, 1.0, 1.5),
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
+        modify the lengths.
 
-    Position and orient the axes in space.
+        >>> axes = pv.AxesAssembly(
+        ...     shaft_type='pyramid',
+        ...     tip_type='hemisphere',
+        ...     tip_length=0.1,
+        ...     shaft_length=(0.5, 1.0, 1.5),
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
-    >>> pl.show()
+        Position and orient the axes in space.
 
-    Add the axes as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`:
+        >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> import pyvista as pv
+        Scale the axes non-uniformly.
 
-    >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+        >>> axes = pv.AxesAssembly(scale=(2.0, 6.0, 10.0))
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(pv.Cone())
-    >>> _ = pl.add_orientation_widget(
-    ...     axes,
-    ...     viewport=(0, 0, 0.5, 0.5),
-    ... )
-    >>> pl.show()
+        Note how the non-uniform scaling distorts the axes such that the tips all have different
+        lengths and the shafts are no longer cylindrical. Use the anti-distortion mode when
+        scaling to avoid this.
+
+        >>> axes.scale_mode = 'anti_distortion'
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        Add axes to the minimum extent of a mesh's bounds.
+
+        >>> mesh = pv.ParametricEllipsoid(xradius=6, yradius=3, zradius=1)
+
+        >>> scale = mesh.bounds_size
+        >>> position = (mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min)
+        >>> axes = pv.AxesAssembly(
+        ...     position=position, scale=scale, scale_mode='anti_distortion'
+        ... )
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_actor(axes)
+        >>> pl.view_xy()
+        >>> pl.show()
+
+        Add the axes as a custom orientation widget with
+        :func:`~pyvista.Renderer.add_orientation_widget`.
+
+        >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> _ = pl.add_orientation_widget(
+        ...     axes,
+        ...     viewport=(0, 0, 0.5, 0.5),
+        ... )
+        >>> pl.show()
 
     """
 
@@ -441,13 +544,22 @@ class AxesAssembly(_XYZAssembly):
 
         # Init shaft and tip datasets
         self._shaft_and_tip_geometry_source = geometry_source
-        shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
-        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
+        # Get output without updating source, since source will be updated when setting actor scale
+        shaft_tip_datasets = self._shaft_and_tip_geometry_source._output
+        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets, strict=True):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
 
     def __init__(
         self,
         *,
+        shaft_type: AxesGeometrySource.GeometryTypes | DataSet = 'cylinder',
+        shaft_radius: float | VectorLike[float] = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
+        tip_radius: float | VectorLike[float] = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        symmetric_bounds: bool = False,
+        scale_mode: ScaleModeOptions = 'default',
         x_label: str | None = None,
         y_label: str | None = None,
         z_label: str | None = None,
@@ -465,16 +577,26 @@ class AxesAssembly(_XYZAssembly):
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
-        **kwargs: Unpack[_AxesGeometryKwargs],
     ):
+        self._scale_mode = scale_mode
         # Init shaft and tip actors
-        self._init_actors_from_source(AxesGeometrySource(symmetric=False, **kwargs))
+        source = AxesGeometrySource(
+            shaft_type=shaft_type,
+            shaft_radius=shaft_radius,
+            shaft_length=shaft_length,
+            tip_type=tip_type,
+            tip_radius=tip_radius,
+            tip_length=tip_length,
+            symmetric_bounds=symmetric_bounds,
+            symmetric=False,
+        )
+        self._init_actors_from_source(source)
         # Init label actors
         self._label_actors = (Label(), Label(), Label())
 
         _XYZAssembly.__init__(
             self,
-            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors, strict=True)),  # type: ignore[arg-type]
             xyz_label_actors=self._label_actors,
             x_label=x_label,
             y_label=y_label,
@@ -540,6 +662,158 @@ class AxesAssembly(_XYZAssembly):
             f'  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}',
         ]
         return '\n'.join(attr)
+
+    @property
+    @wraps(AxesGeometrySource.shaft_length.fget)  # type: ignore[attr-defined]
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.shaft_length
+
+    @shaft_length.setter
+    @wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
+    def shaft_length(self, length: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.shaft_length = length
+        self._shaft_and_tip_geometry_source.update()
+
+    @property
+    @wraps(AxesGeometrySource.tip_length.fget)  # type: ignore[attr-defined]
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.tip_length
+
+    @tip_length.setter
+    @wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
+    def tip_length(self, length: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.tip_length = length
+        self._shaft_and_tip_geometry_source.update()
+
+    @property
+    @wraps(AxesGeometrySource.shaft_radius.fget)  # type: ignore[attr-defined]
+    def shaft_radius(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.shaft_radius
+
+    @shaft_radius.setter
+    @wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
+    def shaft_radius(self, radius: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.shaft_radius = radius
+        self._shaft_and_tip_geometry_source.update()
+
+    @property
+    @wraps(AxesGeometrySource.tip_radius.fget)  # type: ignore[attr-defined]
+    def tip_radius(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.tip_radius
+
+    @tip_radius.setter
+    @wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
+    def tip_radius(self, radius: float | VectorLike[float]) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.tip_radius = radius
+        self._shaft_and_tip_geometry_source.update()
+
+    @property
+    @wraps(AxesGeometrySource.shaft_type.fget)  # type: ignore[attr-defined]
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.shaft_type
+
+    @shaft_type.setter
+    @wraps(AxesGeometrySource.shaft_type.fset)  # type: ignore[attr-defined]
+    def shaft_type(self, shaft_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.shaft_type = shaft_type
+        self._shaft_and_tip_geometry_source.update()
+
+    @property
+    @wraps(AxesGeometrySource.tip_type.fget)  # type: ignore[attr-defined]
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Wrap AxesGeometrySource."""
+        return self._shaft_and_tip_geometry_source.tip_type
+
+    @tip_type.setter
+    @wraps(AxesGeometrySource.tip_type.fset)  # type: ignore[attr-defined]
+    def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
+        """Wrap AxesGeometrySource."""
+        self._shaft_and_tip_geometry_source.tip_type = tip_type
+        self._shaft_and_tip_geometry_source.update()
+
+    @property
+    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap Prop3D.scale."""
+        return _Prop3DMixin.scale.fget(self)  # type: ignore[attr-defined]
+
+    @scale.setter
+    @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
+    def scale(self, scale: float | VectorLike[float]):
+        """Wrap Prop3D.scale."""
+        _Prop3DMixin.scale.fset(self, scale)  # type: ignore[attr-defined]
+        self._update_scale()
+
+    @property
+    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Wrap Prop3D.user_matrix."""
+        return _Prop3DMixin.user_matrix.fget(self)  # type: ignore[attr-defined]
+
+    @user_matrix.setter
+    @wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
+    def user_matrix(self, value: TransformLike) -> None:
+        """Wrap Prop3D.user_matrix."""
+        _Prop3DMixin.user_matrix.fset(self, value)  # type: ignore[attr-defined]
+        self._update_scale()
+
+    @property
+    def scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
+        """Set or return the scaling mode.
+
+        - ``'default'``: Apply standard geometric scaling using :attr:`scale` factors. The full
+          assembly is scaled as a single object. If non-uniform scaling is used, the axes may
+          appear distorted.
+        - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
+          do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
+          be scaled to appear uniform. The corrective scaling applies to :attr:`scale` as well as
+          any scaling from :attr:`user_matrix`.
+
+        .. versionadded:: 0.47
+
+        """
+        return self._scale_mode
+
+    @scale_mode.setter
+    def scale_mode(self, mode: ScaleModeOptions) -> None:
+        self._scale_mode = mode
+        self._update_scale()
+
+    @property
+    def _scale_mode(self) -> ScaleModeOptions:  # numpydoc ignore=RT01
+        return self.__scale_mode
+
+    @_scale_mode.setter
+    def _scale_mode(self, mode: ScaleModeOptions) -> None:
+        _validation.check_contains(
+            get_args(ScaleModeOptions), must_contain=mode, name='scale mode'
+        )
+        self.__scale_mode = mode
+
+    def _update_scale(self):
+        if self.scale_mode == 'anti_distortion':
+            _, _, _, scale, _ = decomposition(self._transformation_matrix)
+            # We "undo" anisotropic scaling by the actor, and apply uniform scaling
+            # instead using the geometric mean
+            geometric_mean = np.array(np.cbrt(np.prod(scale)))
+            factor = geometric_mean * _reciprocal(scale)
+        else:
+            factor = np.ones(shape=(3,), dtype=float)
+
+        source = self._shaft_and_tip_geometry_source
+        source._anti_distortion_factor = factor
+        source.update()
+        self._update_label_positions()
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -660,7 +934,11 @@ class AxesAssembly(_XYZAssembly):
 
         """
         position = self._label_position
-        return self._shaft_and_tip_geometry_source.shaft_length if position is None else position
+        value = self._shaft_and_tip_geometry_source.shaft_length if position is None else position
+        if self.scale_mode == 'anti_distortion':
+            factor = self._shaft_and_tip_geometry_source._anti_distortion_factor
+            value += self.tip_length * (1 - factor)
+        return value
 
     @label_position.setter
     def label_position(self, position: float | VectorLike[float] | None):
@@ -705,7 +983,8 @@ class AxesAssembly(_XYZAssembly):
     def z_color(self, color: ColorLike | Sequence[ColorLike]):
         self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
-    def set_actor_prop(
+    @_deprecate_positional_args(allowed=['name', 'value'])
+    def set_actor_prop(  # noqa: PLR0917
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],
@@ -752,49 +1031,88 @@ class AxesAssembly(_XYZAssembly):
         >>> import pyvista as pv
         >>> axes_assembly = pv.AxesAssembly()
         >>> axes_assembly.set_actor_prop('ambient', 0.7)
-        >>> axes_assembly.get_actor_prop('ambient')
-        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+        >>> axes_assembly.get_actor_prop('ambient')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.7,
+                       y_shaft=0.7,
+                       z_shaft=0.7,
+                       x_tip=0.7,
+                       y_tip=0.7,
+                       z_tip=0.7)
 
         Set the property again, but this time set separate values for each part.
 
         >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
         >>> axes_assembly.set_actor_prop('ambient', values)
-        >>> axes_assembly.get_actor_prop('ambient')
-        _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
+        >>> axes_assembly.get_actor_prop('ambient')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.1,
+                       y_shaft=0.2,
+                       z_shaft=0.3,
+                       x_tip=0.4,
+                       y_tip=0.5,
+                       z_tip=0.6)
 
         Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
         for both the axis shaft and tip by default.
 
         >>> axes_assembly.set_actor_prop('opacity', 0.5, axis='x')
-        >>> axes_assembly.get_actor_prop('opacity')
-        _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
+        >>> axes_assembly.get_actor_prop('opacity')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.5,
+                       y_shaft=1.0,
+                       z_shaft=1.0,
+                       x_tip=0.5,
+                       y_tip=1.0,
+                       z_tip=1.0)
 
         Set the property again, but this time set separate values for the shaft and tip.
 
         >>> axes_assembly.set_actor_prop('opacity', [0.3, 0.7], axis='x')
-        >>> axes_assembly.get_actor_prop('opacity')
-        _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
+        >>> axes_assembly.get_actor_prop('opacity')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.3,
+                       y_shaft=1.0,
+                       z_shaft=1.0,
+                       x_tip=0.7,
+                       y_tip=1.0,
+                       z_tip=1.0)
 
         Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
         is set for all axes by default.
 
         >>> axes_assembly.set_actor_prop('show_edges', True, part='shaft')
-        >>> axes_assembly.get_actor_prop('show_edges')
-        _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+        >>> axes_assembly.get_actor_prop(
+        ...     'show_edges'
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=True,
+                       y_shaft=True,
+                       z_shaft=True,
+                       x_tip=False,
+                       y_tip=False,
+                       z_tip=False)
 
         Set the property again, but this time set separate values for each shaft.
 
         >>> axes_assembly.set_actor_prop(
         ...     'show_edges', [True, False, True], part='shaft'
         ... )
-        >>> axes_assembly.get_actor_prop('show_edges')
-        _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+        >>> axes_assembly.get_actor_prop(
+        ...     'show_edges'
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=True,
+                       y_shaft=False,
+                       z_shaft=True,
+                       x_tip=False,
+                       y_tip=False,
+                       z_tip=False)
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
         >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
-        >>> axes_assembly.get_actor_prop('style')
-        _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
+        >>> axes_assembly.get_actor_prop('style')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft='Wireframe',
+                       y_shaft='Surface',
+                       z_shaft='Surface',
+                       x_tip='Surface',
+                       y_tip='Surface',
+                       z_tip='Surface')
 
         """
         actors = self._filter_part_actors(axis=axis, part=part)
@@ -820,11 +1138,14 @@ class AxesAssembly(_XYZAssembly):
             values = [value] * len(actors)
 
         if len(values) != len(actors):
-            msg = f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
+            msg = (
+                f'Number of values ({len(values)}) in {value} must match the number of '
+                f"actors ({len(actors)}) for axis '{axis}' and part '{part}'"
+            )
             raise ValueError(msg)
 
         # Sequence is valid, now set values
-        for actor, val in zip(actors, values):
+        for actor, val in zip(actors, values, strict=True):
             setattr(actor.prop, name, val)
 
     def get_actor_prop(self, name: str):
@@ -890,23 +1211,22 @@ class AxesAssembly(_XYZAssembly):
 
         return actors
 
-    def _get_offset_label_position_vectors(self, position_scalars: tuple[float, float, float]):
-        # Create position vectors
+    def _get_offset_label_position_vectors(self, position_scalars):
         position_vectors = np.diag(position_scalars)
 
-        # Offset label positions radially by the tip radius
-        tip_radius = self._shaft_and_tip_geometry_source.tip_radius
-        offset_array = np.diag([tip_radius] * 3)
-        radial_offset1 = np.roll(offset_array, shift=1, axis=1)
-        radial_offset2 = np.roll(offset_array, shift=-1, axis=1)
+        tip_radius = self.tip_radius
+        factor = self._shaft_and_tip_geometry_source._anti_distortion_factor
+        for axis in range(3):
+            # Set radial (off-axis) values
+            for r in [i for i in range(3) if i != axis]:
+                position_vectors[axis, r] += tip_radius[r] * factor[r]
 
-        position_vectors += radial_offset1 + radial_offset2
         return position_vectors
 
     def _update_label_positions(self):
         labels = self._label_actors
         position_vectors = self._get_offset_label_position_vectors(self.label_position)
-        for label, position in zip(labels, position_vectors):
+        for label, position in zip(labels, position_vectors, strict=True):
             label.relative_position = position
 
 
@@ -927,6 +1247,60 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     Parameters
     ----------
+    shaft_type : str | DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    shaft_radius : float | VectorLike[float], default: 0.025
+        Radius of the axes shafts.
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+    tip_type : str | DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    tip_radius : float | VectorLike[float], default: 0.1
+        Radius of the axes tips.
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+    scale_mode : 'default', 'anti_distortion', default: 'default'
+        Mode used when scaling the axes.
+
+        - ``'default'``: Apply standard geometric scaling using ``'scale'`` factors. The full
+          assembly is scaled as a single object. If non-uniform scaling is used, the axes may
+          appear distorted.
+        - ``'anti_distortion'``: Apply corrective scaling to axes shafts and tips to ensure they
+          do not appear distorted. The shaft diameters, tip diameters, and tip lengths will all
+          be scaled to appear uniform.
+
+        .. versionadded:: 0.47
+
     x_label : str, default: ('+X', '-X')
         Text labels for the positive and negative x-axis. Specify two strings or a
         single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
@@ -995,9 +1369,6 @@ class AxesAssemblySymmetric(AxesAssembly):
 
         .. versionadded:: 0.45
 
-    **kwargs
-        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
-
     See Also
     --------
     AxesAssembly
@@ -1007,50 +1378,60 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     Examples
     --------
-    Add symmetric axes to a plot.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> axes_assembly = pv.AxesAssemblySymmetric()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_assembly)
-    >>> pl.show()
+        Add symmetric axes to a plot.
 
-    Customize the axes labels.
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
 
-    >>> axes_assembly.labels = [
-    ...     'east',
-    ...     'west',
-    ...     'north',
-    ...     'south',
-    ...     'up',
-    ...     'down',
-    ... ]
-    >>> axes_assembly.label_color = 'darkgoldenrod'
+        Customize the axes labels.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_assembly)
-    >>> pl.show()
+        >>> axes_assembly.labels = [
+        ...     'east',
+        ...     'west',
+        ...     'north',
+        ...     'south',
+        ...     'up',
+        ...     'down',
+        ... ]
+        >>> axes_assembly.label_color = 'darkgoldenrod'
 
-    Add the axes as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
-    only show text for the positive axes.
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
 
-    >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(pv.Cone())
-    >>> _ = pl.add_orientation_widget(
-    ...     axes_assembly,
-    ...     viewport=(0, 0, 0.5, 0.5),
-    ... )
-    >>> pl.show()
+        Add the axes as a custom orientation widget with
+        :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
+        only show text for the positive axes.
+
+        >>> axes_assembly = pv.AxesAssemblySymmetric(
+        ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> _ = pl.add_orientation_widget(
+        ...     axes_assembly,
+        ...     viewport=(0, 0, 0.5, 0.5),
+        ... )
+        >>> pl.show()
 
     """
 
     def __init__(
         self,
         *,
+        shaft_type: AxesGeometrySource.GeometryTypes | DataSet = 'cylinder',
+        shaft_radius: float | VectorLike[float] = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
+        tip_radius: float | VectorLike[float] = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        scale_mode: ScaleModeOptions = 'default',
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,
@@ -1068,18 +1449,29 @@ class AxesAssemblySymmetric(AxesAssembly):
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         name: str | None = None,
-        **kwargs: Unpack[_AxesGeometryKwargs],
     ):
+        self._scale_mode = scale_mode
         # Init shaft and tip actors
-        self._init_actors_from_source(AxesGeometrySource(symmetric=True, **kwargs))
+        source = AxesGeometrySource(
+            shaft_type=shaft_type,
+            shaft_radius=shaft_radius,
+            shaft_length=shaft_length,
+            tip_type=tip_type,
+            tip_radius=tip_radius,
+            tip_length=tip_length,
+            symmetric=True,
+        )
+        self._init_actors_from_source(source)
         # Init label actors
         self._label_actors = (Label(), Label(), Label())
         self._label_actors_symmetric = (Label(), Label(), Label())
 
         _XYZAssembly.__init__(
             self,
-            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
-            xyz_label_actors=tuple(zip(self._label_actors, self._label_actors_symmetric)),  # type: ignore[arg-type]
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors, strict=True)),  # type: ignore[arg-type]
+            xyz_label_actors=tuple(
+                zip(self._label_actors, self._label_actors_symmetric, strict=True)
+            ),  # type: ignore[arg-type]
             x_label=x_label,
             y_label=y_label,
             z_label=z_label,
@@ -1139,7 +1531,8 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     @labels.setter
     def labels(
-        self, labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
+        self,
+        labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str],
     ):
         valid_labels = _validate_label_sequence(labels, n_labels=[3, 6], name='labels')
         if len(valid_labels) == 3:
@@ -1266,10 +1659,14 @@ class AxesAssemblySymmetric(AxesAssembly):
 
         # Update minus labels
         label_position = self.label_position
-        label_position_minus = (-label_position[0], -label_position[1], -label_position[2])
+        label_position_minus = (
+            -label_position[0],
+            -label_position[1],
+            -label_position[2],
+        )
         labels_minus = self._label_actors_symmetric
         vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
-        for label, position in zip(labels_minus, vector_position_minus):
+        for label, position in zip(labels_minus, vector_position_minus, strict=True):
             label.relative_position = position
 
 
@@ -1486,6 +1883,8 @@ class PlanesAssembly(_XYZAssembly):
         name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
+        self._camera = None
+
         # Init plane actors
         self._plane_actors = (Actor(), Actor(), Actor())
         # Init planes from source
@@ -1493,7 +1892,7 @@ class PlanesAssembly(_XYZAssembly):
         self._planes = self._geometry_source.output
         self._plane_sources = self._geometry_source.sources
 
-        for actor, dataset in zip(self._plane_actors, self.planes):
+        for actor, dataset in zip(self._plane_actors, self.planes, strict=True):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
 
         # Init label actors
@@ -1530,7 +1929,7 @@ class PlanesAssembly(_XYZAssembly):
         self.opacity = opacity  # type: ignore[assignment]
         self.label_mode = label_mode
         self.label_offset = label_offset
-        self.label_edge = label_edge  # type: ignore[assignment]
+        self.label_edge = label_edge
 
         # Set default properties
         for actor in self._plane_actors:
@@ -1685,10 +2084,16 @@ class PlanesAssembly(_XYZAssembly):
         # Values on the order of 0.01-0.05 seem to work best. Use a normalization
         # factor so that input values are on the order of 10-50 and roughly match 2D sizes
         NORM_FACTOR = 1000
-        scale = self.planes.length * float(valid_size) / NORM_FACTOR
+        scale_3d = self.planes.length * float(valid_size) / NORM_FACTOR
+
+        # In VTK 9.6+, the 3D label size depends on the 2D label size, so in the 3D case
+        # we need to reset the 2D font size to match the VTK default value of 12
+        font_size_2d = (
+            valid_size if hasattr(self, 'label_mode') and self.label_mode == '2D' else 12
+        )
         for axis in self._axis_actors:
-            axis.GetTitleActor().SetScale(scale)  # 3D labels
-            axis.GetTitleTextProperty().SetFontSize(size)  # 2D labels
+            axis.GetTitleActor().SetScale(scale_3d)  # 3D labels
+            axis.GetTitleTextProperty().SetFontSize(font_size_2d)  # 2D labels
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1798,7 +2203,9 @@ class PlanesAssembly(_XYZAssembly):
         )
         for edge_ in valid_edge:
             _validation.check_contains(
-                ['top', 'bottom', 'right', 'left'], must_contain=edge_, name='label_edge'
+                ['top', 'bottom', 'right', 'left'],
+                must_contain=edge_,
+                name='label_edge',
             )
         self._label_edge = tuple(valid_edge)
         self._update_label_positions()
@@ -1814,7 +2221,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_offset
 
     @label_offset.setter
-    def label_offset(self, offset: int):
+    def label_offset(self, offset: float):
         self._label_offset = _validation.validate_number(offset, dtype_out=float)
         self._update_label_positions()
 
@@ -1837,6 +2244,9 @@ class PlanesAssembly(_XYZAssembly):
         use_2D = mode == '2D'
         for axis in self._axis_actors:
             axis.SetUse2DMode(use_2D)
+
+        # The 3D label size depends on the 2D label size so we need to reset this property
+        self.label_size = self.label_size
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
@@ -1876,15 +2286,12 @@ class PlanesAssembly(_XYZAssembly):
             opacity, broadcast=True, dtype_out=float, to_tuple=True
         )
         self._opacity = valid_opacity
-        for actor, opacity in zip(self._plane_actors, valid_opacity):
-            actor.prop.opacity = opacity
+        for actor, opacity_ in zip(self._plane_actors, valid_opacity, strict=True):
+            actor.prop.opacity = opacity_
 
     @property
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
-        if not hasattr(self, '_camera'):
-            msg = 'Camera has not been set.'
-            raise ValueError(msg)
         return self._camera
 
     @camera.setter
@@ -1981,7 +2388,7 @@ class PlanesAssembly(_XYZAssembly):
         self._update_label_positions()
 
 
-class _AxisActor(_vtk.vtkAxisActor):
+class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
     def __init__(self):
         super().__init__()
         # Only show the title

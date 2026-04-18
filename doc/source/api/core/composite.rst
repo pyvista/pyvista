@@ -14,13 +14,13 @@ Create empty composite dataset
    :hide-code:
 
    # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 .. jupyter-execute::
 
@@ -145,11 +145,9 @@ MultiBlock API Reference
 ------------------------
 The :class:`pyvista.MultiBlock` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista. This
-base class is analogous to VTK's `vtk.vtkMultiBlockDataSet`_ class.
+base class is analogous to VTK's :vtk:`vtkMultiBlockDataSet` class.
 
 .. autosummary::
    :toctree: _autosummary
 
    pyvista.MultiBlock
-
-.. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html

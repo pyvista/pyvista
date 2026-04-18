@@ -6,15 +6,12 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """All the tests here fail gc."""
+# A large number of tests here fail gc
+pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture
@@ -142,22 +139,6 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_axis_labels_deprecated(axes_actor):
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        axes_actor.x_axis_label = 'Axis X'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        axes_actor.y_axis_label = 'Axis Y'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        axes_actor.z_axis_label = 'Axis Z'
-
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        _ = axes_actor.x_axis_label
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        _ = axes_actor.y_axis_label
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        _ = axes_actor.z_axis_label
-
-
 def test_axes_actor_labels_individual(axes_actor):
     axes_actor.x_label = 'Axis X'
     axes_actor.y_label = 'Axis Y'
@@ -177,7 +158,7 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.z_label == new_labels[2]
 
     match = 'Labels must be a list or tuple. Got abc instead.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         axes_actor.labels = 'abc'
 
     match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
@@ -185,7 +166,6 @@ def test_axes_actor_labels_group(axes_actor):
         axes_actor.labels = ['1', '2']
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_axes_actor_properties():
     prop = pv.ActorProperties(_vtk.vtkProperty())
 

@@ -64,11 +64,11 @@ def download_grasshopper():  # pragma: no cover
     >>> vrml_file = examples.vrml.download_grasshopper()
     >>> pl = pv.Plotter()
     >>> pl.import_vrml(vrml_file)
-    >>> pl.camera_position = [
-    ...     (25.0, 32.0, 44.0),
-    ...     (0.0, 0.931, -6.68),
-    ...     (-0.20, 0.90, -0.44),
-    ... ]
+    >>> pl.camera_position = pv.CameraPosition(
+    ...     position=(25.0, 32.0, 44.0),
+    ...     focal_point=(0.0, 0.931, -6.68),
+    ...     viewup=(-0.20, 0.90, -0.44),
+    ... )
     >>> pl.show()
 
     """

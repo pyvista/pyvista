@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import gc
 import re
 from unittest import mock
 
 import numpy as np
+import pandas as pd
 import pytest
-import vtk as _vtk
 
+import pyvista as pv
 from pyvista import examples
 from pyvista import pyvista_ndarray
+from pyvista import vtk_points
+from pyvista.core import _vtk_core as _vtk
 
 
 @pytest.fixture
@@ -102,7 +106,32 @@ def test_add_1d():
 @pytest.mark.parametrize('val', [1, True, None])
 def test_raises(val):
     match = re.escape(
-        f'pyvista_ndarray got an invalid type {type(val)}. Expected an Iterable or vtk.vtkAbstractArray'
+        f'pyvista_ndarray got an invalid type {type(val)}. '
+        f'Expected an Iterable or vtk.vtkAbstractArray'
     )
     with pytest.raises(TypeError, match=match):
         pyvista_ndarray(val)
+
+
+@pytest.mark.parametrize('obj_in', [np.eye(3), vtk_points(np.eye(3)).GetData()])
+def test_wrap_pandas(obj_in):
+    array = pyvista_ndarray(obj_in)
+    df = pd.DataFrame(array)
+    assert np.shares_memory(df.values, array)
+
+
+def test_no_dataset_does_not_allocate_weak_reference():
+    # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    arr = pyvista_ndarray([1.0, 2.0, 3.0])
+    assert arr.dataset is None
+
+
+def test_point_data_assignment_does_not_leak_vtk_weak_reference():
+    # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    del mesh
+    gc.collect()
+
+    leaked = [o for o in gc.get_objects() if isinstance(o, _vtk.vtkWeakReference)]
+    assert leaked == []

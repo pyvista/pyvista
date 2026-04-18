@@ -15,6 +15,7 @@ from typing import get_args
 from typing import overload
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
+class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:
@@ -90,7 +91,10 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
                         args = get_args(literal)
                         if len(args) >= 1:
                             return args
-        msg = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+        msg = (
+            'Type argument for subclasses must be a single non-empty Literal with all state '
+            'options provided.'
+        )
         raise TypeError(msg)
 
     def __init__(self) -> None:
@@ -110,7 +114,7 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
 
     @final
     def _validate_state(self, state: T) -> T:
-        from pyvista import _validation
+        from pyvista import _validation  # noqa: PLC0415
 
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
@@ -161,7 +165,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
     Parameters
     ----------
     verbosity : str
-        Verbosity of the ``vtkLogger`` to set.
+        Verbosity of the :vtk:`vtkLogger` to set.
 
         - ``'off'``: No output.
         - ``'error'``: Only error messages.
@@ -236,7 +240,7 @@ vtk_verbosity = _VTKVerbosity()
 _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 
 
-class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
+class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     """Context manager to control access to VTK's pythonic snake_case API.
 
     VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
@@ -267,7 +271,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
     'error'
 
     The following will raise an error because the `information` property is defined
-    by `vtkDataObject` and is not part of PyVista's API.
+    by :vtk:`vtkDataObject` and is not part of PyVista's API.
 
     >>> # pv.PolyData().information
 
@@ -295,15 +299,113 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
 
     @property
     def _state(self) -> _VtkSnakeCaseOptions:
-        import pyvista as pv
-
-        return pv._VTK_SNAKE_CASE_STATE
+        return _vtk_utilities._VTK_SNAKE_CASE_STATE
 
     @_state.setter
     def _state(self, state: _VtkSnakeCaseOptions) -> None:
-        import pyvista as pv
-
-        pv._VTK_SNAKE_CASE_STATE = state
+        _vtk_utilities._VTK_SNAKE_CASE_STATE = state
 
 
 vtk_snake_case = _vtkSnakeCase()
+
+
+_AllowNewAttributesOptions = Literal['private', True, False]
+
+
+class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
+    """Context manager to control setting new attributes on PyVista classes.
+
+    Python allows arbitrarily setting new attributes on objects at any time,
+    but PyVista's classes do not always allow this. By default, setting a
+    new attribute is only allowed when the attribute's name has a leading
+    underscore "``_``", i.e. it is a private attribute; attempting to
+    set a new public attribute raises an ``AttributeError``.
+
+    This context manager may be used to allow or disallow setting `any` new
+    attribute, public or private, either globally or within a context.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    mode : 'private' | bool
+        Control if setting new attributes is allowed.
+
+        - ``'private'``: Allow setting private attributes, but do not allow setting public
+          attributes.
+        - ``True``: Allow setting any new attribute, either private or public.
+        - ``False``: Do not allow setting new attributes, regardless if they are private or public.
+
+        ``'private'`` is used by default, ``True`` removes all restrictions, and ``False``
+        is most strict.
+
+        .. note::
+
+            An attribute is considered private if its name has a leading underscore "``_``".
+
+    See Also
+    --------
+    pyvista.set_new_attribute
+        Function for setting any new attribute on a PyVista object.
+
+    Notes
+    -----
+    Allowing new attributes by default outside ``__init__`` and/or without formally defining
+    class properties was found to be a source of bugs for both developers and users of PyVista.
+    It's very easy to set the wrong attribute name (e.g. ``interpolate`` vs. ``interpolation``)
+    without any errors being generated, and users transitioning from older versions of PyVista
+    would have code that sets attributes which were once valid, but have since been deprecated and
+    removed. Attempting to set an attribute which is not already defined now raises an
+    ``AttributeError`` to clearly signal that there is a potential problem with this line of code.
+
+    Examples
+    --------
+    Get the default attribute mode.
+
+    >>> import pyvista as pv
+    >>> pv.allow_new_attributes()
+    'private'
+
+    Setting new `private` attributes on PyVista objects is allowed by default.
+
+    >>> mesh = pv.PolyData()
+    >>> mesh._foo = 42  # OK
+    >>> mesh.foo = 42  # ERROR # doctest: +SKIP
+
+    Do not allow setting new attributes.
+
+    >>> _ = pv.allow_new_attributes(False)
+    >>> mesh._foo = 42  # ERROR # doctest:+SKIP
+    >>> mesh.foo = 42  # ERROR # doctest:+SKIP
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.allow_new_attributes('private')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.allow_new_attributes(True):
+    ...     mesh._foo = 42  # OK
+    ...     mesh.foo = 42  # OK
+
+    >>> pv.allow_new_attributes()
+    'private'
+
+    """
+
+    @property
+    def _state(self) -> _AllowNewAttributesOptions:
+        from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
+
+        return _ALLOW_NEW_ATTRIBUTES_MODE
+
+    @_state.setter
+    def _state(self, state: _AllowNewAttributesOptions) -> None:
+        import pyvista as pv  # noqa: PLC0415
+
+        pv._ALLOW_NEW_ATTRIBUTES_MODE = state
+
+
+allow_new_attributes = _AllowNewAttributes()

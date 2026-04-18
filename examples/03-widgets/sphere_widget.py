@@ -21,8 +21,6 @@ Let's look at a few use cases that all update a surface mesh.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -33,7 +31,6 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # Use a single sphere widget
 
 import numpy as np
-
 import pyvista as pv
 
 # Create a triangle surface
@@ -47,18 +44,18 @@ surf.points = np.array(
 )
 surf.faces = np.array([3, 0, 1, 2])
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
 
 def callback(point):
     surf.points[0] = point
 
 
-p.add_sphere_widget(callback)
-p.add_mesh(surf, color=True)
+pl.add_sphere_widget(callback)
+pl.add_mesh(surf, color=True)
 
-p.show_grid()
-p.show()
+pl.show_grid()
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -73,7 +70,6 @@ p.show()
 # Use several sphere widgets at once
 
 import numpy as np
-
 import pyvista as pv
 
 # Create a triangle surface
@@ -88,18 +84,18 @@ surf.points = np.array(
 surf.faces = np.array([3, 0, 1, 2])
 
 
-p = pv.Plotter()
+pl = pv.Plotter()
 
 
 def callback(point, i):
     surf.points[i] = point
 
 
-p.add_sphere_widget(callback, center=surf.points)
-p.add_mesh(surf, color=True)
+pl.add_sphere_widget(callback, center=surf.points)
+pl.add_mesh(surf, color=True)
 
-p.show_grid()
-p.show()
+pl.show_grid()
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -114,9 +110,8 @@ p.show()
 # a surface and interpolate between them with some boundary conditions
 
 import numpy as np
-from scipy.interpolate import griddata
-
 import pyvista as pv
+from scipy.interpolate import griddata
 
 
 def get_colors(n):
@@ -137,7 +132,9 @@ y = np.linspace(ymin, ymax, num=25)
 xx, yy, zz = np.meshgrid(x, y, [0])
 
 # Make sure boundary conditions exist
-boundaries = np.array([[xmin, ymin, 0], [xmin, ymax, 0], [xmax, ymin, 0], [xmax, ymax, 0]])
+boundaries = np.array(
+    [[xmin, ymin, 0], [xmin, ymax, 0], [xmax, ymin, 0], [xmax, ymax, 0]]
+)
 
 # Create the PyVista mesh to hold this grid
 surf = pv.StructuredGrid(xx, yy, zz)
@@ -161,18 +158,18 @@ colors = get_colors(len(points))
 # %%
 
 # Begin the plotting routine
-p = pv.Plotter()
+pl = pv.Plotter()
 
 # Add the surface to the scene
-p.add_mesh(surf, color=True)
+pl.add_mesh(surf, color=True)
 
 # Add the widgets which will update the surface
-p.add_sphere_widget(update_surface, center=points, color=colors, radius=3)
+pl.add_sphere_widget(update_surface, center=points, color=colors, radius=3)
 # Add axes grid
-p.show_grid()
+pl.show_grid()
 
 # Show it
-p.show()
+pl.show()
 
 # %%
 # And here is a screen capture of a user interacting with this

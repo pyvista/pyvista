@@ -6,31 +6,36 @@ from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
+@pytest.fixture
+def plane2x2():
+    return pv.Plane(i_resolution=2, j_resolution=2)
+
+
 def test_show_bounds_axes_ranges():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
 
     # test empty call
-    plotter.show_bounds()
-    cube_axes_actor = plotter.renderer.cube_axes_actor
-    assert cube_axes_actor.GetBounds() == tuple(plotter.bounds)
+    pl.show_bounds()
+    cube_axes_actor = pl.renderer.cube_axes_actor
+    assert cube_axes_actor.GetBounds() == tuple(pl.bounds)
 
     # send bounds but no axes ranges
     bounds = (0, 1, 0, 1, 0, 1)
-    plotter.show_bounds(bounds=bounds)
-    cube_axes_actor = plotter.renderer.cube_axes_actor
+    pl.show_bounds(bounds=bounds)
+    cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.bounds == bounds
 
     # send bounds and axes ranges
     axes_ranges = [0, 1, 0, 2, 0, 3]
-    plotter.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
-    cube_axes_actor = plotter.renderer.cube_axes_actor
+    pl.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
+    cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.GetBounds() == bounds
     test_ranges = [
         *cube_axes_actor.GetXAxisRange(),
@@ -42,158 +47,167 @@ def test_show_bounds_axes_ranges():
     # make sure that the axes labels match the axes ranges
     labels_ranges = []
     for axis in range(3):
-        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        axis_labels = pl.renderer.cube_axes_actor.GetAxisLabels(axis)
         labels_ranges.append(float(axis_labels.GetValue(0)))
         labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
     assert labels_ranges == axes_ranges
 
 
 def test_show_grid_axes_ranges_with_all_edges():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
 
     axes_ranges = [5, 10, 5, 10, 5, 10]
-    plotter.show_grid(axes_ranges=axes_ranges, all_edges=True)
+    pl.show_grid(axes_ranges=axes_ranges, all_edges=True)
     labels_ranges = []
     for axis in range(3):
-        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        axis_labels = pl.renderer.cube_axes_actor.GetAxisLabels(axis)
         labels_ranges.append(float(axis_labels.GetValue(0)))
         labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
     assert labels_ranges == axes_ranges
 
 
 def test_show_bounds_with_scaling(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    actor0 = plotter.show_bounds()
-    assert actor0.GetUseTextActor3D()
-    plotter.set_scale(0.5, 0.5, 2)
-    actor1 = plotter.show_bounds()
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    actor0 = pl.show_bounds()
+    expected_default = pv.vtk_version_info < (9, 6, 0)
+    assert actor0.GetUseTextActor3D() == expected_default
+    pl.set_scale(0.5, 0.5, 2)
+    actor1 = pl.show_bounds()
     assert not actor1.GetUseTextActor3D()
 
 
 def test_show_bounds_invalid_axes_ranges():
-    plotter = pv.Plotter()
+    pl = pv.Plotter()
 
     # send incorrect axes_ranges types
     axes_ranges = 1
     with pytest.raises(TypeError, match='numeric sequence'):
-        plotter.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 'a', 'b', 2, 3]
     with pytest.raises(TypeError, match='All of the elements'):
-        plotter.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
-    with pytest.raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
-        plotter.show_bounds(axes_ranges=axes_ranges)
+    with pytest.raises(ValueError, match=r'[xmin, xmax, ymin, max, zmin, zmax]'):
+        pl.show_bounds(axes_ranges=axes_ranges)
 
 
 @pytest.mark.skip_plotting
 def test_camera_position():
-    plotter = pv.Plotter()
-    plotter.add_mesh(pv.Sphere())
-    plotter.show()
-    assert isinstance(plotter.camera_position, pv.CameraPosition)
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show()
+    cpos = pl.camera_position
+    assert isinstance(cpos, pv.CameraPosition)
+
+    # Test str format is a list
+    assert eval(str(cpos)) == cpos.to_list()
+
+    # Test repr format is init-able
+    cpos2 = eval('pv.' + repr(cpos))
+    assert cpos2 == cpos
 
 
 @pytest.mark.skip_plotting
 def test_plotter_camera_position():
-    plotter = pv.Plotter()
-    plotter.set_position([1, 1, 1], render=True)
+    pl = pv.Plotter()
+    pl.set_position([1, 1, 1], render=True)
 
 
 def test_renderer_set_viewup():
-    plotter = pv.Plotter()
-    plotter.renderer.set_viewup([1, 1, 1])
+    pl = pv.Plotter()
+    pl.renderer.set_viewup([1, 1, 1])
 
 
 def test_reset_camera():
-    plotter = pv.Plotter()
-    plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_isometric():
-    plotter = pv.Plotter()
-    plotter.view_isometric(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_isometric(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_xy():
-    plotter = pv.Plotter()
-    plotter.view_xy(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_xy(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_yx():
-    plotter = pv.Plotter()
-    plotter.view_yx(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_yx(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_xz():
-    plotter = pv.Plotter()
-    plotter.view_xz(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_xz(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_zx():
-    plotter = pv.Plotter()
-    plotter.view_zx(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_zx(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_yz():
-    plotter = pv.Plotter()
-    plotter.view_yz(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_yz(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_view_zy():
-    plotter = pv.Plotter()
-    plotter.view_zy(bounds=(-1, 1, -1, 1, -1, 1))
+    pl = pv.Plotter()
+    pl.view_zy(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_camera_is_set():
-    plotter = pv.Plotter()
-    assert not plotter.camera_set
-    assert not plotter.renderer.camera_set
+    pl = pv.Plotter()
+    assert not pl.camera_set
+    assert not pl.renderer.camera_set
 
-    renderer = pv.Renderer(plotter)
+    renderer = pv.Renderer(pl)
     assert not renderer.camera_set
 
 
 def test_layer():
-    plotter = pv.Plotter()
-    plotter.renderer.layer = 1
-    assert plotter.renderer.layer == 1
-    plotter.renderer.layer = 0
-    assert plotter.renderer.layer == 0
+    pl = pv.Plotter()
+    pl.renderer.layer = 1
+    assert pl.renderer.layer == 1
+    pl.renderer.layer = 0
+    assert pl.renderer.layer == 0
 
 
 @pytest.mark.parametrize('has_border', [True, False])
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
-    plotter = pv.Plotter(border=has_border, border_color=border_color, border_width=border_width)
-    assert plotter.renderer.has_border is has_border
+    pl = pv.Plotter(border=has_border, border_color=border_color, border_width=border_width)
+    assert pl.renderer.has_border is has_border
 
     if has_border:
-        assert plotter.renderer.border_color == border_color
+        assert pl.renderer.border_color == border_color
     else:
-        assert plotter.renderer.border_color is None
+        assert pl.renderer.border_color is None
 
     if has_border:
-        assert plotter.renderer.border_width == border_width
+        assert pl.renderer.border_width == border_width
     else:
-        assert plotter.renderer.border_width == 0
+        assert pl.renderer.border_width == 0
 
 
 def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
-        plotter.add_legend(labels=legend_labels, loc='bar')
+        pl.add_legend(labels=legend_labels, loc='bar')
     with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=[])
+        pl.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
     with pytest.raises(ValueError, match='size'):
-        plotter.add_legend(labels=legend_labels, size=type)
+        pl.add_legend(labels=legend_labels, size=type)
 
 
 @pytest.mark.parametrize('loc', ACTOR_LOC_MAP)
@@ -236,14 +250,30 @@ def test_add_remove_legend(sphere):
     pl.remove_legend()
 
 
-@pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
-def test_legend_face(sphere, face, verify_image_cache):
+LEGEND_FACES = {
+    '-': '-',
+    '^': '^',
+    'o': 'o',
+    'r': 'r',
+    'none_str': 'none',
+    'None': None,
+    'custom': pv.ParametricKlein(),
+}
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.parametrize('face', LEGEND_FACES.values(), ids=LEGEND_FACES.keys())
+def test_legend_face(face):
     pl = pv.Plotter()
-    pl.add_mesh(sphere, label='sphere')
-    pl.add_legend(face=face, size=(0.5, 0.5))
+    pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), color='r', label='Sphere')
+    pl.add_mesh(pv.Cube(), color='w', label='Cube')
+    # add a large legend to ensure test fails if face is not configured right
+    pl.add_legend(face=face, bcolor='k', size=(0.6, 0.6))
+    pl.show()
 
 
 def test_legend_from_glyph(sphere, verify_image_cache):
+    verify_image_cache.high_variance_test = True
     pl = pv.Plotter()
     x = sphere.face_normals[:, 0] ** 2
     y = sphere.face_normals[:, 1] ** 2
@@ -256,47 +286,50 @@ def test_legend_from_glyph(sphere, verify_image_cache):
     pl.add_mesh(arrows, color='red', label='Magnitude')
     pl.add_mesh(sphere)
     pl.add_legend(size=(0.5, 0.5))
-
-
-def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
-    pl = pv.Plotter()
-
-    random_hills['Normals2'] = -1 * random_hills['Normals'].copy()
-
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
-    pl.add_mesh(arrows, color='black', label='label 1')
-
-    arrows2 = random_hills.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
-    pl.add_mesh(arrows2, color='red', label='label 2')
-
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
-
-    pl.add_legend(size=(0.5, 0.5))
     pl.show()
 
 
-def test_legend_using_add_legend(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_from_multiple_glyph(plane2x2):
     pl = pv.Plotter()
+    plane2x2['Normals2'] = -1 * plane2x2['Normals'].copy()
 
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
+    arrows2 = plane2x2.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
+    pl.add_mesh(arrows2, color='red', label='label 2')
+
+    pl.add_mesh(plane2x2, color='white')
+
+    pl.add_legend(size=(0.5, 0.5), bcolor='gray')
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend(plane2x2):
+    pl = pv.Plotter()
+
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='black', label='label 1')
+
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
     legend_entries.append(['my label 2', 'blue'])
-    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.add_legend(legend_entries, size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
-def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend_with_glyph(plane2x2):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
@@ -305,52 +338,68 @@ def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': 'circle'})
     legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': None})
 
-    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.add_legend(legend_entries, size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
-def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend_only_labels(plane2x2):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = ['label 1', 'label 2']
 
-    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.add_legend(legend_entries, size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
-def test_legend_none_face(verify_image_cache):
-    """Verifies that ``face="none"`` does not add a face for each label in legend."""
+@pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
+def test_legend_using_add_legend_dict(use_dict_labels):
+    sphere_label = 'sphere'
+    sphere_color = 'r'
+    sphere_kwargs = dict(color=sphere_color)
+
+    cube_label = 'cube'
+    cube_color = 'w'
+    cube_kwargs = dict(color=cube_color)
+
+    legend_kwargs = dict(bcolor='k', size=(0.6, 0.6))
+    if use_dict_labels:
+        legend_kwargs['labels'] = {
+            sphere_label: sphere_color,
+            cube_label: cube_color,
+        }
+    else:
+        sphere_kwargs['label'] = sphere_label
+        cube_kwargs['label'] = cube_label
+
     pl = pv.Plotter()
-    pl.add_mesh(
-        pv.Icosphere(center=(3, 0, 0), radius=1),
-        color='r',
-        label='Sphere',
-    )
-    pl.add_mesh(pv.Box(), color='w', label='Box')
-    # add a large legend to ensure test fails if face="none" not configured right
-    pl.add_legend(face='none', bcolor='k', size=(0.6, 0.6))
+    pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), **sphere_kwargs)
+    pl.add_mesh(pv.Cube(), **cube_kwargs)
+    pl.add_legend(**legend_kwargs)
     pl.show()
 
 
-def test_legend_add_entry_warning(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_add_entry_warning():
     pl = pv.Plotter()
     legend_entries = [{'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'non_used_arg': 'asdf'}]
 
     with pytest.warns(UserWarning, match='Some of the arguments given to legend are not used'):
         pl.add_legend(legend_entries, size=(0.5, 0.5))
-        pl.show()
+    pl.show()
 
 
 def test_legend_add_entry_exception():
     pl = pv.Plotter()
     legend_entries = np.array([1, 2])  # Not allowed type
 
-    with pytest.raises(ValueError, match='The object passed to the legend'):
+    with pytest.raises(TypeError, match='The object passed to the legend'):
         pl.add_legend(legend_entries)
     pl.show()
 
@@ -388,7 +437,7 @@ def test_actors_prop_collection_init():
 
 @pytest.fixture
 def prop_collection():
-    vtk_collection = vtk.vtkPropCollection()
+    vtk_collection = _vtk.vtkPropCollection()
     coll = _PropCollection(vtk_collection)
     yield coll
     del vtk_collection
@@ -487,7 +536,7 @@ def test_prop_collection_setitem(prop_collection):
     assert prop_collection.keys() == ['b', 'b', 'a']
 
     # Test setitem index error
-    with pytest.raises(IndexError, match='Index out of range.'):
+    with pytest.raises(IndexError, match=r'Index out of range.'):
         prop_collection[-4] = c
 
     # Test setitem name
@@ -557,7 +606,7 @@ def test_enable_antialising_raises(aa_type):
 def test_add_actor_raises():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match=re.escape('Culling option (foo) not understood.')):
-        pl.renderer.add_actor(vtk.vtkActor(), culling='foo')
+        pl.renderer.add_actor(_vtk.vtkActor(), culling='foo')
 
 
 @pytest.mark.parametrize('grid', [1.0, 1, object()])
@@ -567,7 +616,7 @@ def test_show_bounds_grid_raises(grid):
         pl.renderer.show_bounds(grid=grid)
 
 
-def test_show_bounds_grid_value_raises(grid):
+def test_show_bounds_grid_value_raises():
     pl = pv.Plotter()
     with pytest.raises(
         ValueError, match=re.escape('`grid` must be either "front", "back, or, "all", not foo')
