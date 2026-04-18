@@ -640,11 +640,10 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
 
         .. note::
 
-            The user dict is a convenience property and is intended for metadata storage.
-            It has an inefficient dictionary implementation and should only be used to
-            store a small number of infrequently-accessed keys with relatively small
-            values. It should not be used to store frequently accessed array data
-            with many entries (a regular field data array should be used instead).
+            The user dict is a convenience property intended for metadata storage.
+            Values are JSON-serialized on every mutation, so it is not a substitute
+            for a regular field data array when storing bulk array data with many
+            entries (use a regular field data array for that instead).
 
         .. warning::
 
