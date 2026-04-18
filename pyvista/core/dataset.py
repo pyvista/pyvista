@@ -1014,6 +1014,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.clear_data()
         >>> mesh.point_data['my_array'] = np.random.default_rng().random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
+        >>> mesh.point_data['my_other_array2'] = 2.0
         >>> mesh.point_data
         pyvista DataSetAttributes
         Association     : POINT
@@ -1024,11 +1025,15 @@ class DataSet(DataSetFilters, DataObject):
         Contains arrays :
             my_array                float64    (8,)                 SCALARS
             my_other_array          int64      (8,)
+            my_other_array2         float64    (8,)
 
         Access an array from ``point_data``.
 
         >>> mesh.point_data['my_other_array']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+
+        >>> mesh.point_data['my_other_array2']
+        pyvista_ndarray([2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0])
 
         Or access it directly from the mesh.
 
@@ -1105,6 +1110,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.clear_data()
         >>> mesh.cell_data['my_array'] = np.random.default_rng().random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
+        >>> mesh.cell_data['my_other_array2'] = 2.0
         >>> mesh.cell_data
         pyvista DataSetAttributes
         Association     : CELL
@@ -1115,11 +1121,15 @@ class DataSet(DataSetFilters, DataObject):
         Contains arrays :
             my_array                float64    (6,)                 SCALARS
             my_other_array          int64      (6,)
+            my_other_array2         float64    (6,)
 
         Access an array from ``cell_data``.
 
         >>> mesh.cell_data['my_other_array']
         pyvista_ndarray([0, 1, 2, 3, 4, 5])
+
+        >>> mesh.cell_data['my_other_array2']
+        pyvista_ndarray([2.0, 2.0, 2.0, 2.0, 2.0, 2.0])
 
         Or access it directly from the mesh.
 
