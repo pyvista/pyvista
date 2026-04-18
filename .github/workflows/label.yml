@@ -1,6 +1,10 @@
 name: "Pull Request Labeler"
-on:
-  pull_request:
+on: # zizmor: ignore[dangerous-triggers]
+  # Use pull_request_target (not pull_request) so fork PRs can be labeled:
+  # this trigger runs in the base repo context and has access to secrets.
+  # Safe here because no fork code is ever checked out or executed — do not
+  # add a checkout of github.event.pull_request.head.ref to this workflow.
+  pull_request_target:
     types: [opened, reopened]
 
 permissions:

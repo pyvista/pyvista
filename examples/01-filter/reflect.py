@@ -9,8 +9,6 @@ This example reflects a mesh across a plane using
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

@@ -16,8 +16,6 @@ effects for the motion picture industry.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%
@@ -87,7 +85,12 @@ pl.add_light(
     )
 )
 pl.add_mesh(
-    mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim
+    mesh,
+    scalars=z,
+    cmap='gist_earth',
+    show_scalar_bar=False,
+    smooth_shading=True,
+    clim=clim,
 )
 pl.enable_shadows = True
 pl.show()

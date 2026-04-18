@@ -116,6 +116,9 @@ flycheck*
 # PyCharm
 .idea/
 
+# uv environments
+uv.lock
+
 # virtual environments
 venv/
 .venv/

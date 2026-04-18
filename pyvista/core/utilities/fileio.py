@@ -362,8 +362,11 @@ def read(  # noqa: PLR0911, PLR0917
         if force_ext is not None:
             msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
-        from meshio._exceptions import ReadError  # noqa: PLC0415
-
+        try:
+            from meshio._exceptions import ReadError  # noqa: PLC0415
+        except ImportError:
+            msg = 'This file was not able to be automatically read by pyvista.'
+            raise OSError(msg)
         try:
             return read_meshio(filename)
         except ReadError:

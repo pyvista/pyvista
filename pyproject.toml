@@ -47,7 +47,7 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter,wasm]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
@@ -107,9 +107,10 @@ test = [
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
   'pytest-pyodide<0.30.0',
-  'pytest-pyvista==0.3.2',
+  'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
+  'pyvista-zstd>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -148,6 +149,7 @@ docs = [
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
+  'pyvista-zstd==0.2.2',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.0; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
@@ -174,7 +176,7 @@ docs = [
 ]
 
 docs-test = [
-  'pytest-pyvista[vtksz]==0.3.2',
+  'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'trame-vtk==2.11.6',
   { include-group = 'pinned' },
@@ -267,10 +269,10 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
-  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.', # https://numpy.org/devdocs/release/2.4.0-notes.html - triggered by VTK's C++ code
+  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2\.\d+\.', # https://github.com/pyvista/pyvista/issues/8484 - triggered by pyvista_ndarray.view() and VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
-  'ignore:The \(path: py.path.local\) argument is deprecated.*:pytest.PytestRemovedIn9Warning', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local → pathlib.Path)
+  'ignore:The \(path.*\) argument is deprecated.*:pytest.PytestRemovedIn9Warning', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local → pathlib.Path)
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
@@ -456,6 +458,7 @@ ignore = [
   'F403', # 'from module import *' used; unable to detect undefined names
   'ISC001', # May cause conflicts when used with the formatter
   'N806',
+  'N817', # CamelCase imported as acronym (e.g. ElementTree as ET)
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
@@ -475,6 +478,9 @@ unfixable = ['F401', 'PLC0415']
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
+[tool.ruff.lint.flake8-import-conventions.aliases]
+pyvista = "pv"
+
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "vtk".msg = "Use targeted vtkmodules imports (e.g., from vtkmodules.vtkCommonDataModel import ...) to avoid pulling in the entire VTK package."
 
@@ -492,7 +498,7 @@ allow-dict-calls-with-keyword-arguments = true
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
@@ -582,7 +588,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/text.py' = ['ANN']
 'pyvista/plotting/texture.py' = ['ANN']
-'pyvista/plotting/themes.py' = ['ANN']
+'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
 'pyvista/plotting/tools.py' = ['ANN']
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']

@@ -20,35 +20,30 @@ permissions:
   id-token: none
 
 jobs:
-  changes:
+  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # via workflow_run) can associate the build with its PR — workflow_run events
+  # do not include pull_request data for fork PRs.
+  pr-info:
+    name: Save PR info
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      docs: ${{ steps.filter.outputs.docs == 'true' || steps.self.outputs.changed == 'true' }}
+    if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v6
-        if: github.event_name == 'pull_request'
+      - name: Save PR metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          mkdir -p pr-info
+          printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
+          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
+          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
+      - uses: actions/upload-artifact@v7
         with:
-          persist-credentials: false
-          sparse-checkout: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: filter
-        with:
-          predicate-quantifier: "every"
-          filters: .github/path-filters.yml
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        if: github.event_name == 'pull_request'
-        id: self
-        with:
-          filters: |
-            changed:
-              - ".github/workflows/docs.yml"
+          name: pr-info
+          path: pr-info/
 
   cache-vtk-data:
-    needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
     name: Cache vtk-data
     uses: ./.github/workflows/cache-vtk-data.yml
     with:
@@ -58,8 +53,7 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-24.04-self-hosted-gpu
-    needs: [cache-vtk-data, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true'
+    needs: cache-vtk-data
     env:
       PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
@@ -175,8 +169,8 @@ jobs:
   test:
     name: Test Documentation
     runs-on: ubuntu-22.04
-    needs: [doc, changes]
-    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true') }}
+    needs: doc
+    if: ${{ !cancelled() }}
     env:
       TOX_COLORED: "yes"
     steps:
@@ -215,155 +209,9 @@ jobs:
           name: doc-generated-test-images
           path: _doc_generated_test_images
 
-  image-report:
-    name: Doc Image Report
-    runs-on: ubuntu-22.04
-    needs: [test, changes]
-    if: always() && github.event_name == 'pull_request' && needs.changes.outputs.docs == 'true'
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      - name: Download doc failed image artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: doc-failed-test-images
-          path: all_doc_failed_images
-
-      - name: Generate HTML report
-        id: report
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          BRANCH: ${{ github.head_ref }}
-        run: |
-          tox run -e image-report -- all_doc_failed_images _doc_image_report
-          if [ -f _doc_image_report/index.html ]; then
-            echo "has_report=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_report=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Deploy to Netlify
-        if: steps.report.outputs.has_report == 'true'
-        id: netlify
-        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
-        with:
-          publish-dir: _doc_image_report
-          production-deploy: false
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          deploy-message: "Doc image report for PR #${{ github.event.pull_request.number }}"
-          enable-pull-request-comment: false
-          enable-commit-comment: false
-          enable-commit-status: false
-          github-deployment-environment: doc-image-report
-          github-deployment-description: "Doc image comparison report"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOC_IMAGE_REPORT_SITE_ID }}
-        timeout-minutes: 5
-
-      - name: Create commit status with report link
-        if: steps.report.outputs.has_report == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
-        run: |
-          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
-            -f state=success \
-            -f context="Deploy / Doc Image Report" \
-            -f description="Doc image comparison report is ready" \
-            -f target_url="$DEPLOY_URL"
-
-      - name: Add report link to job summary
-        if: steps.report.outputs.has_report == 'true'
-        env:
-          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
-        run: |
-          echo "### Doc Image Report" >> $GITHUB_STEP_SUMMARY
-          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
-
-  preview:
-    name: Preview Development Documentation
-    runs-on: ubuntu-22.04
-    needs: [doc, changes]
-    if: (github.ref == 'refs/heads/main' || github.event_name == 'pull_request') && (github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true')
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          name: docs-build
-          path: .
-
-      - name: Preview HTML documentation
-        id: netlify
-        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
-        with:
-          publish-dir: .
-          production-deploy: ${{ github.ref == 'refs/heads/main' }}
-          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: false
-          enable-commit-comment: false
-          enable-commit-status: false
-          github-deployment-environment: docs-preview
-          github-deployment-description: "Documentation preview"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }} # DEV site
-        timeout-minutes: 10
-
-      - name: Create commit status with preview link
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.PYVISTA_BOT_TOKEN }}
-          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
-        run: |
-          gh api repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }} \
-            -f state=success \
-            -f context="Deploy / Docs Preview" \
-            -f description="Documentation preview is ready" \
-            -f target_url="$DEPLOY_URL"
-
-      - name: Add preview link to job summary
-        if: github.event_name == 'pull_request'
-        env:
-          DEPLOY_URL: ${{ steps.netlify.outputs.deploy-url }}
-        run: |
-          echo "### Documentation Preview" >> $GITHUB_STEP_SUMMARY
-          echo "$DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
-
-  deploy:
-    name: Publish Release Documentation
-    runs-on: ubuntu-22.04
-    needs: doc
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          name: docs-build
-          path: .
-
-      - name: Deploy Release Documentation
-        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
-        with:
-          publish-dir: .
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: false
-          enable-commit-comment: false
-          overwrites-pull-request-comment: false
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STABLE_SITE_ID }} # STABLE site
-        timeout-minutes: 10
+  # Netlify deploys (preview, image report, release) live in docs-deploy.yml,
+  # triggered via workflow_run. Keeping them out of this workflow means fork PR
+  # CI is never blocked waiting on a deployment approval.
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder

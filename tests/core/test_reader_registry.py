@@ -21,9 +21,8 @@ from pyvista.core.utilities import reader_registry as _reg_mod
 
 @pytest.fixture(autouse=True)
 def _clean_custom_readers():
-    """Remove any custom readers registered during tests."""
+    """Restore the reader registry and clean temp files around every test."""
     state = _reg_mod._save_registry_state()
-    orig_loaded = _reg_mod._entry_points_loaded
     orig_temp_files = list(_reg_mod._temp_files)
     yield
     _reg_mod._temp_files[:] = [
@@ -32,7 +31,6 @@ def _clean_custom_readers():
     _reg_mod._cleanup_temp_files()
     _reg_mod._temp_files.extend(orig_temp_files)
     _reg_mod._restore_registry_state(state)
-    _reg_mod._entry_points_loaded = orig_loaded
 
 
 def _mock_reader(_path, **__):
@@ -168,7 +166,7 @@ def test_entry_point_does_not_override_explicit():
         assert handler is _mock_reader  # original registration wins
 
 
-def test_entry_point_load_failure_is_ignored():
+def test_entry_point_load_failure_warns_and_returns_none():
     _reg_mod._entry_points_loaded = False
 
     broken = MagicMock()
@@ -176,8 +174,17 @@ def test_entry_point_load_failure_is_ignored():
     broken.value = 'package:broken'
     broken.load.side_effect = RuntimeError('broken plugin')
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]):
+    with (
+        patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]),
+        patch('pyvista.core.utilities.reader_registry.warn_external') as warn,
+    ):
         assert _reg_mod._get_ext_handler('.broken') is None
+
+    warn.assert_called_once()
+    message = warn.call_args.args[0]
+    assert 'Failed to load pyvista.readers entry point' in message
+    assert 'package:broken' in message
+    assert 'broken plugin' in message
 
 
 def test_read_with_custom_extension(tmp_path):

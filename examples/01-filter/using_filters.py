@@ -8,8 +8,6 @@ Using common filters like thresholding and clipping.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -96,13 +94,14 @@ pl.show()
 # filtering pipeline through a chain; attaching each filter to the last filter.
 # In the following example, several filters are chained together:
 #
-# 1. First, and empty ``threshold`` filter to clean out any ``NaN`` values.
+# 1. First, use :func:`~pyvista.DataSetFilters.remove_nan_cells` to drop any
+#    cells whose scalar values are ``NaN``.
 # 2. Use an ``elevation`` filter to generate scalar values corresponding to height.
 # 3. Use the ``clip`` filter to cut the dataset in half.
 # 4. Create three slices along each axial plane using the ``slice_orthogonal`` filter.
 
 # Apply a filtering chain
-result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
+result = dataset.remove_nan_cells().elevation().clip(normal='z').slice_orthogonal()
 
 # %%
 # And to view this filtered data, simply call the ``plot`` method
