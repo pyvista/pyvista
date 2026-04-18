@@ -2547,21 +2547,28 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             vtk_offset = self.GetCellLocationsArray()
             lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
-        # fixing bug with display of quad cells
+        # fixing bug with display of quad cells.
+        # Cache the cell_connectivity array once as each access wraps the
+        # underlying vtkCellArray's connectivity buffer with vtk_to_numpy,
+        # so reading it 4-7 times in the loop redundantly allocates wrappers.
+        if np.any(quad_quad_mask) or np.any(quad_tri_mask):
+            cell_offsets = lgrid.offset
+            cell_conn = lgrid.cell_connectivity
+
         if np.any(quad_quad_mask):
-            quad_offset = lgrid.offset[:-1][quad_quad_mask]
-            base_point = lgrid.cell_connectivity[quad_offset]
-            lgrid.cell_connectivity[quad_offset + 4] = base_point
-            lgrid.cell_connectivity[quad_offset + 5] = base_point
-            lgrid.cell_connectivity[quad_offset + 6] = base_point
-            lgrid.cell_connectivity[quad_offset + 7] = base_point
+            quad_offset = cell_offsets[:-1][quad_quad_mask]
+            base_point = cell_conn[quad_offset]
+            cell_conn[quad_offset + 4] = base_point
+            cell_conn[quad_offset + 5] = base_point
+            cell_conn[quad_offset + 6] = base_point
+            cell_conn[quad_offset + 7] = base_point
 
         if np.any(quad_tri_mask):
-            tri_offset = lgrid.offset[:-1][quad_tri_mask]
-            base_point = lgrid.cell_connectivity[tri_offset]
-            lgrid.cell_connectivity[tri_offset + 3] = base_point
-            lgrid.cell_connectivity[tri_offset + 4] = base_point
-            lgrid.cell_connectivity[tri_offset + 5] = base_point
+            tri_offset = cell_offsets[:-1][quad_tri_mask]
+            base_point = cell_conn[tri_offset]
+            cell_conn[tri_offset + 3] = base_point
+            cell_conn[tri_offset + 4] = base_point
+            cell_conn[tri_offset + 5] = base_point
 
         return lgrid
 

@@ -354,6 +354,30 @@ def test_contains_should_contain_when_added(insert_arange_narray):
     assert 'sample_array' in dsa
 
 
+def test_contains_empty_string_preserves_keys_rename_side_effect(hexbeam):
+    """Empty-name lookup must still trigger ``keys()``'s legacy rename so
+    anonymous arrays injected by codepaths like ``set_custom_opacity`` get
+    a unique ``Unnamed_<i>`` name. Regression for the GIF-writer fallout
+    discovered while implementing the HasArray fast path.
+    """
+    pd = hexbeam.point_data
+    # Inject an anonymous array directly via VTK so it has an empty name.
+    arr = pv.core._vtk_core.vtkFloatArray()
+    arr.SetNumberOfValues(hexbeam.n_points)
+    pd.VTKObject.AddArray(arr)
+    # Name is empty before the lookup.
+    assert pd.VTKObject.GetAbstractArray(pd.VTKObject.GetNumberOfArrays() - 1).GetName() in (
+        None,
+        '',
+    )
+    # The ``''`` lookup must run keys() and rename the anonymous array.
+    assert '' not in pd
+    last = pd.VTKObject.GetAbstractArray(pd.VTKObject.GetNumberOfArrays() - 1)
+    name = last.GetName()
+    assert name
+    assert name.startswith('Unnamed_')
+
+
 def test_set_array_catch(hexbeam):
     data = np.zeros(hexbeam.n_points)
     with pytest.raises(TypeError, match='`name` must be a string'):
