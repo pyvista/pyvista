@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.14"
+          python-version: 3.14
           cache: "pip"
 
       - name: Set environment for self-hosted
@@ -180,7 +180,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.14"
+          python-version: 3.14
           cache: "pip"
 
       - name: Install tox-uv
@@ -224,7 +224,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.14"
+          python-version: 3.14
       - name: Install Dependencies
         run: |
           pip install cookiecutter
