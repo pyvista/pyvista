@@ -753,6 +753,73 @@ class PolyDataFilters(DataSetFilters):
         curv = _get_output(curvefilter)
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
+    def adjusted_edge_curvature(self, curv_type='mean', progress_bar=False):
+        """Return the pointwise adjusted edge curvature of a mesh.
+
+        Parameters
+        ----------
+        curv_type : str, default: "mean"
+            Curvature type.  One of the following:
+
+            * ``"mean"``
+            * ``"gaussian"``
+            * ``"maximum"``
+            * ``"minimum"``
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of curvature values.
+
+        Notes
+        -----
+        This method adjusts curvatures along the edges of the surface by replacing
+        the value with the average value of the curvatures of points in the neighborhood.
+        Remember to update the vtkCurvatures object before calling this.
+
+        This method is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
+        """
+        curvatures = self.curvature(curv_type=curv_type, progress_bar=progress_bar)
+
+        #  Get the boundary point IDs.
+        array_name = 'ids'
+        self[array_name] = range(self.n_points)
+
+        edges = self.extract_feature_edges(
+            boundary_edges=True, manifold_edges=False, non_manifold_edges=False, feature_edges=False
+        )
+
+        boundary_ids = edges[array_name]
+
+        # Iterate over the edge points and compute the curvature as the weighted average of the neighbours.
+        for p_id in boundary_ids:
+            # Compute lengths and extract curvature values.
+            curvs = np.array(
+                [
+                    curvatures[p_id_n]
+                    for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
+                ]
+            )
+            ditances = np.array(
+                [
+                    np.linalg.norm(self.points[p_id_n] - self.points[p_id])
+                    for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
+                ]
+            )
+            curvs = curvs[ditances > 0]
+            ditances = ditances[ditances > 0]
+            if len(curvs) > 0:
+                weights = 1.0 / np.array(ditances)
+                weights /= weights.sum()
+                curvatures[p_id] = np.dot(curvs, weights)
+            else:
+                # Assuming the curvature of the point is planar.
+                curvatures[p_id] = 0.0
+        return curvatures
+
     def plot_curvature(self, curv_type='mean', **kwargs):
         """Plot the curvature.
 
