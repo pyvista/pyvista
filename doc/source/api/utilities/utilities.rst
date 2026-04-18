@@ -70,13 +70,19 @@ Mesh Creation
 .. autosummary::
    :toctree: _autosummary
 
-   CellType
    fit_line_to_points
    fit_plane_to_points
    lines_from_points
    vector_poly_data
    vtk_points
 
+Enums
+~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   CellType
+   CellStatus
 
 Array Access
 ~~~~~~~~~~~~

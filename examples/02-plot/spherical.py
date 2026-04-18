@@ -8,10 +8,7 @@ Generate and visualize meshes from data in longitude-latitude coordinates
 using :func:`~pyvista.grid_from_sph_coords`.
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 
@@ -115,7 +112,9 @@ vectors = np.stack(
             phi=y_polar,
             r=wind_level,
             u=u_vec.transpose(inv_axes),
-            v=-v_vec.transpose(inv_axes),  # Minus sign since y-vector in polar coords is required
+            v=-v_vec.transpose(
+                inv_axes
+            ),  # Minus sign since y-vector in polar coords is required
             w=w_vec.transpose(inv_axes),
         )
     ],
@@ -146,7 +145,8 @@ nlev = 10
 
 # Dummy 3D scalar data
 scalar_3d = (
-    scalar.repeat(nlev).reshape((*scalar.shape, nlev)) * np.arange(nlev)[np.newaxis, np.newaxis, :]
+    scalar.repeat(nlev).reshape((*scalar.shape, nlev))
+    * np.arange(nlev)[np.newaxis, np.newaxis, :]
 ).transpose(2, 0, 1)
 
 

@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+from html import escape
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -20,7 +21,12 @@ from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.formatting_html import _copy_btn
+from pyvista.core.formatting_html import _load_css
+from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -133,6 +139,7 @@ def make_legend_face(face) -> PolyData:
 
     def normalize(poly):
         norm_poly = poly.copy()  # Avoid mutating input
+        norm_poly.clear_data()
 
         # Center data
         norm_poly.points -= np.array(norm_poly.center)
@@ -268,6 +275,39 @@ class CameraPosition(_NoNewAttrMixin):
             f'               viewup={self._viewup})'
         )
 
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+
+        def _fmt_vec(vec: tuple[float, ...]) -> str:
+            return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
+
+        pos = _fmt_vec(self._position)
+        foc = _fmt_vec(self._focal_point)
+        vup = _fmt_vec(self._viewup)
+
+        css = _load_css()
+        copy_all = _copy_btn(repr(self.to_list()))
+        meta = _metadata_html(
+            [
+                ('position', [('', pos)], pos),
+                ('focal_point', [('', foc)], foc),
+                ('viewup', [('', vup)], vup),
+            ]
+        )
+        text_fallback = escape(repr(self))
+
+        return (
+            f'<div><style>{css}</style>'
+            f"<pre class='pv-text-repr-fallback'>{text_fallback}</pre>"
+            "<div class='pv-wrap' style='display:none'>"
+            "<div class='pv-header'>"
+            "<div class='pv-header-text'>"
+            f"<div class='pv-obj-type'>CameraPosition{copy_all}</div>"
+            '</div></div>'
+            f'{meta}'
+            '</div></div>'
+        )
+
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
@@ -308,9 +348,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = value
 
 
-class Renderer(
-    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer
-):
+class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -1253,7 +1291,7 @@ class Renderer(
         zlabel='Z',
         labels_off=False,  # noqa: FBT002
         box=None,
-        box_args=None,
+        box_args=None,  # noqa: ARG002
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1296,12 +1334,17 @@ class Renderer(
             See :func:`pyvista.create_axes_orientation_box` for details.
 
             .. deprecated:: 0.43.0
-                The is deprecated. Use `add_box_axes` method instead.
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
             :func:`pyvista.create_axes_orientation_box`.
+
+            .. deprecated:: 0.43.0
+                This parameter is deprecated. Use the ``add_box_axes`` method
+                instead.
 
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
@@ -1364,40 +1407,23 @@ class Renderer(
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
-        if box is None:
-            box = self._theme.axes.box
+
         if box:
-            warn_external(
-                '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-                PyVistaDeprecationWarning,
-            )
-            if box_args is None:
-                box_args = {}
-            self.axes_actor = create_axes_orientation_box(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **box_args,
-            )
-        else:
-            self.axes_actor = create_axes_marker(
-                label_color=color,
-                line_width=line_width,
-                x_color=x_color,
-                y_color=y_color,
-                z_color=z_color,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                zlabel=zlabel,
-                labels_off=labels_off,
-                **kwargs,
-            )
+            msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+            raise DeprecationError(msg)
+
+        self.axes_actor = create_axes_marker(
+            label_color=color,
+            line_width=line_width,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            labels_off=labels_off,
+            **kwargs,
+        )
         axes_widget = self.add_orientation_widget(
             self.axes_actor,
             interactive=interactive,
@@ -1416,6 +1442,9 @@ class Renderer(
         edge_color=None,
         lighting=False,  # noqa: FBT002
         viewport=(0, 0, 0.1, 0.1),
+        *,
+        top_color=None,
+        bottom_color=None,
     ):
         """Add a geographic north arrow to the scene.
 
@@ -1430,7 +1459,8 @@ class Renderer(
             <pyvista.plotting.themes.Theme.interactive>`.
 
         color : ColorLike, optional
-            Color of the north arrow.
+            Color of the north arrow. When ``top_color`` or ``bottom_color``
+            is set, this color is applied to the side faces only.
 
         opacity : float, optional
             Opacity of the north arrow.
@@ -1447,6 +1477,21 @@ class Renderer(
         viewport : sequence[float], default: (0, 0, 0.1, 0.1)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
+        top_color : ColorLike, optional
+            Color applied to the top face of the arrow. When set (together
+            with or independently from ``bottom_color``), per-face RGB
+            scalars are used so the top face can be distinguished from the
+            bottom at a glance. Defaults to ``color`` when only
+            ``bottom_color`` is set.
+
+            .. versionadded:: 0.48.0
+
+        bottom_color : ColorLike, optional
+            Color applied to the bottom face of the arrow. See ``top_color``
+            for details.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkOrientationMarkerWidget`
@@ -1460,15 +1505,15 @@ class Renderer(
         add_box_axes
             Add an axes box as an orientation widget.
 
-        add_north_arrow_widget
-            Add north arrow as an orientation widget.
+        add_orientation_widget
+            Add a custom mesh as an orientation widget.
 
         :ref:`axes_objects_example`
             Example showing different axes objects.
 
         Examples
         --------
-        Use an north arrow as the orientation widget.
+        Use a north arrow as the orientation widget.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1479,6 +1524,19 @@ class Renderer(
         >>> pl.enable_terrain_style(mouse_wheel_zooms=True)
         >>> pl.show()
 
+        Distinguish the top and bottom of the arrow by coloring the top
+        face a lighter shade and the bottom face a darker shade of the
+        side color.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> widget = pl.add_north_arrow_widget(
+        ...     color='royalblue',
+        ...     top_color='lightsteelblue',
+        ...     bottom_color='midnightblue',
+        ... )
+        >>> pl.show()
+
         """
         marker = create_north_arrow()
         mapper = pv.DataSetMapper(marker)
@@ -1487,9 +1545,23 @@ class Renderer(
         if edge_color is not None:
             actor.prop.edge_color = edge_color
         actor.prop.line_width = line_width
-        actor.prop.color = color
         actor.prop.opacity = opacity
         actor.prop.lighting = lighting
+        if top_color is None and bottom_color is None:
+            actor.prop.color = color
+        else:
+            # Face order in create_north_arrow: 4 sides, bottom (z=0), top (z=1).
+            top = top_color if top_color is not None else color
+            bottom = bottom_color if bottom_color is not None else color
+            face_colors = [color, color, color, color, bottom, top]
+            marker.cell_data['_face_index'] = np.arange(marker.n_cells, dtype=np.uint8)
+            marker.color_labels(
+                face_colors,
+                scalars='_face_index',
+                coloring_mode='index',
+                inplace=True,
+            )
+            mapper.color_mode = 'direct'
         return self.add_orientation_widget(
             actor,
             interactive=interactive,

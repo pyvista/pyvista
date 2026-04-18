@@ -8,8 +8,6 @@ Demonstrate the usage of lights and shadows in PyVista with :class:`~pyvista.Lig
 objects and the :meth:`~pyvista.Plotter.enable_shadows` plotting method.
 """
 
-from __future__ import annotations
-
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2

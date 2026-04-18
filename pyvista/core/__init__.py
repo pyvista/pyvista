@@ -34,6 +34,7 @@ from .filters import DataSetFilters as DataSetFilters
 from .filters import ImageDataFilters as ImageDataFilters
 from .filters import PolyDataFilters as PolyDataFilters
 from .filters import UnstructuredGridFilters as UnstructuredGridFilters
+from .filters.data_object import CellStatus as CellStatus
 from .grid import Grid as Grid
 from .grid import ImageData as ImageData
 from .grid import RectilinearGrid as RectilinearGrid

@@ -12,6 +12,8 @@ import numpy as np
 import numpy.typing as npt
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
 from . import _vtk_core as _vtk
 from .pyvista_ndarray import pyvista_ndarray
@@ -53,9 +55,7 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
-class DataSetAttributes(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKObjectWrapperCheckSnakeCase
-):
+class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCheckSnakeCase):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
     This class provides the ability to pick one of the present arrays as the
@@ -285,7 +285,20 @@ class DataSetAttributes(
         self.remove(key)
 
     def __contains__(self: Self, name: str) -> bool:
-        """Implement the ``in`` operator."""
+        """Implement the ``in`` operator.
+
+        Uses VTK's native ``HasArray`` for an O(1) lookup, avoiding the
+        cost of materialising every array name into a Python list. Falls
+        back to ``self.keys()`` for the empty-name lookup so that
+        ``keys()``'s legacy auto-rename side-effect (renaming any
+        unnamed arrays to ``Unnamed_<i>``) still fires; some plotter
+        codepaths (notably ``set_custom_opacity`` for array-valued
+        ``opacity=`` arguments) inject anonymous arrays and rely on that
+        side-effect to give them a unique, lookup-able name before
+        downstream code activates them.
+        """
+        if name:
+            return bool(self.VTKObject.HasArray(name))
         return name in self.keys()
 
     def __iter__(self: Self) -> Iterator[str]:

@@ -14,12 +14,6 @@ provides. See :func:`~pyvista.Plotter.enable_depth_peeling`.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
-# sphinx_gallery_start_ignore
-PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
-# sphinx_gallery_end_ignore
-
 import pyvista as pv
 from pyvista import examples
 
@@ -96,7 +90,9 @@ pl.add_mesh(contours.copy(), opacity=0.5, cmap=cmap)
 
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(418.3, 659.0, 53.8), focal_point=(90.2, 111.5, 90.0), viewup=(0.03, 0.05, 1.0)
+    position=(418.3, 659.0, 53.8),
+    focal_point=(90.2, 111.5, 90.0),
+    viewup=(0.03, 0.05, 1.0),
 )
 pl.show()
 # %%

@@ -23,6 +23,7 @@ from typing import get_args
 import numpy as np
 from PIL import Image
 import pytest
+from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import demos
@@ -37,11 +38,14 @@ from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
+from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
+from tests.plotting.conftest import AlgorithmExecutionTracker
+from tests.plotting.conftest import get_actor_mapper_input
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -583,6 +587,98 @@ def test_lighting_subplots(sphere):
     assert renderers[0].lights
     assert not renderers[1].lights
 
+    pl.show()
+
+
+def test_shared_mesh_different_scalars_subplots():
+    """Test that the same mesh can be plotted in subplots with different scalars.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
+    mesh = pv.Sphere()
+    mesh['data_a'] = mesh.points[:, 0]
+    mesh['data_b'] = mesh.points[:, 2]
+    mesh.set_active_scalars('data_a')
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    actor_a = pl.add_mesh(mesh, scalars='data_a')
+    pl.subplot(0, 1)
+    actor_b = pl.add_mesh(mesh, scalars='data_b')
+    pl.show()
+
+    # Verify the original mesh's active scalars were NOT modified
+    assert mesh.active_scalars_name == 'data_a'
+
+    # Each mapper should target a different array
+    assert actor_a.mapper.array_name == 'data_a'
+    assert actor_b.mapper.array_name == 'data_b'
+
+
+def test_shared_mesh_different_cell_scalars_subplots():
+    """Test shared mesh with different cell scalars in subplots."""
+    mesh = pv.Cube()
+    mesh.cell_data['cell_a'] = range(mesh.n_cells)
+    mesh.cell_data['cell_b'] = range(mesh.n_cells, 0, -1)
+    mesh.set_active_scalars('cell_a', preference='cell')
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    pl.add_mesh(mesh, scalars='cell_a')
+    pl.subplot(0, 1)
+    pl.add_mesh(mesh, scalars='cell_b')
+    pl.show()
+
+    assert mesh.cell_data.active_scalars_name == 'cell_a'
+
+
+def test_shared_mesh_subplots_with_clim():
+    """Verify clim is respected per-subplot when sharing a mesh.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/542
+    """
+    grid = pv.Wavelet()
+    grid['RTData**2'] = grid['RTData'] ** 2
+
+    pl = pv.Plotter(shape=(1, 2))
+    pl.subplot(0, 0)
+    actor_a = pl.add_mesh(grid, scalars='RTData', clim=[0, 100])
+    pl.subplot(0, 1)
+    actor_b = pl.add_mesh(grid, scalars='RTData**2', clim=[0, 50000])
+    pl.show()
+
+    # Each mapper must target the correct array
+    assert actor_a.mapper.array_name == 'RTData'
+    assert actor_b.mapper.array_name == 'RTData**2'
+
+    # Each mapper must honour its own clim independently
+    assert actor_a.mapper.scalar_range == (0, 100)
+    assert actor_b.mapper.scalar_range == (0, 50000)
+
+
+def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots():
+    """Shared meshes render distinct raw NumPy scalar fields per subplot."""
+    n_row, n_col = 2, 2
+    pl = pv.Plotter(shape=(n_row, n_col))
+    mesh = pv.Sphere(radius=1.0, theta_resolution=80, phi_resolution=80)
+
+    for ii in range(n_row * n_col):
+        row, col = divmod(ii, n_col)
+        pl.subplot(row, col)
+        data = np.linalg.norm(mesh.points, axis=1) if ii == 3 else mesh.points[:, ii]
+        pl.add_mesh(
+            mesh,
+            scalars=data,
+            smooth_shading=True,
+            show_scalar_bar=False,
+            ambient=0.2,
+            specular=0.3,
+            n_colors=9,
+            rng=(-1, 1.0),
+        )
+
+    pl.link_views()
+    pl.camera_position = 'iso'
     pl.show()
 
 
@@ -1278,7 +1374,8 @@ def test_axes():
     pl.show()
 
 
-def test_box_axes(verify_image_cache):
+@pytest.mark.skip_check_gc
+def test_box_axes_deprecated(verify_image_cache):
     """Test deprecated function and make sure we remove it by v0.48."""
     verify_image_cache.skip = True
 
@@ -1286,40 +1383,14 @@ def test_box_axes(verify_image_cache):
 
     def _test_add_axes_box():
         pl.add_axes(box=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Calling this should raise an error'
-            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
             raise RuntimeError(msg)
 
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
+    match_str = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
+    with pytest.raises(DeprecationError, match=re.escape(match_str)):
         _test_add_axes_box()
     pl.close()
-
-
-def test_box_axes_color_box():
-    pl = pv.Plotter()
-
-    def _test_add_axes_color_box():
-        pl.add_axes(box=True, box_args={'color_box': True})
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Convert error this function'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this function'
-            raise RuntimeError(msg)
-
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
-    ):
-        _test_add_axes_color_box()
-    pl.add_mesh(pv.Sphere())
-    pl.show()
 
 
 def test_add_box_axes():
@@ -1334,6 +1405,20 @@ def test_add_north_arrow():
     pl = pv.Plotter()
     pl.add_north_arrow_widget(viewport=(0, 0, 0.5, 0.5))
     pl.add_mesh(pv.Arrow(direction=(0, 1, 0)))
+    pl.show()
+
+
+@pytest.mark.parametrize('negative', [True, False])
+def test_add_north_arrow_top_bottom_colors(negative):
+    pl = pv.Plotter()
+    pl.add_north_arrow_widget(
+        viewport=(0, 0, 0.5, 0.5),
+        color='royalblue',
+        top_color='lightsteelblue',
+        bottom_color='midnightblue',
+    )
+    pl.add_mesh(pv.Arrow(direction=(0, 1, 0)))
+    pl.view_xy(negative=negative)
     pl.show()
 
 
@@ -2047,7 +2132,6 @@ def test_volume_rendering_from_plotter(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkWeakReference not gc'd on Python 3.14 vtk dev wheels")
 def test_volume_rendering_rectilinear(uniform):
     grid = uniform.cast_to_rectilinear_grid()
 
@@ -2384,7 +2468,9 @@ def test_user_matrix_mesh(sphere):
         pl.add_mesh(sphere, user_matrix='invalid')
 
 
-def test_user_matrix_silhouette(airplane):
+def test_user_matrix_silhouette(airplane, verify_image_cache):
+    verify_image_cache.warning_value = 400
+
     matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
     pl = pv.Plotter()
     pl.add_mesh(
@@ -2864,6 +2950,7 @@ def test_chart_plot():
     pl.show()
 
 
+@pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3157,6 +3244,7 @@ def test_add_text():
     pl.show()
 
 
+@pytest.mark.skip_mac('DejaVu Sans font missing on macOS CI runners')
 @pytest.mark.needs_vtk_version(9, 4, 0)
 def test_add_text_latex():
     """Test LaTeX symbols."""
@@ -3515,22 +3603,34 @@ def test_tight_square(noise_2d):
     )
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 def test_plot_cell():
     grid = examples.cells.Tetrahedron()
     examples.plot_cell(grid)
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize(
-    ('line_width', 'point_size', 'font_size', 'normals_scale'),
-    [(5, 30, 20, 0.1), (10, 80, 50, 0.25)],
+    ('line_width', 'point_size', 'font_size', 'normals_scale', 'cls'),
+    [
+        (5, 30, 20, 0.1, pv.PolyData),
+        (10, 80, 50, 0.25, pv.MultiBlock),
+    ],
 )
-def test_plot_cell_kwargs(line_width, point_size, font_size, normals_scale, verify_image_cache):
+def test_plot_cell_kwargs(
+    line_width, point_size, font_size, normals_scale, verify_image_cache, cls
+):
     # Skip since variance is too high across operating systems
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
 
     grid = examples.cells.Polyhedron()
+    if cls is pv.MultiBlock:
+        grid = grid.cast_to_multiblock()
+    elif cls is pv.PolyData:
+        grid = grid.extract_surface(algorithm='geometry')
+
     examples.plot_cell(
         grid,
         show_normals=True,
@@ -3541,6 +3641,7 @@ def test_plot_cell_kwargs(line_width, point_size, font_size, normals_scale, veri
     )
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @skip_windows_mesa  # due to opacity
 @pytest.mark.parametrize('wrong_orientation', [True, False])
 def test_plot_cell_polyhedron(wrong_orientation):
@@ -3556,6 +3657,7 @@ def test_plot_cell_polyhedron(wrong_orientation):
     examples.plot_cell(polyhedron, show_normals=True)
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.needs_vtk_version(9, 5, 0, reason='Merge order differs with older vtk')
 def test_plot_cell_multiple_cell_types(verify_image_cache):
     verify_image_cache.high_variance_test = True
@@ -3722,7 +3824,9 @@ def test_plot_nan_color(uniform):
 
 
 @skip_lesser_9_4_X_depth_peeling
-def test_plot_above_below_color(uniform):
+def test_plot_above_below_color(uniform, verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     mean = uniform.active_scalars.mean()
     clim = (mean - mean / 2, mean + mean / 2)
 
@@ -3751,7 +3855,7 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14 vtk dev wheels")
+@pytest.mark.skip_check_gc("vtkTypeUInt8Array not gc'd on Python 3.14")
 def test_plotter_volume_lookup_table(uniform):
     uniform.set_active_scalars('Spatial Point Data')
 
@@ -4026,6 +4130,7 @@ def test_add_point_scalar_labels_fmt(verify_image_cache):
     pl.show()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_plot_individual_cell(hexbeam):
     hexbeam.get_cell(0).plot(color='b')
 
@@ -4131,6 +4236,378 @@ def test_add_ids_algorithm():
     result = pv.wrap(alg.GetOutputDataObject(0))
     assert 'point_ids' in result.point_data
     assert 'cell_ids' in result.cell_data
+
+
+def _assert_mapper_pipeline_not_executed(
+    mapper: pv.DataSetMapper,
+    tracker: AlgorithmExecutionTracker | None = None,
+    *,
+    scalar_map_mode: str | None = None,
+    scalar_range: tuple[float, float] | None = None,
+) -> None:
+    if tracker is not None:
+        assert tracker.executed is False
+    if scalar_map_mode is not None:
+        assert mapper.scalar_map_mode == scalar_map_mode
+    if scalar_range is not None:
+        assert mapper.scalar_range == pytest.approx(scalar_range)
+    assert mapper.dataset is not None
+    assert mapper.dataset.n_arrays == 0
+    assert mapper.dataset.point_data.active_scalars_name is None
+    assert mapper.dataset.cell_data.active_scalars_name is None
+
+
+@pytest.mark.parametrize('smooth_shading', [True, False])
+def test_add_mesh_smooth_shading_with_algorithm(smooth_shading):
+    """Smooth shading works when the input is a vtkAlgorithm."""
+    algo = pv.PlatonicSolidSource('dodecahedron')
+    pl = pv.Plotter()
+    pl.add_mesh(algo, smooth_shading=smooth_shading, show_scalar_bar=False)
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_with_algorithm_and_scalars():
+    """Algorithm input + scalars + smooth_shading composes pipeline stages."""
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60)
+    mesh.point_data['z'] = np.array(mesh.points[:, 2], dtype=float)
+
+    source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
+    surface = algorithms.callback_algorithm(
+        source,
+        lambda m: m.triangulate(),
+        output_type=pv.PolyData,
+    )
+
+    pl = pv.Plotter()
+    pl.add_mesh(
+        surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
+    )
+
+    # Modify source data after add_mesh to verify the changes propagate
+    # through the smooth shading and active scalars algorithm pipeline.
+    mesh.point_data['z'][::10] = 0
+    source.Modified()
+
+    pl.show()
+
+
+def test_add_actor_array_name_with_callback_algorithm_is_lazy():
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = np.array(mesh.points[:, 2], dtype=float)
+    tracker = AlgorithmExecutionTracker()
+
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algorithms.callback_algorithm(mesh, tracker)
+    mapper.array_name = 'data'
+    actor = pv.Actor(mapper=mapper)
+    expected_range = (
+        float(np.min(mesh.point_data['data'])),
+        float(np.max(mesh.point_data['data'])),
+    )
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl.show()
+    mapped = get_actor_mapper_input(actor)
+
+    assert tracker.executed is True
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert np.array_equal(mapped.point_data['data'], mesh.point_data['data'])
+
+
+def test_add_actor_set_active_scalars_with_callback_algorithm_is_lazy():
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = np.array(mesh.points[:, 2], dtype=float)
+    tracker = AlgorithmExecutionTracker()
+
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algorithms.callback_algorithm(mesh, tracker)
+    mapper.set_active_scalars('data', preference='point')
+    actor = pv.Actor(mapper=mapper)
+    expected_range = (
+        float(np.min(mesh.point_data['data'])),
+        float(np.max(mesh.point_data['data'])),
+    )
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        tracker,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+
+    pl.show()
+    mapped = get_actor_mapper_input(actor)
+
+    assert tracker.executed is True
+    assert actor.mapper.array_name == 'data'
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert np.array_equal(mapped.point_data['data'], mesh.point_data['data'])
+
+
+def test_add_actor_smooth_shading_algorithm_array_name_is_lazy():
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60)
+    mesh.point_data['data'] = np.array(mesh.points[:, 2], dtype=float)
+    algo = algorithms.smooth_shading_algorithm(
+        mesh,
+        split_sharp_edges=True,
+        feature_angle=30.0,
+    )
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algo
+    mapper.array_name = 'data'
+    actor = pv.Actor(mapper=mapper)
+    actor.prop.interpolation = 'phong'
+    expected_range = (
+        float(np.min(mesh.point_data['data'])),
+        float(np.max(mesh.point_data['data'])),
+    )
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='point',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl.show()
+    mapped = get_actor_mapper_input(actor)
+
+    algo_output = pv.wrap(algo.GetOutputDataObject(0))
+    assert algo_output.n_arrays > 0
+    assert 'data' in algo_output.point_data
+    assert algo_output.point_data.active_normals_name == 'Normals'
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert mapped.point_data.active_normals_name == 'Normals'
+
+
+def test_add_actor_smooth_shading_algorithm_cell_array_name_is_lazy():
+    mesh = pv.Sphere(theta_resolution=30, phi_resolution=30)
+    mesh.cell_data['data'] = np.arange(mesh.n_cells, dtype=float)
+    algo = algorithms.smooth_shading_algorithm(
+        mesh,
+        split_sharp_edges=True,
+        feature_angle=30.0,
+    )
+    mapper = pv.DataSetMapper()
+    mapper.dataset = algo
+    mapper.array_name = 'data'
+    actor = pv.Actor(mapper=mapper)
+    actor.prop.interpolation = 'phong'
+    expected_range = (float(np.min(mesh.cell_data['data'])), float(np.max(mesh.cell_data['data'])))
+
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='cell',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl = pv.Plotter()
+    pl.add_actor(actor, render=False)
+    _assert_mapper_pipeline_not_executed(
+        mapper,
+        scalar_map_mode='cell',
+        scalar_range=expected_range,
+    )
+    assert pv.wrap(algo.GetOutputDataObject(0)).n_arrays == 0
+
+    pl.show()
+    mapped = get_actor_mapper_input(actor)
+
+    algo_output = pv.wrap(algo.GetOutputDataObject(0))
+    assert algo_output.n_arrays > 0
+    assert 'data' in algo_output.cell_data
+    assert algo_output.point_data.active_normals_name == 'Normals'
+    assert mapped.cell_data.active_scalars_name == 'data'
+    assert mapped.point_data.active_normals_name == 'Normals'
+
+
+def test_add_mesh_smooth_shading_unstructured_grid_scalars():
+    """Smooth shading on an :class:`pyvista.UnstructuredGrid` with point scalars.
+
+    Exercises the full pipeline from unstructured-grid input through surface
+    extraction, normal generation, and scalar coloring on a curved mesh that
+    visibly changes under smooth shading.
+    """
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
+    mesh.clear_data()
+    mesh.point_data['Elevation'] = np.array(mesh.points[:, 2], dtype=float)
+    source = algorithms.source_algorithm(lambda: mesh, output_type=pv.UnstructuredGrid)
+
+    pl = pv.Plotter()
+    pl.add_mesh(
+        source,
+        scalars='Elevation',
+        smooth_shading=True,
+        split_sharp_edges=True,
+        feature_angle=30.0,
+        show_scalar_bar=False,
+    )
+    pl.show()
+
+
+def test_add_mesh_multi_component_scalars_no_smooth_shading():
+    """2D scalars via name, without smooth shading, exercise the
+    reduction path inside :meth:`DataSetMapper.set_scalars`.
+
+    This is the in-mapper path that calls
+    :func:`reduce_component_scalars`, distinct from the hoisted path
+    used for smooth shading (``_reduce_multicomponent_scalars_on_mesh``).
+    """
+    sphere = pv.Sphere()
+    sphere.point_data['vec'] = np.array(sphere.points, dtype=np.float32)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars='vec', component=2, show_scalar_bar=False)
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars():
+    """Raw numpy scalars with an upstream ``vtkAlgorithm`` + smooth shading.
+
+    Exercises the ``_remap_scalars_through_topology_change`` tracker
+    fallback in :meth:`Plotter.add_mesh`. That helper's fallback path
+    is the only one where ``original_scalar_name`` remains ``None``,
+    so the re-resolution uses
+    ``SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME`` to remap the
+    scalars through the topology change from ``split_sharp_edges``.
+    """
+    # A cone combines a curved sidewall with a sharp base edge, so
+    # ``split_sharp_edges=True`` both changes the rendered appearance and
+    # duplicates vertices to trigger the tracker-based re-resolution.
+    cone = pv.Cone(resolution=90, capping=True).triangulate()
+    source = algorithms.source_algorithm(lambda: cone, output_type=pv.PolyData)
+    raw_scalars = np.linspace(0.0, 1.0, cone.n_points, dtype=np.float32)
+
+    pl = pv.Plotter()
+    pl.add_mesh(
+        source,
+        scalars=raw_scalars,
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
+    )
+    pl.show()
+
+
+def test_add_mesh_raw_numpy_cell_scalars():
+    """Raw numpy cell-length scalars stamp on ``cell_data``.
+
+    Covers the ``cell_data.set_array`` branch of
+    ``_stamp_raw_numpy_scalars`` in :meth:`Plotter.add_mesh`. Without
+    this path the mapper would ravel the array and silently mis-bind
+    it to point data.
+    """
+    sphere = pv.Sphere()
+    cell_scalars = np.arange(sphere.n_cells, dtype=np.float32)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=cell_scalars, show_scalar_bar=False)
+    assert pv.DEFAULT_SCALARS_NAME in sphere.cell_data
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_multi_component_cell_scalars():
+    """2D cell-length scalars + ``component=`` + smooth shading.
+
+    Covers the ``cell_data.set_array`` branch of
+    ``_reduce_multicomponent_scalars_on_mesh`` in
+    :meth:`Plotter.add_mesh`. Cell-scalar analogue of
+    :func:`test_add_mesh_smooth_shading_multi_component_scalars`.
+    """
+    sphere = pv.Sphere()
+    cell_vec = np.column_stack(
+        [
+            np.zeros(sphere.n_cells, dtype=np.float32),
+            np.linspace(-1.0, 1.0, sphere.n_cells, dtype=np.float32),
+            np.zeros(sphere.n_cells, dtype=np.float32),
+        ]
+    )
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        scalars=cell_vec,
+        component=1,
+        smooth_shading=True,
+        show_scalar_bar=False,
+    )
+    pl.show()
+
+
+def test_add_mesh_smooth_shading_multi_component_scalars():
+    """Multi-component scalars with ``component=`` + ``smooth_shading``.
+
+    Regression test for a scenario where ``mapper.set_scalars`` reduces a
+    2D scalar array to a synthesized 1D array (``name-<component>`` or
+    ``name-normed``) and stamps it on the post-pipeline dataset. Under
+    smooth shading, each ``SmoothShadingAlgorithm.RequestData`` re-emits
+    a fresh surface-extracted polydata, wiping the stamped derived array,
+    so the spliced ``ActiveScalarsAlgorithm`` would fail to activate it
+    and the render would silently fall back to no scalar mapping.
+    """
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
+    mesh.clear_data()
+    # Use point coordinates as the vector field so ``component=1`` picks a
+    # clean y-axis gradient.  ``np.array`` (forces a copy) is required to
+    # detach from the ``Points`` ``vtkFloatArray`` buffer. Both ``astype``
+    # and ``asarray`` keep a view-backed reference that survives teardown
+    # and trips ``check_gc`` on Python 3.14.
+    mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False)
+    pl.show()
+
+
+@pytest.mark.parametrize('smooth_shading', [True, False])
+def test_add_mesh_numpy_scalars_mutation_propagates(smooth_shading):
+    """Mutating the input mesh after add_mesh propagates to the renderer.
+
+    When ``add_mesh`` is called with raw numpy ``scalars`` against a mesh,
+    the array must be stamped onto the user's mesh under the generated
+    name (``DEFAULT_SCALARS_NAME``). The user can then later replace it
+    via ``mesh[name] = ...`` and the renderer must reflect the change on
+    the next ``render()``, including when smooth shading inserts an
+    upstream pipeline stage.
+    """
+    sphere = pv.Sphere()
+    initial = np.zeros(sphere.n_points)
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=initial, smooth_shading=smooth_shading, clim=[0, 1])
+    assert pv.DEFAULT_SCALARS_NAME in sphere.point_data
+    sphere[pv.DEFAULT_SCALARS_NAME] = np.ones(sphere.n_points)
+    pl.show()
 
 
 @skip_windows_mesa
@@ -4337,6 +4814,7 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 @pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
 def test_axes_geometry_shaft_type_tip_type(geometry_type):
     if geometry_type == 'custom':
@@ -4483,7 +4961,9 @@ def test_axes_actor_properties():
     pl.show()
 
 
-def test_show_bounds_no_labels():
+def test_show_bounds_no_labels(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
@@ -4505,7 +4985,9 @@ def test_show_bounds_no_labels():
     pl.show()
 
 
-def test_show_bounds_n_labels():
+def test_show_bounds_n_labels(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
@@ -4683,7 +5165,9 @@ def test_enable_custom_trackball_style():
     pl.close()
 
 
-def test_create_axes_orientation_box():
+def test_create_axes_orientation_box(verify_image_cache):
+    verify_image_cache.warning_value = 250
+
     actor = pv.create_axes_orientation_box(
         line_width=4,
         text_scale=0.53,
@@ -4827,6 +5311,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
     positive_dir = direction == 'pos'
@@ -5220,7 +5705,10 @@ def oblique_cone():
     'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
-def test_bounding_box(oblique_cone, box_style):
+def test_bounding_box(oblique_cone, box_style, verify_image_cache):
+    if box_style == 'frame':
+        verify_image_cache.warning_value = 475
+
     pl = pv.Plotter()
     box = oblique_cone.bounding_box(box_style)
     oriented_box = oblique_cone.bounding_box(box_style, oriented=True)
@@ -5350,16 +5838,15 @@ def test_partitioned_dataset(sphere):
     mesh.plot()
 
 
+@pytest.mark.skip_check_gc  # Remove once resolved https://gitlab.kitware.com/vtk/vtk/-/work_items/20018
+@pytest.mark.needs_vtk_version(
+    (9, 6, 99),  # >= 9,7,0
+    reason='point order changes with older VTK https://discourse.vtk.org/t/vtk-wedge-cell-types-fix-point-ordering-triangulation-and-volume-correctness/16322',
+)
 @pytest.mark.parametrize('cell_example', cell_example_functions)
 def test_cell_examples_normals(cell_example, verify_image_cache):
     if cell_example is examples.cells.Empty:
         pytest.skip('nothing to plot')
-    if cell_example in [
-        examples.cells.BiQuadraticQuadraticWedge,
-        examples.cells.QuadraticLinearWedge,
-        examples.cells.QuadraticWedge,
-    ] and pv.vtk_version_info < (9, 4, 0):
-        pytest.xfail('point ordering changed in newer VTK')
 
     # Skip since variance is too high
     verify_image_cache.macos_skip_image_cache = True
@@ -5368,13 +5855,16 @@ def test_cell_examples_normals(cell_example, verify_image_cache):
     grid = cell_example()
     if next(grid.cell).dimension == 2:
         # Ensure normals of 2D cells point in z-direction for consistency
-        normal = grid.extract_geometry().cell_normals.mean(axis=0)
+        normal = grid.extract_surface(algorithm=None).cell_normals.mean(axis=0)
         assert np.allclose(normal, (0.0, 0.0, 1.0))
     examples.plot_cell(grid, show_normals=True)
 
 
 @pytest.mark.parametrize('data', ['point', 'cell'])
-def test_hide_cells(data):
+def test_hide_cells(data, verify_image_cache):
+    if data == 'cell':
+        verify_image_cache.warning_value = 250
+
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
     if data == 'cell':
         grid.cell_data['scalars'] = range(grid.n_cells)
@@ -5394,10 +5884,252 @@ def test_hide_cells(data):
     grid.plot(**kwargs)
 
 
-def test_hide_cells_no_scalars():
+def test_hide_cells_no_scalars(verify_image_cache):
+    verify_image_cache.warning_value = 450
+
     grid = examples.load_explicit_structured().resize(bounds=(-1, 1, -1, 1, -1, 1))
     grid = grid.hide_cells(range(80, 120))
     grid = grid.cast_to_unstructured_grid()
     # Test plotting still works with ghost cells active
     assert grid.active_scalars_name == _vtk.vtkDataSetAttributes.GhostArrayName()
     grid.plot(color='w', show_edges=True, show_grid=True)
+
+
+@pytest.mark.skip_check_gc
+def test_connectivity_cmap():
+    # Test case described in https://github.com/pyvista/pyvista/issues/8252
+    large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
+    medium = pv.Sphere(center=(-2, 0, 0), phi_resolution=15, theta_resolution=15)
+    small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
+    mesh = large + medium + small
+    connected = mesh.connectivity('all')
+    connected.plot(cmap=['red', 'green', 'blue'], show_edges=True)
+
+
+@parametrize(multi_block=[False, True], force_opaque=[False, True])
+def test_actor_force_opaque(
+    force_opaque: bool,
+    multi_block: bool,
+    multiblock_poly: pv.MultiBlock,
+):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        pv.Sphere() if not multi_block else multiblock_poly,
+        force_opaque=force_opaque,
+        culling='front',
+        opacity=0.5,
+    )
+    pl.show()
+    assert actor.force_opaque == force_opaque
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_render(shape, verify_image_cache_wrapper):
+    verify_image_cache_wrapper.high_variance_test = True
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0]],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='scalars',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.set_point_sprite_shape(shape)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_does_not_apply_to_surface(shape):
+    # Regression for #8459: a theme-level point_shape must not inject
+    # the point sprite fragment shader into actors that are rendered as
+    # surfaces. The shader relies on gl_PointCoord which is undefined
+    # for GL_TRIANGLES primitives, so leaving it installed corrupts the
+    # fragment output and the surfaces render as clipped triangles.
+    theme = pv.plotting.themes._TestingTheme()
+    theme.point_shape = shape
+    pl = pv.Plotter(theme=theme)
+    actor = pl.add_mesh(
+        pv.Wavelet(),
+        style='surface',
+        show_scalar_bar=False,
+    )
+    # The shape is persisted on the actor, but the shader replacement
+    # must NOT be installed while the representation is 'Surface'.
+    assert actor._point_sprite_shape == shape
+    assert not actor._point_sprite_applied
+    assert 'point_sprite' not in actor._shader_replacements
+    pl.show()
+
+
+@pytest.mark.parametrize(
+    'shape',
+    ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
+)
+def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
+    verify_image_cache_wrapper.high_variance_test = True
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 0]],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['scalars'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        cloud,
+        scalars='scalars',
+        style='surface',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape(shape)
+    pl.camera_position = 'xy'
+    pl.show()
+
+
+def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # noqa: ARG001
+    # Regression: if the applied-state is tracked as a boolean, calling
+    # set_point_sprite_shape with a new shape while the previous shape
+    # is already applied short-circuits and leaves the old GLSL installed.
+    # Tracking the applied shape string lets transitions propagate.
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape('circle')
+    assert actor._point_sprite_applied == 'circle'
+
+    actor.set_point_sprite_shape('triangle')
+    assert actor._point_sprite_applied == 'triangle'
+
+    actor.set_point_sprite_shape('star')
+    assert actor._point_sprite_applied == 'star'
+
+    actor.clear_point_sprite_shape()
+    assert actor._point_sprite_applied is None
+    assert 'point_sprite' not in actor._shader_replacements
+
+
+def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):  # noqa: ARG001
+    # With a shape persisted on the actor, toggling the representation
+    # between Points and Surface must install / remove the shader via
+    # the property-level observer.
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape('circle')
+    assert actor._point_sprite_applied == 'circle'
+    assert 'point_sprite' in actor._shader_replacements
+
+    actor.prop.style = 'surface'
+    assert actor._point_sprite_applied is None
+    assert 'point_sprite' not in actor._shader_replacements
+    # The shape itself is still persisted so switching back re-installs.
+    assert actor._point_sprite_shape == 'circle'
+
+    actor.prop.style = 'points'
+    assert actor._point_sprite_applied == 'circle'
+    assert 'point_sprite' in actor._shader_replacements
+
+
+def test_clear_point_sprite_shape_detaches_observer(no_images_to_verify):  # noqa: ARG001
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape('circle')
+    assert actor._point_sprite_observer is not None
+
+    actor.clear_point_sprite_shape()
+    assert actor._point_sprite_observer is None
+    assert actor._point_sprite_shape is None
+
+    # After clearing, toggling the representation must NOT re-install
+    # anything — the observer is gone and the shape was forgotten.
+    actor.prop.style = 'surface'
+    actor.prop.style = 'points'
+    assert actor._point_sprite_applied is None
+    assert 'point_sprite' not in actor._shader_replacements
+
+
+def test_set_point_sprite_shape_accepts_enum(no_images_to_verify):  # noqa: ARG001
+    actor = pv.Actor()
+    actor.prop.style = 'points'
+    actor.set_point_sprite_shape(PointSpriteShape.TRIANGLE)
+    assert actor._point_sprite_shape == 'triangle'
+    assert actor._point_sprite_applied == 'triangle'
+
+
+@pytest.fixture
+def mip_test_points():
+    """Create overlapping points along Z for MIP testing.
+
+    Four points at the same XY, staggered along Z, viewed head-on.
+    The highest scalar value (1.0) is at the back. Without MIP the
+    front point (value 0.0) occludes everything. With MIP the back
+    point renders in front as a single bright yellow square/circle.
+    """
+    points = np.array(
+        [
+            [-0.02, 0.02, 0.0],
+            [0.01, 0.01, -1.0],
+            [-0.01, -0.01, -2.0],
+            [0.02, -0.02, -3.0],
+        ],
+        dtype=float,
+    )
+    cloud = pv.PolyData(points)
+    cloud['intensity'] = [0.0, 0.33, 0.66, 1.0]
+    return cloud
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_maximum_intensity_projection_render(verify_image_cache_wrapper, mip_test_points):
+    verify_image_cache_wrapper.high_variance_test = True
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mip_test_points,
+        scalars='intensity',
+        style='points',
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    pl.enable_parallel_projection()
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.15
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_points):
+    verify_image_cache_wrapper.high_variance_test = True
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mip_test_points,
+        scalars='intensity',
+        style='points',
+        render_points_as_spheres=False,
+        point_size=64,
+        show_scalar_bar=False,
+    )
+    actor.enable_maximum_intensity_projection()
+    actor.set_point_sprite_shape('circle')
+    pl.enable_parallel_projection()
+    pl.camera.position = (0, 0, 10)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.camera.parallel_scale = 0.15
+    pl.show()

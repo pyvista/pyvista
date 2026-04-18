@@ -10,8 +10,6 @@ and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista.demos import logo
 

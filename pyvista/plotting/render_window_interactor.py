@@ -8,21 +8,29 @@ from functools import partial
 from inspect import signature
 import logging
 import time
+from typing import TYPE_CHECKING
 from typing import Literal
 import weakref
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core._vtk_core import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
+from .errors import MismatchedInteractorError
+from .interactor_style_registry import _get_interactor_style_handler
+from .interactor_style_registry import _validate_interactor_style
 from .opts import PickerType
+
+if TYPE_CHECKING:
+    from .interactor_style_registry import InteractorStyleHandler
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -480,6 +488,10 @@ class RenderWindowInteractor(_NoNewAttrMixin):
     ):
         """Get/set the current interactor style.
 
+        When set to a string, the name is resolved through the
+        interactor style registry (equivalent to calling
+        :meth:`enable_interactor_style`).
+
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
@@ -493,9 +505,14 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         Examples
         --------
-        Set interactor style with a customized vtk interactor
+        Set interactor style by name.
 
         >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.iren.style = 'terrain_style'
+
+        Set interactor style with a customized vtk interactor.
+
         >>> from vtkmodules.vtkInteractionStyle import (
         ...     vtkInteractorStyleTrackballCamera,
         ... )
@@ -514,7 +531,10 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         return self._style_class
 
     @style.setter
-    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | None):
+    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | str | None):
+        if isinstance(style, str):
+            self.enable_interactor_style(style)
+            return
         self._style = 'Interactor'
         self._style_class = style
         self.update_style()
@@ -1195,6 +1215,74 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """
         self.style = InteractorStyleRubberBand2D(self)
 
+    def _instantiate_registered_interactor_style(
+        self, handler: InteractorStyleHandler
+    ) -> _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin:
+        """Instantiate a registered interactor style handler."""
+        if isinstance(handler, type) and issubclass(handler, InteractorStyleCaptureMixin):
+            style: object = handler(self)
+        elif isinstance(handler, type) and issubclass(handler, _vtk.vtkInteractorStyle):
+            style = handler()
+        else:
+            # Generic callable — pass the interactor so the factory can
+            # configure the style.  The cast is needed because mypy narrows
+            # ``Callable[..., Any]`` to a non-callable after two failing
+            # ``isinstance(handler, type)`` checks.
+            factory: InteractorStyleHandler = handler
+            style = factory(self)
+
+        if not isinstance(style, (_vtk.vtkInteractorStyle, InteractorStyleCaptureMixin)):
+            msg = (
+                'Registered interactor styles must resolve to an instance of `vtkInteractorStyle`.'
+            )
+            raise TypeError(msg)
+
+        return style
+
+    def enable_interactor_style(self, style: str | None = None) -> None:
+        """Set the interactive style to a built-in or registered mode.
+
+        Parameters
+        ----------
+        style : str, optional
+            Name of the interactor style to enable. Built-in styles use
+            names that mirror the public ``enable_*_style`` methods,
+            such as ``'terrain_style'``. If ``None``, use the current
+            plotter theme's :attr:`~pyvista.plotting.themes.Theme.interactor_style`
+            or the global theme when no plotter is attached.
+
+        Raises
+        ------
+        TypeError
+            If the registered handler does not resolve to an interactor
+            style instance.
+
+        ValueError
+            If the style name is not known.
+
+        Examples
+        --------
+        Enable a built-in interactor style by name.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> pl.enable_interactor_style('terrain_style')
+
+        """
+        if style is None:
+            if self._plotter is not None:
+                style = self._plotter.theme.interactor_style
+            else:
+                style = pv.global_theme.interactor_style
+
+        validated = _validate_interactor_style(style)
+        handler = _get_interactor_style_handler(validated)
+
+        if isinstance(handler, str):
+            getattr(self, handler)()
+        elif handler is not None:
+            self.style = self._instantiate_registered_interactor_style(handler)
+
     def _simulate_keypress(self, key):
         """Simulate a keypress."""
         if len(key) > 1:
@@ -1466,6 +1554,19 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if not self.initialized:
             msg = 'Render window interactor must be initialized before processing events.'
             raise RuntimeError(msg)
+        rw = self.interactor.GetRenderWindow()
+        if rw is not None:  # pragma: no cover
+            iren_cls = type(self.interactor).__name__
+            rw_cls = type(rw).__name__
+            del rw
+            if iren_cls == 'vtkXRenderWindowInteractor' and rw_cls != 'vtkXOpenGLRenderWindow':
+                msg = (
+                    f'Cannot process events: {iren_cls} requires an X-backed render window '
+                    f'but got {rw_cls}. This typically happens on headless Linux where VTK '
+                    f'falls back to EGL for rendering but the interactor still expects X. '
+                    f'Use vtkGenericRenderWindowInteractor for headless/EGL contexts.'
+                )
+                raise MismatchedInteractorError(msg)
         self.interactor.ProcessEvents()
 
     @property
@@ -1512,22 +1613,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             if hasattr(picker, 'SetTolerance'):
                 picker.SetTolerance(0.025)
         self.interactor.SetPicker(picker)
-
-    def add_pick_obeserver(self, observer):  # noqa: ARG002
-        """Add an observer to call back when pick events end.
-
-        .. deprecated:: 0.42.2
-            This function has been deprecated. Use
-            :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
-
-        Parameters
-        ----------
-        observer : callable
-            The observer function to call when a pick event ends.
-
-        """
-        msg = '`add_pick_obeserver` has been deprecated, use `add_pick_observer`'
-        raise ValueError(msg)
 
     def add_pick_observer(self, observer):
         """Add an observer to call back when pick events end.

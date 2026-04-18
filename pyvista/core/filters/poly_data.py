@@ -557,7 +557,7 @@ class PolyDataFilters(DataSetFilters):
         # convert back to a polydata if both inputs were polydata
         if is_polydata:
             # if either of the input datasets contained lines or strips, we
-            # must use extract_geometry to ensure they get converted back
+            # must use extract_surface to ensure they get converted back
             # correctly. This incurrs a performance penalty, but is needed to
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pv.MultiBlock)):
@@ -568,7 +568,9 @@ class PolyDataFilters(DataSetFilters):
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
             if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
-                merged = merged.extract_geometry()
+                merged = merged.extract_surface(
+                    algorithm=None, pass_cellid=False, pass_pointid=False
+                )
             else:
                 polydata_merged = pv.PolyData(
                     merged.points,
@@ -4122,7 +4124,9 @@ class PolyDataFilters(DataSetFilters):
         """
         # other mesh must be a polydata
         if not isinstance(other_mesh, pv.PolyData):
-            other_mesh = other_mesh.extract_surface()
+            other_mesh = other_mesh.extract_surface(
+                algorithm=None, pass_pointid=False, pass_cellid=False
+            )
 
         # according to VTK limitations
         poly_data = self
@@ -4253,7 +4257,7 @@ class PolyDataFilters(DataSetFilters):
         Extract the surface from the uniform grid dataset and plot its contours
         alongside the output from the banded contour filter.
 
-        >>> surf = examples.load_uniform().extract_surface()
+        >>> surf = examples.load_uniform().extract_surface(algorithm=None)
         >>> n_contours = 5
         >>> rng = [200, 500]
         >>> output, edges = surf.contour_banded(n_contours, rng=rng)
@@ -4409,7 +4413,11 @@ class PolyDataFilters(DataSetFilters):
         return wrap(mc.GetOutput())
 
     @_deprecate_positional_args
-    def triangulate_contours(self, display_errors: bool = False, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def triangulate_contours(  # type: ignore[misc]
+        self: _PolyDataType,
+        display_errors: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ) -> _PolyDataType:
         """Triangulate and fill all 2D contours to create polygons.
 
         .. versionadded:: 0.44.0
@@ -4447,6 +4455,11 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        Raises
+        ------
+        RuntimeError
+            If the mesh does not contain lines.
+
         Returns
         -------
         pyvista.PolyData
@@ -4473,6 +4486,10 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
+        if self.n_lines == 0:
+            msg = '`triangulate_contours` requires the input PolyData to have lines.'
+            raise RuntimeError(msg)
+
         alg = _vtk.vtkContourTriangulator()
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
@@ -4631,7 +4648,11 @@ class PolyDataFilters(DataSetFilters):
           N Arrays:   0
 
         """
-        removed = self.cast_to_unstructured_grid().remove_unused_points().extract_geometry()
+        removed = (
+            self.cast_to_unstructured_grid()
+            .remove_unused_points()
+            .extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+        )
         out = self if inplace else type(self)()
         out.copy_from(removed, deep=not inplace)
         return out

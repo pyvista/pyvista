@@ -23,10 +23,7 @@ smooth; this was proved in the paper by Bednorz and Bednorz.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # define some parameters
@@ -103,7 +100,10 @@ def close_wormhole(x0, y0, z0, eta, xi, alpha):  # noqa: PLR0917
     denominator = alpha + beta * (x1**2 + y1**2)
     x2 = x1 * exponential / denominator
     y2 = y1 * exponential / denominator
-    z2 = numerator / denominator * exponential / gamma - (alpha - beta) / (alpha + beta) / gamma
+    z2 = (
+        numerator / denominator * exponential / gamma
+        - (alpha - beta) / (alpha + beta) / gamma
+    )
     return x2, y2, z2
 
 

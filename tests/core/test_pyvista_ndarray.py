@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import re
 from unittest import mock
 
@@ -7,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import pyvista as pv
 from pyvista import examples
 from pyvista import pyvista_ndarray
 from pyvista import vtk_points
@@ -116,3 +118,20 @@ def test_wrap_pandas(obj_in):
     array = pyvista_ndarray(obj_in)
     df = pd.DataFrame(array)
     assert np.shares_memory(df.values, array)
+
+
+def test_no_dataset_does_not_allocate_weak_reference():
+    # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    arr = pyvista_ndarray([1.0, 2.0, 3.0])
+    assert arr.dataset is None
+
+
+def test_point_data_assignment_does_not_leak_vtk_weak_reference():
+    # Regression test for https://github.com/pyvista/pyvista/issues/8532
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = mesh.points[:, 2].astype(float)
+    del mesh
+    gc.collect()
+
+    leaked = [o for o in gc.get_objects() if isinstance(o, _vtk.vtkWeakReference)]
+    assert leaked == []

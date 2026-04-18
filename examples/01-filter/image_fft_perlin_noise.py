@@ -15,10 +15,7 @@ and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -103,7 +100,9 @@ pl.show()
 low_pass = sampled_fft.low_pass(1.0, 1.0, 1.0).rfft()
 low_pass['scalars'] = np.real(low_pass.active_scalars)
 warped_low_pass = low_pass.warp_by_scalar()
-warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False)
+warped_low_pass.plot(
+    show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False
+)
 
 
 # %%
@@ -122,7 +121,9 @@ warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise',
 high_pass = sampled_fft.high_pass(1.0, 1.0, 1.0).rfft()
 high_pass['scalars'] = np.real(high_pass.active_scalars)
 warped_high_pass = high_pass.warp_by_scalar()
-warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False)
+warped_high_pass.plot(
+    show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False
+)
 
 
 # %%
@@ -165,7 +166,9 @@ def warp_low_pass_noise(cfreq, scalar_ptp=None):
 
     # on the right: scale to fixed warped height
     output_scaled = output.copy()
-    output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
+    output_scaled['scalars_warp'] = (
+        output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
+    )
     warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
     warped_scaled.active_scalars_name = 'scalars'
     # push center back to xy plane due to peaks near 0 frequency

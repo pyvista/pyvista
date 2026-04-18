@@ -1,7 +1,7 @@
 Contributing
 ============
 
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-3.0-4baaaa.svg
    :target: CODE_OF_CONDUCT.md
 
 .. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
@@ -134,6 +134,13 @@ repository. If you did not write the code yourself, it is your
 responsibility to ensure that the existing license is compatible and
 included in the contributed files or you can obtain permission from the
 original author to relicense the code.
+
+Generative AI
+-------------
+
+We follow the Python Developer's Guide on `Generative AI <https://devguide.python.org/getting-started/generative-ai/>`_.
+The resulting contribution is the responsibility of the contributor, and we value good code,
+concise accurate documentation, and avoiding unneeded code churn.
 
 --------------
 
@@ -1080,23 +1087,16 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
         .. code-block:: bash
 
-            pytest tests/doc/tst_doc_build.py::test_static_images
+            pytest --doc_mode
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
-            tox run -e docs-test -- -k test_static_images
+            tox run -e docs-test
 
-
-The tests must be executed explicitly with this command. The name of the test
-file is prefixed with ``tst``, and not ``test`` specifically to avoid being
-automatically executed by ``pytest`` (``pytest`` collects all tests prefixed
-with ``test`` by default.) This is done since the tests require building the
-documentation, and are not a primary form of testing.
-
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
 
 #. Collected from the ``Build Image Directory``.
@@ -1114,7 +1114,7 @@ copies of the images are made as follows:
 #. If the comparison between the two images fails:
 
     - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
@@ -1122,15 +1122,15 @@ copies of the images are made as follows:
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
 
-To resolve failed tests, any images in ``from_build`` or ``from_cache``
+To resolve failed tests, any images in ``from_test`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
 if adding new docstring examples or plots, the test will initially fail,
-and the images in ``from_build`` may be added to the ``Doc Image Cache``.
+and the images in ``from_test`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
@@ -1187,16 +1187,18 @@ To test that interactive plots do not exceed this limit, run:
 
         .. code-block:: bash
 
-            pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+            pytest --doc_mode
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
-            tox run -e docs-test -- -k test_interactive_plot_file_size
+            tox run -e docs-test
 
+
+Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
+with the limit being specified by ``max_vtksz_file_size`` in the ``pyproject.toml`` file.
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:

@@ -20,6 +20,7 @@ from pyvista import BoundsTuple
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._validation.validate import _validate_color_sequence
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
@@ -80,7 +81,7 @@ class _XYZTuple(NamedTuple):
 @abstract_class
 class _XYZAssembly(
     _NoNewAttrMixin,
-    _vtk.DisableVtkSnakeCase,
+    DisableVtkSnakeCase,
     _Prop3DMixin,
     _NameMixin,
     _vtk.vtkPropAssembly,
@@ -2387,7 +2388,7 @@ class PlanesAssembly(_XYZAssembly):
         self._update_label_positions()
 
 
-class _AxisActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxisActor):
+class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
     def __init__(self):
         super().__init__()
         # Only show the title

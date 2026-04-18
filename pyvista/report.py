@@ -17,6 +17,8 @@ import vtkmodules.vtkRenderingOpenGL2
 ren = vtkRenderer()
 win = vtkRenderWindow()
 win.OffScreenRenderingOn()
+if hasattr(win, 'SetConnectContextToNSView'):
+    win.SetConnectContextToNSView(False)
 win.AddRenderer(ren)
 win.Render()
 print(win.ReportCapabilities())
@@ -174,6 +176,10 @@ class GPUInfo:
 
     def __repr__(self):
         """Representation method."""
+        return f'<{type(self).__name__} object at {hex(id(self))}>'
+
+    def __str__(self):
+        """Return a human-readable string representation."""
         content = '\n'
         for k, v in self.get_info():
             content += f'{k:>18} : {v}\n'
@@ -293,6 +299,7 @@ class Report(scooby.Report):
             'scipy',
             'tqdm',
             # io extras
+            'fsspec',
             'imageio',
             'meshio',
             # colormaps extras

@@ -11,11 +11,8 @@ mesh.
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
 import pyvista as pv
 from pyvista import examples
 

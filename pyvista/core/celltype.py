@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+from enum import EnumMeta
 from enum import IntEnum
 import textwrap
+from types import MappingProxyType
+from typing import ClassVar
 from typing import Literal
 from typing import NamedTuple
+from typing import cast
+from typing import get_args
 
-import numpy as np
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import vtk_version_info
 
-from . import _vtk_core as _vtk
-
-_CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
-
+_Dimension = Literal[0, 1, 2, 3]
 PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
 
 _GRID_TEMPLATE_NO_IMAGE = """
@@ -56,43 +59,50 @@ def _indent_paragraph(string: str, level: int) -> str:
 
 
 # See link for color names: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
-_BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
+_BADGE_COLORS = dict(
+    linear='primary', composite='success', dimension='secondary', geometry='muted'
+)
+
+
+def _generate_badge(*, kind: str, text: str, attr: str) -> str:
+    color = _BADGE_COLORS[kind]
+    ref = f'pyvista.CellType.{attr}'
+    return f':bdg-link-{color}:`{text} <{ref}>`'
 
 
 def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
     text = 'Linear' if is_linear else 'Non-linear'
-    return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
+    return _generate_badge(kind='linear', text=text, attr='is_linear')
 
 
-def _generate_primary_badge(is_primary: bool) -> str:  # noqa: FBT001
-    text = 'Primary' if is_primary else 'Composite'
-    return f':bdg-{_BADGE_COLORS["primary"]}:`{text}`'
+def _generate_composite_badge(is_composite: bool) -> str:  # noqa: FBT001
+    text = 'Composite' if is_composite else 'Primary'
+    return _generate_badge(kind='composite', text=text, attr='is_composite')
 
 
 def _generate_dimension_badge(dimension: int) -> str:
-    return f':bdg-{_BADGE_COLORS["dimension"]}:`{dimension}D`'
+    return _generate_badge(kind='dimension', text=f'{dimension}D', attr='dimension')
 
 
-def _generate_points_badge(num_points: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Points: {num_points}`'
+def _generate_points_badge(n_points: int) -> str:
+    return _generate_badge(kind='geometry', text=f'Points: {n_points}', attr='n_points')
 
 
-def _generate_edges_badge(num_edges: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Edges: {num_edges}`'
+def _generate_edges_badge(n_edges: int) -> str:
+    return _generate_badge(kind='geometry', text=f'Edges: {n_edges}', attr='n_edges')
 
 
-def _generate_faces_badge(num_faces: int) -> str:
-    return f':bdg-{_BADGE_COLORS["geometry"]}:`Faces: {num_faces}`'
+def _generate_faces_badge(n_faces: int) -> str:
+    return _generate_badge(kind='geometry', text=f'Faces: {n_faces}', attr='n_faces')
 
 
 class _CellTypeTuple(NamedTuple):
     value: int
-    cell_class: type[_vtk.vtkCell] | None = None
     doc: str = ''
     example: str | None = None
-    points_override: Literal['variable', 'n/a'] | None = None
-    edges_override: Literal['variable', 'n/a'] | None = None
-    faces_override: Literal['variable', 'n/a'] | None = None
+    variable_points: bool = False
+    variable_edges: bool = False
+    variable_faces: bool = False
 
 
 _CELL_TYPE_INFO = dict(
@@ -100,12 +110,11 @@ _CELL_TYPE_INFO = dict(
     # Linear cells
     EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
-        cell_class=_vtk.vtkEmptyCell,
+        example='Empty',
         doc="""Used as a place-holder during processing.""",
     ),
     VERTEX=_CellTypeTuple(
         value=_vtk.VTK_VERTEX,
-        cell_class=_vtk.vtkVertex,
         example='Vertex',
         doc="""
         Represents a point in 3D space.
@@ -115,9 +124,8 @@ _CELL_TYPE_INFO = dict(
     ),
     POLY_VERTEX=_CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
-        cell_class=_vtk.vtkPolyVertex,
         example='PolyVertex',
-        points_override='variable',
+        variable_points=True,
         doc="""
         Represents a set of points in 3D space.
 
@@ -127,7 +135,6 @@ _CELL_TYPE_INFO = dict(
     ),
     LINE=_CellTypeTuple(
         value=_vtk.VTK_LINE,
-        cell_class=_vtk.vtkLine,
         example='Line',
         doc="""
         Represents a 1D line.
@@ -138,9 +145,8 @@ _CELL_TYPE_INFO = dict(
     ),
     POLY_LINE=_CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
-        cell_class=_vtk.vtkPolyLine,
         example='PolyLine',
-        points_override='variable',
+        variable_points=True,
         doc="""
         Represents a set of 1D lines.
 
@@ -150,7 +156,6 @@ _CELL_TYPE_INFO = dict(
     ),
     TRIANGLE=_CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
-        cell_class=_vtk.vtkTriangle,
         example='Triangle',
         doc="""
         Represents a 2D triangle.
@@ -161,10 +166,9 @@ _CELL_TYPE_INFO = dict(
     ),
     TRIANGLE_STRIP=_CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
-        cell_class=_vtk.vtkTriangleStrip,
         example='TriangleStrip',
-        points_override='variable',
-        edges_override='variable',
+        variable_points=True,
+        variable_edges=True,
         doc="""
         Represents a 2D triangle strip.
 
@@ -174,10 +178,9 @@ _CELL_TYPE_INFO = dict(
     ),
     POLYGON=_CellTypeTuple(
         value=_vtk.VTK_POLYGON,
-        cell_class=_vtk.vtkPolygon,
         example='Polygon',
-        points_override='variable',
-        edges_override='variable',
+        variable_points=True,
+        variable_edges=True,
         doc="""
         Represents a 2D n-sided polygon.
 
@@ -187,7 +190,6 @@ _CELL_TYPE_INFO = dict(
     ),
     PIXEL=_CellTypeTuple(
         value=_vtk.VTK_PIXEL,
-        cell_class=_vtk.vtkPixel,
         example='Pixel',
         doc="""
         Represents a 2D orthogonal quadrilateral.
@@ -204,7 +206,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUAD,
-        cell_class=_vtk.vtkQuad,
         example='Quadrilateral',
         doc="""
         Represents a 2D quadrilateral.
@@ -215,7 +216,6 @@ _CELL_TYPE_INFO = dict(
     ),
     TETRA=_CellTypeTuple(
         value=_vtk.VTK_TETRA,
-        cell_class=_vtk.vtkTetra,
         example='Tetrahedron',
         doc="""
         Represents a 3D tetrahedron.
@@ -226,7 +226,6 @@ _CELL_TYPE_INFO = dict(
     ),
     VOXEL=_CellTypeTuple(
         value=_vtk.VTK_VOXEL,
-        cell_class=_vtk.vtkVoxel,
         example='Voxel',
         doc="""
         Represents a 3D orthogonal parallelepiped.
@@ -243,7 +242,6 @@ _CELL_TYPE_INFO = dict(
     ),
     HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_HEXAHEDRON,
-        cell_class=_vtk.vtkHexahedron,
         example='Hexahedron',
         doc="""
         Represents a 3D rectangular hexahedron.
@@ -254,7 +252,6 @@ _CELL_TYPE_INFO = dict(
     ),
     WEDGE=_CellTypeTuple(
         value=_vtk.VTK_WEDGE,
-        cell_class=_vtk.vtkWedge,
         example='Wedge',
         doc="""
         Represents a linear 3D wedge.
@@ -265,7 +262,6 @@ _CELL_TYPE_INFO = dict(
     ),
     PYRAMID=_CellTypeTuple(
         value=_vtk.VTK_PYRAMID,
-        cell_class=_vtk.vtkPyramid,
         example='Pyramid',
         doc="""
         Represents a 3D pyramid.
@@ -276,7 +272,6 @@ _CELL_TYPE_INFO = dict(
     ),
     PENTAGONAL_PRISM=_CellTypeTuple(
         value=_vtk.VTK_PENTAGONAL_PRISM,
-        cell_class=_vtk.vtkPentagonalPrism,
         example='PentagonalPrism',
         doc="""
         Represents a convex 3D prism with a pentagonal base and five quadrilateral faces.
@@ -287,7 +282,6 @@ _CELL_TYPE_INFO = dict(
     ),
     HEXAGONAL_PRISM=_CellTypeTuple(
         value=_vtk.VTK_HEXAGONAL_PRISM,
-        cell_class=_vtk.vtkHexagonalPrism,
         example='HexagonalPrism',
         doc="""
         Represents a 3D prism with hexagonal base and six quadrilateral faces.
@@ -300,7 +294,6 @@ _CELL_TYPE_INFO = dict(
     # Quadratic, isoparametric cells
     QUADRATIC_EDGE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_EDGE,
-        cell_class=_vtk.vtkQuadraticEdge,
         example='QuadraticEdge',
         doc="""
         Represents a 1D, 3-node, iso-parametric parabolic line.
@@ -310,7 +303,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_TRIANGLE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TRIANGLE,
-        cell_class=_vtk.vtkQuadraticTriangle,
         example='QuadraticTriangle',
         doc="""
         Represents a 2D, 6-node, iso-parametric parabolic triangle.
@@ -320,7 +312,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_QUAD,
-        cell_class=_vtk.vtkQuadraticQuad,
         example='QuadraticQuadrilateral',
         doc="""
         Represents a 2D, 8-node iso-parametric parabolic quadrilateral element.
@@ -330,10 +321,9 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_POLYGON=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_POLYGON,
-        cell_class=_vtk.vtkQuadraticPolygon,
         example='QuadraticPolygon',
-        points_override='variable',
-        edges_override='variable',
+        variable_points=True,
+        variable_edges=True,
         doc="""
         Represents a 2D n-sided (2*n nodes) parabolic polygon.
 
@@ -343,7 +333,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_TETRA=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TETRA,
-        cell_class=_vtk.vtkQuadraticTetra,
         example='QuadraticTetrahedron',
         doc="""
         Represents a 3D, 10-node, iso-parametric parabolic tetrahedron.
@@ -353,7 +342,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_HEXAHEDRON,
-        cell_class=_vtk.vtkQuadraticHexahedron,
         example='QuadraticHexahedron',
         doc="""
         Represents a 3D, 20-node iso-parametric parabolic hexahedron.
@@ -363,7 +351,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_WEDGE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_WEDGE,
-        cell_class=_vtk.vtkQuadraticWedge,
         example='QuadraticWedge',
         doc="""
         Represents a 3D, 15-node iso-parametric parabolic wedge.
@@ -373,7 +360,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_PYRAMID=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_PYRAMID,
-        cell_class=_vtk.vtkQuadraticPyramid,
         example='QuadraticPyramid',
         doc="""
         Represents a 3D, 13-node iso-parametric parabolic pyramid.
@@ -383,7 +369,6 @@ _CELL_TYPE_INFO = dict(
     ),
     BIQUADRATIC_QUAD=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUAD,
-        cell_class=_vtk.vtkBiQuadraticQuad,
         example='BiQuadraticQuadrilateral',
         doc="""
         Represents a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
@@ -394,7 +379,6 @@ _CELL_TYPE_INFO = dict(
     ),
     TRIQUADRATIC_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
-        cell_class=_vtk.vtkTriQuadraticHexahedron,
         example='TriQuadraticHexahedron',
         doc="""
         Represents a 3D, 27-node iso-parametric triquadratic hexahedron.
@@ -405,7 +389,6 @@ _CELL_TYPE_INFO = dict(
     ),
     TRIQUADRATIC_PYRAMID=_CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
-        cell_class=_vtk.vtkTriQuadraticPyramid,
         example='TriQuadraticPyramid',
         doc="""
         Represents a second order 3D iso-parametric 19-node pyramid.
@@ -416,7 +399,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_LINEAR_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
-        cell_class=_vtk.vtkQuadraticLinearQuad,
         example='QuadraticLinearQuadrilateral',
         doc="""
         Represents a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
@@ -426,7 +408,6 @@ _CELL_TYPE_INFO = dict(
     ),
     QUADRATIC_LINEAR_WEDGE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
-        cell_class=_vtk.vtkQuadraticLinearWedge,
         example='QuadraticLinearWedge',
         doc="""
         Represents a 3D, 12-node iso-parametric linear quadratic wedge.
@@ -436,7 +417,6 @@ _CELL_TYPE_INFO = dict(
     ),
     BIQUADRATIC_QUADRATIC_WEDGE=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
-        cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
         example='BiQuadraticQuadraticWedge',
         doc="""
         Represents a 3D, 18-node iso-parametric bi-quadratic wedge.
@@ -446,7 +426,6 @@ _CELL_TYPE_INFO = dict(
     ),
     BIQUADRATIC_QUADRATIC_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
-        cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
         example='BiQuadraticQuadraticHexahedron',
         doc="""
         Represents a 3D, 24-node iso-parametric biquadratic hexahedron.
@@ -456,7 +435,6 @@ _CELL_TYPE_INFO = dict(
     ),
     BIQUADRATIC_TRIANGLE=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
-        cell_class=_vtk.vtkBiQuadraticTriangle,
         example='BiQuadraticTriangle',
         doc="""
         Represents a 2D, 7-node, iso-parametric parabolic triangle.
@@ -469,7 +447,6 @@ _CELL_TYPE_INFO = dict(
     # Cubic, iso-parametric cell
     CUBIC_LINE=_CellTypeTuple(
         value=_vtk.VTK_CUBIC_LINE,
-        cell_class=_vtk.vtkCubicLine,
         example='CubicLine',
         doc="""
         Represents a 1D iso-parametric cubic line.
@@ -481,22 +458,26 @@ _CELL_TYPE_INFO = dict(
     # Special class of cells formed by convex group of points
     CONVEX_POINT_SET=_CellTypeTuple(
         value=_vtk.VTK_CONVEX_POINT_SET,
-        cell_class=_vtk.vtkConvexPointSet,
-        points_override='variable',
+        example='ConvexPointSet',
+        doc="""
+        Represents a 3D cell defined by a convex set of points.
+        """,
+        variable_points=True,
+        variable_edges=True,
+        variable_faces=True,
     ),
     ####################################################################################
     # Polyhedron cell (consisting of polygonal faces)
     POLYHEDRON=_CellTypeTuple(
         value=_vtk.VTK_POLYHEDRON,
-        cell_class=_vtk.vtkPolyhedron,
         example='Polyhedron',
         doc="""
         Represents a 3D cell defined by a set of polygonal faces.
 
         """,
-        points_override='variable',
-        edges_override='variable',
-        faces_override='variable',
+        variable_points=True,
+        variable_edges=True,
+        variable_faces=True,
     ),
     ####################################################################################
     # Higher order cells in parametric form
@@ -518,40 +499,258 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE, cell_class=_vtk.vtkLagrangeCurve),
+    LAGRANGE_CURVE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_CURVE,
+        example='LagrangeCurve',
+        variable_points=True,
+        doc="""
+        Lagrange representation of a curve with arbitrary order.
+        """,
+    ),
     LAGRANGE_TRIANGLE=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_TRIANGLE, cell_class=_vtk.vtkLagrangeTriangle
+        value=_vtk.VTK_LAGRANGE_TRIANGLE,
+        example='LagrangeTriangle',
+        variable_points=True,
+        doc="""
+        Lagrange representation of a triangle with arbitrary order.
+        """,
     ),
     LAGRANGE_QUADRILATERAL=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_QUADRILATERAL, cell_class=_vtk.vtkLagrangeQuadrilateral
+        value=_vtk.VTK_LAGRANGE_QUADRILATERAL,
+        example='LagrangeQuadrilateral',
+        variable_points=True,
+        doc="""
+        Lagrange representation of a quadrilateral with arbitrary order.
+        """,
     ),
-    LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
+    LAGRANGE_TETRAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_TETRAHEDRON,
+        example='LagrangeTetrahedron',
+        variable_points=True,
+        doc="""
+        Lagrange representation of a tetrahedron with arbitrary order.
+        """,
+    ),
     LAGRANGE_HEXAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_LAGRANGE_HEXAHEDRON, cell_class=_vtk.vtkLagrangeHexahedron
+        value=_vtk.VTK_LAGRANGE_HEXAHEDRON,
+        example='LagrangeHexahedron',
+        variable_points=True,
+        doc="""
+        Lagrange representation of a hexahedron with arbitrary order.
+        """,
     ),
-    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE, cell_class=_vtk.vtkLagrangeWedge),
-    LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
+    LAGRANGE_WEDGE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_WEDGE,
+        example='LagrangeWedge',
+        variable_points=True,
+        doc="""
+        Lagrange representation of a wedge with arbitrary order.
+        """,
+    ),
+    LAGRANGE_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_PYRAMID,
+        doc="""
+        Lagrange representation of a pyramid with arbitrary order.
+        """,
+    ),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE, cell_class=_vtk.vtkBezierCurve),
+    BEZIER_CURVE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_CURVE,
+        example='BezierCurve',
+        variable_points=True,
+        doc="""
+        Bezier representation of a curve with arbitrary order.
+        """,
+    ),
     BEZIER_TRIANGLE=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_TRIANGLE, cell_class=_vtk.vtkBezierTriangle
+        value=_vtk.VTK_BEZIER_TRIANGLE,
+        example='BezierTriangle',
+        variable_points=True,
+        doc="""
+        Bezier representation of a triangle with arbitrary order.
+        """,
     ),
     BEZIER_QUADRILATERAL=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_QUADRILATERAL, cell_class=_vtk.vtkBezierQuadrilateral
+        value=_vtk.VTK_BEZIER_QUADRILATERAL,
+        example='BezierQuadrilateral',
+        variable_points=True,
+        doc="""
+        Bezier representation of a quadrilateral with arbitrary order.
+        """,
     ),
     BEZIER_TETRAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_TETRAHEDRON, cell_class=_vtk.vtkBezierTetra
+        value=_vtk.VTK_BEZIER_TETRAHEDRON,
+        example='BezierTetrahedron',
+        variable_points=True,
+        doc="""
+        Bezier representation of a tetrahedron with arbitrary order.
+        """,
     ),
     BEZIER_HEXAHEDRON=_CellTypeTuple(
-        value=_vtk.VTK_BEZIER_HEXAHEDRON, cell_class=_vtk.vtkBezierHexahedron
+        value=_vtk.VTK_BEZIER_HEXAHEDRON,
+        example='BezierHexahedron',
+        variable_points=True,
+        doc="""
+        Bezier representation of a hexahedron with arbitrary order.
+        """,
     ),
-    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
-    BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
+    BEZIER_WEDGE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_WEDGE,
+        example='BezierWedge',
+        variable_points=True,
+        doc="""
+        Bezier representation of a wedge with arbitrary order.
+        """,
+    ),
+    BEZIER_PYRAMID=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_PYRAMID,
+        doc="""
+        Bezier representation of a pyramid with arbitrary order.
+        """,
+    ),
 )
 
 
-class CellType(IntEnum):
+class _CellTypeMeta(EnumMeta):
+    """Metaclass to enable class property definitions for CellType."""
+
+    _dimension_map: ClassVar[dict[_Dimension, frozenset[CellType]]] = {}
+    _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
+        MappingProxyType(_dimension_map)
+    )
+
+    @property
+    def dimension_map(cls) -> MappingProxyType[_Dimension, frozenset[CellType]]:
+        """Return a mapping with sets for all cell types grouped by topological dimension.
+
+        The groupings are derived from each member's :attr:`dimension`.
+
+        .. versionadded:: 0.48
+
+        Returns
+        -------
+        dict
+            Dictionary with cell dimensions ``0``, ``1``, ``2,``, ``3`` as keys, and frozen sets as
+            values with the respective :class:`CellType` members.
+
+        See Also
+        --------
+        dimension
+        pyvista.DataSet.max_cell_dimensionality
+        pyvista.DataSet.min_cell_dimensionality
+        pyvista.DataSet.distinct_cell_types
+
+        Examples
+        --------
+        Common 2D cell types such as :attr:`TRIANGLE` and :attr:`TRIANGLE_STRIP`
+        are in the 2D grouping.
+
+        >>> import pyvista as pv
+        >>> two_d = pv.CellType.dimension_map[2]
+        >>> pv.CellType.TRIANGLE in two_d
+        True
+        >>> pv.CellType.TRIANGLE_STRIP in two_d
+        True
+
+        Check whether a mesh contains only 2D cells by combining this with
+        :attr:`~pyvista.DataSet.distinct_cell_types`.
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.distinct_cell_types <= pv.CellType.dimension_map[2]
+        True
+
+        Show all 0D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[0])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.EMPTY_CELL: 0>,
+         <CellType.VERTEX: 1>,
+         <CellType.POLY_VERTEX: 2>]
+
+        Show all 1D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[1])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.LINE: 3>,
+         <CellType.POLY_LINE: 4>,
+         <CellType.QUADRATIC_EDGE: 21>,
+         <CellType.CUBIC_LINE: 35>,
+         <CellType.PARAMETRIC_CURVE: 51>,
+         <CellType.HIGHER_ORDER_EDGE: 60>,
+         <CellType.LAGRANGE_CURVE: 68>,
+         <CellType.BEZIER_CURVE: 75>]
+
+        Show all 2D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[2])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TRIANGLE: 5>,
+         <CellType.TRIANGLE_STRIP: 6>,
+         <CellType.POLYGON: 7>,
+         <CellType.PIXEL: 8>,
+         <CellType.QUAD: 9>,
+         <CellType.QUADRATIC_TRIANGLE: 22>,
+         <CellType.QUADRATIC_QUAD: 23>,
+         <CellType.BIQUADRATIC_QUAD: 28>,
+         <CellType.QUADRATIC_LINEAR_QUAD: 30>,
+         <CellType.BIQUADRATIC_TRIANGLE: 34>,
+         <CellType.QUADRATIC_POLYGON: 36>,
+         <CellType.PARAMETRIC_SURFACE: 52>,
+         <CellType.PARAMETRIC_TRI_SURFACE: 53>,
+         <CellType.PARAMETRIC_QUAD_SURFACE: 54>,
+         <CellType.HIGHER_ORDER_TRIANGLE: 61>,
+         <CellType.HIGHER_ORDER_QUAD: 62>,
+         <CellType.HIGHER_ORDER_POLYGON: 63>,
+         <CellType.LAGRANGE_TRIANGLE: 69>,
+         <CellType.LAGRANGE_QUADRILATERAL: 70>,
+         <CellType.BEZIER_TRIANGLE: 76>,
+         <CellType.BEZIER_QUADRILATERAL: 77>]
+
+        Show all 3D cell types.
+
+        >>> sorted(pv.CellType.dimension_map[3])  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TETRA: 10>,
+         <CellType.VOXEL: 11>,
+         <CellType.HEXAHEDRON: 12>,
+         <CellType.WEDGE: 13>,
+         <CellType.PYRAMID: 14>,
+         <CellType.PENTAGONAL_PRISM: 15>,
+         <CellType.HEXAGONAL_PRISM: 16>,
+         <CellType.QUADRATIC_TETRA: 24>,
+         <CellType.QUADRATIC_HEXAHEDRON: 25>,
+         <CellType.QUADRATIC_WEDGE: 26>,
+         <CellType.QUADRATIC_PYRAMID: 27>,
+         <CellType.TRIQUADRATIC_HEXAHEDRON: 29>,
+         <CellType.QUADRATIC_LINEAR_WEDGE: 31>,
+         <CellType.BIQUADRATIC_QUADRATIC_WEDGE: 32>,
+         <CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON: 33>,
+         <CellType.TRIQUADRATIC_PYRAMID: 37>,
+         <CellType.CONVEX_POINT_SET: 41>,
+         <CellType.POLYHEDRON: 42>,
+         <CellType.PARAMETRIC_TETRA_REGION: 55>,
+         <CellType.PARAMETRIC_HEX_REGION: 56>,
+         <CellType.HIGHER_ORDER_TETRAHEDRON: 64>,
+         <CellType.HIGHER_ORDER_WEDGE: 65>,
+         <CellType.HIGHER_ORDER_PYRAMID: 66>,
+         <CellType.HIGHER_ORDER_HEXAHEDRON: 67>,
+         <CellType.LAGRANGE_TETRAHEDRON: 71>,
+         <CellType.LAGRANGE_HEXAHEDRON: 72>,
+         <CellType.LAGRANGE_WEDGE: 73>,
+         <CellType.LAGRANGE_PYRAMID: 74>,
+         <CellType.BEZIER_TETRAHEDRON: 78>,
+         <CellType.BEZIER_HEXAHEDRON: 79>,
+         <CellType.BEZIER_WEDGE: 80>,
+         <CellType.BEZIER_PYRAMID: 81>]
+
+        """
+        if not (mapping := cls._dimension_map):
+            # Populate dict on first access
+            for dimension in get_args(_Dimension):
+                mapping[dimension] = frozenset(
+                    celltype for celltype in CellType if celltype.dimension == dimension
+                )
+        return cls._dimension_map_proxy
+
+
+class CellType(IntEnum, metaclass=_CellTypeMeta):
     """Define types of cells.
 
     Cells are defined by specifying a type in combination with an ordered list of points.
@@ -560,15 +759,19 @@ class CellType(IntEnum):
     coordinates define the cell geometry.
 
     Although point coordinates are defined in three dimensions, the cell topology can
-    be 0, 1, 2, or 3-dimensional.
+    be 0, 1, 2, or 3-dimensional. Use :attr:`dimension` to check the topological dimension.
 
     Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
     cells consist of one or more primary cells, while primary cells cannot be
-    decomposed.
+    decomposed. Use :attr:`is_composite` to check if a cell type is primary or composite.
 
     Cells can also be characterized as linear or non-linear. Linear cells use
-    linear or constant interpolation. Non-linear cells may use quadratic,
-    cubic, or some other interpolation.
+    linear or constant interpolation, while non-linear cells may use quadratic,
+    cubic, or some other interpolation. Use :attr:`is_linear` to check if a cell type is linear.
+
+    Higher order interpolation is possible using Lagrange or Bézier cells. For Lagrange cells,
+    all the points lie on the interpolation curve, whereas for the Bézier cells, only the points at
+    the extremities are interpolatory.
 
     This enumeration defines all cell types used in VTK and supported by PyVista. The
     type(s) of cell(s) to use is typically chosen based on application need, such as
@@ -576,11 +779,11 @@ class CellType(IntEnum):
 
     .. seealso::
 
-        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
-            VTK reference about cell types.
+        :class:`pyvista.Cell`
+            Wrapper for instances of :vtk:`vtkCell`.
 
-        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
-            List of all cell types defined in VTK.
+        :mod:`pyvista.examples.cells`
+            Examples creating a mesh comprising a single cell.
 
         :ref:`linear_cells_example`
             Detailed example using linear cells.
@@ -591,8 +794,19 @@ class CellType(IntEnum):
         :ref:`create_polydata_strips_example`
             Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
 
-        :mod:`pyvista.examples.cells`
-            Examples creating a mesh comprising a single cell.
+    References
+    ----------
+    `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
+        VTK reference about cell types.
+
+    `Modeling Lagrange Finite Elements in VTK <https://www.kitware.com//modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit/>`_
+        VTK blog post about Lagrange cells.
+
+    `Implementation of rational Bézier cells into VTK <https://www.kitware.com/implementation-of-rational-bezier-cells-into-vtk/>`_
+        VTK blog post about Bezier cells.
+
+    `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
+        List of all cell types defined in VTK.
 
     Examples
     --------
@@ -629,15 +843,24 @@ class CellType(IntEnum):
 
     """
 
+    # Attributes populated in __new__
+    _vtk_class: type[_vtk.vtkCell] | None
+    _dimension: _Dimension
+    _is_linear: bool
+    _is_composite: bool
+    _n_points: int
+    _n_edges: int
+    _n_faces: int
+    _example: str | None
+
     def __new__(  # noqa: PYI034
         cls: type[CellType],
         value: int,
-        _cell_class: type[_vtk.vtkCell] | None = None,
         _doc: str = '',
         _example: str | None = None,
-        _points_override: Literal['variable', 'n/a'] | None = None,
-        _edges_override: Literal['variable', 'n/a'] | None = None,
-        _faces_override: Literal['variable', 'n/a'] | None = None,
+        _variable_points: bool = False,  # noqa: FBT001, FBT002
+        _variable_edges: bool = False,  # noqa: FBT001, FBT002
+        _variable_faces: bool = False,  # noqa: FBT001, FBT002
     ) -> CellType:
         """Create new enum.
 
@@ -654,9 +877,6 @@ class CellType(IntEnum):
         value : int
             Integer value of the cell type.
 
-        _cell_class : type[:vtk:`vtkCell`], optional
-            VTK class for this cell type.
-
         _doc : str, optional
             Short description of this cell type. Typically a single line but no more
             than 3-4 lines. Should only include a general description and no technical
@@ -667,72 +887,374 @@ class CellType(IntEnum):
             When specified, the first figure from this example is used as the image for
             the cell.
 
-        _points_override: 'variable' | 'n/a', optional
+        _variable_points: bool, optional
             Override the value shown for this cell type's `Points` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
-            of ``0`` may otherwise be shown. By default, the value from ``cell_class``
+            of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
-        _edges_override: 'variable' | 'n/a', optional
+        _variable_edges: bool, optional
             Override the value shown for this cell type's `Edges` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
-            of ``0`` may otherwise be shown. By default, the value from ``cell_class``
+            of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
-        _faces_override: 'variable' | 'n/a', optional
+        _variable_faces: bool, optional
             Override the value shown for this cell type's `Faces` badge. May be
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
-            of ``0`` may otherwise be shown. By default, the value from ``cell_class``
+            of ``0`` may otherwise be shown. By default, the value from ``vtk_class``
             is used.
 
         """
         self = int.__new__(cls, value)
         self._value_ = value
+        self._example = _example
         self.__doc__ = ''
+
+        # Get the vtk class associated with this cell type. For simplicity, skip abstract types
+        # even though some actually do have a corresponding class. Among other things, skipping
+        # abstract types helps avoid the need to work around this VTK bug: https://gitlab.kitware.com/vtk/vtk/-/issues/19988
+        _vtk_class_name = _vtk.vtkCellTypeUtilities.GetClassNameFromTypeId(value)
+        if vtk_version_info < (9, 6, 0):
+            # Fix bug with older VTK where higher order Triangle/Quadrilateral are swapped
+            _vtk_class_name = {
+                'vtkBezierTriangle': 'vtkBezierQuadrilateral',
+                'vtkBezierQuadrilateral': 'vtkBezierTriangle',
+                'vtkLagrangeTriangle': 'vtkLagrangeQuadrilateral',
+                'vtkLagrangeQuadrilateral': 'vtkLagrangeTriangle',
+            }.get(_vtk_class_name, _vtk_class_name)
+        self._vtk_class = (
+            None
+            if _vtk_class_name.startswith(('vtkParametric', 'vtkHigherOrder'))  # Abstract
+            or _vtk_class_name in ('vtkLagrangePyramid', 'vtkBezierPyramid')  # Missing vtk class
+            or _vtk_class_name == 'UnknownClass'  # Abstract/missing classes in vtk 9.7.0
+            else getattr(_vtk, _vtk_class_name)
+        )
+
+        # Set cell type properties using vtkCellTypeUtilities
+        self._dimension = cast('_Dimension', _vtk.vtkCellTypeUtilities.GetDimension(value))
+        self._is_linear = bool(_vtk.vtkCellTypeUtilities.IsLinear(value))
+        if value == _vtk.VTK_HEXAGONAL_PRISM:
+            # Need to fix https://gitlab.kitware.com/vtk/vtk/-/issues/19988#note_1786788
+            self._is_linear = True
+
+        # Set properties that require instantiating the class.
+        # Assume primary cell with -1 values for points/edges/faces for abstract classes
+        self._n_points = -1
+        self._n_edges = -1
+        self._n_faces = -1
+        self._is_composite = False
+        if self._vtk_class is not None:
+            cell = self._vtk_class()
+            self._is_composite = not bool(cell.IsPrimaryCell())
+
+            # Use -1 to denote the cell has variable points/edges/faces
+            self._n_points = -1 if _variable_points else cell.GetNumberOfPoints()
+            self._n_edges = -1 if _variable_edges else cell.GetNumberOfEdges()
+            self._n_faces = -1 if _variable_faces else cell.GetNumberOfFaces()
 
         _doc = textwrap.dedent(_doc).strip()
 
         # Generate cell type documentation if specified
-        if _cell_class or _doc or _example:
-            badges = ''
-            if _cell_class:
-                cell = _cell_class()
-                _CELL_TYPE_TO_NUM_POINTS[np.uint8(value)] = cell.GetNumberOfPoints()
-                linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
-                primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
-                dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
+        if self._vtk_class or _doc or _example:
+            _badges = ''
+            if self._vtk_class:
+                _linear_badge = _generate_linear_badge(self._is_linear)
+                _composite_badge = _generate_composite_badge(self._is_composite)
+                _dimension_badge = _generate_dimension_badge(self._dimension)
 
-                points = _points_override or cell.GetNumberOfPoints()
-                points_badge = _generate_points_badge(points)  # type: ignore[arg-type]
+                _points = 'variable' if _variable_points else self._n_points
+                _points_badge = _generate_points_badge(_points)  # type: ignore[arg-type]
 
-                edges = _edges_override or cell.GetNumberOfEdges()
-                edges_badge = _generate_edges_badge(edges)  # type: ignore[arg-type]
+                _edges = 'variable' if _variable_edges else self._n_edges
+                _edges_badge = _generate_edges_badge(_edges)  # type: ignore[arg-type]
 
-                faces = _faces_override or cell.GetNumberOfFaces()
-                faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
+                _faces = 'variable' if _variable_faces else self._n_faces
+                _faces_badge = _generate_faces_badge(_faces)  # type: ignore[arg-type]
 
-                badges = _indent_paragraph(
-                    f'{linear_badge} {primary_badge} {dimension_badge}\n'
-                    f'{points_badge} {edges_badge} {faces_badge}',
+                _badges = _indent_paragraph(
+                    f'{_linear_badge} {_composite_badge} {_dimension_badge}\n'
+                    f'{_points_badge} {_edges_badge} {_faces_badge}',
                     level=2,
                 )
 
                 # Add additional references to VTK docs
-                cell_class_ref = f':vtk:`{_cell_class.__name__}`'
-                see_also = f'See also {cell_class_ref}.'
-                _doc += f'\n\n{see_also}'
+                _vtk_class_ref = f':vtk:`{self._vtk_class.__name__}`'
+                _see_also = f'See also {_vtk_class_ref}.'
+                _doc += f'\n\n{_see_also}'
 
             _doc = _indent_paragraph(_doc, level=2)
 
             self.__doc__ += (
-                _GRID_TEMPLATE_NO_IMAGE.format(badges, _doc)
-                if _example is None
+                _GRID_TEMPLATE_NO_IMAGE.format(_badges, _doc)
+                if (_example is None or _example == 'Empty')
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
-                    _example, _example, PLACEHOLDER, badges, _doc
+                    _example, _example, PLACEHOLDER, _badges, _doc
                 )
             )
 
         return self
+
+    @property
+    def vtk_class(self) -> type[_vtk.vtkCell] | None:  # numpydoc ignore=RT01
+        """Return the :vtk:`vtkCell` class associated with this cell type.
+
+        Only concrete VTK classes that can instantiated are returned. ``None`` is returned
+        if the cell type has no corresponding VTK class or if the class is abstract.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        pyvista.Cell
+
+        Examples
+        --------
+        Get the VTK class associated with the :attr:`TRIANGLE` cell type.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.TRIANGLE.vtk_class
+        <class 'vtkmodules.vtkCommonDataModel.vtkTriangle'>
+
+        Abstract cell types like ``HIGHER_ORDER_HEXAHEDRON`` return ``None``.
+
+        >>> pv.CellType.HIGHER_ORDER_HEXAHEDRON.vtk_class is None
+        True
+
+        """
+        return self._vtk_class
+
+    @property
+    def dimension(self) -> _Dimension:  # numpydoc ignore=RT01
+        """Return this cell type's dimension.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        pyvista.Cell.dimension
+        dimension_map
+
+        Examples
+        --------
+        :attr:`VERTEX` is 0D.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.VERTEX.dimension
+        0
+
+        :attr:`LINE` is 1D.
+
+        >>> pv.CellType.LINE.dimension
+        1
+
+        :attr:`TRIANGLE` is 2D.
+
+        >>> pv.CellType.TRIANGLE.dimension
+        2
+
+        :attr:`HEXAHEDRON` is 3D.
+
+        >>> pv.CellType.HEXAHEDRON.dimension
+        3
+
+        """
+        return self._dimension
+
+    @property
+    def is_linear(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if this cell type is linear.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        is_composite
+        pyvista.Cell.is_linear
+
+        Examples
+        --------
+        :attr:`HEXAHEDRON` is linear.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.HEXAHEDRON.is_linear
+        True
+
+        :attr:`QUADRATIC_HEXAHEDRON` is not linear.
+
+        >>> pv.CellType.QUADRATIC_HEXAHEDRON.is_linear
+        False
+
+        """
+        return self._is_linear
+
+    @property
+    def is_composite(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if this cell type is composed of multiple smaller cells.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        is_linear
+
+        Examples
+        --------
+        :attr:`VERTEX` is a primary cell and is not composite.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.VERTEX.is_composite
+        False
+
+        :attr:`POLY_VERTEX` `is` composite since it's composed of multiple vertex cells.
+
+        >>> pv.CellType.POLY_VERTEX.is_composite
+        True
+
+        """
+        return self._is_composite
+
+    @property
+    def n_points(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of points defined by this cell type.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        n_edges, n_faces
+        pyvista.Cell.n_points
+
+        Raises
+        ------
+        ValueError
+            If the number of points cannot be determined without a concrete instance.
+            Composite cells, higher order cells, polygon, and polyhedron will all raise an error.
+
+        Examples
+        --------
+        :attr:`LINE` has a fixed number of points.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.LINE.n_points
+        2
+
+        :attr:`POLY_LINE` has a variable number of points and raises a ValueError.
+
+        >>> try:
+        ...     pv.CellType.POLY_LINE.n_points
+        ... except ValueError as error:
+        ...     print(error)
+        Cannot determine number of points for 'POLY_LINE' without a concrete cell instance.
+
+        """
+        if (n_points := self._n_points) == -1:
+            msg = (
+                f'Cannot determine number of points for {self.name!r} '
+                f'without a concrete cell instance.'
+            )
+            raise ValueError(msg)
+        return n_points
+
+    @property
+    def n_edges(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of edges defined by this cell type.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        n_points, n_faces
+        pyvista.Cell.n_edges
+
+        Raises
+        ------
+        ValueError
+            If the number of edges cannot be determined without a concrete instance.
+            Polygon, polyhedron, triangle strip, and convex point set will all raise an error.
+
+        Examples
+        --------
+        :attr:`QUAD` has a fixed number of edges.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.QUAD.n_edges
+        4
+
+        :attr:`POLYGON` has a variable number of edges and raises a ValueError.
+
+        >>> try:
+        ...     pv.CellType.POLYGON.n_edges
+        ... except ValueError as error:
+        ...     print(error)
+        Cannot determine number of edges for 'POLYGON' without a concrete cell instance.
+
+        Zero- and one-dimensional cell types have no edges.
+
+        >>> pv.CellType.VERTEX.n_edges
+        0
+
+        >>> pv.CellType.LINE.n_edges
+        0
+
+        """
+        if (n_edges := self._n_edges) == -1:
+            msg = (
+                f'Cannot determine number of edges for {self.name!r} '
+                f'without a concrete cell instance.'
+            )
+            raise ValueError(msg)
+        return n_edges
+
+    @property
+    def n_faces(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of faces defined by this cell type.
+
+        .. versionadded:: 0.48
+
+        See Also
+        --------
+        n_points, n_edges
+        pyvista.Cell.n_faces
+
+        Raises
+        ------
+        ValueError
+            If the number of faces cannot be determined without a concrete instance.
+            Polyhedron and convex point set will raise an error.
+
+        Examples
+        --------
+        :attr:`WEDGE` has a fixed number of faces.
+
+        >>> import pyvista as pv
+        >>> pv.CellType.WEDGE.n_faces
+        5
+
+        :attr:`POLYHEDRON` has a variable number of faces and raises a ValueError.
+
+        >>> try:
+        ...     pv.CellType.POLYHEDRON.n_faces
+        ... except ValueError as error:
+        ...     print(error)
+        Cannot determine number of faces for 'POLYHEDRON' without a concrete cell instance.
+
+        Only three-dimensional cell types have faces.
+
+        >>> pv.CellType.LINE.n_faces
+        0
+
+        >>> pv.CellType.QUAD.n_faces
+        0
+
+        """
+        if (n_faces := self._n_faces) == -1:
+            msg = (
+                f'Cannot determine number of faces for {self.name!r} '
+                f'without a concrete cell instance.'
+            )
+            raise ValueError(msg)
+        return n_faces
 
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
     VERTEX = _CELL_TYPE_INFO['VERTEX']
