@@ -93,6 +93,7 @@ from vtkmodules.vtkRenderingAnnotation import vtkCornerAnnotation as vtkCornerAn
 from vtkmodules.vtkRenderingAnnotation import vtkCubeAxesActor as vtkCubeAxesActor
 from vtkmodules.vtkRenderingAnnotation import vtkLegendBoxActor as vtkLegendBoxActor
 from vtkmodules.vtkRenderingAnnotation import vtkLegendScaleActor as vtkLegendScaleActor
+from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor as vtkPolarAxesActor
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor as vtkScalarBarActor
 from vtkmodules.vtkRenderingContext2D import vtkBlockItem as vtkBlockItem
 from vtkmodules.vtkRenderingContext2D import vtkBrush as vtkBrush

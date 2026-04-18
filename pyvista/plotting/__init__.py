@@ -15,6 +15,7 @@ from .actor_properties import ActorProperties as ActorProperties
 from .affine_widget import AffineWidget3D as AffineWidget3D
 from .axes import Axes as Axes
 from .axes_actor import AxesActor as AxesActor
+from .axes_actor import PolarAxesActor as PolarAxesActor
 from .axes_assembly import AxesAssembly as AxesAssembly
 from .axes_assembly import AxesAssemblySymmetric as AxesAssemblySymmetric
 from .axes_assembly import PlanesAssembly as PlanesAssembly
