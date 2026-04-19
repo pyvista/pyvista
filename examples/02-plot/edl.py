@@ -28,11 +28,11 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # +++++++++++
 #
 # Eye-Dome Lighting can dramatically improve depth perception when plotting
-# incredibly sophisticated meshes like the creative commons Queen Nefertiti
-# statue:
+# incredibly sophisticated meshes like the Smithsonian's bust of George
+# Washington:
 
-nefertiti = examples.download_nefertiti()
-nefertiti.plot(eye_dome_lighting=True, cpos=[-1, -1, 0.2], color=True)
+bust = examples.download_washington_bust()
+bust.plot(eye_dome_lighting=True, cpos=[-1, -1, 0.2], color=True)
 
 # %%
 # Here we will compare a EDL shading side by side with normal shading
@@ -41,14 +41,14 @@ pl = pv.Plotter(shape=(1, 2), border=False)
 
 # With eye-dome lighting
 pl.subplot(0, 0)
-pl.add_mesh(nefertiti, color=True)
+pl.add_mesh(bust, color=True)
 pl.enable_eye_dome_lighting()
 pl.add_text('Eye-Dome Lighting', font_size=24)
 pl.camera_position = [-1, -1, 0.2]
 
 # No eye-dome lighting
 pl.subplot(0, 1)
-pl.add_mesh(nefertiti, color=True)
+pl.add_mesh(bust, color=True)
 pl.add_text('No Eye-Dome Lighting', font_size=24)
 pl.camera_position = [-1, -1, 0.2]
 

@@ -48,7 +48,7 @@ warp.plot(cmap='gist_earth', show_scalar_bar=False)
 # facing a general direction. In the following snippet, we take a mesh, compute
 # the normals along its cell faces, and extract the faces that face upward.
 
-mesh = examples.download_nefertiti()
+mesh = examples.download_washington_bust()
 # Compute normals
 mesh.compute_normals(cell_normals=True, point_normals=False, inplace=True)
 

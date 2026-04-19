@@ -16,7 +16,6 @@ cases, we have included a helper method that will allow you to add a mesh to a
 scene with a box widget that controls its extent, the
 :func:`pyvista.Plotter.add_mesh_clip_box` method.
 
-.. image:: ../../images/gifs/box-clip.gif
 """
 
 # sphinx_gallery_start_ignore
@@ -28,7 +27,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 from pyvista import examples
 
-mesh = examples.download_nefertiti()
+mesh = examples.download_washington_bust()
 
 # %%
 

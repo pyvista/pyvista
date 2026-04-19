@@ -27,8 +27,8 @@ from itertools import product
 import pyvista as pv
 from pyvista import examples
 
-# Load the statue mesh
-mesh = examples.download_nefertiti()
+# Load the bust mesh (George Washington, CC0, Smithsonian).
+mesh = examples.download_washington_bust()
 mesh.rotate_x(-90.0, inplace=True)  # rotate to orient with the skybox
 
 # Download skybox

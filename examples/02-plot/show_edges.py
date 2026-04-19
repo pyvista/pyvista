@@ -20,7 +20,7 @@ Show the edges of all geometries within a mesh using the
 import pyvista as pv
 from pyvista import examples
 
-nefertiti = examples.download_nefertiti()
+bust = examples.download_washington_bust()
 
 # Camera position to zoom to face
 face_view = pv.CameraPosition(
@@ -30,6 +30,6 @@ face_view = pv.CameraPosition(
 )
 
 
-nefertiti.plot(cpos=face_view, show_edges=True, color=True)
+bust.plot(cpos=face_view, show_edges=True, color=True)
 # %%
 # .. tags:: plot
