@@ -113,6 +113,13 @@ if TYPE_CHECKING:
     from pyvista.plotting import *
 
 
+# Tracks whether the ``PYVISTA_PLOT_THEME`` environment variable has been
+# applied yet. Applying a plugin theme runs arbitrary plugin code that can
+# call back into ``pyvista`` before this module has finished the caller's
+# original request; the flag keeps the apply single-shot.
+_env_theme_applied: bool = False
+
+
 # Lazily import/access the plotting module
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
@@ -148,17 +155,23 @@ def __getattr__(name):
     if 'pyvista.plotting' not in sys.modules:
         import pyvista.plotting  # noqa: F401, PLC0415
 
-        # Apply ``PYVISTA_PLOT_THEME`` now that ``pyvista.plotting`` is fully
-        # loaded. Doing this inside ``pyvista.plotting.__init__`` would invite
-        # re-entrant access to this partially-initialized module when an
-        # entry-point-registered plugin is imported (Python 3.12 evaluates
-        # annotations like ``pv.Plotter`` eagerly at plugin module load).
-        sys.modules['pyvista.plotting']._set_plot_theme_from_env()
-
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError:
         msg = f"module 'pyvista' has no attribute '{name}'"
         raise AttributeError(msg) from None
+
+    # Apply ``PYVISTA_PLOT_THEME`` once, now that ``pyvista.plotting`` is fully
+    # loaded and the caller's requested attribute is already resolved. Doing
+    # this inside ``pyvista.plotting.__init__`` invites re-entrant access to a
+    # partially-initialized module when an entry-point-registered plugin is
+    # imported (Python 3.12 evaluates annotations like ``pv.Plotter`` eagerly
+    # at plugin module load). The flag is set before the call to prevent
+    # re-entrant double-application if a plugin's module body accesses
+    # attributes on ``pyvista`` during the theme apply.
+    global _env_theme_applied  # noqa: PLW0603
+    if not _env_theme_applied:
+        _env_theme_applied = True
+        sys.modules['pyvista.plotting']._set_plot_theme_from_env()
 
     return feature
