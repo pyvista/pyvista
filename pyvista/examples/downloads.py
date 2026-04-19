@@ -6111,6 +6111,15 @@ def download_dicom_stack(
     Clinical Proteomic Tumor Analysis Consortium Sarcomas (CPTAC-SAR)
     collection.
 
+    The CPTAC-SAR collection is distributed under the `Creative Commons
+    Attribution 3.0 Unported License (CC BY 3.0)
+    <https://creativecommons.org/licenses/by/3.0/>`_. Use of this dataset
+    requires attribution (see the citations below) and is subject to the
+    `TCIA Data Usage Policy
+    <https://www.cancerimagingarchive.net/data-usage-policies-and-restrictions/>`_,
+    which prohibits using the data to identify or contact the individual
+    participants.
+
     Parameters
     ----------
     load : bool, default: True
