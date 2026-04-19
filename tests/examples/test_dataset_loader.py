@@ -209,9 +209,7 @@ def test_single_file_loader(file_loader, use_archive):
         assert os.path.isabs(path_download)
         assert file_loader.path == path_download
         assert 'https://github.com/pyvista/data/raw/master/Data/' in file_loader.source_url_raw
-        assert (
-            'https://github.com/pyvista/data/blob/master/Data/' in file_loader.source_url_blob
-        )
+        assert 'https://github.com/pyvista/data/blob/master/Data/' in file_loader.source_url_blob
     else:
         with pytest.raises(AttributeError):
             file_loader.download()
@@ -636,12 +634,9 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert len(loader.dataset_iterable) == 12
     assert loader.unique_dataset_type == (pv.MultiBlock, pv.UnstructuredGrid)
     assert loader.source_name == 'mesh_fs8.exo'
+    assert loader.source_url_raw == 'https://github.com/pyvista/data/raw/master/Data/mesh_fs8.exo'
     assert (
-        loader.source_url_raw == 'https://github.com/pyvista/data/raw/master/Data/mesh_fs8.exo'
-    )
-    assert (
-        loader.source_url_blob
-        == 'https://github.com/pyvista/data/blob/master/Data/mesh_fs8.exo'
+        loader.source_url_blob == 'https://github.com/pyvista/data/blob/master/Data/mesh_fs8.exo'
     )
     assert loader.unique_cell_types == (
         pv.CellType.TRIANGLE,
