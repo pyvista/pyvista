@@ -122,7 +122,8 @@ docs = [
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
-  'colour-science==0.4.6',
+  'colour-science==0.4.6; python_version < "3.14"',
+  'colour-science==0.4.7; python_version >= "3.14"',
   'enum-tools==0.13.0',
   'fsspec==2026.3.0',
   'imageio-ffmpeg==0.6.0',
@@ -141,7 +142,7 @@ docs = [
   'pytest-sphinx==0.7.1',
   'pyvista-zstd==0.2.2',
   'ruamel-yaml<0.20.0',
-  'scipy==1.16.0; python_version >= "3.11"',
+  'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
@@ -172,7 +173,13 @@ docs-test = [
   { include-group = 'pinned' },
 ]
 
-dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
+dev = [
+  'pre-commit',
+  'tox',
+  'tox-uv',
+  { include-group = 'test' },
+  { include-group = 'typing' },
+]
 
 [project.urls]
 'Bug Reports' = 'https://github.com/pyvista/pyvista/issues'

@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: 3.14
           cache: "pip"
 
       - name: Set environment for self-hosted
@@ -180,7 +180,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: 3.14
           cache: "pip"
 
       - name: Install tox-uv
@@ -224,7 +224,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: 3.14
       - name: Install Dependencies
         run: |
           pip install cookiecutter
@@ -240,12 +240,25 @@ jobs:
           cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
 
+      - name: Get app installation token (pyvista-examples)
+        id: app-token
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        with:
+          app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
+          private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
+          owner: pyvista
+          # Scope the token to only pyvista-examples — the only repo this
+          # step writes to. The App must be installed on pyvista-examples.
+          repositories: pyvista-examples
+          permission-contents: write
+
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
         with:
           external_repository: pyvista/pyvista-examples
-          personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          personal_token: ${{ steps.app-token.outputs.token }}
           publish_dir: pyvista-examples
           publish_branch: master
           exclude_assets: ""

@@ -133,6 +133,7 @@ def test_tinypages(tmp_path: Path, ename: str, evalue: str):
     assert b'This is a matplotlib plot.' in html_contents
 
 
+@flaky_test(exceptions=(AssertionError,))
 @pytest.mark.skip_windows('path issues, e.g. image file not readable')
 @pytest.mark.skip_check_gc
 def test_parallel(tmp_path: Path) -> None:

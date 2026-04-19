@@ -416,6 +416,11 @@ jobs:
     # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its
     # coverage artifacts get bundled into this single CodeCov upload.
     if: always() && github.event_name == 'pull_request'
+    permissions:
+      # id-token: write authorizes OIDC token minting so codecov-action can
+      # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
+      id-token: write
+      contents: read
     steps:
       # Needs to checkout only for codecov to match file names
       - uses: actions/checkout@v6
@@ -433,8 +438,7 @@ jobs:
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
 
   # Publish to PyPI using trusted publishing
   release:
@@ -455,7 +459,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
+          python-version: 3.14
 
       - name: Build package
         run: |

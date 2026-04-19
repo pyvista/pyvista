@@ -778,6 +778,26 @@ def test_slice_along_line_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_slice_generate_triangles_true_emits_only_triangles():
+    grid = examples.load_uniform().cast_to_unstructured_grid()
+    out = grid.slice(normal=(1, 1, 1), generate_triangles=True)
+    ug = out.cast_to_unstructured_grid()
+    assert set(ug.celltypes.tolist()) <= {pv.CellType.TRIANGLE}
+
+
+def test_slice_generate_triangles_false_default_preserves_polygons():
+    """The ``False`` default keeps the historical polygon output for
+    plane-cut UnstructuredGrids (no triangulation forced).
+    """
+    grid = examples.load_uniform().cast_to_unstructured_grid()
+    out = grid.slice(normal=(1, 1, 1))  # default generate_triangles=False
+    ug = out.cast_to_unstructured_grid()
+    # Polygon path produces quads (and maybe other polygons) for hex
+    # cell intersections, not just triangles.
+    types = set(ug.celltypes.tolist())
+    assert pv.CellType.QUAD in types or pv.CellType.POLYGON in types
+
+
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
     match_str = re.escape('This filter is deprecated. Use `cell_quality` instead')
