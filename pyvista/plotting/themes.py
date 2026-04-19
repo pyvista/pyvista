@@ -40,6 +40,7 @@ import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
@@ -51,6 +52,12 @@ from .colors import get_cycler
 from .interactor_style_registry import _validate_interactor_style
 from .opts import InterpolationType
 from .opts import PointSpriteShape
+from .theme_registry import _available_theme_names
+from .theme_registry import _register_alias
+from .theme_registry import _register_theme_class
+from .theme_registry import _register_theme_instance
+from .theme_registry import _resolve_dotted_path
+from .theme_registry import _resolve_theme
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -65,14 +72,15 @@ if TYPE_CHECKING:
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
+        theme = os.environ['PYVISTA_PLOT_THEME']
         try:
-            theme = os.environ['PYVISTA_PLOT_THEME']
-            set_plot_theme(theme.lower())
+            # Dotted paths are case-sensitive; registered names are lowercased.
+            set_plot_theme(theme if ':' in theme else theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ', '.join(_available_theme_names())
             warn_external(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}',
+                f'Should be one of {{ {allowed} }} or "package.module:ClassName".',
             )
 
 
@@ -108,8 +116,9 @@ def set_plot_theme(theme):
 
     Parameters
     ----------
-    theme : str
-        The theme name.  Available predefined theme names include:
+    theme : str | Theme
+        The theme name or :class:`~pyvista.plotting.themes.Theme` instance.
+        Built-in theme names include:
 
         - ``'dark'``,
         - ``'default'``,
@@ -119,6 +128,14 @@ def set_plot_theme(theme):
         - ``'paraview'``,
         - ``'testing'`` and
         - ``'vtk'``.
+
+        Any :class:`~pyvista.plotting.themes.Theme` subclass that declares
+        a class-level ``_default_name`` is registered automatically and can
+        be referenced by that name. Pre-configured instances can be
+        registered with :func:`~pyvista.register_theme`.
+
+        A theme class from any importable module can also be loaded using a
+        ``"package.module:ClassName"`` string.
 
     Examples
     --------
@@ -139,17 +156,27 @@ def set_plot_theme(theme):
 
     >>> pv.set_plot_theme('paraview')
 
+    Load a theme from any importable module using a dotted path.
+
+    >>> pv.set_plot_theme('pyvista.plotting.themes:DarkTheme')
+
     """
     import pyvista  # noqa: PLC0415
 
     if isinstance(theme, str):
-        theme = theme.lower()
-        try:
-            new_theme_type = _NATIVE_THEMES[theme].value
-        except KeyError:
-            msg = f"Theme {theme} not found in PyVista's native themes."
+        if ':' in theme:
+            cls = _resolve_dotted_path(theme)
+            pyvista.global_theme.load_theme(cls())
+            return
+        resolved = _resolve_theme(theme)
+        if resolved is None:
+            allowed = ', '.join(_available_theme_names())
+            msg = (
+                f'Theme "{theme}" not found. Available themes: {allowed}. '
+                'To load from an arbitrary module use "package.module:ClassName".'
+            )
             raise ValueError(msg)
-        pyvista.global_theme.load_theme(new_theme_type())
+        pyvista.global_theme.load_theme(resolved)
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -157,6 +184,79 @@ def set_plot_theme(theme):
             f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
         )
         raise TypeError(msg)
+
+
+def register_theme(name: str, theme: Any, *, override: bool = False) -> Theme:
+    """Register a pre-configured :class:`~pyvista.plotting.themes.Theme` instance.
+
+    Once registered, the theme can be activated by name via
+    :func:`set_plot_theme` or by setting the ``PYVISTA_PLOT_THEME``
+    environment variable.
+
+    Subclass-based registration is automatic via
+    :meth:`Theme.__init_subclass__` when the subclass declares a class-level
+    ``_default_name``. Use this function when you want to register an
+    already-configured instance (e.g., a mutated copy of ``DarkTheme``)
+    under a custom name.
+
+    Parameters
+    ----------
+    name : str
+        Name to register the theme under.
+
+    theme : Theme
+        A pre-configured :class:`~pyvista.plotting.themes.Theme` instance.
+
+    override : bool, default: False
+        If ``True``, replace any existing registration with the same name.
+        If ``False`` and the name is already registered, a ``ValueError``
+        is raised.
+
+    Returns
+    -------
+    Theme
+        The registered theme instance.
+
+    Raises
+    ------
+    TypeError
+        If ``theme`` is not a :class:`~pyvista.plotting.themes.Theme`
+        instance.
+
+    ValueError
+        If ``name`` is empty, or if the name is already registered and
+        ``override`` is ``False``.
+
+    Examples
+    --------
+    Register a customized dark theme under a custom name.
+
+    >>> import pyvista as pv
+    >>> from pyvista.plotting.themes import DarkTheme
+    >>> custom = DarkTheme()
+    >>> custom.show_edges = True
+    >>> _ = pv.register_theme('dark_edges', custom)
+    >>> pv.set_plot_theme('dark_edges')
+
+    """
+    if isinstance(theme, type):
+        msg = (
+            f'register_theme expects a Theme instance, got class '
+            f'{theme.__name__}. For Theme subclasses, declare '
+            "'_default_name' as a class attribute and they register "
+            'automatically.'
+        )
+        raise TypeError(msg)
+    if not isinstance(theme, Theme):
+        msg = f'register_theme expects a pyvista Theme instance, got {type(theme).__name__}.'
+        raise TypeError(msg)
+    _register_theme_instance(
+        name,
+        theme,
+        source=f'register_theme({name!r})',
+        override=override,
+    )
+    return theme
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
@@ -1737,6 +1837,12 @@ class _PlotCellConfig(_ThemeConfig):
 class Theme(_ThemeConfig):
     """Base VTK theme.
 
+    Subclasses that declare a class-level ``_default_name`` are
+    automatically registered by that name via
+    :meth:`__init_subclass__` and become available through
+    :func:`set_plot_theme` and the ``PYVISTA_PLOT_THEME`` environment
+    variable.
+
     Examples
     --------
     Change the global default background color to white.
@@ -1756,7 +1862,39 @@ class Theme(_ThemeConfig):
     >>> my_theme.background = 'white'
     >>> pv.global_theme.load_theme(my_theme)
 
+    Define a custom theme that auto-registers under a name.
+
+    >>> from typing import ClassVar
+    >>> class MyTheme(DocumentTheme):
+    ...     _default_name: ClassVar[str] = 'my_theme'
+    >>> pv.set_plot_theme('my_theme')  # doctest: +SKIP
+
     """
+
+    _default_name: ClassVar[str | None] = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Auto-register ``Theme`` subclasses by ``_default_name``."""
+        super().__init_subclass__(**kwargs)
+        # Read from __dict__ directly so inherited _default_name does not
+        # accidentally re-register a parent theme's name.
+        if '_default_name' not in cls.__dict__:
+            # Subclass does not opt into name-based discovery. Silent skip —
+            # ad-hoc subclasses are a valid pattern.
+            return
+        name = cls.__dict__['_default_name']
+        if not isinstance(name, str) or not name:
+            warn_external(
+                f'Theme subclass {cls.__module__}.{cls.__qualname__} declared '
+                f"an invalid '_default_name' ({name!r}); expected a non-empty "
+                'string. The subclass will not be discoverable by name.',
+            )
+            return
+        _register_theme_class(
+            name,
+            cls,
+            source=f'{cls.__module__}.{cls.__qualname__}',
+        )
 
     __slots__ = [
         '_above_range_color',
@@ -1823,7 +1961,7 @@ class Theme(_ThemeConfig):
 
     def __init__(self):
         """Initialize the theme."""
-        self._name = 'default'
+        self._name = type(self)._default_name or 'default'
         self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = _CameraConfig()
@@ -3437,10 +3575,11 @@ class DarkTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'dark'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'dark'
         self.background = 'black'
         self.cmap = 'viridis'
         self.font.color = 'white'
@@ -3470,10 +3609,11 @@ class ParaViewTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'paraview'
+
     def __init__(self):
         """Initialize theme."""
         super().__init__()
-        self.name = 'paraview'
         self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
@@ -3515,10 +3655,11 @@ class DocumentTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'document'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document'
         self.background = 'white'
         self.cmap = 'viridis'
         self.font.size = 18
@@ -3546,10 +3687,11 @@ class DocumentProTheme(DocumentTheme):
 
     """
 
+    _default_name: ClassVar[str] = 'document_pro'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document_pro'
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
@@ -3562,10 +3704,11 @@ class DocumentProTheme(DocumentTheme):
 class _DocumentBuildTheme(DocumentTheme):
     """Theme used for building the documentation."""
 
+    _default_name: ClassVar[str] = 'document_build'
+
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document_build'
         self.window_size = [1024, 768]
         self.font.size = 22
         self.font.label_size = 22
@@ -3594,9 +3737,10 @@ class _TestingTheme(Theme):
 
     """
 
+    _default_name: ClassVar[str] = 'testing'
+
     def __init__(self):
         super().__init__()
-        self.name = 'testing'
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.axes.show = False
@@ -3620,3 +3764,11 @@ class _NATIVE_THEMES(Enum):  # noqa: N801
     default = document
     testing = _TestingTheme
     vtk = Theme
+
+
+# Register legacy name aliases. ``DocumentTheme`` already self-registers as
+# ``'document'`` via ``__init_subclass__``; these aliases preserve the
+# historical ``'default' -> DocumentTheme`` and ``'vtk' -> Theme`` mappings
+# that ``_NATIVE_THEMES`` provided.
+_register_alias('default', DocumentTheme)
+_register_alias('vtk', Theme)
