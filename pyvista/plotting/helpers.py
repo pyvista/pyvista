@@ -153,12 +153,18 @@ def plot_compare_four(  # noqa: PLR0917
 
 @_deprecate_positional_args(allowed=['view'])
 def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:  # noqa: FBT001, FBT002
-    """Given a plane to view, return vectors for setting up camera.
+    """Return the direction and view-up vectors for a named view.
 
     Parameters
     ----------
-    view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}
-        Plane to return vectors for.
+    view : str
+        Plane or axis to return vectors for. Plane strings ``'xy'``,
+        ``'yx'``, ``'xz'``, ``'zx'``, ``'yz'``, ``'zy'`` name the
+        visible plane's horizontal and vertical axes. Axis strings
+        ``'+x'``, ``'-x'``, ``'+y'``, ``'-y'``, ``'+z'``, ``'-z'``
+        place the camera along the named axis; ``'x'``, ``'y'``, and
+        ``'z'`` are aliases for the positive variants. The ±X and ±Y
+        axis views use Z as the view-up; ±Z axis views use Y.
 
     negative : bool, default: False
         Whether to view from opposite direction.
@@ -172,31 +178,38 @@ def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], Nu
         ``[x, y, z]`` vector that points to the viewup direction.
 
     """
-    if view == 'xy':
-        vec = np.array([0, 0, 1])
-        viewup = np.array([0, 1, 0])
-    elif view == 'yx':
-        vec = np.array([0, 0, -1])
-        viewup = np.array([1, 0, 0])
-    elif view == 'xz':
-        vec = np.array([0, -1, 0])
-        viewup = np.array([0, 0, 1])
-    elif view == 'zx':
-        vec = np.array([0, 1, 0])
-        viewup = np.array([1, 0, 0])
-    elif view == 'yz':
-        vec = np.array([1, 0, 0])
-        viewup = np.array([0, 0, 1])
-    elif view == 'zy':
-        vec = np.array([-1, 0, 0])
-        viewup = np.array([0, 1, 0])
+    plane_vectors = {
+        'xy': (np.array([0, 0, 1]), np.array([0, 1, 0])),
+        'yx': (np.array([0, 0, -1]), np.array([1, 0, 0])),
+        'xz': (np.array([0, -1, 0]), np.array([0, 0, 1])),
+        'zx': (np.array([0, 1, 0]), np.array([1, 0, 0])),
+        'yz': (np.array([1, 0, 0]), np.array([0, 0, 1])),
+        'zy': (np.array([-1, 0, 0]), np.array([0, 1, 0])),
+    }
+    axis_vectors = {
+        '+x': (np.array([1, 0, 0]), np.array([0, 0, 1])),
+        '-x': (np.array([-1, 0, 0]), np.array([0, 0, 1])),
+        '+y': (np.array([0, 1, 0]), np.array([0, 0, 1])),
+        '-y': (np.array([0, -1, 0]), np.array([0, 0, 1])),
+        '+z': (np.array([0, 0, 1]), np.array([0, 1, 0])),
+        '-z': (np.array([0, 0, -1]), np.array([0, 1, 0])),
+    }
+    axis_aliases = {'x': '+x', 'y': '+y', 'z': '+z'}
+    key = axis_aliases.get(view, view)
+
+    if key in plane_vectors:
+        vec, viewup = plane_vectors[key]
+    elif key in axis_vectors:
+        vec, viewup = axis_vectors[key]
     else:
+        valid = (*plane_vectors, *axis_vectors, *axis_aliases)
         msg = (
             f'Unexpected value for direction {view}\n'
-            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
+            f'    Expected one of: {", ".join(repr(v) for v in valid)}'
         )
         raise ValueError(msg)
 
+    vec = vec.copy()
     if negative:
         vec *= -1
     return vec, viewup

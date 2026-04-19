@@ -829,8 +829,13 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             Adjust the size of the render window as to match the dimensions of
             the visible actors.
 
-        view : {'xy', 'yx', 'xz', 'zx', 'yz', 'zy'}, default: 'xy'
-            Plane to which the view is oriented.
+        view : str, default: 'xy'
+            Plane or axis to which the view is oriented. Accepts any
+            string supported by :func:`~pyvista.plotting.helpers.view_vectors`
+            — the plane strings ``'xy'``, ``'yx'``, ``'xz'``, ``'zx'``,
+            ``'yz'``, ``'zy'``, or the axis strings ``'+x'``, ``'-x'``,
+            ``'+y'``, ``'-y'``, ``'+z'``, ``'-z'`` (and their unsigned
+            aliases ``'x'``, ``'y'``, ``'z'``).
 
         negative : bool, default: False
             Whether to view in opposite direction.

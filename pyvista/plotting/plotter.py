@@ -1748,6 +1748,21 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Wrap ``Renderer.view_zy``."""
         self.renderer.view_zy(*args, **kwarg)
 
+    @wraps(Renderer.view_x)
+    def view_x(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.view_x``."""
+        self.renderer.view_x(*args, **kwarg)
+
+    @wraps(Renderer.view_y)
+    def view_y(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.view_y``."""
+        self.renderer.view_y(*args, **kwarg)
+
+    @wraps(Renderer.view_z)
+    def view_z(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.view_z``."""
+        self.renderer.view_z(*args, **kwarg)
+
     @wraps(Renderer.disable)
     def disable(self, *args, **kwarg) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.disable``."""

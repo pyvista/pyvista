@@ -121,7 +121,23 @@ def test_skybox(tmpdir):
 
 
 def test_view_vectors():
-    views = ('xy', 'yx', 'xz', 'zx', 'yz', 'zy')
+    views = (
+        'xy',
+        'yx',
+        'xz',
+        'zx',
+        'yz',
+        'zy',
+        '+x',
+        '-x',
+        'x',
+        '+y',
+        '-y',
+        'y',
+        '+z',
+        '-z',
+        'z',
+    )
 
     for view in views:
         vec, viewup = view_vectors(view)
@@ -132,6 +148,31 @@ def test_view_vectors():
 
     with pytest.raises(ValueError, match='Unexpected value for direction'):
         view_vectors('invalid')
+
+
+@pytest.mark.parametrize(
+    ('view', 'expected_vec', 'expected_viewup'),
+    [
+        ('+x', (1, 0, 0), (0, 0, 1)),
+        ('x', (1, 0, 0), (0, 0, 1)),
+        ('-x', (-1, 0, 0), (0, 0, 1)),
+        ('+y', (0, 1, 0), (0, 0, 1)),
+        ('y', (0, 1, 0), (0, 0, 1)),
+        ('-y', (0, -1, 0), (0, 0, 1)),
+        ('+z', (0, 0, 1), (0, 1, 0)),
+        ('z', (0, 0, 1), (0, 1, 0)),
+        ('-z', (0, 0, -1), (0, 1, 0)),
+    ],
+)
+def test_view_vectors_axis_strings(view, expected_vec, expected_viewup):
+    vec, viewup = view_vectors(view)
+    assert np.array_equal(vec, expected_vec)
+    assert np.array_equal(viewup, expected_viewup)
+
+
+def test_view_vectors_axis_negative():
+    vec, _ = view_vectors('+x', negative=True)
+    assert np.array_equal(vec, (-1, 0, 0))
 
 
 @pytest.fixture
