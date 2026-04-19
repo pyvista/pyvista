@@ -2109,7 +2109,7 @@ class DataSet(DataSetFilters, DataObject):
             dist2 = _vtk.mutable(0.0)
 
             locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)  # type: ignore[call-overload]
-            closest_cells.append(int(cell_id))
+            closest_cells.append(int(cell_id))  # type: ignore[call-overload]
             closest_points.append(closest_point)
 
         out_cells: int | NumpyArray[int] = (
