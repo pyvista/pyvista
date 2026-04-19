@@ -108,6 +108,7 @@ class BaseWriter(_FileIOBase):
             pv.ExplicitStructuredGrid,
             pv.MultiBlock,
             pv.PartitionedDataSet,
+            pv.PartitionedDataSetCollection,
         )
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
@@ -542,6 +543,19 @@ class XMLPartitionedDataSetWriter(_XMLWriter):
 
     _vtk_module_name = 'vtkIOParallelXML'
     _vtk_class_name = 'vtkXMLPartitionedDataSetWriter'
+
+
+class XMLPartitionedDataSetCollectionWriter(_XMLWriter):
+    """XMLPartitionedDataSetCollectionWriter for VTK XML ``.vtpc`` files.
+
+    Wraps :vtk:`vtkXMLPartitionedDataSetCollectionWriter`.
+
+    .. versionadded:: 0.48.0
+
+    """
+
+    _vtk_module_name = 'vtkIOParallelXML'
+    _vtk_class_name = 'vtkXMLPartitionedDataSetCollectionWriter'
 
 
 class XMLPolyDataWriter(_XMLWriter):
