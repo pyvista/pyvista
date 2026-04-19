@@ -147,6 +147,28 @@ class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
         self._src = src
 
 
+class PlainHtmlWidget:  # numpydoc ignore=PR01
+    """Lightweight HTML display widget that only requires ``_repr_html_()``.
+
+    Used in environments that support ``_repr_html_()`` but do not have
+    ``ipywidgets`` installed, such as Marimo notebooks.
+    """
+
+    def __init__(self, plotter, width, height, **kwargs):  # noqa: ARG002
+        """Initialize."""
+        scene = plotter.export_html(filename=None)
+        src = scene.getvalue().replace('"', '&quot;')
+        border = 'border: 1px solid rgb(221,221,221);'
+        self._html = (
+            f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; '
+            f'height: {height}; {border}"></iframe>'
+        )
+
+    def _repr_html_(self) -> str:  # numpydoc ignore=RT01
+        """Return HTML representation."""
+        return self._html
+
+
 def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwargs):
     """Launch a trame server for use with Jupyter.
 
@@ -391,6 +413,8 @@ def show_trame(
     kwargs.setdefault('height', dh)
 
     if mode == 'html':
+        if HTML is object:
+            return PlainHtmlWidget(plotter, **kwargs)
         return EmbeddableWidget(plotter, **kwargs)
 
     if jupyter_extension_enabled is None:

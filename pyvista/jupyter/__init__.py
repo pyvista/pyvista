@@ -95,10 +95,27 @@ def _discover_entry_points() -> None:
                 _custom_backends[name] = ep.load()
 
 
+def _is_marimo() -> bool:
+    """Check if running in a Marimo notebook environment.
+
+    Returns
+    -------
+    bool
+        True if running in a Marimo notebook, False otherwise.
+
+    """
+    try:
+        import marimo  # noqa: PLC0415
+
+        return bool(marimo.running_in_notebook())
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _resolve_backend() -> str:
     """Auto-detect the best available Jupyter backend.
 
-    Priority: registered custom backends > trame > static.
+    Priority: registered custom backends > marimo (html) > trame > static.
 
     Returns
     -------
@@ -113,11 +130,14 @@ def _resolve_backend() -> str:
     try:
         from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
     except ImportError:
-        pass
-    else:
-        return 'trame'
+        return 'static'
 
-    return 'static'
+    # In Marimo, use 'html' (VTK.js export) — no server required and works
+    # with Marimo's native _repr_html_() rendering pipeline.
+    if _is_marimo():
+        return 'html'
+
+    return 'trame'
 
 
 def _is_jupyter_backend(backend: str) -> TypeIs[JupyterBackendOptions]:
