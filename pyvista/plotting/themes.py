@@ -186,7 +186,7 @@ def set_plot_theme(theme):
         raise TypeError(msg)
 
 
-def register_theme(name: str, theme: Theme, *, override: bool = False) -> Theme:
+def register_theme(name: str, theme: Any, *, override: bool = False) -> Theme:
     """Register a pre-configured :class:`~pyvista.plotting.themes.Theme` instance.
 
     Once registered, the theme can be activated by name via
