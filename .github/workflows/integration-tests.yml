@@ -59,7 +59,7 @@ jobs:
           persist-credentials: false
 
       - uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
-        if: ${{matrix.project == 'pyvistaqt' || matrix.project == 'geovista'}}
+        if: ${{matrix.project == 'pyvistaqt' || matrix.project == 'geovista' || matrix.project == 'playwright'}}
         with:
           qt: ${{matrix.project == 'pyvistaqt'}}
           pyvista: ${{matrix.project != 'pyvistaqt'}}
