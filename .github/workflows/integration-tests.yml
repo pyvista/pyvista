@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: ["mne", "trame", "pyvistaqt", "geovista"]
+        project: ["mne", "trame", "pyvistaqt", "geovista", "playwright"]
     runs-on: ubuntu-22.04-self-hosted
     defaults:
       run:
