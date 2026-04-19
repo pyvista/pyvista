@@ -38,6 +38,10 @@ from pyvista.plotting.interactor_style_registry import (
 from pyvista.plotting.interactor_style_registry import (
     _save_registry_state as _save_style_registry_state,
 )
+from pyvista.plotting.theme_registry import (
+    _restore_registry_state as _restore_theme_registry_state,
+)
+from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pv.OFF_SCREEN = True
@@ -137,6 +141,7 @@ def reset_global_state():
     reader_registry_state = _save_registry_state()
     writer_registry_state = _save_writer_registry_state()
     accessor_registry_state = _save_accessor_registry_state()
+    theme_registry_state = _save_theme_registry_state()
 
     yield
 
@@ -144,6 +149,7 @@ def reset_global_state():
     _restore_registry_state(reader_registry_state)
     _restore_writer_registry_state(writer_registry_state)
     _restore_accessor_registry_state(accessor_registry_state)
+    _restore_theme_registry_state(theme_registry_state)
 
     pv.vtk_snake_case('error')
     assert pv.vtk_snake_case() == 'error'
