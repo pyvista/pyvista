@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 from typing import TYPE_CHECKING
 from typing import Literal
+import warnings
+
+import numpy as np
 
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
@@ -40,8 +44,57 @@ from pyvista.report import check_math_text_support as check_math_text_support
 from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotlib_vtk_compatibility
 from pyvista.report import get_gpu_info as get_gpu_info
 
-if TYPE_CHECKING:
-    import numpy as np
+
+def _filter_warnings():
+    """Filter warnings emitted by 3rd party modules which PyVista has no control over.
+
+    These are filtered both for user-facing code, and for PyVista unit tests.
+    """
+    warnings.filterwarnings(  # Filter added in https://github.com/pyvista/pyvista/pull/7009
+        'ignore',
+        message=r'It is recommended to use web\.AppKey instances for keys.*',
+        category=Warning,
+    )
+
+    if importlib.util.find_spec('trame_vtk'):
+        # Filter vtk deprecations that were fixed in PyVista, but not in trame-vtk
+        if vtk_version_info >= (9, 5, 0):
+            warnings.filterwarnings(  # Filter added in https://github.com/pyvista/pyvista/pull/8003
+                'ignore',
+                message=r'Call to deprecated method GetData.*',
+                category=DeprecationWarning,
+            )
+        if vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+            warnings.filterwarnings(  # Filter added in https://github.com/pyvista/pyvista/pull/8405
+                'ignore',
+                message=r'Call to deprecated method GetSize.*',
+                category=DeprecationWarning,
+            )
+
+    numpy_version_info = tuple(map(int, np.__version__.split('.')[:3]))
+    if numpy_version_info >= (2, 5, 0):
+        if vtk_version_info < (9, 7, 0):
+            # Older VTK versions internally set array shape, which is deprecated for newer NumPy.
+            # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
+            # Users that update to the latest VTK should continue to see these deprecations
+            # in their own code.
+            warnings.filterwarnings(
+                'ignore',
+                message=r'Setting the shape on a NumPy array has been deprecated.*',
+                category=DeprecationWarning,
+            )
+
+        # Setting array dtype is also deprecated.
+        # These warnings are triggered by pyvista_ndarray.view() and VTK's C++ code
+        # See https://github.com/pyvista/pyvista/issues/8484
+        warnings.filterwarnings(
+            'ignore',
+            message=r'Setting the dtype on a NumPy array has been deprecated.*',
+            category=DeprecationWarning,
+        )
+
+
+_filter_warnings()
 
 # get the int type from vtk
 ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
