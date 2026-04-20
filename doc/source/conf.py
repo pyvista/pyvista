@@ -202,6 +202,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
+    # Python 3.14 typing internals leaked through get_type_hints() on
+    # forward-refs inside Union aliases (e.g., 'Color' inside ColorLike).
+    (r'py:.*', 'TypeAliasForwardRef'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),

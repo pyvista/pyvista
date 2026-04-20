@@ -728,15 +728,21 @@ def convert_string_array(
             # setting the object name
             _set_string_scalar_object_name(vtkarr)
 
-        # OPTIMIZE ###########
-        for val in arr:
-            vtkarr.InsertNextValue(val)
-        ################################
+        # Pre-allocate the underlying storage instead of growing it via
+        # ``InsertNextValue`` per element. Iterating over ``arr.tolist()``
+        # avoids the per-element ``numpy.str_`` scalar boxing cost that
+        # iterating a numpy string array pays.
+        flat_list = arr.reshape(-1).tolist()
+        vtkarr.SetNumberOfValues(len(flat_list))
+        for i, val in enumerate(flat_list):
+            vtkarr.SetValue(i, val)
         if isinstance(name, str):
             vtkarr.SetName(name)
         return vtkarr
-    # Otherwise it is a vtk array and needs to be converted back to numpy
-    # OPTIMIZE ###############
+    # Otherwise it is a vtk array and needs to be converted back to numpy.
+    # ``np.array(list, dtype='|U')`` auto-sizes the unicode width to the
+    # longest value; passing dtype='|U' to np.empty defaults to width 1
+    # which truncates strings.
     nvalues = arr.GetNumberOfValues()
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
     try:
@@ -745,7 +751,6 @@ def convert_string_array(
     except AttributeError:
         pass
     return arr_out
-    ########################################
 
 
 def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> NumpyArray[float]:
@@ -964,23 +969,33 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
     Notes
     -----
-    This class is intended for use as a dict with a small number of keys and
-    relatively small values, e.g. for storing metadata. It should not be
-    used to store frequently accessed array data with hundreds of entries.
+    This class is intended for metadata storage. Values are JSON-serialized
+    on every mutation, so it should not be used in place of a regular field
+    data array when storing bulk array data with many entries.
 
     """
 
     @property
     def _string(self: _SerializedDictArray) -> str:
         """Get the :vtk:`vtkStringArray` string."""
-        return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
+        # Joining all values handles both the historical char-per-value
+        # format (read from older saved files) and the current
+        # whole-string-as-one-value format below.
+        n = self.GetNumberOfValues()
+        if n == 1:
+            return self.GetValue(0)
+        return ''.join([self.GetValue(i) for i in range(n)])
 
     @_string.setter
     def _string(self: _SerializedDictArray, str_: str) -> None:
         """Set the :vtk:`vtkStringArray` to a specified string."""
-        self.SetNumberOfValues(0)  # Clear string
-        for char in str_:  # Populate string
-            self.InsertNextValue(char)
+        # Store the entire string as a single value rather than one
+        # character per value. This avoids O(len(str_)) Python<->C
+        # crossings and matches how every other VTK string field stores
+        # text. Reading still works for the legacy char-per-value format
+        # because the getter joins all values.
+        self.SetNumberOfValues(1)
+        self.SetValue(0, str_)
 
     def _update_string(self: _SerializedDictArray) -> None:
         """Format dict data as JSON and update the :vtk:`vtkStringArray`."""
