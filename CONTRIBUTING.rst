@@ -174,7 +174,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make doctest        # run all docstring tests via tox (matches CI)
     make docs           # build the full documentation via tox (matches CI)
     make docs-test      # test the built documentation via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
