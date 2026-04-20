@@ -369,19 +369,22 @@ def read(  # noqa: PLR0911, PLR0917
     try:
         reader = pv.get_reader(filename, force_ext)
     except ValueError:
+        msg = f'This file was not able to be automatically read by pyvista.\n  {str(filename)!r}'
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
         try:
             from meshio._exceptions import ReadError  # noqa: PLC0415
         except ImportError:
-            msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
         try:
             return read_meshio(filename)
         except ReadError:
-            msg = 'This file was not able to be automatically read by pyvista.'
+            if ext == '.pv':  # pragma: no cover
+                msg += (
+                    "\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
+                    'It can be installed with `pyvista[io]`.'
+                )
             raise OSError(msg)
     else:
         observer = Observer()

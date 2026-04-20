@@ -3,7 +3,7 @@
 Once downloaded, these datasets are stored locally allowing for the
 rapid reuse of these datasets.
 
-Files are all hosted in https://github.com/pyvista/vtk-data/ and are downloaded
+Files are all hosted in https://github.com/pyvista/data/ and are downloaded
 using the ``download_file`` function. If you add a file to the example data
 repository, you should add a ``download-<dataset>`` method here which will
 rendered on this page.
@@ -64,7 +64,7 @@ _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
-_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
 
 
 def _warn_invalid_dir_not_used(path, env_var):
@@ -73,7 +73,7 @@ def _warn_invalid_dir_not_used(path, env_var):
 
 
 def _get_vtk_data_source() -> tuple[str, bool]:
-    # If available, a local vtk-data instance will be used for examples
+    # If available, a local pyvista/data instance will be used for examples
     # Set default output
     source = _DEFAULT_VTK_DATA_SOURCE
     file_cache = False
@@ -194,10 +194,10 @@ def _file_copier(input_file, output_file, *_, **__):
 
 
 def download_file(filename):
-    """Download a single file from the PyVista vtk-data repository.
+    """Download a single file from the pyvista/data repository.
 
-    You can add an example file at `pyvista/vtk_data
-    <https://github.com/pyvista/vtk-data>`_.
+    You can add an example file at `pyvista/data
+    <https://github.com/pyvista/data>`_.
 
     Parameters
     ----------
@@ -988,7 +988,7 @@ def download_clown(load=True):  # noqa: FBT002
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_clown()
-    >>> dataset.plot()
+    >>> dataset.plot(color=True)
 
     .. seealso::
 
@@ -4543,8 +4543,8 @@ def download_cubemap_space_4k(load=True):  # noqa: FBT002
     Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
     https://jaxry.github.io/panorama-to-cubemap/
 
-    See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_
+    See `data/cubemap_space
+    <https://github.com/pyvista/data/tree/master/Data/cubemap_space#readme>`_
     for more details.
 
     Parameters
@@ -4602,8 +4602,8 @@ def download_cubemap_space_16k(load=True):  # noqa: FBT002
     Maps 2020 <https://svs.gsfc.nasa.gov/4851>`_ and converting it using
     https://jaxry.github.io/panorama-to-cubemap/
 
-    See `vtk-data/cubemap_space
-    <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_ for
+    See `data/cubemap_space
+    <https://github.com/pyvista/data/tree/master/Data/cubemap_space#readme>`_ for
     more details.
 
     Parameters
@@ -6620,7 +6620,7 @@ def download_stars_cloud_hyg(load=True):  # noqa: FBT002
     <https://creativecommons.org/licenses/by-sa/2.5/>`_
 
     See the `README.md
-    <https://github.com/pyvista/vtk-data/blob/master/Data/point-clouds/hyg-database/README.md>`_
+    <https://github.com/pyvista/data/blob/master/Data/point-clouds/hyg-database/README.md>`_
     for more details for how the star colors were computed.
 
     Distances are in parsecs from Earth.
@@ -6817,7 +6817,7 @@ def download_black_vase(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -6894,7 +6894,7 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -6977,7 +6977,7 @@ def download_bird_bath(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7052,7 +7052,7 @@ def download_owl(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7132,7 +7132,7 @@ def download_plastic_vase(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7209,7 +7209,7 @@ def download_sea_vase(load=True, *, high_resolution=False):  # noqa: FBT002
     Original datasets are under the CC BY 4.0 license.
 
     For more details, see `Ivan Nikolov Datasets
-    <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
+    <https://github.com/pyvista/data/tree/master/Data/ivan-nikolov>`_
 
     .. versionchanged:: 0.45
 
@@ -7492,7 +7492,7 @@ def download_coil_magnetic_field(load=True):  # noqa: FBT002
     """Download the magnetic field of a coil.
 
     These examples were generated from the following `script
-    <https://github.com/pyvista/vtk-data/tree/master/Data/magpylib/>`_.
+    <https://github.com/pyvista/data/tree/master/Data/magpylib/>`_.
 
     Parameters
     ----------

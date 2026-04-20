@@ -71,6 +71,21 @@ def vol_actor():
     return pl.add_volume(vol)
 
 
+def _make_actor_mapper_array_mesh(association: str):
+    if association == 'point':
+        mesh = pv.Wavelet()
+        mesh.point_data['data'] = mesh.points[:, 2]
+        expected = mesh.point_data['data']
+    else:
+        mesh = pv.Cube().triangulate()
+        mesh.cell_data['data'] = np.arange(mesh.n_cells, dtype=float)
+        expected = mesh.cell_data['data']
+
+    mesh.point_data['keep_active'] = mesh.points[:, 0]
+    mesh.set_active_scalars('keep_active')
+    return mesh, expected
+
+
 def test_actor_init_empty():
     actor = pv.Actor()
     assert 'Position' in repr(actor)
@@ -135,6 +150,126 @@ def test_actor_copy_deep(prop3d, prop_attr, actor, volume, include_mapper):
         assert obj.mapper.dataset is not None
     else:
         assert copied.mapper is None
+
+
+def test_actor_copy_deep_preserves_scalars_pipeline(sphere):
+    """Deep-copying an actor must keep the mapper's scalars pipeline live."""
+    sphere['data'] = sphere.points[:, 2]
+
+    actor = pv.Plotter().add_mesh(sphere, scalars='data')
+    assert actor.mapper._active_scalars_algo is not None
+
+    copied = actor.copy()
+    assert copied is not actor
+    assert copied.mapper is not actor.mapper
+
+    copied.mapper.update()
+    out = pv.wrap(copied.mapper.GetInputDataObject(0, 0))
+    assert out.active_scalars_name == 'data'
+    assert np.array_equal(copied.mapper._mapped_scalars, sphere['data'])
+
+
+@pytest.mark.parametrize('association', ['point', 'cell'])
+def test_actor_mapper_array_name_matches_active_scalars_rendering(association):
+    """Direct actor+mapper scalar selection should match set_active_scalars."""
+    mesh, expected = _make_actor_mapper_array_mesh(association)
+
+    def render_actor(*, use_array_name: bool):
+        mapper = pv.DataSetMapper(mesh)
+        actor = pv.Actor(mapper=mapper, prop=pv.Property())
+        if use_array_name:
+            actor.mapper.array_name = 'data'
+        else:
+            actor.mapper.set_active_scalars('data', association)
+        actor.mapper.scalar_range = (float(np.min(expected)), float(np.max(expected)))
+        actor.mapper.lookup_table.apply_cmap('plasma')
+
+        pl = pv.Plotter(off_screen=True, window_size=(300, 300))
+        pl.add_actor(actor)
+        pl.camera_position = 'xy'
+        pl.render()
+        image = pl.screenshot()
+        pl.close()
+        return actor.mapper, image
+
+    array_name_mapper, array_name_image = render_actor(use_array_name=True)
+    active_mapper, active_image = render_actor(use_array_name=False)
+
+    assert array_name_mapper._active_scalars_algo is not None
+    assert array_name_mapper._active_scalars_algo.preference == association
+    assert np.array_equal(array_name_mapper._mapped_scalars, expected)
+    assert array_name_mapper.lookup_table.cmap.name == 'plasma'
+    assert array_name_mapper.scalar_range == (float(np.min(expected)), float(np.max(expected)))
+    assert np.array_equal(active_mapper._mapped_scalars, expected)
+    assert np.array_equal(array_name_image, active_image)
+    assert mesh.active_scalars_name == 'keep_active'
+
+
+@pytest.mark.parametrize('association', ['point', 'cell'])
+def test_actor_mapper_array_name_defaults_follow_theme_and_data_range(association):
+    """Direct actor+mapper array selection should use theme cmap and data range."""
+    mesh, expected = _make_actor_mapper_array_mesh(association)
+    theme = pv.themes.Theme()
+    theme.cmap = 'plasma'
+
+    mapper = pv.DataSetMapper(mesh, theme=theme)
+    actor = pv.Actor(mapper=mapper, prop=pv.Property())
+    actor.mapper.array_name = 'data'
+
+    pl = pv.Plotter()
+    pl.add_actor(actor)
+    actor.mapper.update()
+
+    expected_range = (float(np.min(expected)), float(np.max(expected)))
+    assert actor.mapper._active_scalars_algo is not None
+    assert actor.mapper._active_scalars_algo.preference == association
+    assert actor.mapper.lookup_table.cmap.name == 'plasma'
+    assert actor.mapper.scalar_range == expected_range
+    assert actor.mapper.lookup_table.scalar_range == expected_range
+    assert np.array_equal(actor.mapper._mapped_scalars, expected)
+    assert mesh.active_scalars_name == 'keep_active'
+
+    pl.close()
+
+
+def test_actor_mapper_set_active_scalars_with_existing_normals_preserves_source_state():
+    """Direct actor shading should preserve source normals and active scalars."""
+    mesh = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    mesh['keep_active'] = mesh.points[:, 0]
+    mesh['data'] = mesh.points[:, 2]
+    mesh.set_active_scalars('keep_active')
+    original_normals = mesh.point_data['Normals'].copy()
+
+    mapper = pv.DataSetMapper(mesh)
+    actor = pv.Actor(mapper=mapper, prop=pv.Property())
+    actor.mapper.set_active_scalars('data', 'point')
+    actor.prop.interpolation = 'phong'
+
+    pl = pv.Plotter()
+    pl.add_actor(actor)
+    actor.mapper.update()
+    mapped = pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
+
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert mapped.point_data.active_normals_name == 'Normals'
+    assert np.array_equal(actor.mapper._mapped_scalars, mesh['data'])
+    assert actor.prop.interpolation == pv.opts.InterpolationType.PHONG
+    assert mesh.active_scalars_name == 'keep_active'
+    assert np.array_equal(mesh.point_data['Normals'], original_normals)
+
+    pl.close()
+
+
+def test_actor_mapper_array_name_preserves_explicit_scalar_range():
+    """Auto scalar-range initialization should not override an explicit range."""
+    mesh, _expected = _make_actor_mapper_array_mesh('point')
+
+    mapper = pv.DataSetMapper(mesh)
+    actor = pv.Actor(mapper=mapper, prop=pv.Property())
+    actor.mapper.scalar_range = (-1.0, 1.0)
+    actor.mapper.array_name = 'data'
+
+    assert actor.mapper.scalar_range == (-1.0, 1.0)
 
 
 @pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])

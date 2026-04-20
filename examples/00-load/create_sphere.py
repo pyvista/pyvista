@@ -9,8 +9,6 @@ This example shows how to create meshes in different ways.
 """
 
 # sphinx_gallery_thumbnail_number = 5
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 
