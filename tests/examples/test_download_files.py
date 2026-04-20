@@ -164,6 +164,24 @@ def test_download_nefertiti():
     assert data.n_cells
 
 
+def test_download_washington_bust():
+    filename = examples.download_washington_bust(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_washington_bust()
+    assert isinstance(data, pv.PolyData)
+    assert data.n_cells
+
+
+def test_download_lincoln_life_mask():
+    filename = examples.download_lincoln_life_mask(load=False)
+    assert Path(filename).is_file()
+
+    data = examples.download_lincoln_life_mask()
+    assert isinstance(data, pv.PolyData)
+    assert data.n_cells
+
+
 def test_download_blood_vessels():
     """Tests the parallel VTU reader"""
     filename = examples.download_blood_vessels(load=False)
