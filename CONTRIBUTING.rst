@@ -1414,7 +1414,7 @@ For more details see :ref:`add_example_example`.
 Adding a New Dataset
 ^^^^^^^^^^^^^^^^^^^^
 If you have a dataset that you want to feature or want to include as part
-of a full gallery example, add it to `pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_
+of a full gallery example, add it to `pyvista/data <https://github.com/pyvista/data/>`_
 and follow the directions there. You will then need to add a new function to
 download the dataset in ``pyvista/examples/downloads.py``. This might be as easy as:
 
@@ -1774,7 +1774,7 @@ status check label regardless of if it is self hosted.
 
   macOS:
     name: ${{ matrix.job-name }}
-    needs: cache-vtk-data
+    needs: cache-pyvista-data
     strategy:
       fail-fast: false
       matrix:
