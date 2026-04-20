@@ -175,15 +175,9 @@ class _ConfigBase(metaclass=_ForceSlots):
 class Config(_ConfigBase):
     """PyVista core configuration.
 
-    Holds process-wide settings that affect :mod:`pyvista.core` behavior. The
-    singleton instance is exposed as :data:`pyvista.global_config`.
-
-    See Also
-    --------
-    pyvista.global_config
-        The singleton instance to use.
-    pyvista.global_theme
-        Sibling singleton for plotting (rendering) settings.
+    Holds process-wide settings that affect ``pyvista.core`` behavior. The
+    singleton instance is exposed as ``pyvista.global_config``. This is the
+    sibling of ``pyvista.global_theme`` for plotting (rendering) settings.
 
     Examples
     --------
