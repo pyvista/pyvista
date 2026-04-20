@@ -175,8 +175,8 @@ pl.close()
 # %%
 # Adding Example Files
 # ~~~~~~~~~~~~~~~~~~~~
-# PyVista has a variety of example files all stored at `pyvista/vtk_data
-# <https://github.com/pyvista/vtk-data>`_, and you can add the file by
+# PyVista has a variety of example files all stored at `pyvista/data
+# <https://github.com/pyvista/data>`_, and you can add the file by
 # following the directions there.
 #
 # Under the hood, PyVista uses `pooch <https://github.com/fatiando/pooch>`_,
