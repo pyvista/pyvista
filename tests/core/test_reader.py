@@ -50,6 +50,40 @@ def test_read_raises():
         pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
 
 
+def test_read_cls_narrows(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    result = pv.read(filepath, cls=pv.PolyData)
+    assert isinstance(result, pv.PolyData)
+    assert result.n_points == mesh.n_points
+
+
+def test_read_cls_mismatch_raises(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    match = (
+        r'Expected an instance of UnstructuredGrid when reading .*sphere\.vtp.*, '
+        r'but got PolyData\.'
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(filepath, cls=pv.UnstructuredGrid)
+
+
+def test_read_cls_none_behaves_like_default(tmp_path):
+    mesh = pv.Sphere()
+    filepath = tmp_path / 'sphere.vtp'
+    mesh.save(filepath)
+
+    explicit = pv.read(filepath, cls=None)
+    default = pv.read(filepath)
+    assert type(explicit) is type(default)
+    assert explicit.n_points == default.n_points
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(npoints=st.integers().filter(lambda x: x < 2))
 def test_read_texture_raises(mocker: MockerFixture, npoints):

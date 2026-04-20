@@ -613,7 +613,8 @@ class XMLImageDataReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
@@ -628,7 +629,8 @@ class XMLPImageDataReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
@@ -660,7 +662,8 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> RectilinearGrid: ...  # noqa: D102
+        def read(self) -> RectilinearGrid:
+            """Read data and return a :class:`~pyvista.RectilinearGrid`."""
 
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
@@ -675,7 +678,8 @@ class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> RectilinearGrid: ...  # noqa: D102
+        def read(self) -> RectilinearGrid:
+            """Read data and return a :class:`~pyvista.RectilinearGrid`."""
 
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
@@ -707,7 +711,8 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> UnstructuredGrid: ...  # noqa: D102
+        def read(self) -> UnstructuredGrid:
+            """Read data and return an :class:`~pyvista.UnstructuredGrid`."""
 
 
 class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
@@ -722,7 +727,8 @@ class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> UnstructuredGrid: ...  # noqa: D102
+        def read(self) -> UnstructuredGrid:
+            """Read data and return an :class:`~pyvista.UnstructuredGrid`."""
 
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
@@ -756,7 +762,8 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
@@ -783,7 +790,8 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> StructuredGrid: ...  # noqa: D102
+        def read(self) -> StructuredGrid:
+            """Read data and return a :class:`~pyvista.StructuredGrid`."""
 
 
 class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
@@ -798,7 +806,8 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 
     if TYPE_CHECKING:
 
-        def read(self) -> MultiBlock: ...  # noqa: D102
+        def read(self) -> MultiBlock:
+            """Read data and return a :class:`~pyvista.MultiBlock`."""
 
 
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
@@ -1261,7 +1270,8 @@ class PLYReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 class OBJReader(BaseReader):
@@ -1288,7 +1298,8 @@ class OBJReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 class STLReader(BaseReader):
@@ -1315,7 +1326,8 @@ class STLReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 class TecplotReader(BaseReader):
@@ -1378,7 +1390,8 @@ class VTKDataSetReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> DataSet: ...  # noqa: D102
+        def read(self) -> DataSet:
+            """Read data and return a :class:`~pyvista.DataSet`."""
 
 
 class VTKPDataSetReader(BaseReader):
@@ -1393,7 +1406,8 @@ class VTKPDataSetReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> DataSet: ...  # noqa: D102
+        def read(self) -> DataSet:
+            """Read data and return a :class:`~pyvista.DataSet`."""
 
 
 class BYUReader(BaseReader):
@@ -1420,7 +1434,8 @@ class BYUReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 class FacetReader(BaseReader):
@@ -1447,7 +1462,8 @@ class FacetReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 class Plot3DMetaReader(BaseReader):
@@ -1978,7 +1994,8 @@ class BinaryMarchingCubesReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> PolyData: ...  # noqa: D102
+        def read(self) -> PolyData:
+            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 @dataclass(order=True)
@@ -2338,7 +2355,8 @@ class DICOMReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class BMPReader(BaseReader):
@@ -2365,7 +2383,8 @@ class BMPReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class DEMReader(BaseReader):
@@ -2392,7 +2411,8 @@ class DEMReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class JPEGReader(BaseReader):
@@ -2419,7 +2439,8 @@ class JPEGReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class MetaImageReader(BaseReader):
@@ -2446,7 +2467,8 @@ class MetaImageReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class NIFTIReader(BaseReader):
@@ -2473,7 +2495,8 @@ class NIFTIReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class NRRDReader(BaseReader):
@@ -2500,7 +2523,8 @@ class NRRDReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class PNGReader(BaseReader):
@@ -2527,7 +2551,8 @@ class PNGReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class PNMReader(BaseReader):
@@ -2554,7 +2579,8 @@ class PNMReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class SLCReader(BaseReader):
@@ -2581,7 +2607,8 @@ class SLCReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class TIFFReader(BaseReader):
@@ -2617,7 +2644,8 @@ class TIFFReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class HDRReader(BaseReader):
@@ -2653,7 +2681,8 @@ class HDRReader(BaseReader):
 
     if TYPE_CHECKING:
 
-        def read(self) -> ImageData: ...  # noqa: D102
+        def read(self) -> ImageData:
+            """Read data and return an :class:`~pyvista.ImageData`."""
 
 
 class PTSReader(BaseReader):

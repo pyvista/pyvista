@@ -290,18 +290,19 @@ def read(  # noqa: PLR0917
         Optionally show a progress bar. Ignored when using ``meshio``.
 
     cls : type, optional
-        If given, assert the returned object is an instance of this type
-        and narrow the static return type accordingly. This avoids the
-        need for ``cast()`` calls when the file's expected type is known
-        ahead of time, e.g. ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
-        A :class:`TypeError` is raised at runtime if the loaded mesh is
-        not an instance of ``cls``.
+        Expected concrete type of the returned mesh. When given, the
+        result is checked with :func:`isinstance` and a
+        :class:`TypeError` is raised on mismatch. Static type checkers
+        (``mypy``, ``pyright``) use this to narrow the return type to
+        ``cls`` directly, so callers do not need ``typing.cast`` or a
+        manual ``assert isinstance`` to access subclass-specific
+        attributes, e.g. ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
 
     Returns
     -------
     pyvista.DataSet | pyvista.MultiBlock
-        Wrapped PyVista dataset. If ``cls`` is given, an instance of ``cls``
-        is returned instead.
+        Wrapped PyVista dataset. When ``cls`` is given, an instance of
+        ``cls`` is returned instead.
 
     Examples
     --------
@@ -353,6 +354,7 @@ def _read_dispatch(  # noqa: PLR0911
     file_format: str | None,
     progress_bar: bool,
 ) -> DataObject:
+    """Dispatch a filename to the right reader and return the wrapped mesh."""
     if file_format is not None and force_ext is not None:
         msg = 'Only one of `file_format` and `force_ext` may be specified.'
         raise ValueError(msg)
