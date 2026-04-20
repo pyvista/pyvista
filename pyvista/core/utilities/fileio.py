@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TextIO
+from typing import TypeVar
 from typing import cast
 from typing import overload
 from urllib.parse import urlparse
@@ -54,6 +55,7 @@ PathStrSeq = str | Path | Sequence['PathStrSeq']
 PICKLE_EXT = ('.pkl', '.pickle')
 _PointCellField = Literal['point', 'cell', 'field']
 _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
+_ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 def _lazy_vtk_import(module_name: str, class_name: str) -> type:
@@ -205,12 +207,32 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
+@overload
+def read(
+    filename: PathStrSeq,
+    force_ext: str | None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,  # noqa: FBT001
+    *,
+    cls: type[_ReadReturnT],
+) -> _ReadReturnT: ...
+@overload
+def read(
+    filename: PathStrSeq,
+    force_ext: str | None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,  # noqa: FBT001
+    *,
+    cls: None = ...,
+) -> DataSet | MultiBlock: ...
 @_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0911, PLR0917
+def read(  # noqa: PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,  # noqa: FBT001, FBT002
+    *,
+    cls: type[DataObject] | None = None,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -267,10 +289,19 @@ def read(  # noqa: PLR0911, PLR0917
     progress_bar : bool, default: False
         Optionally show a progress bar. Ignored when using ``meshio``.
 
+    cls : type, optional
+        If given, assert the returned object is an instance of this type
+        and narrow the static return type accordingly. This avoids the
+        need for ``cast()`` calls when the file's expected type is known
+        ahead of time, e.g. ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
+        A :class:`TypeError` is raised at runtime if the loaded mesh is
+        not an instance of ``cls``.
+
     Returns
     -------
-    pyvista.DataSet
-        Wrapped PyVista dataset.
+    pyvista.DataSet | pyvista.MultiBlock
+        Wrapped PyVista dataset. If ``cls`` is given, an instance of ``cls``
+        is returned instead.
 
     Examples
     --------
@@ -280,6 +311,12 @@ def read(  # noqa: PLR0911, PLR0917
     >>> from pyvista import examples
     >>> mesh = pv.read(examples.antfile)
     >>> mesh.plot(cpos='xz')
+
+    Narrow the return type to a specific class. This avoids the need for
+    a manual ``cast`` when working with type checkers such as ``mypy``
+    or ``pyright``.
+
+    >>> mesh = pv.read('mesh.vtu', cls=pv.UnstructuredGrid)  # doctest:+SKIP
 
     Load a vtk file.
 
@@ -294,6 +331,28 @@ def read(  # noqa: PLR0911, PLR0917
     >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
+    result = _read_dispatch(
+        filename,
+        force_ext=force_ext,
+        file_format=file_format,
+        progress_bar=progress_bar,
+    )
+    if cls is not None and not isinstance(result, cls):
+        msg = (
+            f'Expected an instance of {cls.__name__} when reading {filename!r}, '
+            f'but got {type(result).__name__}.'
+        )
+        raise TypeError(msg)
+    return result
+
+
+def _read_dispatch(  # noqa: PLR0911
+    filename: PathStrSeq,
+    *,
+    force_ext: str | None,
+    file_format: str | None,
+    progress_bar: bool,
+) -> DataObject:
     if file_format is not None and force_ext is not None:
         msg = 'Only one of `file_format` and `force_ext` may be specified.'
         raise ValueError(msg)
@@ -302,7 +361,15 @@ def read(  # noqa: PLR0911, PLR0917
         multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
+            multi.append(
+                _read_dispatch(  # type: ignore[arg-type]
+                    each,
+                    force_ext=None,
+                    file_format=file_format,
+                    progress_bar=progress_bar,
+                ),
+                name,
+            )
         return multi
 
     # Circular import: reader_registry -> reader -> fileio

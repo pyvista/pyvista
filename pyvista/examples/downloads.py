@@ -4085,7 +4085,7 @@ def download_dolfin(load=True):  # noqa: FBT002
 
 _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
     'dolfin_fine.xml',
-    read_func=functools.partial(read, file_format='dolfin-xml'),  # type: ignore[arg-type]
+    read_func=functools.partial(read, file_format='dolfin-xml'),
 )
 
 

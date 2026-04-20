@@ -40,6 +40,15 @@ from .misc import abstract_class
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from pyvista import DataObject
+    from pyvista import DataSet
+    from pyvista import ImageData
+    from pyvista import MultiBlock
+    from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
+    from pyvista import UnstructuredGrid
+
     from ._frd import _FRDData
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
@@ -285,13 +294,16 @@ class BaseReader(_FileIOBase):
         self.reader.SetFileName(filename)
         self._update_information()
 
-    def read(self):
+    def read(self) -> DataObject:
         """Read data in file.
 
         Returns
         -------
-        pyvista.DataSet
-            PyVista Dataset.
+        pyvista.DataObject
+            PyVista dataset. The concrete subclass is determined by the
+            specific ``*Reader`` used; for example,
+            :class:`XMLUnstructuredGridReader.read` returns an
+            :class:`~pyvista.UnstructuredGrid`.
 
         """
         from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
@@ -599,6 +611,10 @@ class XMLImageDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
     """Parallel XML Image Data Reader for .pvti files.
@@ -609,6 +625,10 @@ class XMLPImageDataReader(BaseReader, PointCellDataSelection):
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPImageDataReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
@@ -638,6 +658,10 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLRectilinearGridReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> RectilinearGrid: ...  # noqa: D102
+
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
     """Parallel XML RectilinearGrid Reader for .pvtr files.
@@ -648,6 +672,10 @@ class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPRectilinearGridReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> RectilinearGrid: ...  # noqa: D102
 
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
@@ -677,6 +705,10 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> UnstructuredGrid: ...  # noqa: D102
+
 
 class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """Parallel XML UnstructuredGrid Reader for .pvtu files.
@@ -687,6 +719,10 @@ class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPUnstructuredGridReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> UnstructuredGrid: ...  # noqa: D102
 
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
@@ -718,6 +754,10 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPolyDataReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
+
 
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     """XML StructuredGrid Reader for .vts files.
@@ -741,6 +781,10 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLStructuredGridReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> StructuredGrid: ...  # noqa: D102
+
 
 class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     """XML MultiBlock Data Reader for .vtm or .vtmb files.
@@ -751,6 +795,10 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> MultiBlock: ...  # noqa: D102
 
 
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
@@ -1211,6 +1259,10 @@ class PLYReader(BaseReader):
     _vtk_module_name = 'vtkIOPLY'
     _vtk_class_name = 'vtkPLYReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
+
 
 class OBJReader(BaseReader):
     """OBJ Reader for reading .obj files.
@@ -1234,6 +1286,10 @@ class OBJReader(BaseReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOBJReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
+
 
 class STLReader(BaseReader):
     """STL Reader for .stl files.
@@ -1256,6 +1312,10 @@ class STLReader(BaseReader):
 
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkSTLReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
 
 
 class TecplotReader(BaseReader):
@@ -1316,6 +1376,10 @@ class VTKDataSetReader(BaseReader):
         self.reader.ReadAllFieldsOn()
         self.reader.ReadAllTensorsOn()
 
+    if TYPE_CHECKING:
+
+        def read(self) -> DataSet: ...  # noqa: D102
+
 
 class VTKPDataSetReader(BaseReader):
     """Parallel VTK Data Set Reader for .pvtk files.
@@ -1326,6 +1390,10 @@ class VTKPDataSetReader(BaseReader):
 
     _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPDataSetReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> DataSet: ...  # noqa: D102
 
 
 class BYUReader(BaseReader):
@@ -1350,6 +1418,10 @@ class BYUReader(BaseReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkBYUReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
+
 
 class FacetReader(BaseReader):
     """Facet Reader for .facet files.
@@ -1372,6 +1444,10 @@ class FacetReader(BaseReader):
 
     _vtk_module_name = 'vtkFiltersHybrid'
     _vtk_class_name = 'vtkFacetReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
 
 
 class Plot3DMetaReader(BaseReader):
@@ -1900,6 +1976,10 @@ class BinaryMarchingCubesReader(BaseReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMCubesReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> PolyData: ...  # noqa: D102
+
 
 @dataclass(order=True)
 class PVDDataSet(_NoNewAttrMixin):
@@ -2256,6 +2336,10 @@ class DICOMReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDICOMImageReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class BMPReader(BaseReader):
     """BMP Reader for .bmp files.
@@ -2278,6 +2362,10 @@ class BMPReader(BaseReader):
 
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkBMPReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class DEMReader(BaseReader):
@@ -2302,6 +2390,10 @@ class DEMReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDEMReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class JPEGReader(BaseReader):
     """JPEG Reader for .jpeg and .jpg files.
@@ -2324,6 +2416,10 @@ class JPEGReader(BaseReader):
 
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkJPEGReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class MetaImageReader(BaseReader):
@@ -2348,6 +2444,10 @@ class MetaImageReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkMetaImageReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class NIFTIReader(BaseReader):
     """NIFTI Reader for .nii and .nii.gz files.
@@ -2370,6 +2470,10 @@ class NIFTIReader(BaseReader):
 
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNIFTIImageReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class NRRDReader(BaseReader):
@@ -2394,6 +2498,10 @@ class NRRDReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNrrdReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class PNGReader(BaseReader):
     """PNGReader for .png files.
@@ -2416,6 +2524,10 @@ class PNGReader(BaseReader):
 
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNGReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class PNMReader(BaseReader):
@@ -2440,6 +2552,10 @@ class PNMReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNMReader'
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class SLCReader(BaseReader):
     """SLCReader for .slc files.
@@ -2462,6 +2578,10 @@ class SLCReader(BaseReader):
 
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkSLCReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class TIFFReader(BaseReader):
@@ -2495,6 +2615,10 @@ class TIFFReader(BaseReader):
         ORIENTATION_BOTLEFT = 4
         self.reader.SetOrientationType(ORIENTATION_BOTLEFT)
 
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
+
 
 class HDRReader(BaseReader):
     """HDRReader for .hdr files.
@@ -2526,6 +2650,10 @@ class HDRReader(BaseReader):
 
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkHDRReader'
+
+    if TYPE_CHECKING:
+
+        def read(self) -> ImageData: ...  # noqa: D102
 
 
 class PTSReader(BaseReader):
