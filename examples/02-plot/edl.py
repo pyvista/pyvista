@@ -6,13 +6,29 @@ Eye Dome Lighting
 
 Eye-Dome Lighting (EDL) is a non-photorealistic, image-based shading technique
 designed to improve depth perception in scientific visualization images.
-To learn more, please see `this blog post`_.
+It darkens each pixel based on how much nearer its neighbors are in screen
+space, which makes depth ordering readable even on flat-shaded geometry or
+unshaded point clouds. To learn more, see `this blog post`_.
 
 .. _this blog post: https://blog.kitware.com/eye-dome-lighting-a-non-photorealistic-shading-technique/
+
+EDL is most useful when standard Lambertian shading is insufficient, for
+example:
+
+* Point clouds, which have no surface normals to shade from.
+* Dense or intertwined geometry where overlapping surfaces collapse into a
+  visually flat mass.
+* Noisy or raw-scanned meshes with many features at similar depths.
 
 """
 
 # %%
+# Dense branching geometry
+# ++++++++++++++++++++++++
+#
+# The VTK pine root scan is a classic EDL demonstration dataset: a dense
+# tangle of fine branching structures where depth ordering is hard to read
+# without extra shading cues.
 
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
@@ -23,61 +39,50 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-# %%
-# Statue
-# +++++++++++
-#
-# Eye-Dome Lighting can dramatically improve depth perception when plotting
-# incredibly sophisticated meshes like the Smithsonian's bust of George
-# Washington:
+pine_roots = examples.download_pine_roots()
+pine_roots.plot(eye_dome_lighting=True, color='tan')
 
-bust = examples.download_washington_bust()
-bust.plot(eye_dome_lighting=True, cpos=[-1, -1, 0.2], color=True)
 
 # %%
-# Here we will compare a EDL shading side by side with normal shading
+# Compare EDL shading side by side with standard shading. The left panel
+# is rendered with EDL, the right without. EDL reveals which roots lie in
+# front of which; without it, they collapse into a flat silhouette.
 
 pl = pv.Plotter(shape=(1, 2), border=False)
 
-# With eye-dome lighting
 pl.subplot(0, 0)
-pl.add_mesh(bust, color=True)
+pl.add_mesh(pine_roots, color='tan')
 pl.enable_eye_dome_lighting()
 pl.add_text('Eye-Dome Lighting', font_size=24)
-pl.camera_position = [-1, -1, 0.2]
 
-# No eye-dome lighting
 pl.subplot(0, 1)
-pl.add_mesh(bust, color=True)
+pl.add_mesh(pine_roots, color='tan')
 pl.add_text('No Eye-Dome Lighting', font_size=24)
-pl.camera_position = [-1, -1, 0.2]
 
+pl.link_views()
 pl.show()
 
+
 # %%
-# Point Cloud
+# Point cloud
 # +++++++++++
 #
-# When plotting a simple point cloud, it can be difficult to perceive depth.
-# Take this Lidar point cloud for example:
+# EDL was originally motivated by the problem of shading point clouds, which
+# have no surface normals for traditional lighting. This Lidar point cloud
+# looks ambiguous without shading hints:
 
 point_cloud = examples.download_lidar()
 
-
-# %%
-# And now plot this point cloud as-is:
-
-# Plot a typical point cloud with no EDL
 pl = pv.Plotter()
 pl.add_mesh(point_cloud, color='lightblue', point_size=5)
 pl.show()
 
 
 # %%
-# We can improve the depth mapping by enabling eye dome lighting on the
-# renderer with :func:`pyvista.Renderer.enable_eye_dome_lighting`.
+# Enable EDL on the renderer via
+# :func:`pyvista.Renderer.enable_eye_dome_lighting` and the terrain structure
+# becomes readable.
 
-# Plot with EDL
 pl = pv.Plotter()
 pl.add_mesh(point_cloud, color='lightblue', point_size=5)
 pl.enable_eye_dome_lighting()
@@ -85,9 +90,8 @@ pl.show()
 
 
 # %%
-# The eye dome lighting mode can also handle plotting scalar arrays:
+# EDL also works alongside scalar coloring:
 
-# Plot with EDL and scalar data
 pl = pv.Plotter()
 pl.add_mesh(point_cloud, scalars='Elevation', point_size=5)
 pl.enable_eye_dome_lighting()
