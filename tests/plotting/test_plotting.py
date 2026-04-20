@@ -1,6 +1,6 @@
 """This test module tests any functionality that requires plotting.
 
-See the image regression notes in doc/extras/developer_notes.rst
+See the image regression notes in doc/developer_notes.rst
 
 """
 
