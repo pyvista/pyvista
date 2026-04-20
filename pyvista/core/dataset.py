@@ -63,9 +63,10 @@ if TYPE_CHECKING:
     from ._typing_core import VectorLike
     from ._typing_core import _ArrayLikeOrScalar
 
+    _Dimensionality = Literal[0, 1, 2, 3]
+
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-_Dimensionality = Literal[0, 1, 2, 3]
 
 
 class ActiveArrayInfoTuple(NamedTuple):
