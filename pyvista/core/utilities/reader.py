@@ -40,19 +40,31 @@ from .misc import abstract_class
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    # These are referenced as string forward references in ``BaseReader``
+    # generic parameterization on subclasses (e.g. ``BaseReader['PolyData']``)
+    # and in the ``_T_Output_co`` TypeVar bound. Static type checkers
+    # (mypy, pyright) resolve those strings against this module's namespace,
+    # so the imports are required at type-check time even though Ruff
+    # cannot see the reference inside a string literal.
     from pyvista import DataObject
-    from pyvista import DataSet
-    from pyvista import ImageData
-    from pyvista import MultiBlock
-    from pyvista import PolyData
-    from pyvista import RectilinearGrid
-    from pyvista import StructuredGrid
-    from pyvista import UnstructuredGrid
+    from pyvista import DataSet  # noqa: F401
+    from pyvista import ImageData  # noqa: F401
+    from pyvista import MultiBlock  # noqa: F401
+    from pyvista import PartitionedDataSet  # noqa: F401
+    from pyvista import PolyData  # noqa: F401
+    from pyvista import RectilinearGrid  # noqa: F401
+    from pyvista import StructuredGrid  # noqa: F401
+    from pyvista import UnstructuredGrid  # noqa: F401
 
     from ._frd import _FRDData
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
-CLASS_READERS: dict[str, type[BaseReader]] = {}
+CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
+
+# Covariant TypeVar for :class:`BaseReader`'s output type. Covariant is
+# correct because ``BaseReader`` only *produces* values of ``T_Output``
+# (via :meth:`BaseReader.read`); it never accepts them as input.
+_T_Output_co = TypeVar('_T_Output_co', bound='DataObject', covariant=True)
 
 
 def get_reader(filename, force_ext=None):
@@ -160,13 +172,20 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader(_FileIOBase):
+class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
     and allowing access to the underlying vtk reader. See
     :func:`pyvista.get_reader` for an example using
     a built-in subclass.
+
+    Subclasses parameterize ``BaseReader`` with the concrete
+    :class:`~pyvista.DataObject` subclass they produce, e.g.
+    :class:`XMLPolyDataReader` is declared as
+    ``class XMLPolyDataReader(BaseReader[PolyData], ...)`` so
+    :meth:`read` returns :class:`~pyvista.PolyData` under static analysis
+    without each subclass needing its own ``read`` override.
 
     Parameters
     ----------
@@ -294,7 +313,7 @@ class BaseReader(_FileIOBase):
         self.reader.SetFileName(filename)
         self._update_information()
 
-    def read(self) -> DataObject:
+    def read(self) -> _T_Output_co:
         """Read data in file.
 
         Returns
@@ -317,7 +336,7 @@ class BaseReader(_FileIOBase):
 
         # check for any pyvista metadata
         data._restore_metadata()
-        return data
+        return cast('_T_Output_co', data)
 
     def _update_information(self) -> None:
         self.reader.UpdateInformation()
@@ -601,7 +620,7 @@ class TimeReader(ABC):
         """
 
 
-class XMLImageDataReader(BaseReader, PointCellDataSelection):
+class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
     """XML Image Data Reader for .vti files.
 
     Wraps :vtk:`vtkXMLImageDataReader`.
@@ -611,13 +630,8 @@ class XMLImageDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class XMLPImageDataReader(BaseReader, PointCellDataSelection):
+class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
     """Parallel XML Image Data Reader for .pvti files.
 
     Wraps :vtk:`vtkXMLPImageDataReader`.
@@ -627,13 +641,8 @@ class XMLPImageDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPImageDataReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
+class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelection):
     """XML RectilinearGrid Reader for .vtr files.
 
     Wraps :vtk:`vtkXMLRectilinearGridReader`.
@@ -660,13 +669,8 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLRectilinearGridReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> RectilinearGrid:
-            """Read data and return a :class:`~pyvista.RectilinearGrid`."""
-
-
-class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
+class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelection):
     """Parallel XML RectilinearGrid Reader for .pvtr files.
 
     Wraps :vtk:`vtkXMLPRectilinearGridReader`.
@@ -676,13 +680,8 @@ class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPRectilinearGridReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> RectilinearGrid:
-            """Read data and return a :class:`~pyvista.RectilinearGrid`."""
-
-
-class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
+class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
     """XML UnstructuredGrid Reader for .vtu files.
 
     Wraps :vtk:`vtkXMLUnstructuredGridReader`.
@@ -709,13 +708,8 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> UnstructuredGrid:
-            """Read data and return an :class:`~pyvista.UnstructuredGrid`."""
-
-
-class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
+class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
     """Parallel XML UnstructuredGrid Reader for .pvtu files.
 
     Wraps :vtk:`vtkXMLPUnstructuredGridReader`.
@@ -725,13 +719,8 @@ class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPUnstructuredGridReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> UnstructuredGrid:
-            """Read data and return an :class:`~pyvista.UnstructuredGrid`."""
-
-
-class XMLPolyDataReader(BaseReader, PointCellDataSelection):
+class XMLPolyDataReader(BaseReader['PolyData'], PointCellDataSelection):
     """XML PolyData Reader for .vtp files.
 
     Wraps :vtk:`vtkXMLPolyDataReader`.
@@ -760,13 +749,8 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPolyDataReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
-
-
-class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
+class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelection):
     """XML StructuredGrid Reader for .vts files.
 
     Wraps :vtk:`vtkXMLStructuredGridReader`.
@@ -788,13 +772,8 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLStructuredGridReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> StructuredGrid:
-            """Read data and return a :class:`~pyvista.StructuredGrid`."""
-
-
-class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
+class XMLMultiBlockDataReader(BaseReader['MultiBlock'], PointCellDataSelection):
     """XML MultiBlock Data Reader for .vtm or .vtmb files.
 
     Wraps :vtk:`vtkXMLMultiBlockDataReader`.
@@ -804,13 +783,8 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> MultiBlock:
-            """Read data and return a :class:`~pyvista.MultiBlock`."""
-
-
-class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
+class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
 
     Wraps :vtk:`vtkGenericEnSightReader`.
@@ -909,7 +883,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
             raise IndexError(msg)
 
 
-class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
+class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files.
 
     By default, pyvista enables all patch arrays.  This is a deviation
@@ -1246,7 +1220,7 @@ class POpenFOAMReader(OpenFOAMReader):
         self._update_information()
 
 
-class PLYReader(BaseReader):
+class PLYReader(BaseReader['PolyData']):
     """PLY Reader for reading .ply files.
 
     Wraps :vtk:`vtkPLYReader`.
@@ -1268,13 +1242,8 @@ class PLYReader(BaseReader):
     _vtk_module_name = 'vtkIOPLY'
     _vtk_class_name = 'vtkPLYReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
-
-
-class OBJReader(BaseReader):
+class OBJReader(BaseReader['PolyData']):
     """OBJ Reader for reading .obj files.
 
     Wraps :vtk:`vtkOBJReader`.
@@ -1296,13 +1265,8 @@ class OBJReader(BaseReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOBJReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
-
-
-class STLReader(BaseReader):
+class STLReader(BaseReader['PolyData']):
     """STL Reader for .stl files.
 
     Wraps :vtk:`vtkSTLReader`.
@@ -1324,13 +1288,8 @@ class STLReader(BaseReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkSTLReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
-
-
-class TecplotReader(BaseReader):
+class TecplotReader(BaseReader['MultiBlock']):
     """Tecplot Reader for ascii .dat files.
 
     Wraps :vtk:`vtkTecplotReader`.
@@ -1350,7 +1309,7 @@ class TecplotReader(BaseReader):
     _vtk_class_name = 'vtkTecplotReader'
 
 
-class VTKDataSetReader(BaseReader):
+class VTKDataSetReader(BaseReader['DataSet']):
     """VTK Data Set Reader for .vtk files.
 
     Wraps :vtk:`vtkDataSetReader`.
@@ -1388,13 +1347,8 @@ class VTKDataSetReader(BaseReader):
         self.reader.ReadAllFieldsOn()
         self.reader.ReadAllTensorsOn()
 
-    if TYPE_CHECKING:
 
-        def read(self) -> DataSet:
-            """Read data and return a :class:`~pyvista.DataSet`."""
-
-
-class VTKPDataSetReader(BaseReader):
+class VTKPDataSetReader(BaseReader['DataSet']):
     """Parallel VTK Data Set Reader for .pvtk files.
 
     Wraps :vtk:`vtkPDataSetReader`.
@@ -1404,13 +1358,8 @@ class VTKPDataSetReader(BaseReader):
     _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPDataSetReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> DataSet:
-            """Read data and return a :class:`~pyvista.DataSet`."""
-
-
-class BYUReader(BaseReader):
+class BYUReader(BaseReader['PolyData']):
     """BYU Reader for .g files.
 
     Wraps :vtk:`vtkBYUReader`.
@@ -1432,13 +1381,8 @@ class BYUReader(BaseReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkBYUReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
-
-
-class FacetReader(BaseReader):
+class FacetReader(BaseReader['PolyData']):
     """Facet Reader for .facet files.
 
     Wraps :vtk:`vtkFacetReader`.
@@ -1460,13 +1404,8 @@ class FacetReader(BaseReader):
     _vtk_module_name = 'vtkFiltersHybrid'
     _vtk_class_name = 'vtkFacetReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
-
-
-class Plot3DMetaReader(BaseReader):
+class Plot3DMetaReader(BaseReader['MultiBlock']):
     """Plot3DMeta Reader for .p3d files.
 
     Wraps :vtk:`vtkPlot3DMetaReader`.
@@ -1501,7 +1440,7 @@ class Plot3DFunctionEnum(enum.IntEnum):
     VORTICITY_MAGNITUDE = 211
 
 
-class MultiBlockPlot3DReader(BaseReader):
+class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
     """MultiBlock Plot3D Reader.
 
     Wraps :vtk:`vtkMultiBlockPLOT3DReader`.
@@ -1668,7 +1607,7 @@ class MultiBlockPlot3DReader(BaseReader):
         self.reader.SetR(val)
 
 
-class CGNSReader(BaseReader, PointCellDataSelection):
+class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
     """CGNS Reader for .cgns files.
 
     Creates a multi-block dataset and reads unstructured grids and structured
@@ -1970,7 +1909,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         self._reader.SetLoadBndPatch(bool(enabled))
 
 
-class BinaryMarchingCubesReader(BaseReader):
+class BinaryMarchingCubesReader(BaseReader['PolyData']):
     """BinaryMarchingCubes Reader for .tri files.
 
     Wraps :vtk:`vtkMCubesReader`.
@@ -1991,11 +1930,6 @@ class BinaryMarchingCubesReader(BaseReader):
 
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkMCubesReader'
-
-    if TYPE_CHECKING:
-
-        def read(self) -> PolyData:
-            """Read data and return a :class:`~pyvista.PolyData`."""
 
 
 @dataclass(order=True)
@@ -2065,7 +1999,7 @@ class _PVDReader(BaseVTKReader):
         ]
 
 
-class PVDReader(BaseReader, TimeReader):
+class PVDReader(BaseReader['MultiBlock'], TimeReader):
     """PVD Reader for .pvd files.
 
     Examples
@@ -2145,7 +2079,7 @@ class PVDReader(BaseReader, TimeReader):
         self.set_active_time_value(self.time_values[time_point])
 
 
-class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
+class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, TimeReader):
     """Class for reading .nek5000 files produced by Nek5000 and NekRS.
 
     Wraps :vtk:`vtkNek5000Reader`.
@@ -2323,7 +2257,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         raise AttributeError(self._cell_attr_err_msg)
 
 
-class DICOMReader(BaseReader):
+class DICOMReader(BaseReader['ImageData']):
     """DICOM Reader for reading ``.dcm`` files.
 
     Wraps :vtk:`vtkDICOMImageReader`.
@@ -2353,13 +2287,8 @@ class DICOMReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDICOMImageReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class BMPReader(BaseReader):
+class BMPReader(BaseReader['ImageData']):
     """BMP Reader for .bmp files.
 
     Wraps :vtk:`vtkBMPReader`.
@@ -2381,13 +2310,8 @@ class BMPReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkBMPReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class DEMReader(BaseReader):
+class DEMReader(BaseReader['ImageData']):
     """DEM Reader for .dem files.
 
     Wraps :vtk:`vtkDEMReader`.
@@ -2409,13 +2333,8 @@ class DEMReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkDEMReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class JPEGReader(BaseReader):
+class JPEGReader(BaseReader['ImageData']):
     """JPEG Reader for .jpeg and .jpg files.
 
     Wraps :vtk:`vtkJPEGReader`.
@@ -2437,13 +2356,8 @@ class JPEGReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkJPEGReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class MetaImageReader(BaseReader):
+class MetaImageReader(BaseReader['ImageData']):
     """Meta Image Reader for .mha and .mhd files.
 
     Wraps :vtk:`vtkMetaImageReader`.
@@ -2465,13 +2379,8 @@ class MetaImageReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkMetaImageReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class NIFTIReader(BaseReader):
+class NIFTIReader(BaseReader['ImageData']):
     """NIFTI Reader for .nii and .nii.gz files.
 
     Wraps :vtk:`vtkNIFTIImageReader`.
@@ -2493,13 +2402,8 @@ class NIFTIReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNIFTIImageReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class NRRDReader(BaseReader):
+class NRRDReader(BaseReader['ImageData']):
     """NRRDReader for .nrrd and .nhdr files.
 
     Wraps :vtk:`vtkNrrdReader`.
@@ -2521,13 +2425,8 @@ class NRRDReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNrrdReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class PNGReader(BaseReader):
+class PNGReader(BaseReader['ImageData']):
     """PNGReader for .png files.
 
     Wraps :vtk:`vtkPNGReader`.
@@ -2549,13 +2448,8 @@ class PNGReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNGReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class PNMReader(BaseReader):
+class PNMReader(BaseReader['ImageData']):
     """PNMReader for .pnm files.
 
     Wraps :vtk:`vtkPNMReader`.
@@ -2577,13 +2471,8 @@ class PNMReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNMReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class SLCReader(BaseReader):
+class SLCReader(BaseReader['ImageData']):
     """SLCReader for .slc files.
 
     Wraps :vtk:`vtkSLCReader`.
@@ -2605,13 +2494,8 @@ class SLCReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkSLCReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class TIFFReader(BaseReader):
+class TIFFReader(BaseReader['ImageData']):
     """TIFFReader for .tif and .tiff files.
 
     Wraps :vtk:`vtkTIFFReader`.
@@ -2642,13 +2526,8 @@ class TIFFReader(BaseReader):
         ORIENTATION_BOTLEFT = 4
         self.reader.SetOrientationType(ORIENTATION_BOTLEFT)
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class HDRReader(BaseReader):
+class HDRReader(BaseReader['ImageData']):
     """HDRReader for .hdr files.
 
     Wraps :vtk:`vtkHDRReader`.
@@ -2679,13 +2558,8 @@ class HDRReader(BaseReader):
     _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkHDRReader'
 
-    if TYPE_CHECKING:
 
-        def read(self) -> ImageData:
-            """Read data and return an :class:`~pyvista.ImageData`."""
-
-
-class PTSReader(BaseReader):
+class PTSReader(BaseReader['PolyData']):
     """PTSReader for .pts files.
 
     Wraps :vtk:`vtkPTSReader`.
@@ -2696,7 +2570,7 @@ class PTSReader(BaseReader):
     _vtk_class_name = 'vtkPTSReader'
 
 
-class AVSucdReader(BaseReader):
+class AVSucdReader(BaseReader['UnstructuredGrid']):
     """AVSucdReader for .inp files.
 
     Wraps :vtk:`vtkAVSucdReader`.
@@ -2719,7 +2593,7 @@ class AVSucdReader(BaseReader):
     _vtk_class_name = 'vtkAVSucdReader'
 
 
-class HDFReader(BaseReader):
+class HDFReader(BaseReader['DataObject']):
     """HDFReader for .hdf files.
 
     Wraps :vtk:`vtkHDFReader`.
@@ -2742,7 +2616,7 @@ class HDFReader(BaseReader):
     _vtk_class_name = 'vtkHDFReader'
 
 
-class GLTFReader(BaseReader):
+class GLTFReader(BaseReader['MultiBlock']):
     """GLTFeader for .gltf and .glb files.
 
     Wraps :vtk:`vtkGLTFReader`.
@@ -2753,7 +2627,7 @@ class GLTFReader(BaseReader):
     _vtk_class_name = 'vtkGLTFReader'
 
 
-class FluentReader(BaseReader):
+class FluentReader(BaseReader['UnstructuredGrid']):
     """FluentReader for .cas files.
 
     Wraps :vtk:`vtkFLUENTReader`.
@@ -2764,7 +2638,7 @@ class FluentReader(BaseReader):
     _vtk_class_name = 'vtkFLUENTReader'
 
 
-class MFIXReader(BaseReader):
+class MFIXReader(BaseReader['UnstructuredGrid']):
     """MFIXReader for .res files.
 
     Wraps :vtk:`vtkMFIXReader`.
@@ -2775,7 +2649,7 @@ class MFIXReader(BaseReader):
     _vtk_class_name = 'vtkMFIXReader'
 
 
-class SegYReader(BaseReader):
+class SegYReader(BaseReader['DataSet']):
     """SegYReader for .sgy and .segy files.
 
     Wraps :vtk:`vtkSegYReader`.
@@ -2834,7 +2708,7 @@ class _GIFReader(BaseVTKReader):
         img.close()
 
 
-class GIFReader(BaseReader):
+class GIFReader(BaseReader['ImageData']):
     """GIFReader for .gif files.
 
     Parameters
@@ -2859,7 +2733,7 @@ class GIFReader(BaseReader):
     _class_reader = _GIFReader
 
 
-class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
+class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
 
     Wraps :vtk:`vtkXdmfReader`.
@@ -2929,7 +2803,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
         self.set_active_time_value(self._active_time_value)
 
 
-class XMLPartitionedDataSetReader(BaseReader):
+class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
     """XML PartitionedDataSet Reader for reading .vtpd files.
 
     Wraps :vtk:`vtkXMLPartitionedDataSetReader`.
@@ -2952,7 +2826,7 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = 'vtkXMLPartitionedDataSetReader'
 
 
-class FLUENTCFFReader(BaseReader):
+class FLUENTCFFReader(BaseReader['MultiBlock']):
     """FLUENTCFFReader for .h5 files.
 
     Wraps :vtk:`vtkFLUENTCFFReader`.
@@ -2973,7 +2847,7 @@ class FLUENTCFFReader(BaseReader):
     _vtk_class_name = 'vtkFLUENTCFFReader'
 
 
-class GambitReader(BaseReader):
+class GambitReader(BaseReader['UnstructuredGrid']):
     """GambitReader for .neu files.
 
     Wraps :vtk:`vtkGAMBITReader`.
@@ -2995,7 +2869,7 @@ class GambitReader(BaseReader):
     _vtk_class_name = 'vtkGAMBITReader'
 
 
-class GaussianCubeReader(BaseReader):
+class GaussianCubeReader(BaseReader['DataSet']):
     """GaussianCubeReader for .cube files.
 
     Wraps :vtk:`vtkGaussianCubeReader`.
@@ -3089,7 +2963,7 @@ class GaussianCubeReader(BaseReader):
         self.reader.SetBScale(b_scale)
 
 
-class MINCImageReader(BaseReader):
+class MINCImageReader(BaseReader['ImageData']):
     """MINCImageReader for .mnc files.
 
     Wraps :vtk:`vtkMINCImageReader`.
@@ -3111,7 +2985,7 @@ class MINCImageReader(BaseReader):
     _vtk_class_name = 'vtkMINCImageReader'
 
 
-class PDBReader(BaseReader):
+class PDBReader(BaseReader['PolyData']):
     """PDBReader for .pdb files.
 
     Wraps :vtk:`vtkPDBReader`.
@@ -3133,7 +3007,7 @@ class PDBReader(BaseReader):
     _vtk_class_name = 'vtkPDBReader'
 
 
-class GESignaReader(BaseReader):
+class GESignaReader(BaseReader['ImageData']):
     """GESignaReader for .MR files.
 
     Wraps :vtk:`vtkGESignaReader`.
@@ -3155,7 +3029,7 @@ class GESignaReader(BaseReader):
     _vtk_class_name = 'vtkGESignaReader'
 
 
-class ParticleReader(BaseReader):
+class ParticleReader(BaseReader['PolyData']):
     """ParticleReader for .raw files.
 
     Wraps :vtk:`vtkParticleReader`.
@@ -3217,7 +3091,7 @@ class ParticleReader(BaseReader):
         self.reader.Update()
 
 
-class ProStarReader(BaseReader):
+class ProStarReader(BaseReader['UnstructuredGrid']):
     """ProStarReader for .vrt files.
 
     Wraps :vtk:`vtkProStarReader`.
@@ -3241,7 +3115,7 @@ class ProStarReader(BaseReader):
     _vtk_class_name = 'vtkProStarReader'
 
 
-class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
+class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
     """ExodusIIReader for .e and .exo files.
 
     Reads Exodus II files. Wraps :vtk:`vtkExodusIIReader`.
@@ -3719,7 +3593,7 @@ class _FRDReader(BaseVTKReader):
         self._data_object = _FRDParser._build_grid(self._frd_data, step_data)
 
 
-class FRDReader(BaseReader, TimeReader):
+class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
     """Reader for CalculiX FRD ASCII result files (``.frd``).
 
     Supported element types include: HE8, PE6, PE15, TE4, HE20, TE10, TR3, TR6, QU4, QU8, BE2, BE3.
@@ -3979,7 +3853,7 @@ class SeriesDataSet(_NoNewAttrMixin):
     time: float
 
 
-_SeriesEachReader = TypeVar('_SeriesEachReader', bound=BaseReader)
+_SeriesEachReader = TypeVar('_SeriesEachReader', bound='BaseReader[Any]')
 
 
 class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
@@ -4063,7 +3937,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         )
 
 
-class SeriesReader(BaseReader, TimeReader, Generic[_SeriesEachReader]):
+class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachReader]):
     """Class for reading .series file supported by Paraview.
 
     .. versionadded:: 0.47.0
@@ -4237,7 +4111,7 @@ _legacy_dataset_types = Literal[  # no PointSet
 ]
 
 # Define reader output types. Primarily used for testing and documentation.
-_CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_types, ...]] = {
+_CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
     AVSucdReader: 'UnstructuredGrid',
     BinaryMarchingCubesReader: 'PolyData',
     BMPReader: 'ImageData',

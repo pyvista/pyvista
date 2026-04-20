@@ -460,7 +460,7 @@ def _read_dispatch(  # noqa: PLR0911
 
 
 def _apply_attrs_to_reader(
-    reader: BaseReader, attrs: dict[str, object | Sequence[object]]
+    reader: BaseReader[Any], attrs: dict[str, object | Sequence[object]]
 ) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
