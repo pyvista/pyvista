@@ -64,7 +64,7 @@ ColorLike = Union[
     str,
     'Color',
     _vtk.vtkColor3ub,
-    _ALL_COLORS_LITERAL,
+    '_ALL_COLORS_LITERAL',  # Stringified to avoid crash: https://github.com/davidhalter/jedi/issues/1990
 ]
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']
