@@ -263,6 +263,7 @@ run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
+asyncio_default_fixture_loop_scope = 'function'
 doctest_optionflags = 'NUMBER ELLIPSIS'
 log_level = 'INFO'
 
