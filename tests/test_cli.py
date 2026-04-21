@@ -269,8 +269,7 @@ def test_convert_dir_only_error(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
         main(f'convert {str(tmp_ant_file)!r} {str(tmp_ant_file.parent)!r}')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out, out
-    assert 'Invalid value' in out, out
+    assert '╭─ PyVista Error ─' in out, out
     assert 'Output file must have a file extension.' in out, out
     assert e.value.code == 1
 
@@ -281,7 +280,7 @@ def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
         main(f'convert {file_in} .ply')
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out, out
+    assert '╭─ PyVista Error ─' in out, out
     assert f'1 file not found: {file_in}' in out, out
     assert e.value.code == 1
 
@@ -298,8 +297,71 @@ def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
         main(f'convert {str(file_in)!r} .ply')
 
     out = capsys.readouterr().out
-    assert '╭─ Error ─' in out, out
+    assert '╭─ PyVista Error ─' in out, out
     assert '1 file not readable by PyVista:' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_multiple_inputs(tmp_example_dir, tmp_ant_file: Path):
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
+    main(shlex.split(f'convert {tmp_ant_file.name} {second.name} .vtp'))
+    assert (tmp_example_dir / 'ant.vtp').is_file()
+    assert (tmp_example_dir / 'ant2.vtp').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_multiple_inputs_subdir(tmp_example_dir, tmp_ant_file: Path):
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
+    main(shlex.split(f'convert {tmp_ant_file.name} {second.name} out/.vtp'))
+    assert (tmp_example_dir / 'out' / 'ant.vtp').is_file()
+    assert (tmp_example_dir / 'out' / 'ant2.vtp').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_glob(tmp_example_dir, tmp_ant_file: Path):
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
+    main(shlex.split("convert '*.ply' .vtp"))
+    assert (tmp_example_dir / 'ant.vtp').is_file()
+    assert (tmp_example_dir / 'ant2.vtp').is_file()
+
+
+@pytest.mark.usefixtures('patch_app_console', 'tmp_example_dir')
+def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main(shlex.split("convert '*.nosuchext' .vtp"))
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert '1 file not found: *.nosuchext' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_multiple_inputs_named_output_error(
+    tmp_example_dir,
+    tmp_ant_file: Path,
+    capsys: pytest.CaptureFixture,
+):
+    second = tmp_example_dir / 'ant2.ply'
+    shutil.copy(tmp_ant_file, second)
+    with pytest.raises(SystemExit) as e:
+        main(shlex.split(f'convert {tmp_ant_file.name} {second.name} out.vtp'))
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert 'Cannot write 2 inputs to a single named output' in out, out
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_too_few_args(capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit) as e:
+        main('convert only-one.ply')
+    out = capsys.readouterr().out
+    assert '╭─ PyVista Error ─' in out, out
+    assert 'convert requires at least one input file and an output spec.' in out, out
     assert e.value.code == 1
 
 
@@ -322,23 +384,13 @@ def test_convert_save_error(tmp_ant_file: Path, capsys: pytest.CaptureFixture):
 def test_convert_help(capsys: pytest.CaptureFixture):
     main('convert --help')
 
-    expected = textwrap.dedent(
-        """\
-            Usage: pyvista convert FILE-IN FILE-OUT
-
-            Convert a mesh file to another format.
-
-            Sample usage:
-            ```bash
-            pyvista convert foo.abc bar.xyz
-            Saved: bar.xyz
-
-            pyvista convert foo.abc .xyz
-            Saved: foo.xyz
-            ```
-  """
-    )
-    assert expected == '\n'.join(capsys.readouterr().out.split('\n')[:13])
+    out = capsys.readouterr().out
+    assert 'Usage: pyvista convert FILE-IN [FILE-IN...] FILE-OUT' in out, out
+    assert 'Convert a mesh file to another format.' in out, out
+    assert 'glob patterns are expanded' in out, out
+    assert 'pyvista convert foo.abc bar.xyz' in out, out
+    assert 'pyvista convert foo.abc .xyz' in out, out
+    assert 'pyvista convert *.vtu .pv' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')

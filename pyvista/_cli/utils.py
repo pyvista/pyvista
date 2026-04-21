@@ -6,6 +6,7 @@ Mostly contains converters, validators, console error helper and help formatters
 
 from __future__ import annotations
 
+from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
@@ -97,19 +98,35 @@ def _console_error(*, app: App, message: str | Group, title: str = 'PyVista Erro
     raise SystemExit(1)
 
 
-def _converter_files(
-    type_: type,  # noqa: ARG001
-    tokens: Sequence[Token],
-) -> list[_MeshAndPath]:
-    """Helper function used to read provided files.
+_GLOB_CHARS = ('*', '?', '[')
 
-    Raises errors if:
 
-    - any file does not exits
-    - any file is not readable with ``pv.read``
+def _expand_globs(values: list[str]) -> list[str]:
+    """Expand any glob patterns in-place, preserving order.
 
-    """  # noqa: D401
-    values: list[str] = [t.value for t in tokens]
+    Tokens without glob characters are kept as-is so non-existent literals still raise the
+    "file not found" error downstream. Glob patterns with no matches are kept so they surface
+    as the missing token in the same error.
+    """
+    expanded: list[str] = []
+    for v in values:
+        if any(c in v for c in _GLOB_CHARS):
+            matches = sorted(glob(v, recursive=True))  # noqa: PTH207
+            if matches:
+                expanded.extend(matches)
+            else:
+                expanded.append(v)
+        else:
+            expanded.append(v)
+    return expanded
+
+
+def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
+    """Expand globs, verify each path exists, and read it with ``pv.read``.
+
+    Raises a ``ValueError`` if any path is missing or unreadable.
+    """
+    values = _expand_globs(paths)
 
     # Test file exists
     if not all((files := {v: Path(v).exists() for v in values}).values()):
@@ -145,3 +162,20 @@ def _converter_files(
         raise ValueError(msg)
 
     return meshes_and_paths
+
+
+def _converter_files(
+    type_: type,  # noqa: ARG001
+    tokens: Sequence[Token],
+) -> list[_MeshAndPath]:
+    """Helper function used to read provided files.
+
+    Raises errors if:
+
+    - any file does not exits
+    - any file is not readable with ``pv.read``
+
+    Glob patterns (``*``, ``?``, ``[...]``) are expanded before validation.
+
+    """  # noqa: D401
+    return _load_paths([t.value for t in tokens])

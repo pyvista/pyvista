@@ -12,40 +12,47 @@ import pyvista as pv
 from .app import app
 from .utils import HELP_FORMATTER
 from .utils import _console_error
-from .utils import _converter_files
+from .utils import _load_paths
 
 
-def _validator_has_extension(type_: type, value: str) -> None:  # noqa: ARG001
-    path = Path(value)
-    has_suffix = bool(path.suffix)
-    is_suffix = not path.suffix and path.stem.startswith('.')
-    if not (has_suffix or is_suffix):
-        msg = '\nOutput file must have a file extension.'
+def _is_extension_only(file_out: str) -> bool:
+    """Return ``True`` when ``file_out`` specifies only an extension (``.pv`` or ``dir/.pv``)."""
+    path = Path(file_out)
+    return not path.suffix and path.stem.startswith('.')
+
+
+def _validate_out_has_extension(file_out: str) -> None:
+    if not Path(file_out).suffix and not _is_extension_only(file_out):
+        msg = 'Output file must have a file extension.'
         raise ValueError(msg)
 
 
 @app.command(
-    usage=f'Usage: [bold]{pv.__name__} convert FILE-IN FILE-OUT',
+    usage=f'Usage: [bold]{pv.__name__} convert FILE-IN [FILE-IN...] FILE-OUT',
     help_formatter=HELP_FORMATTER,
 )
 def _convert(
-    file_in: Annotated[
-        str,
+    files: Annotated[
+        list[str],
         Parameter(
-            help='File to convert. Must be readable with ``pyvista.read``.',
-            converter=_converter_files,
-        ),
-    ],
-    file_out: Annotated[
-        str,
-        Parameter(
-            help='Output file. If only an file extension is given, '
-            'the output has the same name as the input.',
-            validator=_validator_has_extension,
+            name='files',
+            consume_multiple=True,
+            negative='',
+            help=(
+                'One or more input files followed by the output spec. '
+                'Inputs may include glob patterns (e.g. ``*.vtu``) and must be readable '
+                'with ``pyvista.read``. The final token is the output: a full filename '
+                '(``bar.xyz``) when converting a single input, or an extension-only spec '
+                '(``.xyz`` or ``dir/.xyz``) which reuses each input stem.'
+            ),
         ),
     ],
 ) -> None:
     """Convert a mesh file to another format.
+
+    One or more inputs may be supplied, and glob patterns are expanded. When multiple
+    inputs are given, the output must be an extension-only spec (``.xyz`` or
+    ``dir/.xyz``) so each input's stem is reused.
 
     Sample usage:
     ```bash
@@ -54,32 +61,56 @@ def _convert(
 
     pyvista convert foo.abc .xyz
     Saved: foo.xyz
+
+    pyvista convert *.vtu .pv
+    Saved: a.pv
+    Saved: b.pv
+    ...
+
+    pyvista convert *.vtu out/.pv
+    Saved: out/a.pv
+    Saved: out/b.pv
+    ...
     ```
     """
-    # get input mesh and input path from file_in str token
-    # which was converted to a (mesh, path) pair
-    mesh_in = file_in[0].mesh  # type: ignore[attr-defined]
-    path_in = file_in[0].path  # type: ignore[attr-defined]
+    if len(files) < 2:
+        _console_error(
+            app=app,
+            message='convert requires at least one input file and an output spec.',
+        )
 
-    # Parse output specification
-    path_out = Path(file_out)
-    out_dir = path_out.parent
-    if not path_out.suffix:
-        # Extension-only, use the input stem
-        out_stem = path_in.stem
-        out_suffix = path_out.stem
-    else:
-        # Explicit filename provided
-        out_stem = path_out.stem
-        out_suffix = path_out.suffix
-
-    # Construct final output path
-    out_path = out_dir / f'{out_stem}{out_suffix}'
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    file_out = files[-1]
+    file_in_tokens = files[:-1]
 
     try:
-        mesh_in.save(out_path)
-    except Exception as e:  # noqa: BLE001
-        _console_error(app=app, message=f'Failed to save output file: {out_path}\n{e}')
+        _validate_out_has_extension(file_out)
+    except ValueError as e:
+        _console_error(app=app, message=str(e))
 
-    app.console.print(f'[green]Saved:[/green] {out_path}')
+    try:
+        inputs = _load_paths(file_in_tokens)
+    except ValueError as e:
+        _console_error(app=app, message=str(e))
+
+    path_out = Path(file_out)
+    ext_only = _is_extension_only(file_out)
+    if not ext_only and len(inputs) > 1:
+        _console_error(
+            app=app,
+            message=(
+                f'Cannot write {len(inputs)} inputs to a single named output '
+                f'{file_out!r}. Use an extension-only output spec (e.g. '
+                f"'{path_out.suffix}') to reuse each input's stem."
+            ),
+        )
+
+    for item in inputs:
+        out_path = path_out.parent / f'{item.path.stem}{path_out.stem}' if ext_only else path_out
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            item.mesh.save(out_path)
+        except Exception as e:  # noqa: BLE001
+            _console_error(app=app, message=f'Failed to save output file: {out_path}\n{e}')
+
+        app.console.print(f'[green]Saved:[/green] {out_path}')
