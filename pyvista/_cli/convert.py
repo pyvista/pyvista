@@ -50,7 +50,8 @@ def _convert(
                 'Inputs may include glob patterns (e.g. ``*.vtu``) and must be readable '
                 'with ``pyvista.read``. The final token is the output: a full filename '
                 '(``bar.xyz``) when converting a single input, or an extension-only spec '
-                '(``.xyz`` or ``dir/.xyz``) which reuses each input stem.'
+                '(``.xyz`` or ``dir/.xyz``) which reuses each input stem. A bare ``.xyz`` '
+                'writes adjacent to each input; ``dir/.xyz`` writes into ``dir/``.'
             ),
         ),
     ],
@@ -59,7 +60,8 @@ def _convert(
 
     One or more inputs may be supplied, and glob patterns are expanded. When multiple
     inputs are given, the output must be an extension-only spec (``.xyz`` or
-    ``dir/.xyz``) so each input's stem is reused.
+    ``dir/.xyz``) so each input's stem is reused. A bare ``.xyz`` writes the output
+    adjacent to each input; ``dir/.xyz`` writes into the given ``dir``.
 
     Sample usage:
     ```bash
@@ -69,15 +71,11 @@ def _convert(
     pyvista convert foo.abc .xyz
     Saved: foo.xyz
 
-    pyvista convert *.vtu .pv
-    Saved: a.pv
-    Saved: b.pv
-    ...
+    pyvista convert sub/*.vtu .pv
+    # Writes sub/a.pv, sub/b.pv, ... next to each input
 
-    pyvista convert *.vtu out/.pv
-    Saved: out/a.pv
-    Saved: out/b.pv
-    ...
+    pyvista convert sub/*.vtu out/.pv
+    # Writes out/a.pv, out/b.pv, ... into the explicit out directory
     ```
     """
     if len(files) < 2:
@@ -123,6 +121,18 @@ def _read_mesh(path_in: Path) -> pv.DataObject:
         return pv.read(path_in)
 
 
+def _resolve_out_path(path_in: Path, path_out: Path, *, ext_only: bool) -> Path:
+    """Compute the per-input output path.
+
+    A bare extension-only spec (``.pv``) is written next to each input. An extension-only
+    spec with an explicit parent (``out/.pv``) is written into that parent.
+    """
+    if not ext_only:
+        return path_out
+    out_dir = path_in.parent if str(path_out.parent) == '.' else path_out.parent
+    return out_dir / f'{path_in.stem}{path_out.stem}'
+
+
 def _convert_one(
     path_in: Path,
     path_out: Path,
@@ -130,7 +140,7 @@ def _convert_one(
     ext_only: bool,
     announce: bool,
 ) -> None:
-    out_path = path_out.parent / f'{path_in.stem}{path_out.stem}' if ext_only else path_out
+    out_path = _resolve_out_path(path_in, path_out, ext_only=ext_only)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -157,13 +167,21 @@ def _convert_many(input_paths: list[Path], path_out: Path) -> None:
         TextColumn('<'),
         TimeRemainingColumn(),
     )
+    out_dirs: set[Path] = set()
     with Progress(*columns, console=app.console, transient=False) as progress:
         task = progress.add_task('Converting', total=len(input_paths))
         for path_in in input_paths:
             progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
+            out_path = _resolve_out_path(path_in, path_out, ext_only=True)
+            out_dirs.add(out_path.parent)
             _convert_one(path_in, path_out, ext_only=True, announce=False)
             progress.update(task, advance=1)
 
-    app.console.print(
-        f'[green]Saved {len(input_paths)} files to:[/green] {path_out.parent or Path()}/'
-    )
+    if len(out_dirs) == 1:
+        app.console.print(
+            f'[green]Saved {len(input_paths)} files to:[/green] {next(iter(out_dirs))}/'
+        )
+    else:
+        app.console.print(
+            f'[green]Saved {len(input_paths)} files across {len(out_dirs)} directories.[/green]'
+        )

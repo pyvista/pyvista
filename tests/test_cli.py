@@ -330,6 +330,22 @@ def test_convert_glob(tmp_example_dir, tmp_ant_file: Path):
     assert (tmp_example_dir / 'ant2.vtp').is_file()
 
 
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_glob_subdir_writes_adjacent(tmp_example_dir, tmp_ant_file: Path):
+    """Bare ``.ext`` output places each converted file next to its input."""
+    sub = tmp_example_dir / 'sub'
+    sub.mkdir()
+    first = sub / 'a.ply'
+    second = sub / 'b.ply'
+    shutil.copy(tmp_ant_file, first)
+    shutil.copy(tmp_ant_file, second)
+    main(shlex.split("convert 'sub/*.ply' .vtp"))
+    assert (sub / 'a.vtp').is_file()
+    assert (sub / 'b.vtp').is_file()
+    assert not (tmp_example_dir / 'a.vtp').exists()
+    assert not (tmp_example_dir / 'b.vtp').exists()
+
+
 @pytest.mark.usefixtures('patch_app_console', 'tmp_example_dir')
 def test_convert_glob_no_match(capsys: pytest.CaptureFixture):
     with pytest.raises(SystemExit) as e:
@@ -391,7 +407,8 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     assert 'glob patterns are expanded' in out, out
     assert 'pyvista convert foo.abc bar.xyz' in out, out
     assert 'pyvista convert foo.abc .xyz' in out, out
-    assert 'pyvista convert *.vtu .pv' in out, out
+    assert 'pyvista convert sub/*.vtu .pv' in out, out
+    assert 'next to each input' in out, out
 
 
 @pytest.mark.usefixtures('patch_app_console')
