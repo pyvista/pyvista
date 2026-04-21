@@ -52,6 +52,7 @@ from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -1616,6 +1617,64 @@ def test_serial_dict_init():
     serial_dict = _SerializedDictArray(json_dict)
     assert serial_dict['ham'] == 'eggs'
     assert str(serial_dict) == '{"ham": "eggs"}'
+
+
+def test_convert_string_array_roundtrip():
+    """numpy string array <-> vtkStringArray must round-trip without truncation."""
+    arr = np.array(['alpha', 'beta', 'gamma', 'delta-with-much-more-text'])
+    vtk_arr = convert_string_array(arr)
+    assert vtk_arr.GetNumberOfValues() == arr.size
+    assert vtk_arr.GetValue(0) == 'alpha'
+    assert vtk_arr.GetValue(3) == 'delta-with-much-more-text'
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == arr.shape
+    # Width must auto-size to longest value, not get truncated to 1 char.
+    assert out[3] == 'delta-with-much-more-text'
+    assert np.array_equal(out, arr)
+
+
+def test_convert_string_array_scalar_string():
+    """A bare Python str round-trips back to a 0-d numpy array of the original."""
+    vtk_arr = convert_string_array('hello')
+    assert vtk_arr.GetNumberOfValues() == 1
+    assert vtk_arr.GetValue(0) == 'hello'
+    out = convert_string_array(vtk_arr)
+    assert out.ndim == 0
+    assert str(out) == 'hello'
+
+
+def test_convert_string_array_rejects_non_ascii():
+    with pytest.raises(ValueError, match='non-ASCII'):
+        convert_string_array(np.array(['hello', 'wörld']))
+
+
+def test_convert_string_array_with_name():
+    vtk_arr = convert_string_array(np.array(['a', 'b']), name='my_array')
+    assert vtk_arr.GetName() == 'my_array'
+
+
+def test_serial_dict_uses_single_value_storage():
+    """The setter stores the JSON string as a single vtkStringArray value
+    instead of one value per character (the historical encoding).
+    """
+    serial = _SerializedDictArray({'foo': 'bar', 'n': 42})
+    # New format: 1 value, not len(json_string).
+    assert serial.GetNumberOfValues() == 1
+    assert serial.GetValue(0) == '{"foo": "bar", "n": 42}'
+
+
+def test_serial_dict_reads_legacy_char_per_value_format():
+    """Files written with the old char-per-value format must still
+    deserialize correctly. The getter joins all values.
+    """
+    legacy = _SerializedDictArray()
+    # Wipe and manually re-encode the JSON char-by-char (the old behavior).
+    legacy.SetNumberOfValues(0)
+    for ch in '{"hello": "world"}':
+        legacy.InsertNextValue(ch)
+    # The getter joins all values so the read still produces the right string.
+    assert legacy._string == '{"hello": "world"}'
 
 
 def test_serial_dict_as_dict(serial_dict_with_foobar):

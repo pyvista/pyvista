@@ -1,4 +1,4 @@
-name: Cache vtk-data
+name: Cache pyvista/data
 
 on:
   workflow_call:
@@ -9,15 +9,15 @@ on:
         type: string
     outputs:
       key:
-        description: Cache key used for vtk-data
-        value: ${{ jobs.cache-vtk-data.outputs.key }}
+        description: Cache key used for pyvista/data
+        value: ${{ jobs.cache-pyvista-data.outputs.key }}
 
 permissions:
   id-token: none
   contents: none
 
 jobs:
-  cache-vtk-data:
+  cache-pyvista-data:
     # Workflows that re-use this workflow must specify a runner label for which to cache the data
     name: ${{ inputs.runs-on }}
     runs-on: ${{ inputs.runs-on }}
@@ -29,31 +29,31 @@ jobs:
       - name: Set cache path dirname
         run: |
           # define a reusable variable for the folder name
-          echo "CACHE_FOLDER_NAME=vtk-data" >> "$GITHUB_ENV"
+          echo "CACHE_FOLDER_NAME=pyvista-data" >> "$GITHUB_ENV"
 
-      - name: Get vtk-data commit
-        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+      - name: Get pyvista/data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/data HEAD | awk '{ print $1}') >> $GITHUB_ENV
 
-      - name: Restore vtk-data cache
+      - name: Restore pyvista/data cache
         id: restore
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          key: pyvista-data-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
-      - name: Clone vtk-data if cache miss
+      - name: Clone pyvista/data if cache miss
         if: steps.restore.outputs.cache-hit != 'true'
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-          repository: pyvista/vtk-data
+          repository: pyvista/data
           path: ${{ env.CACHE_FOLDER_NAME }}
 
-      - name: Save vtk-data cache
+      - name: Save pyvista/data cache
         if: steps.restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          key: pyvista-data-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true
