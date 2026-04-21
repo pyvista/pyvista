@@ -37,8 +37,8 @@ class ThemeRegistration(NamedTuple):
     ----------
     name : str
         The registered (normalized) theme name.
-    kind : str
-        One of ``'subclass'``, ``'instance'``, ``'entry_point'``, ``'alias'``.
+    kind : {'subclass', 'instance', 'entry_point', 'alias'}
+        How the name was registered.
     source : str
         Human-readable origin (e.g. ``'my_package.theme.MyTheme'``).
 

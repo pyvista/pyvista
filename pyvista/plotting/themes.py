@@ -135,9 +135,9 @@ def set_plot_theme(theme):
     registered_themes
         List all registered theme names.
     register_theme
-        Register a pre-configured :class:`~pyvista.plotting.themes.Theme`
-        instance under a custom name.
-    pyvista.plotting.themes.Theme
+        Register a pre-configured :class:`Theme` instance under a
+        custom name.
+    Theme
         Base class. Subclasses with a class-level ``_default_name`` are
         discoverable by name; see the class docstring for details aimed
         at theme authors and plugin packages.
