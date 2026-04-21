@@ -112,30 +112,35 @@ def load_theme(filename):
 
 
 def set_plot_theme(theme):
-    """Set the plotting parameters to a predefined theme using a string.
+    """Set plotting parameters to a predefined theme using a string or ``Theme``.
 
     Parameters
     ----------
     theme : str | Theme
-        The theme name or :class:`~pyvista.plotting.themes.Theme` instance.
-        Built-in theme names include:
+        Theme to apply. Accepts any of:
 
-        - ``'dark'``,
-        - ``'default'``,
-        - ``'document'``,
-        - ``'document_build'``,
-        - ``'document_pro'``,
-        - ``'paraview'``,
-        - ``'testing'`` and
-        - ``'vtk'``.
+        * A registered theme name. Built-in names include ``'dark'``,
+          ``'default'``, ``'document'``, ``'document_build'``,
+          ``'document_pro'``, ``'paraview'``, ``'testing'``, and
+          ``'vtk'``. Third-party plugins and
+          :func:`~pyvista.register_theme` can add more. Use
+          :func:`~pyvista.registered_themes` to list everything that is
+          currently available.
+        * A ``"package.module:ClassName"`` dotted path to any importable
+          :class:`~pyvista.plotting.themes.Theme` subclass.
+        * A :class:`~pyvista.plotting.themes.Theme` instance.
 
-        Any :class:`~pyvista.plotting.themes.Theme` subclass that declares
-        a class-level ``_default_name`` is registered automatically and can
-        be referenced by that name. Pre-configured instances can be
-        registered with :func:`~pyvista.register_theme`.
-
-        A theme class from any importable module can also be loaded using a
-        ``"package.module:ClassName"`` string.
+    See Also
+    --------
+    registered_themes
+        List all registered theme names.
+    register_theme
+        Register a pre-configured :class:`~pyvista.plotting.themes.Theme`
+        instance under a custom name.
+    pyvista.plotting.themes.Theme
+        Base class. Subclasses with a class-level ``_default_name`` are
+        discoverable by name; see the class docstring for details aimed
+        at theme authors and plugin packages.
 
     Examples
     --------
@@ -1750,11 +1755,28 @@ class _PlotCellConfig(_ConfigBase):
 class Theme(_ConfigBase):
     """Base VTK theme.
 
+    Notes
+    -----
+    This section is aimed at theme authors and plugin package
+    maintainers; end users calling :func:`set_plot_theme` do not need
+    any of it.
+
     Subclasses that declare a class-level ``_default_name`` are
     automatically registered by that name via
     :meth:`__init_subclass__` and become available through
-    :func:`set_plot_theme` and the ``PYVISTA_PLOT_THEME`` environment
-    variable.
+    :func:`set_plot_theme`, the ``PYVISTA_PLOT_THEME`` environment
+    variable, and :func:`~pyvista.registered_themes`. Subclasses
+    without ``_default_name`` are not registered, so ad-hoc subclasses
+    remain a valid pattern.
+
+    Plugin packages can expose additional themes under the
+    ``pyvista.themes`` entry-point group without requiring users to
+    import the package first:
+
+    .. code-block:: toml
+
+        [project.entry-points.'pyvista.themes']
+        my_theme = 'my_package.theme:MyTheme'
 
     Examples
     --------

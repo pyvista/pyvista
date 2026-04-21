@@ -450,3 +450,57 @@ def test_available_theme_names_includes_builtins():
     names = _reg_mod._available_theme_names()
     for name in ('dark', 'document', 'paraview', 'default', 'vtk'):
         assert name in names
+
+
+def test_registered_themes_includes_builtins_and_kinds():
+    registered = pv.registered_themes()
+    expected_classes = {
+        'dark': 'DarkTheme',
+        'document': 'DocumentTheme',
+        'paraview': 'ParaViewTheme',
+        'testing': '_TestingTheme',
+    }
+    for name, class_name in expected_classes.items():
+        assert registered[name].kind == 'subclass'
+        assert registered[name].source.endswith(class_name)
+    for name in ('default', 'vtk'):
+        assert registered[name].kind == 'alias'
+
+
+def test_registered_themes_reports_instance_source():
+    custom = DarkTheme()
+    pv.register_theme('reg_inst_theme', custom)
+
+    record = pv.registered_themes()['reg_inst_theme']
+    assert record.name == 'reg_inst_theme'
+    assert record.kind == 'instance'
+    assert "register_theme('reg_inst_theme')" in record.source
+
+
+def test_registered_themes_reports_entry_point_source():
+    class EpListedTheme(Theme):
+        _default_name: ClassVar[str] = '__ep_listed__'
+
+    _reg_mod._registered_theme_classes.pop('ep_listed', None)
+    _reg_mod._registered_theme_classes_sources.pop('ep_listed', None)
+
+    ep = MagicMock()
+    ep.name = 'ep_listed'
+    ep.value = 'some_plugin.pkg:EpListedTheme'
+    ep.load.return_value = EpListedTheme
+
+    _reg_mod._entry_points_loaded = False
+    with patch(
+        'pyvista.plotting.theme_registry.entry_points',
+        return_value=[ep],
+    ):
+        registered = pv.registered_themes()
+
+    record = registered['ep_listed']
+    assert record.kind == 'entry_point'
+    assert record.source == 'some_plugin.pkg:EpListedTheme'
+
+
+def test_registered_themes_is_sorted():
+    registered = pv.registered_themes()
+    assert list(registered) == sorted(registered)

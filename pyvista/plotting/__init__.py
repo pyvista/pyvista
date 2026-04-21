@@ -68,6 +68,8 @@ from .text import TextProperty as TextProperty
 from .texture import Texture as Texture
 from .texture import image_to_texture as image_to_texture
 from .texture import numpy_to_texture as numpy_to_texture
+from .theme_registry import ThemeRegistration as ThemeRegistration
+from .theme_registry import registered_themes as registered_themes
 from .themes import DocumentTheme as _GlobalTheme
 from .themes import _set_plot_theme_from_env as _set_plot_theme_from_env
 from .themes import load_theme as load_theme
