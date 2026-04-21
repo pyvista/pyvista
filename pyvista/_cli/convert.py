@@ -4,15 +4,22 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Annotated
+import warnings
 
 from cyclopts import Parameter
+from rich.progress import BarColumn
+from rich.progress import MofNCompleteColumn
+from rich.progress import Progress
+from rich.progress import TextColumn
+from rich.progress import TimeElapsedColumn
+from rich.progress import TimeRemainingColumn
 
 import pyvista as pv
 
 from .app import app
 from .utils import HELP_FORMATTER
+from .utils import _check_paths_exist
 from .utils import _console_error
-from .utils import _load_paths
 
 
 def _is_extension_only(file_out: str) -> bool:
@@ -88,29 +95,75 @@ def _convert(
         _console_error(app=app, message=str(e))
 
     try:
-        inputs = _load_paths(file_in_tokens)
+        input_paths = _check_paths_exist(file_in_tokens)
     except ValueError as e:
         _console_error(app=app, message=str(e))
 
     path_out = Path(file_out)
     ext_only = _is_extension_only(file_out)
-    if not ext_only and len(inputs) > 1:
+    if not ext_only and len(input_paths) > 1:
         _console_error(
             app=app,
             message=(
-                f'Cannot write {len(inputs)} inputs to a single named output '
+                f'Cannot write {len(input_paths)} inputs to a single named output '
                 f'{file_out!r}. Use an extension-only output spec (e.g. '
                 f"'{path_out.suffix}') to reuse each input's stem."
             ),
         )
 
-    for item in inputs:
-        out_path = path_out.parent / f'{item.path.stem}{path_out.stem}' if ext_only else path_out
-        out_path.parent.mkdir(parents=True, exist_ok=True)
+    if len(input_paths) > 1:
+        _convert_many(input_paths, path_out)
+    else:
+        _convert_one(input_paths[0], path_out, ext_only=ext_only, announce=True)
 
-        try:
-            item.mesh.save(out_path)
-        except Exception as e:  # noqa: BLE001
-            _console_error(app=app, message=f'Failed to save output file: {out_path}\n{e}')
 
+def _read_mesh(path_in: Path) -> pv.DataObject:
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
+        return pv.read(path_in)
+
+
+def _convert_one(
+    path_in: Path,
+    path_out: Path,
+    *,
+    ext_only: bool,
+    announce: bool,
+) -> None:
+    out_path = path_out.parent / f'{path_in.stem}{path_out.stem}' if ext_only else path_out
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        mesh = _read_mesh(path_in)
+    except Exception as e:  # noqa: BLE001
+        _console_error(app=app, message=f'Failed to read input file: {path_in}\n{e}')
+
+    try:
+        mesh.save(out_path)
+    except Exception as e:  # noqa: BLE001
+        _console_error(app=app, message=f'Failed to save output file: {out_path}\n{e}')
+
+    if announce:
         app.console.print(f'[green]Saved:[/green] {out_path}')
+
+
+def _convert_many(input_paths: list[Path], path_out: Path) -> None:
+    columns = (
+        TextColumn('[progress.description]{task.description}'),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn('•'),
+        TimeElapsedColumn(),
+        TextColumn('<'),
+        TimeRemainingColumn(),
+    )
+    with Progress(*columns, console=app.console, transient=False) as progress:
+        task = progress.add_task('Converting', total=len(input_paths))
+        for path_in in input_paths:
+            progress.update(task, description=f'Converting [cyan]{path_in.name}[/cyan]')
+            _convert_one(path_in, path_out, ext_only=True, announce=False)
+            progress.update(task, advance=1)
+
+    app.console.print(
+        f'[green]Saved {len(input_paths)} files to:[/green] {path_out.parent or Path()}/'
+    )

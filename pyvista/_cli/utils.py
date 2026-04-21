@@ -121,14 +121,12 @@ def _expand_globs(values: list[str]) -> list[str]:
     return expanded
 
 
-def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
-    """Expand globs, verify each path exists, and read it with ``pv.read``.
+def _check_paths_exist(paths: list[str]) -> list[Path]:
+    """Expand globs and verify each path exists.
 
-    Raises a ``ValueError`` if any path is missing or unreadable.
+    Raises a ``ValueError`` listing any missing paths.
     """
     values = _expand_globs(paths)
-
-    # Test file exists
     if not all((files := {v: Path(v).exists() for v in values}).values()):
         missing: str | list[str] = [k for k, v in files.items() if not v]
         n_missings = len(missing)
@@ -138,22 +136,30 @@ def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
 
         msg = f'{n_missings} {literal_file} not found: {missing}'
         raise ValueError(msg)
+    return [Path(v) for v in values]
 
-    # Test file can be read by pyvista
+
+def _load_paths(paths: list[str]) -> list[_MeshAndPath]:
+    """Expand globs, verify each path exists, and read it with ``pv.read``.
+
+    Raises a ``ValueError`` if any path is missing or unreadable.
+    """
+    checked = _check_paths_exist(paths)
+
     meshes_and_paths: list[_MeshAndPath] = []
     not_readable: list[str] = []
-    for file in values:
+    for path in checked:
         try:
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     'ignore',
                     category=pv.InvalidMeshWarning,
                 )
-                mesh = pv.read(file)
+                mesh = pv.read(path)
         except Exception:  # noqa: BLE001
-            not_readable.append(file)
+            not_readable.append(str(path))
         else:
-            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=Path(file)))
+            meshes_and_paths.append(_MeshAndPath(mesh=mesh, path=path))
 
     if len(not_readable) > 0:
         n = len(not_readable)
