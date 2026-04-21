@@ -130,10 +130,10 @@ def show_wasm(
     Examples
     --------
     >>> import pyvista as pv
-    >>> plotter = pv.Plotter()  # doctest: +SKIP
-    >>> _ = plotter.add_mesh(pv.Sphere())  # doctest: +SKIP
+    >>> pl = pv.Plotter()  # doctest: +SKIP
+    >>> _ = pl.add_mesh(pv.Sphere())  # doctest: +SKIP
     >>> pv.set_jupyter_backend('wasm')  # doctest: +SKIP
-    >>> plotter.show()  # doctest: +SKIP
+    >>> pl.show()  # doctest: +SKIP
 
     """
     try:

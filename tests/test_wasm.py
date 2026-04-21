@@ -96,11 +96,11 @@ class TestGenerateStandaloneHTML:
 
     def test_generate_standalone_html_requires_pyvista_wasm(self):
         """Test that generate_standalone_html requires pyvista-wasm."""
-        plotter = pv.Plotter()
-        plotter.add_mesh(pv.Sphere())
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
 
         with pytest.raises(ImportError, match='pyvista-wasm'):
-            wasm.generate_standalone_html(plotter)
+            wasm.generate_standalone_html(pl)
 
 
 class TestJupyterBackendAutoDetection:
@@ -135,11 +135,11 @@ class TestNotebookWasmHandler:
         """Test that show_wasm requires pyvista-wasm package."""
         from pyvista.jupyter.notebook import show_wasm
 
-        plotter = pv.Plotter()
-        plotter.add_mesh(pv.Sphere())
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
 
         with pytest.raises(ImportError, match='pyvista-wasm'):
-            show_wasm(plotter)
+            show_wasm(pl)
 
 
 class TestWasmModuleExports:
@@ -244,11 +244,11 @@ class TestPyodideIntegration:
             from pyvista import wasm
 
             # Create plotter with mesh
-            plotter = pv.Plotter()
-            plotter.add_mesh(pv.Sphere())
+            pl = pv.Plotter()
+            pl.add_mesh(pv.Sphere())
 
             # Generate HTML
-            html = wasm.generate_standalone_html(plotter)
+            html = wasm.generate_standalone_html(pl)
 
             # Verify HTML is generated
             assert isinstance(html, str)

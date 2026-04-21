@@ -37,9 +37,9 @@ False
 Generate standalone HTML for embedding:
 
 >>> import pyvista as pv
->>> plotter = pv.Plotter()
->>> _ = plotter.add_mesh(pv.Sphere())
->>> html = pv.wasm.generate_standalone_html(plotter)  # doctest: +SKIP
+>>> pl = pv.Plotter()
+>>> _ = pl.add_mesh(pv.Sphere())
+>>> html = pv.wasm.generate_standalone_html(pl)  # doctest: +SKIP
 >>> '<!DOCTYPE html>' in html  # doctest: +SKIP
 True
 
@@ -358,9 +358,9 @@ def generate_standalone_html(plotter: Plotter, **kwargs) -> str:
     Examples
     --------
     >>> import pyvista as pv
-    >>> plotter = pv.Plotter()
-    >>> _ = plotter.add_mesh(pv.Sphere())
-    >>> html = pv.wasm.generate_standalone_html(plotter)  # doctest: +SKIP
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Sphere())
+    >>> html = pv.wasm.generate_standalone_html(pl)  # doctest: +SKIP
     >>> '<!DOCTYPE html>' in html  # doctest: +SKIP
     True
 
