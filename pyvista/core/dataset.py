@@ -1125,6 +1125,10 @@ class DataSet(DataSetFilters, DataObject):
         pandas.DataFrame
             DataFrame with one column per (expanded) array.
 
+        See Also
+        --------
+        :ref:`dataframe_export_example`
+
         Examples
         --------
         >>> import pyvista as pv
