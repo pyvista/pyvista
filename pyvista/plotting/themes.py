@@ -132,12 +132,12 @@ def set_plot_theme(theme):
 
     See Also
     --------
-    registered_themes
+    pyvista.registered_themes
         List all registered theme names.
-    register_theme
+    pyvista.register_theme
         Register a pre-configured :class:`Theme` instance under a
         custom name.
-    Theme
+    pyvista.plotting.themes.Theme
         Base class. Subclasses with a class-level ``_default_name`` are
         discoverable by name; see the class docstring for details aimed
         at theme authors and plugin packages.
@@ -195,14 +195,14 @@ def register_theme(name: str, theme: Any, *, override: bool = False) -> Theme:
     """Register a pre-configured :class:`~pyvista.plotting.themes.Theme` instance.
 
     Once registered, the theme can be activated by name via
-    :func:`set_plot_theme` or by setting the ``PYVISTA_PLOT_THEME``
-    environment variable.
+    :func:`~pyvista.set_plot_theme` or by setting the
+    ``PYVISTA_PLOT_THEME`` environment variable.
 
     Subclass-based registration is automatic via
-    :meth:`Theme.__init_subclass__` when the subclass declares a class-level
-    ``_default_name``. Use this function when you want to register an
-    already-configured instance (e.g., a mutated copy of ``DarkTheme``)
-    under a custom name.
+    ``Theme.__init_subclass__`` when the subclass declares a
+    class-level ``_default_name``. Use this function when you want to
+    register an already-configured instance (e.g., a mutated copy of
+    ``DarkTheme``) under a custom name.
 
     Parameters
     ----------
@@ -1758,16 +1758,16 @@ class Theme(_ConfigBase):
     Notes
     -----
     This section is aimed at theme authors and plugin package
-    maintainers; end users calling :func:`set_plot_theme` do not need
-    any of it.
+    maintainers; end users calling :func:`~pyvista.set_plot_theme` do
+    not need any of it.
 
     Subclasses that declare a class-level ``_default_name`` are
-    automatically registered by that name via
-    :meth:`__init_subclass__` and become available through
-    :func:`set_plot_theme`, the ``PYVISTA_PLOT_THEME`` environment
-    variable, and :func:`~pyvista.registered_themes`. Subclasses
-    without ``_default_name`` are not registered, so ad-hoc subclasses
-    remain a valid pattern.
+    automatically registered by that name via ``__init_subclass__``
+    and become available through :func:`~pyvista.set_plot_theme`, the
+    ``PYVISTA_PLOT_THEME`` environment variable, and
+    :func:`~pyvista.registered_themes`. Subclasses without
+    ``_default_name`` are not registered, so ad-hoc subclasses remain
+    a valid pattern.
 
     Plugin packages can expose additional themes under the
     ``pyvista.themes`` entry-point group without requiring users to
