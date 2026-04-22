@@ -321,7 +321,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         pyvista.DataObject
             PyVista dataset. The concrete subclass is determined by the
             specific ``*Reader`` used; for example,
-            :meth:`~pyvista.XMLUnstructuredGridReader.read` returns an
+            :class:`~pyvista.XMLUnstructuredGridReader` produces an
             :class:`~pyvista.UnstructuredGrid`.
 
         """
