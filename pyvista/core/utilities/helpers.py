@@ -67,23 +67,33 @@ def _dataset_array_lengths_match(obj: DataSet) -> bool:
     ``point_data_wrong_length`` fields), so skipping the slow path is
     semantically equivalent for valid datasets.
 
+    As a secondary role this loop also auto-names any unnamed array to
+    ``Unnamed_<i>``. The old ``validate_mesh`` path triggered the same rename
+    implicitly by iterating :meth:`DataSetAttributes.keys`; downstream code
+    (notably :meth:`DataSetFilters.contour`) relies on that name being present
+    after :func:`wrap`. The rename is O(1) per array and cheap, so doing it
+    here keeps the fast path observationally equivalent to the old path.
+
     See https://github.com/pyvista/pyvista/issues/8473 for the motivating
     benchmarks.
 
     """
     n_points = obj.GetNumberOfPoints()
     n_cells = obj.GetNumberOfCells()
-    point_data = obj.GetPointData()
-    for i in range(point_data.GetNumberOfArrays()):
-        arr = point_data.GetArray(i)
-        if arr is not None and arr.GetNumberOfTuples() != n_points:
-            return False
-    cell_data = obj.GetCellData()
-    for i in range(cell_data.GetNumberOfArrays()):
-        arr = cell_data.GetArray(i)
-        if arr is not None and arr.GetNumberOfTuples() != n_cells:
-            return False
-    return True
+    ok = True
+    for attrs, expected in (
+        (obj.GetPointData(), n_points),
+        (obj.GetCellData(), n_cells),
+    ):
+        for i in range(attrs.GetNumberOfArrays()):
+            arr = attrs.GetAbstractArray(i)
+            if arr is None:
+                continue
+            if not arr.GetName():
+                arr.SetName(f'Unnamed_{i}')
+            if arr.GetNumberOfTuples() != expected:
+                ok = False
+    return ok
 
 
 def _warn_if_invalid_data(obj: DataObject) -> None:
