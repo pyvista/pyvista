@@ -99,6 +99,7 @@ Array Access
    convert_array
    field_array
    get_array
+   get_array_association
    point_array
 
 
