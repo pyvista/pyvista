@@ -28,7 +28,7 @@ import pyvista as pv
 from pyvista import examples
 
 # Load the bust mesh (George Washington, CC0, Smithsonian).
-mesh = examples.download_washington_bust()
+mesh = examples.download_washington_bust().rotate_x(-90)
 
 # Download skybox
 cubemap = examples.download_sky_box_cube_map()
@@ -41,6 +41,7 @@ pl = pv.Plotter()
 pl.add_actor(cubemap.to_skybox())
 pl.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
 pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
+pl.view_xy(negative=True)
 pl.show()
 
 
