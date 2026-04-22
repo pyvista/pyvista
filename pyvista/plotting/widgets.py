@@ -2174,6 +2174,9 @@ class WidgetHelper:
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
+
         n_handles : int, optional
             The number of interactive spheres to control the spline's
             parametric function.
