@@ -6,6 +6,8 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from . import _vtk_core as _vtk
@@ -18,6 +20,9 @@ from .utilities.arrays import FieldLiteral
 from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
+
+if TYPE_CHECKING:
+    import pyarrow
 
 
 class Table(DataObject, _vtk.vtkTable):
@@ -336,6 +341,47 @@ class Table(DataObject, _vtk.vtkTable):
         for name, array in self.items():
             data_frame[name] = array
         return data_frame
+
+    def to_arrow(self) -> pyarrow.Table:
+        """Return this table as a :class:`pyarrow.Table`.
+
+        Each row array becomes a column with the same name and dtype.
+
+        Requires :mod:`pyarrow`.
+
+        Returns
+        -------
+        pyarrow.Table
+            This table represented as an Arrow Table.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> table = pv.Table({'a': np.arange(3), 'b': np.array([0.5, 1.5, 2.5])})
+        >>> table.to_arrow().schema.names
+        ['a', 'b']
+
+        """
+        try:
+            import pyarrow as pa  # noqa: PLC0415
+        except ImportError:  # pragma: no cover
+            msg = 'Install ``pyarrow`` to use this feature.'
+            raise ImportError(msg) from None
+        return pa.table({name: np.asarray(array) for name, array in self.items()})
+
+    def __arrow_c_stream__(self, requested_schema: object | None = None) -> object:
+        """Export via the Arrow PyCapsule interface.
+
+        Implements `the Arrow PyCapsule interface
+        <https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html>`_
+        by delegating to :meth:`to_arrow`, so pandas, polars, DuckDB,
+        ibis, narwhals, and other Arrow-aware consumers can ingest this
+        table directly.
+
+        Requires :mod:`pyarrow`.
+        """
+        return self.to_arrow().__arrow_c_stream__(requested_schema)
 
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""

@@ -27,6 +27,8 @@ T = TypeVar('T')
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    import pandas
+    import pyarrow
     from typing_extensions import Self
 
     from pyvista import DataSet
@@ -1000,6 +1002,140 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         return [self.get_array(name) for name in self.keys()]
+
+    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, npt.NDArray[Any]]]:
+        """Yield ``(column_name, 1d_ndarray)`` pairs with multi-component arrays expanded.
+
+        Shared helper for :meth:`to_arrow`, :meth:`to_pandas`, and
+        :meth:`__arrow_c_stream__`. Raises :class:`ValueError` when the
+        attribute set isn't row-aligned (field data), when any array's
+        leading dimension doesn't match :attr:`valid_array_len`, or when
+        expanding multi-component arrays would produce duplicate column
+        names.
+        """
+        n_rows = self.valid_array_len
+        if n_rows is None:
+            msg = (
+                'Cannot build a tabular view of field data: field arrays may have '
+                'differing lengths and are not row-aligned. Use point_data or cell_data.'
+            )
+            raise ValueError(msg)
+        seen: set[str] = set()
+
+        def _emit(col_name: str, values: npt.NDArray[Any]) -> tuple[str, npt.NDArray[Any]]:
+            if col_name in seen:
+                msg = (
+                    f'Column name collision on {col_name!r}: multiple arrays would map '
+                    f'to the same column after multi-component expansion. Rename or '
+                    f'drop an array to proceed.'
+                )
+                raise ValueError(msg)
+            seen.add(col_name)
+            return col_name, values
+
+        for name, array in self.items():
+            arr = np.asarray(array)
+            if arr.shape[0] != n_rows:
+                msg = (
+                    f'Array {name!r} has leading dimension {arr.shape[0]}, '
+                    f'expected {n_rows}; cannot build a tabular view.'
+                )
+                raise ValueError(msg)
+            if arr.ndim == 1:
+                yield _emit(name, arr)
+            else:
+                flat = arr.reshape(n_rows, -1)
+                for i in range(flat.shape[1]):
+                    yield _emit(f'{name}_{i}', flat[:, i])
+
+    def to_arrow(self: Self) -> pyarrow.Table:
+        """Return this attribute set as a :class:`pyarrow.Table`.
+
+        Each array becomes a column. Multi-component arrays (e.g. a
+        ``(N, 3)`` vector field) are expanded to one column per component,
+        named ``{array_name}_{i}``. Only ``point_data`` and ``cell_data``
+        can be converted — ``field_data`` raises :class:`ValueError`
+        because its arrays may have differing lengths.
+
+        Requires :mod:`pyarrow`.
+
+        Returns
+        -------
+        pyarrow.Table
+            Table with one column per (expanded) array and
+            :attr:`valid_array_len` rows.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['scalars'] = range(mesh.n_points)
+        >>> table = mesh.point_data.to_arrow()
+        >>> table.num_rows
+        8
+
+        """
+        try:
+            import pyarrow as pa  # noqa: PLC0415
+        except ImportError:  # pragma: no cover
+            msg = 'Install ``pyarrow`` to use this feature.'
+            raise ImportError(msg) from None
+        names: list[str] = []
+        arrays: list[pa.Array] = []
+        for name, col in self._iter_flat_columns():
+            names.append(name)
+            arrays.append(pa.array(col))
+        return pa.table(arrays, names=names)
+
+    def to_pandas(self: Self) -> pandas.DataFrame:
+        """Return this attribute set as a :class:`pandas.DataFrame`.
+
+        Each array becomes a column. Multi-component arrays are expanded
+        to one column per component, named ``{array_name}_{i}``. Only
+        ``point_data`` and ``cell_data`` can be converted —
+        ``field_data`` raises :class:`ValueError`.
+
+        The returned DataFrame is a snapshot; mutating it does not update
+        the underlying VTK arrays.
+
+        Requires :mod:`pandas`.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame with one column per (expanded) array and
+            :attr:`valid_array_len` rows.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['scalars'] = range(mesh.n_points)
+        >>> df = mesh.point_data.to_pandas()
+        >>> list(df.columns)
+        ['scalars']
+
+        """
+        try:
+            import pandas as pd  # noqa: PLC0415
+        except ImportError:  # pragma: no cover
+            msg = 'Install ``pandas`` to use this feature.'
+            raise ImportError(msg) from None
+        return pd.DataFrame(dict(self._iter_flat_columns()))
+
+    def __arrow_c_stream__(self: Self, requested_schema: object | None = None) -> object:
+        """Export via the Arrow PyCapsule interface.
+
+        Implements `the Arrow PyCapsule interface
+        <https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html>`_
+        so pandas, polars, DuckDB, ibis, narwhals, and other Arrow-aware
+        consumers can ingest ``point_data`` / ``cell_data`` directly.
+
+        Requires :mod:`pyarrow`.
+        """
+        return self.to_arrow().__arrow_c_stream__(requested_schema)
 
     def clear(self: Self) -> None:
         """Remove all arrays in this object.
