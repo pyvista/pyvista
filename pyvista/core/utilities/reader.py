@@ -2251,6 +2251,14 @@ class DICOMReader(BaseReader):
     >>> dataset = reader.read()
     >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
 
+    .. note::
+
+        The example dataset is the CPTAC-SAR collection from The Cancer
+        Imaging Archive, distributed under CC BY 3.0 and subject to the
+        TCIA Data Usage Policy. See
+        :func:`~pyvista.examples.downloads.download_dicom_stack` for the
+        required attribution and usage terms.
+
     """
 
     _vtk_module_name = 'vtkIOImage'
