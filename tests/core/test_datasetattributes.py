@@ -913,6 +913,39 @@ def test_to_pandas_is_snapshot_not_view(hexbeam):
 
 
 @skip_no_pandas
+def test_to_pandas_does_not_share_memory_with_vtk(hexbeam):
+    """Pandas consolidates into blocks during construction, which copies."""
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    df = hexbeam.point_data.to_pandas()
+    assert not np.shares_memory(hexbeam.point_data['s'], df['s'].to_numpy())
+
+
+@skip_no_pyarrow
+def test_to_arrow_scalar_column_is_zero_copy(hexbeam):
+    """1D contiguous numeric columns wrap VTK memory zero-copy."""
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    table = hexbeam.point_data.to_arrow()
+    assert np.shares_memory(
+        hexbeam.point_data['s'],
+        table.column('s').to_numpy(zero_copy_only=False),
+    )
+
+
+@skip_no_pyarrow
+def test_to_arrow_multi_component_column_is_copied(hexbeam):
+    """Expanded multi-component columns are strided slices; pyarrow copies."""
+    hexbeam.clear_data()
+    hexbeam.point_data['vec'] = hexbeam.points.astype(np.float64)
+    table = hexbeam.point_data.to_arrow()
+    assert not np.shares_memory(
+        hexbeam.point_data['vec'],
+        table.column('vec_0').to_numpy(zero_copy_only=False),
+    )
+
+
+@skip_no_pandas
 def test_to_pandas_empty_point_data(hexbeam):
     hexbeam.clear_data()
     df = hexbeam.point_data.to_pandas()

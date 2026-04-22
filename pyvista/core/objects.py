@@ -354,6 +354,14 @@ class Table(DataObject, _vtk.vtkTable):
         pyarrow.Table
             This table represented as an Arrow Table.
 
+        Notes
+        -----
+        1D contiguous numeric columns wrap the underlying VTK buffer
+        zero-copy. Booleans, complex numbers, and strings go through
+        pyvista's existing VTK conversion and are copied. Arrow buffers
+        are immutable by contract, so consumers cannot mutate VTK memory
+        through the returned table.
+
         Examples
         --------
         >>> import numpy as np
@@ -377,7 +385,7 @@ class Table(DataObject, _vtk.vtkTable):
         <https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html>`_
         by delegating to :meth:`to_arrow`, so pandas, polars, DuckDB,
         ibis, narwhals, and other Arrow-aware consumers can ingest this
-        table directly.
+        table directly. Scalar 1D columns cross the boundary zero-copy.
 
         Requires :mod:`pyarrow`.
         """

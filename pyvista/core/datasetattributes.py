@@ -1065,6 +1065,21 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Table with one column per (expanded) array and
             :attr:`valid_array_len` rows.
 
+        Notes
+        -----
+        Memory sharing with the underlying VTK buffers is mixed:
+
+        - 1D contiguous numeric columns (scalar arrays) wrap the VTK
+          buffer zero-copy. The Arrow column and the VTK array point at
+          the same memory.
+        - Expanded multi-component columns (``{name}_{i}``) come from
+          strided slices and are copied into contiguous buffers.
+        - Booleans, complex numbers, and strings go through pyvista's
+          existing VTK conversion and are copied.
+
+        Arrow buffers are immutable by contract, so consumers cannot
+        mutate VTK memory through the returned table.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1096,9 +1111,6 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         ``point_data`` and ``cell_data`` can be converted —
         ``field_data`` raises :class:`ValueError`.
 
-        The returned DataFrame is a snapshot; mutating it does not update
-        the underlying VTK arrays.
-
         Requires :mod:`pandas`.
 
         Returns
@@ -1106,6 +1118,14 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         pandas.DataFrame
             DataFrame with one column per (expanded) array and
             :attr:`valid_array_len` rows.
+
+        Notes
+        -----
+        Pandas consolidates the dict of columns into internal blocks
+        during construction, which copies the data. The returned
+        DataFrame is effectively a snapshot and does not share memory
+        with VTK. Callers that need zero-copy access should use
+        :meth:`to_arrow` instead.
 
         Examples
         --------
@@ -1132,6 +1152,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         <https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html>`_
         so pandas, polars, DuckDB, ibis, narwhals, and other Arrow-aware
         consumers can ingest ``point_data`` / ``cell_data`` directly.
+
+        Delegates to :meth:`to_arrow`, so the same memory-sharing rules
+        apply: scalar 1D columns are zero-copy, multi-component expanded
+        columns are copied.
 
         Requires :mod:`pyarrow`.
         """
