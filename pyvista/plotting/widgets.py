@@ -442,9 +442,6 @@ class WidgetHelper:
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
 
-        factor : float, optional
-            An inflation factor to expand on the bounds when placing.
-
         color : ColorLike, optional
             Either a string, rgb list, or hex color string.
 
