@@ -592,9 +592,7 @@ def test_dir_hides_vtk_inherited_attributes(data_object):
 
     # No VTK-style CamelCase names should leak through.
     camel_case_leaks = [
-        name
-        for name in listing
-        if name[:1].isupper() and name not in {type(data_object).__name__}
+        name for name in listing if name[:1].isupper() and name not in {type(data_object).__name__}
     ]
     assert camel_case_leaks == []
 
