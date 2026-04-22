@@ -33,7 +33,7 @@ mesh = examples.download_washington_bust()
 
 pl = pv.Plotter()
 pl.add_mesh_clip_box(mesh, color='white')
-pl.show(cpos=[-1, -1, 0.2])
+pl.show()
 
 
 # %%
