@@ -1054,7 +1054,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Each array becomes a column. Multi-component arrays (e.g. a
         ``(N, 3)`` vector field) are expanded to one column per component,
         named ``{array_name}_{i}``. Only ``point_data`` and ``cell_data``
-        can be converted — ``field_data`` raises :class:`ValueError`
+        can be converted. ``field_data`` raises :class:`ValueError`
         because its arrays may have differing lengths.
 
         Requires :mod:`pyarrow`.
@@ -1108,7 +1108,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Each array becomes a column. Multi-component arrays are expanded
         to one column per component, named ``{array_name}_{i}``. Only
-        ``point_data`` and ``cell_data`` can be converted —
+        ``point_data`` and ``cell_data`` can be converted.
         ``field_data`` raises :class:`ValueError`.
 
         Requires :mod:`pandas`.

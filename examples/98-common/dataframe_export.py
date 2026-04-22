@@ -47,7 +47,7 @@ df.shape
 # %%
 # Ad-hoc analytics
 # ~~~~~~~~~~~~~~~~
-# Since we have a DataFrame, the full pandas API is available — filter,
+# Since we have a DataFrame, the full pandas API is available: filter,
 # derive new columns, summarize.
 
 velocity = df[['velocity_0', 'velocity_1', 'velocity_2']].to_numpy()
@@ -72,8 +72,8 @@ cell_df.head()
 # %%
 # Export to disk
 # ~~~~~~~~~~~~~~
-# A DataFrame gives you one-liner access to every pandas I/O backend —
-# Parquet, CSV, Feather, Excel, SQL, HDF5, and so on. Commented out here to
+# A DataFrame gives you one-liner access to every pandas I/O backend:
+# Parquet, CSV, Feather, Excel, SQL, HDF5, and more. Commented out here to
 # keep the gallery build clean.
 
 # df.to_parquet('point_data.parquet')
@@ -95,5 +95,5 @@ arrow_table.schema
 # %%
 # The ``mesh``, ``mesh.point_data``, and ``mesh.cell_data`` objects can also be
 # opened directly in data-science IDE variable explorers (Positron, Jupyter,
-# VS Code) after calling :meth:`~pyvista.DataSet.to_pandas` — the returned
+# VS Code) after calling :meth:`~pyvista.DataSet.to_pandas`. The returned
 # DataFrame renders as an interactive, sortable, filterable table.

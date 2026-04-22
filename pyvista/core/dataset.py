@@ -1105,7 +1105,7 @@ class DataSet(DataSetFilters, DataObject):
     ) -> pandas.DataFrame:
         """Return this dataset's point or cell arrays as a :class:`pandas.DataFrame`.
 
-        Thin wrapper around :meth:`DataSetAttributes.to_pandas` — see that
+        Thin wrapper around :meth:`DataSetAttributes.to_pandas`. See that
         method for column-expansion rules and dtype handling.
 
         Requires :mod:`pandas`.
@@ -1113,12 +1113,12 @@ class DataSet(DataSetFilters, DataObject):
         Parameters
         ----------
         association : str | pyvista.FieldAssociation, default: 'point'
-            Which attribute set to convert. Accepts ``'point'`` /
-            :attr:`FieldAssociation.POINT <pyvista.FieldAssociation>` — maps to
-            :attr:`point_data` (``n_points`` rows); or ``'cell'`` /
-            :attr:`FieldAssociation.CELL <pyvista.FieldAssociation>` — maps to
-            :attr:`cell_data` (``n_cells`` rows). Field data is not supported
-            because its arrays may have differing lengths.
+            Which attribute set to convert. Accepts ``'point'`` or
+            :attr:`FieldAssociation.POINT <pyvista.FieldAssociation>`, which
+            maps to :attr:`point_data` (``n_points`` rows); or ``'cell'`` or
+            :attr:`FieldAssociation.CELL <pyvista.FieldAssociation>`, which
+            maps to :attr:`cell_data` (``n_cells`` rows). Field data is not
+            supported because its arrays may have differing lengths.
 
         Returns
         -------
