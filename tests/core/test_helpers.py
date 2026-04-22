@@ -111,6 +111,24 @@ def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
         pv.wrap(vtk_poly_with_invalid_arrays)
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0, reason='fast path requires validate_mesh')
+def test_wrap_auto_names_unnamed_arrays():
+    # The pre-optimization wrap() path validated via keys(), which has the
+    # side effect of renaming unnamed arrays to ``Unnamed_<i>``. Filters
+    # like ``contour`` rely on that rename to remap filter output back to
+    # the caller's requested scalar name. The fast path must preserve it.
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    arr = _vtk.vtkFloatArray()
+    arr.SetNumberOfTuples(vtk_poly.GetNumberOfPoints())
+    vtk_poly.GetPointData().AddArray(arr)
+    assert not arr.GetName()
+    pv.wrap(vtk_poly)
+    assert arr.GetName() == 'Unnamed_0'
+
+
 def test_global_config_to_dict():
     assert pv.global_config.to_dict() == {'validate_on_wrap': True}
 
