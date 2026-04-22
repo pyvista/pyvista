@@ -313,7 +313,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         self.reader.SetFileName(filename)
         self._update_information()
 
-    def read(self) -> _T_Output_co:
+    def read(self) -> _T_Output_co:  # numpydoc ignore=RT01
         """Read data in file.
 
         Returns
@@ -321,7 +321,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         pyvista.DataObject
             PyVista dataset. The concrete subclass is determined by the
             specific ``*Reader`` used; for example,
-            :class:`XMLUnstructuredGridReader.read` returns an
+            :meth:`~pyvista.XMLUnstructuredGridReader.read` returns an
             :class:`~pyvista.UnstructuredGrid`.
 
         """
@@ -4110,63 +4110,83 @@ _legacy_dataset_types = Literal[  # no PointSet
     'StructuredGrid',
 ]
 
-# Define reader output types. Primarily used for testing and documentation.
-_CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
-    AVSucdReader: 'UnstructuredGrid',
-    BinaryMarchingCubesReader: 'PolyData',
-    BMPReader: 'ImageData',
-    BYUReader: 'PolyData',
-    CGNSReader: 'MultiBlock',
-    DEMReader: 'ImageData',
-    DICOMReader: 'ImageData',
-    EnSightReader: 'MultiBlock',
-    ExodusIIReader: 'MultiBlock',
-    FacetReader: 'PolyData',
-    FLUENTCFFReader: 'MultiBlock',
-    FluentReader: 'UnstructuredGrid',
-    FRDReader: 'UnstructuredGrid',
-    GambitReader: 'UnstructuredGrid',
+# Override for readers that legitimately produce more than one concrete
+# output type at runtime. The ``BaseReader[X]`` generic parameter on these
+# classes is the narrowest common supertype the VTK format allows (e.g.
+# ``DataSet`` for ``VTKDataSetReader``), but for docs and tests we want
+# the exact list of concrete types the reader can emit.
+#
+# All other readers' output types are derived from their ``BaseReader[X]``
+# parameterization by :func:`_derive_reader_output_types` below, so
+# adding a new single-output reader does not require editing this module.
+_READER_OUTPUT_OVERRIDES: dict[type[BaseReader[Any]], tuple[_mesh_types, ...]] = {
     GaussianCubeReader: ('ImageData', 'PolyData'),
-    GESignaReader: 'ImageData',
-    GIFReader: 'ImageData',
-    GLTFReader: 'MultiBlock',
     HDFReader: ('ImageData', 'PolyData', 'UnstructuredGrid', 'PartitionedDataSet', 'MultiBlock'),
-    HDRReader: 'ImageData',
-    JPEGReader: 'ImageData',
-    MetaImageReader: 'ImageData',
-    MFIXReader: 'UnstructuredGrid',
-    MINCImageReader: 'ImageData',
-    NIFTIReader: 'ImageData',
-    NRRDReader: 'ImageData',
-    Nek5000Reader: 'UnstructuredGrid',
-    OBJReader: 'PolyData',
-    PDBReader: 'PolyData',
-    PLYReader: 'PolyData',
-    PNGReader: 'ImageData',
-    PNMReader: 'ImageData',
-    POpenFOAMReader: 'MultiBlock',
-    PVDReader: 'MultiBlock',
-    ParticleReader: 'PolyData',
-    Plot3DMetaReader: 'MultiBlock',
-    ProStarReader: 'UnstructuredGrid',
-    PTSReader: 'PolyData',
     SegYReader: ('StructuredGrid', 'ImageData'),
-    SLCReader: 'ImageData',
-    STLReader: 'PolyData',
-    TIFFReader: 'ImageData',
-    TecplotReader: 'MultiBlock',
     VTKDataSetReader: get_args(_legacy_dataset_types),
     VTKPDataSetReader: get_args(_legacy_dataset_types),
     XdmfReader: ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid'),
-    XMLImageDataReader: 'ImageData',
-    XMLMultiBlockDataReader: 'MultiBlock',
-    XMLPartitionedDataSetReader: 'PartitionedDataSet',
-    XMLPolyDataReader: 'PolyData',
-    XMLPRectilinearGridReader: 'RectilinearGrid',
-    XMLPUnstructuredGridReader: 'UnstructuredGrid',
-    XMLRectilinearGridReader: 'RectilinearGrid',
-    XMLStructuredGridReader: 'StructuredGrid',
-    XMLUnstructuredGridReader: 'UnstructuredGrid',
-    XMLPImageDataReader: 'ImageData',
     SeriesReader: get_args(_mesh_types),
+}
+
+
+def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
+    """Return the forward-reference name from a ``BaseReader[X]`` base.
+
+    Walks ``cls.__orig_bases__`` looking for a ``BaseReader[X]`` base and
+    returns ``X`` as a string (the forward-reference text, or a real
+    class's ``__name__``). Returns ``None`` when the class is not a
+    parameterized :class:`BaseReader` subclass.
+    """
+    import typing as _typing  # noqa: PLC0415
+
+    for base in getattr(cls, '__orig_bases__', ()):
+        origin = _typing.get_origin(base)
+        if origin is None or not (isinstance(origin, type) and issubclass(origin, BaseReader)):
+            continue
+        args = _typing.get_args(base)
+        if not args:
+            continue
+        arg = args[0]
+        if isinstance(arg, _typing.ForwardRef):
+            return arg.__forward_arg__
+        if isinstance(arg, type):
+            return arg.__name__
+    return None
+
+
+def _derive_reader_output_types(
+    cls: type[BaseReader[Any]],
+) -> _mesh_types | tuple[_mesh_types, ...]:
+    """Return the output type(s) declared by a reader class.
+
+    Returns the :class:`BaseReader` generic parameter as a ``_mesh_types``
+    literal for single-output readers, or the explicit tuple from
+    :data:`_READER_OUTPUT_OVERRIDES` for readers whose generic parameter
+    is a widened common supertype. Raises :class:`TypeError` if neither
+    source supplies a type.
+    """
+    if cls in _READER_OUTPUT_OVERRIDES:
+        return _READER_OUTPUT_OVERRIDES[cls]
+    name = _extract_base_reader_generic_arg(cls)
+    if name is None:
+        msg = (
+            f'Cannot derive output type for reader {cls.__name__!r}: '
+            f'it does not parameterize BaseReader[X] and is not listed '
+            f'in _READER_OUTPUT_OVERRIDES.'
+        )
+        raise TypeError(msg)
+    return cast('_mesh_types', name)
+
+
+# Define reader output types. Primarily used for testing and documentation.
+# The mapping is derived from each reader's ``BaseReader[X]`` parameterization
+# (with ``_READER_OUTPUT_OVERRIDES`` for multi-output readers), so adding a
+# new reader automatically produces the right entry here. We seed the
+# iteration from :data:`CLASS_READERS` (every reader registered to a file
+# extension) plus :class:`SeriesReader` (reached via its ``.series`` entry
+# through a registry mechanism) — readers not registered to an extension
+# stay out by design.
+_CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
+    cls: _derive_reader_output_types(cls) for cls in set(CLASS_READERS.values())
 }
