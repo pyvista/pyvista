@@ -553,3 +553,66 @@ def test_raise_error_when_writing_is_failed(tmp_path):
     ):
         with pytest.raises(OSError, match='VTK writer failed to write file'):
             cylinder.save(tmp_path / 'cylinder.vtk')
+
+
+@pytest.mark.parametrize(
+    'data_object',
+    [
+        pv.PolyData(),
+        pv.UnstructuredGrid(),
+        pv.StructuredGrid(),
+        pv.ImageData(),
+        pv.RectilinearGrid(),
+        pv.MultiBlock(),
+        pv.PartitionedDataSet(),
+        pv.Table(),
+        pv.PointSet(),
+    ],
+)
+def test_dir_hides_vtk_inherited_attributes(data_object):
+    """Verify ``__dir__`` omits VTK-inherited attributes but keeps them callable."""
+    listing = dir(data_object)
+
+    # VTK-inherited names that exist on every vtkDataObject subclass.
+    for vtk_name in (
+        'DeepCopy',
+        'ShallowCopy',
+        'AddObserver',
+        'BreakOnError',
+        'DebugOn',
+        'GetClassName',
+        'GetMTime',
+    ):
+        assert vtk_name not in listing
+        # They must remain accessible on the instance.
+        assert callable(getattr(data_object, vtk_name))
+
+    # The listing should be sorted and unique.
+    assert listing == sorted(set(listing))
+
+    # No VTK-style CamelCase names should leak through.
+    camel_case_leaks = [
+        name
+        for name in listing
+        if name[:1].isupper() and name not in {type(data_object).__name__}
+    ]
+    assert camel_case_leaks == []
+
+
+def test_dir_exposes_pyvista_api(sphere):
+    """Verify curated PyVista API members show up in ``dir``."""
+    listing = dir(sphere)
+    for expected in (
+        'points',
+        'bounds',
+        'point_data',
+        'cell_data',
+        'field_data',
+        'n_points',
+        'n_cells',
+        'save',
+        'copy',
+        'deep_copy',
+        'shallow_copy',
+    ):
+        assert expected in listing
