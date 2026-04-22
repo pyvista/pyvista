@@ -416,7 +416,7 @@ def get_array_association(  # noqa: PLR0917
 
     Parameters
     ----------
-    mesh : Dataset
+    mesh : pyvista.DataSet
         Dataset to get the array association from.
 
     name : str
