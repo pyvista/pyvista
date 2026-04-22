@@ -315,6 +315,7 @@ class Report(scooby.Report):
             'ipywidgets',
             'jupyter-server-proxy',
             'jupyterlab',
+            'playwright',
             'nest-asyncio2',
         ]
 
