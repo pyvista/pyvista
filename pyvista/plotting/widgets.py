@@ -976,6 +976,7 @@ class WidgetHelper:
         widget_color=None,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
+        factor: float = 1.25,
         origin_translation: bool = True,  # noqa: FBT001, FBT002
         outline_translation: bool = False,  # noqa: FBT001, FBT002
         implicit: bool = True,  # noqa: FBT001, FBT002
@@ -1013,6 +1014,10 @@ class WidgetHelper:
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given axis:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        factor : float, optional
+            Expands the plane bounds. 1.0 means the plane bounds are exactly
+            the bounds of the mesh.
 
         tubing : bool, optional
             When using an implicit plane widget, this controls whether or not
@@ -1104,7 +1109,7 @@ class WidgetHelper:
         self.add_plane_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
