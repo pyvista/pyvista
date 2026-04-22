@@ -56,7 +56,7 @@ def _filter_warnings():
         category=Warning,
     )
 
-    if importlib.util.find_spec('trame_vtk'):
+    if importlib.util.find_spec('trame_vtk'):  # pragma: no branch
         # Filter vtk deprecations that were fixed in PyVista, but not in trame-vtk
         if vtk_version_info >= (9, 5, 0):
             warnings.filterwarnings(  # Filter added in https://github.com/pyvista/pyvista/pull/8003
@@ -64,7 +64,7 @@ def _filter_warnings():
                 message=r'Call to deprecated method GetData.*',
                 category=DeprecationWarning,
             )
-        if vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)
+        if vtk_version_info >= (9, 6, 99):  # >= (9, 7, 0)  # pragma: no branch
             warnings.filterwarnings(  # Filter added in https://github.com/pyvista/pyvista/pull/8405
                 'ignore',
                 message=r'Call to deprecated method GetSize.*',
@@ -73,7 +73,7 @@ def _filter_warnings():
 
     numpy_version_info = tuple(map(int, np.__version__.split('.')[:3]))
     if numpy_version_info >= (2, 5, 0):
-        if vtk_version_info < (9, 7, 0):
+        if vtk_version_info < (9, 7, 0):  # pragma: no branch
             # Older VTK versions internally set array shape, which is deprecated for newer NumPy.
             # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
             # Users that update to the latest VTK should continue to see these deprecations
