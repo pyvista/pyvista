@@ -30,7 +30,6 @@ import warnings
 import weakref
 
 import numpy as np
-import PIL.Image
 import scooby
 
 import pyvista as pv
@@ -6633,6 +6632,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             the plotter has not been rendered.
 
         """
+        import PIL.Image  # noqa: PLC0415
+
         if self.last_image is None:
             return None
         buf = io.BytesIO()
