@@ -89,6 +89,30 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      - name: Restore plot directive cache
+        uses: actions/cache@v5
+        with:
+          path: doc/_build/plot_directive
+          key: plot-directive-${{ hashFiles('pyvista/**/*.py') }}
+          restore-keys: |
+            plot-directive-
+
+      - name: Restore make_tables cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            doc/source/images/colormaps
+            doc/source/images/charts
+            doc/source/api/examples/dataset-gallery
+            doc/source/api/readers
+            doc/source/api/utilities/io_table
+            doc/source/api/core/cell_quality
+            doc/source/api/utilities/colormap_table
+            doc/source/api/utilities/color_table
+          key: make-tables-${{ hashFiles('doc/source/make_tables.py', 'pyvista/examples/**/*.py') }}
+          restore-keys: |
+            make-tables-
+
       - name: Build Documentation
         run: timeout 3600 tox run -e docs-build
 

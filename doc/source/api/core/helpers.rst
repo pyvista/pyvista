@@ -1,40 +1,44 @@
+.. _helpers_api:
+
 Helpers
 =======
 
 The ``pyvista`` module contains several functions to simplify the
 creation and manipulation of meshes or interfacing with VTK datasets.
 
+See :ref:`utilities-api-index` for the full API reference of all
+utility functions organized by category.
 
-Wrap a VTK Dataset
-~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.helpers.wrap
+.. currentmodule:: pyvista
 
+Mesh Creation
+~~~~~~~~~~~~~
 
-Simplified Triangular Mesh Construction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.points.make_tri_mesh
+.. autosummary::
 
+   wrap
+   make_tri_mesh
+   lines_from_points
+   line_segments_from_points
+   vector_poly_data
+   vtk_points
 
-Lines from Points
-~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.points.lines_from_points
+Mesh Operations
+~~~~~~~~~~~~~~~
 
+.. autosummary::
 
-Line Segments from Points
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.points.line_segments_from_points
+   merge
+   translate
+   generate_plane
+   fit_plane_to_points
+   fit_line_to_points
 
+Array Utilities
+~~~~~~~~~~~~~~~
 
-Convert to and from VTK Data Types
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.arrays.convert_array
+.. autosummary::
 
-
-Fit Plane to Points
-~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.points.fit_plane_to_points
-
-
-Fit Line to Points
-~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.points.fit_line_to_points
+   convert_array
+   sample_function
+   perlin_noise

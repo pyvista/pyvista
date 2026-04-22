@@ -1,5 +1,7 @@
-Examples
-========
+.. _examples_api:
+
+Examples & Datasets
+===================
 
 .. currentmodule:: pyvista
 

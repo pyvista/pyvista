@@ -20,7 +20,7 @@ vol
 
 # %%
 # Now lets make an array of all of the isovalues for which we want to show.
-values = np.linspace(5, 150, num=25)
+values = np.linspace(5, 150, num=15)
 
 # %%
 # Now let's create an initial isosurface that we can plot and move

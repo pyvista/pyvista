@@ -604,6 +604,40 @@ def hash_plot_code(code: str, options: dict) -> str:
     return hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()[:16]
 
 
+def _try_load_cached_images(*, build_dir, output_base, code):
+    """Return cached image results for *output_base*, or ``None`` if none exist.
+
+    Only safe to call when ``output_base`` carries a content hash (not a
+    counter) and the directive is hash-stable: callers must already have
+    excluded ``:context:``, ``pyvista_plot_use_counter``, and file-based
+    directives. The hash in *output_base* invalidates the cache automatically
+    when the directive's code or options change.
+    """
+    build_path = Path(build_dir)
+    # Image names follow the pattern: {output_base}_{i:02d}_{j:02d}.{ext}
+    cached = sorted(build_path.glob(f'{output_base}_*'))
+    if not cached:
+        return None
+
+    # When both a .png and .vtksz exist for the same stem, keep only the
+    # .vtksz (the template renders it as a static/interactive tab-set with
+    # the .png derived from the stem). Returning both would double-render.
+    vtksz_stems = {p.stem for p in cached if p.suffix == '.vtksz'}
+    cached = [p for p in cached if p.suffix != '.png' or p.stem not in vtksz_stems]
+
+    _, code_pieces = _split_code_at_show(code)
+    if len(code_pieces) <= 1:
+        return [(code, [ImageFile(build_dir, p.name) for p in cached])]
+
+    # Multi-piece: distribute images across pieces by index prefix
+    results = []
+    for i, piece in enumerate(code_pieces):
+        prefix = f'{output_base}_{i:02d}_'
+        piece_images = [ImageFile(build_dir, p.name) for p in cached if p.name.startswith(prefix)]
+        results.append((piece, piece_images))
+    return results
+
+
 def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
@@ -626,7 +660,8 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     rst_file = document.attributes['source']
     rst_dir = str(Path(rst_file).parent)
 
-    if len(arguments):
+    is_file_directive = len(arguments) > 0
+    if is_file_directive:
         if not config.pyvista_plot_basedir:
             source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
@@ -716,26 +751,36 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     if skip:
         results = [(code, [])]
     else:
-        try:
-            results = render_figures(
-                code=code,
-                code_path=source_file_name,
-                output_dir=build_dir,
-                output_base=output_base,
-                context=keep_context,
-                function_name=function_name,
-                config=config,
-                force_static=force_static,
-            )
-        except PlotError as err:  # pragma: no cover
-            reporter = state.memo.reporter
-            sm = reporter.system_message(
-                2,
-                f'Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}',
-                line=lineno,
-            )
-            results = [(code, [])]
-            errors.append(sm)
+        # Reuse cached images when output_base carries a content hash that
+        # changes whenever the directive's code or options change.
+        can_use_cache = not (keep_context or use_counter or is_file_directive)
+        results = (
+            _try_load_cached_images(build_dir=build_dir, output_base=output_base, code=code)
+            if can_use_cache
+            else None
+        )
+        if results is None:
+            try:
+                results = render_figures(
+                    code=code,
+                    code_path=source_file_name,
+                    output_dir=build_dir,
+                    output_base=output_base,
+                    context=keep_context,
+                    function_name=function_name,
+                    config=config,
+                    force_static=force_static,
+                )
+            except PlotError as err:  # pragma: no cover
+                reporter = state.memo.reporter
+                sm = reporter.system_message(
+                    2,
+                    f'Exception occurred in plotting {output_base}\n'
+                    f' from {source_file_name}:\n{err}',
+                    line=lineno,
+                )
+                results = [(code, [])]
+                errors.append(sm)
 
     # Properly indent the caption
     caption = (
