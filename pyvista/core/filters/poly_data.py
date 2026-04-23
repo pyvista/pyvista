@@ -3904,6 +3904,154 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
+    def fit_to_height_map(  # noqa: PLR0917
+        self,
+        height_map,
+        fitting_strategy='point_projection',
+        use_height_map_offset: bool = True,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ):
+        """Fit polygonal data to a height map (image data).
+
+        Adjust the z-coordinates of the input polygonal data so that
+        they drape over a height map (i.e., an :class:`pyvista.ImageData`
+        dataset). The height map is sampled to determine the z-coordinate
+        at each input point or cell center, depending on the fitting
+        strategy.
+
+        Parameters
+        ----------
+        height_map : pyvista.ImageData
+            The height map to fit the input data to. This must be a
+            :class:`pyvista.ImageData` dataset with scalar values
+            representing elevation.
+
+        fitting_strategy : str, default: "point_projection"
+            Strategy used to fit the data to the height map. One of the
+            following:
+
+            * ``"point_projection"`` -- project input points onto the
+              height map.
+            * ``"point_minimum_height"`` -- use the minimum height at each
+              input point.
+            * ``"point_maximum_height"`` -- use the maximum height at each
+              input point.
+            * ``"point_average_height"`` -- use the average height at each
+              input point.
+            * ``"cell_minimum_height"`` -- use the minimum height at each
+              cell center.
+            * ``"cell_maximum_height"`` -- use the maximum height at each
+              cell center.
+            * ``"cell_average_height"`` -- use the average height at each
+              cell center.
+
+        use_height_map_offset : bool, default: True
+            If ``True``, the height map values are offset by the current
+            z-coordinate of the input data. This means that height map
+            values are added to the existing z-coordinates rather than
+            replacing them.
+
+        inplace : bool, default: False
+            Overwrites the original mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            The mesh fitted to the height map.
+
+        Examples
+        --------
+        Fit two rectangles to a sinusoidal height map and compare
+        point-projection vs cell-average-height fitting strategies.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> height_map = pv.ImageData(dimensions=(50, 50, 1))
+        >>> height_map.origin = (0.0, 0.0, 0.0)
+        >>> height_map.spacing = (1.0, 1.0, 1.0)
+        >>> xx, yy = np.meshgrid(
+        ...     np.linspace(0, 2 * np.pi, 50),
+        ...     np.linspace(0, 2 * np.pi, 50),
+        ... )
+        >>> elevation = np.sin(xx) * np.cos(yy) * 10 + 20
+        >>> height_map.point_data['elevation'] = elevation.flatten(order='C')
+        >>> polygon1 = pv.Rectangle(
+        ...     [[10.0, 10.0, 0.0], [30.0, 10.0, 0.0], [30.0, 30.0, 0.0]]
+        ... )
+        >>> polygon2 = pv.Rectangle(
+        ...     [[5.0, 35.0, 0.0], [15.0, 35.0, 0.0], [15.0, 45.0, 0.0]]
+        ... )
+        >>> result1 = polygon1.fit_to_height_map(
+        ...     height_map,
+        ...     fitting_strategy='point_projection',
+        ...     use_height_map_offset=True,
+        ... )
+        >>> result2 = polygon2.fit_to_height_map(
+        ...     height_map,
+        ...     fitting_strategy='point_projection',
+        ...     use_height_map_offset=True,
+        ... )
+        >>> terrain = height_map.warp_by_scalar(scalars='elevation')
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(terrain, scalars='elevation', opacity=0.7, cmap='terrain')
+        >>> _ = pl.add_mesh(result1, color='red', opacity=0.9)
+        >>> _ = pl.add_mesh(result2, color='blue', opacity=0.9)
+        >>> _ = pl.add_text('Point Projection', position='upper_left', font_size=12)
+        >>> pl.view_isometric()
+        >>> pl.subplot(0, 1)
+        >>> result_cell = polygon1.fit_to_height_map(
+        ...     height_map,
+        ...     fitting_strategy='cell_average_height',
+        ...     use_height_map_offset=True,
+        ... )
+        >>> _ = pl.add_mesh(terrain, scalars='elevation', opacity=0.7, cmap='terrain')
+        >>> _ = pl.add_mesh(result_cell, color='red', opacity=0.9)
+        >>> _ = pl.add_text('Cell Average Height', position='upper_left', font_size=12)
+        >>> pl.view_isometric()
+        >>> pl.show()
+
+        """
+        fitting_strategies = {
+            'point_projection': 0,
+            'point_minimum_height': 1,
+            'point_maximum_height': 2,
+            'point_average_height': 3,
+            'cell_minimum_height': 4,
+            'cell_maximum_height': 5,
+            'cell_average_height': 6,
+        }
+        if isinstance(fitting_strategy, str):
+            if fitting_strategy not in fitting_strategies:
+                msg = (
+                    f'Invalid fitting strategy "{fitting_strategy}". '
+                    f'Expected one of {list(fitting_strategies)}.'
+                )
+                raise ValueError(msg)
+            fitting_strategy = fitting_strategies[fitting_strategy]
+        else:
+            msg = 'Invalid type given to `fitting_strategy`. Must be a string.'
+            raise TypeError(msg)
+
+        alg = _vtk.vtkFitToHeightMapFilter()
+        alg.SetInputData(self)
+        alg.SetHeightMapData(height_map)
+        alg.SetFittingStrategy(fitting_strategy)
+        if use_height_map_offset:
+            alg.UseHeightMapOffsetOn()
+        else:
+            alg.UseHeightMapOffsetOff()
+        _update_alg(alg, progress_bar=progress_bar, message='Fitting to height map')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
+            return self
+        return mesh
+
     @_deprecate_positional_args
     def strip(  # noqa: PLR0917
         self,
