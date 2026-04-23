@@ -107,7 +107,7 @@ def _collect_documented_names() -> set[str]:
     """
     names: set[str] = set()
     for rst in _API_DOC_ROOT.rglob('*.rst'):
-        lines = rst.read_text().splitlines()
+        lines = rst.read_text(encoding='utf-8').splitlines()
         in_block = False
         block_indent = -1
         for raw in lines:
