@@ -6,7 +6,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import PartitionedDataSet
-from pyvista.core.errors import PartitionedDataSetsNotSupported
 
 
 def partitions_from_datasets(*datasets):
@@ -32,9 +31,25 @@ def test_insert(sphere):
 def test_pop():
     spheres = [pv.Sphere(phi_resolution=i + 3) for i in range(10)]
     partitions = PartitionedDataSet(spheres)
-    match = 'The requested operation is not supported for PartitionedDataSetss.'
-    with pytest.raises(PartitionedDataSetsNotSupported, match=match):
-        partitions.pop()
+    popped = partitions.pop()
+    assert len(partitions) == 9
+    assert popped.n_points == spheres[-1].n_points
+    first = partitions.pop(0)
+    assert len(partitions) == 8
+    assert first.n_points == spheres[0].n_points
+
+
+def test_delitem_single(sphere):
+    partitions = PartitionedDataSet([sphere, pv.Cube(), pv.Cone()])
+    del partitions[1]
+    assert len(partitions) == 2
+    assert partitions[1] == pv.Cone()
+
+
+def test_delitem_out_of_range(sphere):
+    partitions = PartitionedDataSet([sphere])
+    with pytest.raises(IndexError, match='out of range'):
+        del partitions[5]
 
 
 def test_partitions_slice_index(ant, sphere, uniform, airplane, tetbeam):
@@ -75,9 +90,10 @@ def test_partitioned_dataset_deep_copy(ant, sphere, uniform, airplane, tetbeam):
 
 def test_partitioned_dataset_shallow_copy(ant, sphere, uniform, airplane, tetbeam):
     partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
-    match = 'The requested operation is not supported for PartitionedDataSetss.'
-    with pytest.raises(PartitionedDataSetsNotSupported, match=match):
-        _ = partitions.copy(deep=False)
+    partitions_copy = partitions.copy(deep=False)
+    assert partitions.n_partitions == partitions_copy.n_partitions
+    for i in range(partitions.n_partitions):
+        assert partitions_copy[i].n_points == partitions[i].n_points
 
 
 def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -100,10 +116,21 @@ def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetb
 
 
 def test_del_slice(sphere):
-    partitions = PartitionedDataSet([sphere for i in range(10)])
-    match = 'The requested operation is not supported for PartitionedDataSetss.'
-    with pytest.raises(PartitionedDataSetsNotSupported, match=match):
-        del partitions[0:10:2]
+    partitions = PartitionedDataSet([sphere, pv.Cube(), sphere, pv.Cone(), sphere])
+    del partitions[0:5:2]
+    assert len(partitions) == 2
+    assert partitions[0] == pv.Cube()
+    assert partitions[1] == pv.Cone()
+
+
+def test_init_bad_arg():
+    with pytest.raises(TypeError, match='not supported'):
+        PartitionedDataSet(42)
+
+
+def test_init_too_many_args():
+    with pytest.raises(ValueError, match='0 or 1 positional arguments'):
+        PartitionedDataSet(pv.Sphere(), pv.Cube())
 
 
 def test_partitioned_dataset_repr(ant, sphere, uniform, airplane):

@@ -2803,6 +2803,19 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = 'vtkXMLPartitionedDataSetReader'
 
 
+class XMLPartitionedDataSetCollectionReader(BaseReader):
+    """XML PartitionedDataSetCollection Reader for reading ``.vtpc`` files.
+
+    Wraps :vtk:`vtkXMLPartitionedDataSetCollectionReader`.
+
+    .. versionadded:: 0.48.0
+
+    """
+
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLPartitionedDataSetCollectionReader'
+
+
 class FLUENTCFFReader(BaseReader):
     """FLUENTCFFReader for .h5 files.
 
@@ -4061,6 +4074,7 @@ CLASS_READERS = {
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
     '.vtp': XMLPolyDataReader,
+    '.vtpc': XMLPartitionedDataSetCollectionReader,
     '.vtpd': XMLPartitionedDataSetReader,
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
@@ -4078,6 +4092,7 @@ _mesh_types = Literal[
     'StructuredGrid',
     'PointSet',
     'PartitionedDataSet',
+    'PartitionedDataSetCollection',
 ]
 _legacy_dataset_types = Literal[  # no PointSet
     'UnstructuredGrid',
@@ -4138,6 +4153,7 @@ _CLASS_READER_RETURN_TYPE: dict[type[BaseReader], _mesh_types | tuple[_mesh_type
     XMLImageDataReader: 'ImageData',
     XMLMultiBlockDataReader: 'MultiBlock',
     XMLPartitionedDataSetReader: 'PartitionedDataSet',
+    XMLPartitionedDataSetCollectionReader: 'PartitionedDataSetCollection',
     XMLPolyDataReader: 'PolyData',
     XMLPRectilinearGridReader: 'RectilinearGrid',
     XMLPUnstructuredGridReader: 'UnstructuredGrid',
