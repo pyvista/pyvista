@@ -1112,13 +1112,12 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        association : str | pyvista.FieldAssociation, default: 'point'
+        association : str | pyvista.core.utilities.arrays.FieldAssociation, default: 'point'
             Which attribute set to convert. Accepts ``'point'`` or
-            :attr:`FieldAssociation.POINT <pyvista.FieldAssociation>`, which
-            maps to :attr:`point_data` (``n_points`` rows); or ``'cell'`` or
-            :attr:`FieldAssociation.CELL <pyvista.FieldAssociation>`, which
-            maps to :attr:`cell_data` (``n_cells`` rows). Field data is not
-            supported because its arrays may have differing lengths.
+            ``FieldAssociation.POINT``, which maps to :attr:`point_data`
+            (``n_points`` rows); or ``'cell'`` or ``FieldAssociation.CELL``,
+            which maps to :attr:`cell_data` (``n_cells`` rows). Field data is
+            not supported because its arrays may have differing lengths.
 
         Returns
         -------
@@ -1151,10 +1150,9 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        association : str | pyvista.FieldAssociation, default: 'point'
+        association : str | pyvista.core.utilities.arrays.FieldAssociation, default: 'point'
             Which attribute set to convert. Accepts ``'point'`` /
-            :attr:`FieldAssociation.POINT <pyvista.FieldAssociation>` or
-            ``'cell'`` / :attr:`FieldAssociation.CELL <pyvista.FieldAssociation>`.
+            ``FieldAssociation.POINT`` or ``'cell'`` / ``FieldAssociation.CELL``.
 
         Returns
         -------

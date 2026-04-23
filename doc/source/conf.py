@@ -293,6 +293,12 @@ nitpick_ignore_regex = [
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
     #
+    # pyarrow does not register a py:module entry in its intersphinx
+    # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
+    # inventory is loaded. ``pyarrow.Table`` is registered as a py:class
+    # and resolves normally.
+    (r'py:mod', 'pyarrow'),
+    #
     # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
     (r'py:.*', 'EmbeddableWidget'),
@@ -340,6 +346,10 @@ intersphinx_mapping = {
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
         (None, '../intersphinx/pandas-objects.inv'),
+    ),
+    'pyarrow': (
+        'https://arrow.apache.org/docs',
+        (None, '../intersphinx/pyarrow-objects.inv'),
     ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
