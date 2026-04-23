@@ -8,11 +8,15 @@ import locale
 import os
 from pathlib import Path
 import sys
+import time
+import types
 from typing import TYPE_CHECKING
 import warnings
 
 from atsphinx.mini18n import get_template_dir
 from docutils.parsers.rst.directives.images import Image
+import requests
+import vtk_xref
 
 if TYPE_CHECKING:
     from sphinx.application import Sphinx
@@ -122,6 +126,30 @@ extensions = [
     'sphinx_sitemap',
     'vtk_xref',
 ]
+
+
+# vtk_xref hardcodes a 3-second timeout on its HTTP validation of VTK class
+# URLs (https://vtk.org/doc/nightly/html/class<X>.html) and emits warnings
+# when the fetch exceeds that. CI network occasionally hits the 3-second
+# budget and produces spurious "Invalid VTK class reference" warnings that
+# break `-W`. Replace vtk_xref's ``requests`` reference with a small proxy
+# that uses a longer timeout and retries transient failures.
+def _resilient_vtk_xref_get(url, *args, **kwargs):
+    kwargs.setdefault('timeout', 15)
+    last_exc = None
+    for attempt in range(3):
+        try:
+            return requests.get(url, *args, **kwargs)
+        except requests.RequestException as exc:
+            last_exc = exc
+            time.sleep(attempt + 1)
+    raise last_exc  # type: ignore[misc]
+
+
+vtk_xref.requests = types.SimpleNamespace(
+    get=_resilient_vtk_xref_get,
+    RequestException=requests.RequestException,
+)
 
 
 # Configuration for sphinx.ext.autodoc

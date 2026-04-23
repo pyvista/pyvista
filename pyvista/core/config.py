@@ -272,7 +272,7 @@ class Config(_ConfigBase):
         controlled separately by :func:`pyvista.vtk_snake_case`. When
         snake_case is not ``'allow'`` (the default), those names are hidden
         from :func:`dir` regardless of this setting, because accessing them
-        would already raise :class:`~pyvista.PyVistaAttributeError`.
+        would already raise ``PyVistaAttributeError``.
         Enabling snake_case surfaces the snake_case names in :func:`dir`;
         ``show_vtk_api`` only controls the CamelCase VTK API.
 

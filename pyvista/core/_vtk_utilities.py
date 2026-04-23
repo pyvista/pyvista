@@ -160,7 +160,7 @@ class DisableVtkSnakeCase:
         - snake_case VTK aliases (``get_bounds``, ``deep_copy``, ...) are
           hidden unless VTK snake_case is allowed via
           :func:`pyvista.vtk_snake_case`, since they would otherwise raise
-          :class:`~pyvista.PyVistaAttributeError` on access.
+          ``PyVistaAttributeError`` on access.
         """
         cls: type = type(self)
         listing = super().__dir__()
