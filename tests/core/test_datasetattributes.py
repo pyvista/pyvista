@@ -1207,3 +1207,25 @@ def test_dataset_to_arrow_schema_names_cell(hexbeam):
     )
     table = hexbeam.to_arrow('cell')
     assert table.schema.names == ['s', 'v_0', 'v_1', 'v_2']
+
+
+@skip_no_pandas
+@pytest.mark.needs_vtk_version(9, 6, 99)  # >= (9, 7, 0)
+def test_to_pandas_matches_vtk_native(hexbeam):
+    """PyVista's ``to_pandas`` lines up with VTK's native ``to_pandas``.
+
+    VTK 9.7 added ``to_pandas`` on ``vtkFieldDataBase`` using the same
+    ``{name}_{i}`` expansion for multi-component arrays. We don't delegate
+    to keep our error contract independent of VTK, but for the main happy
+    path the two should agree column-for-column and value-for-value.
+    """
+    hexbeam.clear_data()
+    hexbeam.point_data['pressure'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    hexbeam.point_data['velocity'] = np.arange(hexbeam.n_points * 3, dtype=np.float64).reshape(
+        hexbeam.n_points, 3
+    )
+
+    pv_df = hexbeam.point_data.to_pandas()
+    vtk_df = hexbeam.point_data.VTKObject.to_pandas()
+
+    pd.testing.assert_frame_equal(pv_df, vtk_df, check_dtype=False)
