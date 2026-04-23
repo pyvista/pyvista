@@ -470,11 +470,12 @@ def coverage_edge_cases_frd(tmp_path):
 def test_frd_reader_coverage_edge_cases(coverage_edge_cases_frd):
     """Tests parsing edge cases to ensure proper error handling and coverage."""
     # Invalid elements will raise warnings, which we catch here
-    with pytest.warns(pv.InvalidMeshWarning):
+    match = r"too few points detected"
+    with pytest.warns(pv.InvalidMeshWarning, match=match):
         reader = pv.FRDReader(coverage_edge_cases_frd)
 
     mesh = reader.read()
 
-    # Validate that the bad node (Node 1) was successfully skipped
-    assert '1' not in mesh.point_data['original_node_ids']
-    assert '2' in mesh.point_data['original_node_ids']
+    # Validate that the bad node was successfully skipped
+    assert str(FRDElementType.HE8.value) not in mesh.point_data['original_node_ids']
+    assert str(FRDElementType.PE6.value) in mesh.point_data['original_node_ids']
