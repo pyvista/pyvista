@@ -48,3 +48,5 @@ Global Configuration
 
 .. autoclass:: pyvista.core.config.Config
    :members:
+
+.. autoclass:: pyvista.InvalidMeshWarning
