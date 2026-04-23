@@ -14,7 +14,6 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core._vtk_utilities import _is_vtk_attribute_cached
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
@@ -104,19 +103,6 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
     def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
-
-    def __dir__(self: Self) -> list[str]:
-        """Return a filtered list of attributes for tab-completion and :func:`dir`.
-
-        Attributes inherited from VTK base classes are hidden so that PyVista
-        data objects present a curated public surface in data-science IDEs
-        (Positron variable pane, VS Code's Jupyter extension, etc.) and in
-        IPython/Jupyter tab-completion. VTK methods remain fully callable.
-        """
-        cls = type(self)
-        return sorted(
-            attr for attr in super().__dir__() if not _is_vtk_attribute_cached(cls, attr)
-        )
 
     def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.

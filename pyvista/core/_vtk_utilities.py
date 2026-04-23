@@ -9,6 +9,7 @@ from typing import NamedTuple
 
 from pyvista._warn_external import warn_external
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.config import global_config
 
 
 class VersionInfo(NamedTuple):
@@ -143,6 +144,39 @@ class DisableVtkSnakeCase:
     def __getattribute__(self, item):
         DisableVtkSnakeCase.check_attribute(self, item)
         return object.__getattribute__(self, item)
+
+    def __dir__(self) -> list[str]:
+        """Return a filtered attribute listing for :func:`dir` and tab-completion.
+
+        VTK-inherited names are hidden by default so PyVista objects present
+        a curated public surface in data-science IDEs (Positron Variables
+        pane, VS Code Jupyter extension, ...) and in IPython / Jupyter
+        tab-completion. VTK methods remain fully callable; only their
+        enumeration is suppressed.
+
+        - CamelCase VTK attributes (``GetBounds``, ``DeepCopy``, ...) are
+          hidden unless :attr:`pyvista.global_config.show_vtk_api` is
+          ``True``.
+        - snake_case VTK aliases (``get_bounds``, ``deep_copy``, ...) are
+          hidden unless VTK snake_case is allowed via
+          :func:`pyvista.vtk_snake_case`, since they would otherwise raise
+          :class:`~pyvista.PyVistaAttributeError` on access.
+        """
+        cls: type = type(self)
+        listing = super().__dir__()
+        show_camel = global_config.show_vtk_api
+        show_snake = _VTK_SNAKE_CASE_STATE == 'allow'
+        if show_camel and show_snake:
+            return sorted(listing)
+
+        def keep(attr: str) -> bool:
+            if not _is_vtk_attribute_cached(cls, attr):
+                return True
+            if attr and attr[0].islower():
+                return show_snake
+            return show_camel
+
+        return sorted(attr for attr in listing if keep(attr))
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01

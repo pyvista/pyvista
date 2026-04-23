@@ -571,6 +571,7 @@ def test_raise_error_when_writing_is_failed(tmp_path):
 )
 def test_dir_hides_vtk_inherited_attributes(data_object):
     """Verify ``__dir__`` omits VTK-inherited attributes but keeps them callable."""
+    assert pv.global_config.show_vtk_api is False  # default
     listing = dir(data_object)
 
     # VTK-inherited names that exist on every vtkDataObject subclass.
@@ -614,3 +615,61 @@ def test_dir_exposes_pyvista_api(sphere):
         'shallow_copy',
     ):
         assert expected in listing
+
+
+def test_dir_show_vtk_api_opt_in(sphere):
+    """Setting ``pv.global_config.show_vtk_api`` re-enables the full VTK surface."""
+    assert 'GetBounds' not in dir(sphere)
+    try:
+        pv.global_config.show_vtk_api = True
+        listing = dir(sphere)
+        for vtk_name in ('GetBounds', 'DeepCopy', 'AddObserver', 'GetClassName'):
+            assert vtk_name in listing
+        # PyVista API still visible.
+        for expected in ('points', 'bounds', 'point_data', 'n_points'):
+            assert expected in listing
+    finally:
+        pv.global_config.show_vtk_api = False
+    assert 'GetBounds' not in dir(sphere)
+
+
+def test_dir_snake_case_hidden_when_disallowed(sphere):
+    """Snake_case VTK aliases stay hidden while ``vtk_snake_case`` is not ``'allow'``.
+
+    They would raise ``PyVistaAttributeError`` on access, so surfacing them in
+    ``dir`` would only be misleading.
+    """
+    # Even with the CamelCase API toggled on, snake_case VTK aliases stay
+    # hidden unless snake_case is allowed.
+    try:
+        pv.global_config.show_vtk_api = True
+        listing = dir(sphere)
+        # ``information`` is a VTK-defined snake_case alias on vtkDataObject
+        # (see pv.vtk_snake_case docstring).
+        assert 'information' not in listing
+    finally:
+        pv.global_config.show_vtk_api = False
+
+
+def test_dir_snake_case_visible_when_allowed(sphere):
+    """Snake_case VTK aliases appear in ``dir`` when snake_case is allowed."""
+    with pv.vtk_snake_case('allow'):
+        listing = dir(sphere)
+        assert 'information' in listing
+
+
+def test_dir_show_vtk_api_invalid_type():
+    """Non-bool values raise ``TypeError``."""
+    with pytest.raises(TypeError, match='show_vtk_api'):
+        pv.global_config.show_vtk_api = 1  # type: ignore[assignment]
+
+
+def test_dir_applies_to_non_dataobject_wrappers():
+    """The filter also applies to VTK wrappers like :class:`pyvista.Property`."""
+    prop = pv.Property()
+    assert 'GetColor' not in dir(prop)
+    try:
+        pv.global_config.show_vtk_api = True
+        assert 'GetColor' in dir(prop)
+    finally:
+        pv.global_config.show_vtk_api = False
