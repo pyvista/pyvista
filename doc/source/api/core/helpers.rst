@@ -42,3 +42,9 @@ Array Utilities
    convert_array
    sample_function
    perlin_noise
+
+Global Configuration
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pyvista.core.config.Config
+   :members:
