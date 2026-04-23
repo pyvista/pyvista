@@ -9,6 +9,11 @@ Wrap a VTK Dataset
 ~~~~~~~~~~~~~~~~~~
 .. automethod:: pyvista.core.utilities.helpers.wrap
 
+.. autoclass:: pyvista.InvalidMeshWarning
+
+.. autoclass:: pyvista.core.config.Config
+   :members:
+
 
 Simplified Triangular Mesh Construction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
