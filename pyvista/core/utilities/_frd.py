@@ -291,8 +291,8 @@ class _FRDParser:
                     new_nodes = [int(c) for c in chunks if c.strip()]
                     node_ids.extend(new_nodes)
                 except ValueError:
-                    # Fallback for unstructured PyVista mock test files
-                    # where standard fixed-width indexing naturally fails.
+                    # Fallback for malformed or edge-case real-world files
+                    # where standard fixed-width indexing fails.
                     for p in data_str.split():
                         with contextlib.suppress(ValueError):
                             node_ids.append(int(p))
