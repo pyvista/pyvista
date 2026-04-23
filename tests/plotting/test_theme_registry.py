@@ -25,6 +25,7 @@ def test_init_subclass_auto_registers():
 
     assert _reg_mod._resolve_theme('foo_theme') is not None
     assert 'foo_theme' in _reg_mod._available_theme_names()
+    assert 'foo_theme' in pv.registered_themes()
 
     pv.set_plot_theme('foo_theme')
     assert pv.global_theme.name == 'foo_theme'
@@ -52,8 +53,11 @@ def test_init_subclass_subclass_of_subclass_registers_own_name():
     assert type(doc) is DocumentTheme
 
 
-def test_init_subclass_missing_default_name_is_silent():
-    """Ad-hoc subclasses without ``_default_name`` should register silently."""
+def test_init_subclass_missing_default_name_is_not_registered():
+    """Ad-hoc subclasses without ``_default_name`` must not be registered."""
+    names_before = _reg_mod._available_theme_names()
+    registered_before = dict(pv.registered_themes())
+
     with warnings.catch_warnings():
         warnings.simplefilter('error')
 
@@ -61,6 +65,11 @@ def test_init_subclass_missing_default_name_is_silent():
             pass
 
     assert 'noname' not in _reg_mod._available_theme_names()
+    assert 'noname' not in pv.registered_themes()
+    # Creating the subclass must not register it under any other name
+    # either — the set of registered themes is unchanged.
+    assert _reg_mod._available_theme_names() == names_before
+    assert dict(pv.registered_themes()) == registered_before
 
 
 def test_init_subclass_empty_default_name_warns():
@@ -100,6 +109,25 @@ def test_register_theme_instance():
 
     pv.set_plot_theme('my_custom')
     assert pv.global_theme.show_edges is True
+
+
+def test_set_plot_theme_does_not_mutate_class_registration():
+    """Applying a class-backed theme must not convert its entry into an instance."""
+    dark_before = pv.registered_themes()['dark']
+    assert dark_before.kind == 'subclass'
+
+    pv.set_plot_theme('dark')
+    assert pv.global_theme.name == 'dark'
+
+    # Mutating the global theme must not leak into the registered theme
+    # (the registry should hand out fresh instances from the class).
+    pv.global_theme.show_edges = not pv.global_theme.show_edges
+
+    dark_after = pv.registered_themes()['dark']
+    assert dark_after == dark_before
+    fresh = _reg_mod._resolve_theme('dark')
+    assert isinstance(fresh, DarkTheme)
+    assert fresh.show_edges is DarkTheme().show_edges
 
 
 def test_register_theme_override():

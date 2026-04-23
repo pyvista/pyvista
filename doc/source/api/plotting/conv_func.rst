@@ -13,6 +13,7 @@ routines in PyVista.
    set_plot_theme
    register_theme
    registered_themes
+   ThemeRegistration
    create_axes_orientation_box
    create_axes_marker
    opacity_transfer_function

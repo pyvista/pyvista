@@ -204,6 +204,15 @@ def register_theme(name: str, theme: Any, *, override: bool = False) -> Theme:
     register an already-configured instance (e.g., a mutated copy of
     ``DarkTheme``) under a custom name.
 
+    Notes
+    -----
+    Both this function and subclass-based registration require the
+    defining module to be imported before the name resolves. This is
+    convenient for scripts, notebooks, and testing, but plugin packages
+    that want their themes discovered without a user ``import`` should
+    declare a ``pyvista.themes`` entry point instead — see
+    :class:`~pyvista.plotting.themes.Theme` for details.
+
     Parameters
     ----------
     name : str
@@ -1769,14 +1778,19 @@ class Theme(_ConfigBase):
     ``_default_name`` are not registered, so ad-hoc subclasses remain
     a valid pattern.
 
-    Plugin packages can expose additional themes under the
-    ``pyvista.themes`` entry-point group without requiring users to
-    import the package first:
+    For plugin packages distributing themes, the recommended path is to
+    declare a ``pyvista.themes`` entry point so the theme is discovered
+    without requiring users to import the package first:
 
     .. code-block:: toml
 
         [project.entry-points.'pyvista.themes']
         my_theme = 'my_package.theme:MyTheme'
+
+    Subclass-based auto-registration and :func:`~pyvista.register_theme`
+    require the defining module to be imported before the name resolves.
+    They are primarily useful for scripts, notebooks, testing, and local
+    development; plugin packages should prefer the entry-point path.
 
     Examples
     --------
@@ -1834,7 +1848,6 @@ class Theme(_ConfigBase):
             cls,
             source=f'{cls.__module__}.{cls.__qualname__}',
         )
-
 
     __slots__ = [
         '_above_range_color',

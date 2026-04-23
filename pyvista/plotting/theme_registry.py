@@ -42,6 +42,14 @@ class ThemeRegistration(NamedTuple):
     source : str
         Human-readable origin (e.g. ``'my_package.theme.MyTheme'``).
 
+    Examples
+    --------
+    Inspect how a name became registered.
+
+    >>> import pyvista as pv
+    >>> pv.registered_themes()['dark']
+    ThemeRegistration(name='dark', kind='subclass', source='pyvista.plotting.themes.DarkTheme')
+
     """
 
     name: str
@@ -241,9 +249,9 @@ def registered_themes() -> dict[str, ThemeRegistration]:
 
     Returns
     -------
-    dict[str, ThemeRegistration]
-        Mapping of theme name to a :class:`ThemeRegistration` record
-        describing how the name was registered.
+    dict[str, pyvista.ThemeRegistration]
+        Mapping of theme name to a :class:`~pyvista.ThemeRegistration`
+        record describing how the name was registered.
 
     Examples
     --------
