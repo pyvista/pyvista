@@ -101,7 +101,19 @@ class DataObject(_NoNewAttrMixin, DisableVtkSnakeCase, vtkPyVistaOverride):
         self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
     def __getattr__(self: Self, item: str) -> Any:
-        """Get attribute from base class if not found."""
+        """Get attribute from base class if not found.
+
+        Before falling through to the VTK base class, check whether
+        ``item`` matches a pending ``pyvista.accessors`` entry point.
+        A match triggers a one-shot plugin import, after which normal
+        attribute resolution finds the newly-attached accessor
+        descriptor.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
+
+        if _resolve_pending_accessor(item):
+            return object.__getattribute__(self, item)
         return super().__getattribute__(item)
 
     def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:

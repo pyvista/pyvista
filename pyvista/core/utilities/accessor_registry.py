@@ -12,8 +12,11 @@ Two registration paths are supported:
    user that does ``import plugin`` gets the accessor attached.
 2. **Entry points.** A plugin declares a ``pyvista.accessors`` entry
    point in its ``pyproject.toml`` pointing at its accessor module.
-   PyVista discovers and imports the module once on startup, so users
-   get the accessor without a manual ``import``.
+   PyVista reads the entry-point metadata lazily (no plugin module is
+   imported at ``import pyvista`` time). The plugin module imports only
+   when a user first accesses ``dataset.<name>`` on any dataset and the
+   normal attribute lookup misses. That isolates broken or slow plugins
+   from the main ``import pyvista`` path.
 
 See Also
 --------
@@ -121,9 +124,14 @@ class _AccessorRegistryState(TypedDict):
     # Snapshot of each target class's current binding for each registered
     # name so restore can diff against "live" state.
     attached: dict[tuple[type, str], Any]
-    # Whether entry-point discovery has already run. Tests that mock
-    # ``entry_points`` reset this to force re-discovery.
+    # Whether entry-point metadata has already been scanned. Tests that
+    # mock ``entry_points`` reset this to force a re-scan.
     entry_points_loaded: bool
+    # Accessor names declared via entry points that have not yet had
+    # their plugin module imported. Populated by ``_ensure_entry_points``
+    # and consumed by ``_resolve_pending_accessor`` on first attribute
+    # miss.
+    pending: dict[str, str]
 
 
 class _CachedAccessor:
@@ -167,6 +175,7 @@ _MISSING: Any = object()
 _registrations: list[AccessorRegistration] = []
 _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
+_pending_accessors: dict[str, str] = {}
 
 
 def _save_registry_state() -> _AccessorRegistryState:
@@ -180,6 +189,7 @@ def _save_registry_state() -> _AccessorRegistryState:
         'prior': dict(_prior_values),
         'attached': attached,
         'entry_points_loaded': _entry_points_loaded,
+        'pending': dict(_pending_accessors),
     }
 
 
@@ -226,6 +236,8 @@ def _restore_registry_state(state: _AccessorRegistryState) -> None:
     _prior_values.clear()
     _prior_values.update(state['prior'])
     _entry_points_loaded = state['entry_points_loaded']
+    _pending_accessors.clear()
+    _pending_accessors.update(state['pending'])
 
 
 def _find_accessor_on_mro(target_cls: type, name: str) -> type | None:
@@ -529,11 +541,15 @@ def unregister_dataset_accessor(name: str, target_cls: type) -> None:
 
 
 def _ensure_entry_points() -> None:
-    """Discover ``pyvista.accessors`` entry points once.
+    """Scan ``pyvista.accessors`` entry-point metadata once.
 
-    Each entry point's ``value`` points at a plugin module. Importing
-    the module triggers any ``@register_dataset_accessor`` decorators
-    in that module, attaching the accessor as a side effect.
+    Populates :data:`_pending_accessors` with a mapping of
+    ``name -> module_path`` for every declared entry point. The plugin
+    modules themselves are **not** imported here; the cost of this
+    function is one ``importlib.metadata.entry_points`` call. The
+    plugin import is deferred to :func:`_resolve_pending_accessor`,
+    which runs only when the corresponding accessor is actually
+    accessed on a dataset.
     """
     global _entry_points_loaded  # noqa: PLW0603
     if _entry_points_loaded:
@@ -543,24 +559,58 @@ def _ensure_entry_points() -> None:
     # pyvista recursively does not loop back into this function.
     _entry_points_loaded = True
     for accessor_entry_point in entry_points(group=ACCESSOR_ENTRY_POINT_GROUP):
-        module_path = accessor_entry_point.value
-        try:
-            import_module(module_path)
-        except Exception as exc:  # noqa: BLE001
-            msg = (
-                f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
-                f'"{accessor_entry_point.name}" from {module_path}: {exc}'
-            )
-            warn_external(msg)
+        _pending_accessors[accessor_entry_point.name] = accessor_entry_point.value
+
+
+def _resolve_pending_accessor(name: str) -> bool:
+    """Import the plugin module registered under ``name``, if any.
+
+    Called from :meth:`pyvista.DataObject.__getattr__` when a normal
+    attribute lookup misses. Ensures entry-point metadata has been
+    scanned, pops the pending entry for ``name``, and imports the
+    corresponding plugin module. Importing the module triggers any
+    ``@register_dataset_accessor`` decorators inside it and attaches
+    the accessor as a side effect.
+
+    Returns
+    -------
+    bool
+        ``True`` if a plugin was loaded for ``name`` (and the attribute
+        lookup should be retried). ``False`` if no pending plugin
+        matches ``name``, or if the plugin failed to import.
+
+    Notes
+    -----
+    A plugin that fails to import emits a ``UserWarning`` and is
+    dropped from the pending list, so subsequent lookups of the same
+    name fall straight through without re-triggering the import or
+    re-emitting the warning.
+
+    """
+    _ensure_entry_points()
+    module_path = _pending_accessors.pop(name, None)
+    if module_path is None:
+        return False
+    try:
+        import_module(module_path)
+    except Exception as exc:  # noqa: BLE001
+        msg = (
+            f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
+            f'"{name}" from {module_path}: {exc}'
+        )
+        warn_external(msg)
+        return False
+    return True
 
 
 def registered_accessors() -> tuple[AccessorRegistration, ...]:
     """Return every accessor currently registered.
 
-    Inspects the registry populated by
-    :func:`~pyvista.register_dataset_accessor`. Entry-point plugins
-    are discovered (and their accessor modules imported) on the first
-    call so they appear in the result.
+    Forces discovery of any pending entry-point plugins so the returned
+    list reflects every plugin visible to PyVista, not just the ones
+    that have been touched already via attribute access. A plugin that
+    fails to import emits a ``UserWarning`` and is skipped; the rest
+    still appear in the result.
 
     .. versionadded:: 0.48.0
 
@@ -583,4 +633,6 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
 
     """
     _ensure_entry_points()
+    for pending_name in list(_pending_accessors):
+        _resolve_pending_accessor(pending_name)
     return tuple(_registrations)

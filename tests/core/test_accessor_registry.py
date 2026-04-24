@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 import types
 from unittest.mock import MagicMock
-from unittest.mock import patch
 import warnings
 
 import pytest
@@ -581,10 +581,41 @@ def _fake_importer(name: str, body: str):
     return _import
 
 
-def test_entry_point_triggers_decorator_registration():
-    """An entry point value pointing at a module should import it and
-    the decorator inside runs as a side effect."""
-    plugin_name = 'fake_entry_point_plugin_a'
+def _reset_entry_point_state(monkeypatch, eps: list):
+    """Reset registry discovery state and install a fake
+    ``entry_points`` return value."""
+    monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
+    _reg_mod._pending_accessors.clear()
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.entry_points',
+        lambda **_: eps,
+    )
+
+
+def test_ensure_entry_points_does_not_import_plugin_modules(monkeypatch):
+    """``_ensure_entry_points`` reads metadata only and never imports
+    a plugin module. A user that does ``import pyvista`` must not pay
+    any plugin-side import cost up front."""
+    ep = MagicMock()
+    ep.name = 'metadata_only'
+    ep.value = 'metadata_only_module'
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    import_calls: list[str] = []
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        lambda path: import_calls.append(path) or None,
+    )
+
+    _reg_mod._ensure_entry_points()
+    assert import_calls == []
+    assert _reg_mod._pending_accessors == {'metadata_only': 'metadata_only_module'}
+
+
+def test_attribute_access_triggers_plugin_load(monkeypatch):
+    """First ``mesh.<name>`` access resolves the pending plugin, runs
+    the decorator via import, and returns the accessor."""
+    plugin_name = 'fake_ep_plugin_trigger'
     fake_import = _fake_importer(
         plugin_name,
         'import pyvista as pv\n'
@@ -595,154 +626,233 @@ def test_entry_point_triggers_decorator_registration():
         '    def value(self):\n'
         '        return 42\n',
     )
-
     ep = MagicMock()
-    ep.name = 'ep_demo_plugin'
+    ep.name = 'ep_demo'
     ep.value = plugin_name
 
-    _reg_mod._entry_points_loaded = False
-    with (
-        patch(
-            'pyvista.core.utilities.accessor_registry.entry_points',
-            return_value=[ep],
-        ),
-        patch(
-            'pyvista.core.utilities.accessor_registry.import_module',
-            side_effect=fake_import,
-        ),
-    ):
-        _reg_mod._ensure_entry_points()
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
 
     try:
+        # First access triggers the import.
+        assert pv.Sphere().ep_demo.value() == 42
+        # Second access hits the cached accessor without re-triggering.
         assert pv.Sphere().ep_demo.value() == 42
     finally:
-        pv.unregister_dataset_accessor('ep_demo', pv.PolyData)
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('ep_demo', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
 
-def test_entry_point_discovery_is_cached():
-    """A second discovery pass must not re-import the plugin modules."""
+def test_pending_plugin_only_imported_once(monkeypatch):
+    """After a plugin loads, the pending entry is popped. Subsequent
+    attribute accesses on the same name go through normal lookup and
+    never re-import the module."""
+    plugin_name = 'fake_ep_plugin_one_shot'
+    import_count = 0
+
+    def _counting_import(path):
+        nonlocal import_count
+        import_count += 1
+        module = types.ModuleType(path)
+        sys.modules[path] = module
+        # Module attaches an accessor as a side effect of import.
+        exec(  # noqa: S102
+            'import pyvista as pv\n'
+            "@pv.register_dataset_accessor('one_shot', pv.PolyData)\n"
+            'class OneShotAccessor:\n'
+            '    def __init__(self, mesh):\n'
+            '        self._mesh = mesh\n',
+            module.__dict__,
+        )
+        return module
+
     ep = MagicMock()
-    ep.name = 'cached_ep_plugin'
-    ep.value = 'cached_ep_plugin_module'
+    ep.name = 'one_shot'
+    ep.value = plugin_name
 
-    _reg_mod._entry_points_loaded = False
-    with (
-        patch(
-            'pyvista.core.utilities.accessor_registry.entry_points',
-            return_value=[ep],
-        ),
-        patch(
-            'pyvista.core.utilities.accessor_registry.import_module',
-        ) as mock_import,
-    ):
-        _reg_mod._ensure_entry_points()
-        _reg_mod._ensure_entry_points()
-        mock_import.assert_called_once_with('cached_ep_plugin_module')
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        _counting_import,
+    )
+
+    try:
+        for _ in range(5):
+            _ = pv.Sphere().one_shot
+        assert import_count == 1
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('one_shot', pv.PolyData)
+        sys.modules.pop(plugin_name, None)
 
 
-def test_entry_point_load_failure_warns():
+def test_entry_point_metadata_scanned_once(monkeypatch):
+    """The metadata scan itself runs once per process and is gated by
+    ``_entry_points_loaded``."""
     ep = MagicMock()
-    ep.name = 'broken_plugin'
+    ep.name = 'scan_once'
+    ep.value = 'scan_once_module'
+    scan_count = 0
+
+    def _counting_entry_points(**_):
+        nonlocal scan_count
+        scan_count += 1
+        return [ep]
+
+    monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
+    _reg_mod._pending_accessors.clear()
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.entry_points',
+        _counting_entry_points,
+    )
+
+    _reg_mod._ensure_entry_points()
+    _reg_mod._ensure_entry_points()
+    _reg_mod._ensure_entry_points()
+    assert scan_count == 1
+
+
+def test_broken_plugin_warns_once_and_isolates(monkeypatch):
+    """A plugin that fails to import emits one ``UserWarning`` per
+    access attempt, does not crash pyvista, and does not affect
+    lookups of unrelated names."""
+    ep = MagicMock()
+    ep.name = 'broken'
     ep.value = 'broken_plugin_module'
 
-    _reg_mod._entry_points_loaded = False
-    with (
-        patch(
-            'pyvista.core.utilities.accessor_registry.entry_points',
-            return_value=[ep],
-        ),
-        patch(
-            'pyvista.core.utilities.accessor_registry.import_module',
-            side_effect=ImportError('missing dependency'),
-        ),
-        pytest.warns(UserWarning, match='Failed to load'),
-    ):
-        _reg_mod._ensure_entry_points()
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        MagicMock(side_effect=ImportError('missing dep')),
+    )
 
-    # A broken plugin must not block future calls or block pyvista usage.
-    assert pv.Sphere() is not None
+    # First access: warn and raise AttributeError because there is no
+    # accessor named 'broken' after the failed import.
+    with pytest.warns(UserWarning, match='Failed to load'):
+        with pytest.raises(AttributeError):
+            _ = pv.Sphere().broken
+
+    # Pending entry was consumed, so a second access is a clean
+    # AttributeError with no retry and no second warning.
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        with pytest.raises(AttributeError):
+            _ = pv.Sphere().broken
+
+    # Unrelated attributes still work.
+    assert pv.Sphere().n_points > 0
 
 
-def test_entry_point_and_decorator_collision_warns():
-    """If a decorator has already registered a name, an entry-point
-    module that tries to register the same name gets the standard
-    accessor-vs-accessor collision warning and wins (pandas semantics)."""
+def test_import_pyvista_does_not_import_plugin_modules(monkeypatch):
+    """Regression guard: ``_ensure_entry_points`` is not invoked
+    eagerly from ``pyvista/__init__.py``."""
+    # Simulate a "fresh" pyvista state and then merely access the
+    # registry-adjacent surface without touching any dataset attribute.
+    monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
+    _reg_mod._pending_accessors.clear()
+    ep = MagicMock()
+    ep.name = 'should_not_load'
+    ep.value = 'should_not_load_module'
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.entry_points',
+        lambda **_: [ep],
+    )
+    import_mock = MagicMock()
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        import_mock,
+    )
 
-    @pv.register_dataset_accessor('ep_collide', pv.PolyData)
-    class FirstAccessor:
+    # Constructing datasets and accessing built-in attributes must not
+    # trigger the pending import. Only a lookup on the specific pending
+    # name does.
+    sphere = pv.Sphere()
+    _ = sphere.n_points
+    _ = sphere.bounds
+    _ = hasattr(sphere, 'definitely_not_a_plugin_name')
+
+    import_mock.assert_not_called()
+
+
+def test_decorator_wins_over_pending_entry_point(monkeypatch):
+    """A decorator that has already attached an accessor preempts
+    the pending entry-point plugin: the attribute lookup hits the
+    decorator-installed descriptor, never misses, and the plugin
+    module is never imported.
+
+    This is a direct consequence of lazy discovery: entry points are
+    only resolved on attribute-lookup misses. A decorator-registered
+    accessor is a hit, so the pending plugin stays pending.
+    """
+
+    @pv.register_dataset_accessor('ep_preempted', pv.PolyData)
+    class DecoratorAccessor:
         def __init__(self, mesh):
             self._mesh = mesh
 
         def who(self):
             return 'decorator'
 
-    plugin_name = 'fake_entry_point_plugin_collide'
+    ep = MagicMock()
+    ep.name = 'ep_preempted'
+    ep.value = 'fake_preempted_plugin_module'
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    import_mock = MagicMock()
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        import_mock,
+    )
+
+    try:
+        assert pv.Sphere().ep_preempted.who() == 'decorator'
+        import_mock.assert_not_called()
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('ep_preempted', pv.PolyData)
+
+
+def test_registered_accessors_forces_discovery(monkeypatch):
+    """``registered_accessors()`` is the one caller that explicitly
+    asks for the full picture, so it loads every pending plugin."""
+    plugin_name = 'fake_ep_plugin_forced'
     fake_import = _fake_importer(
         plugin_name,
         'import pyvista as pv\n'
-        "@pv.register_dataset_accessor('ep_collide', pv.PolyData)\n"
-        'class EpCollideAccessor:\n'
+        "@pv.register_dataset_accessor('forced', pv.PolyData)\n"
+        'class ForcedAccessor:\n'
         '    def __init__(self, mesh):\n'
-        '        self._mesh = mesh\n'
-        '    def who(self):\n'
-        "        return 'entry_point'\n",
+        '        self._mesh = mesh\n',
     )
-
     ep = MagicMock()
-    ep.name = 'ep_collide_plugin'
+    ep.name = 'forced'
     ep.value = plugin_name
 
-    _reg_mod._entry_points_loaded = False
-    with (
-        patch(
-            'pyvista.core.utilities.accessor_registry.entry_points',
-            return_value=[ep],
-        ),
-        patch(
-            'pyvista.core.utilities.accessor_registry.import_module',
-            side_effect=fake_import,
-        ),
-        pytest.warns(UserWarning, match='replaces an existing registered accessor'),
-    ):
-        _reg_mod._ensure_entry_points()
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
 
     try:
-        assert pv.Sphere().ep_collide.who() == 'entry_point'
+        names = {r.name for r in pv.registered_accessors()}
+        assert 'forced' in names
     finally:
-        pv.unregister_dataset_accessor('ep_collide', pv.PolyData)
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('forced', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
 
-def test_registered_accessors_triggers_entry_point_discovery():
-    """Calling registered_accessors() must run entry-point discovery."""
-    ep = MagicMock()
-    ep.name = 'trigger_check'
-    ep.value = 'trigger_check_module'
-
-    _reg_mod._entry_points_loaded = False
-    with (
-        patch(
-            'pyvista.core.utilities.accessor_registry.entry_points',
-            return_value=[ep],
-        ),
-        patch(
-            'pyvista.core.utilities.accessor_registry.import_module',
-        ) as mock_import,
-    ):
-        pv.registered_accessors()
-        mock_import.assert_called_once_with('trigger_check_module')
-
-
-def test_no_entry_points_is_silent():
+def test_no_entry_points_is_silent(monkeypatch):
     """No installed accessor plugins must be a no-op without warnings."""
-    _reg_mod._entry_points_loaded = False
-    with (
-        patch(
-            'pyvista.core.utilities.accessor_registry.entry_points',
-            return_value=[],
-        ),
-        warnings.catch_warnings(),
-    ):
+    _reset_entry_point_state(monkeypatch, [])
+    with warnings.catch_warnings():
         warnings.simplefilter('error')
         _reg_mod._ensure_entry_points()
+        # Attribute access for an unknown name still raises cleanly.
+        with pytest.raises(AttributeError):
+            _ = pv.Sphere().completely_unknown

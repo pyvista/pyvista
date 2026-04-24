@@ -213,7 +213,21 @@ class DataSet(DataSetFilters, DataObject):
         self._glyph_geom: Sequence[_vtk.vtkDataSet] | None = None
 
     def __getattr__(self: Self, item: str) -> Any:
-        """Get attribute from base class if not found."""
+        """Get attribute from base class if not found.
+
+        Before falling through to the VTK base class, check whether
+        ``item`` matches a pending ``pyvista.accessors`` entry point.
+        A match triggers a one-shot plugin import, after which normal
+        attribute resolution finds the newly-attached accessor
+        descriptor.
+        """
+        # Lazy import to avoid a circular dependency at module load time.
+        from pyvista.core.utilities.accessor_registry import (  # noqa: PLC0415
+            _resolve_pending_accessor,
+        )
+
+        if _resolve_pending_accessor(item):
+            return object.__getattribute__(self, item)
         return super().__getattribute__(item)
 
     @property

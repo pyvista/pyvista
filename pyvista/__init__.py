@@ -28,9 +28,6 @@ from pyvista.core.filters.data_object import MeshValidationFields as MeshValidat
 from pyvista.core.utilities.accessor_registry import AccessorRegistration as AccessorRegistration
 from pyvista.core.utilities.accessor_registry import DataSetAccessor as DataSetAccessor
 from pyvista.core.utilities.accessor_registry import (
-    _ensure_entry_points as _ensure_accessor_entry_points,
-)
-from pyvista.core.utilities.accessor_registry import (
     register_dataset_accessor as register_dataset_accessor,
 )
 from pyvista.core.utilities.accessor_registry import registered_accessors as registered_accessors
@@ -80,13 +77,6 @@ ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'tru
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()
-
-# Discover ``pyvista.accessors`` entry points at ``import pyvista`` time.
-# Unlike readers/writers (discovered lazily on first ``read``/``save``),
-# accessors must attach their descriptors to dataset classes before any
-# ``dataset.<namespace>`` access can succeed — so discovery has to be
-# eager.
-_ensure_accessor_entry_points()
 
 # theme to use by default for the plot directive
 PLOT_DIRECTIVE_THEME = None

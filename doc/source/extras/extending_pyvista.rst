@@ -125,9 +125,12 @@ notebooks, and tests:
 
 **Entry points.** The plugin declares a ``pyvista.accessors`` entry
 point in its ``pyproject.toml`` pointing at its accessor module.
-PyVista discovers the entry points on the first ``import pyvista``
-and imports each module, whose top-level decorators run as a side
-effect. Users never need an explicit ``import plugin``:
+``import pyvista`` reads the entry-point metadata but does not import
+any plugin module. The plugin module imports on demand: on the first
+``dataset.<name>`` access whose normal attribute lookup misses,
+PyVista resolves the pending entry, imports the module, lets its
+top-level decorator attach the accessor, and completes the lookup.
+Users never need an explicit ``import plugin``:
 
 .. code-block:: toml
 
@@ -148,17 +151,28 @@ Both paths populate the same registry. A plugin that declares an
 entry point AND imports its accessor module from its ``__init__`` is
 safe (the second import is a no-op against ``sys.modules``).
 
+The lazy resolution means installing an accessor plugin does not
+affect ``import pyvista`` performance or stability. A broken plugin
+only surfaces when a user actually accesses its namespace: they get
+a ``UserWarning`` pointing at the specific plugin and an
+``AttributeError`` on the call, and no other code is affected.
+``pv.registered_accessors()`` is the one call that explicitly forces
+discovery of every pending plugin so the returned list reflects the
+full picture.
+
 For production plugins on PyPI, prefer the entry-point path: users
-get zero-config ergonomics, which is the main ergonomic win of the
-accessor pattern. For in-script or in-notebook experimentation, the
+get zero-config discovery without any startup cost on ``import
+pyvista``. For in-script or in-notebook experimentation, the
 decorator alone is simpler.
 
-The entry point value must be a module path (no ``:ClassName``
-suffix). Put your accessor in a small module like ``_accessor.py``
-that does nothing at import time besides run the decorator — that
-keeps the cost of ``import pyvista`` minimal no matter how many
-plugins are installed. Lazy-import any heavy compute dependencies
-inside the accessor methods, not at module top.
+The entry-point key is the accessor namespace (``meshfix`` above),
+and the value must be a module path (no ``:ClassName`` suffix). A
+plugin that registers multiple accessors from one module should
+declare one entry-point line per namespace, all pointing at the same
+module. Put the accessor in a small module like ``_accessor.py``
+that runs the decorator at import time and does nothing else; heavy
+compute dependencies should be lazy-imported inside the accessor
+methods, not at the module top.
 
 
 Chaining and return types
