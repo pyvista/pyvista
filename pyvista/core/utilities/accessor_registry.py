@@ -5,6 +5,16 @@ dataset classes. Plugin packages attach a namespaced accessor to a target
 class at import time; the accessor is constructed lazily on first access
 per dataset instance and cached on the instance.
 
+Two registration paths are supported:
+
+1. **Explicit import.** A plugin's module runs the
+   :func:`register_dataset_accessor` decorator at import time, so any
+   user that does ``import plugin`` gets the accessor attached.
+2. **Entry points.** A plugin declares a ``pyvista.accessors`` entry
+   point in its ``pyproject.toml`` pointing at its accessor module.
+   PyVista discovers and imports the module once on startup, so users
+   get the accessor without a manual ``import``.
+
 See Also
 --------
 pyvista.register_dataset_accessor
@@ -16,6 +26,8 @@ pyvista.registered_accessors
 from __future__ import annotations
 
 import contextlib
+from importlib import import_module
+from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import NamedTuple
@@ -27,6 +39,9 @@ from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+ACCESSOR_ENTRY_POINT_GROUP = 'pyvista.accessors'
 
 
 @runtime_checkable
@@ -95,6 +110,9 @@ class _AccessorRegistryState(TypedDict):
     # Snapshot of each target class's current binding for each registered
     # name so restore can diff against "live" state.
     attached: dict[tuple[type, str], Any]
+    # Whether entry-point discovery has already run. Tests that mock
+    # ``entry_points`` reset this to force re-discovery.
+    entry_points_loaded: bool
 
 
 class _CachedAccessor:
@@ -137,6 +155,7 @@ _MISSING: Any = object()
 
 _registrations: list[AccessorRegistration] = []
 _prior_values: dict[tuple[type, str], Any] = {}
+_entry_points_loaded: bool = False
 
 
 def _save_registry_state() -> _AccessorRegistryState:
@@ -149,6 +168,7 @@ def _save_registry_state() -> _AccessorRegistryState:
         'registrations': list(_registrations),
         'prior': dict(_prior_values),
         'attached': attached,
+        'entry_points_loaded': _entry_points_loaded,
     }
 
 
@@ -159,6 +179,7 @@ def _restore_registry_state(state: _AccessorRegistryState) -> None:
     taken and re-attaches any that were removed, putting prior built-in
     attributes back if override had shadowed them.
     """
+    global _entry_points_loaded  # noqa: PLW0603
     current_keys = {(r.target, r.name) for r in _registrations}
     snapshot_keys = {(r.target, r.name) for r in state['registrations']}
 
@@ -193,6 +214,7 @@ def _restore_registry_state(state: _AccessorRegistryState) -> None:
     _registrations.extend(state['registrations'])
     _prior_values.clear()
     _prior_values.update(state['prior'])
+    _entry_points_loaded = state['entry_points_loaded']
 
 
 def _find_accessor_on_mro(target_cls: type, name: str) -> type | None:
@@ -491,11 +513,40 @@ def unregister_dataset_accessor(name: str, target_cls: type) -> None:
     ]
 
 
+def _ensure_entry_points() -> None:
+    """Discover ``pyvista.accessors`` entry points once.
+
+    Each entry point's ``value`` points at a plugin module. Importing
+    the module triggers any ``@register_dataset_accessor`` decorators
+    in that module, attaching the accessor as a side effect.
+    """
+    global _entry_points_loaded  # noqa: PLW0603
+    if _entry_points_loaded:
+        return
+
+    # Flip the flag before iterating so a plugin that happens to import
+    # pyvista recursively does not loop back into this function.
+    _entry_points_loaded = True
+    for accessor_entry_point in entry_points(group=ACCESSOR_ENTRY_POINT_GROUP):
+        module_path = accessor_entry_point.value
+        try:
+            import_module(module_path)
+        except Exception as exc:  # noqa: BLE001
+            msg = (
+                f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
+                f'"{accessor_entry_point.name}" from {module_path}: {exc}'
+            )
+            warn_external(msg)
+            continue
+
+
 def registered_accessors() -> tuple[AccessorRegistration, ...]:
     """Return every accessor currently registered.
 
     Inspects the registry populated by
-    :func:`~pyvista.register_dataset_accessor`.
+    :func:`~pyvista.register_dataset_accessor`. Entry-point plugins
+    are discovered (and their accessor modules imported) on the first
+    call so they appear in the result.
 
     Returns
     -------
@@ -515,4 +566,5 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
     >>> pv.unregister_dataset_accessor('demo_listed', pv.PolyData)
 
     """
+    _ensure_entry_points()
     return tuple(_registrations)

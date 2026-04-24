@@ -103,22 +103,62 @@ cover :class:`~pyvista.MultiBlock` as well, register against
 :class:`~pyvista.DataObject`.
 
 
-Registration is import-time
----------------------------
+Registration paths
+------------------
 
-Registration is a side effect of importing the plugin module: the
-``@pv.register_dataset_accessor(...)`` decorator runs at import time,
-and that is the entire contract. If a user never imports the plugin,
-nothing is attached.
+PyVista supports two ways to register an accessor. Both use the same
+``@register_dataset_accessor`` decorator — the difference is only
+*when* the decorator runs.
 
-This is deliberately different from the reader/writer registries,
-which use ``importlib.metadata`` entry points for zero-config
-discovery. Accessors are looked up by name (``mesh.meshfix.*``), so
-the user is already reaching for the plugin; requiring ``import
-pymeshfix`` is zero extra cognitive load and buys a lot of
-predictability. If ``mesh.meshfix`` is missing, the answer is always
-"you did not import pymeshfix", never "the entry point failed to
-load".
+**Import-time.** The plugin's module runs the decorator at import
+time, so any user who does ``import plugin`` gets the accessor
+attached. This is the simplest pattern and is ideal for scripts,
+notebooks, and tests:
+
+.. code-block:: python
+
+    # script.py
+    import pyvista as pv
+    import pymeshfix  # noqa: F401 — registers the ``.meshfix`` accessor
+
+    pv.PolyData("broken.ply").meshfix.repair()
+
+**Entry points.** The plugin declares a ``pyvista.accessors`` entry
+point in its ``pyproject.toml`` pointing at its accessor module.
+PyVista discovers the entry points on the first ``import pyvista``
+and imports each module, whose top-level decorators run as a side
+effect. Users never need an explicit ``import plugin``:
+
+.. code-block:: toml
+
+   # pymeshfix/pyproject.toml
+   [project.entry-points."pyvista.accessors"]
+   meshfix = "pymeshfix._accessor"
+
+.. code-block:: python
+
+    # script.py
+    import pyvista as pv
+
+    pv.PolyData(
+        "broken.ply"
+    ).meshfix.repair()  # works with no explicit import
+
+Both paths populate the same registry. A plugin that declares an
+entry point AND imports its accessor module from its ``__init__`` is
+safe (the second import is a no-op against ``sys.modules``).
+
+For production plugins on PyPI, prefer the entry-point path: users
+get zero-config ergonomics, which is the main ergonomic win of the
+accessor pattern. For in-script or in-notebook experimentation, the
+decorator alone is simpler.
+
+The entry point value must be a module path (no ``:ClassName``
+suffix). Put your accessor in a small module like ``_accessor.py``
+that does nothing at import time besides run the decorator — that
+keeps the cost of ``import pyvista`` minimal no matter how many
+plugins are installed. Lazy-import any heavy compute dependencies
+inside the accessor methods, not at module top.
 
 
 Chaining and return types

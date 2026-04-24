@@ -78,6 +78,15 @@ ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'tru
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
+# Discover ``pyvista.accessors`` entry points so installed plugin
+# packages attach their accessors automatically, matching the
+# zero-config behavior of the reader / writer registries.
+from pyvista.core.utilities.accessor_registry import (
+    _ensure_entry_points as _ensure_accessor_entry_points,
+)
+
+_ensure_accessor_entry_points()
+
 # theme to use by default for the plot directive
 PLOT_DIRECTIVE_THEME = None
 
