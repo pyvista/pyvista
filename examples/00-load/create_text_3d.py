@@ -32,9 +32,13 @@ extruded = pv.Text3D('PyVista', depth=0.4)
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
 pl.add_mesh(flat, color='royalblue')
+pl.view_xy()
 pl.subplot(0, 1)
 pl.add_mesh(extruded, color='royalblue')
-pl.link_views()
+pl.view_xy()
+pl.camera.azimuth = -25
+pl.camera.elevation = 20
+pl.camera.zoom(0.85)
 pl.show()
 # %%
 # .. tags:: load

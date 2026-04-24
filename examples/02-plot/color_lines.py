@@ -4,7 +4,8 @@
 Color Several Lines
 ~~~~~~~~~~~~~~~~~~~
 
-Render multiple polylines and color them by a line-wise scalar value.
+Render several :func:`pyvista.MultipleLines` polylines and color them by a
+line-wise scalar value.
 """
 
 from __future__ import annotations

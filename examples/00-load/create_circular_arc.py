@@ -10,6 +10,7 @@ Generate arc geometry with :func:`pyvista.CircularArc` and
 
 from __future__ import annotations
 
+import numpy as np
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 2
@@ -31,6 +32,14 @@ pl.add_mesh(arc.tube(radius=0.03), color='royalblue')
 pl.add_points(
     arc.points[[0, -1]], color='tomato', point_size=18, render_points_as_spheres=True
 )
+pl.add_points(
+    np.array([[0.0, 0.0, 0.0]]),
+    color='black',
+    point_size=12,
+    render_points_as_spheres=True,
+)
+pl.show_grid()
+pl.view_xy()
 pl.show()
 
 
@@ -48,8 +57,10 @@ arc_from_normal = pv.CircularArcFromNormal(
 )
 
 pl = pv.Plotter()
-pl.add_mesh(arc_from_normal.tube(radius=0.03), color='seagreen')
-pl.add_mesh(pv.Circle(radius=1.0), color='lightgray', style='wireframe')
+pl.add_mesh(arc_from_normal.tube(radius=0.04), color='seagreen')
+pl.add_mesh(pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2)
+pl.show_grid()
+pl.view_xy()
 pl.show()
 # %%
 # .. tags:: load

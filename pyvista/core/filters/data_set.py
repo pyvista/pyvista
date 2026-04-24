@@ -164,6 +164,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> np.abs(dist).mean()  # doctest:+SKIP
         9.997635192915073e-05
 
+        See :ref:`icp_registration_example` for more examples using this filter.
+
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
@@ -1562,8 +1564,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ... )
         >>> out.plot(color='lightblue', smooth_shading=True)
 
-        See :ref:`using_filters_example` or
-        :ref:`marching_cubes_example` for more examples using this
+        See :ref:`using_filters_example`, :ref:`marching_cubes_example`, or
+        :ref:`gyroid_example` for more examples using this
         filter.
 
         """
@@ -2932,6 +2934,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> grid = sphere.delaunay_3d()
         >>> edges = grid.extract_all_edges()
         >>> edges.plot(line_width=5, color='k')
+
+        See :ref:`convex_hull_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkDelaunay3D()

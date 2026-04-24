@@ -5,7 +5,7 @@ Measure Distance Between Point Clouds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Color a source point cloud by the distance to its nearest neighbors in a target
-cloud.
+cloud using :func:`pyvista.DataSet.find_closest_point`.
 """
 
 from __future__ import annotations
@@ -62,6 +62,11 @@ pl.add_points(
     render_points_as_spheres=True,
 )
 pl.add_mesh(connectors, color='black', opacity=0.35)
+pl.camera_position = pv.CameraPosition(
+    position=(0.4, -0.5, 0.25),
+    focal_point=source.center,
+    viewup=(0, 0, 1),
+)
 pl.show()
 
 

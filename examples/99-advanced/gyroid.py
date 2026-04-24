@@ -4,7 +4,8 @@
 Plot a Gyroid Surface
 ---------------------
 
-Contour an implicit gyroid field into a periodic surface.
+Contour an implicit gyroid field stored on :class:`pyvista.ImageData` into a
+periodic surface with :func:`pyvista.DataSetFilters.contour`.
 """
 
 from __future__ import annotations

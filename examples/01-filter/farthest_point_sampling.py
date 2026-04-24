@@ -15,7 +15,7 @@ References
 ----------
 Y. Eldar et al., "The farthest point strategy for progressive image sampling,"
 *Proc. 12th IAPR Int. Conf. on Pattern Recognition*, Vol. 2, 1994, pp. 93-97,
-:doi:`10.1109/ICPR.1994.577129`.
+`doi:10.1109/ICPR.1994.577129 <https://doi.org/10.1109/ICPR.1994.577129>`_.
 
 """
 
@@ -73,6 +73,12 @@ random_cloud = pv.PolyData(cloud.points[random_ids])
 # farthest-point subsample (right, blue) lays the points down in a more
 # uniform pattern over the surface.
 
+cpos = pv.CameraPosition(
+    position=(0.4, -0.5, 0.25),
+    focal_point=cloud.center,
+    viewup=(0, 0, 1),
+)
+
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
 pl.add_points(
@@ -88,6 +94,7 @@ pl.add_points(
     point_size=10,
     render_points_as_spheres=True,
 )
+pl.camera_position = cpos
 
 pl.subplot(0, 1)
 pl.add_points(
@@ -103,6 +110,7 @@ pl.add_points(
     point_size=10,
     render_points_as_spheres=True,
 )
+pl.camera_position = cpos
 pl.link_views()
 pl.show()
 

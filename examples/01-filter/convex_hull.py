@@ -43,6 +43,11 @@ pl.add_points(
     render_points_as_spheres=True,
 )
 pl.add_mesh(hull, color='royalblue', opacity=0.4, show_edges=True)
+pl.camera_position = pv.CameraPosition(
+    position=(0.4, -0.5, 0.25),
+    focal_point=cloud.center,
+    viewup=(0, 0, 1),
+)
 pl.show()
 
 

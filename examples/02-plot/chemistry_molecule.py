@@ -4,7 +4,8 @@
 Build a Ball-and-Stick Molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Assemble a simple molecule from spheres and cylinders.
+Assemble a simple molecule from :func:`pyvista.Sphere` atoms and
+:func:`pyvista.Cylinder` bonds.
 """
 
 from __future__ import annotations

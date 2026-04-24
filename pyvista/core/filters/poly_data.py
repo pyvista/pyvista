@@ -2112,6 +2112,8 @@ class PolyDataFilters(DataSetFilters):
         >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
+        See :ref:`clip_closed_surface_example` for more examples using this filter.
+
         """
         # verify it is manifold
         if self.n_open_edges > 0:
@@ -2187,6 +2189,8 @@ class PolyDataFilters(DataSetFilters):
         ...     feature_edges=False, manifold_edges=False
         ... )  # doctest:+SKIP
         >>> assert edges.n_cells == 0  # doctest:+SKIP
+
+        See :ref:`fill_holes_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkFillHolesFilter()

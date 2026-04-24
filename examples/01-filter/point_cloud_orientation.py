@@ -30,6 +30,15 @@ transform = pv.Transform().rotate_vector((1, 1, 0), 33).rotate_y(18)
 cloud = pv.PolyData(full_cloud.points[sample_ids]).transform(transform, inplace=False)
 cloud
 
+# %%
+# Pick a camera that frames the rotated cloud well.
+
+cpos = pv.CameraPosition(
+    position=(0.4, -0.5, 0.25),
+    focal_point=cloud.center,
+    viewup=(0, 0, 1),
+)
+
 
 # %%
 # Fit a line and a plane
@@ -63,6 +72,7 @@ pl.add_points(
 )
 pl.add_mesh(plane, color='orange', opacity=0.25)
 pl.add_mesh(arrow, color='tomato')
+pl.camera_position = cpos
 pl.show()
 
 
@@ -89,6 +99,7 @@ pl.add_points(
     opacity=0.4,
 )
 pl.add_mesh(axis_aligned_box, color='tomato', line_width=4)
+pl.camera_position = cpos
 pl.subplot(0, 1)
 pl.add_points(
     cloud,
@@ -98,6 +109,7 @@ pl.add_points(
     opacity=0.4,
 )
 pl.add_mesh(oriented_box, color='seagreen', line_width=4)
+pl.camera_position = cpos
 pl.link_views()
 pl.show()
 

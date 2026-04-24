@@ -25,6 +25,15 @@ from pyvista import examples
 target = examples.download_action_figure()
 target
 
+# %%
+# A camera position that frames the figure clearly.
+
+cpos = pv.CameraPosition(
+    position=(150, -250, 150),
+    focal_point=(0, 0, 35),
+    viewup=(0, 0, 1),
+)
+
 
 # %%
 # Transform a copy away from the reference
@@ -37,8 +46,9 @@ transform = pv.Transform().rotate_x(25).rotate_z(-35).translate((offset, -offset
 source = target.transform(transform, inplace=False)
 
 pl = pv.Plotter()
-pl.add_mesh(target, style='wireframe', color='black', line_width=3)
+pl.add_mesh(target, color='lightgray', opacity=0.6)
 pl.add_mesh(source, color='tomato', opacity=0.8)
+pl.camera_position = cpos
 pl.show()
 
 
@@ -55,11 +65,13 @@ aligned['distance_to_target'] = np.linalg.norm(aligned.points - closest_points, 
 
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
-pl.add_mesh(target, style='wireframe', color='black', line_width=3)
+pl.add_mesh(target, color='lightgray', opacity=0.6)
 pl.add_mesh(source, color='tomato', opacity=0.8)
+pl.camera_position = cpos
 pl.subplot(0, 1)
-pl.add_mesh(target, style='wireframe', color='black', line_width=3)
+pl.add_mesh(target, color='lightgray', opacity=0.4)
 pl.add_mesh(aligned, scalars='distance_to_target', cmap='viridis')
+pl.camera_position = cpos
 pl.link_views()
 pl.show()
 

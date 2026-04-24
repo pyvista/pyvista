@@ -31,7 +31,7 @@ surface
 # The same plane is reused for both the open and the closed-surface clip.
 
 plane_origin = surface.center
-plane_normal = (1, 1, 0.3)
+plane_normal = (1, 0.3, 0)
 plane_size = surface.length * 1.2
 plane = pv.Plane(
     center=plane_origin, direction=plane_normal, i_size=plane_size, j_size=plane_size
@@ -40,6 +40,8 @@ plane = pv.Plane(
 pl = pv.Plotter()
 pl.add_mesh(surface, color='wheat', smooth_shading=True)
 pl.add_mesh(plane, style='wireframe', color='black', line_width=2)
+pl.view_xz()
+pl.camera.azimuth = 35
 pl.show()
 
 
@@ -64,9 +66,13 @@ pl.subplot(0, 0)
 pl.add_mesh(open_clip, color='wheat', smooth_shading=True)
 pl.add_mesh(open_boundary, color='tomato', line_width=6)
 pl.add_mesh(plane, style='wireframe', color='black', line_width=2)
+pl.view_xz()
+pl.camera.azimuth = 35
 pl.subplot(0, 1)
 pl.add_mesh(closed_clip, color='wheat', smooth_shading=True)
 pl.add_mesh(plane, style='wireframe', color='black', line_width=2)
+pl.view_xz()
+pl.camera.azimuth = 35
 pl.link_views()
 pl.show()
 
