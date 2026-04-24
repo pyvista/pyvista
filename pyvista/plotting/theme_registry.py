@@ -19,9 +19,6 @@ if TYPE_CHECKING:
 THEME_ENTRY_POINT_GROUP = 'pyvista.themes'
 
 
-ThemeRegistrationKind = Literal['subclass', 'entry_point', 'alias']
-
-
 class ThemeRegistration(NamedTuple):
     """Describe how a theme name became registered.
 
@@ -52,7 +49,7 @@ class ThemeRegistration(NamedTuple):
     """
 
     name: str
-    kind: ThemeRegistrationKind
+    kind: Literal['subclass', 'entry_point', 'alias']
     source: str
 
 
@@ -227,7 +224,9 @@ def registered_themes() -> dict[str, ThemeRegistration]:
     _ensure_entry_points()
     out: dict[str, ThemeRegistration] = {}
     for name, cls in _registered_theme_classes.items():
-        kind: ThemeRegistrationKind = 'alias' if name in _registered_theme_aliases else 'subclass'
+        kind: Literal['subclass', 'alias'] = (
+            'alias' if name in _registered_theme_aliases else 'subclass'
+        )
         source = _registered_theme_classes_sources.get(
             name, f'{cls.__module__}.{cls.__qualname__}'
         )
