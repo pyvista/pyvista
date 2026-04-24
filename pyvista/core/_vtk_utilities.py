@@ -154,10 +154,10 @@ class DisableVtkSnakeCase:
         tab-completion. VTK methods remain fully callable; only their
         enumeration is suppressed.
 
-        - CamelCase VTK attributes (``GetBounds``, ``DeepCopy``, ...) are
+        - CamelCase VTK attributes (``GetNumberOfPoints``, ``DeepCopy``, ...) are
           hidden unless :attr:`pyvista.global_config.show_vtk_api` is
           ``True``.
-        - snake_case VTK aliases (``get_bounds``, ``deep_copy``, ...) are
+        - snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
           hidden unless VTK snake_case is allowed via
           :func:`pyvista.vtk_snake_case`, since they would otherwise raise
           ``PyVistaAttributeError`` on access.
