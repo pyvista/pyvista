@@ -616,7 +616,7 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
 
     Returns
     -------
-    tuple of AccessorRegistration
+    tuple[AccessorRegistration, ...]
         Ordered by registration time. Each record exposes ``name``,
         ``target``, ``accessor``, and ``source``.
 

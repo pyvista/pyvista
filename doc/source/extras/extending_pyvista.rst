@@ -19,7 +19,7 @@ Why accessors
 
 PyVista inherits the problem every extensible scientific library in
 Python eventually faces: users want to add methods to a core type
-without forking it. Pandas solved this first with
+without forking it. pandas solved this first with
 `registered accessors <https://pandas.pydata.org/docs/development/extending.html#registering-custom-accessors>`_
 and xarray adopted the same pattern, growing an ecosystem of
 downstream plugins such as
@@ -107,7 +107,7 @@ Registration paths
 ------------------
 
 PyVista supports two ways to register an accessor. Both use the same
-``@register_dataset_accessor`` decorator — the difference is only
+``@register_dataset_accessor`` decorator. The difference is only
 *when* the decorator runs.
 
 **Import-time.** The plugin's module runs the decorator at import
@@ -300,12 +300,12 @@ behavior — functional methods that return a new dataset are easier to
 reason about.
 
 
-Subclassing (advanced)
+subclassing (advanced)
 ----------------------
 
-For use cases that genuinely require a custom class — for example,
-adding persistent state that travels with the dataset through filters
-— direct subclassing of :class:`~pyvista.PolyData` or
+For use cases that genuinely require a custom class (for example,
+adding persistent state that travels with the dataset through
+filters), direct subclassing of :class:`~pyvista.PolyData` or
 :class:`~pyvista.UnstructuredGrid` is still supported. See
 :ref:`Extending PyVista Example <extending_pyvista_example>` for the
 subclassing pattern.

@@ -283,6 +283,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             vtkPyVistaOverride,
             VTKObjectWrapperCheckSnakeCase,
             pv.VtkErrorCatcher,
+            pv.DataSetAccessor,
         ):
             assert not issubclass(pyvista_class, _NoNewAttrMixin)
             pytest.skip('Specialized class with no real risk of new attributes being added.')
