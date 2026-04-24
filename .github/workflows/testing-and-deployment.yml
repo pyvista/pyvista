@@ -31,8 +31,8 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  CACHE_FOLDER_NAME: vtk-data
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
+  CACHE_FOLDER_NAME: pyvista-data
+  PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
 
 permissions:
   id-token: none
@@ -61,26 +61,26 @@ jobs:
           name: pr-info
           path: pr-info/
 
-  # Cache vtk-data for each runner separately
+  # Cache pyvista/data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
 
   # GitHub-hosted runners can re-use the cache across OS's.
   # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
   cache-github-hosted:
-    name: Cache vtk-data
-    uses: ./.github/workflows/cache-vtk-data.yml
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
   # For self-hosted runners, we need to cache each runner separately
   cache-macOS-self-hosted:
-    name: Cache vtk-data
-    uses: ./.github/workflows/cache-vtk-data.yml
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "macos-15-self-hosted"
   cache-ubuntu-self-hosted:
-    name: Cache vtk-data
-    uses: ./.github/workflows/cache-vtk-data.yml
+    name: Cache pyvista/data
+    uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04-self-hosted"
 
@@ -128,7 +128,7 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-      - name: Restore vtk-data cache
+      - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -192,6 +192,10 @@ jobs:
             runner-labels: "ubuntu-22.04-self-hosted"
           - python-version: "3.14"
             vtk-version: "latest"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.14"
+            vtk-version: "latest"
             numpy-version: "nightly"
             runner-labels: "ubuntu-22.04-self-hosted"
 
@@ -214,7 +218,7 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Restore vtk-data cache
+      - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -294,7 +298,7 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - name: Restore vtk-data cache
+      - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -325,12 +329,13 @@ jobs:
           name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: coverage*.xml
+          if-no-files-found: error
 
   windows:
     name: Windows Unit Testing
@@ -355,7 +360,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Restore vtk-data cache
+      - name: Restore pyvista/data cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
@@ -406,8 +411,18 @@ jobs:
   upload-coverage-:
     name: Upload coverage reports
     runs-on: ubuntu-22.04
-    needs: Linux
-    if: always() && github.event_name == 'pull_request'
+    needs: [Linux, VTK-dev]
+    # `always()` ensures this still runs when VTK-dev is skipped because the
+    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its
+    # coverage artifacts get bundled into this single CodeCov upload.
+    # Run on push/merge_group as well as pull_request so Codecov's
+    # main-branch baseline keeps advancing with every merge.
+    if: always() && needs.Linux.result == 'success'
+    permissions:
+      # id-token: write authorizes OIDC token minting so codecov-action can
+      # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
+      id-token: write
+      contents: read
     steps:
       # Needs to checkout only for codecov to match file names
       - uses: actions/checkout@v6
@@ -425,8 +440,7 @@ jobs:
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
 
   # Publish to PyPI using trusted publishing
   release:
@@ -447,7 +461,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
+          python-version: 3.14
 
       - name: Build package
         run: |

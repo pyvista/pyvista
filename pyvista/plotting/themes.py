@@ -33,16 +33,16 @@ pyvista.
 from __future__ import annotations
 
 from enum import Enum
-from itertools import chain
 import json
 import os
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
+from typing import ClassVar
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
+from pyvista.core.config import _ConfigBase
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -159,94 +159,7 @@ def set_plot_theme(theme):
         raise TypeError(msg)
 
 
-# Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
-class _ForceSlots(type):
-    """Metaclass to force classes and subclasses to have __slots__."""
-
-    @classmethod
-    def __prepare__(cls, name, bases, **kwargs):  # type: ignore[override]
-        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
-        super_prepared['__slots__'] = ()
-        return super_prepared
-
-
-class _ThemeConfig(metaclass=_ForceSlots):
-    """Provide common methods for theme configuration classes."""
-
-    __slots__: list[str] = []
-
-    @classmethod
-    def from_dict(cls, dict_):
-        """Create from a dictionary."""
-        inst = cls()
-        for key, value in dict_.items():
-            attr = getattr(inst, key)
-            if hasattr(attr, 'from_dict'):
-                setattr(inst, key, attr.from_dict(value))
-            else:
-                setattr(inst, key, value)
-        return inst
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return theme config parameters as a dictionary.
-
-        Returns
-        -------
-        dict
-            This theme parameter represented as a dictionary.
-
-        """
-        # remove the first underscore in each entry
-        dict_ = {}
-        for key in self._all__slots__():
-            value = getattr(self, key)
-            key_ = key[1:]
-            if key_ == 'plot_cell':  # private config values
-                continue
-            if hasattr(value, 'to_dict'):
-                dict_[key_] = value.to_dict()
-            else:
-                dict_[key_] = value
-        return dict_
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, _ThemeConfig):
-            return False
-
-        for attr_name in other._all__slots__():
-            attr = getattr(self, attr_name)
-            other_attr = getattr(other, attr_name)
-            if (
-                isinstance(attr, (tuple, list)) and tuple(attr) != tuple(other_attr)
-            ) or not attr == other_attr:
-                return False
-
-        return True
-
-    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
-
-    def __getitem__(self, key):
-        """Get a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        """Set a value via a key.
-
-        Implemented here for backwards compatibility.
-        """
-        setattr(self, key, value)
-
-    @classmethod
-    def _all__slots__(cls):
-        """Get all slots including parent classes."""
-        mro = cls.mro()
-        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
-
-
-class _LightingConfig(_ThemeConfig):
+class _LightingConfig(_ConfigBase):
     """PyVista lighting configuration.
 
     This will control the lighting interpolation type, parameters,
@@ -487,7 +400,7 @@ class _LightingConfig(_ThemeConfig):
         self._emissive = bool(emissive)
 
 
-class _DepthPeelingConfig(_ThemeConfig):
+class _DepthPeelingConfig(_ConfigBase):
     """PyVista depth peeling configuration.
 
     Examples
@@ -569,7 +482,7 @@ class _DepthPeelingConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _SilhouetteConfig(_ThemeConfig):
+class _SilhouetteConfig(_ConfigBase):
     """PyVista silhouette configuration.
 
     Examples
@@ -712,7 +625,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _ColorbarConfig(_ThemeConfig):
+class _ColorbarConfig(_ConfigBase):
     """PyVista colorbar configuration.
 
     Examples
@@ -811,7 +724,7 @@ class _ColorbarConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _AxesConfig(_ThemeConfig):
+class _AxesConfig(_ConfigBase):
     """PyVista axes configuration.
 
     Examples
@@ -980,7 +893,7 @@ class _AxesConfig(_ThemeConfig):
         self._show = bool(show)
 
 
-class _Font(_ThemeConfig):
+class _Font(_ConfigBase):
     """PyVista plotter font configuration.
 
     Examples
@@ -1157,7 +1070,7 @@ class _Font(_ThemeConfig):
         self._fmt = fmt
 
 
-class _SliderStyleConfig(_ThemeConfig):
+class _SliderStyleConfig(_ConfigBase):
     """PyVista configuration for a single slider style."""
 
     __slots__ = [
@@ -1340,7 +1253,7 @@ class _SliderStyleConfig(_ThemeConfig):
         return '\n'.join(txt)
 
 
-class _SliderConfig(_ThemeConfig):
+class _SliderConfig(_ConfigBase):
     """PyVista configuration encompassing all slider styles.
 
     Examples
@@ -1437,7 +1350,7 @@ class _SliderConfig(_ThemeConfig):
             yield style.name
 
 
-class _TrameConfig(_ThemeConfig):
+class _TrameConfig(_ConfigBase):
     """PyVista Trame configuration.
 
     Examples
@@ -1471,8 +1384,12 @@ class _TrameConfig(_ThemeConfig):
         # default for ``jupyter-server-proxy``
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/')).rstrip('/') + '/'
+        if service and not prefix.startswith('http'):
+            # JupyterHub service prefixes are URL paths, not filesystem paths,
+            # so use PurePosixPath to force forward-slash joining on Windows.
+            self._server_proxy_prefix = (
+                str(pathlib.PurePosixPath(service) / prefix.lstrip('/')).rstrip('/') + '/'
+            )
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1619,7 +1536,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = mode
 
 
-class _CameraConfig(_ThemeConfig):
+class _CameraConfig(_ConfigBase):
     """PyVista camera configuration.
 
     Examples
@@ -1718,7 +1635,7 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = value
 
 
-class _PlotCellConfig(_ThemeConfig):
+class _PlotCellConfig(_ConfigBase):
     """Internal config for plotting cells."""
 
     __slots__ = ['_font_size', '_line_width', '_normals_scale', '_point_size']
@@ -1730,7 +1647,7 @@ class _PlotCellConfig(_ThemeConfig):
         self._normals_scale = 0.1
 
 
-class Theme(_ThemeConfig):
+class Theme(_ConfigBase):
     """Base VTK theme.
 
     Examples
@@ -1753,6 +1670,10 @@ class Theme(_ThemeConfig):
     >>> pv.global_theme.load_theme(my_theme)
 
     """
+
+    # ``_plot_cell`` is an internal-only sub-config — exclude it from
+    # ``to_dict`` output so themes serialize/deserialize round-trip cleanly.
+    _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'plot_cell'})
 
     __slots__ = [
         '_above_range_color',

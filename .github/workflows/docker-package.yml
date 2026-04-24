@@ -7,6 +7,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,28 +22,35 @@ permissions:
 
 jobs:
   build-and-publish:
-    name: Build and Publish Docker Image
-    runs-on: ubuntu-22.04
-    # For Pull Requests, only runs from `docker`
+    name: Build ${{ matrix.target }} image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # For pull requests, run on branches named `docker*` or when the
+    # `docker` label is applied. Never runs on forked PRs (needs secrets).
     if: github.event_name == 'push' ||
       ( github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'docker')
-      )
+      ( startsWith(github.event.pull_request.head.ref, 'docker') ||
+      contains(github.event.pull_request.labels.*.name, 'docker')
+      ))
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: jupyter
+            flavor: |
+              latest=auto
+          - target: slim
+            flavor: |
+              latest=auto
+              suffix=-slim,onlatest=true
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Create PyVista package
-        run: |
-          pip install build
-          python -m build --sdist
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
 
       - name: Log into the Container registry
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
@@ -51,33 +59,57 @@ jobs:
           username: token
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for the Jupyter Docker image
-        id: jupyter_meta
+      - name: Extract metadata
+        id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Build and push the Jupyter Docker image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
-        with:
-          context: .
-          file: docker/jupyter.Dockerfile
-          push: ${{ github.actor != 'dependabot[bot]' }}
-          tags: ${{ steps.jupyter_meta.outputs.tags }}
-          labels: ${{ steps.jupyter_meta.outputs.labels }}
+          flavor: ${{ matrix.flavor }}
 
-      - name: Extract metadata for the Slim Docker image
-        id: slim_meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=auto
-            suffix=-slim,onlatest=true
-      - name: Build and push the Slim Docker image
+      # Build locally first so the smoke test can exercise the image before
+      # anything is pushed to the registry.
+      - name: Build image (load into local daemon)
+        id: build
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           context: .
-          file: docker/slim.Dockerfile
-          push: ${{ github.actor != 'dependabot[bot]' }}
-          tags: ${{ steps.slim_meta.outputs.tags }}
-          labels: ${{ steps.slim_meta.outputs.labels }}
+          file: docker/Dockerfile
+          target: ${{ matrix.target }}
+          load: true
+          tags: pyvista-ci:${{ matrix.target }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+
+      # Exercise server-side off-screen rendering so we catch missing GL /
+      # EGL runtime libraries instead of shipping an image that can import
+      # pyvista but cannot actually render.
+      - name: Smoke test (render + GPUInfo)
+        run: |
+          docker run --rm pyvista-ci:${{ matrix.target }} python -c "
+          import numpy as np
+          import pyvista as pv
+          print(pv.Report())
+          print('GPU info:')
+          print(pv.GPUInfo())
+          pl = pv.Plotter(off_screen=True)
+          pl.add_mesh(pv.Sphere(), color='red')
+          img = pl.screenshot(return_img=True)
+          assert img is not None and img.size > 0, 'empty screenshot'
+          assert np.any(img), 'screenshot is all zeros'
+          print('screenshot ok:', img.shape, 'non-zero px:', int(np.count_nonzero(img)))
+          "
+
+      # Second build is a cache hit from the step above; this pushes the
+      # already-validated image to the registry under the real tags.
+      - name: Push image
+        if: github.actor != 'dependabot[bot]'
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: ${{ matrix.target }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}

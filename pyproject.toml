@@ -41,15 +41,15 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.2']
 jupyter = [
   'ipywidgets',
   'jupyter-server-proxy',
   'nest-asyncio2',
   'trame-client>=2.12.7',
   'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
-  'trame-vtk != 2.10.3, != 2.11.0, != 2.11.1, != 2.11.2, != 2.11.3, != 2.11.4, != 2.11.5',
-  'trame-vtk>=2.5.8, <2.11.7', # Pin indefinitely to avoid breakages
+  'trame-vtk != 2.10.3, != 2.11.0, != 2.11.1, != 2.11.2, != 2.11.3, != 2.11.4, != 2.11.5, != 2.11.6',
+  'trame-vtk>=2.5.8, <2.11.8', # Pin indefinitely to avoid breakages
   'trame-vuetify>=2.3.1',
   'trame>=2.5.2',
 ]
@@ -98,7 +98,7 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
-  'pyvista-zstd>=0.2.0,<0.3.0',
+  'pyvista-zstd>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
@@ -107,7 +107,7 @@ test = [
   'sphinx<8.3.0',
   'sympy<1.15.0',
   'tqdm<4.68.0',
-  'trame-vtk>=2.5.8,<2.11.7',
+  'trame-vtk>=2.5.8,<2.11.8',
   'trame-vuetify>=2.3.1,<3.3.0',
   'trame>=2.5.2,<3.13.0',
   'trimesh<4.12.0',
@@ -115,12 +115,15 @@ test = [
   { include-group = 'pinned' },
 ]
 
+test-playwright = ['playwright<1.59.0', { include-group = 'test' }]
+
 docs = [
   'atsphinx-mini18n==0.5.1',
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
-  'colour-science==0.4.6',
+  'colour-science==0.4.6; python_version < "3.14"',
+  'colour-science==0.4.7; python_version >= "3.14"',
   'enum-tools==0.13.0',
   'fsspec==2026.3.0',
   'imageio-ffmpeg==0.6.0',
@@ -137,9 +140,9 @@ docs = [
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-zstd==0.2.0',
+  'pyvista-zstd==0.2.2',
   'ruamel-yaml<0.20.0',
-  'scipy==1.16.0; python_version >= "3.11"',
+  'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
@@ -155,7 +158,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-vtk==2.11.6',
+  'trame-vtk==2.11.7',
   'trame-vuetify==3.2.1',
   'trame==3.12.0',
   'trimesh==4.11.5',
@@ -166,11 +169,17 @@ docs = [
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
-  'trame-vtk==2.11.6',
+  'trame-vtk==2.11.7',
   { include-group = 'pinned' },
 ]
 
-dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
+dev = [
+  'pre-commit',
+  'tox',
+  'tox-uv',
+  { include-group = 'test' },
+  { include-group = 'typing' },
+]
 
 [project.urls]
 'Bug Reports' = 'https://github.com/pyvista/pyvista/issues'
@@ -257,7 +266,7 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
-  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.', # https://numpy.org/devdocs/release/2.4.0-notes.html - triggered by VTK's C++ code
+  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2\.\d+\.', # https://github.com/pyvista/pyvista/issues/8484 - triggered by pyvista_ndarray.view() and VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
@@ -271,6 +280,7 @@ log_cli_level = "INFO"
 markers = [
   'expect_check_gc_fail: Expect vtk leak.',
   'needs_download: this test downloads data during execution',
+  'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
@@ -444,6 +454,7 @@ ignore = [
   'F403', # 'from module import *' used; unable to detect undefined names
   'ISC001', # May cause conflicts when used with the formatter
   'N806',
+  'N817', # CamelCase imported as acronym (e.g. ElementTree as ET)
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
@@ -463,6 +474,9 @@ unfixable = ['F401', 'PLC0415']
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
+[tool.ruff.lint.flake8-import-conventions.aliases]
+pyvista = "pv"
+
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "vtk".msg = "Use targeted vtkmodules imports (e.g., from vtkmodules.vtkCommonDataModel import ...) to avoid pulling in the entire VTK package."
 
@@ -480,7 +494,7 @@ allow-dict-calls-with-keyword-arguments = true
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415', 'TID251']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
@@ -570,7 +584,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/text.py' = ['ANN']
 'pyvista/plotting/texture.py' = ['ANN']
-'pyvista/plotting/themes.py' = ['ANN']
+'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
 'pyvista/plotting/tools.py' = ['ANN']
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']

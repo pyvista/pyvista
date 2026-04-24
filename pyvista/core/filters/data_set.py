@@ -5178,7 +5178,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> extracted = mesh.extract_values(0, include_cells=False)
         >>> extracted.get_data_range()
         (np.float64(0.0), np.float64(0.0))
-        >>> extracted.plot(render_points_as_spheres=True, point_size=100)
+        >>> extracted.plot(render_points_as_spheres=True, point_size=100, color=True)
 
         Use ``ranges`` to extract values from a grid's point data in range.
 

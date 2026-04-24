@@ -1442,6 +1442,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         edge_color=None,
         lighting=False,  # noqa: FBT002
         viewport=(0, 0, 0.1, 0.1),
+        *,
+        top_color=None,
+        bottom_color=None,
     ):
         """Add a geographic north arrow to the scene.
 
@@ -1456,7 +1459,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             <pyvista.plotting.themes.Theme.interactive>`.
 
         color : ColorLike, optional
-            Color of the north arrow.
+            Color of the north arrow. When ``top_color`` or ``bottom_color``
+            is set, this color is applied to the side faces only.
 
         opacity : float, optional
             Opacity of the north arrow.
@@ -1473,6 +1477,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         viewport : sequence[float], default: (0, 0, 0.1, 0.1)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
+        top_color : ColorLike, optional
+            Color applied to the top face of the arrow. When set (together
+            with or independently from ``bottom_color``), per-face RGB
+            scalars are used so the top face can be distinguished from the
+            bottom at a glance. Defaults to ``color`` when only
+            ``bottom_color`` is set.
+
+            .. versionadded:: 0.48.0
+
+        bottom_color : ColorLike, optional
+            Color applied to the bottom face of the arrow. See ``top_color``
+            for details.
+
+            .. versionadded:: 0.48.0
+
         Returns
         -------
         :vtk:`vtkOrientationMarkerWidget`
@@ -1486,15 +1505,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         add_box_axes
             Add an axes box as an orientation widget.
 
-        add_north_arrow_widget
-            Add north arrow as an orientation widget.
+        add_orientation_widget
+            Add a custom mesh as an orientation widget.
 
         :ref:`axes_objects_example`
             Example showing different axes objects.
 
         Examples
         --------
-        Use an north arrow as the orientation widget.
+        Use a north arrow as the orientation widget.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1505,6 +1524,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl.enable_terrain_style(mouse_wheel_zooms=True)
         >>> pl.show()
 
+        Distinguish the top and bottom of the arrow by coloring the top
+        face a lighter shade and the bottom face a darker shade of the
+        side color.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> widget = pl.add_north_arrow_widget(
+        ...     color='royalblue',
+        ...     top_color='lightsteelblue',
+        ...     bottom_color='midnightblue',
+        ... )
+        >>> pl.show()
+
         """
         marker = create_north_arrow()
         mapper = pv.DataSetMapper(marker)
@@ -1513,9 +1545,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if edge_color is not None:
             actor.prop.edge_color = edge_color
         actor.prop.line_width = line_width
-        actor.prop.color = color
         actor.prop.opacity = opacity
         actor.prop.lighting = lighting
+        if top_color is None and bottom_color is None:
+            actor.prop.color = color
+        else:
+            # Face order in create_north_arrow: 4 sides, bottom (z=0), top (z=1).
+            top = top_color if top_color is not None else color
+            bottom = bottom_color if bottom_color is not None else color
+            face_colors = [color, color, color, color, bottom, top]
+            marker.cell_data['_face_index'] = np.arange(marker.n_cells, dtype=np.uint8)
+            marker.color_labels(
+                face_colors,
+                scalars='_face_index',
+                coloring_mode='index',
+                inplace=True,
+            )
+            mapper.color_mode = 'direct'
         return self.add_orientation_widget(
             actor,
             interactive=interactive,

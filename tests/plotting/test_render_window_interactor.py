@@ -210,6 +210,11 @@ def test_track_click_position():
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
+@pytest.mark.skipif(
+    type(_vtk.vtkRenderWindowInteractor()).__name__ == 'vtkXRenderWindowInteractor'
+    and type(_vtk.vtkRenderWindow()).__name__ != 'vtkXOpenGLRenderWindow',
+    reason='X interactor ProcessEvents() segfaults without an X-backed render window',
+)
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
     # which is the default for offscreen rendering)

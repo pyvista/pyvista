@@ -17,8 +17,6 @@ see :ref:`point_sets_api`.
 """
 
 # sphinx_gallery_start_ignore
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 

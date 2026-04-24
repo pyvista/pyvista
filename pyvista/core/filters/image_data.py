@@ -3817,20 +3817,20 @@ class ImageDataFilters(DataSetFilters):
         ...     actor = vtk.vtkImageActor()
         ...     actor.GetMapper().SetInputData(image)
         ...     actor.GetProperty().SetInterpolationTypeToNearest()
-        ...     plot = pv.Plotter()
-        ...     plot.add_actor(actor)
-        ...     plot.view_xy()
-        ...     plot.camera.tight()
-        ...     return plot
+        ...     pl = pv.Plotter()
+        ...     pl.add_actor(actor)
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
         >>>
-        >>> plot = grayscale_image_plotter(padded)
-        >>> plot.show()
+        >>> pl = grayscale_image_plotter(padded)
+        >>> pl.show()
 
         Pad only the x-axis with a white border.
 
         >>> padded = gray_image.pad_image(pad_value=255, pad_size=(200, 0))
-        >>> plot = grayscale_image_plotter(padded)
-        >>> plot.show()
+        >>> pl = grayscale_image_plotter(padded)
+        >>> pl.show()
 
         Pad with wrapping.
 

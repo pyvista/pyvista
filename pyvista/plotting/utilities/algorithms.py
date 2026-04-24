@@ -16,6 +16,8 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pyvista import DataSet
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -177,6 +179,174 @@ class PreserveTypeAlgorithmBase(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPy
         return 1
 
 
+class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
+    """Algorithm that generates data from a callable with no input.
+
+    The callable is invoked on each :meth:`RequestData` and must return a
+    :class:`~pyvista.DataSet`.
+
+    Parameters
+    ----------
+    generator : callable
+        ``generator() -> dataset``.  Called each time the pipeline requests
+        data.
+
+    output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
+        Output type.  Accepts a VTK class name string (e.g.
+        ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
+        (e.g. :class:`pyvista.PolyData`).
+
+    """
+
+    def __init__(
+        self,
+        generator: Callable[[], DataSet],
+        output_type: str | type = pv.UnstructuredGrid,
+    ):
+        """Initialize algorithm."""
+        _vtk.VTKPythonAlgorithmBase.__init__(
+            self,
+            nInputPorts=0,
+            nOutputPorts=1,
+            outputType=(
+                output_type if isinstance(output_type, str) else output_type().GetClassName()
+            ),
+        )
+        self._generator = generator
+
+    def RequestData(self, _request, _inInfo, outInfo) -> int:
+        """Perform algorithm execution.
+
+        Parameters
+        ----------
+        _request : :vtk:`vtkInformation`
+            The request object.
+        _inInfo : :vtk:`vtkInformationVector`
+            Information about the input data. Unused; this algorithm has no input ports.
+        outInfo : :vtk:`vtkInformationVector`
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            1 on success.
+
+        """
+        try:
+            out = self.GetOutputData(outInfo, 0)
+            out.ShallowCopy(self._generator())
+        except Exception:  # pragma: no cover
+            traceback.print_exc()
+            raise
+        return 1
+
+
+class CallbackFilterAlgorithm(PreserveTypeAlgorithmBase):
+    """Algorithm that delegates processing to a user-supplied callable.
+
+    The callable receives a :class:`~pyvista.DataSet` (the wrapped input) and
+    must return a :class:`~pyvista.DataSet` of the appropriate type.
+
+    By default the output type is preserved from the input (via
+    :class:`PreserveTypeAlgorithmBase`). Pass ``output_type`` to override.
+
+    Parameters
+    ----------
+    callback : callable
+        ``callback(dataset) -> dataset``.  Called on each
+        :meth:`RequestData` invocation with the wrapped input.
+
+    output_type : str | type[pyvista.DataSet] | None, default: ``None``
+        Fixed output type. Accepts a VTK class name string (e.g.
+        ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
+        (e.g. :class:`pyvista.PolyData`). When ``None``, the output type is
+        inferred from the input.
+
+    nInputPorts : int, default: 1
+        Number of input ports.
+
+    nOutputPorts : int, default: 1
+        Number of output ports.
+
+    """
+
+    def __init__(  # noqa: PLR0917
+        self,
+        callback: Callable[[DataSet], DataSet],
+        output_type: str | type | None = None,
+        nInputPorts: int = 1,
+        nOutputPorts: int = 1,
+    ):
+        """Initialize algorithm."""
+        self._fixed_output_type: str | None = (
+            None
+            if output_type is None
+            else output_type
+            if isinstance(output_type, str)
+            else output_type().GetClassName()
+        )
+        if self._fixed_output_type is not None:
+            _vtk.VTKPythonAlgorithmBase.__init__(
+                self,
+                nInputPorts=nInputPorts,
+                nOutputPorts=nOutputPorts,
+                outputType=self._fixed_output_type,
+            )
+        else:
+            super().__init__(nInputPorts=nInputPorts, nOutputPorts=nOutputPorts)
+        self._callback = callback
+
+    def RequestDataObject(self, _request, inInfo, outInfo) -> int:
+        """Preserve or override data type.
+
+        Parameters
+        ----------
+        _request : :vtk:`vtkInformation`
+            The request object for the filter.
+        inInfo : :vtk:`vtkInformationVector`
+            The input information vector for the filter.
+        outInfo : :vtk:`vtkInformationVector`
+            The output information vector for the filter.
+
+        Returns
+        -------
+        int
+            Returns 1 if successful.
+
+        """
+        if self._fixed_output_type is not None:
+            return 1
+        return super().RequestDataObject(_request, inInfo, outInfo)
+
+    def RequestData(self, _request, inInfo, outInfo) -> int:
+        """Perform algorithm execution.
+
+        Parameters
+        ----------
+        _request : :vtk:`vtkInformation`
+            The request object.
+        inInfo : :vtk:`vtkInformationVector`
+            Information about the input data.
+        outInfo : :vtk:`vtkInformationVector`
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            1 on success.
+
+        """
+        try:
+            inp = self.GetInputData(inInfo, 0, 0)
+            out = self.GetOutputData(outInfo, 0)
+            result = self._callback(wrap(inp))
+            out.ShallowCopy(result)
+        except Exception:  # pragma: no cover
+            traceback.print_exc()
+            raise
+        return 1
+
+
 class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
     """Algorithm to control active scalars.
 
@@ -256,6 +426,166 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
                 out.GetCellData().SetActiveScalars(self.scalars_name)
             else:
                 out.GetPointData().SetActiveScalars(self.scalars_name)
+        except Exception:  # pragma: no cover
+            traceback.print_exc()
+            raise
+        return 1
+
+
+class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
+    """Algorithm to compute point normals for smooth shading.
+
+    The output is always a :vtk:`vtkPolyData`. Non-polydata inputs have their
+    external surface extracted first. Normals are computed via
+    :meth:`~pyvista.PolyDataFilters.compute_normals`, with ``split_vertices``
+    controlled by ``split_sharp_edges`` to get crisp edges at feature-angle
+    boundaries.
+
+    The output carries a ``vtkOriginalPointIds`` point-data array that maps
+    each output point back to its index in the original input mesh. Callers
+    that need to remap input-length arrays onto the (potentially longer)
+    output topology (for example raw numpy scalars passed to ``add_mesh``)
+    can do so via this tracker.
+
+    Parameters
+    ----------
+    split_sharp_edges : bool, default: False
+        Whether to use feature-angle splitting when computing normals.
+        When ``True``, shared vertices on sharp edges are duplicated so
+        each face has its own normal, producing crisp feature lines.
+
+    feature_angle : float, default: 30.0
+        Angle (in degrees) above which an edge is considered sharp. Only
+        used when ``split_sharp_edges`` is ``True``.
+
+    """
+
+    ORIGINAL_POINT_IDS_NAME = 'vtkOriginalPointIds'
+
+    @_deprecate_positional_args
+    def __init__(
+        self,
+        split_sharp_edges: bool = False,  # noqa: FBT001, FBT002
+        feature_angle: float = 30.0,
+    ):
+        """Initialize algorithm."""
+        _vtk.VTKPythonAlgorithmBase.__init__(
+            self,
+            nInputPorts=1,
+            nOutputPorts=1,
+            outputType='vtkPolyData',
+        )
+        self._split_sharp_edges = split_sharp_edges
+        self._feature_angle = feature_angle
+
+    @property
+    def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether to split sharp edges when computing normals."""
+        return self._split_sharp_edges
+
+    @split_sharp_edges.setter
+    def split_sharp_edges(self, value: bool) -> None:
+        if value != self._split_sharp_edges:
+            self._split_sharp_edges = value
+            self.Modified()
+
+    @property
+    def feature_angle(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the feature angle (degrees) for splitting sharp edges."""
+        return self._feature_angle
+
+    @feature_angle.setter
+    def feature_angle(self, value: float) -> None:
+        if value != self._feature_angle:
+            self._feature_angle = value
+            self.Modified()
+
+    def RequestData(self, _request, inInfo, outInfo) -> int:
+        """Perform algorithm execution.
+
+        Parameters
+        ----------
+        _request : :vtk:`vtkInformation`
+            The request object.
+        inInfo : :vtk:`vtkInformationVector`
+            Information about the input data.
+        outInfo : :vtk:`vtkInformationVector`
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            1 on success.
+
+        """
+        try:
+            inp = self.GetInputData(inInfo, 0, 0)
+            out = self.GetOutputData(outInfo, 0)
+
+            wrapped = wrap(inp)
+            if isinstance(wrapped, pv.PointSet):
+                wrapped = wrapped.cast_to_polydata()
+
+            if not isinstance(wrapped, pv.DataSet) or wrapped.n_points == 0:
+                return 1
+
+            # Respect user-provided point normals on a polydata input when no
+            # splitting is requested: pass the input through unchanged so the
+            # custom normals survive.  Splitting always re-runs compute_normals
+            # because it needs to know which points to duplicate.
+            # No ``vtkOriginalPointIds`` tracker is needed here because the
+            # topology is unchanged (n_points stays the same).
+            if (
+                isinstance(wrapped, pv.PolyData)
+                and not self._split_sharp_edges
+                and wrapped.point_data.active_normals is not None
+            ):
+                out.ShallowCopy(wrapped)
+                return 1
+
+            # Extract the external surface when the input is not polydata.
+            # ``pass_pointid=True`` attaches ``vtkOriginalPointIds`` that maps
+            # each surface point back to its index in the input mesh. For
+            # polydata inputs we install an identity tracker on a shallow
+            # copy so that compute_normals(split_vertices=True) will split
+            # it alongside the points, giving us a chained mapping for free.
+            if isinstance(wrapped, pv.PolyData):
+                surface = wrapped.copy(deep=False)
+                surface.point_data[self.ORIGINAL_POINT_IDS_NAME] = np.arange(
+                    surface.n_points, dtype=pv.ID_TYPE
+                )
+            else:
+                surface = wrapped.extract_surface(
+                    algorithm=None,
+                    pass_pointid=True,
+                    pass_cellid=True,
+                )
+                if surface.n_points == 0:
+                    out.ShallowCopy(surface)
+                    return 1
+
+            # ``compute_normals`` raises TypeError when the surface has no
+            # polygonal cells (point clouds, lines). Pre-check and pass the
+            # surface through so downstream stages still see a valid
+            # polydata, without coupling to the upstream error message.
+            if surface.n_verts + surface.n_lines == surface.n_cells:
+                out.ShallowCopy(surface)
+                return 1
+
+            result = surface.compute_normals(
+                cell_normals=False,
+                split_vertices=self._split_sharp_edges,
+                feature_angle=self._feature_angle,
+            )
+
+            # ``compute_normals(split_vertices=True)`` leaves behind a
+            # ``pyvistaOriginalPointIds`` helper array that mirrors our own
+            # ``vtkOriginalPointIds``. Drop it so downstream code isn't
+            # surprised by the duplicate tracker.
+            if 'pyvistaOriginalPointIds' in result.point_data:
+                del result.point_data['pyvistaOriginalPointIds']
+
+            out.ShallowCopy(result)
         except Exception:  # pragma: no cover
             traceback.print_exc()
             raise
@@ -449,6 +779,66 @@ def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT00
     return alg
 
 
+@_deprecate_positional_args(allowed=['generator'])
+def source_algorithm(
+    generator: Callable[[], DataSet],
+    output_type: str | type = pv.UnstructuredGrid,
+) -> SourceAlgorithm:
+    """Create a source algorithm that generates data from a callable.
+
+    A source has no input port. It produces data from scratch via
+    *generator*.
+
+    Parameters
+    ----------
+    generator : callable
+        ``generator() -> dataset``.
+
+    output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
+        Output type.  Accepts a VTK class name string or a PyVista
+        :class:`~pyvista.DataSet` subclass.
+
+    Returns
+    -------
+    SourceAlgorithm
+        The source algorithm.
+
+    """
+    return SourceAlgorithm(generator=generator, output_type=output_type)
+
+
+@_deprecate_positional_args(allowed=['inp', 'callback'])
+def callback_algorithm(
+    inp,
+    callback: Callable[[DataSet], DataSet],
+    output_type: str | type | None = None,
+) -> CallbackFilterAlgorithm:
+    """Add a filter that delegates to a user-supplied callable.
+
+    Parameters
+    ----------
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+        Input data or algorithm.
+
+    callback : callable
+        ``callback(dataset) -> dataset``.
+
+    output_type : str | type[pyvista.DataSet] | None, default: ``None``
+        Fixed output type.  Accepts a VTK class name string or a PyVista
+        :class:`~pyvista.DataSet` subclass.  When ``None``, the output
+        type matches the input type.
+
+    Returns
+    -------
+    CallbackFilterAlgorithm
+        The callback filter wired to *inp*.
+
+    """
+    alg = CallbackFilterAlgorithm(callback=callback, output_type=output_type)
+    set_algorithm_input(alg, inp)
+    return alg
+
+
 @_deprecate_positional_args(allowed=['inp'])
 def extract_surface_algorithm(  # noqa: PLR0917
     inp,
@@ -484,21 +874,29 @@ def extract_surface_algorithm(  # noqa: PLR0917
     return surf_filter
 
 
-def active_scalars_algorithm(inp, name, preference='point'):
+@_deprecate_positional_args(allowed=['inp', 'name'])
+def active_scalars_algorithm(
+    inp,
+    name: str,
+    preference: PointLiteral | CellLiteral = 'point',
+) -> ActiveScalarsAlgorithm:
     """Add a filter that sets the active scalars.
 
     Parameters
     ----------
-    inp : pyvista.Common
-        Input data to be filtered.
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+        Input data or algorithm.
+
     name : str
         Name of the scalars to set as active.
+
     preference : str, default: 'point'
-        Preference for the scalars to be set as active. Options are 'point', 'cell', or 'field'.
+        Either ``'point'`` or ``'cell'``. Determines the field
+        association when the same array name exists on both.
 
     Returns
     -------
-    :vtk:`vtkAlgorithm`
+    ActiveScalarsAlgorithm
         Active scalars filter applied to the input data.
 
     """
@@ -510,7 +908,41 @@ def active_scalars_algorithm(inp, name, preference='point'):
     return alg
 
 
-def pointset_to_polydata_algorithm(inp):
+@_deprecate_positional_args(allowed=['inp'])
+def smooth_shading_algorithm(
+    inp,
+    split_sharp_edges: bool = False,  # noqa: FBT001, FBT002
+    feature_angle: float = 30.0,
+) -> SmoothShadingAlgorithm:
+    """Add a filter that computes point normals for smooth shading.
+
+    Parameters
+    ----------
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+        Input data or algorithm.
+
+    split_sharp_edges : bool, default: False
+        Whether to split sharp edges when computing normals.
+
+    feature_angle : float, default: 30.0
+        Angle (in degrees) above which an edge is considered sharp. Only
+        used when ``split_sharp_edges`` is ``True``.
+
+    Returns
+    -------
+    SmoothShadingAlgorithm
+        Smooth shading filter applied to the input data.
+
+    """
+    alg = SmoothShadingAlgorithm(
+        split_sharp_edges=split_sharp_edges,
+        feature_angle=feature_angle,
+    )
+    set_algorithm_input(alg, inp)
+    return alg
+
+
+def pointset_to_polydata_algorithm(inp) -> PointSetToPolyDataAlgorithm:
     """Add a filter that casts PointSet to PolyData.
 
     Parameters

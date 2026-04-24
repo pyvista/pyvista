@@ -285,7 +285,20 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.remove(key)
 
     def __contains__(self: Self, name: str) -> bool:
-        """Implement the ``in`` operator."""
+        """Implement the ``in`` operator.
+
+        Uses VTK's native ``HasArray`` for an O(1) lookup, avoiding the
+        cost of materialising every array name into a Python list. Falls
+        back to ``self.keys()`` for the empty-name lookup so that
+        ``keys()``'s legacy auto-rename side-effect (renaming any
+        unnamed arrays to ``Unnamed_<i>``) still fires; some plotter
+        codepaths (notably ``set_custom_opacity`` for array-valued
+        ``opacity=`` arguments) inject anonymous arrays and rely on that
+        side-effect to give them a unique, lookup-able name before
+        downstream code activates them.
+        """
+        if name:
+            return bool(self.VTKObject.HasArray(name))
         return name in self.keys()
 
     def __iter__(self: Self) -> Iterator[str]:
