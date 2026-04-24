@@ -51,7 +51,7 @@ pl.add_mesh(
 pl.open_gif('glyph_wave.gif')
 
 # Update Z and write a frame for each updated mesh
-nframe = 30
+nframe = 20
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     z = (np.sin(r + phase) + 1) / 2
 

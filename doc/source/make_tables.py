@@ -1478,6 +1478,8 @@ class ColormapTable(DocTable):
     @staticmethod
     def generate_img_swatch(cmap, img_path):
         """Generate and save an image of the given colormap."""
+        if os.path.isfile(img_path):
+            return
         width = 256
         height = 100
         N = 256
@@ -1508,7 +1510,8 @@ class ColormapTable(DocTable):
         lab = rgb_to_cam02ucs(rgb)
         y = lab[0, :, 0]
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
+        if not os.path.isfile(img_path):
+            ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
 
         # Compute linearity of the lightness.
         # r^2 is good for ramps, but not for iso-luminant colormaps
@@ -1536,7 +1539,8 @@ class ColormapTable(DocTable):
         delta_e = delta_e_cie2000(rgb)
         y = np.concatenate([[0], np.cumsum(delta_e)])
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        if not os.path.isfile(img_path):
+            ColormapTable.save_scatter_plot(x, y, cmap, img_path)
         return ColormapTable.linear_regression(x, y)
 
     @staticmethod
@@ -3500,7 +3504,23 @@ class MedicalCarousel(DatasetGalleryCarousel):
         )
 
 
+def _resolve_path(cls):
+    """Resolve a DocTable class path, handling property descriptors."""
+    path = cls.path
+    if isinstance(path, property):
+        path = path.fget(cls)
+    return path
+
+
 def make_all_carousels(carousels: list[DatasetGalleryCarousel]) -> list[str]:  # noqa: D103
+    # Check if all carousel RST files already exist - if so, skip the
+    # expensive dataset download/load step on incremental builds
+    carousel_paths = [_resolve_path(carousel) for carousel in carousels]
+    all_exist = all(Path(p).exists() for p in carousel_paths)
+    if all_exist:
+        print('All carousel RST files already exist, skipping dataset loading', flush=True)
+        return carousel_paths
+
     # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
 

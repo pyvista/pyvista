@@ -1,10 +1,17 @@
 Miscellaneous
 =============
 
-These miscellaneous methods are used to support imaging or data sampling.
+Miscellaneous utility functions for imaging, data sampling, and
+system configuration.
+
+.. currentmodule:: pyvista
 
 .. autosummary::
-   :toctree: _autosummary
 
-   pyvista.core.utilities.features.sample_function
-   pyvista.core.utilities.features.perlin_noise
+   sample_function
+   perlin_noise
+   core.utilities.set_error_output_file
+   send_errors_to_logging
+   start_xvfb
+   Report
+   get_gpu_info
