@@ -77,8 +77,8 @@ to choose a colormap.
     packages, but have slight variations in the mapped colors. When a name
     exists in ``matplotlib``, ``matplotlib``'s colormap is used so that plots
     remain reproducible regardless of which optional colormap packages are
-    installed. Use a package-specific alias (e.g. an ``_r`` variant or a
-    distinct name from ``colorcet``, ``cmocean``, or ``cmcrameri``) to
+    installed. Use a package-specific alias (for example an ``_r`` variant or
+    a distinct name from ``colorcet``, ``cmocean``, or ``cmcrameri``) to
     explicitly request a third-party colormap.
 
 .. note::
