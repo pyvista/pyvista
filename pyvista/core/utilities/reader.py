@@ -220,7 +220,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     # generic parameter on such a class is the narrowest common supertype
     # the VTK format allows (e.g. ``BaseReader['DataSet']``), so docs and
     # tests that need the exact list consult this attribute.
-    _output_types: ClassVar[tuple[str, ...] | None] = None
+    _output_types: ClassVar[tuple[_mesh_types, ...] | None] = None
 
     def __init__(self, path) -> None:
         """Initialize Reader by setting path."""
@@ -4206,7 +4206,7 @@ def _derive_reader_output_types(
     """
     override = getattr(cls, '_output_types', None)
     if override is not None:
-        return cast('tuple[_mesh_types, ...]', override)
+        return override
     name = _extract_base_reader_generic_arg(cls)
     if name is None:
         msg = (
