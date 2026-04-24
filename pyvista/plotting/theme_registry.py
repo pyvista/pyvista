@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 THEME_ENTRY_POINT_GROUP = 'pyvista.themes'
 
 
-ThemeRegistrationKind = Literal['subclass', 'instance', 'entry_point', 'alias']
+ThemeRegistrationKind = Literal['subclass', 'entry_point', 'alias']
 
 
 class ThemeRegistration(NamedTuple):
@@ -27,9 +27,8 @@ class ThemeRegistration(NamedTuple):
 
     Returned by :func:`~pyvista.registered_themes`. ``kind`` distinguishes
     the registration path: a :class:`~pyvista.plotting.themes.Theme`
-    subclass with a class-level ``_default_name`` (``'subclass'``), an
-    instance passed to :func:`~pyvista.register_theme` (``'instance'``),
-    a ``pyvista.themes`` entry point from an installed plugin
+    subclass with a class-level ``_default_name`` (``'subclass'``), a
+    ``pyvista.themes`` entry point from an installed plugin
     (``'entry_point'``), or a built-in legacy alias such as ``'default'``
     or ``'vtk'`` (``'alias'``).
 
@@ -37,7 +36,7 @@ class ThemeRegistration(NamedTuple):
     ----------
     name : str
         The registered (normalized) theme name.
-    kind : {'subclass', 'instance', 'entry_point', 'alias'}
+    kind : {'subclass', 'entry_point', 'alias'}
         How the name was registered.
     source : str
         Human-readable origin (e.g. ``'my_package.theme.MyTheme'``).
@@ -63,8 +62,6 @@ class _ThemeRegistryState(TypedDict):
     classes: dict[str, type[Theme]]
     classes_sources: dict[str, str]
     aliases: set[str]
-    instances: dict[str, Theme]
-    instances_sources: dict[str, str]
     discovered: dict[str, type[Theme] | Theme]
     discovered_sources: dict[str, str]
     loaded: bool
@@ -73,8 +70,6 @@ class _ThemeRegistryState(TypedDict):
 _registered_theme_classes: dict[str, type[Theme]] = {}
 _registered_theme_classes_sources: dict[str, str] = {}
 _registered_theme_aliases: set[str] = set()
-_registered_theme_instances: dict[str, Theme] = {}
-_registered_theme_instances_sources: dict[str, str] = {}
 _discovered_entry_point_themes: dict[str, type[Theme] | Theme] = {}
 _discovered_entry_point_sources: dict[str, str] = {}
 _entry_points_loaded: bool = False
@@ -91,8 +86,6 @@ def _save_registry_state() -> _ThemeRegistryState:
         'classes': _registered_theme_classes.copy(),
         'classes_sources': _registered_theme_classes_sources.copy(),
         'aliases': _registered_theme_aliases.copy(),
-        'instances': _registered_theme_instances.copy(),
-        'instances_sources': _registered_theme_instances_sources.copy(),
         'discovered': _discovered_entry_point_themes.copy(),
         'discovered_sources': _discovered_entry_point_sources.copy(),
         'loaded': _entry_points_loaded,
@@ -108,24 +101,11 @@ def _restore_registry_state(state: _ThemeRegistryState) -> None:
     _registered_theme_classes_sources.update(state['classes_sources'])
     _registered_theme_aliases.clear()
     _registered_theme_aliases.update(state['aliases'])
-    _registered_theme_instances.clear()
-    _registered_theme_instances.update(state['instances'])
-    _registered_theme_instances_sources.clear()
-    _registered_theme_instances_sources.update(state['instances_sources'])
     _discovered_entry_point_themes.clear()
     _discovered_entry_point_themes.update(state['discovered'])
     _discovered_entry_point_sources.clear()
     _discovered_entry_point_sources.update(state['discovered_sources'])
     _entry_points_loaded = state['loaded']
-
-
-def _describe_existing(name: str) -> str:
-    """Return a human-readable source of the existing registration."""
-    if name in _registered_theme_classes_sources:
-        return _registered_theme_classes_sources[name]
-    if name in _registered_theme_instances_sources:
-        return _registered_theme_instances_sources[name]
-    return '<unknown>'
 
 
 def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
@@ -140,8 +120,8 @@ def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
             f'Theme class {source} declared an empty ``_default_name``; skipped.',
         )
         return
-    if normalized in _registered_theme_classes or normalized in _registered_theme_instances:
-        existing = _describe_existing(normalized)
+    if normalized in _registered_theme_classes:
+        existing = _registered_theme_classes_sources.get(normalized, '<unknown>')
         warn_external(
             f'Theme name "{normalized}" is already registered by {existing}; '
             f'ignoring duplicate registration from {source}.',
@@ -149,32 +129,6 @@ def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
         return
     _registered_theme_classes[normalized] = cls
     _registered_theme_classes_sources[normalized] = source
-
-
-def _register_theme_instance(name: str, instance: Theme, *, source: str, override: bool) -> None:
-    """Register a pre-configured ``Theme`` instance.
-
-    Collisions raise ``ValueError`` unless ``override=True``. This is
-    called from the public ``register_theme`` function, so loud failure
-    is the right behavior.
-    """
-    normalized = _normalize_theme_name(name)
-    if not normalized:
-        msg = 'Theme name must not be empty.'
-        raise ValueError(msg)
-    if not override and (
-        normalized in _registered_theme_classes or normalized in _registered_theme_instances
-    ):
-        existing = _describe_existing(normalized)
-        msg = (
-            f'Theme name "{normalized}" is already registered by {existing}. '
-            'Pass ``override=True`` to replace it.'
-        )
-        raise ValueError(msg)
-    _registered_theme_classes.pop(normalized, None)
-    _registered_theme_classes_sources.pop(normalized, None)
-    _registered_theme_instances[normalized] = instance
-    _registered_theme_instances_sources[normalized] = source
 
 
 def _register_alias(name: str, cls: type[Theme]) -> None:
@@ -190,22 +144,21 @@ def _register_alias(name: str, cls: type[Theme]) -> None:
 
 
 def _lookup_explicit(normalized: str) -> Theme | None:
-    """Look up a normalized name in the explicit registries.
+    """Look up a normalized name in the explicit subclass registry.
 
-    Classes are instantiated fresh; instances are returned as-is (the
-    caller uses ``load_theme`` which copies attributes into a target).
+    Classes are instantiated fresh every call so callers never share a
+    registered instance with the global theme.
     """
     cls = _registered_theme_classes.get(normalized)
     if cls is not None:
         return cls()
-    return _registered_theme_instances.get(normalized)
+    return None
 
 
 def _resolve_theme(name: str) -> Theme | None:
     """Look up a theme by name and return a usable ``Theme`` instance.
 
-    Explicit registrations (subclasses + ``register_theme``) win over
-    entry-point discoveries.
+    Explicit subclass registrations win over entry-point discoveries.
     """
     normalized = _normalize_theme_name(name)
 
@@ -231,11 +184,7 @@ def _resolve_theme(name: str) -> Theme | None:
 def _available_theme_names() -> tuple[str, ...]:
     """Return all currently registered theme names."""
     _ensure_entry_points()
-    names = (
-        set(_registered_theme_classes)
-        | set(_registered_theme_instances)
-        | set(_discovered_entry_point_themes)
-    )
+    names = set(_registered_theme_classes) | set(_discovered_entry_point_themes)
     return tuple(sorted(names))
 
 
@@ -283,12 +232,6 @@ def registered_themes() -> dict[str, ThemeRegistration]:
             name, f'{cls.__module__}.{cls.__qualname__}'
         )
         out[name] = ThemeRegistration(name=name, kind=kind, source=source)
-    for name in _registered_theme_instances:
-        out[name] = ThemeRegistration(
-            name=name,
-            kind='instance',
-            source=_registered_theme_instances_sources.get(name, '<unknown>'),
-        )
     for name in _discovered_entry_point_themes:
         if name in out:
             # Explicit registrations always win over entry-point providers.
@@ -374,7 +317,7 @@ def _register_discovered_theme(name: str, obj: object, *, source: str) -> None:
         )
         return
 
-    if normalized in _registered_theme_classes or normalized in _registered_theme_instances:
+    if normalized in _registered_theme_classes:
         # Explicit registration wins silently — user-owned registrations
         # shouldn't be shouted at just because a plugin also defines it.
         return

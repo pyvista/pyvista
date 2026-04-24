@@ -14,7 +14,6 @@ import pyvista as pv
 from pyvista.plotting import theme_registry as _reg_mod
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import DocumentTheme
-from pyvista.plotting.themes import ParaViewTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
 
@@ -100,27 +99,16 @@ def test_init_subclass_duplicate_name_warns():
     assert isinstance(resolved, OriginalTheme)
 
 
-def test_register_theme_instance():
-    custom = DarkTheme()
-    custom.show_edges = True
-
-    returned = pv.register_theme('my_custom', custom)
-    assert returned is custom
-
-    pv.set_plot_theme('my_custom')
-    assert pv.global_theme.show_edges is True
-
-
 def test_set_plot_theme_does_not_mutate_class_registration():
-    """Applying a class-backed theme must not convert its entry into an instance."""
+    """Applying a class-backed theme must keep its entry as a subclass."""
     dark_before = pv.registered_themes()['dark']
     assert dark_before.kind == 'subclass'
 
     pv.set_plot_theme('dark')
     assert pv.global_theme.name == 'dark'
 
-    # Mutating the global theme must not leak into the registered theme
-    # (the registry should hand out fresh instances from the class).
+    # Mutating the global theme must not leak into the registered theme —
+    # the registry hands out fresh instances from the class on every call.
     pv.global_theme.show_edges = not pv.global_theme.show_edges
 
     dark_after = pv.registered_themes()['dark']
@@ -128,48 +116,6 @@ def test_set_plot_theme_does_not_mutate_class_registration():
     fresh = _reg_mod._resolve_theme('dark')
     assert isinstance(fresh, DarkTheme)
     assert fresh.show_edges is DarkTheme().show_edges
-
-
-def test_register_theme_override():
-    first = DarkTheme()
-    pv.register_theme('replaceable', first)
-
-    replacement = ParaViewTheme()
-    pv.register_theme('replaceable', replacement, override=True)
-
-    resolved = _reg_mod._resolve_theme('replaceable')
-    assert isinstance(resolved, ParaViewTheme)
-
-
-def test_register_theme_collision_raises():
-    instance = DarkTheme()
-    pv.register_theme('collision_name', instance)
-
-    with pytest.raises(ValueError, match='already registered'):
-        pv.register_theme('collision_name', DocumentTheme())
-
-
-def test_register_theme_rejects_class():
-    with pytest.raises(TypeError, match='expects a Theme instance, got class'):
-        pv.register_theme('as_class', DarkTheme)
-
-
-def test_register_theme_rejects_non_theme():
-    with pytest.raises(TypeError, match='expects a pyvista Theme instance'):
-        pv.register_theme('bogus', 'not a theme')
-
-
-def test_register_theme_empty_name_raises():
-    with pytest.raises(ValueError, match='must not be empty'):
-        pv.register_theme('', DarkTheme())
-
-
-def test_register_theme_collides_with_subclass_registration():
-    class PreExisting(Theme):
-        _default_name: ClassVar[str] = 'pre_existing'
-
-    with pytest.raises(ValueError, match='already registered'):
-        pv.register_theme('pre_existing', DarkTheme())
 
 
 def test_dotted_path_resolution():
@@ -493,16 +439,6 @@ def test_registered_themes_includes_builtins_and_kinds():
         assert registered[name].source.endswith(class_name)
     for name in ('default', 'vtk'):
         assert registered[name].kind == 'alias'
-
-
-def test_registered_themes_reports_instance_source():
-    custom = DarkTheme()
-    pv.register_theme('reg_inst_theme', custom)
-
-    record = pv.registered_themes()['reg_inst_theme']
-    assert record.name == 'reg_inst_theme'
-    assert record.kind == 'instance'
-    assert "register_theme('reg_inst_theme')" in record.source
 
 
 def test_registered_themes_reports_entry_point_source():

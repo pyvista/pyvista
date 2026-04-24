@@ -73,7 +73,6 @@ from .theme_registry import registered_themes as registered_themes
 from .themes import DocumentTheme as _GlobalTheme
 from .themes import _set_plot_theme_from_env as _set_plot_theme_from_env
 from .themes import load_theme as load_theme
-from .themes import register_theme as register_theme
 from .themes import set_plot_theme as set_plot_theme
 from .tools import FONTS as FONTS
 from .tools import check_math_text_support as check_math_text_support

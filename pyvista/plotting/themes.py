@@ -55,7 +55,6 @@ from .opts import PointSpriteShape
 from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
-from .theme_registry import _register_theme_instance
 from .theme_registry import _resolve_dotted_path
 from .theme_registry import _resolve_theme
 from .tools import parse_font_family
@@ -122,8 +121,8 @@ def set_plot_theme(theme):
         * A registered theme name. Built-in names include ``'dark'``,
           ``'default'``, ``'document'``, ``'document_build'``,
           ``'document_pro'``, ``'paraview'``, ``'testing'``, and
-          ``'vtk'``. Third-party plugins and
-          :func:`~pyvista.register_theme` can add more. Use
+          ``'vtk'``. Third-party plugins can add more via the
+          ``pyvista.themes`` entry-point group. Use
           :func:`~pyvista.registered_themes` to list everything that is
           currently available.
         * A ``"package.module:ClassName"`` dotted path to any importable
@@ -134,9 +133,6 @@ def set_plot_theme(theme):
     --------
     pyvista.registered_themes
         List all registered theme names.
-    pyvista.register_theme
-        Register a pre-configured :class:`Theme` instance under a
-        custom name.
     pyvista.plotting.themes.Theme
         Base class. Subclasses with a class-level ``_default_name`` are
         discoverable by name; see the class docstring for details aimed
@@ -189,88 +185,6 @@ def set_plot_theme(theme):
             f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
         )
         raise TypeError(msg)
-
-
-def register_theme(name: str, theme: Any, *, override: bool = False) -> Theme:
-    """Register a pre-configured :class:`~pyvista.plotting.themes.Theme` instance.
-
-    Once registered, the theme can be activated by name via
-    :func:`~pyvista.set_plot_theme` or by setting the
-    ``PYVISTA_PLOT_THEME`` environment variable.
-
-    Subclass-based registration is automatic via
-    ``Theme.__init_subclass__`` when the subclass declares a
-    class-level ``_default_name``. Use this function when you want to
-    register an already-configured instance (e.g., a mutated copy of
-    ``DarkTheme``) under a custom name.
-
-    Notes
-    -----
-    Both this function and subclass-based registration require the
-    defining module to be imported before the name resolves. This is
-    convenient for scripts, notebooks, and testing, but plugin packages
-    that want their themes discovered without a user ``import`` should
-    declare a ``pyvista.themes`` entry point instead — see
-    :class:`~pyvista.plotting.themes.Theme` for details.
-
-    Parameters
-    ----------
-    name : str
-        Name to register the theme under.
-
-    theme : Theme
-        A pre-configured :class:`~pyvista.plotting.themes.Theme` instance.
-
-    override : bool, default: False
-        If ``True``, replace any existing registration with the same name.
-        If ``False`` and the name is already registered, a ``ValueError``
-        is raised.
-
-    Returns
-    -------
-    Theme
-        The registered theme instance.
-
-    Raises
-    ------
-    TypeError
-        If ``theme`` is not a :class:`~pyvista.plotting.themes.Theme`
-        instance.
-
-    ValueError
-        If ``name`` is empty, or if the name is already registered and
-        ``override`` is ``False``.
-
-    Examples
-    --------
-    Register a customized dark theme under a custom name.
-
-    >>> import pyvista as pv
-    >>> from pyvista.plotting.themes import DarkTheme
-    >>> custom = DarkTheme()
-    >>> custom.show_edges = True
-    >>> _ = pv.register_theme('dark_edges', custom)
-    >>> pv.set_plot_theme('dark_edges')
-
-    """
-    if isinstance(theme, type):
-        msg = (
-            f'register_theme expects a Theme instance, got class '
-            f'{theme.__name__}. For Theme subclasses, declare '
-            "'_default_name' as a class attribute and they register "
-            'automatically.'
-        )
-        raise TypeError(msg)
-    if not isinstance(theme, Theme):
-        msg = f'register_theme expects a pyvista Theme instance, got {type(theme).__name__}.'
-        raise TypeError(msg)
-    _register_theme_instance(
-        name,
-        theme,
-        source=f'register_theme({name!r})',
-        override=override,
-    )
-    return theme
 
 
 class _LightingConfig(_ConfigBase):
@@ -1787,10 +1701,10 @@ class Theme(_ConfigBase):
         [project.entry-points.'pyvista.themes']
         my_theme = 'my_package.theme:MyTheme'
 
-    Subclass-based auto-registration and :func:`~pyvista.register_theme`
-    require the defining module to be imported before the name resolves.
-    They are primarily useful for scripts, notebooks, testing, and local
-    development; plugin packages should prefer the entry-point path.
+    Subclass-based auto-registration requires the defining module to be
+    imported before the name resolves, so it is primarily useful for
+    scripts, notebooks, testing, and local development. Plugin packages
+    should prefer the entry-point path.
 
     Examples
     --------

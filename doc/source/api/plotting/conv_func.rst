@@ -11,7 +11,6 @@ routines in PyVista.
    plot
    plot_arrows
    set_plot_theme
-   register_theme
    registered_themes
    ThemeRegistration
    create_axes_orientation_box
