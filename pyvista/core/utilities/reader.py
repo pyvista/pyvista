@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Generic
 from typing import Literal
 from typing import TypeVar
@@ -65,6 +66,24 @@ CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
 # correct because ``BaseReader`` only *produces* values of ``T_Output``
 # (via :meth:`BaseReader.read`); it never accepts them as input.
 _T_Output_co = TypeVar('_T_Output_co', bound='DataObject', covariant=True)
+
+_mesh_types = Literal[
+    'UnstructuredGrid',
+    'ImageData',
+    'PolyData',
+    'MultiBlock',
+    'RectilinearGrid',
+    'StructuredGrid',
+    'PointSet',
+    'PartitionedDataSet',
+]
+_legacy_dataset_types = Literal[  # no PointSet
+    'UnstructuredGrid',
+    'ImageData',
+    'PolyData',
+    'RectilinearGrid',
+    'StructuredGrid',
+]
 
 
 def get_reader(filename, force_ext=None):
@@ -195,6 +214,13 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     """
 
     _class_reader: Any = None
+
+    # Override on subclasses whose VTK reader can emit more than one
+    # concrete :class:`~pyvista.DataObject` subclass. The ``BaseReader[X]``
+    # generic parameter on such a class is the narrowest common supertype
+    # the VTK format allows (e.g. ``BaseReader['DataSet']``), so docs and
+    # tests that need the exact list consult this attribute.
+    _output_types: ClassVar[tuple[str, ...] | None] = None
 
     def __init__(self, path) -> None:
         """Initialize Reader by setting path."""
@@ -1349,6 +1375,7 @@ class VTKDataSetReader(BaseReader['DataSet']):
 
     _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetReader'
+    _output_types = get_args(_legacy_dataset_types)
 
     def _set_defaults_post(self) -> None:
         self.reader.ReadAllScalarsOn()
@@ -1369,6 +1396,7 @@ class VTKPDataSetReader(BaseReader['DataSet']):
 
     _vtk_module_name = 'vtkIOParallel'
     _vtk_class_name = 'vtkPDataSetReader'
+    _output_types = get_args(_legacy_dataset_types)
 
 
 class BYUReader(BaseReader['PolyData']):
@@ -2634,6 +2662,13 @@ class HDFReader(BaseReader['DataObject']):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
+    _output_types = (
+        'ImageData',
+        'PolyData',
+        'UnstructuredGrid',
+        'PartitionedDataSet',
+        'MultiBlock',
+    )
 
 
 class GLTFReader(BaseReader['MultiBlock']):
@@ -2678,6 +2713,7 @@ class SegYReader(BaseReader['DataSet']):
 
     _vtk_module_name = 'vtkIOSegY'
     _vtk_class_name = 'vtkSegYReader'
+    _output_types = ('StructuredGrid', 'ImageData')
 
 
 class _GIFReader(BaseVTKReader):
@@ -2779,6 +2815,7 @@ class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
 
     _vtk_module_name = 'vtkIOXdmf2'
     _vtk_class_name = 'vtkXdmfReader'
+    _output_types = ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid')
 
     @property
     def number_grids(self):
@@ -2908,6 +2945,7 @@ class GaussianCubeReader(BaseReader['DataSet']):
 
     _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
+    _output_types = ('ImageData', 'PolyData')
 
     @_deprecate_positional_args
     def read(
@@ -2915,7 +2953,7 @@ class GaussianCubeReader(BaseReader['DataSet']):
         grid: bool = True,  # noqa: FBT001, FBT002
         *,
         validate: bool | None = None,
-    ) -> pv.DataObject:
+    ) -> pv.DataSet:
         """Read the file and return the output.
 
         Parameters
@@ -2930,7 +2968,7 @@ class GaussianCubeReader(BaseReader['DataSet']):
 
         Returns
         -------
-        pyvista.DataObject
+        pyvista.DataSet
             PyVista dataset read from the file.
 
         """
@@ -3999,6 +4037,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
     """
 
     _class_reader: type[_SeriesReader[_SeriesEachReader]] = _SeriesReader[_SeriesEachReader]
+    _output_types = get_args(_mesh_types)
 
     @property
     def active_reader(self):
@@ -4129,44 +4168,6 @@ CLASS_READERS = {
     '.xdmf': XdmfReader,
 }
 
-_mesh_types = Literal[
-    'UnstructuredGrid',
-    'ImageData',
-    'PolyData',
-    'MultiBlock',
-    'RectilinearGrid',
-    'StructuredGrid',
-    'PointSet',
-    'PartitionedDataSet',
-]
-_legacy_dataset_types = Literal[  # no PointSet
-    'UnstructuredGrid',
-    'ImageData',
-    'PolyData',
-    'RectilinearGrid',
-    'StructuredGrid',
-]
-
-# Override for readers that legitimately produce more than one concrete
-# output type at runtime. The ``BaseReader[X]`` generic parameter on these
-# classes is the narrowest common supertype the VTK format allows (e.g.
-# ``DataSet`` for ``VTKDataSetReader``), but for docs and tests we want
-# the exact list of concrete types the reader can emit.
-#
-# All other readers' output types are derived from their ``BaseReader[X]``
-# parameterization by :func:`_derive_reader_output_types` below, so
-# adding a new single-output reader does not require editing this module.
-_READER_OUTPUT_OVERRIDES: dict[type[BaseReader[Any]], tuple[_mesh_types, ...]] = {
-    GaussianCubeReader: ('ImageData', 'PolyData'),
-    HDFReader: ('ImageData', 'PolyData', 'UnstructuredGrid', 'PartitionedDataSet', 'MultiBlock'),
-    SegYReader: ('StructuredGrid', 'ImageData'),
-    VTKDataSetReader: get_args(_legacy_dataset_types),
-    VTKPDataSetReader: get_args(_legacy_dataset_types),
-    XdmfReader: ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid'),
-    SeriesReader: get_args(_mesh_types),
-}
-
-
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     """Return the forward-reference name from a ``BaseReader[X]`` base.
 
@@ -4197,20 +4198,20 @@ def _derive_reader_output_types(
 ) -> _mesh_types | tuple[_mesh_types, ...]:
     """Return the output type(s) declared by a reader class.
 
-    Returns the :class:`BaseReader` generic parameter as a ``_mesh_types``
-    literal for single-output readers, or the explicit tuple from
-    :data:`_READER_OUTPUT_OVERRIDES` for readers whose generic parameter
-    is a widened common supertype. Raises :class:`TypeError` if neither
-    source supplies a type.
+    Uses the ``_output_types`` class attribute when a reader's ``BaseReader[X]``
+    generic parameter is a widened common supertype (multi-output readers);
+    otherwise returns the generic parameter as a ``_mesh_types`` literal.
+    Raises :class:`TypeError` if neither source supplies a type.
     """
-    if cls in _READER_OUTPUT_OVERRIDES:
-        return _READER_OUTPUT_OVERRIDES[cls]
+    override = getattr(cls, '_output_types', None)
+    if override is not None:
+        return cast('tuple[_mesh_types, ...]', override)
     name = _extract_base_reader_generic_arg(cls)
     if name is None:
         msg = (
             f'Cannot derive output type for reader {cls.__name__!r}: '
-            f'it does not parameterize BaseReader[X] and is not listed '
-            f'in _READER_OUTPUT_OVERRIDES.'
+            f'it does not parameterize BaseReader[X] and does not define '
+            f'an `_output_types` class attribute.'
         )
         raise TypeError(msg)
     return cast('_mesh_types', name)
@@ -4218,12 +4219,10 @@ def _derive_reader_output_types(
 
 # Define reader output types. Primarily used for testing and documentation.
 # The mapping is derived from each reader's ``BaseReader[X]`` parameterization
-# (with ``_READER_OUTPUT_OVERRIDES`` for multi-output readers), so adding a
-# new reader automatically produces the right entry here. We seed the
+# (with a per-class ``_output_types`` attribute on multi-output readers), so
+# adding a new reader automatically produces the right entry here. We seed the
 # iteration from :data:`CLASS_READERS` (every reader registered to a file
-# extension) plus :class:`SeriesReader` (reached via its ``.series`` entry
-# through a registry mechanism) — readers not registered to an extension
-# stay out by design.
+# extension) — readers not registered to an extension stay out by design.
 _CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
     cls: _derive_reader_output_types(cls) for cls in set(CLASS_READERS.values())
 }
