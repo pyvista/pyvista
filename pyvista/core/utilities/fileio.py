@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TextIO
+from typing import TypeVar
 from typing import cast
 from typing import overload
 from urllib.parse import urlparse
@@ -54,6 +55,7 @@ PathStrSeq = str | Path | Sequence['PathStrSeq']
 PICKLE_EXT = ('.pkl', '.pickle')
 _PointCellField = Literal['point', 'cell', 'field']
 _PassDataOptions = bool | _PointCellField | Sequence[_PointCellField]
+_ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 def _lazy_vtk_import(module_name: str, class_name: str) -> type:
@@ -205,13 +207,34 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
+@overload
+def read(
+    filename: PathStrSeq,
+    force_ext: str | None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,  # noqa: FBT001
+    *,
+    cls: type[_ReadReturnT],
+    validate: bool | None = ...,
+) -> _ReadReturnT: ...
+@overload
+def read(
+    filename: PathStrSeq,
+    force_ext: str | None = ...,
+    file_format: str | None = ...,
+    progress_bar: bool = ...,  # noqa: FBT001
+    *,
+    cls: None = ...,
+    validate: bool | None = ...,
+) -> DataSet | MultiBlock: ...
 @_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0911, PLR0917
+def read(  # noqa: PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,  # noqa: FBT001, FBT002
     *,
+    cls: type[DataObject] | None = None,
     validate: bool | None = None,
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
@@ -269,6 +292,15 @@ def read(  # noqa: PLR0911, PLR0917
     progress_bar : bool, default: False
         Optionally show a progress bar. Ignored when using ``meshio``.
 
+    cls : type, optional
+        Expected concrete type of the returned mesh. When given, the
+        result is checked with :func:`isinstance` and a
+        :class:`TypeError` is raised on mismatch. Static type checkers
+        (``mypy``, ``pyright``) use this to narrow the return type to
+        ``cls`` directly, so callers do not need ``typing.cast`` or a
+        manual ``assert isinstance`` to access subclass-specific
+        attributes, e.g. ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
+
     validate : bool, optional
         Forwarded to :func:`pyvista.wrap` as the ``validate`` keyword when
         using a ``vtk`` reader. When ``None`` (the default), honors
@@ -280,8 +312,9 @@ def read(  # noqa: PLR0911, PLR0917
 
     Returns
     -------
-    pyvista.DataSet
-        Wrapped PyVista dataset.
+    pyvista.DataSet | pyvista.MultiBlock
+        Wrapped PyVista dataset. When ``cls`` is given, an instance of
+        ``cls`` is returned instead.
 
     Examples
     --------
@@ -291,6 +324,12 @@ def read(  # noqa: PLR0911, PLR0917
     >>> from pyvista import examples
     >>> mesh = pv.read(examples.antfile)
     >>> mesh.plot(cpos='xz')
+
+    Narrow the return type to a specific class. This avoids the need for
+    a manual ``cast`` when working with type checkers such as ``mypy``
+    or ``pyright``.
+
+    >>> mesh = pv.read('mesh.vtu', cls=pv.UnstructuredGrid)  # doctest:+SKIP
 
     Load a vtk file.
 
@@ -305,6 +344,31 @@ def read(  # noqa: PLR0911, PLR0917
     >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
+    result = _read_dispatch(
+        filename,
+        force_ext=force_ext,
+        file_format=file_format,
+        progress_bar=progress_bar,
+        validate=validate,
+    )
+    if cls is not None and not isinstance(result, cls):
+        msg = (
+            f'Expected an instance of {cls.__name__} when reading {filename!r}, '
+            f'but got {type(result).__name__}.'
+        )
+        raise TypeError(msg)
+    return result
+
+
+def _read_dispatch(  # noqa: PLR0911
+    filename: PathStrSeq,
+    *,
+    force_ext: str | None,
+    file_format: str | None,
+    progress_bar: bool,
+    validate: bool | None,
+) -> DataObject:
+    """Dispatch a filename to the right reader and return the wrapped mesh."""
     if file_format is not None and force_ext is not None:
         msg = 'Only one of `file_format` and `force_ext` may be specified.'
         raise ValueError(msg)
@@ -313,7 +377,16 @@ def read(  # noqa: PLR0911, PLR0917
         multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format, validate=validate), name)  # type: ignore[arg-type]
+            multi.append(
+                _read_dispatch(  # type: ignore[arg-type]
+                    each,
+                    force_ext=None,
+                    file_format=file_format,
+                    progress_bar=progress_bar,
+                    validate=validate,
+                ),
+                name,
+            )
         return multi
 
     # Circular import: reader_registry -> reader -> fileio
@@ -402,7 +475,7 @@ def read(  # noqa: PLR0911, PLR0917
 
 
 def _apply_attrs_to_reader(
-    reader: BaseReader, attrs: dict[str, object | Sequence[object]]
+    reader: BaseReader[Any], attrs: dict[str, object | Sequence[object]]
 ) -> None:
     """For a given pyvista reader, call methods according to attrs.
 

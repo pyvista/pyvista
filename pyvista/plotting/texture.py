@@ -160,7 +160,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     def _from_file(self, filename, **kwargs):
         try:
-            image = pv.read(filename, **kwargs)
+            image = pv.read(filename, cls=pv.ImageData, **kwargs)
             if image.n_points < 2:  # pragma: no cover
                 msg = 'Problem reading the image with VTK.'
                 raise RuntimeError(msg)
