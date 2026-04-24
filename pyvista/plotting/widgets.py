@@ -259,6 +259,7 @@ class WidgetHelper:
         merge_points: bool = True,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
         interaction_event: InteractionEventType = 'end',
+        factor=1.25,
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -277,6 +278,9 @@ class WidgetHelper:
 
         invert : bool, optional
             Flag on whether to flip/invert the clip.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         rotation_enabled : bool, optional
             If ``False``, the box widget cannot be rotated and is strictly
@@ -382,7 +386,7 @@ class WidgetHelper:
         self.add_box_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             rotation_enabled=rotation_enabled,
             use_planes=True,
             color=widget_color,
@@ -437,11 +441,11 @@ class WidgetHelper:
         bounds : tuple(float)
             Length 6 tuple of the bounding box where the widget is placed.
 
-        factor : float, optional
-            An inflation factor to expand on the bounds when placing.
-
         color : ColorLike, optional
             Either a string, rgb list, or hex color string.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -652,6 +656,7 @@ class WidgetHelper:
         invert: bool = False,  # noqa: FBT001, FBT002
         widget_color=None,
         value=0.0,
+        factor=1.25,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
         origin_translation: bool = True,  # noqa: FBT001, FBT002
@@ -690,6 +695,9 @@ class WidgetHelper:
         value : float, optional
             Set the clipping value along the normal direction.
             The default value is 0.0.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -810,7 +818,7 @@ class WidgetHelper:
         self.add_plane_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
@@ -836,6 +844,7 @@ class WidgetHelper:
         invert: bool = False,  # noqa: ARG002, FBT001, FBT002
         widget_color=None,
         value=0.0,  # noqa: ARG002
+        factor=1.25,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
         origin_translation: bool = True,  # noqa: FBT001, FBT002
@@ -868,6 +877,9 @@ class WidgetHelper:
         value : float, optional
             Set the clipping value along the normal direction.
             The default value is 0.0.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
@@ -947,7 +959,7 @@ class WidgetHelper:
         widget = self.add_plane_widget(
             callback=callback,
             bounds=volume.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
@@ -975,6 +987,7 @@ class WidgetHelper:
         widget_color=None,
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
+        factor: float = 1.25,
         origin_translation: bool = True,  # noqa: FBT001, FBT002
         outline_translation: bool = False,  # noqa: FBT001, FBT002
         implicit: bool = True,  # noqa: FBT001, FBT002
@@ -1012,6 +1025,10 @@ class WidgetHelper:
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given axis:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        factor : float, optional
+            Expands the plane bounds. 1.0 means the plane bounds are exactly
+            the bounds of the mesh.
 
         tubing : bool, optional
             When using an implicit plane widget, this controls whether or not
@@ -1103,7 +1120,7 @@ class WidgetHelper:
         self.add_plane_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             normal=normal,
             color=widget_color,
             tubing=tubing,
@@ -2123,6 +2140,7 @@ class WidgetHelper:
         self,
         mesh,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        factor=1.25,
         n_handles=5,
         resolution=25,
         widget_color=None,
@@ -2151,6 +2169,9 @@ class WidgetHelper:
         generate_triangles : bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing.
 
         n_handles : int, optional
             The number of interactive spheres to control the spline's
@@ -2234,7 +2255,7 @@ class WidgetHelper:
         self.add_spline_widget(
             callback=callback,
             bounds=mesh.bounds,
-            factor=1.25,
+            factor=factor,
             color=widget_color,
             n_handles=n_handles,
             resolution=resolution,

@@ -6615,6 +6615,31 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 self._make_render_window_current()
                 return self._save_image(self.image, filename, return_img)
 
+    def _repr_png_(self) -> bytes | None:
+        """Return the last cached screenshot as PNG bytes for IPython display hooks.
+
+        Enables the plotter to render as a static image in IDE plot panes and
+        rich notebook frontends (Positron, VS Code Jupyter, JupyterLab). Uses
+        :attr:`last_image`, which is populated by :meth:`show` or
+        :meth:`screenshot`. Returns ``None`` when no screenshot has been
+        captured yet; this method never triggers a render, so IDE variable
+        inspectors can probe a plotter without side effects.
+
+        Returns
+        -------
+        bytes or None
+            PNG-encoded image of the most recent screenshot, or ``None`` if
+            the plotter has not been rendered.
+
+        """
+        import PIL.Image  # noqa: PLC0415
+
+        if self.last_image is None:
+            return None
+        buf = io.BytesIO()
+        PIL.Image.fromarray(self.last_image).save(buf, format='PNG')
+        return buf.getvalue()
+
     @wraps(Renderers.set_background)
     def set_background(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_background``."""
