@@ -213,12 +213,10 @@ Typing and autocomplete
 Because accessors are attached at import time via a decorator, static
 type checkers do not see the new attribute on the target class.
 PyVista exports a :class:`~pyvista.DataSetAccessor` structural
-protocol that plugin authors can use to type-check their own accessor
-classes:
+protocol so plugin authors can have type checkers verify their own
+accessor class conforms to the expected shape:
 
 .. code-block:: python
-
-    from typing import TYPE_CHECKING
 
     import pyvista as pv
 
@@ -230,9 +228,9 @@ classes:
         def repair(self) -> pv.PolyData: ...
 
 
-    if TYPE_CHECKING:
-        # structural confirmation the class satisfies the protocol
-        _check: pv.DataSetAccessor = MeshFixAccessor(pv.PolyData())
+    # mypy / pyright verify that MeshFixAccessor's __init__ signature
+    # is compatible with the DataSetAccessor protocol.
+    _accessor_cls: type[pv.DataSetAccessor] = MeshFixAccessor
 
 To give downstream users autocomplete on ``mesh.meshfix.repair(...)``,
 plugin packages should ship a small ``.pyi`` stub that declares the

@@ -53,6 +53,15 @@ class DataSetAccessor(Protocol):
     available as ``dataset.<namespace>.<method>(...)`` once the class is
     registered with :func:`~pyvista.register_dataset_accessor`.
 
+    This Protocol exists primarily for static type analysis: plugin
+    authors can annotate ``accessor_cls: type[DataSetAccessor]`` (or
+    use it as a return annotation) to have mypy/pyright check that
+    their accessor class conforms. The runtime ``isinstance`` check is
+    intentionally permissive (every class has ``__init__``), so prefer
+    the static-typing use.
+
+    .. versionadded:: 0.48.0
+
     Examples
     --------
     Declare an accessor that satisfies the protocol.
@@ -73,6 +82,8 @@ class AccessorRegistration(NamedTuple):
     """Describe one registered dataset accessor.
 
     Returned by :func:`~pyvista.registered_accessors`.
+
+    .. versionadded:: 0.48.0
 
     Attributes
     ----------
@@ -141,9 +152,9 @@ class _CachedAccessor:
             # ``help(cls.<name>)`` shows the accessor docstring.
             return self._accessor_cls
         accessor_instance = self._accessor_cls(obj)
-        # Skip the cache on slotted or read-only objects and construct
-        # fresh on each access.
-        with contextlib.suppress(AttributeError, TypeError):
+        # Skip the cache on ``__slots__`` targets (no ``__dict__``) and
+        # construct fresh on each access.
+        with contextlib.suppress(AttributeError):
             obj.__dict__[self._name] = accessor_instance
         return accessor_instance
 
@@ -301,6 +312,8 @@ def register_dataset_accessor(
     and its subclasses. The accessor class is instantiated lazily on
     first access and cached on the dataset instance, so subsequent
     accesses return the same accessor object.
+
+    .. versionadded:: 0.48.0
 
     Parameters
     ----------
@@ -462,6 +475,8 @@ def unregister_dataset_accessor(name: str, target_cls: type) -> None:
     any built-in attribute that was shadowed via ``override=True`` when
     the accessor was registered.
 
+    .. versionadded:: 0.48.0
+
     Parameters
     ----------
     name : str
@@ -537,7 +552,6 @@ def _ensure_entry_points() -> None:
                 f'"{accessor_entry_point.name}" from {module_path}: {exc}'
             )
             warn_external(msg)
-            continue
 
 
 def registered_accessors() -> tuple[AccessorRegistration, ...]:
@@ -547,6 +561,8 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
     :func:`~pyvista.register_dataset_accessor`. Entry-point plugins
     are discovered (and their accessor modules imported) on the first
     call so they appear in the result.
+
+    .. versionadded:: 0.48.0
 
     Returns
     -------
