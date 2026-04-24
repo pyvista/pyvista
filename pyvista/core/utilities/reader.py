@@ -4168,6 +4168,7 @@ CLASS_READERS = {
     '.xdmf': XdmfReader,
 }
 
+
 def _extract_base_reader_generic_arg(cls: type[BaseReader[Any]]) -> str | None:
     """Return the forward-reference name from a ``BaseReader[X]`` base.
 
