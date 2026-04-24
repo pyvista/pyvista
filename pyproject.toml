@@ -162,7 +162,7 @@ docs = [
   'trame-vuetify==3.2.1',
   'trame==3.12.0',
   'trimesh==4.11.5',
-  'vtk-xref==0.1.1',
+  'vtk-xref==0.1.2',
   { include-group = 'pinned' },
 ]
 

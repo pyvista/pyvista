@@ -195,6 +195,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_MeshType_co'),
+    (r'py:.*', '.*_T_Output_co'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
@@ -311,10 +312,29 @@ nitpick_ignore_regex = [
     #
     # Misc general ignores
     (r'py:.*', 'optional'),
+    #
+    # Private implementation types used in signatures
+    (r'py:.*', r'.*_SMPToolsContext'),
+    (r'py:.*', r'.*_ActiveArrayExistsInfoTuple'),
+    #
+    # Private algorithm classes returned by plotting utility functions
+    (r'py:.*', r'.*ActiveScalarsAlgorithm'),
+    (r'py:.*', r'.*AddIDsAlgorithm'),
+    (r'py:.*', r'.*CallbackFilterAlgorithm'),
+    (r'py:.*', r'.*CrinkleAlgorithm'),
+    (r'py:.*', r'.*PointSetToPolyDataAlgorithm'),
+    (r'py:.*', r'.*SmoothShadingAlgorithm'),
+    (r'py:.*', r'.*SourceAlgorithm'),
+    (r'py:.*', r'pyvista\.Common'),
+    #
+    # Long-form function paths used in some docstrings/examples
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.perlin_noise'),
+    (r'py:.*', r'pyvista\.core\.utilities\.features\.sample_function'),
 ]
 
 
 add_module_names = False
+toc_object_entries_show_parents = 'hide'
 
 # Intersphinx mapping
 # NOTE: if these are changed, then doc/intersphinx/update.sh
@@ -322,30 +342,30 @@ add_module_names = False
 intersphinx_mapping = {
     'python': (
         'https://docs.python.org/3.11',
-        (None, '../intersphinx/python-objects.inv'),
+        ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
-        (None, '../intersphinx/scipy-objects.inv'),
+        ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
         'https://matplotlib.org/stable',
-        (None, '../intersphinx/matplotlib-objects.inv'),
+        ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
         'https://imageio.readthedocs.io/en/stable',
-        (None, '../intersphinx/imageio-objects.inv'),
+        ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
-        (None, '../intersphinx/pandas-objects.inv'),
+        ('../intersphinx/pandas-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'pytest': ('https://docs.pytest.org/en/stable', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
-intersphinx_timeout = 10
+intersphinx_timeout = 5
 
 # Select if we want to generate production or dev documentation
 #
@@ -570,6 +590,8 @@ html_theme_options = {
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
+    # Capping at depth 4 keeps classes nested under their section pages while
+    # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
     'icon_links': [
         {
