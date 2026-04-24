@@ -69,6 +69,7 @@ PyVista has the following mesh types:
    grids
    composite
    filters
+   accessors
    camera
    lights
    cells

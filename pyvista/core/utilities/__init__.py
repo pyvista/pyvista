@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import contextlib
 
+from .accessor_registry import AccessorRegistration as AccessorRegistration
+from .accessor_registry import DataSetAccessor as DataSetAccessor
+from .accessor_registry import register_dataset_accessor as register_dataset_accessor
+from .accessor_registry import registered_accessors as registered_accessors
+from .accessor_registry import unregister_dataset_accessor as unregister_dataset_accessor
 from .arrays import FieldAssociation as FieldAssociation
 from .arrays import array_from_vtkmatrix as array_from_vtkmatrix
 from .arrays import cell_array as cell_array
