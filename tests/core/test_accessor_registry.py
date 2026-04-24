@@ -737,11 +737,17 @@ def test_broken_plugin_warns_once_and_isolates(monkeypatch):
             _ = pv.Sphere().broken
 
     # Pending entry was consumed, so a second access is a clean
-    # AttributeError with no retry and no second warning.
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
+    # AttributeError with no retry and no second "Failed to load"
+    # warning. Capture all warnings and assert specifically that no
+    # accessor-load warning fires; unrelated warnings (e.g. nightly
+    # NumPy / VTK deprecations) are ignored.
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
         with pytest.raises(AttributeError):
             _ = pv.Sphere().broken
+
+    accessor_warnings = [w for w in captured if 'Failed to load' in str(w.message)]
+    assert accessor_warnings == []
 
     # Unrelated attributes still work.
     assert pv.Sphere().n_points > 0
@@ -848,11 +854,24 @@ def test_registered_accessors_forces_discovery(monkeypatch):
 
 
 def test_no_entry_points_is_silent(monkeypatch):
-    """No installed accessor plugins must be a no-op without warnings."""
+    """No installed accessor plugins must be a no-op without warnings.
+
+    Captures all warnings and asserts none of them came from the
+    accessor registry. Unrelated warnings (e.g. NumPy / VTK nightly
+    deprecations) are ignored so the test stays robust on
+    nightly-dependency CI jobs.
+    """
     _reset_entry_point_state(monkeypatch, [])
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
         _reg_mod._ensure_entry_points()
         # Attribute access for an unknown name still raises cleanly.
         with pytest.raises(AttributeError):
             _ = pv.Sphere().completely_unknown
+
+    accessor_warnings = [
+        w
+        for w in captured
+        if 'pyvista.accessors' in str(w.message) or 'Failed to load' in str(w.message)
+    ]
+    assert accessor_warnings == []
