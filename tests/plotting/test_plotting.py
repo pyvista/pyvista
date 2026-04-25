@@ -326,6 +326,23 @@ def test_set_environment_texture_cubemap(resample, verify_image_cache):
     pl.show()
 
 
+def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_images_to_verify):  # noqa: ARG001
+    """Resampling an environment texture should use linear interpolation and anti-aliasing."""
+    spy = mocker.spy(pv.ImageData, 'resample')
+
+    pl = pv.Plotter(lighting=None)
+    texture = examples.load_globe_texture()
+    pl.set_environment_texture(texture, resample=0.5)
+
+    spy.assert_called_once()
+    args, kwargs = spy.call_args
+    # The call signature is resample(self, sample_rate, interpolation, *, anti_aliasing=...)
+    assert args[1] == 0.5
+    assert args[2] == 'linear'
+    assert kwargs.get('anti_aliasing') is True
+    pl.close()
+
+
 @pytest.mark.skip_windows
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_remove_environment_texture_cubemap(sphere):

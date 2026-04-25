@@ -3859,6 +3859,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             .. versionadded:: 0.45
 
+            .. versionchanged:: 0.48
+
+                Resampling now uses linear interpolation with anti-aliasing
+                instead of nearest-neighbor, which gives smoother results for
+                continuous environment textures.
+
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
@@ -3899,9 +3905,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
-                texture_copy.SetInputDataObject(
-                    i, pv.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
-                )
+                old_image = pv.wrap(texture.GetInputDataObject(i, 0))
+                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
+                texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
             self.SetEnvironmentTexture(texture, is_srgb)
