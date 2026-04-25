@@ -2151,7 +2151,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         This method must be called before the window is realized.
         """
         if self.render_window is None:
-            raise AttributeError('The render window has been closed.')
+            msg = 'The render window has been closed.'
+            raise AttributeError(msg)
         # TODO: add check to make sure this is called before the window is realized
         self.render_window.GetStereoCapableWindow()
         self.render_window.SetStereoType(stereo_type.value)

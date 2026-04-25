@@ -39,6 +39,7 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.opts import PointSpriteShape
+from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -3121,6 +3122,93 @@ def test_disable_stereo_render():
     pl.camera.distance = 0.1
     pl.enable_stereo_render()
     pl.disable_stereo_render()
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_stereo_type_enum_values():
+    expected = {
+        'CRYSTAL_EYES': 1,
+        'RED_BLUE': 2,
+        'INTERLACED': 3,
+        'LEFT': 4,
+        'RIGHT': 5,
+        'DRESDEN': 6,
+        'ANAGLYPH': 7,
+        'CHECKERBOARD': 8,
+        'SPLITVIEWPORT_HORIZONTAL': 9,
+        'FAKE': 10,
+        'EMULATE': 11,
+        'ZSPACE_INSPIRE': 12,
+    }
+    assert {member.name: member.value for member in StereoType} == expected
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plotter_init_stereo_default_does_not_enable():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Cube())
+    assert pl.render_window.GetStereoRender() == 0
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plotter_init_stereo_true_uses_anaglyph():
+    pl = pv.Plotter(stereo=True)
+    pl.add_mesh(pv.Cube())
+    assert pl.render_window.GetStereoRender() == 1
+    assert pl.render_window.GetStereoType() == StereoType.ANAGLYPH.value
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize(
+    'stereo_type',
+    [
+        StereoType.ANAGLYPH,
+        StereoType.RED_BLUE,
+        StereoType.INTERLACED,
+        StereoType.CHECKERBOARD,
+    ],
+)
+def test_plotter_init_stereo_with_enum(stereo_type):
+    pl = pv.Plotter(stereo=stereo_type)
+    pl.add_mesh(pv.Cube())
+    assert pl.render_window.GetStereoRender() == 1
+    assert pl.render_window.GetStereoType() == stereo_type.value
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_enable_stereo_rendering_raises_when_window_closed():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Cube())
+    pl.close()
+    with pytest.raises(AttributeError, match='render window has been closed'):
+        pl._enable_stereo_rendering()
+
+
+def test_init_stereo_anaglyph(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+    pl = pv.Plotter(stereo=StereoType.ANAGLYPH)
+    pl.add_mesh(pv.Cube())
+    pl.camera.distance = 0.1
+    pl.show()
+
+
+def test_init_stereo_red_blue(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+    pl = pv.Plotter(stereo=StereoType.RED_BLUE)
+    pl.add_mesh(pv.Cube())
+    pl.camera.distance = 0.1
+    pl.show()
+
+
+def test_init_stereo_checkerboard(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+    pl = pv.Plotter(stereo=StereoType.CHECKERBOARD)
+    pl.add_mesh(pv.Cube())
+    pl.camera.distance = 0.1
     pl.show()
 
 
