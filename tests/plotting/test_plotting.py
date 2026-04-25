@@ -316,6 +316,7 @@ def test_set_environment_texture_cubemap(resample, verify_image_cache):
     # Skip due to large variance
     verify_image_cache.windows_skip_image_cache = True
     verify_image_cache.macos_skip_image_cache = True
+    verify_image_cache.high_variance_test = True
 
     pl = pv.Plotter(lighting=None)
     texture = examples.download_cubemap_park()
