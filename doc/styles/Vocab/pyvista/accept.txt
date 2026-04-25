@@ -1,5 +1,7 @@
 APIs
 Abaqus
+Accessor
+Accessors
 Ansys
 Attene
 Autosummary
@@ -12,10 +14,12 @@ Colab
 Colormap
 Colormaps
 Comms
+Composable
 Cookiecutter
 Coords
 Cython
 Dependabot
+Deregistration
 Deserializing
 Dev
 Dictionary-like
@@ -84,6 +88,8 @@ Transifex
 URI
 URIs
 VTK
+accessor
+accessors
 autodoc
 autoenum
 autofix
@@ -100,8 +106,11 @@ colormap
 colormaps
 conda
 data's
+dataclass
 dataframes
 dependabot
+deregister
+deregistration
 deserialize
 deserializes
 dev
@@ -149,9 +158,11 @@ numpydoc
 objname
 omf
 omfvista
+pandas
 parametrizing
 parm
 performant
+pint-xarray
 pixi
 postprocessing
 pre
@@ -170,13 +181,16 @@ relicense
 renderers
 reusability
 revered
+rioxarray
 rst
 rtree
+runtime-checkable
 scipy
 scooby
 setuptools
 sphinx
 stl
+subclassing
 subpackages
 sympy
 tensorflow
@@ -202,5 +216,6 @@ vtk
 wireframe
 worktree
 wslink
+xarray
 xy
 zenodo

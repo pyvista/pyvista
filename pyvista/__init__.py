@@ -25,6 +25,15 @@ from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
+from pyvista.core.utilities.accessor_registry import AccessorRegistration as AccessorRegistration
+from pyvista.core.utilities.accessor_registry import DataSetAccessor as DataSetAccessor
+from pyvista.core.utilities.accessor_registry import (
+    register_dataset_accessor as register_dataset_accessor,
+)
+from pyvista.core.utilities.accessor_registry import registered_accessors as registered_accessors
+from pyvista.core.utilities.accessor_registry import (
+    unregister_dataset_accessor as unregister_dataset_accessor,
+)
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme

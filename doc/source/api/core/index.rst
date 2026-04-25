@@ -19,6 +19,7 @@ and provide direct access to common VTK filters (see :ref:`filters`).
    composite
    partitioned
    filters
+   accessors
    camera
    lights
    cells
